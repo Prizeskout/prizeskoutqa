@@ -14,6 +14,198 @@ export type Database = {
   }
   public: {
     Tables: {
+      behavior_patterns: {
+        Row: {
+          category: string
+          channel: string
+          competitor: string
+          confidence: number
+          created_at: string
+          depth: string | null
+          detection_period: string
+          evidence: Json
+          id: string
+          impact: string
+          pattern: string
+          position: number
+          recommendation: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          channel: string
+          competitor: string
+          confidence: number
+          created_at?: string
+          depth?: string | null
+          detection_period: string
+          evidence?: Json
+          id?: string
+          impact: string
+          pattern: string
+          position?: number
+          recommendation: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          channel?: string
+          competitor?: string
+          confidence?: number
+          created_at?: string
+          depth?: string | null
+          detection_period?: string
+          evidence?: Json
+          id?: string
+          impact?: string
+          pattern?: string
+          position?: number
+          recommendation?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      competitor_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
+        }
+        Relationships: []
+      }
+      competitor_price_history: {
+        Row: {
+          amazon: number | null
+          carrefour: number | null
+          created_at: string
+          id: string
+          month_label: string
+          position: number
+          product: string
+          talabat: number | null
+          updated_at: string
+          user_id: string
+          you: number | null
+        }
+        Insert: {
+          amazon?: number | null
+          carrefour?: number | null
+          created_at?: string
+          id?: string
+          month_label: string
+          position?: number
+          product: string
+          talabat?: number | null
+          updated_at?: string
+          user_id: string
+          you?: number | null
+        }
+        Update: {
+          amazon?: number | null
+          carrefour?: number | null
+          created_at?: string
+          id?: string
+          month_label?: string
+          position?: number
+          product?: string
+          talabat?: number | null
+          updated_at?: string
+          user_id?: string
+          you?: number | null
+        }
+        Relationships: []
+      }
+      competitor_prices: {
+        Row: {
+          amazon: Json | null
+          carrefour: Json | null
+          category: string
+          channel: string
+          created_at: string
+          id: string
+          lulu: Json | null
+          noon: Json | null
+          position: number
+          product: string
+          signal: string
+          talabat: Json | null
+          updated_at: string
+          user_id: string
+          your_price: number
+        }
+        Insert: {
+          amazon?: Json | null
+          carrefour?: Json | null
+          category: string
+          channel: string
+          created_at?: string
+          id?: string
+          lulu?: Json | null
+          noon?: Json | null
+          position?: number
+          product: string
+          signal: string
+          talabat?: Json | null
+          updated_at?: string
+          user_id: string
+          your_price: number
+        }
+        Update: {
+          amazon?: Json | null
+          carrefour?: Json | null
+          category?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          lulu?: Json | null
+          noon?: Json | null
+          position?: number
+          product?: string
+          signal?: string
+          talabat?: Json | null
+          updated_at?: string
+          user_id?: string
+          your_price?: number
+        }
+        Relationships: []
+      }
       overview_alerts: {
         Row: {
           alert_type: string

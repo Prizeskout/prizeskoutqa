@@ -3,6 +3,7 @@ import { Eye } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportPatternsPdf } from "./exportPatternsPdf";
 import { useBranding, accentRgba } from "@/hooks/useBranding";
+import type { BehaviorPattern } from "@/lib/competitors-data";
 
 type Pattern = {
   competitor: string;
@@ -17,100 +18,59 @@ type Pattern = {
   impact: string;
 };
 
-const PATTERNS: Pattern[] = [
-  {
-    competitor: "Carrefour",
-    channel: "Both",
-    category: "Electronics",
-    detectionPeriod: "14 months of data",
-    confidence: 94,
-    pattern:
-      "Drops electronics prices every 3rd Thursday of the month by 8 to 12%",
-    depth: "8-12%",
-    evidence: [
-      { date: "Nov 16, 2025", description: "Electronics category dropped 9.2% across 47 products" },
-      { date: "Dec 21, 2025", description: "Electronics dropped 11.1% across 52 products" },
-      { date: "Jan 18, 2026", description: "Electronics dropped 8.7% across 44 products" },
-      { date: "Feb 20, 2026", description: "Electronics dropped 10.3% across 49 products" },
-    ],
-    recommendation:
-      "Hold your electronics promotions until the Friday after Carrefour's Thursday drop. Their traffic spike peaks Thursday evening and fades by Saturday. You capture the residual demand at a better margin. Do not try to compete during their drop window. Instead, position yourself as the option for shoppers who missed the deals or want faster delivery.",
-    impact: "+QAR 14K monthly from better promotion timing",
-  },
-  {
-    competitor: "Talabat",
-    channel: "Online",
-    category: "Grocery",
-    detectionPeriod: "11 months of data",
-    confidence: 89,
-    pattern: "Runs flash grocery discounts every Sunday between 6pm and 9pm",
-    depth: "10-15%",
-    evidence: [
-      { date: "Jan 5, 2026", description: "Grocery flash sale 6:02pm to 8:58pm, avg discount 12.4%" },
-      { date: "Jan 12, 2026", description: "Grocery flash sale 6:10pm to 9:05pm, avg discount 11.8%" },
-      { date: "Feb 2, 2026", description: "Grocery flash sale 5:55pm to 9:00pm, avg discount 13.1%" },
-      { date: "Mar 9, 2026", description: "Grocery flash sale 6:00pm to 8:50pm, avg discount 10.9%" },
-    ],
-    recommendation:
-      "Schedule your grocery push for Monday morning. Talabat's Sunday buyers have already purchased, but Monday has low competition and your delivery speed advantage peaks during working hours when people order for home delivery. Run a 'Monday Fresh' campaign specifically targeting items that Talabat discounted the night before.",
-    impact: "+QAR 8K monthly from shifted grocery promotion timing",
-  },
-  {
-    competitor: "Amazon.ae",
-    channel: "Online",
-    category: "Electronics",
-    detectionPeriod: "9 months of data",
-    confidence: 91,
-    pattern:
-      "Raises prices 5 to 8 days before a major sale, then discounts back to the original price",
-    depth: "Perceived 20-30% discount, actual 3-5%",
-    evidence: [
-      { date: "Nov 17, 2025", description: "Avg electronics price raised 18% across 230 products" },
-      { date: "Nov 25, 2025", description: "Black Friday sale launched with 'up to 25% off', net price 2.8% below pre-inflation" },
-      { date: "Mar 5, 2026", description: "Avg electronics price raised 22% across 195 products" },
-      { date: "Mar 14, 2026", description: "Spring sale launched with 'up to 30% off', net price 4.1% below pre-inflation" },
-    ],
-    recommendation:
-      "Do not react to Amazon's pre-sale price hikes. Your team may see their prices jump and think demand is shifting. It is artificial inflation. Hold your prices steady. When their sale launches, your regular prices are already competitive without any margin sacrifice. Communicate this to your category managers so they do not panic-adjust.",
-    impact: "Prevents unnecessary margin erosion of 3-5% during Amazon sale periods",
-  },
-  {
-    competitor: "Lulu",
-    channel: "In-Store",
-    category: "Electronics, Home",
-    detectionPeriod: "8 months of data",
-    confidence: 87,
-    pattern:
-      "Stocks out on premium electronics and home appliances 2 to 3 days before weekend",
-    depth: null,
-    evidence: [
-      { date: "Dec 18, 2025", description: "Dyson, Samsung premium range out of stock at Lusail location by Wednesday" },
-      { date: "Jan 15, 2026", description: "Apple accessories, Dyson out of stock at Al Gharafa by Thursday morning" },
-      { date: "Feb 12, 2026", description: "Premium electronics stock gaps at 3 of 4 monitored Lulu locations by Wednesday" },
-      { date: "Mar 19, 2026", description: "Similar pattern, stock gaps appearing Wednesday afternoon" },
-    ],
-    recommendation:
-      "Push premium electronics and home appliance ads on Thursday evening, specifically targeting areas near Lulu locations (Lusail, Al Gharafa, Al Messila). Their stock gaps are your conversion opportunity. Customers who visited Lulu and found items out of stock will search online. Be the first result they see with guaranteed same-day delivery.",
-    impact: "+QAR 11K monthly from capturing Lulu stock gap demand",
-  },
-];
+// Map a DB-shaped BehaviorPattern (snake_case) into the local Pattern shape
+// used by the card UI and the PDF export.
+function toPattern(p: BehaviorPattern): Pattern {
+  return {
+    competitor: p.competitor,
+    channel: p.channel,
+    category: p.category,
+    detectionPeriod: p.detection_period,
+    confidence: p.confidence,
+    pattern: p.pattern,
+    depth: p.depth,
+    evidence: p.evidence ?? [],
+    recommendation: p.recommendation,
+    impact: p.impact,
+  };
+}
 
-export function BehaviorPatterns() {
+export function BehaviorPatterns({ patterns }: { patterns: BehaviorPattern[] }) {
+  const mapped = patterns.map(toPattern);
+
+  if (!mapped.length) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px dashed #E5E2DB",
+          borderRadius: 10,
+          padding: "20px 24px",
+          fontSize: 13,
+          color: "#6B6B6B",
+        }}
+      >
+        No behavior patterns detected yet — patterns appear once we have at least 8 months of
+        competitor tracking data.
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <ExportPdfButton onExport={() => exportPatternsPdf(PATTERNS)} />
+        <ExportPdfButton onExport={() => exportPatternsPdf(mapped)} />
       </div>
-      <ContextBanner />
-      {PATTERNS.map((p) => (
+      <ContextBanner count={mapped.length} />
+      {mapped.map((p) => (
         <PatternCard key={p.competitor} pattern={p} />
       ))}
-      <PatternSummary />
+      <PatternSummary count={mapped.length} />
     </div>
   );
 }
 
-function ContextBanner() {
+function ContextBanner({ count }: { count: number }) {
   const { accentColor } = useBranding();
   return (
     <div
@@ -166,7 +126,7 @@ function ContextBanner() {
         }}
       >
         <div style={{ fontSize: 18, fontWeight: 700, color: accentColor }}>
-          4 patterns
+          {count} {count === 1 ? "pattern" : "patterns"}
         </div>
         <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
           detected
@@ -484,7 +444,7 @@ function Timeline({
   );
 }
 
-function PatternSummary() {
+function PatternSummary({ count }: { count: number }) {
   const { accentColor, brandName } = useBranding();
   const blocks = [
     {
@@ -497,7 +457,7 @@ function PatternSummary() {
     {
       bg: accentRgba(accentColor, 0.06),
       label: "Patterns detected",
-      value: "4",
+      value: String(count),
       valueColor: accentColor,
       sub: "with more emerging as data grows",
     },
