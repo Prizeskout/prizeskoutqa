@@ -227,7 +227,7 @@ export function DashboardLayout({
             className="dashboard-page-fade"
             style={{ maxWidth: 1080, margin: "0 auto" }}
           >
-            <Breadcrumbs title={title} />
+            <Breadcrumbs title={title} pathname={location.pathname} />
             {children}
           </div>
         </main>
