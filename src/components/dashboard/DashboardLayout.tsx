@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronRight, RefreshCw } from "lucide-react";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -22,6 +22,8 @@ function LastUpdated({ pathname }: { pathname: string }) {
   const [mounted, setMounted] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number>(() => Date.now());
   const [now, setNow] = useState<number>(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -46,9 +48,17 @@ function LastUpdated({ pathname }: { pathname: string }) {
       })
     : "";
 
-  const handleRefresh = () => {
-    setUpdatedAt(Date.now());
-    setNow(Date.now());
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      // Re-runs every active route loader (sync: true awaits completion)
+      await router.invalidate({ sync: true });
+      setUpdatedAt(Date.now());
+      setNow(Date.now());
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   if (!mounted) {
@@ -82,6 +92,8 @@ function LastUpdated({ pathname }: { pathname: string }) {
         type="button"
         onClick={handleRefresh}
         aria-label="Refresh dashboard data"
+        aria-busy={refreshing}
+        disabled={refreshing}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -92,21 +104,36 @@ function LastUpdated({ pathname }: { pathname: string }) {
           background: "transparent",
           border: "1px solid #E5E2DB",
           borderRadius: 6,
-          cursor: "pointer",
+          cursor: refreshing ? "wait" : "pointer",
           color: "#6B6B6B",
-          transition: "color 0.15s, border-color 0.15s",
+          opacity: refreshing ? 0.6 : 1,
+          transition: "color 0.15s, border-color 0.15s, opacity 0.15s",
         }}
         onMouseEnter={(e) => {
+          if (refreshing) return;
           e.currentTarget.style.color = "#1A1A18";
           e.currentTarget.style.borderColor = "#9A9A9A";
         }}
         onMouseLeave={(e) => {
+          if (refreshing) return;
           e.currentTarget.style.color = "#6B6B6B";
           e.currentTarget.style.borderColor = "#E5E2DB";
         }}
       >
-        <RefreshCw size={12} aria-hidden="true" />
+        <RefreshCw
+          size={12}
+          aria-hidden="true"
+          style={{
+            animation: refreshing ? "prizeskout-spin 0.8s linear infinite" : "none",
+          }}
+        />
       </button>
+      <style>{`
+        @keyframes prizeskout-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
