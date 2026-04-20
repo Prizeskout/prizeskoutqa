@@ -1,5 +1,31 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { Crosshair, TrendingUp, Target } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, Crosshair, TrendingUp, Target } from "lucide-react";
+
+export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) {
+  const color = tone === "light" ? "#6B6B6B" : "#8A8A8A";
+  const hoverColor = tone === "light" ? "#1A1A18" : "#FAFAF9";
+  return (
+    <Link
+      to="/"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 12,
+        fontWeight: 500,
+        color,
+        textDecoration: "none",
+        transition: "color 0.15s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = hoverColor)}
+      onMouseLeave={(e) => (e.currentTarget.style.color = color)}
+    >
+      <ArrowLeft size={14} aria-hidden="true" />
+      Back to home
+    </Link>
+  );
+}
 
 export function BrandLogo() {
   return (
