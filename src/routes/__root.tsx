@@ -132,6 +132,47 @@ function NotFoundPage() {
   );
 }
 
+const SITE_URL = "https://prizeskoutqa.lovable.app";
+
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "PrizeSkout",
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.svg`,
+  description: SITE_DESCRIPTION,
+  foundingLocation: {
+    "@type": "Place",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "QA",
+      addressLocality: "Doha",
+    },
+  },
+  areaServed: ["Qatar", "Middle East"],
+  contactPoint: [
+    {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: "support@prizeskout.com",
+      availableLanguage: ["English", "Arabic"],
+    },
+  ],
+};
+
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "PrizeSkout",
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  publisher: {
+    "@type": "Organization",
+    name: "PrizeSkout",
+  },
+  inLanguage: "en",
+};
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -142,6 +183,8 @@ export const Route = createRootRoute({
       { property: "og:title", content: SITE_TITLE },
       { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:site_name", content: "PrizeSkout" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: SITE_TITLE },
       { name: "twitter:description", content: SITE_DESCRIPTION },
@@ -157,6 +200,16 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: appCss,
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(ORGANIZATION_JSON_LD),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(WEBSITE_JSON_LD),
       },
     ],
   }),
