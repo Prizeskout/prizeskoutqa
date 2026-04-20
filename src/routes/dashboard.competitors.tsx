@@ -125,6 +125,8 @@ function CompetitorsPage() {
     return sorted;
   }, [allProducts, category, channel, sort, search]);
 
+  if (isHydrating) return <CompetitorsPendingPage />;
+
   return (
     <DashboardLayout title="Competitors">
       <SubTabs active={tab} onChange={setTab} />
