@@ -167,6 +167,132 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
+        }
+        Relationships: []
+      }
+      pricing_recommendations: {
+        Row: {
+          category: string
+          channel: string
+          confidence: number
+          created_at: string
+          current_price: number
+          id: string
+          margin_impact: string
+          net_monthly: string
+          position: number
+          product: string
+          reason: string
+          recommended_price: number
+          unit_impact: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          channel: string
+          confidence: number
+          created_at?: string
+          current_price: number
+          id?: string
+          margin_impact: string
+          net_monthly: string
+          position?: number
+          product: string
+          reason: string
+          recommended_price: number
+          unit_impact: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          channel?: string
+          confidence?: number
+          created_at?: string
+          current_price?: number
+          id?: string
+          margin_impact?: string
+          net_monthly?: string
+          position?: number
+          product?: string
+          reason?: string
+          recommended_price?: number
+          unit_impact?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pricing_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          position: number
+          rule_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          position?: number
+          rule_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          position?: number
+          rule_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
