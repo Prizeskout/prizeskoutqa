@@ -42,6 +42,25 @@ function ForgotPasswordPage() {
           padding: 40,
         }}
       >
+        <div style={{ marginBottom: 20 }}>
+          <Link
+            to="/"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 500,
+              color: "#6B6B6B",
+              textDecoration: "none",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#1A1A18")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            Back to home
+          </Link>
+        </div>
         <BrandLogoLight />
 
         <h1

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 
 export function MarketingHero({
   eyebrow,
@@ -13,53 +15,75 @@ export function MarketingHero({
     <section
       style={{
         background: "#050505",
-        textAlign: "center",
         paddingTop: 96,
         paddingBottom: 56,
       }}
       className="px-5 md:px-10"
     >
-      {eyebrow && (
-        <p
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <Link
+          to="/"
           style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#EA580C",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            margin: 0,
-          }}
-        >
-          {eyebrow}
-        </p>
-      )}
-      <h1
-        className="ps-section-title"
-        style={{
-          color: "#FAFAF9",
-          marginTop: eyebrow ? 12 : 0,
-          maxWidth: 720,
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-      >
-        {title}
-      </h1>
-      {subtitle && (
-        <p
-          style={{
-            fontSize: 16,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 13,
+            fontWeight: 500,
             color: "#8A8A8A",
-            lineHeight: 1.65,
-            marginTop: 16,
-            maxWidth: 640,
-            marginLeft: "auto",
-            marginRight: "auto",
+            textDecoration: "none",
+            transition: "color 0.15s",
+            marginBottom: 24,
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8A8A")}
         >
-          {subtitle}
-        </p>
-      )}
+          <ArrowLeft size={14} aria-hidden="true" />
+          Back to home
+        </Link>
+        <div style={{ textAlign: "center" }}>
+          {eyebrow && (
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#EA580C",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                margin: 0,
+              }}
+            >
+              {eyebrow}
+            </p>
+          )}
+          <h1
+            className="ps-section-title"
+            style={{
+              color: "#FAFAF9",
+              marginTop: eyebrow ? 12 : 0,
+              maxWidth: 720,
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            {title}
+          </h1>
+          {subtitle && (
+            <p
+              style={{
+                fontSize: 16,
+                color: "#8A8A8A",
+                lineHeight: 1.65,
+                marginTop: 16,
+                maxWidth: 640,
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+      </div>
     </section>
   );
 }

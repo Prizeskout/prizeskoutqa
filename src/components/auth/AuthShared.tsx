@@ -1,5 +1,31 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { Crosshair, TrendingUp, Target } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, Crosshair, TrendingUp, Target } from "lucide-react";
+
+export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) {
+  const color = tone === "light" ? "#6B6B6B" : "#8A8A8A";
+  const hoverColor = tone === "light" ? "#1A1A18" : "#FAFAF9";
+  return (
+    <Link
+      to="/"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 12,
+        fontWeight: 500,
+        color,
+        textDecoration: "none",
+        transition: "color 0.15s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = hoverColor)}
+      onMouseLeave={(e) => (e.currentTarget.style.color = color)}
+    >
+      <ArrowLeft size={14} aria-hidden="true" />
+      Back to home
+    </Link>
+  );
+}
 
 export function BrandLogo() {
   return (
@@ -180,8 +206,18 @@ export function AuthShell({ children }: { children: ReactNode }) {
           alignItems: "center",
           justifyContent: "center",
           padding: 40,
+          position: "relative",
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            top: 24,
+            left: 24,
+          }}
+        >
+          <BackToHomeLink />
+        </div>
         <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>
       </div>
       <style>{`
