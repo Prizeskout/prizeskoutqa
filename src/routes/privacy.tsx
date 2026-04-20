@@ -5,13 +5,13 @@ import { MarketingHero, MarketingBody, MarketingProse } from "@/components/marke
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy policy — PrizeSkout" },
+      { title: "Privacy policy | PrizeSkout" },
       {
         name: "description",
         content:
           "How PrizeSkout collects, uses, and protects your data. Client data is walled off and never shared with competitors.",
       },
-      { property: "og:title", content: "Privacy policy — PrizeSkout" },
+      { property: "og:title", content: "Privacy policy | PrizeSkout" },
       {
         property: "og:description",
         content: "Read how PrizeSkout handles your data, what we collect, and how we keep it safe.",
@@ -56,7 +56,7 @@ function PrivacyPage() {
           </p>
           <h3>Usage data</h3>
           <p>
-            We collect basic usage telemetry — pages viewed, features used, errors encountered —
+            We collect basic usage telemetry, pages viewed, features used, errors encountered -
             to improve the product. This data is aggregated and never tied back to a competitor
             or a customer of yours.
           </p>

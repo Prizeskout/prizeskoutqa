@@ -5,13 +5,13 @@ import { MarketingHero, MarketingBody, MarketingProse } from "@/components/marke
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of service — PrizeSkout" },
+      { title: "Terms of service | PrizeSkout" },
       {
         name: "description",
         content:
-          "The terms that govern your use of PrizeSkout — accounts, billing, acceptable use, and the limits of our service.",
+          "The terms that govern your use of PrizeSkout, accounts, billing, acceptable use, and the limits of our service.",
       },
-      { property: "og:title", content: "Terms of service — PrizeSkout" },
+      { property: "og:title", content: "Terms of service | PrizeSkout" },
       {
         property: "og:description",
         content: "Read the agreement between PrizeSkout and the businesses that use our platform.",
@@ -77,7 +77,7 @@ function TermsPage() {
           <h2>6. Service availability</h2>
           <p>
             We aim for high availability but we do not guarantee that the service will be
-            uninterrupted or error-free. Enterprise plans include an SLA — see your contract
+            uninterrupted or error-free. Enterprise plans include an SLA, see your contract
             for details.
           </p>
 

@@ -20,7 +20,7 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout Commerce Intelligence — AI Pricing for Retail" },
+      { title: "PrizeSkout Commerce Intelligence, AI Pricing for Retail" },
       {
         name: "description",
         content:
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "PrizeSkout Commerce Intelligence — AI Pricing for Retail",
+        content: "PrizeSkout Commerce Intelligence, AI Pricing for Retail",
       },
       {
         property: "og:description",
@@ -112,7 +112,7 @@ function useInView<T extends Element>(rootMargin = "0px") {
 }
 
 function Sparkline({ color = "#EA580C", seed = 0 }: { color?: string; seed?: number }) {
-  // Generate a smooth-ish wavy line — animated by re-mounting via key
+  // Generate a smooth-ish wavy line, animated by re-mounting via key
   const points = Array.from({ length: 24 }, (_, i) => {
     const t = i / 23;
     const wave =
@@ -474,7 +474,7 @@ function HeroMockup() {
                     {r.competitor}
                   </span>
                   <span style={{ textAlign: "right", color: diffColor, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-                    {r.trend === "up" ? "▲" : r.trend === "down" ? "▼" : "—"}
+                    {r.trend === "up" ? "▲" : r.trend === "down" ? "▼" : "·"}
                   </span>
                 </div>
               );

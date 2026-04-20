@@ -13,7 +13,7 @@ import {
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign in — PrizeSkout" },
+      { title: "Sign in | PrizeSkout" },
       {
         name: "description",
         content: "Sign in to your PrizeSkout commerce intelligence dashboard.",

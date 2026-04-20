@@ -7,7 +7,7 @@ import { PastCampaigns } from "@/components/dashboard/promotions/PastCampaigns";
 import { TimingInsight } from "@/components/dashboard/promotions/TimingInsight";
 
 export const Route = createFileRoute("/dashboard/promotions")({
-  head: () => ({ meta: [{ title: "Promotions — PrizeSkout" }] }),
+  head: () => ({ meta: [{ title: "Promotions | PrizeSkout" }] }),
   component: PromotionsPage,
 });
 

@@ -7,7 +7,7 @@ import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
 
 export const Route = createFileRoute("/dashboard/pricing")({
-  head: () => ({ meta: [{ title: "Pricing — PrizeSkout" }] }),
+  head: () => ({ meta: [{ title: "Pricing | PrizeSkout" }] }),
   component: PricingPage,
 });
 
