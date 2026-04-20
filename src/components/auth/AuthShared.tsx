@@ -206,8 +206,18 @@ export function AuthShell({ children }: { children: ReactNode }) {
           alignItems: "center",
           justifyContent: "center",
           padding: 40,
+          position: "relative",
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            top: 24,
+            left: 24,
+          }}
+        >
+          <BackToHomeLink />
+        </div>
         <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>
       </div>
       <style>{`
