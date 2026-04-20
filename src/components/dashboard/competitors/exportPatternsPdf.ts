@@ -113,7 +113,7 @@ function drawSummaryStrip(doc: jsPDF, y: number, count: number) {
   const w = (CONTENT_W - gap * (blocks.length - 1)) / blocks.length;
   blocks.forEach((b, i) => {
     const x = MARGIN_X + i * (w + gap);
-    doc.setFillColor(...b.bg);
+    doc.setFillColor(b.bg[0], b.bg[1], b.bg[2]);
     doc.roundedRect(x, y, w, 20, 2, 2, "F");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -121,7 +121,7 @@ function drawSummaryStrip(doc: jsPDF, y: number, count: number) {
     doc.text(b.label.toUpperCase(), x + 5, y + 6);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.setTextColor(...b.color);
+    doc.setTextColor(b.color[0], b.color[1], b.color[2]);
     doc.text(b.value, x + 5, y + 15);
   });
 }
@@ -164,7 +164,7 @@ function drawPatternCard(
     conf > 90 ? GREEN : conf >= 80 ? ORANGE : ([245, 158, 11] as const);
   const badgeW = 28;
   const badgeX = cardX + cardW - 6 - badgeW;
-  doc.setFillColor(...confColor);
+  doc.setFillColor(confColor[0], confColor[1], confColor[2]);
   doc.roundedRect(badgeX, y - 5, badgeW, 7, 1.5, 1.5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
