@@ -229,3 +229,19 @@ export function PromotionsPendingPage() {
     </DashboardLayout>
   );
 }
+
+export function BenchmarksPendingPage() {
+  return (
+    <DashboardLayout title="Benchmarks">
+      <SkeletonStyles />
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <SkeletonMetricsRow count={4} />
+        <SkeletonCard title height={420} />
+        <SkeletonCard height={80} />
+        <SkeletonCard title height={340} />
+        <SkeletonCard title height={300} />
+        <SkeletonCard height={120} />
+      </div>
+    </DashboardLayout>
+  );
+}

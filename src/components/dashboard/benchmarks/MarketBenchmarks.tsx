@@ -1,71 +1,6 @@
-type Benchmark = {
-  metric: string;
-  you: number;
-  youDisplay: string;
-  marketAvg: number;
-  marketAvgDisplay: string;
-  top: number;
-  topDisplay: string;
-};
+import type { MarketBenchmarkRow } from "@/lib/benchmarks-data";
 
-const BENCHMARKS: Benchmark[] = [
-  {
-    metric: "Pricing competitiveness (Electronics)",
-    you: 72,
-    youDisplay: "72nd percentile",
-    marketAvg: 58,
-    marketAvgDisplay: "58th",
-    top: 89,
-    topDisplay: "89th",
-  },
-  {
-    metric: "Pricing competitiveness (Grocery)",
-    you: 81,
-    youDisplay: "81st percentile",
-    marketAvg: 65,
-    marketAvgDisplay: "65th",
-    top: 93,
-    topDisplay: "93rd",
-  },
-  {
-    metric: "Promotion ROI efficiency",
-    you: 64,
-    youDisplay: "64th percentile",
-    marketAvg: 51,
-    marketAvgDisplay: "51st",
-    top: 83,
-    topDisplay: "83rd",
-  },
-  {
-    metric: "Price response time",
-    you: 78,
-    youDisplay: "4.2 hrs",
-    marketAvg: 52,
-    marketAvgDisplay: "8.1 hrs",
-    top: 92,
-    topDisplay: "1.8 hrs",
-  },
-  {
-    metric: "Assortment coverage vs market",
-    you: 78,
-    youDisplay: "78%",
-    marketAvg: 72,
-    marketAvgDisplay: "72%",
-    top: 94,
-    topDisplay: "94%",
-  },
-  {
-    metric: "Stock availability rate",
-    you: 91,
-    youDisplay: "91%",
-    marketAvg: 85,
-    marketAvgDisplay: "85%",
-    top: 97,
-    topDisplay: "97%",
-  },
-];
-
-function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
+function BenchmarkRow({ b, isLast }: { b: MarketBenchmarkRow; isLast: boolean }) {
   return (
     <div
       style={{
@@ -75,10 +10,9 @@ function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: "#1A1A18" }}>{b.metric}</div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#EA580C" }}>{b.youDisplay}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#EA580C" }}>{b.you_display}</div>
       </div>
       <div style={{ marginTop: 28, position: "relative" }}>
-        {/* Bar container */}
         <div
           style={{
             width: "100%",
@@ -88,7 +22,6 @@ function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
             position: "relative",
           }}
         >
-          {/* Filled portion */}
           <div
             style={{
               position: "absolute",
@@ -100,11 +33,10 @@ function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
               borderRadius: 6,
             }}
           />
-          {/* Market average marker */}
           <div
             style={{
               position: "absolute",
-              left: `${b.marketAvg}%`,
+              left: `${b.market_avg}%`,
               top: -4,
               width: 2,
               height: 20,
@@ -124,10 +56,9 @@ function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
                 whiteSpace: "nowrap",
               }}
             >
-              Market avg: {b.marketAvgDisplay}
+              Market avg: {b.market_avg_display}
             </div>
           </div>
-          {/* Top performer marker */}
           <div
             style={{
               position: "absolute",
@@ -151,10 +82,9 @@ function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
                 whiteSpace: "nowrap",
               }}
             >
-              Top: {b.topDisplay}
+              Top: {b.top_display}
             </div>
           </div>
-          {/* Your position marker */}
           <div
             style={{
               position: "absolute",
@@ -189,7 +119,7 @@ function BenchmarkRow({ b, isLast }: { b: Benchmark; isLast: boolean }) {
   );
 }
 
-export function MarketBenchmarks() {
+export function MarketBenchmarks({ benchmarks }: { benchmarks: MarketBenchmarkRow[] }) {
   return (
     <div
       style={{
@@ -207,8 +137,8 @@ export function MarketBenchmarks() {
         data. You see where you stand.
       </div>
       <div style={{ marginTop: 8 }}>
-        {BENCHMARKS.map((b, i) => (
-          <BenchmarkRow key={b.metric} b={b} isLast={i === BENCHMARKS.length - 1} />
+        {benchmarks.map((b, i) => (
+          <BenchmarkRow key={b.id} b={b} isLast={i === benchmarks.length - 1} />
         ))}
       </div>
       <div
