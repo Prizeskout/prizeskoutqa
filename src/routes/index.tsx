@@ -1601,6 +1601,20 @@ function LandingPage() {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes ps-flash {
+          0% { color: #EA580C; }
+          100% { color: inherit; }
+        }
+        @keyframes ps-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+          70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+        @keyframes ps-spark-draw { to { stroke-dashoffset: 0; } }
+        @keyframes ps-slide-up {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         html { scroll-behavior: smooth; }
         .ps-hero-title { font-size: 32px; }
         .ps-hero-sub { font-size: 15px; }
@@ -1612,6 +1626,12 @@ function LandingPage() {
         .ps-footer-grid { display: flex; flex-direction: column; gap: 32px; }
         .ps-faq-q:hover span { color: #EA580C !important; }
         .ps-feature-card:hover { border-color: rgba(234, 88, 12, 0.3) !important; transform: translateY(-2px); }
+        .ps-mock-metrics { grid-template-columns: repeat(2, 1fr); }
+        .ps-mock-bottom { grid-template-columns: 1fr; }
+        @media (min-width: 560px) {
+          .ps-mock-metrics { grid-template-columns: repeat(4, 1fr); }
+          .ps-mock-bottom { grid-template-columns: 1.4fr 1fr; }
+        }
 
         @media (min-width: 640px) {
           .ps-feature-grid { grid-template-columns: repeat(2, 1fr); }
