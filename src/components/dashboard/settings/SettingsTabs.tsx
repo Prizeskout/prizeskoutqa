@@ -6,6 +6,7 @@ import { LocationsTab } from "./LocationsTab";
 import { NotificationsTab } from "./NotificationsTab";
 import { IntegrationsTab } from "./IntegrationsTab";
 import { TeamTab } from "./TeamTab";
+import { RoiModelTab } from "./RoiModelTab";
 
 const TABS = [
   "Account",
@@ -15,6 +16,7 @@ const TABS = [
   "Notifications",
   "Integrations",
   "Team",
+  "ROI Model",
 ] as const;
 
 type Tab = (typeof TABS)[number];
@@ -72,6 +74,7 @@ export function SettingsTabs() {
       <div style={{ display: active === "Notifications" ? "block" : "none" }}><NotificationsTab /></div>
       <div style={{ display: active === "Integrations" ? "block" : "none" }}><IntegrationsTab /></div>
       <div style={{ display: active === "Team" ? "block" : "none" }}><TeamTab /></div>
+      <div style={{ display: active === "ROI Model" ? "block" : "none" }}><RoiModelTab /></div>
     </div>
   );
 }
