@@ -6,6 +6,8 @@ import {
   isOutOfStock,
   formatQAR,
 } from "./types";
+import { LiveBadge } from "./LiveBadge";
+import type { LiveScrape } from "@/hooks/useLiveScrapes";
 
 const COMP_KEYS = ["talabat", "carrefour", "lulu", "amazon", "noon"] as const;
 const COMP_LABELS = ["TALABAT", "CARREFOUR", "LULU", "AMAZON.AE", "NOON"];
@@ -100,7 +102,13 @@ function GapCell({ product }: { product: Product }) {
   );
 }
 
-export function PriceTable({ products }: { products: Product[] }) {
+export function PriceTable({
+  products,
+  liveByProduct,
+}: {
+  products: Product[];
+  liveByProduct?: Map<string, LiveScrape>;
+}) {
   const [hoverId, setHoverId] = useState<number | null>(null);
 
   return (
@@ -167,8 +175,12 @@ export function PriceTable({ products }: { products: Product[] }) {
                   }}
                 >
                   <td style={{ padding: "14px 10px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A18" }}>
-                      {p.name}
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A18", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span>{p.name}</span>
+                      {(() => {
+                        const hit = liveByProduct?.get(p.name.toLowerCase().trim());
+                        return <LiveBadge live={!!hit} scrapedAt={hit?.scraped_at ?? null} />;
+                      })()}
                     </div>
                     <div
                       style={{
