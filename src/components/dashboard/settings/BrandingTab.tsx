@@ -8,6 +8,7 @@ import {
   resetBranding,
   setBranding,
 } from "@/lib/brandingStore";
+import { getCompany, subscribeCompany } from "@/lib/companyStore";
 
 const PRESET_COLORS = [
   "#EA580C", // PrizeSkout orange
