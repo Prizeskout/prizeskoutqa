@@ -198,7 +198,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <div className="auth-left-panel" style={{ display: "flex", flex: 1 }}>
         <AuthLeftPanel />
       </div>
-      <div
+      <main
+        id="main-content"
+        tabIndex={-1}
         style={{
           flex: 1,
           backgroundColor: "#FAFAF9",
@@ -207,6 +209,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           justifyContent: "center",
           padding: 40,
           position: "relative",
+          outline: "none",
         }}
       >
         <div
@@ -219,7 +222,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <BackToHomeLink />
         </div>
         <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>
-      </div>
+      </main>
       <style>{`
         @media (max-width: 767px) {
           .auth-left-panel { display: none !important; }
