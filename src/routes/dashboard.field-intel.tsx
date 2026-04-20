@@ -1,12 +1,45 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { PlaceholderPage } from "@/components/dashboard/PlaceholderPage";
+import { FieldIntelMetrics } from "@/components/dashboard/field-intel/FieldIntelMetrics";
+import { SubmitObservation } from "@/components/dashboard/field-intel/SubmitObservation";
+import { RecentObservations } from "@/components/dashboard/field-intel/RecentObservations";
+import { PriceGaps } from "@/components/dashboard/field-intel/PriceGaps";
+import { FieldTeamActivity } from "@/components/dashboard/field-intel/FieldTeamActivity";
 
 export const Route = createFileRoute("/dashboard/field-intel")({
   head: () => ({ meta: [{ title: "Field Intel — PrizeSkout" }] }),
-  component: () => (
-    <DashboardLayout title="Field Intel">
-      <PlaceholderPage title="Field Intel" />
-    </DashboardLayout>
-  ),
+  component: FieldIntelPage,
 });
+
+function FieldIntelPage() {
+  return (
+    <DashboardLayout title="Field Intel">
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <FieldIntelMetrics />
+        <div className="field-intel-two-col">
+          <div className="field-intel-left">
+            <SubmitObservation />
+          </div>
+          <div className="field-intel-right">
+            <RecentObservations />
+          </div>
+        </div>
+        <PriceGaps />
+        <FieldTeamActivity />
+      </div>
+      <style>{`
+        .field-intel-two-col {
+          display: flex;
+          gap: 14px;
+          align-items: flex-start;
+        }
+        .field-intel-left { flex: 0 0 calc(55% - 7px); min-width: 0; }
+        .field-intel-right { flex: 0 0 calc(45% - 7px); min-width: 0; }
+        @media (max-width: 768px) {
+          .field-intel-two-col { flex-direction: column; }
+          .field-intel-left, .field-intel-right { flex: 1 1 auto; width: 100%; }
+        }
+      `}</style>
+    </DashboardLayout>
+  );
+}
