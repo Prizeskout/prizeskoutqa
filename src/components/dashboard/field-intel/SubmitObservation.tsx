@@ -354,27 +354,51 @@ export function SubmitObservation() {
             </div>
           </div>
 
+          {error && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "#B91C1C",
+                backgroundColor: "rgba(239, 68, 68, 0.06)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                borderRadius: 8,
+                padding: "8px 12px",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={handleSubmit}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C2410C")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#EA580C")}
-            onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
-            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            disabled={submitting}
+            onMouseEnter={(e) => {
+              if (!submitting) e.currentTarget.style.backgroundColor = "#C2410C";
+            }}
+            onMouseLeave={(e) => {
+              if (!submitting) e.currentTarget.style.backgroundColor = "#EA580C";
+            }}
+            onMouseDown={(e) => {
+              if (!submitting) e.currentTarget.style.transform = "scale(0.98)";
+            }}
+            onMouseUp={(e) => {
+              if (!submitting) e.currentTarget.style.transform = "scale(1)";
+            }}
             style={{
               width: "100%",
-              backgroundColor: "#EA580C",
+              backgroundColor: submitting ? "#F4A679" : "#EA580C",
               color: "white",
               fontSize: 14,
               fontWeight: 600,
               padding: 12,
               borderRadius: 8,
               border: "none",
-              cursor: "pointer",
+              cursor: submitting ? "not-allowed" : "pointer",
               transition: "all 0.15s",
             }}
           >
-            Submit observation
+            {submitting ? "Submitting…" : "Submit observation"}
           </button>
         </div>
       )}
