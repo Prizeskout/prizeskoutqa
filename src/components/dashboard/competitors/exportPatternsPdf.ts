@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import { getBranding, hexToRgb } from "@/lib/brandingStore";
 
 type Pattern = {
   competitor: string;
@@ -13,22 +14,72 @@ type Pattern = {
   impact: string;
 };
 
-// Brand palette
-const INK = [26, 26, 24] as const;
-const MUTED = [107, 107, 107] as const;
-const FAINT = [154, 154, 154] as const;
-const ORANGE = [234, 88, 12] as const;
-const GREEN = [34, 197, 94] as const;
-const BLUE = [59, 130, 246] as const;
-const SURFACE = [250, 250, 249] as const;
-const BORDER = [229, 226, 219] as const;
+type RGB = readonly [number, number, number];
+
+// Static palette
+const INK: RGB = [26, 26, 24];
+const MUTED: RGB = [107, 107, 107];
+const FAINT: RGB = [154, 154, 154];
+const GREEN: RGB = [34, 197, 94];
+const BLUE: RGB = [59, 130, 246];
+const BORDER: RGB = [229, 226, 219];
+const DEFAULT_ACCENT: RGB = [234, 88, 12]; // PrizeSkout orange
 
 const PAGE_W = 210;
 const PAGE_H = 297;
 const MARGIN_X = 18;
 const CONTENT_W = PAGE_W - MARGIN_X * 2;
 
+/** Lighten an RGB toward white by `amount` (0..1). Used for tinted backgrounds. */
+function tint(rgb: RGB, amount: number): RGB {
+  const f = Math.max(0, Math.min(1, amount));
+  return [
+    Math.round(rgb[0] + (255 - rgb[0]) * f),
+    Math.round(rgb[1] + (255 - rgb[1]) * f),
+    Math.round(rgb[2] + (255 - rgb[2]) * f),
+  ];
+}
+
+/**
+ * Load a logo data URL into a PNG via a hidden canvas. Handles SVG by drawing
+ * it onto a canvas at a comfortable size for the PDF header.
+ * Returns a PNG data URL plus the natural width/height in pixels.
+ */
+function loadLogoAsPng(
+  dataUrl: string,
+): Promise<{ png: string; w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof window === "undefined") return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      // Render at up to 320px on the longer edge for crisp output without bloat.
+      const max = 320;
+      const scale = Math.min(1, max / Math.max(img.width || max, img.height || max));
+      const w = Math.max(1, Math.round((img.width || max) * scale));
+      const h = Math.max(1, Math.round((img.height || max) * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(null);
+      try {
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve({ png: canvas.toDataURL("image/png"), w, h });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
 export async function exportPatternsPdf(patterns: Pattern[]) {
+  const branding = getBranding();
+  const accent: RGB = hexToRgb(branding.accentColor) ?? DEFAULT_ACCENT;
+  const accentTint: RGB = tint(accent, 0.92); // very pale background fill
+
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = 0;
 
@@ -36,15 +87,38 @@ export async function exportPatternsPdf(patterns: Pattern[]) {
   doc.setFillColor(...INK);
   doc.rect(0, 0, PAGE_W, 38, "F");
 
+  // Try to render the brand logo on the right
+  let titleX = MARGIN_X;
+  const logo = await loadLogoAsPng(branding.logoDataUrl);
+  if (logo) {
+    // Fit logo into a 32mm wide x 14mm tall slot at top-right
+    const slotW = 32;
+    const slotH = 14;
+    const ratio = logo.w / logo.h;
+    let drawW = slotW;
+    let drawH = slotW / ratio;
+    if (drawH > slotH) {
+      drawH = slotH;
+      drawW = slotH * ratio;
+    }
+    const logoX = PAGE_W - MARGIN_X - drawW;
+    const logoY = (38 - drawH) / 2;
+    try {
+      doc.addImage(logo.png, "PNG", logoX, logoY, drawW, drawH);
+    } catch {
+      // ignore image errors, keep going without logo
+    }
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setTextColor(...ORANGE);
-  doc.text("PRIZESKOUT", MARGIN_X, 16);
+  doc.setTextColor(...accent);
+  doc.text(branding.brandName.toUpperCase(), titleX, 16);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
   doc.setTextColor(255, 255, 255);
-  doc.text("Competitor Behavior Patterns", MARGIN_X, 26);
+  doc.text("Competitor Behavior Patterns", titleX, 26);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -54,7 +128,7 @@ export async function exportPatternsPdf(patterns: Pattern[]) {
     month: "long",
     day: "numeric",
   });
-  doc.text(`Intelligence report  |  ${today}`, MARGIN_X, 33);
+  doc.text(`Intelligence report  |  ${today}`, titleX, 33);
 
   y = 50;
 
@@ -75,17 +149,18 @@ export async function exportPatternsPdf(patterns: Pattern[]) {
   y += introLines.length * 4.6 + 4;
 
   // Summary strip
-  drawSummaryStrip(doc, y, patterns.length);
+  drawSummaryStrip(doc, y, patterns.length, accent, accentTint);
   y += 24;
 
   // ---------- Patterns ----------
   for (let i = 0; i < patterns.length; i++) {
-    y = drawPatternCard(doc, patterns[i], i + 1, y);
+    y = drawPatternCard(doc, patterns[i], i + 1, y, accent, accentTint);
     y += 6;
   }
 
   // ---------- Footer on every page ----------
   const total = doc.getNumberOfPages();
+  const footerLeft = `${branding.brandName}  -  Confidential intelligence`;
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
     doc.setDrawColor(...BORDER);
@@ -94,13 +169,18 @@ export async function exportPatternsPdf(patterns: Pattern[]) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...FAINT);
-    doc.text("PrizeSkout  -  Confidential intelligence", MARGIN_X, PAGE_H - 7);
+    doc.text(footerLeft, MARGIN_X, PAGE_H - 7);
     doc.text(`Page ${p} of ${total}`, PAGE_W - MARGIN_X, PAGE_H - 7, {
       align: "right",
     });
   }
 
-  doc.save("prizeskout-behavior-patterns.pdf");
+  const slug = branding.brandName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "report";
+  doc.save(`${slug}-behavior-patterns.pdf`);
 }
 
 function drawSummaryStrip(doc: jsPDF, y: number, count: number) {
