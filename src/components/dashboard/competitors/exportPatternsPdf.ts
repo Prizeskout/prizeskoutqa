@@ -153,8 +153,9 @@ export async function exportPatternsPdf(patterns: Pattern[]) {
   y += 24;
 
   // ---------- Patterns ----------
+  const recLabel = `RECOMMENDATION FOR ${branding.brandName.toUpperCase()}`;
   for (let i = 0; i < patterns.length; i++) {
-    y = drawPatternCard(doc, patterns[i], i + 1, y, accent, accentTint);
+    y = drawPatternCard(doc, patterns[i], i + 1, y, accent, accentTint, recLabel);
     y += 6;
   }
 
@@ -183,11 +184,17 @@ export async function exportPatternsPdf(patterns: Pattern[]) {
   doc.save(`${slug}-behavior-patterns.pdf`);
 }
 
-function drawSummaryStrip(doc: jsPDF, y: number, count: number) {
-  const blocks = [
-    { label: "Monthly value", value: "+QAR 45K", color: GREEN, bg: [240, 253, 244] as const },
-    { label: "Patterns detected", value: String(count), color: ORANGE, bg: [254, 243, 235] as const },
-    { label: "Time to replicate", value: "8-14 months", color: BLUE, bg: [239, 246, 255] as const },
+function drawSummaryStrip(
+  doc: jsPDF,
+  y: number,
+  count: number,
+  accent: RGB,
+  accentTint: RGB,
+) {
+  const blocks: { label: string; value: string; color: RGB; bg: RGB }[] = [
+    { label: "Monthly value", value: "+QAR 45K", color: GREEN, bg: [240, 253, 244] },
+    { label: "Patterns detected", value: String(count), color: accent, bg: accentTint },
+    { label: "Time to replicate", value: "8-14 months", color: BLUE, bg: [239, 246, 255] },
   ];
   const gap = 4;
   const w = (CONTENT_W - gap * (blocks.length - 1)) / blocks.length;
@@ -241,6 +248,9 @@ function drawPatternCard(
   p: Pattern,
   index: number,
   startY: number,
+  accent: RGB,
+  accentTint: RGB,
+  recLabel: string,
 ): number {
   const innerW = CONTENT_W - 12;
   const cardH = estimateCardHeight(doc, p, innerW);
@@ -264,8 +274,8 @@ function drawPatternCard(
 
   // Confidence badge (right)
   const conf = p.confidence;
-  const confColor =
-    conf > 90 ? GREEN : conf >= 80 ? ORANGE : ([245, 158, 11] as const);
+  const confColor: RGB =
+    conf > 90 ? GREEN : conf >= 80 ? accent : [245, 158, 11];
   const badgeW = 28;
   const badgeX = cardX + cardW - 6 - badgeW;
   doc.setFillColor(confColor[0], confColor[1], confColor[2]);
@@ -311,7 +321,7 @@ function drawPatternCard(
     const descLines = doc.splitTextToSize(ev.description, innerW - 32);
     const rowH = Math.max(5, descLines.length * 4.4) + 1;
     // dot
-    doc.setFillColor(...ORANGE);
+    doc.setFillColor(accent[0], accent[1], accent[2]);
     doc.circle(innerX + 1.2, y - 1.4, 0.9, "F");
     // date
     doc.setFont("helvetica", "bold");
@@ -331,15 +341,15 @@ function drawPatternCard(
   const recLines = doc.splitTextToSize(p.recommendation, innerW - 8);
   const recBoxH = recLines.length * 4.6 + 22;
   const recTop = y;
-  doc.setFillColor(254, 243, 235);
+  doc.setFillColor(accentTint[0], accentTint[1], accentTint[2]);
   doc.roundedRect(innerX, recTop, innerW, recBoxH, 2, 2, "F");
-  doc.setFillColor(...ORANGE);
+  doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.rect(innerX, recTop, 1.2, recBoxH, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.setTextColor(...ORANGE);
-  doc.text("RECOMMENDATION FOR SNOONU", innerX + 5, recTop + 6);
+  doc.setTextColor(accent[0], accent[1], accent[2]);
+  doc.text(recLabel, innerX + 5, recTop + 6);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
@@ -370,7 +380,5 @@ function drawLabel(doc: jsPDF, label: string, x: number, y: number): number {
   doc.setFontSize(7.5);
   doc.setTextColor(...FAINT);
   doc.text(label, x, y);
-  // underline accent dot
-  doc.setFillColor(...SURFACE);
   return y + 4;
 }
