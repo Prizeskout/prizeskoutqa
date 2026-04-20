@@ -1,25 +1,22 @@
 import { useState } from "react";
-import { Copy, Pencil, Plus, RefreshCw, Trash2, Zap } from "lucide-react";
+import {
+  Copy,
+  LineChart,
+  MapPin,
+  Package,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import {
   Card,
   CardSubtitle,
   CardTitle,
-  Field,
-  FieldRow,
   IconAction,
   OutlineAddButton,
-  SelectField,
   StatusDot,
-  TextField,
 } from "./primitives";
-
-const AI_PROVIDERS = [
-  "PrizeSkout Default",
-  "Google Gemini",
-  "OpenAI",
-  "Anthropic",
-  "Custom endpoint",
-] as const;
 
 function SmallButton({
   icon,
@@ -59,19 +56,135 @@ function SmallButton({
   );
 }
 
-export function IntegrationsTab() {
-  const [aiProvider, setAiProvider] = useState<string>("Google Gemini");
-  const [aiKey, setAiKey] = useState("");
+type DataConnectionCard = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  options?: string[];
+  status: { label: string; color: string };
+  cta: string;
+};
 
+const DATA_CONNECTIONS: DataConnectionCard[] = [
+  {
+    icon: <Package size={20} color="#EA580C" strokeWidth={1.75} />,
+    title: "Product catalog sync",
+    description:
+      "Import your product catalog so we can match your products against competitors",
+    options: ["CSV upload", "API sync", "Shopify", "WooCommerce"],
+    status: { label: "Connected via API", color: "#22C55E" },
+    cta: "Configure",
+  },
+  {
+    icon: <LineChart size={20} color="#EA580C" strokeWidth={1.75} />,
+    title: "Sales and margin data",
+    description:
+      "Share your sales volumes and margin targets for personalized pricing recommendations",
+    options: ["CSV upload", "ERP sync", "Manual entry"],
+    status: { label: "Not connected", color: "#9A9A9A" },
+    cta: "Configure",
+  },
+  {
+    icon: <MapPin size={20} color="#EA580C" strokeWidth={1.75} />,
+    title: "Store locations",
+    description:
+      "Add your physical store locations for in-store competitive tracking and field intel",
+    status: { label: "4 locations configured", color: "#22C55E" },
+    cta: "Manage",
+  },
+];
+
+function DataConnectionTile({ card }: { card: DataConnectionCard }) {
+  return (
+    <div
+      style={{
+        backgroundColor: "#FAFAF9",
+        border: "1px solid #E5E2DB",
+        borderRadius: 10,
+        padding: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {card.icon}
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{card.title}</div>
+      </div>
+      <div style={{ fontSize: 12, color: "#6B6B6B", lineHeight: 1.5 }}>
+        {card.description}
+      </div>
+      {card.options && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
+          {card.options.map((opt) => (
+            <span
+              key={opt}
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "#6B6B6B",
+                backgroundColor: "#FFFFFF",
+                border: "1px solid #E5E2DB",
+                borderRadius: 6,
+                padding: "3px 8px",
+              }}
+            >
+              {opt}
+            </span>
+          ))}
+        </div>
+      )}
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          marginTop: 2,
+        }}
+      >
+        <StatusDot color={card.status.color} />
+        <span style={{ fontSize: 11, color: card.status.color, fontWeight: 500 }}>
+          {card.status.label}
+        </span>
+      </div>
+      <a
+        href="#"
+        onClick={(e) => e.preventDefault()}
+        style={{
+          fontSize: 12,
+          fontWeight: 500,
+          color: "#EA580C",
+          textDecoration: "none",
+          marginTop: 2,
+        }}
+      >
+        {card.cta}
+      </a>
+    </div>
+  );
+}
+
+export function IntegrationsTab() {
   return (
     <Card>
       <CardTitle>API and integrations</CardTitle>
       <CardSubtitle>Connect PrizeSkout to your existing systems</CardSubtitle>
 
-      {/* 5a: API Key */}
+      {/* Your API key (for pulling data FROM PrizeSkout) */}
       <div style={{ marginTop: 18 }}>
-        <div style={{ fontSize: 12, color: "#9A9A9A", marginBottom: 6 }}>API Key</div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>Your API key</div>
+        <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
+          Use this key to pull PrizeSkout data into your own systems
+        </div>
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <div
             style={{
               flex: "1 1 240px",
@@ -95,43 +208,7 @@ export function IntegrationsTab() {
         </div>
       </div>
 
-      {/* 5b: AI engine */}
-      <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>
-          AI engine configuration
-        </div>
-        <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-          Connect your own AI provider for custom model training and inference
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <FieldRow>
-            <Field label="AI Provider">
-              <SelectField value={aiProvider} onChange={setAiProvider} options={AI_PROVIDERS} />
-            </Field>
-            <Field label="API Key">
-              <TextField
-                value={aiKey}
-                onChange={setAiKey}
-                placeholder="Enter your Gemini API key"
-                type="password"
-              />
-            </Field>
-          </FieldRow>
-        </div>
-        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <SmallButton icon={<Zap size={14} />}>Test connection</SmallButton>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <StatusDot color="#9A9A9A" />
-            <span style={{ fontSize: 12, color: "#9A9A9A" }}>Not configured</span>
-          </div>
-        </div>
-        <div style={{ marginTop: 10, fontSize: 11, color: "#9A9A9A", lineHeight: 1.6 }}>
-          Your AI API key is encrypted and never shared. It is used exclusively for running pricing
-          models on your data.
-        </div>
-      </div>
-
-      {/* 5c: Webhooks */}
+      {/* Webhooks */}
       <div style={{ marginTop: 24 }}>
         <div
           style={{
@@ -206,7 +283,7 @@ export function IntegrationsTab() {
         </div>
       </div>
 
-      {/* 5d: ERP */}
+      {/* ERP and system integrations */}
       <div style={{ marginTop: 24 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>
           ERP and system integrations
@@ -282,6 +359,27 @@ export function IntegrationsTab() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Data connections (new) */}
+      <div style={{ marginTop: 24 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>Data connections</div>
+        <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4, lineHeight: 1.5 }}>
+          Connect your internal systems so PrizeSkout can combine your data with market
+          intelligence for more accurate recommendations
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 14,
+            marginTop: 12,
+          }}
+        >
+          {DATA_CONNECTIONS.map((card) => (
+            <DataConnectionTile key={card.title} card={card} />
+          ))}
         </div>
       </div>
     </Card>
