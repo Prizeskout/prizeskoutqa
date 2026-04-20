@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Eye } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportPatternsPdf } from "./exportPatternsPdf";
+import { useBranding, accentRgba } from "@/hooks/useBranding";
 
 type Pattern = {
   competitor: string;
