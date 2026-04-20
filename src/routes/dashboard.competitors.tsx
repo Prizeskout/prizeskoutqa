@@ -15,6 +15,7 @@ import {
   getPriceValue,
 } from "@/components/dashboard/competitors/types";
 import { CompetitorsPendingPage } from "@/components/dashboard/Skeletons";
+import { useHydrationRefetch } from "@/hooks/useHydrationRefetch";
 import { supabase } from "@/integrations/supabase/client";
 import {
   rowToProduct,
