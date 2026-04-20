@@ -1,21 +1,7 @@
 import { TrendingUp } from "lucide-react";
+import type { TrendingProductRow } from "@/lib/market-data";
 
-type Trend = {
-  name: string;
-  category: string;
-  growth: string;
-  status: "In catalog" | "Not listed";
-};
-
-const TRENDS: Trend[] = [
-  { name: "Samsung Galaxy S24 FE", category: "Electronics", growth: "+45%", status: "In catalog" },
-  { name: "Stanley Quencher Tumbler", category: "Home", growth: "+62%", status: "Not listed" },
-  { name: "The Ordinary AHA Peel", category: "Beauty", growth: "+38%", status: "Not listed" },
-  { name: "iPad Air M2", category: "Electronics", growth: "+29%", status: "In catalog" },
-  { name: "Crocs Classic Clog", category: "Fashion", growth: "+51%", status: "In catalog" },
-];
-
-export function TrendingProducts() {
+export function TrendingProducts({ trending }: { trending: TrendingProductRow[] }) {
   return (
     <div
       style={{
@@ -38,11 +24,11 @@ export function TrendingProducts() {
           paddingBottom: 8,
         }}
       >
-        {TRENDS.map((t) => {
+        {trending.map((t) => {
           const inCatalog = t.status === "In catalog";
           return (
             <div
-              key={t.name}
+              key={t.id}
               style={{
                 width: 200,
                 flexShrink: 0,
