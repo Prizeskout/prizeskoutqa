@@ -141,4 +141,37 @@
       gap: 14px;
     }
   }
+
+  /*
+   * Wide-table scroll container: lets a wide <table> scroll horizontally
+   * inside its card on small screens, with a subtle fade hint on the right
+   * edge so users know there is more content. Use as:
+   *   <div class="table-scroll"><table style="min-width: ...">...</table></div>
+   */
+  .table-scroll {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-scroll::after {
+    content: "";
+    position: sticky;
+    top: 0;
+    right: 0;
+    float: right;
+    width: 24px;
+    height: 100%;
+    margin-left: -24px;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.95)
+    );
+  }
+  @media (min-width: 1024px) {
+    .table-scroll::after {
+      display: none;
+    }
+  }
 }
