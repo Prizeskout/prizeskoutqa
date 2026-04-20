@@ -77,67 +77,60 @@ export function AuthLeftPanel() {
         flex: 1,
         backgroundColor: "#050505",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
+        flexDirection: "column",
+        justifyContent: "space-between",
         padding: 40,
+        minHeight: "100vh",
       }}
     >
-      <div style={{ maxWidth: 420, width: "100%" }}>
-        <BrandLogo />
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            color: "#FAFAF9",
-            lineHeight: 1.3,
-            marginTop: 40,
-            margin: "40px 0 0 0",
-          }}
-        >
-          The pricing brain behind commerce.
-        </h1>
-        <p
-          style={{
-            fontSize: 14,
-            color: "#8A8A8A",
-            lineHeight: 1.7,
-            marginTop: 14,
-            margin: "14px 0 0 0",
-          }}
-        >
-          AI-powered pricing intelligence for e-commerce platforms, physical
-          retailers, and omnichannel brands across Qatar and the Middle East.
-        </p>
-        <div
-          style={{
-            marginTop: 40,
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
-          {bullets.map(({ Icon, text }, i) => (
-            <div
-              key={i}
-              style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-            >
-              <Icon size={18} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ fontSize: 13, color: "#8A8A8A", flex: 1, lineHeight: 1.55 }}>
-                {text}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 40, paddingBottom: 40 }}>
+        <div style={{ maxWidth: 420, width: "100%" }}>
+          <BrandLogo />
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 700,
+              color: "#FAFAF9",
+              lineHeight: 1.3,
+              margin: "40px 0 0 0",
+            }}
+          >
+            The pricing brain behind commerce.
+          </h1>
+          <p
+            style={{
+              fontSize: 14,
+              color: "#8A8A8A",
+              lineHeight: 1.7,
+              margin: "14px 0 0 0",
+            }}
+          >
+            AI-powered pricing intelligence for e-commerce platforms, physical
+            retailers, and omnichannel brands across Qatar and the Middle East.
+          </p>
+          <div
+            style={{
+              marginTop: 40,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            {bullets.map(({ Icon, text }, i) => (
+              <div
+                key={i}
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
+                <Icon size={18} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div style={{ fontSize: 13, color: "#8A8A8A", flex: 1, lineHeight: 1.55 }}>
+                  {text}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 32,
-          left: 40,
-          right: 40,
-        }}
-      >
+      <div style={{ maxWidth: 420, width: "100%", marginLeft: "auto", marginRight: "auto" }}>
         <div style={{ fontSize: 11, color: "#6B6B6B" }}>
           Trusted by commerce brands across Qatar
         </div>
@@ -150,6 +143,7 @@ export function AuthLeftPanel() {
             display: "flex",
             gap: 10,
             flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
           {brands.map((b, i) => (
