@@ -1,5 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { CheckCircle, ChevronDown, Upload } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORES = [
   "Carrefour - Doha Festival City",
