@@ -274,8 +274,42 @@ function SignupPage() {
           />
         </div>
 
+        {error && (
+          <div
+            role="alert"
+            style={{
+              fontSize: 12,
+              color: "#DC2626",
+              backgroundColor: "rgba(239, 68, 68, 0.08)",
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {info && (
+          <div
+            role="status"
+            style={{
+              fontSize: 12,
+              color: "#15803D",
+              backgroundColor: "rgba(34, 197, 94, 0.08)",
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(34, 197, 94, 0.2)",
+            }}
+          >
+            {info}
+          </div>
+        )}
+
         <div style={{ marginTop: 4 }}>
-          <PrimaryAuthButton type="submit">Create account</PrimaryAuthButton>
+          <PrimaryAuthButton type="submit" disabled={submitting}>
+            {submitting ? "Creating account…" : "Create account"}
+          </PrimaryAuthButton>
         </div>
       </form>
 

@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Crosshair,
@@ -9,8 +9,11 @@ import {
   MapPin,
   Settings,
   X,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = {
   to: string;
@@ -139,27 +142,105 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       {/* User */}
-      <div className="flex items-center gap-3 px-4 pb-4 pt-2">
-        <div
-          className="flex items-center justify-center"
+      <UserPanel />
+    </>
+  );
+}
+
+function getInitials(name: string | null | undefined, email: string | null | undefined) {
+  const source = (name || email || "").trim();
+  if (!source) return "U";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
+function UserPanel() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const navigate = useNavigate();
+  const displayName =
+    (user?.user_metadata?.display_name as string | undefined) ||
+    user?.email?.split("@")[0] ||
+    "Account";
+  const company = (user?.user_metadata?.company as string | undefined) || "";
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    await router.invalidate();
+    navigate({ to: "/login" });
+  };
+
+  return (
+    <div className="flex items-center gap-3 px-4 pb-4 pt-2">
+      <div
+        className="flex items-center justify-center"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 9999,
+          backgroundColor: "#EA580C",
+          color: "#FFFFFF",
+          fontSize: 12,
+          fontWeight: 600,
+          flexShrink: 0,
+        }}
+      >
+        {getInitials(displayName, user?.email)}
+      </div>
+      <div className="flex flex-col leading-tight" style={{ minWidth: 0, flex: 1 }}>
+        <span
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 9999,
-            backgroundColor: "#EA580C",
-            color: "#FFFFFF",
-            fontSize: 12,
-            fontWeight: 600,
+            fontSize: 13,
+            color: "#FAFAF9",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          SM
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span style={{ fontSize: 13, color: "#8A8A8A" }}>Snoonu Qatar</span>
-          <span style={{ fontSize: 11, color: "#6B6B6B" }}>Category Manager</span>
-        </div>
+          {displayName}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            color: "#6B6B6B",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {company || user?.email || ""}
+        </span>
       </div>
-    </>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        aria-label="Sign out"
+        title="Sign out"
+        className="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 6,
+          background: "transparent",
+          border: "none",
+          color: "#8A8A8A",
+          cursor: "pointer",
+          flexShrink: 0,
+          transition: "color 0.15s, background-color 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#FAFAF9";
+          e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "#8A8A8A";
+          e.currentTarget.style.backgroundColor = "transparent";
+        }}
+      >
+        <LogOut size={15} strokeWidth={1.75} />
+      </button>
+    </div>
   );
 }
 
