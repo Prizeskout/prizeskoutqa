@@ -5,7 +5,7 @@ import { MarketingHero, MarketingBody, MarketingProse } from "@/components/marke
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About PrizeSkout, Pricing intelligence built for the Middle East" },
+      { title: "About | PrizeSkout" },
       {
         name: "description",
         content:
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/about")({
       },
       {
         property: "og:title",
-        content: "About PrizeSkout, Pricing intelligence built for the Middle East",
+        content: "About | PrizeSkout",
       },
       {
         property: "og:description",

@@ -5,13 +5,13 @@ import { MarketingHero, MarketingBody } from "@/components/marketing/MarketingPa
 export const Route = createFileRoute("/changelog")({
   head: () => ({
     meta: [
-      { title: "Changelog, What is new in PrizeSkout" },
+      { title: "Changelog | PrizeSkout" },
       {
         name: "description",
         content:
           "New features, improvements, and fixes shipped in PrizeSkout. Updated regularly as we release.",
       },
-      { property: "og:title", content: "Changelog, What is new in PrizeSkout" },
+      { property: "og:title", content: "Changelog | PrizeSkout" },
       {
         property: "og:description",
         content: "Track every release of PrizeSkout, new features, improvements, and fixes.",

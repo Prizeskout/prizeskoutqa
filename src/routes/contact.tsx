@@ -7,13 +7,13 @@ import { MarketingHero, MarketingBody } from "@/components/marketing/MarketingPa
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact PrizeSkout, Talk to our team" },
+      { title: "Contact | PrizeSkout" },
       {
         name: "description",
         content:
-          "Get in touch with PrizeSkout. Sales, support, partnerships, and press, we read every message and reply within one business day.",
+          "Get in touch with PrizeSkout. We read every message and reply within one business day.",
       },
-      { property: "og:title", content: "Contact PrizeSkout, Talk to our team" },
+      { property: "og:title", content: "Contact | PrizeSkout" },
       {
         property: "og:description",
         content: "Reach the PrizeSkout team for sales, support, partnerships, or press inquiries.",
