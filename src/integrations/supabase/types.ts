@@ -110,6 +110,48 @@ export type Database = {
         }
         Relationships: []
       }
+      benchmarks_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
+        }
+        Relationships: []
+      }
       category_performance: {
         Row: {
           avg_discount: number
@@ -416,6 +458,51 @@ export type Database = {
         }
         Relationships: []
       }
+      market_benchmarks: {
+        Row: {
+          created_at: string
+          id: string
+          market_avg: number
+          market_avg_display: string
+          metric: string
+          position: number
+          top: number
+          top_display: string
+          updated_at: string
+          user_id: string
+          you: number
+          you_display: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_avg: number
+          market_avg_display: string
+          metric: string
+          position?: number
+          top: number
+          top_display: string
+          updated_at?: string
+          user_id: string
+          you: number
+          you_display: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_avg?: number
+          market_avg_display?: string
+          metric?: string
+          position?: number
+          top?: number
+          top_display?: string
+          updated_at?: string
+          user_id?: string
+          you?: number
+          you_display?: string
+        }
+        Relationships: []
+      }
       market_metrics: {
         Row: {
           created_at: string
@@ -455,6 +542,105 @@ export type Database = {
           user_id?: string
           value?: string
           value_color?: string | null
+        }
+        Relationships: []
+      }
+      model_knowledge: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      model_maturity: {
+        Row: {
+          accuracy: number | null
+          created_at: string
+          id: string
+          kind: string
+          month_label: string | null
+          position: number
+          stat_color: string | null
+          stat_label: string | null
+          stat_sub: string | null
+          stat_value: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string
+          id?: string
+          kind: string
+          month_label?: string | null
+          position?: number
+          stat_color?: string | null
+          stat_label?: string | null
+          stat_sub?: string | null
+          stat_value?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string
+          id?: string
+          kind?: string
+          month_label?: string | null
+          position?: number
+          stat_color?: string | null
+          stat_label?: string | null
+          stat_sub?: string | null
+          stat_value?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      network_value: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -989,6 +1175,33 @@ export type Database = {
         }
         Relationships: []
       }
+      switching_cost: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       timing_insights: {
         Row: {
           body: string
@@ -1060,6 +1273,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      seed_benchmarks_for_user: { Args: { uid: string }; Returns: undefined }
       seed_field_intel_for_user: { Args: { uid: string }; Returns: undefined }
       seed_market_for_user: { Args: { uid: string }; Returns: undefined }
       seed_promotions_for_user: { Args: { uid: string }; Returns: undefined }
