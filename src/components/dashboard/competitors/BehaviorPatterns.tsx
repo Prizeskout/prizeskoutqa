@@ -70,7 +70,7 @@ export function BehaviorPatterns({ patterns }: { patterns: BehaviorPattern[] }) 
   );
 }
 
-function ContextBanner() {
+function ContextBanner({ count }: { count: number }) {
   const { accentColor } = useBranding();
   return (
     <div
@@ -126,7 +126,7 @@ function ContextBanner() {
         }}
       >
         <div style={{ fontSize: 18, fontWeight: 700, color: accentColor }}>
-          4 patterns
+          {count} {count === 1 ? "pattern" : "patterns"}
         </div>
         <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
           detected
@@ -444,7 +444,7 @@ function Timeline({
   );
 }
 
-function PatternSummary() {
+function PatternSummary({ count }: { count: number }) {
   const { accentColor, brandName } = useBranding();
   const blocks = [
     {
@@ -457,7 +457,7 @@ function PatternSummary() {
     {
       bg: accentRgba(accentColor, 0.06),
       label: "Patterns detected",
-      value: "4",
+      value: String(count),
       valueColor: accentColor,
       sub: "with more emerging as data grows",
     },
