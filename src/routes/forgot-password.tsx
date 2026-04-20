@@ -11,7 +11,7 @@ import {
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
-      { title: "Reset your password — PrizeSkout" },
+      { title: "Reset your password | PrizeSkout" },
       {
         name: "description",
         content: "Reset the password for your PrizeSkout account.",

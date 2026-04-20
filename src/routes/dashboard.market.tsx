@@ -7,7 +7,7 @@ import { CrossBorderRadar } from "@/components/dashboard/market/CrossBorderRadar
 import { TrendingProducts } from "@/components/dashboard/market/TrendingProducts";
 
 export const Route = createFileRoute("/dashboard/market")({
-  head: () => ({ meta: [{ title: "Market — PrizeSkout" }] }),
+  head: () => ({ meta: [{ title: "Market | PrizeSkout" }] }),
   component: MarketPage,
 });
 

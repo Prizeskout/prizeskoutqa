@@ -5,7 +5,7 @@ import { MarketingHero, MarketingBody, MarketingProse } from "@/components/marke
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About PrizeSkout — Pricing intelligence built for the Middle East" },
+      { title: "About | PrizeSkout" },
       {
         name: "description",
         content:
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/about")({
       },
       {
         property: "og:title",
-        content: "About PrizeSkout — Pricing intelligence built for the Middle East",
+        content: "About | PrizeSkout",
       },
       {
         property: "og:description",
@@ -31,7 +31,7 @@ function AboutPage() {
       <MarketingHero
         eyebrow="ABOUT"
         title="Pricing intelligence built for the Middle East"
-        subtitle="We help commerce brands across the GCC see, decide, and act on every price that matters — online and in-store."
+        subtitle="We help commerce brands across the GCC see, decide, and act on every price that matters, online and in-store."
       />
       <MarketingBody>
         <MarketingProse>
@@ -46,13 +46,13 @@ function AboutPage() {
             Most pricing tools were designed for European and US markets. They miss the local
             platforms, payment habits, store formats, and language realities of the GCC.
             PrizeSkout was built from the ground up to cover the channels and competitors that
-            actually matter here — from Snoonu and Talabat to Carrefour, Lulu, and the malls.
+            actually matter here, from Snoonu and Talabat to Carrefour, Lulu, and the malls.
           </p>
 
           <h2>What we believe</h2>
           <p>
             <strong>Pricing should be a strategic muscle, not a spreadsheet.</strong> Brands
-            that price well do not just react to competitors — they understand their market,
+            that price well do not just react to competitors, they understand their market,
             protect their margins, and make pricing decisions confidently every week.
           </p>
           <p>

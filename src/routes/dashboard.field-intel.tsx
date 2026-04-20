@@ -9,7 +9,7 @@ import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportFieldIntelPdf } from "@/components/dashboard/field-intel/exportFieldIntelPdf";
 
 export const Route = createFileRoute("/dashboard/field-intel")({
-  head: () => ({ meta: [{ title: "Field Intel — PrizeSkout" }] }),
+  head: () => ({ meta: [{ title: "Field Intel | PrizeSkout" }] }),
   component: FieldIntelPage,
 });
 

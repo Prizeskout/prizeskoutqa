@@ -2,21 +2,129 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 
 import appCss from "../styles.css?url";
 
-function NotFoundComponent() {
+const FAVICON_SVG =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23EA580C'/><text x='16' y='22' text-anchor='middle' font-family='Arial' font-weight='700' font-size='18' fill='white'>P</text></svg>";
+
+const SITE_TITLE = "PrizeSkout | Commerce Intelligence";
+const SITE_DESCRIPTION =
+  "AI-powered pricing intelligence for e-commerce platforms, physical retailers, and omnichannel brands.";
+
+function NotFoundPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#FAFAF9",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "24px",
+      }}
+    >
+      <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 28,
+          }}
+        >
+          <span
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: "#EA580C",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#FFFFFF",
+              fontWeight: 700,
+              fontSize: 16,
+              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              lineHeight: 1,
+            }}
+          >
+            P
+          </span>
+          <span
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              color: "#1A1A18",
+              fontFamily: '"Plus Jakarta Sans", sans-serif',
+            }}
+          >
+            PrizeSkout
+          </span>
+        </div>
+        <div
+          style={{
+            fontSize: 64,
+            fontWeight: 700,
+            color: "#EA580C",
+            lineHeight: 1,
+            fontFamily: '"Plus Jakarta Sans", sans-serif',
+          }}
+        >
+          404
+        </div>
+        <div
+          style={{
+            fontSize: 18,
+            fontWeight: 600,
+            color: "#1A1A18",
+            marginTop: 16,
+            fontFamily: '"Plus Jakarta Sans", sans-serif',
+          }}
+        >
+          Page not found
+        </div>
+        <p
+          style={{
+            fontSize: 14,
+            color: "#6B6B6B",
+            marginTop: 8,
+            lineHeight: 1.6,
+            fontFamily: '"Plus Jakarta Sans", sans-serif',
+          }}
+        >
+          The page you are looking for does not exist or has been moved.
         </p>
-        <div className="mt-6">
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <Link
+            to="/dashboard"
+            style={{
+              display: "inline-block",
+              background: "#EA580C",
+              color: "#FFFFFF",
+              fontSize: 14,
+              fontWeight: 600,
+              padding: "10px 20px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              transition: "background-color 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
+          >
+            Back to dashboard
+          </Link>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            style={{
+              fontSize: 13,
+              color: "#6B6B6B",
+              textDecoration: "none",
+              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              transition: "color 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#EA580C")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
           >
-            Go home
+            Go to homepage
           </Link>
         </div>
       </div>
@@ -29,28 +137,17 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PrizeSkout Commerce Intelligence" },
-      {
-        name: "description",
-        content:
-          "AI-powered pricing and market intelligence for commerce brands across online and physical retail.",
-      },
-      { property: "og:title", content: "PrizeSkout Commerce Intelligence" },
-      {
-        property: "og:description",
-        content:
-          "AI-powered pricing and market intelligence for commerce brands across online and physical retail.",
-      },
+      { title: SITE_TITLE },
+      { name: "description", content: SITE_DESCRIPTION },
+      { property: "og:title", content: SITE_TITLE },
+      { property: "og:description", content: SITE_DESCRIPTION },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "PrizeSkout Commerce Intelligence" },
-      { name: "description", content: "Prizeskout Qatar" },
-      { property: "og:description", content: "Prizeskout Qatar" },
-      { name: "twitter:description", content: "Prizeskout Qatar" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a81c176b-cbf9-45c1-864f-db4d4df93cd4/id-preview-edb9a65a--cb795ef1-ef78-4285-92a6-f1de82cbe76e.lovable.app-1776694116508.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a81c176b-cbf9-45c1-864f-db4d4df93cd4/id-preview-edb9a65a--cb795ef1-ef78-4285-92a6-f1de82cbe76e.lovable.app-1776694116508.png" },
+      { name: "twitter:title", content: SITE_TITLE },
+      { name: "twitter:description", content: SITE_DESCRIPTION },
     ],
     links: [
+      { rel: "icon", type: "image/svg+xml", href: FAVICON_SVG },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -65,7 +162,7 @@ export const Route = createRootRoute({
   }),
   shellComponent: RootShell,
   component: RootComponent,
-  notFoundComponent: NotFoundComponent,
+  notFoundComponent: NotFoundPage,
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {

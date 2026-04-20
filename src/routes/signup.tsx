@@ -22,7 +22,7 @@ import {
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
-      { title: "Create your account — PrizeSkout" },
+      { title: "Create your account | PrizeSkout" },
       {
         name: "description",
         content:

@@ -8,7 +8,7 @@ import { ModelKnowledge } from "@/components/dashboard/benchmarks/ModelKnowledge
 import { SwitchingCost } from "@/components/dashboard/benchmarks/SwitchingCost";
 
 export const Route = createFileRoute("/dashboard/benchmarks")({
-  head: () => ({ meta: [{ title: "Benchmarks — PrizeSkout" }] }),
+  head: () => ({ meta: [{ title: "Benchmarks | PrizeSkout" }] }),
   component: BenchmarksPage,
 });
 
