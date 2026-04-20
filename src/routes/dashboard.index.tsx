@@ -6,6 +6,7 @@ import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
+import { useHydrationRefetch } from "@/hooks/useHydrationRefetch";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   OverviewAlert,
