@@ -1,33 +1,11 @@
 import { useMemo, useState } from "react";
+import type {
+  PromotionCalendarRow,
+  PromoChannel,
+  PromoStatus,
+} from "@/lib/promotions-data";
 
-type Channel = "Online" | "In-Store" | "Both";
-type Status = "Live" | "Upcoming" | "Ended";
-
-type Promo = {
-  competitor: string;
-  campaign: string;
-  channel: Channel;
-  dates: string;
-  duration: string;
-  depth: string;
-  categories: string;
-  status: Status;
-};
-
-const PROMOS: Promo[] = [
-  { competitor: "Talabat", campaign: "Eid Al-Fitr Mega Sale", channel: "Both", dates: "Mar 28 - Apr 5", duration: "9 days", depth: "15-25%", categories: "All categories", status: "Live" },
-  { competitor: "Carrefour", campaign: "Back to School", channel: "Both", dates: "Apr 10 - Apr 20", duration: "11 days", depth: "10-20%", categories: "Electronics, Stationery", status: "Upcoming" },
-  { competitor: "Lulu", campaign: "Weekend Flash Deals", channel: "In-Store", dates: "Every Thu-Sat", duration: "Recurring", depth: "5-15%", categories: "Grocery, Home", status: "Live" },
-  { competitor: "Amazon.ae", campaign: "Spring Deals", channel: "Online", dates: "Apr 15 - Apr 22", duration: "8 days", depth: "20-40%", categories: "Electronics, Fashion", status: "Upcoming" },
-  { competitor: "Noon", campaign: "Yellow Friday Mini", channel: "Online", dates: "Apr 18 - Apr 19", duration: "2 days", depth: "10-30%", categories: "Electronics", status: "Upcoming" },
-  { competitor: "Carrefour", campaign: "Doha Festival City Exclusive", channel: "In-Store", dates: "Apr 1 - Apr 14", duration: "14 days", depth: "10-15%", categories: "Home, Beauty", status: "Live" },
-  { competitor: "Talabat", campaign: "Free Delivery Week", channel: "Online", dates: "Apr 7 - Apr 13", duration: "7 days", depth: "Free delivery", categories: "All categories", status: "Live" },
-  { competitor: "Lulu", campaign: "Ramadan Clearance", channel: "Both", dates: "Mar 20 - Mar 30", duration: "11 days", depth: "20-40%", categories: "Grocery, Home", status: "Ended" },
-];
-
-const COMPETITORS = ["All", "Talabat", "Carrefour", "Lulu", "Amazon.ae", "Noon"];
-
-function ChannelPill({ channel }: { channel: Channel }) {
+function ChannelPill({ channel }: { channel: PromoChannel }) {
   const map = {
     Online: { bg: "rgba(59, 130, 246, 0.08)", color: "#3B82F6" },
     "In-Store": { bg: "rgba(168, 85, 247, 0.08)", color: "#7C3AED" },
@@ -50,7 +28,7 @@ function ChannelPill({ channel }: { channel: Channel }) {
   );
 }
 
-function StatusBadge({ status }: { status: Status }) {
+function StatusBadge({ status }: { status: PromoStatus }) {
   if (status === "Live") {
     return (
       <span
@@ -121,11 +99,17 @@ const th: React.CSSProperties = {
   textAlign: "left",
 };
 
-export function PromotionCalendar() {
+export function PromotionCalendar({ promos }: { promos: PromotionCalendarRow[] }) {
+  const competitors = useMemo(() => {
+    const set = new Set<string>();
+    promos.forEach((p) => set.add(p.competitor));
+    return ["All", ...Array.from(set)];
+  }, [promos]);
+
   const [filter, setFilter] = useState("All");
   const filtered = useMemo(
-    () => (filter === "All" ? PROMOS : PROMOS.filter((p) => p.competitor === filter)),
-    [filter],
+    () => (filter === "All" ? promos : promos.filter((p) => p.competitor === filter)),
+    [filter, promos],
   );
 
   return (
@@ -144,7 +128,7 @@ export function PromotionCalendar() {
         Current and upcoming promotions across Qatar commerce
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-        {COMPETITORS.map((c) => {
+        {competitors.map((c) => {
           const active = filter === c;
           return (
             <button
@@ -196,7 +180,7 @@ export function PromotionCalendar() {
           <tbody>
             {filtered.map((p, i) => (
               <tr
-                key={`${p.competitor}-${p.campaign}`}
+                key={p.id}
                 style={{
                   borderBottom: "1px solid #E5E2DB",
                   backgroundColor: i % 2 === 1 ? "#FAFAF9" : "transparent",

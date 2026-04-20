@@ -214,3 +214,18 @@ export function MarketPendingPage() {
     </DashboardLayout>
   );
 }
+
+export function PromotionsPendingPage() {
+  return (
+    <DashboardLayout title="Promotions">
+      <SkeletonStyles />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <SkeletonMetricsRow count={4} />
+        <SkeletonCard title height={320} />
+        <SkeletonCard title height={260} />
+        <SkeletonCard title height={300} />
+        <SkeletonCard height={80} />
+      </div>
+    </DashboardLayout>
+  );
+}
