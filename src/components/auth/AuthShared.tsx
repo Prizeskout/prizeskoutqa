@@ -483,11 +483,13 @@ export function PrimaryAuthButton({
   onClick,
   muted = false,
   type = "button",
+  disabled = false,
 }: {
   children: ReactNode;
   onClick?: () => void;
   muted?: boolean;
   type?: "button" | "submit";
+  disabled?: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const [active, setActive] = useState(false);
@@ -497,23 +499,24 @@ export function PrimaryAuthButton({
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onMouseDown={() => setActive(true)}
       onMouseUp={() => setActive(false)}
       style={{
         width: "100%",
-        backgroundColor: hover ? hoverBg : baseBg,
+        backgroundColor: hover && !disabled ? hoverBg : baseBg,
         color: "#FFFFFF",
         fontSize: 14,
         fontWeight: 600,
         padding: "12px",
         border: "none",
         borderRadius: 8,
-        cursor: "pointer",
+        cursor: disabled ? "not-allowed" : "pointer",
         transition: "background-color 0.15s, transform 0.15s",
-        transform: active ? "scale(0.98)" : "scale(1)",
-        opacity: muted ? 0.7 : 1,
+        transform: active && !disabled ? "scale(0.98)" : "scale(1)",
+        opacity: disabled ? 0.6 : muted ? 0.7 : 1,
         fontFamily: "inherit",
       }}
     >
