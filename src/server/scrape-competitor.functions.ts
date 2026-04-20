@@ -59,8 +59,7 @@ export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
       const extracted = r.json ?? r.data?.json ?? {};
       const metadata = r.metadata ?? r.data?.metadata ?? {};
 
-      const { data: row, error } = await supabase
-        .from('competitor_scrapes')
+      const { data: row, error } = await (supabase.from('competitor_scrapes') as any)
         .insert({
           user_id: userId,
           url: data.url,
@@ -85,7 +84,7 @@ export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
       const message = err instanceof Error ? err.message : 'Unknown scrape error';
       console.error('Firecrawl scrape failed', message);
 
-      await supabase.from('competitor_scrapes').insert({
+      await (supabase.from('competitor_scrapes') as any).insert({
         user_id: userId,
         url: data.url,
         competitor: data.competitor ?? null,
@@ -106,8 +105,7 @@ export const listLatestScrapes = createServerFn({ method: 'GET' })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const { data, error } = await supabase
-      .from('competitor_scrapes')
+    const { data, error } = await (supabase.from('competitor_scrapes') as any)
       .select('id, url, competitor, product, price, currency, status, scraped_at')
       .eq('user_id', userId)
       .eq('status', 'success')
