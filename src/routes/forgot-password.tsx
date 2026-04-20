@@ -143,6 +143,8 @@ function ForgotPasswordPage() {
               </li>
             </ul>
           </div>
+
+          {sent && (
             <div
               style={{
                 marginTop: 16,
