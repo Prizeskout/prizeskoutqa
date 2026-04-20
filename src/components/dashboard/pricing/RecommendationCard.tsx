@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import { useBranding } from "@/hooks/useBranding";
 
 export type Recommendation = {
   id: string;
@@ -51,6 +52,7 @@ function ChannelPill({ channel }: { channel: "Online" | "In-Store" }) {
 
 export function RecommendationCard({ rec }: { rec: Recommendation }) {
   const [status, setStatus] = useState<"pending" | "applied" | "dismissed">("pending");
+  const { accentColor } = useBranding();
 
   if (status === "dismissed") return null;
 
