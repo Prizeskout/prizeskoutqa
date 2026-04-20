@@ -25,12 +25,36 @@ const MAX_LOGO_BYTES = 500 * 1024; // 500 KB
 
 export function BrandingTab() {
   const initial = getBranding();
+  const initialCompany = getCompany().name;
+  const [companyName, setCompanyName] = useState(initialCompany);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
-  const [brandName, setBrandName] = useState(initial.brandName);
+  // Brand name defaults to the company name from Account when the user
+  // hasn't explicitly customized it (i.e. it's still the PrizeSkout default).
+  const [brandName, setBrandName] = useState(
+    initial.brandName === DEFAULT_BRANDING.brandName ? initialCompany : initial.brandName,
+  );
   const [logoDataUrl, setLogoDataUrl] = useState(initial.logoDataUrl);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // If Account tab updates the company name and the user hasn't typed a
+  // custom brand name yet, mirror the new company name into the field.
+  useEffect(() => {
+    return subscribeCompany(() => {
+      const fresh = getCompany().name;
+      setCompanyName(fresh);
+      setBrandName((prev) =>
+        prev.trim() === "" ||
+        prev === DEFAULT_BRANDING.brandName ||
+        prev === companyName
+          ? fresh
+          : prev,
+      );
+    });
+    // companyName intentionally captured by closure for "previous value" check
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keep "Saved" indicator visible briefly
   useEffect(() => {
