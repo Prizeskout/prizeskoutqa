@@ -7,15 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const DATA = [
-  { month: "Nov", you: 1349, talabat: 1399, carrefour: 1299, amazon: 1249 },
-  { month: "Dec", you: 1299, talabat: 1349, carrefour: 1249, amazon: 1199 },
-  { month: "Jan", you: 1299, talabat: 1299, carrefour: 1199, amazon: 1149 },
-  { month: "Feb", you: 1299, talabat: 1349, carrefour: 1199, amazon: 1149 },
-  { month: "Mar", you: 1299, talabat: 1349, carrefour: 1199, amazon: 1149 },
-  { month: "Apr", you: 1299, talabat: 1349, carrefour: 1199, amazon: 1149 },
-];
+import type { PriceHistoryRow } from "@/lib/competitors-data";
 
 const LINES = [
   { key: "you", label: "Snoonu (You)", color: "#EA580C", strokeWidth: 2.5, r: 3 },
@@ -24,7 +16,38 @@ const LINES = [
   { key: "amazon", label: "Amazon.ae", color: "#3B82F6", strokeWidth: 1.5, r: 2 },
 ] as const;
 
-export function PriceHistory() {
+export function PriceHistory({ history }: { history: PriceHistoryRow[] }) {
+  // Build chart data sorted by position. Recharts handles nulls by skipping the point.
+  const data = [...history]
+    .sort((a, b) => a.position - b.position)
+    .map((h) => ({
+      month: h.month_label,
+      you: h.you,
+      talabat: h.talabat,
+      carrefour: h.carrefour,
+      amazon: h.amazon,
+    }));
+
+  const headerProduct = history[0]?.product ?? "Top tracked product";
+
+  if (!data.length) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px dashed #E5E2DB",
+          borderRadius: 10,
+          padding: "20px 24px",
+          fontSize: 13,
+          color: "#6B6B6B",
+        }}
+      >
+        No price history yet — your dashboard will populate as we track competitor prices over
+        time.
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -36,12 +59,12 @@ export function PriceHistory() {
     >
       <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Price history</div>
       <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-        Sony WH-1000XM5 across key competitors, last 6 months
+        {headerProduct} across key competitors, last {data.length} months
       </div>
 
       <div style={{ height: 240, marginTop: 18 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={DATA} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E2DB" />
             <XAxis
               dataKey="month"
@@ -50,7 +73,7 @@ export function PriceHistory() {
               tickLine={false}
             />
             <YAxis
-              domain={[1100, 1450]}
+              domain={["auto", "auto"]}
               tick={{ fontSize: 11, fill: "#9A9A9A" }}
               axisLine={false}
               tickLine={false}
@@ -75,6 +98,7 @@ export function PriceHistory() {
                 strokeWidth={l.strokeWidth}
                 dot={{ r: l.r, fill: l.color, strokeWidth: 0 }}
                 activeDot={{ r: l.r + 1 }}
+                connectNulls
               />
             ))}
           </LineChart>
