@@ -460,7 +460,7 @@ function Timeline({
               width: 7,
               height: 7,
               borderRadius: "50%",
-              backgroundColor: "#EA580C",
+              backgroundColor: accentColor,
               boxShadow: "0 0 0 3px #FFFFFF",
             }}
           />
