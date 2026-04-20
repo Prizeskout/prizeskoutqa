@@ -10,7 +10,7 @@ type Row = {
   observed: string;
 };
 
-const ROWS: Row[] = [
+export const ROWS: Row[] = [
   { product: "Samsung Galaxy S24 Ultra", competitor: "Carrefour", online: 3799, inStore: 3849, gap: "+1.3%", direction: "up", observed: "2 hrs ago" },
   { product: "Sony WH-1000XM5", competitor: "Carrefour", online: 1199, inStore: 1149, gap: "-4.2%", direction: "down", observed: "5 hrs ago" },
   { product: "Dyson V15 Detect", competitor: "Lulu", online: 2749, inStore: 2699, gap: "-1.8%", direction: "down", observed: "3 hrs ago" },
