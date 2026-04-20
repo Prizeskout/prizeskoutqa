@@ -174,7 +174,6 @@ function drawPatternCard(
 
   // We'll draw content first, measure, then stroke a border at the end.
   const innerX = cardX + 6;
-  const innerW = cardW - 12;
   y += 8;
 
   // Title row
