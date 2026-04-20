@@ -85,8 +85,6 @@ function CompetitorsPage() {
   const [sort, setSort] = useState<SortKey>("Price gap");
   const [search, setSearch] = useState("");
 
-  if (isHydrating) return <CompetitorsPendingPage />;
-
   // Map DB rows -> existing UI Product shape.
   const allProducts = useMemo(
     () => data.prices.map((row, idx) => rowToProduct(row, idx)),
