@@ -1127,6 +1127,57 @@ export type Database = {
         }
         Relationships: []
       }
+      promotions_scenarios: {
+        Row: {
+          cannibalization_pct: number
+          category: string
+          channel: string
+          created_at: string
+          depth: string
+          duration: string
+          gmv_uplift: number
+          healthy: boolean
+          id: string
+          incremental_orders: number
+          is_baseline: boolean
+          net_roi: number
+          simulated_at: string
+          user_id: string
+        }
+        Insert: {
+          cannibalization_pct: number
+          category: string
+          channel: string
+          created_at?: string
+          depth: string
+          duration: string
+          gmv_uplift: number
+          healthy: boolean
+          id?: string
+          incremental_orders: number
+          is_baseline?: boolean
+          net_roi: number
+          simulated_at?: string
+          user_id: string
+        }
+        Update: {
+          cannibalization_pct?: number
+          category?: string
+          channel?: string
+          created_at?: string
+          depth?: string
+          duration?: string
+          gmv_uplift?: number
+          healthy?: boolean
+          id?: string
+          incremental_orders?: number
+          is_baseline?: boolean
+          net_roi?: number
+          simulated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recent_observations: {
         Row: {
           agent: string
@@ -1170,6 +1221,48 @@ export type Database = {
           status?: string
           store?: string
           time_label?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      roi_model_categories: {
+        Row: {
+          avg_order_value: number
+          base_margin: number
+          baseline_daily_orders: number
+          cannibalization_base: number
+          category: string
+          created_at: string
+          elasticity: number
+          id: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_order_value: number
+          base_margin: number
+          baseline_daily_orders: number
+          cannibalization_base: number
+          category: string
+          created_at?: string
+          elasticity: number
+          id?: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_order_value?: number
+          base_margin?: number
+          baseline_daily_orders?: number
+          cannibalization_base?: number
+          category?: string
+          created_at?: string
+          elasticity?: number
+          id?: string
+          position?: number
           updated_at?: string
           user_id?: string
         }
@@ -1277,6 +1370,7 @@ export type Database = {
       seed_field_intel_for_user: { Args: { uid: string }; Returns: undefined }
       seed_market_for_user: { Args: { uid: string }; Returns: undefined }
       seed_promotions_for_user: { Args: { uid: string }; Returns: undefined }
+      seed_roi_model_for_user: { Args: { uid: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
