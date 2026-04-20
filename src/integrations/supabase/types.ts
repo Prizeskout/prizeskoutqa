@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      assortment_gaps: {
+        Row: {
+          competitors: Json
+          created_at: string
+          demand: string
+          id: string
+          missed: string
+          position: number
+          price: number
+          product: string
+          searches: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          competitors?: Json
+          created_at?: string
+          demand: string
+          id?: string
+          missed: string
+          position?: number
+          price: number
+          product: string
+          searches: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          competitors?: Json
+          created_at?: string
+          demand?: string
+          id?: string
+          missed?: string
+          position?: number
+          price?: number
+          product?: string
+          searches?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       behavior_patterns: {
         Row: {
           category: string
@@ -65,6 +107,54 @@ export type Database = {
           recommendation?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      category_performance: {
+        Row: {
+          avg_discount: number
+          category: string
+          created_at: string
+          direction: string
+          growth: number
+          id: string
+          market_position: string
+          position: number
+          top_mover: string
+          updated_at: string
+          user_id: string
+          volatility: string
+          volatility_pct: number
+        }
+        Insert: {
+          avg_discount: number
+          category: string
+          created_at?: string
+          direction: string
+          growth: number
+          id?: string
+          market_position: string
+          position?: number
+          top_mover: string
+          updated_at?: string
+          user_id: string
+          volatility: string
+          volatility_pct: number
+        }
+        Update: {
+          avg_discount?: number
+          category?: string
+          created_at?: string
+          direction?: string
+          growth?: number
+          id?: string
+          market_position?: string
+          position?: number
+          top_mover?: string
+          updated_at?: string
+          user_id?: string
+          volatility?: string
+          volatility_pct?: number
         }
         Relationships: []
       }
@@ -206,6 +296,51 @@ export type Database = {
         }
         Relationships: []
       }
+      cross_border_radar: {
+        Row: {
+          created_at: string
+          delivery: string
+          gap: string
+          id: string
+          intl_price: number
+          platform: string
+          position: number
+          product: string
+          risk: string
+          updated_at: string
+          user_id: string
+          your_price: number
+        }
+        Insert: {
+          created_at?: string
+          delivery: string
+          gap: string
+          id?: string
+          intl_price: number
+          platform: string
+          position?: number
+          product: string
+          risk: string
+          updated_at?: string
+          user_id: string
+          your_price: number
+        }
+        Update: {
+          created_at?: string
+          delivery?: string
+          gap?: string
+          id?: string
+          intl_price?: number
+          platform?: string
+          position?: number
+          product?: string
+          risk?: string
+          updated_at?: string
+          user_id?: string
+          your_price?: number
+        }
+        Relationships: []
+      }
       field_intel_metrics: {
         Row: {
           created_at: string
@@ -278,6 +413,48 @@ export type Database = {
           role?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      market_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
         }
         Relationships: []
       }
@@ -677,12 +854,49 @@ export type Database = {
         }
         Relationships: []
       }
+      trending_products: {
+        Row: {
+          category: string
+          created_at: string
+          growth: string
+          id: string
+          name: string
+          position: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          growth: string
+          id?: string
+          name: string
+          position?: number
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          growth?: string
+          id?: string
+          name?: string
+          position?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       seed_field_intel_for_user: { Args: { uid: string }; Returns: undefined }
+      seed_market_for_user: { Args: { uid: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
