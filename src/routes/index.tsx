@@ -841,11 +841,22 @@ function HowItWorks() {
   );
 }
 
-const PLANS = [
+const ANNUAL_DISCOUNT = 0.2; // 20% off
+
+type Plan = {
+  name: string;
+  monthly: number | null; // null = custom
+  sub: string;
+  features: string[];
+  cta: string;
+  to: "/signup";
+  featured: boolean;
+};
+
+const PLANS: Plan[] = [
   {
     name: "Scout",
-    price: "$299",
-    per: "/month",
+    monthly: 299,
     sub: "per location",
     features: [
       "Up to 500 products tracked",
@@ -855,13 +866,12 @@ const PLANS = [
       "Email support",
     ],
     cta: "Start free trial",
-    to: "/signup" as const,
+    to: "/signup",
     featured: false,
   },
   {
     name: "Pro",
-    price: "$799",
-    per: "/month",
+    monthly: 799,
     sub: "per location",
     features: [
       "Up to 5,000 products tracked",
@@ -874,13 +884,12 @@ const PLANS = [
       "Priority support",
     ],
     cta: "Start free trial",
-    to: "/signup" as const,
+    to: "/signup",
     featured: true,
   },
   {
     name: "Enterprise",
-    price: "Custom",
-    per: "",
+    monthly: null,
     sub: "tailored to your scale",
     features: [
       "Unlimited products",
@@ -893,12 +902,14 @@ const PLANS = [
       "SLA guarantee",
     ],
     cta: "Contact sales",
-    to: "/signup" as const,
+    to: "/signup",
     featured: false,
   },
 ];
 
 function Pricing() {
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+
   return (
     <section
       id="pricing"
@@ -925,16 +936,91 @@ function Pricing() {
         Start free. Scale as you grow. No long-term contracts.
       </p>
 
+      {/* Billing toggle */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
+        <div
+          role="tablist"
+          aria-label="Billing period"
+          style={{
+            display: "inline-flex",
+            padding: 4,
+            background: "#0A0A0A",
+            border: "1px solid #1A1A1A",
+            borderRadius: 999,
+            gap: 4,
+          }}
+        >
+          {(["monthly", "annual"] as const).map((opt) => {
+            const active = billing === opt;
+            return (
+              <button
+                key={opt}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setBilling(opt)}
+                style={{
+                  appearance: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  background: active ? "#EA580C" : "transparent",
+                  color: active ? "#FFFFFF" : "#8A8A8A",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: "8px 18px",
+                  borderRadius: 999,
+                  transition: "background 0.15s, color 0.15s",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {opt === "monthly" ? "Monthly" : "Annual"}
+                {opt === "annual" && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      background: active ? "rgba(255,255,255,0.2)" : "rgba(34, 197, 94, 0.15)",
+                      color: active ? "#FFFFFF" : "#22C55E",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    SAVE 20%
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div
         className="ps-pricing-grid"
         style={{
           maxWidth: 960,
-          margin: "48px auto 0",
+          margin: "32px auto 0",
           display: "grid",
           gap: 20,
         }}
       >
-        {PLANS.map((p) => (
+        {PLANS.map((p) => {
+          const isCustom = p.monthly === null;
+          const monthlyEffective = isCustom
+            ? null
+            : billing === "annual"
+              ? Math.round(p.monthly! * (1 - ANNUAL_DISCOUNT))
+              : p.monthly!;
+          const priceLabel = isCustom ? "Custom" : `$${monthlyEffective}`;
+          const perLabel = isCustom ? "" : "/month";
+          const billedNote = isCustom
+            ? null
+            : billing === "annual"
+              ? `Billed annually ($${monthlyEffective! * 12}/yr)`
+              : "Billed monthly";
+
+          return (
           <div
             key={p.name}
             style={{
@@ -970,13 +1056,16 @@ function Pricing() {
             <div style={{ fontSize: 18, fontWeight: 600, color: "#FAFAF9" }}>{p.name}</div>
             <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 4 }}>
               <span style={{ fontSize: 40, fontWeight: 700, color: "#FAFAF9", lineHeight: 1 }}>
-                {p.price}
+                {priceLabel}
               </span>
-              {p.per && (
-                <span style={{ fontSize: 14, fontWeight: 400, color: "#6B6B6B" }}>{p.per}</span>
+              {perLabel && (
+                <span style={{ fontSize: 14, fontWeight: 400, color: "#6B6B6B" }}>{perLabel}</span>
               )}
             </div>
             <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>{p.sub}</div>
+            {billedNote && (
+              <div style={{ fontSize: 11, color: "#8A8A8A", marginTop: 6 }}>{billedNote}</div>
+            )}
 
             <div style={{ borderTop: "1px solid #1A1A1A", margin: "20px 0" }} />
 
@@ -1033,7 +1122,8 @@ function Pricing() {
               </span>
             </Link>
           </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
