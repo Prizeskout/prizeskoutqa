@@ -1,8 +1,52 @@
 import { useState, type ReactNode } from "react";
-import { useLocation } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import type { Channel } from "./ChannelFilter";
+
+function Breadcrumbs({ title }: { title: string }) {
+  const isOverview = title.toLowerCase() === "overview";
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 12,
+        fontWeight: 500,
+        color: "#6B6B6B",
+        marginBottom: 14,
+      }}
+    >
+      <Link
+        to="/dashboard"
+        style={{
+          color: isOverview ? "#1A1A18" : "#6B6B6B",
+          textDecoration: "none",
+          transition: "color 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          if (!isOverview) e.currentTarget.style.color = "#1A1A18";
+        }}
+        onMouseLeave={(e) => {
+          if (!isOverview) e.currentTarget.style.color = "#6B6B6B";
+        }}
+      >
+        Dashboard
+      </Link>
+      {!isOverview && (
+        <>
+          <ChevronRight size={12} aria-hidden="true" color="#9A9A9A" />
+          <span aria-current="page" style={{ color: "#1A1A18" }}>
+            {title}
+          </span>
+        </>
+      )}
+    </nav>
+  );
+}
 
 export function DashboardLayout({
   title,
@@ -41,6 +85,7 @@ export function DashboardLayout({
             className="dashboard-page-fade"
             style={{ maxWidth: 1080, margin: "0 auto" }}
           >
+            <Breadcrumbs title={title} />
             {children}
           </div>
         </main>
