@@ -1,45 +1,4 @@
-type Campaign = {
-  name: string;
-  discount: string;
-  totalGMV: string;
-  incrementalGMV: string;
-  cannibalized: string;
-  roi: number;
-  verdict: string;
-};
-
-const CAMPAIGNS: Campaign[] = [
-  {
-    name: "Eid Electronics Blitz (Mar 2026)",
-    discount: "20% off all electronics",
-    totalGMV: "+QAR 312K",
-    incrementalGMV: "+QAR 187K",
-    cannibalized: "QAR 125K (40%)",
-    roi: 1.4,
-    verdict:
-      "Moderate cannibalization. 40% of orders would have happened at full price. Recommend reducing to 15% and targeting only items where you are not already the cheapest option.",
-  },
-  {
-    name: "Free Delivery Weekend (Feb 2026)",
-    discount: "Free delivery on all orders",
-    totalGMV: "+QAR 89K",
-    incrementalGMV: "+QAR 71K",
-    cannibalized: "QAR 18K (20%)",
-    roi: 3.1,
-    verdict:
-      "Low cannibalization. Free delivery attracted genuinely new orders. This campaign profile works well. Recommend repeating monthly, especially targeting first-time buyers.",
-  },
-  {
-    name: "Flash Sale: Headphones (Jan 2026)",
-    discount: "30% off premium headphones",
-    totalGMV: "+QAR 47K",
-    incrementalGMV: "+QAR 12K",
-    cannibalized: "QAR 35K (74%)",
-    roi: 0.6,
-    verdict:
-      "Heavy cannibalization. 74% of buyers were already in your funnel and would have purchased at full price. You gave away margin on customers you already had. Do not repeat at this discount depth. Consider 10% maximum for this category.",
-  },
-];
+import type { PastCampaignRow } from "@/lib/promotions-data";
 
 function roiColors(roi: number) {
   if (roi > 2) {
@@ -51,8 +10,8 @@ function roiColors(roi: number) {
   return { bg: "rgba(239, 68, 68, 0.1)", color: "#DC2626", border: "rgba(239, 68, 68, 0.2)", accent: "#EF4444" };
 }
 
-function CampaignCard({ c }: { c: Campaign }) {
-  const colors = roiColors(c.roi);
+function CampaignCard({ c }: { c: PastCampaignRow }) {
+  const colors = roiColors(Number(c.roi));
   return (
     <div
       style={{
@@ -78,13 +37,13 @@ function CampaignCard({ c }: { c: Campaign }) {
             border: `1px solid ${colors.border}`,
           }}
         >
-          {c.roi.toFixed(1)}x ROI
+          {Number(c.roi).toFixed(1)}x ROI
         </span>
       </div>
       <div style={{ display: "flex", gap: 14, marginTop: 14, flexWrap: "wrap" }}>
         {[
-          { label: "Total GMV uplift", value: c.totalGMV },
-          { label: "Truly incremental", value: c.incrementalGMV },
+          { label: "Total GMV uplift", value: c.total_gmv },
+          { label: "Truly incremental", value: c.incremental_gmv },
           { label: "Cannibalized", value: c.cannibalized },
         ].map((m) => (
           <div
@@ -123,7 +82,7 @@ function CampaignCard({ c }: { c: Campaign }) {
   );
 }
 
-export function PastCampaigns() {
+export function PastCampaigns({ campaigns }: { campaigns: PastCampaignRow[] }) {
   return (
     <div
       style={{
@@ -138,8 +97,8 @@ export function PastCampaigns() {
         How your recent promotions actually performed vs what they appeared to deliver
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 14 }}>
-        {CAMPAIGNS.map((c) => (
-          <CampaignCard key={c.name} c={c} />
+        {campaigns.map((c) => (
+          <CampaignCard key={c.id} c={c} />
         ))}
       </div>
     </div>
