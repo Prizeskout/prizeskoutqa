@@ -7,44 +7,69 @@ import type { Channel } from "./ChannelFilter";
 
 function Breadcrumbs({ title }: { title: string }) {
   const isOverview = title.toLowerCase() === "overview";
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://prizeskout.com";
+  const itemList = isOverview
+    ? [{ name: "Dashboard", item: `${origin}/dashboard` }]
+    : [
+        { name: "Dashboard", item: `${origin}/dashboard` },
+        { name: title, item: typeof window !== "undefined" ? window.location.href : "" },
+      ];
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: itemList.map((entry, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: entry.name,
+      item: entry.item,
+    })),
+  };
   return (
-    <nav
-      aria-label="Breadcrumb"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        fontSize: 12,
-        fontWeight: 500,
-        color: "#6B6B6B",
-        marginBottom: 14,
-      }}
-    >
-      <Link
-        to="/dashboard"
+    <>
+      <nav
+        aria-label="Breadcrumb"
         style={{
-          color: isOverview ? "#1A1A18" : "#6B6B6B",
-          textDecoration: "none",
-          transition: "color 0.15s",
-        }}
-        onMouseEnter={(e) => {
-          if (!isOverview) e.currentTarget.style.color = "#1A1A18";
-        }}
-        onMouseLeave={(e) => {
-          if (!isOverview) e.currentTarget.style.color = "#6B6B6B";
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: 12,
+          fontWeight: 500,
+          color: "#6B6B6B",
+          marginBottom: 14,
         }}
       >
-        Dashboard
-      </Link>
-      {!isOverview && (
-        <>
-          <ChevronRight size={12} aria-hidden="true" color="#9A9A9A" />
-          <span aria-current="page" style={{ color: "#1A1A18" }}>
-            {title}
-          </span>
-        </>
-      )}
-    </nav>
+        <Link
+          to="/dashboard"
+          style={{
+            color: isOverview ? "#1A1A18" : "#6B6B6B",
+            textDecoration: "none",
+            transition: "color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            if (!isOverview) e.currentTarget.style.color = "#1A1A18";
+          }}
+          onMouseLeave={(e) => {
+            if (!isOverview) e.currentTarget.style.color = "#6B6B6B";
+          }}
+        >
+          Dashboard
+        </Link>
+        {!isOverview && (
+          <>
+            <ChevronRight size={12} aria-hidden="true" color="#9A9A9A" />
+            <span aria-current="page" style={{ color: "#1A1A18" }}>
+              {title}
+            </span>
+          </>
+        )}
+      </nav>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+    </>
   );
 }
 
