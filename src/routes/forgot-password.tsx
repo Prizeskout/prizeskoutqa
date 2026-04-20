@@ -145,7 +145,7 @@ function ForgotPasswordPage() {
             Back to sign in
           </Link>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
