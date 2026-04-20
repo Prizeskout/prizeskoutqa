@@ -1,25 +1,81 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { MarketMetrics } from "@/components/dashboard/market/MarketMetrics";
 import { CategoryPerformance } from "@/components/dashboard/market/CategoryPerformance";
 import { AssortmentGaps } from "@/components/dashboard/market/AssortmentGaps";
 import { CrossBorderRadar } from "@/components/dashboard/market/CrossBorderRadar";
 import { TrendingProducts } from "@/components/dashboard/market/TrendingProducts";
+import { MarketPendingPage } from "@/components/dashboard/Skeletons";
+import { pendingOnSSR } from "@/lib/ssr-pending";
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  MarketData,
+  MarketMetric,
+  CategoryPerformanceRow,
+  TrendingProductRow,
+  AssortmentGapRow,
+  CrossBorderRadarRow,
+} from "@/lib/market-data";
+
+async function loadMarket(): Promise<MarketData> {
+  if (typeof window === "undefined") {
+    return pendingOnSSR<MarketData>();
+  }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
+    throw redirect({ to: "/login", search: { redirect: "/dashboard/market" } });
+  }
+
+  const [metricsRes, catsRes, trendRes, gapsRes, cbRes] = await Promise.all([
+    supabase.from("market_metrics").select("*").order("position", { ascending: true }),
+    supabase.from("category_performance").select("*").order("position", { ascending: true }),
+    supabase.from("trending_products").select("*").order("position", { ascending: true }),
+    supabase.from("assortment_gaps").select("*").order("position", { ascending: true }),
+    supabase.from("cross_border_radar").select("*").order("position", { ascending: true }),
+  ]);
+
+  if (metricsRes.error) throw metricsRes.error;
+  if (catsRes.error) throw catsRes.error;
+  if (trendRes.error) throw trendRes.error;
+  if (gapsRes.error) throw gapsRes.error;
+  if (cbRes.error) throw cbRes.error;
+
+  return {
+    metrics: (metricsRes.data ?? []) as MarketMetric[],
+    categories: (catsRes.data ?? []) as unknown as CategoryPerformanceRow[],
+    trending: (trendRes.data ?? []) as unknown as TrendingProductRow[],
+    gaps: ((gapsRes.data ?? []) as unknown as (Omit<AssortmentGapRow, "competitors"> & {
+      competitors: unknown;
+    })[]).map((g) => ({
+      ...g,
+      competitors: Array.isArray(g.competitors) ? (g.competitors as string[]) : [],
+    })) as AssortmentGapRow[],
+    crossBorder: (cbRes.data ?? []) as unknown as CrossBorderRadarRow[],
+  };
+}
 
 export const Route = createFileRoute("/dashboard/market")({
   head: () => ({ meta: [{ title: "Market | PrizeSkout" }] }),
+  loader: () => loadMarket(),
+  staleTime: 0,
+  pendingMs: 0,
+  pendingMinMs: 300,
+  pendingComponent: MarketPendingPage,
   component: MarketPage,
 });
 
 function MarketPage() {
+  const data = Route.useLoaderData() as MarketData;
   return (
     <DashboardLayout title="Market">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <MarketMetrics />
-        <CategoryPerformance />
-        <AssortmentGaps />
-        <CrossBorderRadar />
-        <TrendingProducts />
+        <MarketMetrics metrics={data.metrics} />
+        <CategoryPerformance rows={data.categories} />
+        <AssortmentGaps gaps={data.gaps} />
+        <CrossBorderRadar rows={data.crossBorder} />
+        <TrendingProducts trending={data.trending} />
       </div>
     </DashboardLayout>
   );

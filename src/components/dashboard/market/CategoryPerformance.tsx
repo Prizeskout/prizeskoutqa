@@ -1,30 +1,7 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import type { CategoryPerformanceRow } from "@/lib/market-data";
 
-type Direction = "up" | "down" | "flat";
-type Volatility = "Low" | "Medium" | "High";
-
-type Row = {
-  category: string;
-  growth: number;
-  avgDiscount: number;
-  volatility: Volatility;
-  volatilityPct: number;
-  topMover: string;
-  position: string;
-  direction: Direction;
-};
-
-const ROWS: Row[] = [
-  { category: "Electronics", growth: 14, avgDiscount: 8, volatility: "Medium", volatilityPct: 50, topMover: "Samsung Galaxy S24 series", position: "3rd / 6", direction: "up" },
-  { category: "Grocery", growth: 22, avgDiscount: 12, volatility: "Low", volatilityPct: 25, topMover: "Ramadan bundles", position: "2nd / 4", direction: "up" },
-  { category: "Fashion", growth: 6, avgDiscount: 18, volatility: "High", volatilityPct: 80, topMover: "Nike Air Max series", position: "4th / 5", direction: "flat" },
-  { category: "Home", growth: -3, avgDiscount: 15, volatility: "Medium", volatilityPct: 55, topMover: "Dyson products", position: "5th / 6", direction: "down" },
-  { category: "Beauty", growth: 19, avgDiscount: 10, volatility: "Medium", volatilityPct: 45, topMover: "The Ordinary serums", position: "4th / 5", direction: "up" },
-  { category: "Baby & Kids", growth: 11, avgDiscount: 7, volatility: "Low", volatilityPct: 20, topMover: "Pampers bundles", position: "2nd / 3", direction: "up" },
-  { category: "Sports", growth: 8, avgDiscount: 14, volatility: "Medium", volatilityPct: 50, topMover: "Adidas running shoes", position: "3rd / 4", direction: "flat" },
-];
-
-function volColor(v: Volatility) {
+function volColor(v: "Low" | "Medium" | "High") {
   if (v === "Low") return "#22C55E";
   if (v === "Medium") return "#F59E0B";
   return "#EF4444";
@@ -49,7 +26,7 @@ function PositionBadge({ position }: { position: string }) {
   );
 }
 
-function DirectionIcon({ direction }: { direction: Direction }) {
+function DirectionIcon({ direction }: { direction: "up" | "down" | "flat" }) {
   if (direction === "up") return <TrendingUp size={16} color="#22C55E" />;
   if (direction === "down") return <TrendingDown size={16} color="#EF4444" />;
   return <Minus size={16} color="#9A9A9A" />;
@@ -64,7 +41,7 @@ const th: React.CSSProperties = {
   padding: "12px 10px",
 };
 
-export function CategoryPerformance() {
+export function CategoryPerformance({ rows }: { rows: CategoryPerformanceRow[] }) {
   return (
     <div
       style={{
@@ -92,11 +69,12 @@ export function CategoryPerformance() {
             </tr>
           </thead>
           <tbody>
-            {ROWS.map((row, i) => {
+            {rows.map((row, i) => {
               const c = volColor(row.volatility);
+              const growthNum = Number(row.growth);
               return (
                 <tr
-                  key={row.category}
+                  key={row.id}
                   style={{
                     borderBottom: "1px solid #E5E2DB",
                     backgroundColor: i % 2 === 1 ? "#FAFAF9" : "transparent",
@@ -117,14 +95,14 @@ export function CategoryPerformance() {
                       fontSize: 13,
                       fontWeight: 600,
                       textAlign: "right",
-                      color: row.growth >= 0 ? "#22C55E" : "#EF4444",
+                      color: growthNum >= 0 ? "#22C55E" : "#EF4444",
                     }}
                   >
-                    {row.growth >= 0 ? "+" : ""}
-                    {row.growth}%
+                    {growthNum >= 0 ? "+" : ""}
+                    {growthNum}%
                   </td>
                   <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 400, color: "#1A1A18", textAlign: "right" }}>
-                    {row.avgDiscount}%
+                    {Number(row.avg_discount)}%
                   </td>
                   <td style={{ padding: "14px 10px", textAlign: "center" }}>
                     <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -139,7 +117,7 @@ export function CategoryPerformance() {
                       >
                         <div
                           style={{
-                            width: `${row.volatilityPct}%`,
+                            width: `${row.volatility_pct}%`,
                             height: "100%",
                             backgroundColor: c,
                             borderRadius: 3,
@@ -150,10 +128,10 @@ export function CategoryPerformance() {
                     </div>
                   </td>
                   <td style={{ padding: "14px 10px", fontSize: 12, color: "#6B6B6B", textAlign: "left" }}>
-                    {row.topMover}
+                    {row.top_mover}
                   </td>
                   <td style={{ padding: "14px 10px", textAlign: "center" }}>
-                    <PositionBadge position={row.position} />
+                    <PositionBadge position={row.market_position} />
                   </td>
                   <td style={{ padding: "14px 10px", textAlign: "center" }}>
                     <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>

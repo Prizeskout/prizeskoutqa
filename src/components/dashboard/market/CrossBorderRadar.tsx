@@ -1,26 +1,7 @@
 import { Globe, ShieldAlert } from "lucide-react";
+import type { CrossBorderRadarRow } from "@/lib/market-data";
 
-type Risk = "High" | "Medium" | "Low";
-
-type Row = {
-  product: string;
-  you: number;
-  intl: number;
-  platform: string;
-  delivery: string;
-  gap: string;
-  risk: Risk;
-};
-
-const ROWS: Row[] = [
-  { product: "Sony WH-1000XM5", you: 1299, intl: 1049, platform: "Amazon Global", delivery: "5-8 days", gap: "-19.2%", risk: "High" },
-  { product: "Nike Air Max 90", you: 549, intl: 419, platform: "Shein", delivery: "7-12 days", gap: "-23.7%", risk: "High" },
-  { product: "The Ordinary Niacinamide", you: 45, intl: 29, platform: "iHerb", delivery: "6-10 days", gap: "-35.6%", risk: "Medium" },
-  { product: "Apple AirPods Pro 2", you: 949, intl: 879, platform: "Amazon Global", delivery: "5-8 days", gap: "-7.4%", risk: "Medium" },
-  { product: "Dyson V15 Detect", you: 2799, intl: 2399, platform: "Noon (UAE)", delivery: "3-5 days", gap: "-14.3%", risk: "High" },
-];
-
-function RiskBadge({ risk }: { risk: Risk }) {
+function RiskBadge({ risk }: { risk: "High" | "Medium" | "Low" }) {
   const map = {
     High: { bg: "rgba(239, 68, 68, 0.1)", color: "#DC2626" },
     Medium: { bg: "rgba(245, 158, 11, 0.1)", color: "#D97706" },
@@ -52,7 +33,7 @@ const th: React.CSSProperties = {
   padding: "12px 10px",
 };
 
-export function CrossBorderRadar() {
+export function CrossBorderRadar({ rows }: { rows: CrossBorderRadarRow[] }) {
   return (
     <div
       style={{
@@ -80,9 +61,9 @@ export function CrossBorderRadar() {
             </tr>
           </thead>
           <tbody>
-            {ROWS.map((row, i) => (
+            {rows.map((row, i) => (
               <tr
-                key={row.product}
+                key={row.id}
                 style={{
                   borderBottom: "1px solid #E5E2DB",
                   backgroundColor: i % 2 === 1 ? "#FAFAF9" : "transparent",
@@ -98,10 +79,10 @@ export function CrossBorderRadar() {
                   {row.product}
                 </td>
                 <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EA580C", textAlign: "right" }}>
-                  QAR {row.you.toLocaleString()}
+                  QAR {Number(row.your_price).toLocaleString()}
                 </td>
                 <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EF4444", textAlign: "right" }}>
-                  QAR {row.intl.toLocaleString()}
+                  QAR {Number(row.intl_price).toLocaleString()}
                 </td>
                 <td style={{ padding: "14px 10px", fontSize: 12, color: "#6B6B6B" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>

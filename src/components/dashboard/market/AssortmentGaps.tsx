@@ -1,26 +1,7 @@
 import { Plus } from "lucide-react";
+import type { AssortmentGapRow } from "@/lib/market-data";
 
-type Demand = "High" | "Medium";
-
-type Gap = {
-  product: string;
-  competitors: string[];
-  price: number;
-  searches: string;
-  missed: string;
-  demand: Demand;
-};
-
-const GAPS: Gap[] = [
-  { product: "Apple Watch Ultra 2", competitors: ["Carrefour", "Amazon.ae", "Noon"], price: 3199, searches: "4,200", missed: "QAR 89K", demand: "High" },
-  { product: "Samsung Galaxy Tab S9 FE", competitors: ["Talabat", "Amazon.ae", "Noon"], price: 1499, searches: "3,800", missed: "QAR 62K", demand: "High" },
-  { product: "Nespresso Vertuo Pop", competitors: ["Carrefour", "Lulu"], price: 449, searches: "2,100", missed: "QAR 28K", demand: "Medium" },
-  { product: "Oura Ring Gen 3", competitors: ["Amazon.ae", "Noon"], price: 1299, searches: "1,400", missed: "QAR 34K", demand: "Medium" },
-  { product: "Dyson Airwrap Complete", competitors: ["Carrefour", "Amazon.ae", "Noon", "Lulu"], price: 2199, searches: "2,800", missed: "QAR 51K", demand: "High" },
-  { product: "PlayStation 5 Slim", competitors: ["Talabat", "Carrefour", "Lulu", "Amazon.ae", "Noon"], price: 1899, searches: "5,100", missed: "QAR 94K", demand: "High" },
-];
-
-function DemandBadge({ demand }: { demand: Demand }) {
+function DemandBadge({ demand }: { demand: "High" | "Medium" }) {
   const isHigh = demand === "High";
   return (
     <span
@@ -38,7 +19,7 @@ function DemandBadge({ demand }: { demand: Demand }) {
   );
 }
 
-export function AssortmentGaps() {
+export function AssortmentGaps({ gaps }: { gaps: AssortmentGapRow[] }) {
   return (
     <div
       style={{
@@ -54,15 +35,15 @@ export function AssortmentGaps() {
         you are not capturing.
       </div>
       <div style={{ marginTop: 8 }}>
-        {GAPS.map((gap, i) => (
+        {gaps.map((gap, i) => (
           <div
-            key={gap.product}
+            key={gap.id}
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               padding: "14px 0",
-              borderBottom: i < GAPS.length - 1 ? "1px solid #E5E2DB" : "none",
+              borderBottom: i < gaps.length - 1 ? "1px solid #E5E2DB" : "none",
               gap: 16,
               flexWrap: "wrap",
             }}
@@ -93,7 +74,7 @@ export function AssortmentGaps() {
               <div>
                 <div style={{ fontSize: 10, color: "#9A9A9A" }}>Market price</div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18", marginTop: 2 }}>
-                  QAR {gap.price.toLocaleString()}
+                  QAR {Number(gap.price).toLocaleString()}
                 </div>
               </div>
               <div>

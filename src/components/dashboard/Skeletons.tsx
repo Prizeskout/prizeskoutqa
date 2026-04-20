@@ -199,3 +199,18 @@ export function FieldIntelPendingPage() {
     </DashboardLayout>
   );
 }
+
+export function MarketPendingPage() {
+  return (
+    <DashboardLayout title="Market">
+      <SkeletonStyles />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <SkeletonMetricsRow count={4} />
+        <SkeletonCard title height={300} />
+        <SkeletonCard title height={280} />
+        <SkeletonCard title height={240} />
+        <SkeletonCard title height={200} />
+      </div>
+    </DashboardLayout>
+  );
+}
