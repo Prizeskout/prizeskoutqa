@@ -1,11 +1,117 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, RefreshCw } from "lucide-react";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import type { Channel } from "./ChannelFilter";
 
-function Breadcrumbs({ title }: { title: string }) {
+function formatRelative(ts: number, now: number) {
+  const seconds = Math.max(0, Math.floor((now - ts) / 1000));
+  if (seconds < 10) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function LastUpdated({ pathname }: { pathname: string }) {
+  // Defer to client-only to avoid SSR/CSR mismatch on Date.now()
+  const [mounted, setMounted] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number>(() => Date.now());
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Reset the "last updated" stamp on route change
+  useEffect(() => {
+    setUpdatedAt(Date.now());
+    setNow(Date.now());
+  }, [pathname]);
+
+  // Tick every 30s so the relative label stays fresh
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const absolute = mounted
+    ? new Date(updatedAt).toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "";
+
+  const handleRefresh = () => {
+    setUpdatedAt(Date.now());
+    setNow(Date.now());
+  };
+
+  if (!mounted) {
+    // Render a stable placeholder during SSR/initial hydration
+    return (
+      <span
+        aria-hidden="true"
+        style={{ fontSize: 11, color: "transparent", userSelect: "none" }}
+      >
+        Last updated
+      </span>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 11,
+        color: "#9A9A9A",
+        fontWeight: 500,
+      }}
+      title={`Last refreshed at ${absolute}`}
+    >
+      <span>
+        Last updated <span style={{ color: "#6B6B6B" }}>{formatRelative(updatedAt, now)}</span>
+      </span>
+      <button
+        type="button"
+        onClick={handleRefresh}
+        aria-label="Refresh dashboard data"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 22,
+          height: 22,
+          padding: 0,
+          background: "transparent",
+          border: "1px solid #E5E2DB",
+          borderRadius: 6,
+          cursor: "pointer",
+          color: "#6B6B6B",
+          transition: "color 0.15s, border-color 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#1A1A18";
+          e.currentTarget.style.borderColor = "#9A9A9A";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "#6B6B6B";
+          e.currentTarget.style.borderColor = "#E5E2DB";
+        }}
+      >
+        <RefreshCw size={12} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function Breadcrumbs({ title, pathname }: { title: string; pathname: string }) {
   const isOverview = title.toLowerCase() === "overview";
   const origin =
     typeof window !== "undefined" ? window.location.origin : "https://prizeskout.com";
@@ -27,43 +133,54 @@ function Breadcrumbs({ title }: { title: string }) {
   };
   return (
     <>
-      <nav
-        aria-label="Breadcrumb"
+      <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 6,
-          fontSize: 12,
-          fontWeight: 500,
-          color: "#6B6B6B",
+          justifyContent: "space-between",
+          gap: 12,
           marginBottom: 14,
+          flexWrap: "wrap",
         }}
       >
-        <Link
-          to="/dashboard"
+        <nav
+          aria-label="Breadcrumb"
           style={{
-            color: isOverview ? "#1A1A18" : "#6B6B6B",
-            textDecoration: "none",
-            transition: "color 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            if (!isOverview) e.currentTarget.style.color = "#1A1A18";
-          }}
-          onMouseLeave={(e) => {
-            if (!isOverview) e.currentTarget.style.color = "#6B6B6B";
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#6B6B6B",
           }}
         >
-          Dashboard
-        </Link>
-        {!isOverview && (
-          <>
-            <ChevronRight size={12} aria-hidden="true" color="#9A9A9A" />
-            <span aria-current="page" style={{ color: "#1A1A18" }}>
-              {title}
-            </span>
-          </>
-        )}
-      </nav>
+          <Link
+            to="/dashboard"
+            style={{
+              color: isOverview ? "#1A1A18" : "#6B6B6B",
+              textDecoration: "none",
+              transition: "color 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              if (!isOverview) e.currentTarget.style.color = "#1A1A18";
+            }}
+            onMouseLeave={(e) => {
+              if (!isOverview) e.currentTarget.style.color = "#6B6B6B";
+            }}
+          >
+            Dashboard
+          </Link>
+          {!isOverview && (
+            <>
+              <ChevronRight size={12} aria-hidden="true" color="#9A9A9A" />
+              <span aria-current="page" style={{ color: "#1A1A18" }}>
+                {title}
+              </span>
+            </>
+          )}
+        </nav>
+        <LastUpdated pathname={pathname} />
+      </div>
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
