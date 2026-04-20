@@ -87,8 +87,23 @@ export function AccountTab() {
           <Field label="Company description">
             <TextareaField value={description} onChange={setDescription} />
           </Field>
-          <div>
-            <PrimaryButton>Save changes</PrimaryButton>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <PrimaryButton onClick={onSave}>Save changes</PrimaryButton>
+            {savedAt !== null && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 12,
+                  color: "#16A34A",
+                  fontWeight: 500,
+                }}
+              >
+                <Check size={14} />
+                Saved
+              </span>
+            )}
           </div>
         </div>
       </Card>
