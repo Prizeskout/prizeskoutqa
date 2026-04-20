@@ -105,12 +105,12 @@ export function PriceTable({ products }: { products: Product[] }) {
 
   return (
     <div
+      className="table-scroll"
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E5E2DB",
         borderRadius: 10,
         padding: 6,
-        overflowX: "auto",
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>

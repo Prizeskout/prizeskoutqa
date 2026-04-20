@@ -44,8 +44,8 @@ export function PriceGaps() {
       <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
         Products where field observations reveal different pricing than what is listed online
       </div>
-      <div style={{ overflowX: "auto", marginTop: 14 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="table-scroll" style={{ marginTop: 14 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
           <thead>
             <tr>
               <th style={{ ...thStyle, textAlign: "left" }}>Product</th>
