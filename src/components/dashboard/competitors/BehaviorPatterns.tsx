@@ -485,6 +485,7 @@ function Timeline({
 }
 
 function PatternSummary() {
+  const { accentColor, brandName } = useBranding();
   const blocks = [
     {
       bg: "rgba(34, 197, 94, 0.06)",
@@ -494,10 +495,10 @@ function PatternSummary() {
       sub: "from better timing and positioning",
     },
     {
-      bg: "rgba(234, 88, 12, 0.06)",
+      bg: accentRgba(accentColor, 0.06),
       label: "Patterns detected",
       value: "4",
-      valueColor: "#EA580C",
+      valueColor: accentColor,
       sub: "with more emerging as data grows",
     },
     {
@@ -558,8 +559,8 @@ function PatternSummary() {
       <div
         style={{
           marginTop: 16,
-          backgroundColor: "rgba(234, 88, 12, 0.04)",
-          border: "1px solid rgba(234, 88, 12, 0.15)",
+          backgroundColor: accentRgba(accentColor, 0.04),
+          border: `1px solid ${accentRgba(accentColor, 0.15)}`,
           borderRadius: 10,
           padding: "14px 20px",
           fontSize: 13,
@@ -568,7 +569,7 @@ function PatternSummary() {
         }}
       >
         These patterns are invisible to anyone without continuous, long-term
-        competitive tracking. Every month you use PrizeSkout, the pattern
+        competitive tracking. Every month you use {brandName}, the pattern
         library grows deeper. Competitors starting fresh today are 8 to 14
         months behind and counting.
       </div>
