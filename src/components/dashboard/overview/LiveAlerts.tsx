@@ -55,7 +55,18 @@ function Pill({
   );
 }
 
-export function LiveAlerts() {
+function RelativeTime({ iso }: { iso: string }) {
+  // SSR-safe: only compute "X min ago" on the client to avoid hydration drift.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  return <span className="live-alert-time">{now ? formatRelativeTime(iso, now) : ""}</span>;
+}
+
+export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
   return (
     <div
       style={{
@@ -120,49 +131,53 @@ export function LiveAlerts() {
         </h2>
       </div>
 
-      <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
-        {ALERTS.map((a, i) => {
-          const t = TYPE_STYLES[a.type];
-          const c = CHANNEL_STYLES[a.channel];
-          const s = SEVERITY_STYLES[a.severity];
-          const isLast = i === ALERTS.length - 1;
-          return (
-            <li
-              key={i}
-              className="live-alert-row"
-              style={{
-                borderBottom: isLast ? "none" : "1px solid #E5E2DB",
-              }}
-            >
-              <div className="live-alert-meta">
-                <Pill bg={t.bg} color={t.color}>
-                  {a.type}
-                </Pill>
-                <Pill bg={c.bg} color={c.color} fontSize={10}>
-                  {a.channel}
-                </Pill>
-              </div>
-              <span
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontSize: 13,
-                  fontWeight: 400,
-                  color: "#1A1A18",
-                }}
+      {alerts.length === 0 ? (
+        <p style={{ fontSize: 13, color: "#6B6B6B", margin: "12px 0 0" }}>
+          No alerts yet — your dashboard will populate as competitors and prices change.
+        </p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
+          {alerts.map((a, i) => {
+            const t = TYPE_STYLES[a.alert_type];
+            const c = CHANNEL_STYLES[a.channel];
+            const s = SEVERITY_STYLES[a.severity];
+            const isLast = i === alerts.length - 1;
+            return (
+              <li
+                key={a.id}
+                className="live-alert-row"
+                style={{ borderBottom: isLast ? "none" : "1px solid #E5E2DB" }}
               >
-                {a.msg}
-              </span>
-              <div className="live-alert-meta">
-                <Pill bg={s.bg} color={s.color}>
-                  {a.severity}
-                </Pill>
-                <span className="live-alert-time">{a.time}</span>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                <div className="live-alert-meta">
+                  <Pill bg={t.bg} color={t.color}>
+                    {a.alert_type}
+                  </Pill>
+                  <Pill bg={c.bg} color={c.color} fontSize={10}>
+                    {a.channel}
+                  </Pill>
+                </div>
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 13,
+                    fontWeight: 400,
+                    color: "#1A1A18",
+                  }}
+                >
+                  {a.message}
+                </span>
+                <div className="live-alert-meta">
+                  <Pill bg={s.bg} color={s.color}>
+                    {a.severity}
+                  </Pill>
+                  <RelativeTime iso={a.occurred_at} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
