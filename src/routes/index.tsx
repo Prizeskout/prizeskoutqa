@@ -1296,8 +1296,8 @@ function ComparisonTable() {
           </thead>
           <tbody>
             {COMPARISON_GROUPS.map((g) => (
-              <>
-                <tr key={`${g.group}-header`} style={{ background: "#050505" }}>
+              <Fragment key={g.group}>
+                <tr style={{ background: "#050505" }}>
                   <th
                     scope="colgroup"
                     colSpan={4}
@@ -1317,7 +1317,7 @@ function ComparisonTable() {
                   </th>
                 </tr>
                 {g.rows.map((row) => (
-                  <tr key={`${g.group}-${row.label}`} style={{ borderBottom: "1px solid #141414" }}>
+                  <tr key={row.label} style={{ borderBottom: "1px solid #141414" }}>
                     <th
                       scope="row"
                       style={{
@@ -1337,7 +1337,7 @@ function ComparisonTable() {
                     ))}
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
