@@ -68,7 +68,7 @@ export const Route = createFileRoute("/dashboard/competitors")({
 const SIGNAL_ORDER = { WATCH: 0, LOWER: 1, HOLD: 2, RAISE: 3 } as const;
 
 function CompetitorsPage() {
-  const data = Route.useLoaderData();
+  const data = Route.useLoaderData() as CompetitorsData;
   const [tab, setTab] = useState<CompetitorsSubTab>("Price tracker");
   const [category, setCategory] = useState<Category>("All");
   const [channel, setChannel] = useState<ChannelOpt>("All Channels");
