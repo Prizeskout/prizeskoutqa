@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Zap,
   Crosshair,
@@ -73,12 +73,41 @@ const ALERTS = [
   { tag: "PROMO LIVE", color: "#3B82F6", text: "Talabat launched 15% off small appliances" },
 ];
 
-function useTicker(intervalMs: number, fn: () => void) {
+function useTicker(intervalMs: number, fn: () => void, enabled: boolean = true) {
   useEffect(() => {
+    if (!enabled) return;
     const id = window.setInterval(fn, intervalMs);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intervalMs]);
+  }, [intervalMs, enabled]);
+}
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return reduced;
+}
+
+function useInView<T extends Element>(rootMargin = "0px") {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin, threshold: 0 },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [rootMargin]);
+  return [ref, inView] as const;
 }
 
 function Sparkline({ color = "#EA580C", seed = 0 }: { color?: string; seed?: number }) {
@@ -121,6 +150,9 @@ function HeroMockup() {
   const [rows, setRows] = useState<Row[]>(INITIAL_ROWS);
   const [alertIdx, setAlertIdx] = useState(0);
   const [sparkSeed, setSparkSeed] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
+  const [containerRef, inView] = useInView<HTMLDivElement>("0px");
+  const animate = inView && !reducedMotion;
 
   useTicker(2200, () => {
     setMetrics((prev) =>
@@ -130,7 +162,7 @@ function HeroMockup() {
         return { ...m, value: next, delta: drift };
       }),
     );
-  });
+  }, animate);
 
   useTicker(1800, () => {
     setRows((prev) =>
@@ -141,10 +173,10 @@ function HeroMockup() {
         return { ...r, competitor, trend };
       }),
     );
-  });
+  }, animate);
 
-  useTicker(3000, () => setAlertIdx((i) => (i + 1) % ALERTS.length));
-  useTicker(4500, () => setSparkSeed((s) => s + 1));
+  useTicker(3000, () => setAlertIdx((i) => (i + 1) % ALERTS.length), animate);
+  useTicker(4500, () => setSparkSeed((s) => s + 1), animate);
 
   const fmt = (m: Metric) => {
     const v = m.decimals ? m.value.toFixed(m.decimals) : Math.round(m.value).toLocaleString();
@@ -155,6 +187,7 @@ function HeroMockup() {
 
   return (
     <div
+      ref={containerRef}
       style={{
         maxWidth: 900,
         margin: "48px auto 0",
@@ -163,7 +196,7 @@ function HeroMockup() {
         borderRadius: 12,
         overflow: "hidden",
         boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-        animation: "ps-mockup-in 0.6s ease-out 0.3s both",
+        animation: reducedMotion ? undefined : "ps-mockup-in 0.6s ease-out 0.3s both",
       }}
     >
       {/* Window chrome */}
