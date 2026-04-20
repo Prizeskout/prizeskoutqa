@@ -118,8 +118,10 @@ export const listLatestScrapes = createServerFn({ method: 'GET' })
     }
 
     // Dedupe to latest per URL.
-    const latest = new Map<string, (typeof data)[number]>();
-    for (const row of data ?? []) {
+    type Row = { id: string; url: string; competitor: string | null; product: string | null; price: number | null; currency: string | null; status: string; scraped_at: string };
+    const rows: Row[] = (data ?? []) as Row[];
+    const latest = new Map<string, Row>();
+    for (const row of rows) {
       if (!latest.has(row.url)) latest.set(row.url, row);
     }
     return { scrapes: Array.from(latest.values()), error: null };
