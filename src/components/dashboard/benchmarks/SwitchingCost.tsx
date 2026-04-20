@@ -1,6 +1,8 @@
 import { ShieldAlert } from "lucide-react";
+import type { SwitchingCostRow } from "@/lib/benchmarks-data";
 
-export function SwitchingCost() {
+export function SwitchingCost({ data }: { data: SwitchingCostRow | null }) {
+  if (!data) return null;
   return (
     <div
       style={{
@@ -15,13 +17,9 @@ export function SwitchingCost() {
     >
       <ShieldAlert size={20} color="#EF4444" style={{ flexShrink: 0, marginTop: 2 }} />
       <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>The cost of switching</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{data.title}</div>
         <div style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.65, marginTop: 4 }}>
-          Building this in-house or switching to a competitor means starting a new model from
-          scratch at 61% accuracy. It takes 12 months of continuous data to reach your current 91%
-          level. During those 12 months, every pricing decision is less accurate, every promotion
-          is less optimized, and every competitive gap takes longer to spot. The model you have
-          built here is an asset that appreciates over time.
+          {data.body}
         </div>
       </div>
     </div>

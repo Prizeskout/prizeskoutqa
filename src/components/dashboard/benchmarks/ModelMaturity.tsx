@@ -8,15 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
-const DATA = [
-  { month: "Month 1", accuracy: 61 },
-  { month: "Month 3", accuracy: 74 },
-  { month: "Month 6", accuracy: 82 },
-  { month: "Month 9", accuracy: 87 },
-  { month: "Month 12", accuracy: 91 },
-  { month: "Month 18", accuracy: 94 },
-];
+import type { ModelMaturityRow } from "@/lib/benchmarks-data";
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ value: number }> }) {
   if (!active || !payload || !payload.length) return null;
@@ -54,7 +46,12 @@ function StatCard({ label, value, valueColor, sub }: { label: string; value: str
   );
 }
 
-export function ModelMaturity() {
+export function ModelMaturity({ rows }: { rows: ModelMaturityRow[] }) {
+  const points = rows
+    .filter((r) => r.kind === "point" && r.month_label && r.accuracy != null)
+    .map((r) => ({ month: r.month_label as string, accuracy: r.accuracy as number }));
+  const stats = rows.filter((r) => r.kind === "stat");
+
   return (
     <div
       style={{
@@ -73,7 +70,7 @@ export function ModelMaturity() {
       </div>
       <div style={{ height: 260, marginTop: 18 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={DATA} margin={{ top: 10, right: 180, left: 0, bottom: 5 }}>
+          <AreaChart data={points} margin={{ top: 10, right: 180, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E2DB" />
             <XAxis
               dataKey="month"
@@ -125,24 +122,15 @@ export function ModelMaturity() {
         </ResponsiveContainer>
       </div>
       <div style={{ display: "flex", gap: 14, marginTop: 18 }}>
-        <StatCard
-          label="Current accuracy"
-          value="91%"
-          valueColor="#22C55E"
-          sub="Month 12 maturity"
-        />
-        <StatCard
-          label="Data points processed"
-          value="2.4M"
-          valueColor="#1A1A18"
-          sub="Snoonu-specific signals"
-        />
-        <StatCard
-          label="Competitor starting today"
-          value="61%"
-          valueColor="#EF4444"
-          sub="Would need 12+ months to catch up"
-        />
+        {stats.map((s) => (
+          <StatCard
+            key={s.id}
+            label={s.stat_label ?? ""}
+            value={s.stat_value ?? ""}
+            valueColor={s.stat_color ?? "#1A1A18"}
+            sub={s.stat_sub ?? ""}
+          />
+        ))}
       </div>
     </div>
   );
