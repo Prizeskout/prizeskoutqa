@@ -50,12 +50,13 @@ function StyledSelect({
   style?: CSSProperties;
 }) {
   return (
-    <div style={{ position: "relative", ...style }}>
+    <div style={{ position: "relative", ...style }} suppressHydrationWarning>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={(e) => (e.currentTarget.style.borderColor = "#EA580C")}
         onBlur={(e) => (e.currentTarget.style.borderColor = "#E5E2DB")}
+        suppressHydrationWarning
         style={{
           ...inputStyle,
           appearance: "none",
