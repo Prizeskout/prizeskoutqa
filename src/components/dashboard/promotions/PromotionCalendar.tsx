@@ -179,8 +179,8 @@ export function PromotionCalendar() {
           );
         })}
       </div>
-      <div style={{ marginTop: 14, overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="table-scroll" style={{ marginTop: 14 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 880 }}>
           <thead>
             <tr style={{ borderBottom: "2px solid #E5E2DB" }}>
               <th style={th}>Competitor</th>
