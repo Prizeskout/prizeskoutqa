@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, ShieldCheck } from "lucide-react";
 import {
   IconInput,
   FormLabel,
@@ -103,7 +103,46 @@ function ForgotPasswordPage() {
             </PrimaryAuthButton>
           </div>
 
-          {sent && (
+          <div
+            style={{
+              marginTop: 16,
+              padding: "12px 14px",
+              backgroundColor: "#F5F2EC",
+              border: "1px solid #E5E2DB",
+              borderRadius: 8,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#1A1A18",
+                marginBottom: 6,
+              }}
+            >
+              <ShieldCheck size={13} color="#EA580C" aria-hidden="true" />
+              When you set a new password
+            </div>
+            <ul
+              style={{
+                listStyle: "disc",
+                margin: 0,
+                paddingLeft: 18,
+                fontSize: 11.5,
+                color: "#6B6B6B",
+                lineHeight: 1.6,
+              }}
+            >
+              <li>At least 8 characters long</li>
+              <li>Mix of letters, numbers, and symbols</li>
+              <li>
+                Passwords found in known data breaches will be rejected
+              </li>
+            </ul>
+          </div>
             <div
               style={{
                 marginTop: 16,
