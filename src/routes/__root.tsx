@@ -43,6 +43,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "PrizeSkout Commerce Intelligence" },
+      { name: "description", content: "Prizeskout Qatar" },
+      { property: "og:description", content: "Prizeskout Qatar" },
+      { name: "twitter:description", content: "Prizeskout Qatar" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a81c176b-cbf9-45c1-864f-db4d4df93cd4/id-preview-edb9a65a--cb795ef1-ef78-4285-92a6-f1de82cbe76e.lovable.app-1776694116508.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a81c176b-cbf9-45c1-864f-db4d4df93cd4/id-preview-edb9a65a--cb795ef1-ef78-4285-92a6-f1de82cbe76e.lovable.app-1776694116508.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
