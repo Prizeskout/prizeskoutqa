@@ -281,6 +281,7 @@ function SectionLabel({
 }
 
 function PatternCard({ pattern }: { pattern: Pattern }) {
+  const { accentColor, brandName } = useBranding();
   return (
     <div
       style={{
@@ -424,6 +425,7 @@ function Timeline({
 }: {
   items: { date: string; description: string }[];
 }) {
+  const { accentColor } = useBranding();
   return (
     <div style={{ position: "relative", marginTop: 8, paddingLeft: 14 }}>
       <div
