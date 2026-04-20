@@ -120,6 +120,38 @@ export function LiveAlerts() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
         }
+        .live-alert-row {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 12px 0;
+        }
+        .live-alert-meta {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+        }
+        .live-alert-time {
+          font-size: 11px;
+          color: #9A9A9A;
+          margin-left: auto;
+        }
+        @media (min-width: 768px) {
+          .live-alert-row {
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+          }
+          .live-alert-meta {
+            flex-wrap: nowrap;
+          }
+          .live-alert-time {
+            min-width: 80px;
+            text-align: right;
+            margin-left: 0;
+          }
+        }
       `}</style>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -147,20 +179,19 @@ export function LiveAlerts() {
           return (
             <li
               key={i}
+              className="live-alert-row"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 0",
                 borderBottom: isLast ? "none" : "1px solid #E5E2DB",
               }}
             >
-              <Pill bg={t.bg} color={t.color}>
-                {a.type}
-              </Pill>
-              <Pill bg={c.bg} color={c.color} fontSize={10}>
-                {a.channel}
-              </Pill>
+              <div className="live-alert-meta">
+                <Pill bg={t.bg} color={t.color}>
+                  {a.type}
+                </Pill>
+                <Pill bg={c.bg} color={c.color} fontSize={10}>
+                  {a.channel}
+                </Pill>
+              </div>
               <span
                 style={{
                   flex: 1,
@@ -172,19 +203,12 @@ export function LiveAlerts() {
               >
                 {a.msg}
               </span>
-              <Pill bg={s.bg} color={s.color}>
-                {a.severity}
-              </Pill>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "#9A9A9A",
-                  minWidth: 80,
-                  textAlign: "right",
-                }}
-              >
-                {a.time}
-              </span>
+              <div className="live-alert-meta">
+                <Pill bg={s.bg} color={s.color}>
+                  {a.severity}
+                </Pill>
+                <span className="live-alert-time">{a.time}</span>
+              </div>
             </li>
           );
         })}
