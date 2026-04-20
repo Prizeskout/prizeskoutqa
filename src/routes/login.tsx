@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import {
   AuthShell,
@@ -9,8 +9,12 @@ import {
   PrimaryAuthButton,
   LegalFooter,
 } from "@/components/auth/AuthShared";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : "/dashboard",
+  }),
   head: () => ({
     meta: [
       { title: "Sign in | PrizeSkout" },
@@ -28,6 +32,36 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const router = useRouter();
+  const search = Route.useSearch();
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
+    setSubmitting(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setSubmitting(false);
+    if (signInError) {
+      setError(
+        signInError.message === "Invalid login credentials"
+          ? "Email or password is incorrect."
+          : signInError.message,
+      );
+      return;
+    }
+    await router.invalidate();
+    navigate({ to: search.redirect || "/dashboard" });
+  };
 
   return (
     <AuthShell>
@@ -39,7 +73,7 @@ function LoginPage() {
       </p>
 
       <form
-        onSubmit={(e) => e.preventDefault()}
+        onSubmit={handleSubmit}
         style={{
           marginTop: 28,
           display: "flex",
@@ -88,6 +122,22 @@ function LoginPage() {
           />
         </div>
 
+        {error && (
+          <div
+            role="alert"
+            style={{
+              fontSize: 12,
+              color: "#DC2626",
+              backgroundColor: "rgba(239, 68, 68, 0.08)",
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -113,7 +163,9 @@ function LoginPage() {
         </div>
 
         <div style={{ marginTop: 8 }}>
-          <PrimaryAuthButton type="submit">Sign in</PrimaryAuthButton>
+          <PrimaryAuthButton type="submit" disabled={submitting}>
+            {submitting ? "Signing in…" : "Sign in"}
+          </PrimaryAuthButton>
         </div>
       </form>
 

@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { useState, useMemo, type FormEvent } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Mail,
   Lock,
