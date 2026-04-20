@@ -35,11 +35,14 @@ function ForgotPasswordPage() {
         padding: "10vh 24px 40px 24px",
       }}
     >
-      <div
+      <main
+        id="main-content"
+        tabIndex={-1}
         style={{
           maxWidth: 400,
           margin: "0 auto",
           padding: 40,
+          outline: "none",
         }}
       >
         <div style={{ marginBottom: 20 }}>
