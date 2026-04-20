@@ -134,13 +134,38 @@ function ensureSpace(doc: jsPDF, y: number, needed: number): number {
   return y;
 }
 
+function estimateCardHeight(doc: jsPDF, p: Pattern, innerW: number): number {
+  // Mirrors the layout in drawPatternCard so we can reserve full card height upfront.
+  let h = 8; // top padding
+  h += 5; // title row baseline
+  h += 6; // meta line
+  h += 4; // detected pattern label
+  const patternLines = doc.splitTextToSize(p.pattern, innerW);
+  h += patternLines.length * 4.6;
+  if (p.depth) h += 4;
+  h += 5;
+  h += 4; // evidence label
+  for (const ev of p.evidence) {
+    const descLines = doc.splitTextToSize(ev.description, innerW - 32);
+    h += Math.max(5, descLines.length * 4.4) + 1;
+  }
+  h += 3;
+  const recLines = doc.splitTextToSize(p.recommendation, innerW - 8);
+  h += recLines.length * 4.6 + 22; // recommendation box
+  h += 8; // bottom padding
+  return h;
+}
+
 function drawPatternCard(
   doc: jsPDF,
   p: Pattern,
   index: number,
   startY: number,
 ): number {
-  let y = ensureSpace(doc, startY, 60);
+  const innerW = CONTENT_W - 12;
+  const cardH = estimateCardHeight(doc, p, innerW);
+  // Reserve the full card height. If it doesn't fit, push to a new page.
+  let y = ensureSpace(doc, startY, cardH);
 
   // Card background
   const cardTop = y;
@@ -149,7 +174,6 @@ function drawPatternCard(
 
   // We'll draw content first, measure, then stroke a border at the end.
   const innerX = cardX + 6;
-  const innerW = cardW - 12;
   y += 8;
 
   // Title row
@@ -190,7 +214,6 @@ function drawPatternCard(
   doc.setFontSize(10);
   doc.setTextColor(...INK);
   const patternLines = doc.splitTextToSize(p.pattern, innerW);
-  y = ensureSpace(doc, y, patternLines.length * 4.6 + 4);
   doc.text(patternLines, innerX, y);
   y += patternLines.length * 4.6;
   if (p.depth) {
@@ -207,7 +230,6 @@ function drawPatternCard(
   for (const ev of p.evidence) {
     const descLines = doc.splitTextToSize(ev.description, innerW - 32);
     const rowH = Math.max(5, descLines.length * 4.4) + 1;
-    y = ensureSpace(doc, y, rowH);
     // dot
     doc.setFillColor(...ORANGE);
     doc.circle(innerX + 1.2, y - 1.4, 0.9, "F");
@@ -228,7 +250,6 @@ function drawPatternCard(
   // Recommendation block
   const recLines = doc.splitTextToSize(p.recommendation, innerW - 8);
   const recBoxH = recLines.length * 4.6 + 22;
-  y = ensureSpace(doc, y, recBoxH);
   const recTop = y;
   doc.setFillColor(254, 243, 235);
   doc.roundedRect(innerX, recTop, innerW, recBoxH, 2, 2, "F");
