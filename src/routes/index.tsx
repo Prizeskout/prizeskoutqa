@@ -187,6 +187,7 @@ function HeroMockup() {
 
   return (
     <div
+      ref={containerRef}
       style={{
         maxWidth: 900,
         margin: "48px auto 0",
@@ -195,7 +196,7 @@ function HeroMockup() {
         borderRadius: 12,
         overflow: "hidden",
         boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-        animation: "ps-mockup-in 0.6s ease-out 0.3s both",
+        animation: reducedMotion ? undefined : "ps-mockup-in 0.6s ease-out 0.3s both",
       }}
     >
       {/* Window chrome */}
