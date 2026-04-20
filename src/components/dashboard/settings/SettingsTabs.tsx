@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { AccountTab } from "./AccountTab";
 import { CompetitorsTab } from "./CompetitorsTab";
 import { LocationsTab } from "./LocationsTab";
@@ -16,15 +16,6 @@ const TABS = [
 ] as const;
 
 type Tab = (typeof TABS)[number];
-
-const RENDERERS: Record<Tab, () => ReactNode> = {
-  Account: () => <AccountTab />,
-  Competitors: () => <CompetitorsTab />,
-  Locations: () => <LocationsTab />,
-  Notifications: () => <NotificationsTab />,
-  Integrations: () => <IntegrationsTab />,
-  Team: () => <TeamTab />,
-};
 
 export function SettingsTabs() {
   const [active, setActive] = useState<Tab>("Account");
@@ -71,7 +62,14 @@ export function SettingsTabs() {
           );
         })}
       </div>
-      {RENDERERS[active]()}
+      {/* Keep all tab panels mounted so user state (form values, toggles) persists across tab switches */}
+      <div style={{ display: active === "Account" ? "block" : "none" }}><AccountTab /></div>
+      <div style={{ display: active === "Competitors" ? "block" : "none" }}><CompetitorsTab /></div>
+      <div style={{ display: active === "Locations" ? "block" : "none" }}><LocationsTab /></div>
+      <div style={{ display: active === "Notifications" ? "block" : "none" }}><NotificationsTab /></div>
+      <div style={{ display: active === "Integrations" ? "block" : "none" }}><IntegrationsTab /></div>
+      <div style={{ display: active === "Team" ? "block" : "none" }}><TeamTab /></div>
     </div>
   );
 }
+
