@@ -9,6 +9,8 @@ import {
   TextField,
   TextareaField,
 } from "./primitives";
+import { Check } from "lucide-react";
+import { getCompany, setCompany } from "@/lib/companyStore";
 
 const INDUSTRIES = [
   "E-commerce / Quick commerce",
