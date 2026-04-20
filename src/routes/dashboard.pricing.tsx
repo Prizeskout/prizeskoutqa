@@ -67,6 +67,12 @@ export const Route = createFileRoute("/dashboard/pricing")({
 
 function PricingPage() {
   const data = Route.useLoaderData();
+  const isHydrating = useHydrationRefetch(
+    data.metrics.length === 0 &&
+      data.recommendations.length === 0 &&
+      data.rules.length === 0,
+  );
+  if (isHydrating) return <PricingPendingPage />;
 
   return (
     <DashboardLayout title="Pricing">

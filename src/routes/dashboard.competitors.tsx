@@ -74,11 +74,18 @@ const SIGNAL_ORDER = { WATCH: 0, LOWER: 1, HOLD: 2, RAISE: 3 } as const;
 
 function CompetitorsPage() {
   const data = Route.useLoaderData() as CompetitorsData;
+  const isHydrating = useHydrationRefetch(
+    data.metrics.length === 0 &&
+      data.prices.length === 0 &&
+      data.patterns.length === 0,
+  );
   const [tab, setTab] = useState<CompetitorsSubTab>("Price tracker");
   const [category, setCategory] = useState<Category>("All");
   const [channel, setChannel] = useState<ChannelOpt>("All Channels");
   const [sort, setSort] = useState<SortKey>("Price gap");
   const [search, setSearch] = useState("");
+
+  if (isHydrating) return <CompetitorsPendingPage />;
 
   // Map DB rows -> existing UI Product shape.
   const allProducts = useMemo(
