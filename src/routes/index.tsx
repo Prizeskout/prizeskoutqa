@@ -937,66 +937,63 @@ function Pricing() {
       </p>
 
       {/* Billing toggle */}
-      <div
-        role="tablist"
-        aria-label="Billing period"
-        style={{
-          margin: "32px auto 0",
-          display: "inline-flex",
-          padding: 4,
-          background: "#0A0A0A",
-          border: "1px solid #1A1A1A",
-          borderRadius: 999,
-          gap: 4,
-        }}
-        className="ps-billing-toggle"
-      >
-        {(["monthly", "annual"] as const).map((opt) => {
-          const active = billing === opt;
-          return (
-            <button
-              key={opt}
-              role="tab"
-              aria-selected={active}
-              onClick={() => setBilling(opt)}
-              style={{
-                appearance: "none",
-                border: "none",
-                cursor: "pointer",
-                background: active ? "#EA580C" : "transparent",
-                color: active ? "#FFFFFF" : "#8A8A8A",
-                fontSize: 13,
-                fontWeight: 600,
-                padding: "8px 18px",
-                borderRadius: 999,
-                transition: "background 0.15s, color 0.15s",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              {opt === "monthly" ? "Monthly" : "Annual"}
-              {opt === "annual" && (
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                    background: active ? "rgba(255,255,255,0.2)" : "rgba(34, 197, 94, 0.15)",
-                    color: active ? "#FFFFFF" : "#22C55E",
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                  }}
-                >
-                  SAVE 20%
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <div style={{ textAlign: "center", marginTop: 0 }}>
-        <div style={{ display: "block", height: 0 }} />
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
+        <div
+          role="tablist"
+          aria-label="Billing period"
+          style={{
+            display: "inline-flex",
+            padding: 4,
+            background: "#0A0A0A",
+            border: "1px solid #1A1A1A",
+            borderRadius: 999,
+            gap: 4,
+          }}
+        >
+          {(["monthly", "annual"] as const).map((opt) => {
+            const active = billing === opt;
+            return (
+              <button
+                key={opt}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setBilling(opt)}
+                style={{
+                  appearance: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  background: active ? "#EA580C" : "transparent",
+                  color: active ? "#FFFFFF" : "#8A8A8A",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: "8px 18px",
+                  borderRadius: 999,
+                  transition: "background 0.15s, color 0.15s",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {opt === "monthly" ? "Monthly" : "Annual"}
+                {opt === "annual" && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      background: active ? "rgba(255,255,255,0.2)" : "rgba(34, 197, 94, 0.15)",
+                      color: active ? "#FFFFFF" : "#22C55E",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    SAVE 20%
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div
