@@ -2,6 +2,7 @@
 // Data fetch lives in src/routes/dashboard.promotions.tsx loader.
 
 import type { OverviewMetric } from "@/lib/overview-data";
+import type { RoiModelCategory, ScenarioRow } from "@/lib/roi-model";
 
 export type PromotionsMetric = OverviewMetric;
 
@@ -45,4 +46,6 @@ export type PromotionsData = {
   calendar: PromotionCalendarRow[];
   campaigns: PastCampaignRow[];
   insights: TimingInsightRow[];
+  roiModel: RoiModelCategory[];
+  scenarios: ScenarioRow[];
 };
