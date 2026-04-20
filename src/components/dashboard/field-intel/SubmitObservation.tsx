@@ -90,6 +90,7 @@ function StyledSelect({
 }
 
 export function SubmitObservation() {
+  const router = useRouter();
   const [store, setStore] = useState("");
   const [product, setProduct] = useState("");
   const [price, setPrice] = useState("");
@@ -99,22 +100,79 @@ export function SubmitObservation() {
   const [promoDetail, setPromoDetail] = useState("");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const showPromoField = condition === "On promotion" || condition === "Clearance";
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    setTimeout(() => {
-      setStore("");
-      setProduct("");
-      setPrice("");
-      setCurrency("QAR");
-      setCategory("");
-      setCondition("Regular price");
-      setPromoDetail("");
-      setNotes("");
-      setSubmitted(false);
-    }, 3000);
+  const handleSubmit = async () => {
+    setError(null);
+    if (!store || !product || !price || !category) {
+      setError("Please fill in store, product, price, and category.");
+      return;
+    }
+    const priceNum = Number(price);
+    if (!Number.isFinite(priceNum) || priceNum <= 0) {
+      setError("Please enter a valid price.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("You must be signed in to submit an observation.");
+        setSubmitting(false);
+        return;
+      }
+
+      const displayName =
+        (user.user_metadata?.display_name as string | undefined) ||
+        (user.email ? user.email.split("@")[0] : "You");
+
+      const promo = showPromoField ? promoDetail.trim() : "";
+      const promoWithNotes = [promo, notes.trim()].filter(Boolean).join(" — ") || null;
+
+      const { error: insertError } = await supabase.from("recent_observations").insert({
+        user_id: user.id,
+        product,
+        store,
+        price: priceNum,
+        condition,
+        promo_detail: promoWithNotes,
+        status: "Pending",
+        agent: displayName,
+        time_label: "Just now",
+        position: -Date.now(), // newest first when sorted ascending
+      });
+
+      if (insertError) {
+        setError(insertError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      await router.invalidate();
+
+      setSubmitted(true);
+      setSubmitting(false);
+      setTimeout(() => {
+        setStore("");
+        setProduct("");
+        setPrice("");
+        setCurrency("QAR");
+        setCategory("");
+        setCondition("Regular price");
+        setPromoDetail("");
+        setNotes("");
+        setSubmitted(false);
+      }, 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to submit observation.");
+      setSubmitting(false);
+    }
   };
 
   return (
