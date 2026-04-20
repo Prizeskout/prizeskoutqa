@@ -129,10 +129,10 @@ function CompetitorsPage() {
   }, [allProducts, category, channel, sort, search]);
 
   return (
-    <DashboardLayout
-      title="Competitors"
-      titleAccessory={<HeaderLivePill liveCount={liveCount} />}
-    >
+    <DashboardLayout title="Competitors">
+      <div style={{ marginBottom: 12 }}>
+        <HeaderLivePill liveCount={liveCount} />
+      </div>
       <SubTabs active={tab} onChange={setTab} />
       <div
         style={{
