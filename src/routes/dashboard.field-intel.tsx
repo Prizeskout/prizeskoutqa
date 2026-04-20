@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { FieldIntelMetrics } from "@/components/dashboard/field-intel/FieldIntelMetrics";
 import { SubmitObservation } from "@/components/dashboard/field-intel/SubmitObservation";
-import { RecentObservations } from "@/components/dashboard/field-intel/RecentObservations";
-import { PriceGaps } from "@/components/dashboard/field-intel/PriceGaps";
+import { RecentObservations, OBSERVATIONS } from "@/components/dashboard/field-intel/RecentObservations";
+import { PriceGaps, ROWS as PRICE_GAPS } from "@/components/dashboard/field-intel/PriceGaps";
 import { FieldTeamActivity } from "@/components/dashboard/field-intel/FieldTeamActivity";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { exportFieldIntelPdf } from "@/components/dashboard/field-intel/exportFieldIntelPdf";
 
 export const Route = createFileRoute("/dashboard/field-intel")({
   head: () => ({ meta: [{ title: "Field Intel — PrizeSkout" }] }),
@@ -15,6 +17,13 @@ function FieldIntelPage() {
   return (
     <DashboardLayout title="Field Intel">
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ExportPdfButton
+            onExport={() =>
+              exportFieldIntelPdf({ observations: OBSERVATIONS, gaps: PRICE_GAPS })
+            }
+          />
+        </div>
         <FieldIntelMetrics />
         <div className="field-intel-two-col">
           <div className="field-intel-left">

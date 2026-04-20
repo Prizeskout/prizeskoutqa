@@ -15,7 +15,7 @@ type Observation = {
   time: string;
 };
 
-const OBSERVATIONS: Observation[] = [
+export const OBSERVATIONS: Observation[] = [
   {
     product: "Samsung Galaxy S24 Ultra 256GB",
     store: "Carrefour - Doha Festival City",

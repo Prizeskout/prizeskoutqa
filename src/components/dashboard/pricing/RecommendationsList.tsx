@@ -1,4 +1,6 @@
 import { RecommendationCard, type Recommendation } from "./RecommendationCard";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { exportPricingPdf } from "./exportPricingPdf";
 
 const RECOMMENDATIONS: Recommendation[] = [
   {
@@ -76,6 +78,9 @@ const RECOMMENDATIONS: Recommendation[] = [
 export function RecommendationsList() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <ExportPdfButton onExport={() => exportPricingPdf(RECOMMENDATIONS)} />
+      </div>
       {RECOMMENDATIONS.map((rec) => (
         <RecommendationCard key={rec.id} rec={rec} />
       ))}

@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-import { useState } from "react";
-import { Eye, Download, Loader2 } from "lucide-react";
+import { Eye } from "lucide-react";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportPatternsPdf } from "./exportPatternsPdf";
 
 type Pattern = {
@@ -95,53 +95,10 @@ const PATTERNS: Pattern[] = [
 ];
 
 export function BehaviorPatterns() {
-  const [exporting, setExporting] = useState(false);
-
-  const handleExport = async () => {
-    if (exporting) return;
-    setExporting(true);
-    try {
-      await exportPatternsPdf(PATTERNS);
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={exporting}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "8px 14px",
-            backgroundColor: "#1A1A18",
-            color: "#FFFFFF",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 500,
-            cursor: exporting ? "default" : "pointer",
-            opacity: exporting ? 0.7 : 1,
-            transition: "opacity 150ms ease",
-          }}
-        >
-          {exporting ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Download size={14} />
-          )}
-          {exporting ? "Generating PDF..." : "Export PDF report"}
-        </button>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <ExportPdfButton onExport={() => exportPatternsPdf(PATTERNS)} />
       </div>
       <ContextBanner />
       {PATTERNS.map((p) => (
