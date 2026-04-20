@@ -6,6 +6,8 @@ import { FilterBar } from "@/components/dashboard/competitors/FilterBar";
 import { PriceTable } from "@/components/dashboard/competitors/PriceTable";
 import { PriceHistory } from "@/components/dashboard/competitors/PriceHistory";
 import { OmnichannelGaps } from "@/components/dashboard/competitors/OmnichannelGaps";
+import { SubTabs, type CompetitorsSubTab } from "@/components/dashboard/competitors/SubTabs";
+import { BehaviorPatterns } from "@/components/dashboard/competitors/BehaviorPatterns";
 import {
   PRODUCTS,
   type Category,
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/dashboard/competitors")({
 const SIGNAL_ORDER = { WATCH: 0, LOWER: 1, HOLD: 2, RAISE: 3 } as const;
 
 function CompetitorsPage() {
+  const [tab, setTab] = useState<CompetitorsSubTab>("Price tracker");
   const [category, setCategory] = useState<Category>("All");
   const [channel, setChannel] = useState<ChannelOpt>("All Channels");
   const [sort, setSort] = useState<SortKey>("Price gap");
@@ -63,7 +66,8 @@ function CompetitorsPage() {
 
   return (
     <DashboardLayout title="Competitors">
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <SubTabs active={tab} onChange={setTab} />
+      <div style={{ display: tab === "Price tracker" ? "flex" : "none", flexDirection: "column", gap: 14 }}>
         <CompetitorMetrics />
         <FilterBar
           category={category}
@@ -78,6 +82,9 @@ function CompetitorsPage() {
         <PriceTable products={filtered} />
         <PriceHistory />
         <OmnichannelGaps />
+      </div>
+      <div style={{ display: tab === "Behavior patterns" ? "block" : "none" }}>
+        <BehaviorPatterns />
       </div>
     </DashboardLayout>
   );
