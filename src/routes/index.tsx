@@ -841,11 +841,22 @@ function HowItWorks() {
   );
 }
 
-const PLANS = [
+const ANNUAL_DISCOUNT = 0.2; // 20% off
+
+type Plan = {
+  name: string;
+  monthly: number | null; // null = custom
+  sub: string;
+  features: string[];
+  cta: string;
+  to: "/signup";
+  featured: boolean;
+};
+
+const PLANS: Plan[] = [
   {
     name: "Scout",
-    price: "$299",
-    per: "/month",
+    monthly: 299,
     sub: "per location",
     features: [
       "Up to 500 products tracked",
@@ -855,13 +866,12 @@ const PLANS = [
       "Email support",
     ],
     cta: "Start free trial",
-    to: "/signup" as const,
+    to: "/signup",
     featured: false,
   },
   {
     name: "Pro",
-    price: "$799",
-    per: "/month",
+    monthly: 799,
     sub: "per location",
     features: [
       "Up to 5,000 products tracked",
@@ -874,13 +884,12 @@ const PLANS = [
       "Priority support",
     ],
     cta: "Start free trial",
-    to: "/signup" as const,
+    to: "/signup",
     featured: true,
   },
   {
     name: "Enterprise",
-    price: "Custom",
-    per: "",
+    monthly: null,
     sub: "tailored to your scale",
     features: [
       "Unlimited products",
@@ -893,7 +902,7 @@ const PLANS = [
       "SLA guarantee",
     ],
     cta: "Contact sales",
-    to: "/signup" as const,
+    to: "/signup",
     featured: false,
   },
 ];
