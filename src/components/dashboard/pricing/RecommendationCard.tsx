@@ -101,24 +101,39 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
             </span>
           </div>
         </div>
-        <div style={{ textAlign: "center", flexShrink: 0 }}>
-          <div
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
+          <span
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              border: `3px solid ${cColor}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 14,
-              fontWeight: 700,
-              color: cColor,
+              fontSize: 10,
+              fontWeight: 500,
+              padding: "2px 8px",
+              borderRadius: 20,
+              backgroundColor: "#F5F4F1",
+              color: "#9A9A9A",
+              whiteSpace: "nowrap",
             }}
           >
-            {rec.confidence}
+            Cached intelligence
+          </span>
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                border: `3px solid ${cColor}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                fontWeight: 700,
+                color: cColor,
+              }}
+            >
+              {rec.confidence}
+            </div>
+            <div style={{ fontSize: 10, color: "#9A9A9A", marginTop: 4 }}>confidence</div>
           </div>
-          <div style={{ fontSize: 10, color: "#9A9A9A", marginTop: 4 }}>confidence</div>
         </div>
       </div>
 
