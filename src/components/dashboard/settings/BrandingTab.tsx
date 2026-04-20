@@ -121,7 +121,7 @@ export function BrandingTab() {
               <TextField
                 value={brandName}
                 onChange={setBrandName}
-                placeholder="Snoonu"
+                placeholder={companyName || "Your company"}
               />
             </Field>
             <Field label="Accent color (hex)">
