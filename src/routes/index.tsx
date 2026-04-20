@@ -13,6 +13,7 @@ import {
   Camera,
   Play,
   Globe,
+  Minus,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
