@@ -48,7 +48,7 @@ function NavLinkItem({
     <Link
       to={item.to}
       onClick={onNavigate}
-      className="relative flex items-center gap-3 px-5 py-2.5 text-[14px] font-medium transition-colors"
+      className="relative flex items-center gap-3 px-5 py-2.5 text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-inset"
       style={{
         color: active ? "#FAFAF9" : "#8A8A8A",
         backgroundColor: active ? "rgba(234, 88, 12, 0.06)" : "transparent",
@@ -105,7 +105,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             type="button"
             aria-label="Close menu"
             onClick={onNavigate}
-            className="flex items-center justify-center md:hidden"
+            className="flex items-center justify-center md:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
             style={{ width: 32, height: 32, borderRadius: 8, color: "#8A8A8A" }}
           >
             <X size={18} />
