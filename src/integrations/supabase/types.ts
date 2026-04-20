@@ -206,6 +206,81 @@ export type Database = {
         }
         Relationships: []
       }
+      field_intel_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
+        }
+        Relationships: []
+      }
+      field_team_activity: {
+        Row: {
+          agent_name: string
+          created_at: string
+          id: string
+          observation_count: number
+          position: number
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          id?: string
+          observation_count: number
+          position?: number
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          id?: string
+          observation_count?: number
+          position?: number
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       overview_alerts: {
         Row: {
           alert_type: string
@@ -354,6 +429,51 @@ export type Database = {
           link_text?: string
           position?: number
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      price_gaps: {
+        Row: {
+          competitor: string
+          created_at: string
+          direction: string
+          gap: string
+          id: string
+          in_store_price: number
+          observed: string
+          online_price: number
+          position: number
+          product: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          competitor: string
+          created_at?: string
+          direction: string
+          gap: string
+          id?: string
+          in_store_price: number
+          observed: string
+          online_price: number
+          position?: number
+          product: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          competitor?: string
+          created_at?: string
+          direction?: string
+          gap?: string
+          id?: string
+          in_store_price?: number
+          observed?: string
+          online_price?: number
+          position?: number
+          product?: string
           updated_at?: string
           user_id?: string
         }
@@ -509,12 +629,60 @@ export type Database = {
         }
         Relationships: []
       }
+      recent_observations: {
+        Row: {
+          agent: string
+          condition: string
+          created_at: string
+          id: string
+          position: number
+          price: number
+          product: string
+          promo_detail: string | null
+          status: string
+          store: string
+          time_label: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent: string
+          condition: string
+          created_at?: string
+          id?: string
+          position?: number
+          price: number
+          product: string
+          promo_detail?: string | null
+          status: string
+          store: string
+          time_label: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          position?: number
+          price?: number
+          product?: string
+          promo_detail?: string | null
+          status?: string
+          store?: string
+          time_label?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      seed_field_intel_for_user: { Args: { uid: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

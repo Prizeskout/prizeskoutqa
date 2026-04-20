@@ -178,3 +178,24 @@ export function CompetitorsPendingPage() {
     </DashboardLayout>
   );
 }
+
+export function FieldIntelPendingPage() {
+  return (
+    <DashboardLayout title="Field Intel">
+      <SkeletonStyles />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <SkeletonMetricsRow count={4} />
+        <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
+          <div style={{ flex: "0 0 calc(55% - 7px)", minWidth: 0 }}>
+            <SkeletonCard title height={420} />
+          </div>
+          <div style={{ flex: "0 0 calc(45% - 7px)", minWidth: 0 }}>
+            <SkeletonCard title height={420} />
+          </div>
+        </div>
+        <SkeletonCard title height={260} />
+        <SkeletonCard title height={220} />
+      </div>
+    </DashboardLayout>
+  );
+}

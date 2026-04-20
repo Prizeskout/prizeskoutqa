@@ -1,40 +1,116 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { FieldIntelMetrics } from "@/components/dashboard/field-intel/FieldIntelMetrics";
 import { SubmitObservation } from "@/components/dashboard/field-intel/SubmitObservation";
-import { RecentObservations, OBSERVATIONS } from "@/components/dashboard/field-intel/RecentObservations";
-import { PriceGaps, ROWS as PRICE_GAPS } from "@/components/dashboard/field-intel/PriceGaps";
+import { RecentObservations } from "@/components/dashboard/field-intel/RecentObservations";
+import { PriceGaps } from "@/components/dashboard/field-intel/PriceGaps";
 import { FieldTeamActivity } from "@/components/dashboard/field-intel/FieldTeamActivity";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportFieldIntelPdf } from "@/components/dashboard/field-intel/exportFieldIntelPdf";
+import { FieldIntelPendingPage } from "@/components/dashboard/Skeletons";
+import { useHydrationRefetch } from "@/hooks/useHydrationRefetch";
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  FieldIntelData,
+  FieldIntelMetric,
+  FieldTeamActivityRow,
+  PriceGapRow,
+  RecentObservationRow,
+} from "@/lib/field-intel-data";
+
+async function loadFieldIntel(): Promise<FieldIntelData> {
+  if (typeof window === "undefined") {
+    return { metrics: [], observations: [], gaps: [], activity: [] };
+  }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
+    throw redirect({ to: "/login", search: { redirect: "/dashboard/field-intel" } });
+  }
+
+  const [metricsRes, obsRes, gapsRes, activityRes] = await Promise.all([
+    supabase.from("field_intel_metrics").select("*").order("position", { ascending: true }),
+    supabase.from("recent_observations").select("*").order("position", { ascending: true }),
+    supabase.from("price_gaps").select("*").order("position", { ascending: true }),
+    supabase.from("field_team_activity").select("*").order("position", { ascending: true }),
+  ]);
+
+  if (metricsRes.error) throw metricsRes.error;
+  if (obsRes.error) throw obsRes.error;
+  if (gapsRes.error) throw gapsRes.error;
+  if (activityRes.error) throw activityRes.error;
+
+  return {
+    metrics: (metricsRes.data ?? []) as FieldIntelMetric[],
+    observations: (obsRes.data ?? []) as unknown as RecentObservationRow[],
+    gaps: (gapsRes.data ?? []) as unknown as PriceGapRow[],
+    activity: (activityRes.data ?? []) as unknown as FieldTeamActivityRow[],
+  };
+}
 
 export const Route = createFileRoute("/dashboard/field-intel")({
   head: () => ({ meta: [{ title: "Field Intel | PrizeSkout" }] }),
+  loader: () => loadFieldIntel(),
+  staleTime: 0,
+  pendingMs: 0,
+  pendingMinMs: 300,
+  pendingComponent: FieldIntelPendingPage,
   component: FieldIntelPage,
 });
 
 function FieldIntelPage() {
+  const data = Route.useLoaderData() as FieldIntelData;
+  const isHydrating = useHydrationRefetch(
+    data.metrics.length === 0 &&
+      data.observations.length === 0 &&
+      data.gaps.length === 0 &&
+      data.activity.length === 0,
+  );
+
+  if (isHydrating) return <FieldIntelPendingPage />;
+
   return (
     <DashboardLayout title="Field Intel">
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportPdfButton
             onExport={() =>
-              exportFieldIntelPdf({ observations: OBSERVATIONS, gaps: PRICE_GAPS })
+              exportFieldIntelPdf({
+                observations: data.observations.map((o) => ({
+                  product: o.product,
+                  store: o.store,
+                  price: Number(o.price),
+                  condition: o.condition,
+                  promoDetail: o.promo_detail ?? undefined,
+                  status: o.status,
+                  agent: o.agent,
+                  time: o.time_label,
+                })),
+                gaps: data.gaps.map((g) => ({
+                  product: g.product,
+                  competitor: g.competitor,
+                  online: Number(g.online_price),
+                  inStore: Number(g.in_store_price),
+                  gap: g.gap,
+                  direction: g.direction,
+                  observed: g.observed,
+                })),
+              })
             }
           />
         </div>
-        <FieldIntelMetrics />
+        <FieldIntelMetrics metrics={data.metrics} />
         <div className="field-intel-two-col">
           <div className="field-intel-left">
             <SubmitObservation />
           </div>
           <div className="field-intel-right">
-            <RecentObservations />
+            <RecentObservations observations={data.observations} />
           </div>
         </div>
-        <PriceGaps />
-        <FieldTeamActivity />
+        <PriceGaps gaps={data.gaps} />
+        <FieldTeamActivity activity={data.activity} />
       </div>
       <style>{`
         .field-intel-two-col {

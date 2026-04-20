@@ -1,81 +1,11 @@
 import { useState } from "react";
 import { MapPin } from "lucide-react";
+import type {
+  ObservationStatus,
+  RecentObservationRow,
+} from "@/lib/field-intel-data";
 
-type Status = "Reviewed" | "Pending" | "Flagged";
-type Condition = "Regular price" | "On promotion" | "Clearance";
-
-type Observation = {
-  product: string;
-  store: string;
-  price: number;
-  condition: Condition;
-  promoDetail?: string;
-  status: Status;
-  agent: string;
-  time: string;
-};
-
-export const OBSERVATIONS: Observation[] = [
-  {
-    product: "Samsung Galaxy S24 Ultra 256GB",
-    store: "Carrefour - Doha Festival City",
-    price: 3849,
-    condition: "Regular price",
-    status: "Reviewed",
-    agent: "Ahmad K.",
-    time: "2 hrs ago",
-  },
-  {
-    product: "Dyson V15 Detect Vacuum",
-    store: "Lulu - Lusail",
-    price: 2699,
-    condition: "On promotion",
-    promoDetail: "Weekend deal, 15% off until Saturday",
-    status: "Reviewed",
-    agent: "Sara M.",
-    time: "3 hrs ago",
-  },
-  {
-    product: "Sony WH-1000XM5",
-    store: "Carrefour - Mall of Qatar",
-    price: 1149,
-    condition: "Clearance",
-    status: "Flagged",
-    agent: "Ahmad K.",
-    time: "5 hrs ago",
-  },
-  {
-    product: "Ariel Detergent 3kg",
-    store: "Lulu - Al Gharafa",
-    price: 37.5,
-    condition: "On promotion",
-    promoDetail: "Buy 2 get 10% off",
-    status: "Pending",
-    agent: "Fatima R.",
-    time: "6 hrs ago",
-  },
-  {
-    product: "Nike Air Max 90 Men",
-    store: "Carrefour - Landmark Mall",
-    price: 529,
-    condition: "Regular price",
-    status: "Pending",
-    agent: "Omar H.",
-    time: "8 hrs ago",
-  },
-  {
-    product: "Nespresso Vertuo Pop",
-    store: "Lulu - Al Messila",
-    price: 429,
-    condition: "On promotion",
-    promoDetail: "Ramadan special, free capsule box included",
-    status: "Pending",
-    agent: "Sara M.",
-    time: "1 day ago",
-  },
-];
-
-function StatusBadge({ status }: { status: Status }) {
+function StatusBadge({ status }: { status: ObservationStatus }) {
   const map = {
     Reviewed: { bg: "rgba(34, 197, 94, 0.1)", color: "#16A34A" },
     Pending: { bg: "rgba(245, 158, 11, 0.1)", color: "#D97706" },
@@ -100,11 +30,15 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-export function RecentObservations() {
+export function RecentObservations({
+  observations,
+}: {
+  observations: RecentObservationRow[];
+}) {
   const [filter, setFilter] = useState<"All" | "Pending review">("All");
 
   const filtered =
-    filter === "All" ? OBSERVATIONS : OBSERVATIONS.filter((o) => o.status === "Pending");
+    filter === "All" ? observations : observations.filter((o) => o.status === "Pending");
 
   return (
     <div
@@ -146,7 +80,7 @@ export function RecentObservations() {
       <div style={{ marginTop: 6 }}>
         {filtered.map((o, i) => (
           <div
-            key={`${o.product}-${i}`}
+            key={o.id}
             style={{
               padding: "14px 0",
               borderBottom: i === filtered.length - 1 ? "none" : "1px solid #E5E2DB",
@@ -171,7 +105,7 @@ export function RecentObservations() {
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "#EA580C" }}>
-                  QAR {o.price.toFixed(2)}
+                  QAR {Number(o.price).toFixed(2)}
                 </div>
                 <StatusBadge status={o.status} />
               </div>
@@ -188,8 +122,8 @@ export function RecentObservations() {
               >
                 {o.condition}
               </span>
-              {o.promoDetail && (
-                <span style={{ fontSize: 11, color: "#9A9A9A" }}>{o.promoDetail}</span>
+              {o.promo_detail && (
+                <span style={{ fontSize: 11, color: "#9A9A9A" }}>{o.promo_detail}</span>
               )}
             </div>
             <div
@@ -201,7 +135,7 @@ export function RecentObservations() {
               }}
             >
               <span style={{ fontSize: 11, color: "#9A9A9A" }}>Agent: {o.agent}</span>
-              <span style={{ fontSize: 11, color: "#9A9A9A" }}>{o.time}</span>
+              <span style={{ fontSize: 11, color: "#9A9A9A" }}>{o.time_label}</span>
             </div>
           </div>
         ))}
