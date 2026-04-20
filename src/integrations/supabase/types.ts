@@ -611,6 +611,51 @@ export type Database = {
         }
         Relationships: []
       }
+      past_campaigns: {
+        Row: {
+          cannibalized: string
+          created_at: string
+          discount: string
+          id: string
+          incremental_gmv: string
+          name: string
+          position: number
+          roi: number
+          total_gmv: string
+          updated_at: string
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          cannibalized: string
+          created_at?: string
+          discount: string
+          id?: string
+          incremental_gmv: string
+          name: string
+          position?: number
+          roi: number
+          total_gmv: string
+          updated_at?: string
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          cannibalized?: string
+          created_at?: string
+          discount?: string
+          id?: string
+          incremental_gmv?: string
+          name?: string
+          position?: number
+          roi?: number
+          total_gmv?: string
+          updated_at?: string
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: []
+      }
       price_gaps: {
         Row: {
           competitor: string
@@ -806,6 +851,96 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_calendar: {
+        Row: {
+          campaign: string
+          categories: string
+          channel: string
+          competitor: string
+          created_at: string
+          dates: string
+          depth: string
+          duration: string
+          id: string
+          position: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign: string
+          categories: string
+          channel: string
+          competitor: string
+          created_at?: string
+          dates: string
+          depth: string
+          duration: string
+          id?: string
+          position?: number
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign?: string
+          categories?: string
+          channel?: string
+          competitor?: string
+          created_at?: string
+          dates?: string
+          depth?: string
+          duration?: string
+          id?: string
+          position?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      promotions_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
+        }
+        Relationships: []
+      }
       recent_observations: {
         Row: {
           agent: string
@@ -854,6 +989,36 @@ export type Database = {
         }
         Relationships: []
       }
+      timing_insights: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          position?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trending_products: {
         Row: {
           category: string
@@ -897,6 +1062,7 @@ export type Database = {
     Functions: {
       seed_field_intel_for_user: { Args: { uid: string }; Returns: undefined }
       seed_market_for_user: { Args: { uid: string }; Returns: undefined }
+      seed_promotions_for_user: { Args: { uid: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
