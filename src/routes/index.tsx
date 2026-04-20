@@ -1594,89 +1594,14 @@ function Footer() {
 
 function LandingPage() {
   return (
-    <div style={{ background: "#050505", minHeight: "100vh", overflowX: "hidden" }}>
-      <style>{`
-        @keyframes ps-fade-in { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes ps-mockup-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes ps-flash {
-          0% { color: #EA580C; }
-          100% { color: inherit; }
-        }
-        @keyframes ps-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
-          70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-        }
-        @keyframes ps-spark-draw { to { stroke-dashoffset: 0; } }
-        @keyframes ps-slide-up {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        html { scroll-behavior: smooth; }
-        .ps-hero-title { font-size: 32px; }
-        .ps-hero-sub { font-size: 15px; }
-        .ps-section-title { font-size: 26px; font-weight: 700; line-height: 1.2; margin: 0; }
-        .ps-feature-grid { grid-template-columns: 1fr; }
-        .ps-steps { display: flex; flex-direction: column; gap: 32px; }
-        .ps-step-line { display: none; }
-        .ps-pricing-grid { grid-template-columns: 1fr; }
-        .ps-footer-grid { display: flex; flex-direction: column; gap: 32px; }
-        .ps-faq-q:hover span { color: #EA580C !important; }
-        .ps-feature-card:hover { border-color: rgba(234, 88, 12, 0.3) !important; transform: translateY(-2px); }
-        .ps-mock-metrics { grid-template-columns: repeat(2, 1fr); }
-        .ps-mock-bottom { grid-template-columns: 1fr; }
-        @media (min-width: 560px) {
-          .ps-mock-metrics { grid-template-columns: repeat(4, 1fr); }
-          .ps-mock-bottom { grid-template-columns: 1.4fr 1fr; }
-        }
-
-        @media (min-width: 640px) {
-          .ps-feature-grid { grid-template-columns: repeat(2, 1fr); }
-          .ps-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-        }
-        @media (min-width: 768px) {
-          .ps-hero-title { font-size: 48px; }
-          .ps-hero-sub { font-size: 17px; }
-          .ps-section-title { font-size: 36px; }
-          .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
-          .ps-steps {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-            position: relative;
-          }
-          .ps-step-line {
-            display: block;
-            position: absolute;
-            top: 20px;
-            left: calc(50% + 24px);
-            right: calc(-50% + 24px);
-            height: 0;
-            border-top: 1px dashed #E5E2DB;
-            z-index: 0;
-          }
-        }
-        @media (min-width: 900px) {
-          .ps-feature-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (min-width: 768px) {
-          .ps-footer-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px; }
-        }
-      `}</style>
-      <Header />
-      <main style={{ paddingTop: 64 }}>
-        <Hero />
-        <LogosBar />
-        <Features />
-        <HowItWorks />
-        <Pricing />
-        <FAQ />
-        <CTASection />
-      </main>
-      <Footer />
-    </div>
+    <MarketingShell>
+      <Hero />
+      <LogosBar />
+      <Features />
+      <HowItWorks />
+      <Pricing />
+      <FAQ />
+      <CTASection />
+    </MarketingShell>
   );
 }
