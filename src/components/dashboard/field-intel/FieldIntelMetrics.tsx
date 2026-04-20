@@ -2,7 +2,7 @@ import { MetricCard } from "@/components/dashboard/overview/MetricsRow";
 
 export function FieldIntelMetrics() {
   return (
-    <div style={{ display: "flex", gap: 14 }}>
+    <div className="metrics-row">
       <MetricCard
         label="Observations this week"
         value="47"

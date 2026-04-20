@@ -2,7 +2,7 @@ import { MetricCard } from "@/components/dashboard/overview/MetricsRow";
 
 export function PricingMetrics() {
   return (
-    <div style={{ display: "flex", gap: 14 }}>
+    <div className="metrics-row">
       <MetricCard
         label="Active recommendations"
         value="5"
