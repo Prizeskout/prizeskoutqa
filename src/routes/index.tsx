@@ -1243,104 +1243,134 @@ function ComparisonTable() {
         Full breakdown of what's included in each plan.
       </p>
 
-      <div
-        style={{
-          marginTop: 32,
-          background: "#0A0A0A",
-          border: "1px solid #1A1A1A",
-          borderRadius: 12,
-          overflowX: "auto",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            minWidth: 640,
-            borderCollapse: "collapse",
-            fontSize: 13,
-          }}
-        >
-          <thead>
-            <tr style={{ borderBottom: "1px solid #1A1A1A" }}>
-              <th
-                scope="col"
-                style={{
-                  textAlign: "left",
-                  padding: "16px 20px",
-                  fontWeight: 500,
-                  color: "#6B6B6B",
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  width: "40%",
-                }}
-              >
-                Feature
-              </th>
-              {headers.map((h) => (
+      <style>{`
+        .ps-compare-wrap { position: relative; margin-top: 32px; }
+        .ps-compare-scroll {
+          background: #0A0A0A;
+          border: 1px solid #1A1A1A;
+          border-radius: 12px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .ps-compare-fade {
+          pointer-events: none;
+          position: absolute;
+          top: 1px;
+          right: 1px;
+          bottom: 1px;
+          width: 32px;
+          border-top-right-radius: 12px;
+          border-bottom-right-radius: 12px;
+          background: linear-gradient(to right, rgba(10,10,10,0) 0%, rgba(10,10,10,0.95) 100%);
+        }
+        @media (min-width: 720px) { .ps-compare-fade { display: none; } }
+        .ps-compare-table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .ps-compare-table th, .ps-compare-table td { background: #0A0A0A; }
+        .ps-compare-table tr.ps-group-row > th { background: #050505; }
+        .ps-compare-table .ps-feat {
+          position: sticky;
+          left: 0;
+          z-index: 2;
+          box-shadow: 1px 0 0 0 #1A1A1A;
+        }
+      `}</style>
+      <div className="ps-compare-wrap">
+        <div className="ps-compare-scroll">
+          <table className="ps-compare-table">
+            <thead>
+              <tr style={{ borderBottom: "1px solid #1A1A1A" }}>
                 <th
-                  key={h}
                   scope="col"
+                  className="ps-feat"
                   style={{
-                    textAlign: "center",
+                    textAlign: "left",
                     padding: "16px 20px",
-                    fontWeight: 600,
-                    color: h === "Pro" ? "#EA580C" : "#FAFAF9",
-                    fontSize: 14,
+                    fontWeight: 500,
+                    color: "#6B6B6B",
+                    fontSize: 11,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "40%",
                   }}
                 >
-                  {h}
+                  Feature
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {COMPARISON_GROUPS.map((g) => (
-              <Fragment key={g.group}>
-                <tr style={{ background: "#050505" }}>
+                {headers.map((h) => (
                   <th
-                    scope="colgroup"
-                    colSpan={4}
+                    key={h}
+                    scope="col"
                     style={{
-                      textAlign: "left",
-                      padding: "12px 20px",
-                      fontSize: 11,
+                      textAlign: "center",
+                      padding: "16px 20px",
                       fontWeight: 600,
-                      color: "#EA580C",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      borderTop: "1px solid #1A1A1A",
-                      borderBottom: "1px solid #1A1A1A",
+                      color: h === "Pro" ? "#EA580C" : "#FAFAF9",
+                      fontSize: 14,
                     }}
                   >
-                    {g.group}
+                    {h}
                   </th>
-                </tr>
-                {g.rows.map((row) => (
-                  <tr key={row.label} style={{ borderBottom: "1px solid #141414" }}>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON_GROUPS.map((g) => (
+                <Fragment key={g.group}>
+                  <tr className="ps-group-row">
                     <th
-                      scope="row"
+                      scope="colgroup"
+                      colSpan={4}
+                      className="ps-feat"
                       style={{
                         textAlign: "left",
-                        padding: "14px 20px",
-                        fontWeight: 400,
-                        color: "#C7C7C5",
-                        fontSize: 13,
+                        padding: "12px 20px",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: "#EA580C",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        borderTop: "1px solid #1A1A1A",
+                        borderBottom: "1px solid #1A1A1A",
                       }}
                     >
-                      {row.label}
+                      {g.group}
                     </th>
-                    {row.values.map((v, i) => (
-                      <td key={i} style={{ textAlign: "center", padding: "14px 20px" }}>
-                        <ComparisonCell value={v} />
-                      </td>
-                    ))}
                   </tr>
-                ))}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+                  {g.rows.map((row) => (
+                    <tr key={row.label} style={{ borderBottom: "1px solid #141414" }}>
+                      <th
+                        scope="row"
+                        className="ps-feat"
+                        style={{
+                          textAlign: "left",
+                          padding: "14px 20px",
+                          fontWeight: 400,
+                          color: "#C7C7C5",
+                          fontSize: 13,
+                          borderBottom: "1px solid #141414",
+                        }}
+                      >
+                        {row.label}
+                      </th>
+                      {row.values.map((v, i) => (
+                        <td
+                          key={i}
+                          style={{
+                            textAlign: "center",
+                            padding: "14px 20px",
+                            borderBottom: "1px solid #141414",
+                          }}
+                        >
+                          <ComparisonCell value={v} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="ps-compare-fade" aria-hidden="true" />
       </div>
     </div>
   );
