@@ -38,7 +38,7 @@ const COUNTRIES = [
 const CURRENCIES = ["QAR", "USD", "AED", "SAR", "KWD", "BHD"] as const;
 
 export function AccountTab() {
-  const [companyName, setCompanyName] = useState("Snoonu Qatar");
+  const [companyName, setCompanyName] = useState(() => getCompany().name);
   const [industry, setIndustry] = useState<string>("E-commerce / Quick commerce");
   const [country, setCountry] = useState<string>("Qatar");
   const [currency, setCurrency] = useState<string>("QAR");
@@ -47,6 +47,13 @@ export function AccountTab() {
   const [description, setDescription] = useState(
     "Qatar's leading super-app for delivery, grocery, and lifestyle services. Operating across food, grocery, electronics, fashion, and more.",
   );
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const onSave = () => {
+    setCompany({ name: companyName.trim() || "Company" });
+    setSavedAt(Date.now());
+    window.setTimeout(() => setSavedAt(null), 1800);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
