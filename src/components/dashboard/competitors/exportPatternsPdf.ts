@@ -172,7 +172,7 @@ function drawPatternCard(
   const cardX = MARGIN_X;
   const cardW = CONTENT_W;
 
-  // We'll draw content first, measure, then stroke a border at the end.
+  // Draw content first, then stroke the card border at the end.
   const innerX = cardX + 6;
   y += 8;
 
