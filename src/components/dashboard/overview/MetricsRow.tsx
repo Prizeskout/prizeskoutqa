@@ -42,7 +42,7 @@ export function MetricCard({
 
 export function MetricsRow() {
   return (
-    <div style={{ display: "flex", gap: 14 }}>
+    <div className="metrics-row">
       <MetricCard
         label="Products tracked"
         value="2,847"

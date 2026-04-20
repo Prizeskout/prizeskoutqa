@@ -128,4 +128,17 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
   }
+
+  /* Metrics row: 2x2 grid on mobile, 4-col flex on tablet+ */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 768px) {
+    .metrics-row {
+      display: flex;
+      gap: 14px;
+    }
+  }
 }
