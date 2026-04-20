@@ -97,7 +97,7 @@ export function BrandingTab() {
   const onReset = () => {
     resetBranding();
     setAccentColor(DEFAULT_BRANDING.accentColor);
-    setBrandName(DEFAULT_BRANDING.brandName);
+    setBrandName(companyName);
     setLogoDataUrl("");
     setLogoError(null);
     setSavedAt(Date.now());
