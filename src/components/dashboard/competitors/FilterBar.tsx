@@ -177,10 +177,10 @@ export function FilterBar({
         ))}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div className="competitors-controls">
         <PillDropdown value={channel} options={CHANNEL_OPTS} onChange={setChannel} />
         <PillDropdown label="Sort:" value={sort} options={SORT_OPTS} onChange={setSort} />
-        <div style={{ position: "relative", width: 220 }}>
+        <div className="competitors-search">
           <Search
             size={16}
             color="#9A9A9A"
@@ -204,6 +204,38 @@ export function FilterBar({
           />
         </div>
       </div>
+      <style>{`
+        .competitors-controls {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+          width: 100%;
+        }
+        .competitors-controls > div > button {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .competitors-search {
+          position: relative;
+          width: 100%;
+        }
+        @media (min-width: 768px) {
+          .competitors-controls {
+            flex-direction: row;
+            align-items: center;
+            gap: 14px;
+            width: auto;
+          }
+          .competitors-controls > div > button {
+            width: auto;
+            justify-content: flex-start;
+          }
+          .competitors-search {
+            width: 220px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
