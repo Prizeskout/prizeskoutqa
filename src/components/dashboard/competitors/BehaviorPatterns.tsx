@@ -312,7 +312,7 @@ function PatternCard({ pattern }: { pattern: Pattern }) {
               flexWrap: "wrap",
             }}
           >
-            <span style={channelPillStyle(pattern.channel)}>
+            <span style={channelPillStyle(pattern.channel, accentColor)}>
               {pattern.channel}
             </span>
             <span
@@ -382,13 +382,15 @@ function PatternCard({ pattern }: { pattern: Pattern }) {
       <div
         style={{
           marginTop: 14,
-          backgroundColor: "rgba(234, 88, 12, 0.04)",
+          backgroundColor: accentRgba(accentColor, 0.04),
           borderRadius: 8,
           padding: "16px 20px",
-          borderLeft: "3px solid #EA580C",
+          borderLeft: `3px solid ${accentColor}`,
         }}
       >
-        <SectionLabel color="#EA580C">Recommendation for Snoonu</SectionLabel>
+        <SectionLabel color={accentColor}>
+          Recommendation for {brandName}
+        </SectionLabel>
         <div
           style={{
             fontSize: 13,
