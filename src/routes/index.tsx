@@ -10,6 +10,9 @@ import {
   Target,
   Check,
   ChevronDown,
+  Camera,
+  Play,
+  Globe,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
