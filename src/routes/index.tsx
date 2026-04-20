@@ -20,7 +20,7 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout Commerce Intelligence, AI Pricing for Retail" },
+      { title: "PrizeSkout | Commerce Intelligence" },
       {
         name: "description",
         content:
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "PrizeSkout Commerce Intelligence, AI Pricing for Retail",
+        content: "PrizeSkout | Commerce Intelligence",
       },
       {
         property: "og:description",
