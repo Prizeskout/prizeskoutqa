@@ -10,33 +10,141 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
+import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
+import { Route as DashboardMarketRouteImport } from './routes/dashboard.market'
+import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.field-intel'
+import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
+import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/dashboard/settings',
+  path: '/dashboard/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardPromotionsRoute = DashboardPromotionsRouteImport.update({
+  id: '/dashboard/promotions',
+  path: '/dashboard/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardPricingRoute = DashboardPricingRouteImport.update({
+  id: '/dashboard/pricing',
+  path: '/dashboard/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardMarketRoute = DashboardMarketRouteImport.update({
+  id: '/dashboard/market',
+  path: '/dashboard/market',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardFieldIntelRoute = DashboardFieldIntelRouteImport.update({
+  id: '/dashboard/field-intel',
+  path: '/dashboard/field-intel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardCompetitorsRoute = DashboardCompetitorsRouteImport.update({
+  id: '/dashboard/competitors',
+  path: '/dashboard/competitors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardBenchmarksRoute = DashboardBenchmarksRouteImport.update({
+  id: '/dashboard/benchmarks',
+  path: '/dashboard/benchmarks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
+  '/dashboard/competitors': typeof DashboardCompetitorsRoute
+  '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/market': typeof DashboardMarketRoute
+  '/dashboard/pricing': typeof DashboardPricingRoute
+  '/dashboard/promotions': typeof DashboardPromotionsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
+  '/dashboard/competitors': typeof DashboardCompetitorsRoute
+  '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/market': typeof DashboardMarketRoute
+  '/dashboard/pricing': typeof DashboardPricingRoute
+  '/dashboard/promotions': typeof DashboardPromotionsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
+  '/dashboard/competitors': typeof DashboardCompetitorsRoute
+  '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/market': typeof DashboardMarketRoute
+  '/dashboard/pricing': typeof DashboardPricingRoute
+  '/dashboard/promotions': typeof DashboardPromotionsRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard/benchmarks'
+    | '/dashboard/competitors'
+    | '/dashboard/field-intel'
+    | '/dashboard/market'
+    | '/dashboard/pricing'
+    | '/dashboard/promotions'
+    | '/dashboard/settings'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard/benchmarks'
+    | '/dashboard/competitors'
+    | '/dashboard/field-intel'
+    | '/dashboard/market'
+    | '/dashboard/pricing'
+    | '/dashboard/promotions'
+    | '/dashboard/settings'
+    | '/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard/benchmarks'
+    | '/dashboard/competitors'
+    | '/dashboard/field-intel'
+    | '/dashboard/market'
+    | '/dashboard/pricing'
+    | '/dashboard/promotions'
+    | '/dashboard/settings'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
+  DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
+  DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
+  DashboardMarketRoute: typeof DashboardMarketRoute
+  DashboardPricingRoute: typeof DashboardPricingRoute
+  DashboardPromotionsRoute: typeof DashboardPromotionsRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +156,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/dashboard/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/promotions': {
+      id: '/dashboard/promotions'
+      path: '/dashboard/promotions'
+      fullPath: '/dashboard/promotions'
+      preLoaderRoute: typeof DashboardPromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/pricing': {
+      id: '/dashboard/pricing'
+      path: '/dashboard/pricing'
+      fullPath: '/dashboard/pricing'
+      preLoaderRoute: typeof DashboardPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/market': {
+      id: '/dashboard/market'
+      path: '/dashboard/market'
+      fullPath: '/dashboard/market'
+      preLoaderRoute: typeof DashboardMarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/field-intel': {
+      id: '/dashboard/field-intel'
+      path: '/dashboard/field-intel'
+      fullPath: '/dashboard/field-intel'
+      preLoaderRoute: typeof DashboardFieldIntelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/competitors': {
+      id: '/dashboard/competitors'
+      path: '/dashboard/competitors'
+      fullPath: '/dashboard/competitors'
+      preLoaderRoute: typeof DashboardCompetitorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/benchmarks': {
+      id: '/dashboard/benchmarks'
+      path: '/dashboard/benchmarks'
+      fullPath: '/dashboard/benchmarks'
+      preLoaderRoute: typeof DashboardBenchmarksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardBenchmarksRoute: DashboardBenchmarksRoute,
+  DashboardCompetitorsRoute: DashboardCompetitorsRoute,
+  DashboardFieldIntelRoute: DashboardFieldIntelRoute,
+  DashboardMarketRoute: DashboardMarketRoute,
+  DashboardPricingRoute: DashboardPricingRoute,
+  DashboardPromotionsRoute: DashboardPromotionsRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
