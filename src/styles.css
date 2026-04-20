@@ -72,7 +72,8 @@
   --color-destructive-foreground: #ffffff;
   --color-border: var(--color-light-border);
   --color-input: var(--color-light-border);
-  --color-ring: var(--color-brand-orange);
+  --color-ring: color-mix(in oklab, var(--color-brand-orange) 40%, transparent);
+  --color-sidebar-ring: color-mix(in oklab, var(--color-brand-orange) 40%, transparent);
 }
 
 @layer base {
