@@ -1,59 +1,9 @@
+import { useEffect, useState } from "react";
+import { type OverviewAlert, formatRelativeTime } from "@/lib/overview-data";
+
 type AlertType = "price" | "stock" | "promo" | "pattern" | "insight";
 type Channel = "online" | "in-store";
 type Severity = "action" | "opportunity" | "intel";
-
-type Alert = {
-  type: AlertType;
-  channel: Channel;
-  msg: string;
-  severity: Severity;
-  time: string;
-};
-
-const ALERTS: Alert[] = [
-  {
-    type: "price",
-    channel: "online",
-    msg: "Carrefour dropped Sony WH-1000XM5 to QAR 1,149 (-4.2%)",
-    severity: "action",
-    time: "2 min ago",
-  },
-  {
-    type: "stock",
-    channel: "online",
-    msg: "Lulu out of stock on Samsung Galaxy S24 Ultra. Estimated restock: 3-4 days.",
-    severity: "opportunity",
-    time: "18 min ago",
-  },
-  {
-    type: "pattern",
-    channel: "online",
-    msg: "Talabat Eid sale detected. Matches their annual pattern. Confidence: 92%.",
-    severity: "intel",
-    time: "1 hr ago",
-  },
-  {
-    type: "price",
-    channel: "in-store",
-    msg: "Carrefour Doha Festival City raised iPhone 15 Pro price by QAR 100 in-store.",
-    severity: "intel",
-    time: "2 hrs ago",
-  },
-  {
-    type: "insight",
-    channel: "online",
-    msg: "Your avg price response time improved to 4.2 hrs. Market average is 8.1 hrs.",
-    severity: "intel",
-    time: "5 hrs ago",
-  },
-  {
-    type: "promo",
-    channel: "in-store",
-    msg: "Lulu Hypermarket Lusail running 20% off on home appliances in-store only.",
-    severity: "opportunity",
-    time: "6 hrs ago",
-  },
-];
 
 const TYPE_STYLES: Record<AlertType, { bg: string; color: string }> = {
   price: { bg: "rgba(245, 158, 11, 0.1)", color: "#D97706" },
