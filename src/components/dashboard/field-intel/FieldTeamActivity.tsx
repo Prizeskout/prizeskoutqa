@@ -1,16 +1,7 @@
-type Agent = { name: string; role: string; count: number };
+import type { FieldTeamActivityRow } from "@/lib/field-intel-data";
 
-const AGENTS: Agent[] = [
-  { name: "Ahmad K.", role: "Field agent, Doha", count: 16 },
-  { name: "Sara M.", role: "Field agent, Lusail", count: 13 },
-  { name: "Fatima R.", role: "Field agent, Al Gharafa", count: 9 },
-  { name: "Omar H.", role: "Field agent, Doha", count: 7 },
-  { name: "Yusuf A.", role: "Field agent, Al Wakrah", count: 2 },
-];
-
-const MAX = 16;
-
-export function FieldTeamActivity() {
+export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow[] }) {
+  const max = activity.reduce((m, a) => Math.max(m, a.observation_count), 1);
   return (
     <div
       style={{
@@ -25,18 +16,18 @@ export function FieldTeamActivity() {
         Observation volume by team member this week
       </div>
       <div style={{ marginTop: 8 }}>
-        {AGENTS.map((a, i) => (
+        {activity.map((a, i) => (
           <div
-            key={a.name}
+            key={a.id}
             style={{
               padding: "10px 0",
-              borderBottom: i === AGENTS.length - 1 ? "none" : "1px solid #F5F4F1",
+              borderBottom: i === activity.length - 1 ? "none" : "1px solid #F5F4F1",
               display: "flex",
               alignItems: "center",
             }}
           >
             <div style={{ minWidth: 180 }}>
-              <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A18" }}>{a.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A18" }}>{a.agent_name}</div>
               <div style={{ fontSize: 11, color: "#9A9A9A" }}>{a.role}</div>
             </div>
             <div
@@ -51,15 +42,23 @@ export function FieldTeamActivity() {
             >
               <div
                 style={{
-                  width: `${(a.count / MAX) * 100}%`,
+                  width: `${(a.observation_count / max) * 100}%`,
                   height: "100%",
                   backgroundColor: "#EA580C",
                   borderRadius: 4,
                 }}
               />
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1A18", minWidth: 30, textAlign: "right" }}>
-              {a.count}
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#1A1A18",
+                minWidth: 30,
+                textAlign: "right",
+              }}
+            >
+              {a.observation_count}
             </div>
           </div>
         ))}

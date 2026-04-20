@@ -1,22 +1,5 @@
 import { AlertTriangle, ArrowDown, ArrowUp } from "lucide-react";
-
-type Row = {
-  product: string;
-  competitor: string;
-  online: number;
-  inStore: number;
-  gap: string;
-  direction: "up" | "down";
-  observed: string;
-};
-
-export const ROWS: Row[] = [
-  { product: "Samsung Galaxy S24 Ultra", competitor: "Carrefour", online: 3799, inStore: 3849, gap: "+1.3%", direction: "up", observed: "2 hrs ago" },
-  { product: "Sony WH-1000XM5", competitor: "Carrefour", online: 1199, inStore: 1149, gap: "-4.2%", direction: "down", observed: "5 hrs ago" },
-  { product: "Dyson V15 Detect", competitor: "Lulu", online: 2749, inStore: 2699, gap: "-1.8%", direction: "down", observed: "3 hrs ago" },
-  { product: "Ariel Detergent 3kg", competitor: "Lulu", online: 39.9, inStore: 37.5, gap: "-6.0%", direction: "down", observed: "6 hrs ago" },
-  { product: "Nespresso Vertuo Pop", competitor: "Lulu", online: 459, inStore: 429, gap: "-6.5%", direction: "down", observed: "1 day ago" },
-];
+import type { PriceGapRow } from "@/lib/field-intel-data";
 
 const thStyle = {
   fontSize: 11,
@@ -28,7 +11,7 @@ const thStyle = {
   letterSpacing: "0.04em",
 };
 
-export function PriceGaps() {
+export function PriceGaps({ gaps }: { gaps: PriceGapRow[] }) {
   return (
     <div
       style={{
@@ -58,11 +41,11 @@ export function PriceGaps() {
             </tr>
           </thead>
           <tbody>
-            {ROWS.map((r, i) => {
+            {gaps.map((r, i) => {
               const gapColor = r.direction === "up" ? "#F59E0B" : "#22C55E";
               return (
                 <tr
-                  key={r.product}
+                  key={r.id}
                   style={{
                     backgroundColor: i % 2 === 0 ? "white" : "#FAFAF9",
                     transition: "background 0.15s",
@@ -79,10 +62,10 @@ export function PriceGaps() {
                     {r.competitor}
                   </td>
                   <td style={{ padding: "12px", fontSize: 13, fontWeight: 400, color: "#1A1A18", textAlign: "right", borderBottom: "1px solid #F5F4F1" }}>
-                    QAR {r.online.toFixed(2)}
+                    QAR {Number(r.online_price).toFixed(2)}
                   </td>
                   <td style={{ padding: "12px", fontSize: 13, fontWeight: 600, color: "#1A1A18", textAlign: "right", borderBottom: "1px solid #F5F4F1" }}>
-                    QAR {r.inStore.toFixed(2)}
+                    QAR {Number(r.in_store_price).toFixed(2)}
                   </td>
                   <td style={{ padding: "12px", fontSize: 13, fontWeight: 600, color: gapColor, textAlign: "right", borderBottom: "1px solid #F5F4F1" }}>
                     {r.gap}
