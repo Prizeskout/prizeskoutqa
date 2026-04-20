@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   Zap,
   Crosshair,
@@ -13,6 +13,7 @@ import {
   Camera,
   Play,
   Globe,
+  Minus,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
@@ -1158,7 +1159,190 @@ function Pricing() {
           );
         })}
       </div>
+
+      <ComparisonTable />
     </section>
+  );
+}
+
+const COMPARISON_GROUPS: {
+  group: string;
+  rows: { label: string; values: [boolean | string, boolean | string, boolean | string] }[];
+}[] = [
+  {
+    group: "Catalog & monitoring",
+    rows: [
+      { label: "Products tracked", values: ["Up to 500", "Up to 5,000", "Unlimited"] },
+      { label: "Competitor monitors", values: ["5", "Unlimited", "Unlimited"] },
+      { label: "Price alerts and notifications", values: [true, true, true] },
+      { label: "Competitive dashboard", values: ["Basic", "Advanced", "Advanced"] },
+    ],
+  },
+  {
+    group: "AI & automation",
+    rows: [
+      { label: "AI pricing recommendations", values: [false, true, true] },
+      { label: "Custom AI model training", values: [false, false, true] },
+      { label: "Promotion management & ROI simulator", values: [false, true, true] },
+      { label: "Market benchmarks", values: [false, true, true] },
+    ],
+  },
+  {
+    group: "Omnichannel",
+    rows: [
+      { label: "Field intelligence (in-store)", values: [false, true, true] },
+      { label: "ERP and POS integration", values: [false, false, true] },
+      { label: "White-label option", values: [false, false, true] },
+      { label: "Custom reporting", values: [false, false, true] },
+    ],
+  },
+  {
+    group: "Access & support",
+    rows: [
+      { label: "API access", values: [false, true, true] },
+      { label: "Support", values: ["Email", "Priority", "Dedicated manager"] },
+      { label: "SLA guarantee", values: [false, false, true] },
+    ],
+  },
+];
+
+function ComparisonCell({ value }: { value: boolean | string }) {
+  if (value === true) {
+    return (
+      <span style={{ display: "inline-flex" }}>
+        <Check size={16} color="#22C55E" aria-label="Included" />
+      </span>
+    );
+  }
+  if (value === false) {
+    return (
+      <span style={{ display: "inline-flex" }}>
+        <Minus size={16} color="#3A3A3A" aria-label="Not included" />
+      </span>
+    );
+  }
+  return <span style={{ fontSize: 13, color: "#FAFAF9" }}>{value}</span>;
+}
+
+function ComparisonTable() {
+  const headers = ["Scout", "Pro", "Enterprise"] as const;
+  return (
+    <div style={{ maxWidth: 960, margin: "64px auto 0" }}>
+      <h3
+        style={{
+          fontSize: 20,
+          fontWeight: 600,
+          color: "#FAFAF9",
+          textAlign: "center",
+          margin: 0,
+        }}
+      >
+        Compare every feature
+      </h3>
+      <p style={{ fontSize: 13, color: "#8A8A8A", textAlign: "center", marginTop: 8 }}>
+        Full breakdown of what's included in each plan.
+      </p>
+
+      <div
+        style={{
+          marginTop: 32,
+          background: "#0A0A0A",
+          border: "1px solid #1A1A1A",
+          borderRadius: 12,
+          overflowX: "auto",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            minWidth: 640,
+            borderCollapse: "collapse",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr style={{ borderBottom: "1px solid #1A1A1A" }}>
+              <th
+                scope="col"
+                style={{
+                  textAlign: "left",
+                  padding: "16px 20px",
+                  fontWeight: 500,
+                  color: "#6B6B6B",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  width: "40%",
+                }}
+              >
+                Feature
+              </th>
+              {headers.map((h) => (
+                <th
+                  key={h}
+                  scope="col"
+                  style={{
+                    textAlign: "center",
+                    padding: "16px 20px",
+                    fontWeight: 600,
+                    color: h === "Pro" ? "#EA580C" : "#FAFAF9",
+                    fontSize: 14,
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARISON_GROUPS.map((g) => (
+              <Fragment key={g.group}>
+                <tr style={{ background: "#050505" }}>
+                  <th
+                    scope="colgroup"
+                    colSpan={4}
+                    style={{
+                      textAlign: "left",
+                      padding: "12px 20px",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#EA580C",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      borderTop: "1px solid #1A1A1A",
+                      borderBottom: "1px solid #1A1A1A",
+                    }}
+                  >
+                    {g.group}
+                  </th>
+                </tr>
+                {g.rows.map((row) => (
+                  <tr key={row.label} style={{ borderBottom: "1px solid #141414" }}>
+                    <th
+                      scope="row"
+                      style={{
+                        textAlign: "left",
+                        padding: "14px 20px",
+                        fontWeight: 400,
+                        color: "#C7C7C5",
+                        fontSize: 13,
+                      }}
+                    >
+                      {row.label}
+                    </th>
+                    {row.values.map((v, i) => (
+                      <td key={i} style={{ textAlign: "center", padding: "14px 20px" }}>
+                        <ComparisonCell value={v} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
