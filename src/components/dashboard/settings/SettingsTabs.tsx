@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AccountTab } from "./AccountTab";
+import { BrandingTab } from "./BrandingTab";
 import { CompetitorsTab } from "./CompetitorsTab";
 import { LocationsTab } from "./LocationsTab";
 import { NotificationsTab } from "./NotificationsTab";
@@ -8,6 +9,7 @@ import { TeamTab } from "./TeamTab";
 
 const TABS = [
   "Account",
+  "Branding",
   "Competitors",
   "Locations",
   "Notifications",
@@ -64,6 +66,7 @@ export function SettingsTabs() {
       </div>
       {/* Keep all tab panels mounted so user state (form values, toggles) persists across tab switches */}
       <div style={{ display: active === "Account" ? "block" : "none" }}><AccountTab /></div>
+      <div style={{ display: active === "Branding" ? "block" : "none" }}><BrandingTab /></div>
       <div style={{ display: active === "Competitors" ? "block" : "none" }}><CompetitorsTab /></div>
       <div style={{ display: active === "Locations" ? "block" : "none" }}><LocationsTab /></div>
       <div style={{ display: active === "Notifications" ? "block" : "none" }}><NotificationsTab /></div>
