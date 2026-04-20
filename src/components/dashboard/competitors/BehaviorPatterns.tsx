@@ -111,11 +111,12 @@ export function BehaviorPatterns() {
 }
 
 function ContextBanner() {
+  const { accentColor } = useBranding();
   return (
     <div
       style={{
-        backgroundColor: "rgba(234, 88, 12, 0.04)",
-        border: "1px solid rgba(234, 88, 12, 0.15)",
+        backgroundColor: accentRgba(accentColor, 0.04),
+        border: `1px solid ${accentRgba(accentColor, 0.15)}`,
         borderRadius: 10,
         padding: "18px 24px",
         display: "flex",
@@ -129,13 +130,13 @@ function ContextBanner() {
           width: 40,
           height: 40,
           borderRadius: 8,
-          backgroundColor: "rgba(234, 88, 12, 0.1)",
+          backgroundColor: accentRgba(accentColor, 0.1),
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Eye size={20} color="#EA580C" />
+        <Eye size={20} color={accentColor} />
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18" }}>
@@ -164,7 +165,7 @@ function ContextBanner() {
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#EA580C" }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: accentColor }}>
           4 patterns
         </div>
         <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
@@ -175,11 +176,14 @@ function ContextBanner() {
   );
 }
 
-function channelPillStyle(ch: Pattern["channel"]): CSSProperties {
+function channelPillStyle(
+  ch: Pattern["channel"],
+  accent: string,
+): CSSProperties {
   const map: Record<Pattern["channel"], { bg: string; color: string }> = {
     Online: { bg: "rgba(59, 130, 246, 0.08)", color: "#3B82F6" },
     "In-Store": { bg: "rgba(168, 85, 247, 0.08)", color: "#7C3AED" },
-    Both: { bg: "rgba(234, 88, 12, 0.08)", color: "#EA580C" },
+    Both: { bg: accentRgba(accent, 0.08), color: accent },
   };
   const { bg, color } = map[ch];
   return {
@@ -193,8 +197,9 @@ function channelPillStyle(ch: Pattern["channel"]): CSSProperties {
 }
 
 function ConfidenceRing({ value }: { value: number }) {
+  const { accentColor } = useBranding();
   const color =
-    value > 90 ? "#22C55E" : value >= 80 ? "#EA580C" : "#F59E0B";
+    value > 90 ? "#22C55E" : value >= 80 ? accentColor : "#F59E0B";
   const size = 56;
   const stroke = 4;
   const radius = (size - stroke) / 2;
