@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Eye } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportPatternsPdf } from "./exportPatternsPdf";
+import { useBranding, accentRgba } from "@/hooks/useBranding";
 
 type Pattern = {
   competitor: string;
@@ -110,11 +111,12 @@ export function BehaviorPatterns() {
 }
 
 function ContextBanner() {
+  const { accentColor } = useBranding();
   return (
     <div
       style={{
-        backgroundColor: "rgba(234, 88, 12, 0.04)",
-        border: "1px solid rgba(234, 88, 12, 0.15)",
+        backgroundColor: accentRgba(accentColor, 0.04),
+        border: `1px solid ${accentRgba(accentColor, 0.15)}`,
         borderRadius: 10,
         padding: "18px 24px",
         display: "flex",
@@ -128,13 +130,13 @@ function ContextBanner() {
           width: 40,
           height: 40,
           borderRadius: 8,
-          backgroundColor: "rgba(234, 88, 12, 0.1)",
+          backgroundColor: accentRgba(accentColor, 0.1),
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Eye size={20} color="#EA580C" />
+        <Eye size={20} color={accentColor} />
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18" }}>
@@ -163,7 +165,7 @@ function ContextBanner() {
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#EA580C" }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: accentColor }}>
           4 patterns
         </div>
         <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
@@ -174,11 +176,14 @@ function ContextBanner() {
   );
 }
 
-function channelPillStyle(ch: Pattern["channel"]): CSSProperties {
+function channelPillStyle(
+  ch: Pattern["channel"],
+  accent: string,
+): CSSProperties {
   const map: Record<Pattern["channel"], { bg: string; color: string }> = {
     Online: { bg: "rgba(59, 130, 246, 0.08)", color: "#3B82F6" },
     "In-Store": { bg: "rgba(168, 85, 247, 0.08)", color: "#7C3AED" },
-    Both: { bg: "rgba(234, 88, 12, 0.08)", color: "#EA580C" },
+    Both: { bg: accentRgba(accent, 0.08), color: accent },
   };
   const { bg, color } = map[ch];
   return {
@@ -192,8 +197,9 @@ function channelPillStyle(ch: Pattern["channel"]): CSSProperties {
 }
 
 function ConfidenceRing({ value }: { value: number }) {
+  const { accentColor } = useBranding();
   const color =
-    value > 90 ? "#22C55E" : value >= 80 ? "#EA580C" : "#F59E0B";
+    value > 90 ? "#22C55E" : value >= 80 ? accentColor : "#F59E0B";
   const size = 56;
   const stroke = 4;
   const radius = (size - stroke) / 2;
@@ -275,6 +281,7 @@ function SectionLabel({
 }
 
 function PatternCard({ pattern }: { pattern: Pattern }) {
+  const { accentColor, brandName } = useBranding();
   return (
     <div
       style={{
@@ -305,7 +312,7 @@ function PatternCard({ pattern }: { pattern: Pattern }) {
               flexWrap: "wrap",
             }}
           >
-            <span style={channelPillStyle(pattern.channel)}>
+            <span style={channelPillStyle(pattern.channel, accentColor)}>
               {pattern.channel}
             </span>
             <span
@@ -375,13 +382,15 @@ function PatternCard({ pattern }: { pattern: Pattern }) {
       <div
         style={{
           marginTop: 14,
-          backgroundColor: "rgba(234, 88, 12, 0.04)",
+          backgroundColor: accentRgba(accentColor, 0.04),
           borderRadius: 8,
           padding: "16px 20px",
-          borderLeft: "3px solid #EA580C",
+          borderLeft: `3px solid ${accentColor}`,
         }}
       >
-        <SectionLabel color="#EA580C">Recommendation for Snoonu</SectionLabel>
+        <SectionLabel color={accentColor}>
+          Recommendation for {brandName}
+        </SectionLabel>
         <div
           style={{
             fontSize: 13,
@@ -418,6 +427,7 @@ function Timeline({
 }: {
   items: { date: string; description: string }[];
 }) {
+  const { accentColor } = useBranding();
   return (
     <div style={{ position: "relative", marginTop: 8, paddingLeft: 14 }}>
       <div
@@ -450,7 +460,7 @@ function Timeline({
               width: 7,
               height: 7,
               borderRadius: "50%",
-              backgroundColor: "#EA580C",
+              backgroundColor: accentColor,
               boxShadow: "0 0 0 3px #FFFFFF",
             }}
           />
@@ -475,6 +485,7 @@ function Timeline({
 }
 
 function PatternSummary() {
+  const { accentColor, brandName } = useBranding();
   const blocks = [
     {
       bg: "rgba(34, 197, 94, 0.06)",
@@ -484,10 +495,10 @@ function PatternSummary() {
       sub: "from better timing and positioning",
     },
     {
-      bg: "rgba(234, 88, 12, 0.06)",
+      bg: accentRgba(accentColor, 0.06),
       label: "Patterns detected",
       value: "4",
-      valueColor: "#EA580C",
+      valueColor: accentColor,
       sub: "with more emerging as data grows",
     },
     {
@@ -548,8 +559,8 @@ function PatternSummary() {
       <div
         style={{
           marginTop: 16,
-          backgroundColor: "rgba(234, 88, 12, 0.04)",
-          border: "1px solid rgba(234, 88, 12, 0.15)",
+          backgroundColor: accentRgba(accentColor, 0.04),
+          border: `1px solid ${accentRgba(accentColor, 0.15)}`,
           borderRadius: 10,
           padding: "14px 20px",
           fontSize: 13,
@@ -558,7 +569,7 @@ function PatternSummary() {
         }}
       >
         These patterns are invisible to anyone without continuous, long-term
-        competitive tracking. Every month you use PrizeSkout, the pattern
+        competitive tracking. Every month you use {brandName}, the pattern
         library grows deeper. Competitors starting fresh today are 8 to 14
         months behind and counting.
       </div>

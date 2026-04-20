@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import { useBranding } from "@/hooks/useBranding";
 
 export type Recommendation = {
   id: string;
@@ -51,6 +52,7 @@ function ChannelPill({ channel }: { channel: "Online" | "In-Store" }) {
 
 export function RecommendationCard({ rec }: { rec: Recommendation }) {
   const [status, setStatus] = useState<"pending" | "applied" | "dismissed">("pending");
+  const { accentColor } = useBranding();
 
   if (status === "dismissed") return null;
 
@@ -230,10 +232,10 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
             <>
               <button
                 onClick={() => setStatus("applied")}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C2410C")}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#EA580C")}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                 style={{
-                  backgroundColor: "#EA580C",
+                  backgroundColor: accentColor,
                   color: "#FFFFFF",
                   fontSize: 12,
                   fontWeight: 600,
@@ -241,14 +243,14 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
                   borderRadius: 8,
                   border: "none",
                   cursor: "pointer",
-                  transition: "background-color 150ms ease",
+                  transition: "opacity 150ms ease",
                 }}
               >
                 Apply
               </button>
               <button
                 onClick={() => setStatus("dismissed")}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#EA580C")}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = accentColor)}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E5E2DB")}
                 style={{
                   backgroundColor: "transparent",
