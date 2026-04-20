@@ -6,7 +6,7 @@ import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
-import { useHydrationRefetch } from "@/hooks/useHydrationRefetch";
+import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   OverviewAlert,
@@ -17,10 +17,11 @@ import type {
 } from "@/lib/overview-data";
 
 async function loadOverview(): Promise<OverviewData> {
-  // SSR has no auth session — return empty payload, the client guard
-  // in `dashboard.tsx` will redirect unauthenticated users to /login.
+  // During SSR there is no auth session — keep the route in its pending state
+  // so the SSR HTML serializes the skeleton. Client-side the loader runs
+  // normally with the real session.
   if (typeof window === "undefined") {
-    return { metrics: [], alerts: [], channels: [], quickActions: [] };
+    return pendingOnSSR<OverviewData>();
   }
 
   const {
@@ -75,12 +76,6 @@ export const Route = createFileRoute("/dashboard/")({
 
 function OverviewPage() {
   const data = Route.useLoaderData();
-  const isHydrating = useHydrationRefetch(
-    data.metrics.length === 0 &&
-      data.alerts.length === 0 &&
-      data.channels.length === 0,
-  );
-  if (isHydrating) return <OverviewPendingPage />;
 
   return (
     <DashboardLayout title="Overview">

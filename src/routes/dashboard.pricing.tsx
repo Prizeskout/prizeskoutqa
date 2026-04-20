@@ -6,7 +6,7 @@ import { RecommendationsList } from "@/components/dashboard/pricing/Recommendati
 import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
 import { PricingPendingPage } from "@/components/dashboard/Skeletons";
-import { useHydrationRefetch } from "@/hooks/useHydrationRefetch";
+import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   PricingData,
@@ -16,10 +16,11 @@ import type {
 } from "@/lib/pricing-data";
 
 async function loadPricing(): Promise<PricingData> {
-  // SSR has no auth session — return empty payload, the client guard
-  // in `dashboard.tsx` will redirect unauthenticated users to /login.
+  // During SSR keep the route in its pending state so the skeleton is what
+  // serializes into the SSR HTML. Client-side the loader runs with the real
+  // session.
   if (typeof window === "undefined") {
-    return { metrics: [], recommendations: [], rules: [] };
+    return pendingOnSSR<PricingData>();
   }
 
   const {
@@ -67,12 +68,6 @@ export const Route = createFileRoute("/dashboard/pricing")({
 
 function PricingPage() {
   const data = Route.useLoaderData();
-  const isHydrating = useHydrationRefetch(
-    data.metrics.length === 0 &&
-      data.recommendations.length === 0 &&
-      data.rules.length === 0,
-  );
-  if (isHydrating) return <PricingPendingPage />;
 
   return (
     <DashboardLayout title="Pricing">
