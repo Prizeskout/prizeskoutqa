@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
+import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import type { Channel } from "./ChannelFilter";
 
@@ -11,23 +11,38 @@ export function DashboardLayout({
   children: ReactNode;
 }) {
   const [channel, setChannel] = useState<Channel>("All Channels");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FAFAF9" }}>
       <Sidebar />
-      <div style={{ marginLeft: 240, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-        <TopBar title={title} channel={channel} onChannelChange={setChannel} />
+      <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <div className="dashboard-main-shift" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        <TopBar
+          title={title}
+          channel={channel}
+          onChannelChange={setChannel}
+          onMenuClick={() => setMobileOpen(true)}
+        />
         <main
+          className="dashboard-main-content"
           style={{
             flex: 1,
             backgroundColor: "#FAFAF9",
-            padding: 24,
             overflowY: "auto",
           }}
         >
           <div style={{ maxWidth: 1080, margin: "0 auto" }}>{children}</div>
         </main>
       </div>
+      <style>{`
+        .dashboard-main-shift { margin-left: 0; }
+        .dashboard-main-content { padding: 16px; }
+        @media (min-width: 768px) {
+          .dashboard-main-shift { margin-left: 240px; }
+          .dashboard-main-content { padding: 24px; }
+        }
+      `}</style>
     </div>
   );
 }
