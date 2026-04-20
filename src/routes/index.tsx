@@ -282,7 +282,111 @@ function Header() {
   );
 }
 
+type Metric = { label: string; value: number; delta: number; color: string; prefix?: string; suffix?: string; decimals?: number };
+
+const INITIAL_METRICS: Metric[] = [
+  { label: "Avg margin", value: 24.8, delta: 0.4, color: "#EA580C", suffix: "%", decimals: 1 },
+  { label: "Price index", value: 102.3, delta: 0.2, color: "#22C55E", decimals: 1 },
+  { label: "Competitors", value: 1428, delta: 6, color: "#3B82F6" },
+  { label: "Alerts today", value: 37, delta: 1, color: "#F59E0B" },
+];
+
+type Row = { sku: string; product: string; you: number; competitor: number; trend: "up" | "down" | "flat" };
+
+const INITIAL_ROWS: Row[] = [
+  { sku: "SN-1042", product: "Galaxy Buds Pro", you: 449, competitor: 469, trend: "up" },
+  { sku: "SN-2918", product: "Nespresso Vertuo", you: 729, competitor: 699, trend: "down" },
+  { sku: "SN-3377", product: "Dyson V12 Detect", you: 2199, competitor: 2249, trend: "up" },
+  { sku: "SN-4521", product: "iPad Air 11\"", you: 2399, competitor: 2399, trend: "flat" },
+];
+
+const ALERTS = [
+  { tag: "PRICE DROP", color: "#EF4444", text: "Carrefour cut Nespresso Vertuo by QAR 30" },
+  { tag: "STOCK OUT", color: "#F59E0B", text: "Lulu out of stock on Dyson V12 Detect" },
+  { tag: "OPPORTUNITY", color: "#22C55E", text: "Raise Galaxy Buds Pro by QAR 20, still under market" },
+  { tag: "PROMO LIVE", color: "#3B82F6", text: "Talabat launched 15% off small appliances" },
+];
+
+function useTicker(intervalMs: number, fn: () => void) {
+  useEffect(() => {
+    const id = window.setInterval(fn, intervalMs);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intervalMs]);
+}
+
+function Sparkline({ color = "#EA580C", seed = 0 }: { color?: string; seed?: number }) {
+  // Generate a smooth-ish wavy line — animated by re-mounting via key
+  const points = Array.from({ length: 24 }, (_, i) => {
+    const t = i / 23;
+    const wave =
+      Math.sin(t * Math.PI * 2 + seed * 0.7) * 10 +
+      Math.cos(t * Math.PI * 3 + seed * 1.3) * 6 +
+      (Math.sin(seed + i) * 3);
+    const y = 30 - wave;
+    return `${i * (240 / 23)},${Math.max(4, Math.min(56, y))}`;
+  });
+  const path = `M ${points.join(" L ")}`;
+  const areaPath = `${path} L 240,60 L 0,60 Z`;
+  return (
+    <svg viewBox="0 0 240 60" width="100%" height="60" preserveAspectRatio="none" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id={`spark-grad-${seed}`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#spark-grad-${seed})`} />
+      <path
+        d={path}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ strokeDasharray: 600, strokeDashoffset: 600, animation: "ps-spark-draw 1.2s ease-out 0.5s forwards" }}
+      />
+    </svg>
+  );
+}
+
 function HeroMockup() {
+  const [metrics, setMetrics] = useState<Metric[]>(INITIAL_METRICS);
+  const [rows, setRows] = useState<Row[]>(INITIAL_ROWS);
+  const [alertIdx, setAlertIdx] = useState(0);
+  const [sparkSeed, setSparkSeed] = useState(0);
+
+  useTicker(2200, () => {
+    setMetrics((prev) =>
+      prev.map((m) => {
+        const drift = (Math.random() - 0.5) * (m.decimals ? 0.6 : 3);
+        const next = Math.max(0, m.value + drift);
+        return { ...m, value: next, delta: drift };
+      }),
+    );
+  });
+
+  useTicker(1800, () => {
+    setRows((prev) =>
+      prev.map((r) => {
+        const change = Math.round((Math.random() - 0.5) * 6);
+        const competitor = Math.max(10, r.competitor + change);
+        const trend: Row["trend"] = change > 0 ? "up" : change < 0 ? "down" : "flat";
+        return { ...r, competitor, trend };
+      }),
+    );
+  });
+
+  useTicker(3000, () => setAlertIdx((i) => (i + 1) % ALERTS.length));
+  useTicker(4500, () => setSparkSeed((s) => s + 1));
+
+  const fmt = (m: Metric) => {
+    const v = m.decimals ? m.value.toFixed(m.decimals) : Math.round(m.value).toLocaleString();
+    return `${m.prefix ?? ""}${v}${m.suffix ?? ""}`;
+  };
+
+  const alert = ALERTS[alertIdx];
+
   return (
     <div
       style={{
@@ -296,6 +400,7 @@ function HeroMockup() {
         animation: "ps-mockup-in 0.6s ease-out 0.3s both",
       }}
     >
+      {/* Window chrome */}
       <div
         style={{
           height: 36,
@@ -327,31 +432,254 @@ function HeroMockup() {
         </span>
       </div>
 
-      <div style={{ display: "flex", minHeight: 220 }}>
-        <div style={{ width: 40, background: "#050505" }} />
-        <div style={{ flex: 1, background: "#111111" }}>
-          <div style={{ display: "flex", gap: 8, padding: 12 }}>
-            {[
-              { color: "#EA580C" },
-              { color: "#22C55E" },
-              { color: "#3B82F6" },
-              { color: "#F59E0B" },
-            ].map((c, i) => (
-              <div
-                key={i}
+      <div style={{ display: "flex", minHeight: 320 }}>
+        {/* Sidebar strip */}
+        <div
+          style={{
+            width: 44,
+            background: "#050505",
+            borderRight: "1px solid #1A1A1A",
+            padding: "14px 0",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <span style={{ width: 20, height: 20, background: "#EA580C", borderRadius: 5 }} />
+          {[BarChart3, Crosshair, TrendingUp, MapPin, Target].map((Icon, i) => (
+            <span
+              key={i}
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: i === 0 ? "#EA580C" : "#3A3A3A",
+                background: i === 0 ? "rgba(234,88,12,0.1)" : "transparent",
+              }}
+            >
+              <Icon size={13} />
+            </span>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, background: "#0F0F0F", padding: 14, minWidth: 0 }}>
+          {/* Live status row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
                 style={{
-                  flex: 1,
-                  background: "#1A1A1A",
-                  borderRadius: 6,
-                  height: 48,
-                  padding: 6,
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#22C55E",
+                  boxShadow: "0 0 0 0 rgba(34,197,94,0.5)",
+                  animation: "ps-pulse 1.6s ease-out infinite",
+                }}
+              />
+              <span style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 500 }}>
+                Live · monitoring 1,428 SKUs
+              </span>
+            </div>
+            <span style={{ fontSize: 10, color: "#6B6B6B" }}>Updated just now</span>
+          </div>
+
+          {/* Metric cards */}
+          <div className="ps-mock-metrics" style={{ display: "grid", gap: 8 }}>
+            {metrics.map((m) => {
+              const isUp = m.delta >= 0;
+              return (
+                <div
+                  key={m.label}
+                  style={{
+                    background: "#161616",
+                    border: "1px solid #1F1F1F",
+                    borderRadius: 8,
+                    padding: "10px 12px",
+                    minWidth: 0,
+                  }}
+                >
+                  <div style={{ height: 2, background: m.color, borderRadius: 2, marginBottom: 8, opacity: 0.8 }} />
+                  <div style={{ fontSize: 10, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    {m.label}
+                  </div>
+                  <div
+                    key={fmt(m)}
+                    style={{
+                      fontSize: 17,
+                      fontWeight: 700,
+                      color: "#FAFAF9",
+                      marginTop: 2,
+                      animation: "ps-flash 0.5s ease-out",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {fmt(m)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: isUp ? "#22C55E" : "#EF4444",
+                      marginTop: 2,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {isUp ? "▲" : "▼"} {Math.abs(m.delta).toFixed(m.decimals ? 2 : 0)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Chart + alert */}
+          <div className="ps-mock-bottom" style={{ display: "grid", gap: 10, marginTop: 12 }}>
+            <div
+              style={{
+                background: "#161616",
+                border: "1px solid #1F1F1F",
+                borderRadius: 8,
+                padding: 12,
+                minWidth: 0,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 500 }}>Margin trend · 30d</span>
+                <span style={{ fontSize: 10, color: "#22C55E", fontWeight: 600 }}>+2.4%</span>
+              </div>
+              <Sparkline key={sparkSeed} color="#EA580C" seed={sparkSeed} />
+            </div>
+
+            <div
+              style={{
+                background: "#161616",
+                border: "1px solid #1F1F1F",
+                borderRadius: 8,
+                padding: 12,
+                minWidth: 0,
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 500, marginBottom: 8 }}>Live alerts</div>
+              <div
+                key={alertIdx}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  animation: "ps-slide-up 0.4s ease-out",
                 }}
               >
-                <div style={{ height: 3, background: c.color, borderRadius: 2 }} />
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: alert.color,
+                    background: `${alert.color}1A`,
+                    border: `1px solid ${alert.color}40`,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    letterSpacing: "0.04em",
+                    flexShrink: 0,
+                  }}
+                >
+                  {alert.tag}
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "#C9C9C9",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {alert.text}
+                </span>
               </div>
-            ))}
+            </div>
           </div>
-          <div style={{ background: "#1A1A1A", borderRadius: 6, height: 120, margin: "8px 12px 12px" }} />
+
+          {/* Price table */}
+          <div
+            className="ps-mock-table"
+            style={{
+              background: "#161616",
+              border: "1px solid #1F1F1F",
+              borderRadius: 8,
+              marginTop: 10,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.6fr 0.7fr 0.7fr 0.4fr",
+                padding: "8px 12px",
+                borderBottom: "1px solid #1F1F1F",
+                fontSize: 10,
+                color: "#6B6B6B",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              <span>Product</span>
+              <span style={{ textAlign: "right" }}>You</span>
+              <span style={{ textAlign: "right" }}>Market</span>
+              <span style={{ textAlign: "right" }}>Δ</span>
+            </div>
+            {rows.map((r) => {
+              const diff = r.competitor - r.you;
+              const diffColor = diff > 0 ? "#22C55E" : diff < 0 ? "#EF4444" : "#6B6B6B";
+              return (
+                <div
+                  key={r.sku}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1.6fr 0.7fr 0.7fr 0.4fr",
+                    padding: "8px 12px",
+                    fontSize: 11,
+                    borderBottom: "1px solid #1A1A1A",
+                    alignItems: "center",
+                  }}
+                >
+                  <span style={{ color: "#FAFAF9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {r.product}
+                  </span>
+                  <span style={{ textAlign: "right", color: "#9A9A9A", fontVariantNumeric: "tabular-nums" }}>
+                    {r.you}
+                  </span>
+                  <span
+                    key={r.competitor}
+                    style={{
+                      textAlign: "right",
+                      color: "#FAFAF9",
+                      fontVariantNumeric: "tabular-nums",
+                      fontWeight: 600,
+                      animation: "ps-flash 0.5s ease-out",
+                    }}
+                  >
+                    {r.competitor}
+                  </span>
+                  <span style={{ textAlign: "right", color: diffColor, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                    {r.trend === "up" ? "▲" : r.trend === "down" ? "▼" : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
