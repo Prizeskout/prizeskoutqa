@@ -1,6 +1,10 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState, useMemo, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  PasswordStrength,
+  evaluatePassword,
+} from "@/components/auth/PasswordStrength";
 import {
   Mail,
   Lock,
@@ -56,15 +60,6 @@ const countries = [
   "Other",
 ] as const;
 
-function getStrength(pw: string) {
-  const len = pw.length;
-  if (len < 4) return { bars: 0, color: "#E5E2DB", label: "" };
-  if (len < 6) return { bars: 1, color: "#EF4444", label: "Weak" };
-  if (len < 8) return { bars: 2, color: "#F59E0B", label: "Fair" };
-  if (len < 12) return { bars: 3, color: "#22C55E", label: "Good" };
-  return { bars: 4, color: "#22C55E", label: "Strong" };
-}
-
 function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -80,8 +75,6 @@ function SignupPage() {
   const navigate = useNavigate();
   const router = useRouter();
 
-  const strength = useMemo(() => getStrength(password), [password]);
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -90,8 +83,13 @@ function SignupPage() {
       setError("Please fill in your name, email, and password.");
       return;
     }
-    if (password.length < 8) {
+    const pwScore = evaluatePassword(password);
+    if (!pwScore.checks.length) {
       setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (pwScore.score < 2) {
+      setError("Please choose a stronger password — mix letters, numbers, and symbols.");
       return;
     }
     if (!agreed) {
@@ -224,35 +222,7 @@ function SignupPage() {
               </button>
             }
           />
-          <div style={{ marginTop: 8 }}>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    flex: 1,
-                    height: 3,
-                    borderRadius: 2,
-                    backgroundColor:
-                      i < strength.bars ? strength.color : "#E5E2DB",
-                    transition: "background-color 0.2s",
-                  }}
-                />
-              ))}
-            </div>
-            {strength.label && (
-              <div
-                style={{
-                  fontSize: 10,
-                  color: strength.color,
-                  marginTop: 4,
-                  fontWeight: 500,
-                }}
-              >
-                {strength.label}
-              </div>
-            )}
-          </div>
+          <PasswordStrength password={password} />
         </div>
 
         <div style={{ marginTop: 4 }}>
