@@ -1,5 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { CheckCircle, ChevronDown, Upload } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORES = [
   "Carrefour - Doha Festival City",
@@ -88,6 +90,7 @@ function StyledSelect({
 }
 
 export function SubmitObservation() {
+  const router = useRouter();
   const [store, setStore] = useState("");
   const [product, setProduct] = useState("");
   const [price, setPrice] = useState("");
@@ -97,22 +100,79 @@ export function SubmitObservation() {
   const [promoDetail, setPromoDetail] = useState("");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const showPromoField = condition === "On promotion" || condition === "Clearance";
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    setTimeout(() => {
-      setStore("");
-      setProduct("");
-      setPrice("");
-      setCurrency("QAR");
-      setCategory("");
-      setCondition("Regular price");
-      setPromoDetail("");
-      setNotes("");
-      setSubmitted(false);
-    }, 3000);
+  const handleSubmit = async () => {
+    setError(null);
+    if (!store || !product || !price || !category) {
+      setError("Please fill in store, product, price, and category.");
+      return;
+    }
+    const priceNum = Number(price);
+    if (!Number.isFinite(priceNum) || priceNum <= 0) {
+      setError("Please enter a valid price.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("You must be signed in to submit an observation.");
+        setSubmitting(false);
+        return;
+      }
+
+      const displayName =
+        (user.user_metadata?.display_name as string | undefined) ||
+        (user.email ? user.email.split("@")[0] : "You");
+
+      const promo = showPromoField ? promoDetail.trim() : "";
+      const promoWithNotes = [promo, notes.trim()].filter(Boolean).join(" — ") || null;
+
+      const { error: insertError } = await supabase.from("recent_observations").insert({
+        user_id: user.id,
+        product,
+        store,
+        price: priceNum,
+        condition,
+        promo_detail: promoWithNotes,
+        status: "Pending",
+        agent: displayName,
+        time_label: "Just now",
+        position: -Date.now(), // newest first when sorted ascending
+      });
+
+      if (insertError) {
+        setError(insertError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      await router.invalidate();
+
+      setSubmitted(true);
+      setSubmitting(false);
+      setTimeout(() => {
+        setStore("");
+        setProduct("");
+        setPrice("");
+        setCurrency("QAR");
+        setCategory("");
+        setCondition("Regular price");
+        setPromoDetail("");
+        setNotes("");
+        setSubmitted(false);
+      }, 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to submit observation.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -294,27 +354,51 @@ export function SubmitObservation() {
             </div>
           </div>
 
+          {error && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "#B91C1C",
+                backgroundColor: "rgba(239, 68, 68, 0.06)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                borderRadius: 8,
+                padding: "8px 12px",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={handleSubmit}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#C2410C")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#EA580C")}
-            onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
-            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            disabled={submitting}
+            onMouseEnter={(e) => {
+              if (!submitting) e.currentTarget.style.backgroundColor = "#C2410C";
+            }}
+            onMouseLeave={(e) => {
+              if (!submitting) e.currentTarget.style.backgroundColor = "#EA580C";
+            }}
+            onMouseDown={(e) => {
+              if (!submitting) e.currentTarget.style.transform = "scale(0.98)";
+            }}
+            onMouseUp={(e) => {
+              if (!submitting) e.currentTarget.style.transform = "scale(1)";
+            }}
             style={{
               width: "100%",
-              backgroundColor: "#EA580C",
+              backgroundColor: submitting ? "#F4A679" : "#EA580C",
               color: "white",
               fontSize: 14,
               fontWeight: 600,
               padding: 12,
               borderRadius: 8,
               border: "none",
-              cursor: "pointer",
+              cursor: submitting ? "not-allowed" : "pointer",
               transition: "all 0.15s",
             }}
           >
-            Submit observation
+            {submitting ? "Submitting…" : "Submit observation"}
           </button>
         </div>
       )}
