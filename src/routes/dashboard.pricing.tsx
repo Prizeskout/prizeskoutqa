@@ -5,6 +5,7 @@ import { ModelStatusBanner } from "@/components/dashboard/pricing/ModelStatusBan
 import { RecommendationsList } from "@/components/dashboard/pricing/RecommendationsList";
 import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
+import { PricingPendingPage } from "@/components/dashboard/Skeletons";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   PricingData,
@@ -57,6 +58,9 @@ export const Route = createFileRoute("/dashboard/pricing")({
   head: () => ({ meta: [{ title: "Pricing | PrizeSkout" }] }),
   loader: () => loadPricing(),
   staleTime: 0,
+  pendingMs: 0,
+  pendingMinMs: 300,
+  pendingComponent: PricingPendingPage,
   component: PricingPage,
 });
 

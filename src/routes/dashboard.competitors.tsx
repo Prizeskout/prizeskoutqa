@@ -14,6 +14,7 @@ import {
   type SortKey,
   getPriceValue,
 } from "@/components/dashboard/competitors/types";
+import { CompetitorsPendingPage } from "@/components/dashboard/Skeletons";
 import { supabase } from "@/integrations/supabase/client";
 import {
   rowToProduct,
@@ -62,6 +63,9 @@ export const Route = createFileRoute("/dashboard/competitors")({
   head: () => ({ meta: [{ title: "Competitors | PrizeSkout" }] }),
   loader: () => loadCompetitors(),
   staleTime: 0,
+  pendingMs: 0,
+  pendingMinMs: 300,
+  pendingComponent: CompetitorsPendingPage,
   component: CompetitorsPage,
 });
 

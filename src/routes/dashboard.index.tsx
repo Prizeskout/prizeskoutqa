@@ -5,6 +5,7 @@ import { LiveAlerts } from "@/components/dashboard/overview/LiveAlerts";
 import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
+import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   OverviewAlert,
@@ -65,6 +66,9 @@ export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Overview | PrizeSkout" }] }),
   loader: () => loadOverview(),
   staleTime: 0,
+  pendingMs: 0,
+  pendingMinMs: 300,
+  pendingComponent: OverviewPendingPage,
   component: OverviewPage,
 });
 
