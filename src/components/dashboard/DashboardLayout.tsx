@@ -25,10 +25,10 @@ export function DashboardLayout({
           onMenuClick={() => setMobileOpen(true)}
         />
         <main
+          className="dashboard-main-content"
           style={{
             flex: 1,
             backgroundColor: "#FAFAF9",
-            padding: 16,
             overflowY: "auto",
           }}
         >
@@ -37,11 +37,10 @@ export function DashboardLayout({
       </div>
       <style>{`
         .dashboard-main-shift { margin-left: 0; }
+        .dashboard-main-content { padding: 16px; }
         @media (min-width: 768px) {
           .dashboard-main-shift { margin-left: 240px; }
-        }
-        @media (min-width: 768px) {
-          main { padding: 24px !important; }
+          .dashboard-main-content { padding: 24px; }
         }
       `}</style>
     </div>
