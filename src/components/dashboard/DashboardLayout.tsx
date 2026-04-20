@@ -27,6 +27,8 @@ export function DashboardLayout({
           onMenuClick={() => setMobileOpen(true)}
         />
         <main
+          id="main-content"
+          tabIndex={-1}
           className="dashboard-main-content"
           style={{
             flex: 1,

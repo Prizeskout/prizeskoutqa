@@ -536,7 +536,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     <div style={{ background: "#050505", minHeight: "100vh", overflowX: "hidden" }}>
       <style>{SHELL_STYLES}</style>
       <Header />
-      <main style={{ paddingTop: 64 }}>{children}</main>
+      <main id="main-content" tabIndex={-1} style={{ paddingTop: 64, outline: "none" }}>{children}</main>
       <Footer />
     </div>
   );
