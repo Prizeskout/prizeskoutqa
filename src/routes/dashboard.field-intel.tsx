@@ -8,7 +8,7 @@ import { FieldTeamActivity } from "@/components/dashboard/field-intel/FieldTeamA
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { exportFieldIntelPdf } from "@/components/dashboard/field-intel/exportFieldIntelPdf";
 import { FieldIntelPendingPage } from "@/components/dashboard/Skeletons";
-import { useHydrationRefetch } from "@/hooks/useHydrationRefetch";
+import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
 import type {
   FieldIntelData,
@@ -20,7 +20,7 @@ import type {
 
 async function loadFieldIntel(): Promise<FieldIntelData> {
   if (typeof window === "undefined") {
-    return { metrics: [], observations: [], gaps: [], activity: [] };
+    return pendingOnSSR<FieldIntelData>();
   }
   const {
     data: { session },
@@ -61,14 +61,6 @@ export const Route = createFileRoute("/dashboard/field-intel")({
 
 function FieldIntelPage() {
   const data = Route.useLoaderData() as FieldIntelData;
-  const isHydrating = useHydrationRefetch(
-    data.metrics.length === 0 &&
-      data.observations.length === 0 &&
-      data.gaps.length === 0 &&
-      data.activity.length === 0,
-  );
-
-  if (isHydrating) return <FieldIntelPendingPage />;
 
   return (
     <DashboardLayout title="Field Intel">
