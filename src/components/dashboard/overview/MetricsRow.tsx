@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { OverviewMetric } from "@/lib/overview-data";
 
 export function MetricCard({
   label,
@@ -40,47 +41,47 @@ export function MetricCard({
   );
 }
 
-export function MetricsRow() {
+export function MetricsRow({ metrics }: { metrics: OverviewMetric[] }) {
+  if (!metrics.length) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#FFFFFF",
+          border: "1px dashed #E5E2DB",
+          borderRadius: 10,
+          padding: "20px 24px",
+          fontSize: 13,
+          color: "#6B6B6B",
+        }}
+      >
+        No metrics yet.
+      </div>
+    );
+  }
+
   return (
     <div className="metrics-row">
-      <MetricCard
-        label="Products tracked"
-        value="2,847"
-        footer={
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#22C55E" }}>
-            +12% vs last month
-          </span>
-        }
-      />
-      <MetricCard
-        label="Price position"
-        value="3rd / 6"
-        footer={
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#22C55E" }}>
-            Rank improved by 1
-          </span>
-        }
-      />
-      <MetricCard
-        label="Active alerts today"
-        value="14"
-        valueColor="#EA580C"
-        footer={
-          <span style={{ fontSize: 12, fontWeight: 400, color: "#6B6B6B" }}>
-            3 require action
-          </span>
-        }
-      />
-      <MetricCard
-        label="Estimated monthly savings"
-        value="QAR 48K"
-        valueColor="#22C55E"
-        footer={
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#22C55E" }}>
-            +3.2% vs last month
-          </span>
-        }
-      />
+      {metrics.map((m) => (
+        <MetricCard
+          key={m.id}
+          label={m.label}
+          value={m.value}
+          valueColor={m.value_color || "#1A1A18"}
+          footer={
+            m.footer_text ? (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: m.footer_color || "#6B6B6B",
+                }}
+              >
+                {m.footer_text}
+              </span>
+            ) : null
+          }
+        />
+      ))}
     </div>
   );
 }

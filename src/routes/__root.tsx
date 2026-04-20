@@ -1,4 +1,5 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { AuthProvider } from "@/lib/auth-context";
 
 import appCss from "../styles.css?url";
 
@@ -234,7 +235,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <>
+    <AuthProvider>
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
@@ -265,6 +266,6 @@ function RootComponent() {
         [id="main-content"]:focus { outline: none; }
       `}</style>
       <Outlet />
-    </>
+    </AuthProvider>
   );
 }

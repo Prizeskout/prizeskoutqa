@@ -1,36 +1,15 @@
-import { ArrowRight, Crosshair, TrendingUp, MapPin, type LucideIcon } from "lucide-react";
+import { ArrowRight, Crosshair, TrendingUp, MapPin, Bell, type LucideIcon } from "lucide-react";
+import type { OverviewQuickAction } from "@/lib/overview-data";
 
-type Action = {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  link: string;
+const ICON_MAP: Record<string, LucideIcon> = {
+  crosshair: Crosshair,
+  "trending-up": TrendingUp,
+  "map-pin": MapPin,
+  bell: Bell,
 };
 
-const ACTIONS: Action[] = [
-  {
-    icon: Crosshair,
-    title: "Price alerts need action",
-    description: "3 competitors have undercut your prices on tracked products.",
-    link: "View competitors",
-  },
-  {
-    icon: TrendingUp,
-    title: "5 pricing recommendations",
-    description:
-      "AI has identified 5 products where price adjustments could improve margins.",
-    link: "Review pricing",
-  },
-  {
-    icon: MapPin,
-    title: "Field intel pending review",
-    description: "4 new price observations submitted by your field team today.",
-    link: "Review submissions",
-  },
-];
-
-function ActionCard({ action }: { action: Action }) {
-  const Icon = action.icon;
+function ActionCard({ action }: { action: OverviewQuickAction }) {
+  const Icon = ICON_MAP[action.icon] || Bell;
   return (
     <div
       style={{
@@ -75,18 +54,21 @@ function ActionCard({ action }: { action: Action }) {
           alignSelf: "flex-start",
         }}
       >
-        {action.link}
+        {action.link_text}
         <ArrowRight size={14} strokeWidth={1.75} />
       </button>
     </div>
   );
 }
 
-export function QuickActions() {
+export function QuickActions({ actions }: { actions: OverviewQuickAction[] }) {
+  if (actions.length === 0) return null;
   return (
-    <div style={{ display: "flex", gap: 14 }}>
-      {ACTIONS.map((a) => (
-        <ActionCard key={a.title} action={a} />
+    <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+      {actions.map((a) => (
+        <div key={a.id} style={{ flex: "1 1 240px", minWidth: 0, display: "flex" }}>
+          <ActionCard action={a} />
+        </div>
       ))}
     </div>
   );

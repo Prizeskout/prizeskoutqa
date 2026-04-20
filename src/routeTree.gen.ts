@@ -14,6 +14,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as AboutRouteImport } from './routes/about'
@@ -52,6 +53,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -73,44 +79,44 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
-  id: '/dashboard/settings',
-  path: '/dashboard/settings',
-  getParentRoute: () => rootRouteImport,
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardPromotionsRoute = DashboardPromotionsRouteImport.update({
-  id: '/dashboard/promotions',
-  path: '/dashboard/promotions',
-  getParentRoute: () => rootRouteImport,
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardPricingRoute = DashboardPricingRouteImport.update({
-  id: '/dashboard/pricing',
-  path: '/dashboard/pricing',
-  getParentRoute: () => rootRouteImport,
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardMarketRoute = DashboardMarketRouteImport.update({
-  id: '/dashboard/market',
-  path: '/dashboard/market',
-  getParentRoute: () => rootRouteImport,
+  id: '/market',
+  path: '/market',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardFieldIntelRoute = DashboardFieldIntelRouteImport.update({
-  id: '/dashboard/field-intel',
-  path: '/dashboard/field-intel',
-  getParentRoute: () => rootRouteImport,
+  id: '/field-intel',
+  path: '/field-intel',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardCompetitorsRoute = DashboardCompetitorsRouteImport.update({
-  id: '/dashboard/competitors',
-  path: '/dashboard/competitors',
-  getParentRoute: () => rootRouteImport,
+  id: '/competitors',
+  path: '/competitors',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardBenchmarksRoute = DashboardBenchmarksRouteImport.update({
-  id: '/dashboard/benchmarks',
-  path: '/dashboard/benchmarks',
-  getParentRoute: () => rootRouteImport,
+  id: '/benchmarks',
+  path: '/benchmarks',
+  getParentRoute: () => DashboardRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -157,6 +164,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -178,6 +186,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/changelog'
     | '/contact'
+    | '/dashboard'
     | '/forgot-password'
     | '/login'
     | '/privacy'
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/changelog'
     | '/contact'
+    | '/dashboard'
     | '/forgot-password'
     | '/login'
     | '/privacy'
@@ -236,19 +246,12 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ChangelogRoute: typeof ChangelogRoute
   ContactRoute: typeof ContactRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
-  DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
-  DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
-  DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
-  DashboardMarketRoute: typeof DashboardMarketRoute
-  DashboardPricingRoute: typeof DashboardPricingRoute
-  DashboardPromotionsRoute: typeof DashboardPromotionsRoute
-  DashboardSettingsRoute: typeof DashboardSettingsRoute
-  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -288,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -318,73 +328,75 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/': {
       id: '/dashboard/'
-      path: '/dashboard'
+      path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/settings': {
       id: '/dashboard/settings'
-      path: '/dashboard/settings'
+      path: '/settings'
       fullPath: '/dashboard/settings'
       preLoaderRoute: typeof DashboardSettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/promotions': {
       id: '/dashboard/promotions'
-      path: '/dashboard/promotions'
+      path: '/promotions'
       fullPath: '/dashboard/promotions'
       preLoaderRoute: typeof DashboardPromotionsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/pricing': {
       id: '/dashboard/pricing'
-      path: '/dashboard/pricing'
+      path: '/pricing'
       fullPath: '/dashboard/pricing'
       preLoaderRoute: typeof DashboardPricingRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/market': {
       id: '/dashboard/market'
-      path: '/dashboard/market'
+      path: '/market'
       fullPath: '/dashboard/market'
       preLoaderRoute: typeof DashboardMarketRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/field-intel': {
       id: '/dashboard/field-intel'
-      path: '/dashboard/field-intel'
+      path: '/field-intel'
       fullPath: '/dashboard/field-intel'
       preLoaderRoute: typeof DashboardFieldIntelRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/competitors': {
       id: '/dashboard/competitors'
-      path: '/dashboard/competitors'
+      path: '/competitors'
       fullPath: '/dashboard/competitors'
       preLoaderRoute: typeof DashboardCompetitorsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/benchmarks': {
       id: '/dashboard/benchmarks'
-      path: '/dashboard/benchmarks'
+      path: '/benchmarks'
       fullPath: '/dashboard/benchmarks'
       preLoaderRoute: typeof DashboardBenchmarksRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DashboardRoute
     }
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  ChangelogRoute: ChangelogRoute,
-  ContactRoute: ContactRoute,
-  ForgotPasswordRoute: ForgotPasswordRoute,
-  LoginRoute: LoginRoute,
-  PrivacyRoute: PrivacyRoute,
-  SignupRoute: SignupRoute,
-  TermsRoute: TermsRoute,
+interface DashboardRouteChildren {
+  DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
+  DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
+  DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
+  DashboardMarketRoute: typeof DashboardMarketRoute
+  DashboardPricingRoute: typeof DashboardPricingRoute
+  DashboardPromotionsRoute: typeof DashboardPromotionsRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,
@@ -394,15 +406,23 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ChangelogRoute: ChangelogRoute,
+  ContactRoute: ContactRoute,
+  DashboardRoute: DashboardRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
+  SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
