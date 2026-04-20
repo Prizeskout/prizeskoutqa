@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      overview_alerts: {
+        Row: {
+          alert_type: string
+          channel: string
+          created_at: string
+          id: string
+          message: string
+          occurred_at: string
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          channel: string
+          created_at?: string
+          id?: string
+          message: string
+          occurred_at?: string
+          severity: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          message?: string
+          occurred_at?: string
+          severity?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      overview_channels: {
+        Row: {
+          amount: string
+          color: string
+          created_at: string
+          id: string
+          label: string
+          percent: number
+          position: number
+          share_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: string
+          color: string
+          created_at?: string
+          id?: string
+          label: string
+          percent: number
+          position?: number
+          share_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: string
+          color?: string
+          created_at?: string
+          id?: string
+          label?: string
+          percent?: number
+          position?: number
+          share_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      overview_metrics: {
+        Row: {
+          created_at: string
+          footer_color: string | null
+          footer_text: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+          updated_at: string
+          user_id: string
+          value: string
+          value_color: string | null
+        }
+        Insert: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+          updated_at?: string
+          user_id: string
+          value: string
+          value_color?: string | null
+        }
+        Update: {
+          created_at?: string
+          footer_color?: string | null
+          footer_text?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+          value_color?: string | null
+        }
+        Relationships: []
+      }
+      overview_quick_actions: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          link_href: string | null
+          link_text: string
+          position: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          link_href?: string | null
+          link_text: string
+          position?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          link_href?: string | null
+          link_text?: string
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
