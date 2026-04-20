@@ -17,6 +17,7 @@ import {
 import { CompetitorsPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
+import { useLiveScrapes, indexScrapesByProduct } from "@/hooks/useLiveScrapes";
 import {
   rowToProduct,
   type CompetitorMetric,
@@ -80,6 +81,13 @@ function CompetitorsPage() {
   const [sort, setSort] = useState<SortKey>("Price gap");
   const [search, setSearch] = useState("");
 
+  const { data: liveScrapes } = useLiveScrapes();
+  const liveByProduct = useMemo(
+    () => indexScrapesByProduct(liveScrapes ?? []),
+    [liveScrapes],
+  );
+  const liveCount = liveByProduct.size;
+
   // Map DB rows -> existing UI Product shape.
   const allProducts = useMemo(
     () => data.prices.map((row, idx) => rowToProduct(row, idx)),
@@ -121,7 +129,10 @@ function CompetitorsPage() {
   }, [allProducts, category, channel, sort, search]);
 
   return (
-    <DashboardLayout title="Competitors">
+    <DashboardLayout
+      title="Competitors"
+      titleAccessory={<HeaderLivePill liveCount={liveCount} />}
+    >
       <SubTabs active={tab} onChange={setTab} />
       <div
         style={{
@@ -141,7 +152,7 @@ function CompetitorsPage() {
           search={search}
           setSearch={setSearch}
         />
-        <PriceTable products={filtered} />
+        <PriceTable products={filtered} liveByProduct={liveByProduct} />
         <PriceHistory history={data.history} />
         <OmnichannelGaps />
       </div>
@@ -149,5 +160,36 @@ function CompetitorsPage() {
         <BehaviorPatterns patterns={data.patterns} />
       </div>
     </DashboardLayout>
+  );
+}
+
+function HeaderLivePill({ liveCount }: { liveCount: number }) {
+  const live = liveCount > 0;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "4px 10px",
+        borderRadius: 999,
+        backgroundColor: live ? "rgba(34, 197, 94, 0.12)" : "rgba(154, 154, 154, 0.12)",
+        color: live ? "#16A34A" : "#6B6B6B",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+      }}
+    >
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          backgroundColor: live ? "#22C55E" : "#9A9A9A",
+          display: "inline-block",
+        }}
+      />
+      {live ? `LIVE DATA · ${liveCount} product${liveCount === 1 ? "" : "s"}` : "MOCK DATA"}
+    </span>
   );
 }
