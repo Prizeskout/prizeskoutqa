@@ -74,8 +74,56 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const router = useRouter();
 
   const strength = useMemo(() => getStrength(password), [password]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    if (!name || !email || !password) {
+      setError("Please fill in your name, email, and password.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (!agreed) {
+      setError("Please accept the Terms of Service and Privacy Policy.");
+      return;
+    }
+    setSubmitting(true);
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          display_name: name,
+          company,
+          business_type: businessType,
+          country,
+        },
+      },
+    });
+    setSubmitting(false);
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+    if (data.session) {
+      await router.invalidate();
+      navigate({ to: "/dashboard" });
+    } else {
+      setInfo("Check your inbox to confirm your email, then sign in.");
+    }
+  };
 
   return (
     <AuthShell>
@@ -87,7 +135,7 @@ function SignupPage() {
       </p>
 
       <form
-        onSubmit={(e) => e.preventDefault()}
+        onSubmit={handleSubmit}
         style={{
           marginTop: 28,
           display: "flex",
