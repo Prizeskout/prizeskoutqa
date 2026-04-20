@@ -338,6 +338,54 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_scrapes: {
+        Row: {
+          competitor: string | null
+          created_at: string
+          currency: string | null
+          error: string | null
+          id: string
+          markdown: string | null
+          metadata: Json | null
+          price: number | null
+          product: string | null
+          scraped_at: string
+          status: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          competitor?: string | null
+          created_at?: string
+          currency?: string | null
+          error?: string | null
+          id?: string
+          markdown?: string | null
+          metadata?: Json | null
+          price?: number | null
+          product?: string | null
+          scraped_at?: string
+          status?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          competitor?: string | null
+          created_at?: string
+          currency?: string | null
+          error?: string | null
+          id?: string
+          markdown?: string | null
+          metadata?: Json | null
+          price?: number | null
+          product?: string | null
+          scraped_at?: string
+          status?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cross_border_radar: {
         Row: {
           created_at: string
