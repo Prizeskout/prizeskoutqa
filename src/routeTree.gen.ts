@@ -9,6 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
@@ -19,6 +22,21 @@ import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.fiel
 import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -67,6 +85,9 @@ const DashboardBenchmarksRoute = DashboardBenchmarksRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
@@ -78,6 +99,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
@@ -90,6 +114,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
@@ -103,6 +130,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/signup'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
@@ -114,6 +144,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/signup'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
@@ -125,6 +158,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/signup'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
@@ -137,6 +173,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
   DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
   DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
@@ -149,6 +188,27 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -217,6 +277,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,
@@ -229,3 +292,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

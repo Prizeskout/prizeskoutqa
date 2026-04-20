@@ -1,0 +1,129 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import {
+  IconInput,
+  FormLabel,
+  PrimaryAuthButton,
+  BrandLogoLight,
+} from "@/components/auth/AuthShared";
+
+export const Route = createFileRoute("/forgot-password")({
+  head: () => ({
+    meta: [
+      { title: "Reset your password — PrizeSkout" },
+      {
+        name: "description",
+        content: "Reset the password for your PrizeSkout account.",
+      },
+    ],
+  }),
+  component: ForgotPasswordPage,
+});
+
+function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#FAFAF9",
+        fontFamily:
+          "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+        padding: "10vh 24px 40px 24px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 400,
+          margin: "0 auto",
+          padding: 40,
+        }}
+      >
+        <BrandLogoLight />
+
+        <h1
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: "#1A1A18",
+            marginTop: 24,
+            margin: "24px 0 0 0",
+          }}
+        >
+          Reset your password
+        </h1>
+        <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 6, margin: "6px 0 0 0" }}>
+          Enter your email and we will send you a reset link
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSent(true);
+          }}
+          style={{ marginTop: 24 }}
+        >
+          <FormLabel>Email address</FormLabel>
+          <IconInput
+            leftIcon={<Mail size={16} />}
+            value={email}
+            onChange={setEmail}
+            placeholder="you@company.com"
+            type="email"
+          />
+
+          <div style={{ marginTop: 16 }}>
+            <PrimaryAuthButton type="submit" muted={sent}>
+              {sent ? "Resend link" : "Send reset link"}
+            </PrimaryAuthButton>
+          </div>
+
+          {sent && (
+            <div
+              style={{
+                marginTop: 16,
+                backgroundColor: "rgba(34, 197, 94, 0.06)",
+                border: "1px solid rgba(34, 197, 94, 0.15)",
+                borderRadius: 8,
+                padding: "14px 18px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+              }}
+            >
+              <CheckCircle
+                size={18}
+                color="#22C55E"
+                style={{ flexShrink: 0, marginTop: 1 }}
+              />
+              <div style={{ fontSize: 13, color: "#22C55E", lineHeight: 1.5 }}>
+                Reset link sent. Check your email for instructions.
+              </div>
+            </div>
+          )}
+        </form>
+
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          <Link
+            to="/login"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#EA580C",
+              textDecoration: "none",
+            }}
+          >
+            <ArrowLeft size={14} />
+            Back to sign in
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
