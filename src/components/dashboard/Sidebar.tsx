@@ -114,7 +114,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Primary nav */}
-      <nav aria-label="Primary" className="mt-8 flex flex-col">
+      <nav aria-label="Primary navigation" className="mt-8 flex flex-col">
         {primaryNav.map((item) => (
           <NavLinkItem
             key={item.to}
@@ -130,7 +130,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Divider + Settings */}
       <div style={{ margin: "0 16px", height: 1, backgroundColor: "#1A1A1A" }} />
-      <nav aria-label="Settings" className="py-2">
+      <nav aria-label="Settings navigation" className="py-2">
         <NavLinkItem
           item={settingsNav}
           active={isActive(settingsNav.to)}
