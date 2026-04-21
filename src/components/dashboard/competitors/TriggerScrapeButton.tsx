@@ -1,13 +1,14 @@
 // Admin-only "Trigger scrape" button rendered next to each product row in the
-// Competitors price table. Opens a shadcn Dialog form to enter the URL
-// (remembered in localStorage per product so admins don't have to re-enter),
-// calls the scrapeCompetitorUrl server function, then invalidates the
-// live-scrapes query so LIVE badges refresh in place.
+// Competitors price table. Opens a shadcn Dialog with the saved URL pre-filled
+// (persisted server-side in `competitor_product_urls` per user + product +
+// competitor), calls the scrapeCompetitorUrl server function, then invalidates
+// the live-scrapes query so LIVE badges refresh in place.
 //
 // Visibility is gated by useIsAdmin — non-admins never see this button.
 
 import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { scrapeCompetitorUrl } from "@/server/scrape-competitor.functions";
 import { toast } from "sonner";
 import {
@@ -27,16 +28,8 @@ type Props = {
   competitor?: string;
 };
 
-const URL_STORAGE_PREFIX = "scrape-url:";
-
-function getRememberedUrl(product: string): string {
-  if (typeof window === "undefined") return "";
-  return window.localStorage.getItem(URL_STORAGE_PREFIX + product.toLowerCase().trim()) ?? "";
-}
-
-function rememberUrl(product: string, url: string) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(URL_STORAGE_PREFIX + product.toLowerCase().trim(), url);
+function urlKey(product: string, competitor?: string) {
+  return ["competitor-product-url", product.toLowerCase().trim(), (competitor ?? "").toLowerCase().trim()] as const;
 }
 
 export function TriggerScrapeButton({ product, competitor }: Props) {
@@ -45,21 +38,63 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const competitorKey = competitor ?? "";
+
+  // Load the saved URL for this (product, competitor) once the dialog opens.
+  const savedUrlQuery = useQuery({
+    queryKey: urlKey(product, competitor),
+    enabled: open,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("competitor_product_urls")
+        .select("url")
+        .eq("product", product)
+        .eq("competitor", competitorKey)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.url ?? "";
+    },
+  });
 
   useEffect(() => {
     if (open) {
-      setUrl(getRememberedUrl(product));
       setUrlError(null);
       setServerError(null);
     }
-  }, [open, product]);
+  }, [open]);
 
-  const [serverError, setServerError] = useState<string | null>(null);
+  // Sync fetched URL into the input whenever it lands.
+  useEffect(() => {
+    if (open && savedUrlQuery.data !== undefined) {
+      setUrl(savedUrlQuery.data);
+    }
+  }, [open, savedUrlQuery.data]);
 
   const mutation = useMutation({
-    mutationFn: async (url: string) => {
+    mutationFn: async (submittedUrl: string) => {
+      // Persist the URL first so future opens are one-click.
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (userId) {
+        const { error: upsertError } = await supabase
+          .from("competitor_product_urls")
+          .upsert(
+            {
+              user_id: userId,
+              product,
+              competitor: competitorKey,
+              url: submittedUrl,
+            },
+            { onConflict: "user_id,product,competitor" },
+          );
+        if (upsertError) throw new Error(`Failed to save URL: ${upsertError.message}`);
+      }
+
       const res = await scrapeCompetitorUrl({
-        data: { url, product, competitor },
+        data: { url: submittedUrl, product, competitor },
       });
       if (!res.ok) throw new Error(res.error || "Scrape failed");
       return res;
@@ -67,6 +102,7 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
     onSuccess: () => {
       toast.success(`Scraped "${product}"`);
       queryClient.invalidateQueries({ queryKey: ["live-scrapes"] });
+      queryClient.invalidateQueries({ queryKey: urlKey(product, competitor) });
       setServerError(null);
       setOpen(false);
     },
@@ -78,6 +114,8 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
   });
 
   const loading = mutation.isPending;
+  const loadingSavedUrl = open && savedUrlQuery.isLoading;
+  const hasSavedUrl = (savedUrlQuery.data ?? "").trim().length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +132,6 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
       return;
     }
     setUrlError(null);
-    rememberUrl(product, trimmed);
     mutation.mutate(trimmed);
   };
 
@@ -135,10 +172,9 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
           <DialogHeader>
             <DialogTitle>Trigger live scrape</DialogTitle>
             <DialogDescription>
-              Paste the competitor product URL for{" "}
-              <span className="font-medium text-foreground">{product}</span>
-              {competitor ? ` on ${competitor}` : ""}. We'll fetch the latest
-              price and flip this row to LIVE.
+              {hasSavedUrl
+                ? <>Saved URL for <span className="font-medium text-foreground">{product}</span>{competitor ? ` on ${competitor}` : ""}. Click Scrape now to confirm, or edit the URL first.</>
+                : <>Paste the competitor product URL for <span className="font-medium text-foreground">{product}</span>{competitor ? ` on ${competitor}` : ""}. We'll save it so next time it's a one-click confirm.</>}
             </DialogDescription>
           </DialogHeader>
 
@@ -149,20 +185,22 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
                 id="scrape-url"
                 type="url"
                 inputMode="url"
-                placeholder="https://www.carrefourqa.com/..."
+                placeholder={loadingSavedUrl ? "Loading saved URL…" : "https://www.carrefourqa.com/..."}
                 value={url}
                 onChange={(e) => {
                   setUrl(e.target.value);
                   if (urlError) setUrlError(null);
                 }}
                 autoFocus
-                disabled={loading}
+                disabled={loading || loadingSavedUrl}
               />
               {urlError ? (
                 <p className="text-xs text-destructive">{urlError}</p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  We'll remember this URL for next time.
+                  {hasSavedUrl
+                    ? "Saved server-side. Edits will overwrite the saved URL."
+                    : "We'll save this URL server-side for next time."}
                 </p>
               )}
             </div>
@@ -187,7 +225,7 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || loadingSavedUrl}>
                 {loading ? "Scraping…" : "Scrape now"}
               </Button>
             </DialogFooter>
