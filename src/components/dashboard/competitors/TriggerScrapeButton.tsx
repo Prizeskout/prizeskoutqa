@@ -50,24 +50,29 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
     if (open) {
       setUrl(getRememberedUrl(product));
       setUrlError(null);
+      setServerError(null);
     }
   }, [open, product]);
+
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (url: string) => {
       const res = await scrapeCompetitorUrl({
         data: { url, product, competitor },
       });
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) throw new Error(res.error || "Scrape failed");
       return res;
     },
     onSuccess: () => {
       toast.success(`Scraped "${product}"`);
       queryClient.invalidateQueries({ queryKey: ["live-scrapes"] });
+      setServerError(null);
       setOpen(false);
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : "Scrape failed";
+      setServerError(msg);
       toast.error(msg);
     },
   });
@@ -161,6 +166,17 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
                 </p>
               )}
             </div>
+
+            {serverError ? (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                  Server error
+                </p>
+                <pre className="whitespace-pre-wrap break-words text-xs text-destructive font-mono leading-relaxed max-h-40 overflow-auto">
+                  {serverError}
+                </pre>
+              </div>
+            ) : null}
 
             <DialogFooter>
               <Button
