@@ -18,6 +18,7 @@ import { CompetitorsPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
 import { useLiveScrapes, indexScrapesByProduct } from "@/hooks/useLiveScrapes";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import {
   rowToProduct,
   type CompetitorMetric,
@@ -82,6 +83,7 @@ function CompetitorsPage() {
   const [search, setSearch] = useState("");
 
   const { data: liveScrapes } = useLiveScrapes();
+  const { data: isAdmin = false } = useIsAdmin();
   const liveByProduct = useMemo(
     () => indexScrapesByProduct(liveScrapes ?? []),
     [liveScrapes],
@@ -152,7 +154,7 @@ function CompetitorsPage() {
           search={search}
           setSearch={setSearch}
         />
-        <PriceTable products={filtered} liveByProduct={liveByProduct} />
+        <PriceTable products={filtered} liveByProduct={liveByProduct} isAdmin={isAdmin} />
         <PriceHistory history={data.history} />
         <OmnichannelGaps />
       </div>

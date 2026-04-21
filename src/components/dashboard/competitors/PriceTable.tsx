@@ -7,6 +7,7 @@ import {
   formatQAR,
 } from "./types";
 import { LiveBadge } from "./LiveBadge";
+import { TriggerScrapeButton } from "./TriggerScrapeButton";
 import type { LiveScrape } from "@/hooks/useLiveScrapes";
 
 const COMP_KEYS = ["talabat", "carrefour", "lulu", "amazon", "noon"] as const;
@@ -105,9 +106,11 @@ function GapCell({ product }: { product: Product }) {
 export function PriceTable({
   products,
   liveByProduct,
+  isAdmin = false,
 }: {
   products: Product[];
   liveByProduct?: Map<string, LiveScrape>;
+  isAdmin?: boolean;
 }) {
   const [hoverId, setHoverId] = useState<number | null>(null);
 
@@ -188,10 +191,12 @@ export function PriceTable({
                         display: "flex",
                         alignItems: "center",
                         gap: 8,
+                        flexWrap: "wrap",
                       }}
                     >
                       <span style={{ fontSize: 11, color: "#6B6B6B" }}>{p.category}</span>
                       <ChannelPill channel={p.channel} />
+                      {isAdmin && <TriggerScrapeButton product={p.name} />}
                     </div>
                   </td>
                   <td style={tdRight}>
