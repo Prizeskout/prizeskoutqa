@@ -53,21 +53,25 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
     }
   }, [open, product]);
 
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const mutation = useMutation({
     mutationFn: async (url: string) => {
       const res = await scrapeCompetitorUrl({
         data: { url, product, competitor },
       });
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) throw new Error(res.error || "Scrape failed");
       return res;
     },
     onSuccess: () => {
       toast.success(`Scraped "${product}"`);
       queryClient.invalidateQueries({ queryKey: ["live-scrapes"] });
+      setServerError(null);
       setOpen(false);
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : "Scrape failed";
+      setServerError(msg);
       toast.error(msg);
     },
   });
