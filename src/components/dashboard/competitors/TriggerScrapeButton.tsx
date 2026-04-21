@@ -167,6 +167,17 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
               )}
             </div>
 
+            {serverError ? (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-destructive">
+                  Server error
+                </p>
+                <pre className="whitespace-pre-wrap break-words text-xs text-destructive font-mono leading-relaxed max-h-40 overflow-auto">
+                  {serverError}
+                </pre>
+              </div>
+            ) : null}
+
             <DialogFooter>
               <Button
                 type="button"
