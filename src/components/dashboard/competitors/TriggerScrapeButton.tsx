@@ -50,6 +50,7 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
     if (open) {
       setUrl(getRememberedUrl(product));
       setUrlError(null);
+      setServerError(null);
     }
   }, [open, product]);
 
