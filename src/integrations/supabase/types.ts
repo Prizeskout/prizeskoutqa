@@ -338,6 +338,36 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_product_urls: {
+        Row: {
+          competitor: string
+          created_at: string
+          id: string
+          product: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          competitor?: string
+          created_at?: string
+          id?: string
+          product: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          competitor?: string
+          created_at?: string
+          id?: string
+          product?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       competitor_scrapes: {
         Row: {
           competitor: string | null
