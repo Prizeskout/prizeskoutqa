@@ -20,6 +20,7 @@ import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as HooksScrapeAllRouteImport } from './routes/hooks/scrape-all'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
@@ -83,6 +84,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const HooksScrapeAllRoute = HooksScrapeAllRouteImport.update({
+  id: '/hooks/scrape-all',
+  path: '/hooks/scrape-all',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/hooks/scrape-all': typeof HooksScrapeAllRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/hooks/scrape-all': typeof HooksScrapeAllRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/hooks/scrape-all': typeof HooksScrapeAllRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/hooks/scrape-all'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/hooks/scrape-all'
     | '/dashboard'
   id:
     | '__root__'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/hooks/scrape-all'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -252,6 +264,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  HooksScrapeAllRoute: typeof HooksScrapeAllRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/hooks/scrape-all': {
+      id: '/hooks/scrape-all'
+      path: '/hooks/scrape-all'
+      fullPath: '/hooks/scrape-all'
+      preLoaderRoute: typeof HooksScrapeAllRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/settings': {
       id: '/dashboard/settings'
@@ -422,7 +442,17 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  HooksScrapeAllRoute: HooksScrapeAllRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
