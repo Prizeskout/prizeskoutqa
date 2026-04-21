@@ -2,12 +2,14 @@
 // (markdown + structured price extraction) and persist the result so the UI
 // can render a Live data badge keyed off the latest scrape per URL.
 //
-// Auth: requireSupabaseAuth gives us an RLS-scoped supabase client + userId.
-// Secret: FIRECRAWL_API_KEY_1 (the Qatar key) — never exposed to the client.
+// IMPORTANT: We call the Firecrawl REST API directly with `fetch` instead of
+// using the `@mendable/firecrawl-js` SDK. The SDK depends on `axios`, which
+// uses Node's `http` internals and is not compatible with the Cloudflare
+// Worker SSR runtime — it causes the server function to 500 before reaching
+// our handler. `fetch` is Worker-native.
 
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import Firecrawl from '@mendable/firecrawl-js';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 const InputSchema = z.object({
@@ -25,7 +27,15 @@ const PriceSchema = {
   required: ['price'],
 } as const;
 
-type ScrapeJson = { price?: number; currency?: string };
+type FirecrawlScrapeResponse = {
+  success?: boolean;
+  data?: {
+    markdown?: string;
+    json?: { price?: number; currency?: string };
+    metadata?: Record<string, unknown>;
+  };
+  error?: string;
+};
 
 export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
@@ -33,31 +43,51 @@ export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     const apiKey = process.env.FIRECRAWL_API_KEY_1;
     if (!apiKey) {
-      throw new Error('FIRECRAWL_API_KEY_1 is not configured');
+      console.error('FIRECRAWL_API_KEY_1 missing in env');
+      return { ok: false as const, error: 'FIRECRAWL_API_KEY_1 is not configured' };
     }
 
     const { supabase, userId } = context;
-    const firecrawl = new Firecrawl({ apiKey });
 
     try {
-      const result = await firecrawl.scrape(data.url, {
-        formats: [
-          'markdown',
-          { type: 'json', schema: PriceSchema, prompt: 'Extract the product price and currency from this page.' },
-        ],
-        onlyMainContent: true,
+      const fcRes = await fetch('https://api.firecrawl.dev/v2/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          url: data.url,
+          formats: [
+            'markdown',
+            {
+              type: 'json',
+              schema: PriceSchema,
+              prompt: 'Extract the product price and currency from this page.',
+            },
+          ],
+          onlyMainContent: true,
+        }),
       });
 
-      // SDK v2 returns fields on the result object; fall back to .data shape just in case.
-      const r = result as unknown as {
-        markdown?: string;
-        json?: ScrapeJson;
-        metadata?: Record<string, unknown>;
-        data?: { markdown?: string; json?: ScrapeJson; metadata?: Record<string, unknown> };
-      };
-      const markdown = r.markdown ?? r.data?.markdown ?? null;
-      const extracted = r.json ?? r.data?.json ?? {};
-      const metadata = r.metadata ?? r.data?.metadata ?? {};
+      if (!fcRes.ok) {
+        const text = await fcRes.text();
+        console.error('Firecrawl HTTP error', fcRes.status, text);
+        await (supabase.from('competitor_scrapes') as any).insert({
+          user_id: userId,
+          url: data.url,
+          competitor: data.competitor ?? null,
+          product: data.product ?? null,
+          status: 'error',
+          error: `Firecrawl ${fcRes.status}: ${text.slice(0, 500)}`,
+        });
+        return { ok: false as const, error: `Firecrawl returned ${fcRes.status}` };
+      }
+
+      const payload = (await fcRes.json()) as FirecrawlScrapeResponse;
+      const markdown = payload.data?.markdown ?? null;
+      const extracted = payload.data?.json ?? {};
+      const metadata = payload.data?.metadata ?? {};
 
       const { data: row, error } = await (supabase.from('competitor_scrapes') as any)
         .insert({
@@ -82,7 +112,7 @@ export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
       return { ok: true as const, scrape: row };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown scrape error';
-      console.error('Firecrawl scrape failed', message);
+      console.error('Scrape handler threw', message);
 
       await (supabase.from('competitor_scrapes') as any).insert({
         user_id: userId,
@@ -117,7 +147,6 @@ export const listLatestScrapes = createServerFn({ method: 'GET' })
       return { scrapes: [], error: error.message };
     }
 
-    // Dedupe to latest per URL.
     type Row = { id: string; url: string; competitor: string | null; product: string | null; price: number | null; currency: string | null; status: string; scraped_at: string };
     const rows: Row[] = (data ?? []) as Row[];
     const latest = new Map<string, Row>();
