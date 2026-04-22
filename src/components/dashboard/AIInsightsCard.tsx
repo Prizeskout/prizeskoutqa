@@ -138,7 +138,7 @@ export function AIInsightsCard({
         setInsight(row);
       })
       .catch(() => {
-        // silent — UI will show empty state
+        // silent - UI will show empty state
       })
       .finally(() => {
         if (!cancelled) setFetching(false);
@@ -287,7 +287,7 @@ export function AIInsightsCard({
         >
           <p style={{ fontSize: 13, color: "#6B6B6B", margin: 0, lineHeight: 1.5 }}>
             No {window} insights yet. Press &ldquo;Generate insights&rdquo; to summarize this
-            page&rsquo;s data for the {windowLabel(window)} — headline read, top observations,
+            page&rsquo;s data for the {windowLabel(window)} - headline read, top observations,
             recommended actions, plus the specific records each insight is based on.
           </p>
         </div>
@@ -464,7 +464,7 @@ export function AIInsightsCard({
                       </span>
                       <span style={{ fontWeight: 500, color: "#1A1A18" }}>{c.label}</span>
                       {c.ref && (
-                        <span style={{ color: "#6B6B6B" }}>— {c.ref}</span>
+                        <span style={{ color: "#6B6B6B" }}>- {c.ref}</span>
                       )}
                     </li>
                   );

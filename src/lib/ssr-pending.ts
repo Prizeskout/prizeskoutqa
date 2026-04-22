@@ -6,11 +6,11 @@
  * state, which serializes as the route's `pendingComponent` (the skeleton).
  *
  * On the client, the loader runs normally with the real session and resolves
- * with data on first paint — no double-fetch.
+ * with data on first paint - no double-fetch.
  */
 export function pendingOnSSR<T>(): Promise<T> {
   if (typeof window === "undefined") {
-    // Never resolves — route stays in pendingComponent during SSR.
+    // Never resolves - route stays in pendingComponent during SSR.
     return new Promise<T>(() => {});
   }
   // Should not be reached on the client; callers branch on `typeof window`.

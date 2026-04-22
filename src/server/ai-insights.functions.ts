@@ -304,7 +304,7 @@ Rules:
 - 2-4 actions. Each action has a short title (max 6 words) and a detail (one sentence).
 - Headline: one bold-friendly sentence (max 16 words) summarizing the most important read.
 
-CITATIONS — required:
+CITATIONS - required:
 - Build a "citations" array listing the specific records you used (products, rules, competitor rows, patterns, categories, etc.).
 - Each citation has { label, kind, ref }. Use the exact product name, competitor name, rule text or category from the snapshot in "label". Put numeric evidence (price, gap %, confidence, etc.) in "ref".
 - "kind" MUST be one of: ${ALLOWED_KINDS.join(", ")}.

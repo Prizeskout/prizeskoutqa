@@ -38,7 +38,7 @@ export function RecommendationsList({
           color: "#6B6B6B",
         }}
       >
-        No pricing recommendations yet — your dashboard will populate as the model learns
+        No pricing recommendations yet - your dashboard will populate as the model learns
         your sales and competitor data.
       </div>
     );

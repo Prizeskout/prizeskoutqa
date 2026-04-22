@@ -4,7 +4,7 @@
 
 import type { OverviewMetric } from "@/lib/overview-data";
 
-// Pricing metrics share the exact same column shape as overview metrics —
+// Pricing metrics share the exact same column shape as overview metrics -
 // reuse the type so <MetricsRow /> can render them with no changes.
 export type PricingMetric = OverviewMetric;
 

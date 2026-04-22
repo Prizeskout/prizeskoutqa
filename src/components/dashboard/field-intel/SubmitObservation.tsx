@@ -133,7 +133,7 @@ export function SubmitObservation() {
         (user.email ? user.email.split("@")[0] : "You");
 
       const promo = showPromoField ? promoDetail.trim() : "";
-      const promoWithNotes = [promo, notes.trim()].filter(Boolean).join(" — ") || null;
+      const promoWithNotes = [promo, notes.trim()].filter(Boolean).join(" - ") || null;
 
       const { error: insertError } = await supabase.from("recent_observations").insert({
         user_id: user.id,

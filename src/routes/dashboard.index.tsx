@@ -21,7 +21,7 @@ import type { AIInsight } from "@/server/ai-insights.functions";
 type OverviewPageData = OverviewData & { insight: AIInsight | null };
 
 async function loadOverview(): Promise<OverviewPageData> {
-  // During SSR there is no auth session — keep the route in its pending state
+  // During SSR there is no auth session - keep the route in its pending state
   // so the SSR HTML serializes the skeleton. Client-side the loader runs
   // normally with the real session.
   if (typeof window === "undefined") {
