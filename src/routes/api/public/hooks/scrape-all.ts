@@ -1,7 +1,8 @@
 // Cron hook: scrape every saved competitor product URL across all users.
-// Triggered by pg_cron (see migration scheduling cron.schedule) every 6 hours.
+// Triggered by pg_cron every 6 hours (see scheduled job in the database).
 // Auth: requires `Authorization: Bearer <SUPABASE_PUBLISHABLE_KEY>` matching
-// the project's anon key - same pattern as other Lovable scheduled hooks.
+// the project's anon key - bearer check happens inside the handler since
+// `/api/public/*` routes bypass platform-level auth on published sites.
 //
 // Iterates competitor_product_urls with the admin client (bypasses RLS),
 // scrapes each URL via Firecrawl, and persists results to competitor_scrapes
@@ -27,7 +28,7 @@ async function runJobs<T, R>(items: T[], fn: (item: T) => Promise<R>, concurrenc
   return results;
 }
 
-export const Route = createFileRoute("/hooks/scrape-all")({
+export const Route = createFileRoute("/api/public/hooks/scrape-all")({
   server: {
     handlers: {
       POST: async ({ request }) => {

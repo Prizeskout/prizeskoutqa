@@ -1608,6 +1608,10 @@ export type Database = {
         Returns: boolean
       }
       seed_benchmarks_for_user: { Args: { uid: string }; Returns: undefined }
+      seed_competitor_urls_for_user: {
+        Args: { uid: string }
+        Returns: undefined
+      }
       seed_field_intel_for_user: { Args: { uid: string }; Returns: undefined }
       seed_market_for_user: { Args: { uid: string }; Returns: undefined }
       seed_promotions_for_user: { Args: { uid: string }; Returns: undefined }
