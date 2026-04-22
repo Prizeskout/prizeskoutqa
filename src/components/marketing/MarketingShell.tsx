@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
 import { Menu, X, Camera, Play, Globe } from "lucide-react";
+import logoDark from "@/assets/logo-dark.svg";
 
 const NAV_LINKS = [
   { label: "Features", hash: "features" },
@@ -96,16 +97,11 @@ function Header() {
               textDecoration: "none",
             }}
           >
-            <span
-              style={{
-                width: 24,
-                height: 24,
-                background: "#EA580C",
-                borderRadius: 6,
-                display: "inline-block",
-              }}
+            <img
+              src={logoDark}
+              alt="PrizeSkout"
+              style={{ height: 28, width: "auto", display: "block" }}
             />
-            <span style={{ fontSize: 17, fontWeight: 700, color: "#FAFAF9" }}>PrizeSkout</span>
           </a>
 
           <nav className="hidden md:flex" style={{ gap: 32 }}>
@@ -202,8 +198,7 @@ function Header() {
                 textDecoration: "none",
               }}
             >
-              <span style={{ width: 24, height: 24, background: "#EA580C", borderRadius: 6 }} />
-              <span style={{ fontSize: 17, fontWeight: 700, color: "#FAFAF9" }}>PrizeSkout</span>
+              <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
             <button
               onClick={() => setMobileOpen(false)}
@@ -346,8 +341,7 @@ function Footer() {
               onClick={handleLogoClick}
               style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
             >
-              <span style={{ width: 24, height: 24, background: "#EA580C", borderRadius: 6 }} />
-              <span style={{ fontSize: 17, fontWeight: 700, color: "#FAFAF9" }}>PrizeSkout</span>
+              <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
             <p
               style={{
