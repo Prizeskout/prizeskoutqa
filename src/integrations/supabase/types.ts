@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_insights: {
+        Row: {
+          actions: Json
+          bullets: Json
+          created_at: string
+          generated_at: string
+          headline: string
+          id: string
+          model: string | null
+          page: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actions?: Json
+          bullets?: Json
+          created_at?: string
+          generated_at?: string
+          headline: string
+          id?: string
+          model?: string | null
+          page: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actions?: Json
+          bullets?: Json
+          created_at?: string
+          generated_at?: string
+          headline?: string
+          id?: string
+          model?: string | null
+          page?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       assortment_gaps: {
         Row: {
           competitors: Json
