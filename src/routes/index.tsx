@@ -1485,7 +1485,7 @@ function Pricing() {
               margin: 0,
             }}
           >
-            PRICING
+            Pricing
           </p>
           <h2
             style={{
@@ -1496,10 +1496,10 @@ function Pricing() {
               letterSpacing: "-0.02em",
             }}
           >
-            Plans that grow with your business
+            Priced like a tool you'll actually use
           </h2>
           <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 10 }}>
-            Start free. Scale as you grow. No long-term contracts.
+            One location to start. Add channels and SKUs as the value compounds. No long-term lock-in.
           </p>
 
           {/* Toggle */}
