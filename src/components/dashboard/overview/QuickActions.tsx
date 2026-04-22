@@ -1,4 +1,5 @@
 import { ArrowRight, Crosshair, TrendingUp, MapPin, Bell, type LucideIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import type { OverviewQuickAction } from "@/lib/overview-data";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -8,8 +9,23 @@ const ICON_MAP: Record<string, LucideIcon> = {
   bell: Bell,
 };
 
+// Fallback routing when link_href is empty in the database. Maps either the
+// icon slug or the link_text to the appropriate dashboard route.
+const ICON_ROUTE_FALLBACK: Record<string, string> = {
+  crosshair: "/dashboard/competitors",
+  "trending-up": "/dashboard/pricing",
+  "map-pin": "/dashboard/field-intel",
+  bell: "/dashboard/competitors",
+};
+
+function resolveHref(action: OverviewQuickAction): string {
+  if (action.link_href && action.link_href.trim().length > 0) return action.link_href;
+  return ICON_ROUTE_FALLBACK[action.icon] ?? "/dashboard";
+}
+
 function ActionCard({ action }: { action: OverviewQuickAction }) {
   const Icon = ICON_MAP[action.icon] || Bell;
+  const href = resolveHref(action);
   return (
     <div
       style={{
