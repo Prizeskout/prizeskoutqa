@@ -36,7 +36,8 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "A continuous read on competitor prices, promotions, and shelf moves — online and in-store. Built for category teams that need to defend margin without losing share.
+          "A continuous read on competitor prices, promotions, and shelf moves — online and in-store. Built for category teams that need to defend margin without losing share.",
+      },
     ],
   }),
   component: LandingPage,
