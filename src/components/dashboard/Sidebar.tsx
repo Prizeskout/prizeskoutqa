@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import logoDark from "@/assets/logo-dark.svg";
 
 type NavItem = {
   to: string;
@@ -86,23 +87,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <>
       {/* Logo */}
       <div className="flex items-center justify-between px-5 pt-6">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="flex items-center justify-center"
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 6,
-              backgroundColor: "#EA580C",
-            }}
+        <Link to="/dashboard" onClick={onNavigate} aria-label="PrizeSkout home" className="flex flex-col gap-1">
+          <img
+            src={logoDark}
+            alt="PrizeSkout"
+            style={{ height: 28, width: "auto", display: "block" }}
           />
-          <div className="flex flex-col leading-tight">
-            <span style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF" }}>PrizeSkout</span>
-            <span style={{ fontSize: 11, fontWeight: 400, color: "#8A8A8A" }}>
-              Commerce Intelligence
-            </span>
-          </div>
-        </div>
+          <span style={{ fontSize: 11, fontWeight: 400, color: "#8A8A8A", paddingLeft: 2 }}>
+            Commerce Intelligence
+          </span>
+        </Link>
         {onNavigate && (
           <button
             type="button"
