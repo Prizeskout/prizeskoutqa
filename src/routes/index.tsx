@@ -23,21 +23,20 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Commerce Intelligence" },
+      { title: "PrizeSkout — Pricing intelligence for retail" },
       {
         name: "description",
         content:
-          "AI-powered pricing intelligence for e-commerce platforms, physical retailers, and omnichannel brands. Monitor competitors and optimize prices across every channel.",
+          "PrizeSkout gives category teams a continuous read on competitor prices, promotions, and shelf moves — online and in-store — so every pricing decision is grounded in evidence.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout | Commerce Intelligence",
+        content: "PrizeSkout — Pricing intelligence for retail",
       },
       {
         property: "og:description",
         content:
-          "Monitor competitors, optimize prices, and outsmart the market across every channel.",
-      },
+          "A continuous read on competitor prices, promotions, and shelf moves — online and in-store. Built for category teams that need to defend margin without losing share.
     ],
   }),
   component: LandingPage,
