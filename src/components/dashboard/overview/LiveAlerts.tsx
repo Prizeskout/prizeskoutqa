@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { type OverviewAlert, formatRelativeTime } from "@/lib/overview-data";
+
+// Map each alert type to the dashboard surface that owns the underlying data.
+// Clicking an alert deep-links the user to that page so they can act on it.
+const ALERT_ROUTE: Record<AlertType, string> = {
+  price: "/dashboard/competitors",
+  stock: "/dashboard/field-intel",
+  promo: "/dashboard/competitors",
+  pattern: "/dashboard/competitors",
+  insight: "/dashboard/market",
+};
 
 type AlertType = "price" | "stock" | "promo" | "pattern" | "insight";
 type Channel = "online" | "in-store";
