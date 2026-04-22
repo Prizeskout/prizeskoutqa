@@ -1139,14 +1139,14 @@ function HubSection() {
             />
             <div style={{ position: "relative", zIndex: 1 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: "#EA580C", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
-                Market scan
+                Category read
               </p>
               <h3 style={{ fontSize: 22, fontWeight: 700, color: "#FAFAF9", margin: "8px 0 0", lineHeight: 1.2 }}>
-                See your category at a glance
+                The category, on one screen
               </h3>
               <p style={{ fontSize: 13, color: "#8A8A8A", marginTop: 8, lineHeight: 1.5 }}>
-                Volatility, top movers, growth pockets, and assortment gaps — across every channel
-                you operate in.
+                Volatility, top movers, growth pockets, and assortment gaps — read together so the
+                story of the category is obvious before the meeting starts.
               </p>
 
               <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
