@@ -414,8 +414,8 @@ function Hero() {
               textTransform: "uppercase",
             }}
           >
-            <Zap size={11} />
-            AI Commerce Intelligence
+            <Crosshair size={11} />
+            Pricing intelligence for retail
           </span>
 
           <h1
@@ -429,7 +429,7 @@ function Hero() {
               margin: "22px 0 0",
             }}
           >
-            Pricing,
+            Every move your competitors make.
             <br />
             <span
               style={{
@@ -439,7 +439,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              Decoded by AI
+              On the record.
             </span>
           </h1>
 
@@ -452,8 +452,9 @@ function Hero() {
               maxWidth: 520,
             }}
           >
-            Pricing intelligence for retailers, hypermarkets, and omnichannel brands. Monitor every
-            competitor, every channel — then let AI tell you exactly what to price, when, and why.
+            PrizeSkout watches competitor prices, promotions, and shelf moves across every channel
+            you sell on — online and in-store. Category teams use it to defend margin, time
+            promotions, and stop losing share to moves they didn't see coming.
           </p>
 
           <div
