@@ -2200,40 +2200,39 @@ function LandingPage() {
       <LogosBar />
 
       <SplitSection
-        eyebrow="Competitive intelligence"
+        eyebrow="Competitive watch"
         title={
           <>
-            Skip the spreadsheets.{" "}
+            Know the price{" "}
             <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Just ask.
+              before the customer does.
             </span>
           </>
         }
-        subtitle="Stop pulling reports. PrizeSkout monitors competitors in real time across every channel — online and in-store — and answers questions in plain English."
+        subtitle="A continuous read on every competitor SKU across the channels you sell on. Online prices are scraped on a schedule you control. Shelf prices come in from your field team through a workflow that takes seconds. Every change is timestamped, every source is cited."
         bullets={[
-          { Icon: Crosshair, title: "Live price tracking", desc: "Every competitor SKU, every channel, refreshed continuously." },
-          { Icon: BarChart3, title: "Promo & stock signals", desc: "Catch promotions, depletions, and reprice events the moment they happen." },
-          { Icon: MapPin, title: "In-store coverage", desc: "Field intelligence captures what scrapers can't see." },
+          { Icon: Crosshair, title: "SKU-level price tracking", desc: "Match by name, EAN, or your own catalog. No noisy fuzzy matches." },
+          { Icon: BarChart3, title: "Promo and stock signals", desc: "Catches markdowns, depletions, and reprice events as they happen." },
+          { Icon: MapPin, title: "Online and in-store, one view", desc: "Field intelligence captures shelf prices, promo collateral, and OOS." },
         ]}
         mockup={<CompetitorMockup />}
       />
 
       <SplitSection
         reverse
-        eyebrow="AI Pricing"
+        eyebrow="Decision support"
         title={
           <>
-            Data-driven{" "}
+            A reason behind{" "}
             <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              "price"
-            </span>{" "}
-            signals.
+              every price you set.
+            </span>
           </>
         }
-        subtitle="The AI learns your margins, elasticity, and market context — then tells you exactly what to price, when, and why. Confidence-scored. Citation-backed."
+        subtitle="Recommendations come with the math: the competitor evidence, the elasticity read, the expected unit and margin impact. Approve, edit, or override — it's your call. The model learns from what you ship and what you reject."
         bullets={[
-          { Icon: TrendingUp, title: "Specific recommendations", desc: "Not 'consider raising' — exact numbers with the rationale and risk." },
-          { Icon: Sparkles, title: "Gets smarter weekly", desc: "Your private model improves every week with your data and outcomes." },
+          { Icon: TrendingUp, title: "Specific moves, not 'consider'", desc: "Exact prices, expected impact, and a confidence score for each one." },
+          { Icon: Sparkles, title: "Sharper every cycle", desc: "Your private model improves with every approval, override, and outcome." },
         ]}
         mockup={<AIRecMockup />}
       />
@@ -2242,16 +2241,16 @@ function LandingPage() {
         eyebrow="Promotions"
         title={
           <>
-            Set it. Forget it.{" "}
+            Test the campaign{" "}
             <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Save margin.
+              before you fund it.
             </span>
           </>
         }
-        subtitle="Simulate every campaign before it goes live. See ROI, cannibalization, and competitor response — and catch margin-eaters before they cost you."
+        subtitle="Model depth, duration, and channel mix and see the likely outcome before a single banner goes live. Catches cannibalisation early so you stop subsidising units you would have sold at full price."
         bullets={[
-          { Icon: Megaphone, title: "ROI simulator", desc: "Model depth, duration, and channel mix to find the healthy promo window." },
-          { Icon: Target, title: "Cannibalization alerts", desc: "Know when a promo is stealing from full-price units." },
+          { Icon: Megaphone, title: "Promo ROI simulator", desc: "Forecast incremental orders, net margin, and cannibalisation by category." },
+          { Icon: Target, title: "Calendar-aware planning", desc: "See what competitors are running so your campaign doesn't collide with theirs." },
         ]}
         mockup={<ROIMockup />}
       />
