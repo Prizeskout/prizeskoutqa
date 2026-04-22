@@ -25,6 +25,7 @@ export type Database = {
           id: string
           model: string | null
           page: string
+          time_window: string
           updated_at: string
           user_id: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           id?: string
           model?: string | null
           page: string
+          time_window?: string
           updated_at?: string
           user_id: string
         }
@@ -51,6 +53,7 @@ export type Database = {
           id?: string
           model?: string | null
           page?: string
+          time_window?: string
           updated_at?: string
           user_id?: string
         }
