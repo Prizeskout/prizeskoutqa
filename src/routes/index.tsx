@@ -12,8 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Send,
-  Zap,
   ArrowRight,
   Minus,
   Star,
