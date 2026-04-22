@@ -4,7 +4,7 @@
 // competitor), calls the scrapeCompetitorUrl server function, then invalidates
 // the live-scrapes query so LIVE badges refresh in place.
 //
-// Visibility is gated by useIsAdmin — non-admins never see this button.
+// Visibility is gated by useIsAdmin - non-admins never see this button.
 
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

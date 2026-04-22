@@ -1,7 +1,7 @@
 // Cron hook: scrape every saved competitor product URL across all users.
 // Triggered by pg_cron (see migration scheduling cron.schedule) every 6 hours.
 // Auth: requires `Authorization: Bearer <SUPABASE_PUBLISHABLE_KEY>` matching
-// the project's anon key — same pattern as other Lovable scheduled hooks.
+// the project's anon key - same pattern as other Lovable scheduled hooks.
 //
 // Iterates competitor_product_urls with the admin client (bypasses RLS),
 // scrapes each URL via Firecrawl, and persists results to competitor_scrapes

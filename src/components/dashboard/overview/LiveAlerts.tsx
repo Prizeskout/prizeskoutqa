@@ -133,7 +133,7 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
 
       {alerts.length === 0 ? (
         <p style={{ fontSize: 13, color: "#6B6B6B", margin: "12px 0 0" }}>
-          No alerts yet — your dashboard will populate as competitors and prices change.
+          No alerts yet - your dashboard will populate as competitors and prices change.
         </p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>

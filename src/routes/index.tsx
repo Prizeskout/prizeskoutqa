@@ -21,7 +21,7 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout — Pricing intelligence for retail" },
+      { title: "PrizeSkout - Pricing intelligence for retail" },
       {
         name: "description",
         content: "PrizeSkout gives category teams a continuous read on competitor prices, promotions, and shelf moves online and in-store, so every pricing decision is grounded in evidence.",
@@ -431,7 +431,7 @@ function Hero() {
             }}
           >
             PrizeSkout watches competitor prices, promotions, and shelf moves across every channel
-            you sell on — online and in-store. Category teams use it to defend margin, time
+            you sell on - online and in-store. Category teams use it to defend margin, time
             promotions, and stop losing share to moves they didn't see coming.
           </p>
 
@@ -1027,7 +1027,7 @@ function ROIMockup() {
 }
 
 /* ============================================================================
-   "ULTIMATE INTELLIGENCE HUB" — overview grid
+   "ULTIMATE INTELLIGENCE HUB" - overview grid
    ========================================================================= */
 
 function HubSection() {
@@ -1075,7 +1075,7 @@ function HubSection() {
           </span>
         </h2>
         <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 12 }}>
-          Online marketplaces, delivery apps, hypermarkets, your own stores — read together, not in
+          Online marketplaces, delivery apps, hypermarkets, your own stores - read together, not in
           separate tabs.
         </p>
 
@@ -1123,7 +1123,7 @@ function HubSection() {
                 The category, on one screen
               </h3>
               <p style={{ fontSize: 13, color: "#8A8A8A", marginTop: 8, lineHeight: 1.5 }}>
-                Volatility, top movers, growth pockets, and assortment gaps — read together so the
+                Volatility, top movers, growth pockets, and assortment gaps - read together so the
                 story of the category is obvious before the meeting starts.
               </p>
 
@@ -1159,12 +1159,12 @@ function HubSection() {
               {
                 Icon: MapPin,
                 title: "Field intelligence",
-                desc: "Your reps log shelf prices, promo collateral, and OOS in seconds — and it lands beside your online data.",
+                desc: "Your reps log shelf prices, promo collateral, and OOS in seconds - and it lands beside your online data.",
               },
               {
                 Icon: Target,
                 title: "Anonymous benchmarks",
-                desc: "See where you sit on price index, promo depth, and assortment versus the network — without exposing your numbers.",
+                desc: "See where you sit on price index, promo depth, and assortment versus the network - without exposing your numbers.",
               },
               {
                 Icon: Megaphone,
@@ -1278,7 +1278,7 @@ function Testimonials() {
           What category teams say
         </h2>
         <p style={{ fontSize: 14, color: "#8A8A8A", marginTop: 10 }}>
-          Operators on the ground — pricing, e-commerce, and category leads.
+          Operators on the ground - pricing, e-commerce, and category leads.
         </p>
 
         <div
@@ -2026,7 +2026,7 @@ function FAQ() {
 }
 
 /* ============================================================================
-   FINAL CTA — heavy glow
+   FINAL CTA - heavy glow
    ========================================================================= */
 
 function CTASection() {
@@ -2099,7 +2099,7 @@ function CTASection() {
           }}
         >
           Plug your catalog in. Live competitor data on day one. A first set of recommendations
-          inside the first week. Cancel any time — but you won't.
+          inside the first week. Cancel any time - but you won't.
         </p>
         <div style={{ marginTop: 32 }}>
           <Link
@@ -2220,7 +2220,7 @@ function LandingPage() {
             </span>
           </>
         }
-        subtitle="Recommendations come with the math: the competitor evidence, the elasticity read, the expected unit and margin impact. Approve, edit, or override — it's your call. The model learns from what you ship and what you reject."
+        subtitle="Recommendations come with the math: the competitor evidence, the elasticity read, the expected unit and margin impact. Approve, edit, or override - it's your call. The model learns from what you ship and what you reject."
         bullets={[
           { Icon: TrendingUp, title: "Specific moves, not 'consider'", desc: "Exact prices, expected impact, and a confidence score for each one." },
           { Icon: Sparkles, title: "Sharper every cycle", desc: "Your private model improves with every approval, override, and outcome." },

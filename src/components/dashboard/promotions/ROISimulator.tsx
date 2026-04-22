@@ -262,7 +262,7 @@ export function ROISimulator({
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     if (isBaseline) {
-      // Only one baseline per user — clear previous, then insert.
+      // Only one baseline per user - clear previous, then insert.
       await supabase
         .from("promotions_scenarios")
         .delete()
@@ -332,9 +332,9 @@ export function ROISimulator({
   const verdictText = result.healthy
     ? `This campaign profile looks strong. Low cannibalization risk and healthy ROI. Recommended timing: launch on a ${dayOfWeek} to capture weekend traffic. Avoid overlapping with Talabat's Eid sale for maximum impact.`
     : `This campaign profile is marginal. ${
-        result.netRoi < 1.2 ? "Net ROI is below 1.2x — discount depth is eating margin faster than it lifts volume. " : ""
+        result.netRoi < 1.2 ? "Net ROI is below 1.2x - discount depth is eating margin faster than it lifts volume. " : ""
       }${
-        result.cannibalizationPct > 0.28 ? "Cannibalization risk is elevated — much of the lift is pulled-forward demand. " : ""
+        result.cannibalizationPct > 0.28 ? "Cannibalization risk is elevated - much of the lift is pulled-forward demand. " : ""
       }Consider reducing depth, shortening the window, or narrowing the category mix before launch.`;
 
   return (

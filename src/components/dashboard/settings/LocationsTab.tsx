@@ -153,7 +153,7 @@ export function LocationsTab() {
                     <span style={{ fontSize: 12, color: "#6B6B6B" }}>{l.address}</span>
                   </div>
                   <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 4 }}>
-                    Nearby competitors: {l.nearbyCompetitors || "—"}
+                    Nearby competitors: {l.nearbyCompetitors || "-"}
                   </div>
                 </div>
 

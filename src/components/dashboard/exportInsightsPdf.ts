@@ -58,7 +58,7 @@ export async function exportInsightsPdf(sections: Section[]) {
   doc.setFontSize(10);
   doc.setTextColor(...MUTED);
   const intro =
-    "Each section is a snapshot of one dashboard, summarized by your AI analyst. Every bullet and action references the specific records (products, rules, competitor moves) it was derived from — listed in the Sources block at the end of the section.";
+    "Each section is a snapshot of one dashboard, summarized by your AI analyst. Every bullet and action references the specific records (products, rules, competitor moves) it was derived from - listed in the Sources block at the end of the section.";
   const introLines = doc.splitTextToSize(intro, CONTENT_W);
   doc.text(introLines, MARGIN_X, y);
   y += introLines.length * 4.6 + 8;
@@ -189,7 +189,7 @@ function drawSection(
     doc.setFontSize(8.8);
     section.insight.citations.forEach((c, i) => {
       const idx = i + 1;
-      const refPart = c.ref ? ` — ${c.ref}` : "";
+      const refPart = c.ref ? ` - ${c.ref}` : "";
       const text = `[${idx}] ${c.label} (${c.kind})${refPart}`;
       const lines = doc.splitTextToSize(text, CONTENT_W - 4);
       y = ensureSpace(doc, y, lines.length * 4.2 + 1);
