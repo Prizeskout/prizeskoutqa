@@ -54,8 +54,8 @@ function ActionCard({ action }: { action: OverviewQuickAction }) {
       >
         {action.description}
       </p>
-      <button
-        type="button"
+      <Link
+        to={href}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -63,16 +63,13 @@ function ActionCard({ action }: { action: OverviewQuickAction }) {
           fontSize: 13,
           fontWeight: 500,
           color: "#EA580C",
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
+          textDecoration: "none",
           alignSelf: "flex-start",
         }}
       >
         {action.link_text}
         <ArrowRight size={14} strokeWidth={1.75} />
-      </button>
+      </Link>
     </div>
   );
 }
