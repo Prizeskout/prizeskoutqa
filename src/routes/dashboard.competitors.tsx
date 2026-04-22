@@ -150,6 +150,7 @@ function CompetitorsPage() {
         }}
       >
         <CompetitorMetrics metrics={data.metrics} />
+        <AIInsightsCard page="competitors" initial={data.insight} />
         <FilterBar
           category={category}
           setCategory={setCategory}
