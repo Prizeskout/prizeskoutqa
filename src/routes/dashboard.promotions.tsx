@@ -5,6 +5,7 @@ import { PromotionCalendar } from "@/components/dashboard/promotions/PromotionCa
 import { ROISimulator } from "@/components/dashboard/promotions/ROISimulator";
 import { PastCampaigns } from "@/components/dashboard/promotions/PastCampaigns";
 import { TimingInsight } from "@/components/dashboard/promotions/TimingInsight";
+import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { PromotionsPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +76,9 @@ function PromotionsPage() {
   return (
     <DashboardLayout title="Promotions">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ExportInsightsButton />
+        </div>
         <PromotionsMetrics metrics={data.metrics} />
         <PromotionCalendar promos={data.calendar} />
         <ROISimulator roiModel={data.roiModel} scenarios={data.scenarios} />

@@ -6,6 +6,7 @@ import { AssortmentGaps } from "@/components/dashboard/market/AssortmentGaps";
 import { CrossBorderRadar } from "@/components/dashboard/market/CrossBorderRadar";
 import { TrendingProducts } from "@/components/dashboard/market/TrendingProducts";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
+import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { MarketPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +78,9 @@ function MarketPage() {
   return (
     <DashboardLayout title="Market">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ExportInsightsButton />
+        </div>
         <MarketMetrics metrics={data.metrics} />
         <AIInsightsCard page="market" initial={data.insight} />
         <CategoryPerformance rows={data.categories} />
