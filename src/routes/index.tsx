@@ -2085,7 +2085,7 @@ function CTASection() {
             margin: 0,
           }}
         >
-          Outsmart the market
+          For category teams
         </p>
         <h2
           style={{
@@ -2097,7 +2097,7 @@ function CTASection() {
             letterSpacing: "-0.02em",
           }}
         >
-          Ready to price on{" "}
+          Stop pricing in{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -2106,7 +2106,7 @@ function CTASection() {
               backgroundClip: "text",
             }}
           >
-            God Mode?
+            the dark.
           </span>
         </h2>
         <p
@@ -2114,14 +2114,14 @@ function CTASection() {
             fontSize: 15,
             color: "#9A9A9A",
             marginTop: 14,
-            maxWidth: 480,
+            maxWidth: 520,
             marginLeft: "auto",
             marginRight: "auto",
             lineHeight: 1.6,
           }}
         >
-          Join commerce brands using PrizeSkout to monitor every competitor and optimize every
-          price across every channel.
+          Plug your catalog in. Live competitor data on day one. A first set of recommendations
+          inside the first week. Cancel any time — but you won't.
         </p>
         <div style={{ marginTop: 32 }}>
           <Link
@@ -2149,12 +2149,12 @@ function CTASection() {
               e.currentTarget.style.boxShadow = "0 16px 40px rgba(234,88,12,0.45)";
             }}
           >
-            Start your free trial
+            Start a 14-day trial
             <ArrowRight size={15} />
           </Link>
         </div>
         <p style={{ marginTop: 14, fontSize: 12, color: "#6B6B6B" }}>
-          14-day free trial · No credit card required
+          No card required · Live data on day one · Cancel any time
         </p>
       </div>
     </section>
