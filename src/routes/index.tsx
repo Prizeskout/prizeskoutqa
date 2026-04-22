@@ -1951,7 +1951,7 @@ function FAQ() {
             letterSpacing: "-0.02em",
           }}
         >
-          Got any{" "}
+          The questions{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -1960,7 +1960,7 @@ function FAQ() {
               backgroundClip: "text",
             }}
           >
-            Questions?
+            buyers usually ask
           </span>
         </h2>
 
