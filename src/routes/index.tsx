@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useRef, useState } from "react";
 import {
-  Zap,
   Crosshair,
   TrendingUp,
   BarChart3,
@@ -10,10 +9,14 @@ import {
   Target,
   Check,
   ChevronDown,
-  Camera,
-  Play,
-  Globe,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Send,
+  Zap,
+  ArrowRight,
   Minus,
+  Star,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
@@ -40,48 +43,9 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-function smoothScrollTo(href: string) {
-  if (href === "#top") {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    return;
-  }
-  const el = document.querySelector(href);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-type Metric = { label: string; value: number; delta: number; color: string; prefix?: string; suffix?: string; decimals?: number };
-
-const INITIAL_METRICS: Metric[] = [
-  { label: "Avg margin", value: 24.8, delta: 0.4, color: "#EA580C", suffix: "%", decimals: 1 },
-  { label: "Price index", value: 102.3, delta: 0.2, color: "#22C55E", decimals: 1 },
-  { label: "Competitors", value: 1428, delta: 6, color: "#3B82F6" },
-  { label: "Alerts today", value: 37, delta: 1, color: "#F59E0B" },
-];
-
-type Row = { sku: string; product: string; you: number; competitor: number; trend: "up" | "down" | "flat" };
-
-const INITIAL_ROWS: Row[] = [
-  { sku: "SN-1042", product: "Galaxy Buds Pro", you: 449, competitor: 469, trend: "up" },
-  { sku: "SN-2918", product: "Nespresso Vertuo", you: 729, competitor: 699, trend: "down" },
-  { sku: "SN-3377", product: "Dyson V12 Detect", you: 2199, competitor: 2249, trend: "up" },
-  { sku: "SN-4521", product: "iPad Air 11\"", you: 2399, competitor: 2399, trend: "flat" },
-];
-
-const ALERTS = [
-  { tag: "PRICE DROP", color: "#EF4444", text: "Carrefour cut Nespresso Vertuo by QAR 30" },
-  { tag: "STOCK OUT", color: "#F59E0B", text: "Lulu out of stock on Dyson V12 Detect" },
-  { tag: "OPPORTUNITY", color: "#22C55E", text: "Raise Galaxy Buds Pro by QAR 20, still under market" },
-  { tag: "PROMO LIVE", color: "#3B82F6", text: "Talabat launched 15% off small appliances" },
-];
-
-function useTicker(intervalMs: number, fn: () => void, enabled: boolean = true) {
-  useEffect(() => {
-    if (!enabled) return;
-    const id = window.setInterval(fn, intervalMs);
-    return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intervalMs, enabled]);
-}
+/* ============================================================================
+   Hooks & primitives
+   ========================================================================= */
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -111,375 +75,267 @@ function useInView<T extends Element>(rootMargin = "0px") {
   return [ref, inView] as const;
 }
 
-function Sparkline({ color = "#EA580C", seed = 0 }: { color?: string; seed?: number }) {
-  // Generate a smooth-ish wavy line, animated by re-mounting via key
-  const points = Array.from({ length: 24 }, (_, i) => {
-    const t = i / 23;
-    const wave =
-      Math.sin(t * Math.PI * 2 + seed * 0.7) * 10 +
-      Math.cos(t * Math.PI * 3 + seed * 1.3) * 6 +
-      (Math.sin(seed + i) * 3);
-    const y = 30 - wave;
-    return `${i * (240 / 23)},${Math.max(4, Math.min(56, y))}`;
-  });
-  const path = `M ${points.join(" L ")}`;
-  const areaPath = `${path} L 240,60 L 0,60 Z`;
+function useTicker(intervalMs: number, fn: () => void, enabled = true) {
+  useEffect(() => {
+    if (!enabled) return;
+    const id = window.setInterval(fn, intervalMs);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intervalMs, enabled]);
+}
+
+/* The signature radial-orange glow that sits behind feature mockups. */
+function GlowBackdrop({
+  intensity = 0.55,
+  size = 720,
+}: {
+  intensity?: number;
+  size?: number;
+}) {
   return (
-    <svg viewBox="0 0 240 60" width="100%" height="60" preserveAspectRatio="none" style={{ display: "block" }}>
-      <defs>
-        <linearGradient id={`spark-grad-${seed}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill={`url(#spark-grad-${seed})`} />
-      <path
-        d={path}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ strokeDasharray: 600, strokeDashoffset: 600, animation: "ps-spark-draw 1.2s ease-out 0.5s forwards" }}
-      />
-    </svg>
+    <div
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        background: `radial-gradient(circle at 50% 50%, rgba(234,88,12,${intensity}) 0%, rgba(234,88,12,0.18) 28%, rgba(5,5,5,0) 65%)`,
+        filter: "blur(20px)",
+        zIndex: 0,
+        maxWidth: size,
+        maxHeight: size,
+        margin: "auto",
+      }}
+    />
   );
 }
 
-function HeroMockup() {
-  const [metrics, setMetrics] = useState<Metric[]>(INITIAL_METRICS);
-  const [rows, setRows] = useState<Row[]>(INITIAL_ROWS);
-  const [alertIdx, setAlertIdx] = useState(0);
-  const [sparkSeed, setSparkSeed] = useState(0);
+/* ============================================================================
+   HERO
+   ========================================================================= */
+
+const HERO_REPLIES = [
+  {
+    user: "What is Carrefour pricing Galaxy Buds Pro at right now?",
+    response: {
+      head: "Carrefour Qatar · Galaxy Buds Pro 2",
+      lines: [
+        { tag: "PRICE", value: "QAR 449" },
+        { tag: "VS YOU", value: "−QAR 20", color: "#22C55E" },
+        { tag: "STOCK", value: "In stock · 3 stores" },
+      ],
+      action: "Recommend a counter-move",
+    },
+  },
+  {
+    user: "Where am I losing margin this week?",
+    response: {
+      head: "3 SKUs eroding margin · Talabat",
+      lines: [
+        { tag: "SKU", value: "Nespresso Vertuo" },
+        { tag: "GAP", value: "−QAR 30 vs market", color: "#EF4444" },
+        { tag: "IMPACT", value: "−QAR 4,200 / mo" },
+      ],
+      action: "Auto-tune prices",
+    },
+  },
+  {
+    user: "Which categories should I push promotions on?",
+    response: {
+      head: "Top promo opportunity · Small appliances",
+      lines: [
+        { tag: "DEMAND", value: "+18% WoW" },
+        { tag: "ROI", value: "1.9× est.", color: "#22C55E" },
+        { tag: "RISK", value: "Low cannibalization" },
+      ],
+      action: "Build the campaign",
+    },
+  },
+];
+
+function HeroChatMockup() {
+  const [idx, setIdx] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
   const [containerRef, inView] = useInView<HTMLDivElement>("0px");
   const animate = inView && !reducedMotion;
 
-  useTicker(2200, () => {
-    setMetrics((prev) =>
-      prev.map((m) => {
-        const drift = (Math.random() - 0.5) * (m.decimals ? 0.6 : 3);
-        const next = Math.max(0, m.value + drift);
-        return { ...m, value: next, delta: drift };
-      }),
-    );
-  }, animate);
+  useTicker(4200, () => setIdx((i) => (i + 1) % HERO_REPLIES.length), animate);
 
-  useTicker(1800, () => {
-    setRows((prev) =>
-      prev.map((r) => {
-        const change = Math.round((Math.random() - 0.5) * 6);
-        const competitor = Math.max(10, r.competitor + change);
-        const trend: Row["trend"] = change > 0 ? "up" : change < 0 ? "down" : "flat";
-        return { ...r, competitor, trend };
-      }),
-    );
-  }, animate);
-
-  useTicker(3000, () => setAlertIdx((i) => (i + 1) % ALERTS.length), animate);
-  useTicker(4500, () => setSparkSeed((s) => s + 1), animate);
-
-  const fmt = (m: Metric) => {
-    const v = m.decimals ? m.value.toFixed(m.decimals) : Math.round(m.value).toLocaleString();
-    return `${m.prefix ?? ""}${v}${m.suffix ?? ""}`;
-  };
-
-  const alert = ALERTS[alertIdx];
+  const reply = HERO_REPLIES[idx];
 
   return (
     <div
       ref={containerRef}
       style={{
-        maxWidth: 900,
-        margin: "48px auto 0",
-        background: "#0A0A0A",
-        border: "1px solid #1A1A1A",
-        borderRadius: 12,
-        overflow: "hidden",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-        animation: reducedMotion ? undefined : "ps-mockup-in 0.6s ease-out 0.3s both",
+        position: "relative",
+        width: "100%",
+        maxWidth: 520,
+        margin: "0 auto",
       }}
     >
-      {/* Window chrome */}
+      {/* Glow */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: "-40% -20%",
+          background:
+            "radial-gradient(ellipse at center, rgba(234,88,12,0.55) 0%, rgba(234,88,12,0.18) 30%, rgba(5,5,5,0) 70%)",
+          filter: "blur(30px)",
+          zIndex: 0,
+        }}
+      />
       <div
         style={{
-          height: 36,
-          background: "#0A0A0A",
-          borderBottom: "1px solid #1A1A1A",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 14px",
           position: "relative",
+          zIndex: 1,
+          background: "rgba(15,15,15,0.85)",
+          border: "1px solid rgba(234,88,12,0.25)",
+          borderRadius: 16,
+          padding: 18,
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow: "0 30px 80px rgba(234,88,12,0.18), 0 0 0 1px rgba(234,88,12,0.05) inset",
+          animation: reducedMotion ? undefined : "ps-mockup-in 0.7s ease-out 0.2s both",
         }}
       >
-        <div style={{ display: "flex", gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444" }} />
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B" }} />
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E" }} />
-        </div>
-        <span
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            fontSize: 11,
-            color: "#6B6B6B",
-            pointerEvents: "none",
-          }}
-        >
-          PrizeSkout Commerce Intelligence
-        </span>
-      </div>
-
-      <div style={{ display: "flex", minHeight: 320 }}>
-        {/* Sidebar strip */}
-        <div
-          style={{
-            width: 44,
-            background: "#050505",
-            borderRight: "1px solid #1A1A1A",
-            padding: "14px 0",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
-          <span style={{ width: 20, height: 20, background: "#EA580C", borderRadius: 5 }} />
-          {[BarChart3, Crosshair, TrendingUp, MapPin, Target].map((Icon, i) => (
-            <span
-              key={i}
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 5,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: i === 0 ? "#EA580C" : "#3A3A3A",
-                background: i === 0 ? "rgba(234,88,12,0.1)" : "transparent",
-              }}
-            >
-              <Icon size={13} />
-            </span>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div style={{ flex: 1, background: "#0F0F0F", padding: 14, minWidth: 0 }}>
-          {/* Live status row */}
-          <div
+        {/* Header chip */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <span
             style={{
-              display: "flex",
+              width: 28,
+              height: 28,
+              borderRadius: 7,
+              background: "linear-gradient(135deg, #EA580C, #C2410C)",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 12,
-              gap: 12,
-              flexWrap: "wrap",
+              justifyContent: "center",
+              boxShadow: "0 6px 20px rgba(234,88,12,0.4)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Sparkles size={14} color="#FFF" />
+          </span>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#FAFAF9" }}>
+              PrizeSkout AI
+            </span>
+            <span style={{ fontSize: 10, color: "#22C55E", display: "inline-flex", alignItems: "center", gap: 5 }}>
               <span
                 style={{
-                  width: 7,
-                  height: 7,
+                  width: 6,
+                  height: 6,
                   borderRadius: "50%",
                   background: "#22C55E",
                   boxShadow: "0 0 0 0 rgba(34,197,94,0.5)",
                   animation: "ps-pulse 1.6s ease-out infinite",
                 }}
               />
-              <span style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 500 }}>
-                Live · monitoring 1,428 SKUs
-              </span>
-            </div>
-            <span style={{ fontSize: 10, color: "#6B6B6B" }}>Updated just now</span>
+              Live · monitoring 1,428 SKUs
+            </span>
           </div>
+        </div>
 
-          {/* Metric cards */}
-          <div className="ps-mock-metrics" style={{ display: "grid", gap: 8 }}>
-            {metrics.map((m) => {
-              const isUp = m.delta >= 0;
-              return (
-                <div
-                  key={m.label}
-                  style={{
-                    background: "#161616",
-                    border: "1px solid #1F1F1F",
-                    borderRadius: 8,
-                    padding: "10px 12px",
-                    minWidth: 0,
-                  }}
-                >
-                  <div style={{ height: 2, background: m.color, borderRadius: 2, marginBottom: 8, opacity: 0.8 }} />
-                  <div style={{ fontSize: 10, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                    {m.label}
-                  </div>
-                  <div
-                    key={fmt(m)}
-                    style={{
-                      fontSize: 17,
-                      fontWeight: 700,
-                      color: "#FAFAF9",
-                      marginTop: 2,
-                      animation: "ps-flash 0.5s ease-out",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {fmt(m)}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      color: isUp ? "#22C55E" : "#EF4444",
-                      marginTop: 2,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {isUp ? "▲" : "▼"} {Math.abs(m.delta).toFixed(m.decimals ? 2 : 0)}
-                  </div>
-                </div>
-              );
-            })}
+        {/* User bubble */}
+        <div
+          key={`u-${idx}`}
+          style={{
+            background: "rgba(234,88,12,0.12)",
+            border: "1px solid rgba(234,88,12,0.25)",
+            borderRadius: 12,
+            padding: "10px 14px",
+            fontSize: 13,
+            color: "#FAFAF9",
+            marginBottom: 12,
+            animation: reducedMotion ? undefined : "ps-slide-up 0.4s ease-out",
+          }}
+        >
+          {reply.user}
+        </div>
+
+        {/* AI response card */}
+        <div
+          key={`a-${idx}`}
+          style={{
+            background: "rgba(0,0,0,0.45)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 12,
+            padding: 14,
+            animation: reducedMotion ? undefined : "ps-slide-up 0.5s 0.1s ease-out both",
+          }}
+        >
+          <div style={{ fontSize: 11, color: "#8A8A8A", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            {reply.response.head}
           </div>
-
-          {/* Chart + alert */}
-          <div className="ps-mock-bottom" style={{ display: "grid", gap: 10, marginTop: 12 }}>
-            <div
-              style={{
-                background: "#161616",
-                border: "1px solid #1F1F1F",
-                borderRadius: 8,
-                padding: 12,
-                minWidth: 0,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 500 }}>Margin trend · 30d</span>
-                <span style={{ fontSize: 10, color: "#22C55E", fontWeight: 600 }}>+2.4%</span>
-              </div>
-              <Sparkline key={sparkSeed} color="#EA580C" seed={sparkSeed} />
-            </div>
-
-            <div
-              style={{
-                background: "#161616",
-                border: "1px solid #1F1F1F",
-                borderRadius: 8,
-                padding: 12,
-                minWidth: 0,
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ fontSize: 11, color: "#9A9A9A", fontWeight: 500, marginBottom: 8 }}>Live alerts</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {reply.response.lines.map((l) => (
               <div
-                key={alertIdx}
+                key={l.tag}
                 style={{
                   display: "flex",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  gap: 8,
-                  animation: "ps-slide-up 0.4s ease-out",
+                  fontSize: 12,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 700,
-                    color: alert.color,
-                    background: `${alert.color}1A`,
-                    border: `1px solid ${alert.color}40`,
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                    letterSpacing: "0.04em",
-                    flexShrink: 0,
-                  }}
-                >
-                  {alert.tag}
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#C9C9C9",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {alert.text}
+                <span style={{ color: "#6B6B6B", fontWeight: 500 }}>{l.tag}</span>
+                <span style={{ color: l.color || "#FAFAF9", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                  {l.value}
                 </span>
               </div>
-            </div>
+            ))}
           </div>
-
-          {/* Price table */}
-          <div
-            className="ps-mock-table"
+          <button
+            type="button"
             style={{
-              background: "#161616",
-              border: "1px solid #1F1F1F",
+              marginTop: 14,
+              width: "100%",
+              background: "linear-gradient(135deg, #EA580C, #C2410C)",
+              color: "#FFF",
+              border: "none",
               borderRadius: 8,
-              marginTop: 10,
-              overflow: "hidden",
+              padding: "9px 12px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              boxShadow: "0 8px 24px rgba(234,88,12,0.3)",
             }}
           >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.6fr 0.7fr 0.7fr 0.4fr",
-                padding: "8px 12px",
-                borderBottom: "1px solid #1F1F1F",
-                fontSize: 10,
-                color: "#6B6B6B",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-              }}
-            >
-              <span>Product</span>
-              <span style={{ textAlign: "right" }}>You</span>
-              <span style={{ textAlign: "right" }}>Market</span>
-              <span style={{ textAlign: "right" }}>Δ</span>
-            </div>
-            {rows.map((r) => {
-              const diff = r.competitor - r.you;
-              const diffColor = diff > 0 ? "#22C55E" : diff < 0 ? "#EF4444" : "#6B6B6B";
-              return (
-                <div
-                  key={r.sku}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.6fr 0.7fr 0.7fr 0.4fr",
-                    padding: "8px 12px",
-                    fontSize: 11,
-                    borderBottom: "1px solid #1A1A1A",
-                    alignItems: "center",
-                  }}
-                >
-                  <span style={{ color: "#FAFAF9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {r.product}
-                  </span>
-                  <span style={{ textAlign: "right", color: "#9A9A9A", fontVariantNumeric: "tabular-nums" }}>
-                    {r.you}
-                  </span>
-                  <span
-                    key={r.competitor}
-                    style={{
-                      textAlign: "right",
-                      color: "#FAFAF9",
-                      fontVariantNumeric: "tabular-nums",
-                      fontWeight: 600,
-                      animation: "ps-flash 0.5s ease-out",
-                    }}
-                  >
-                    {r.competitor}
-                  </span>
-                  <span style={{ textAlign: "right", color: diffColor, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-                    {r.trend === "up" ? "▲" : r.trend === "down" ? "▼" : "·"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+            {reply.response.action}
+            <ArrowRight size={12} />
+          </button>
+        </div>
+
+        {/* Input */}
+        <div
+          style={{
+            marginTop: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: "rgba(0,0,0,0.45)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 10,
+            padding: "10px 12px",
+          }}
+        >
+          <span style={{ fontSize: 12, color: "#6B6B6B", flex: 1 }}>Ask anything about your market…</span>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              background: "#EA580C",
+              borderRadius: 6,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Send size={12} color="#FFF" />
+          </span>
         </div>
       </div>
     </div>
@@ -491,170 +347,229 @@ function Hero() {
     <section
       id="hero"
       style={{
+        position: "relative",
         background: "#050505",
-        textAlign: "center",
-        paddingTop: 120,
-        paddingBottom: 100,
+        paddingTop: 96,
+        paddingBottom: 60,
+        overflow: "hidden",
       }}
       className="px-5 md:px-10"
     >
-      <div style={{ paddingTop: 0 }} className="ps-hero-wrap">
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            background: "rgba(234, 88, 12, 0.12)",
-            border: "1px solid rgba(234, 88, 12, 0.25)",
-            borderRadius: 20,
-            padding: "5px 16px",
-            fontSize: 12,
-            fontWeight: 500,
-            color: "#EA580C",
-          }}
-        >
-          <Zap size={12} />
-          Now available in Qatar
-        </span>
-
-        <h1
-          className="ps-hero-title"
-          style={{
-            marginTop: 24,
-            fontWeight: 700,
-            color: "#FAFAF9",
-            lineHeight: 1.15,
-            maxWidth: 700,
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          The pricing brain behind <span style={{ color: "#EA580C" }}>commerce</span>.
-        </h1>
-
-        <p
-          className="ps-hero-sub"
-          style={{
-            marginTop: 18,
-            fontWeight: 400,
-            color: "#8A8A8A",
-            lineHeight: 1.65,
-            maxWidth: 600,
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          AI-powered pricing intelligence for e-commerce platforms, physical retailers, and
-          omnichannel brands. Monitor competitors, optimize prices, and outsmart the market across
-          every channel.
-        </p>
-
-        <div
-          style={{
-            marginTop: 32,
-            display: "flex",
-            gap: 14,
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Link
-            to="/signup"
+      {/* Outer ambient glow */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: -200,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 1100,
+          height: 700,
+          background:
+            "radial-gradient(ellipse at center, rgba(234,88,12,0.32) 0%, rgba(234,88,12,0.10) 30%, rgba(5,5,5,0) 65%)",
+          filter: "blur(40px)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 1180,
+          margin: "0 auto",
+        }}
+        className="ps-hero-grid"
+      >
+        {/* Left: copy */}
+        <div className="ps-hero-copy">
+          <span
             style={{
-              background: "#EA580C",
-              color: "#FFFFFF",
-              fontSize: 15,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "rgba(234,88,12,0.10)",
+              border: "1px solid rgba(234,88,12,0.25)",
+              borderRadius: 999,
+              padding: "5px 14px",
+              fontSize: 11,
               fontWeight: 600,
-              padding: "13px 32px",
-              borderRadius: 8,
-              textDecoration: "none",
-              transition: "background 0.15s",
+              color: "#EA580C",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
           >
-            Start free trial
-          </Link>
-          <button
-            onClick={() => smoothScrollTo("#features")}
+            <Zap size={11} />
+            AI Commerce Intelligence
+          </span>
+
+          <h1
+            className="ps-hero-title"
             style={{
-              background: "transparent",
-              border: "1px solid #3A3A3A",
+              marginTop: 22,
+              fontWeight: 700,
               color: "#FAFAF9",
-              fontSize: 15,
-              fontWeight: 500,
-              padding: "13px 32px",
-              borderRadius: 8,
-              cursor: "pointer",
-              transition: "border-color 0.15s, color 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#EA580C";
-              e.currentTarget.style.color = "#EA580C";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#3A3A3A";
-              e.currentTarget.style.color = "#FAFAF9";
+              lineHeight: 1.05,
+              letterSpacing: "-0.02em",
+              margin: "22px 0 0",
             }}
           >
-            See it in action
-          </button>
+            Pricing,
+            <br />
+            <span
+              style={{
+                background: "linear-gradient(90deg, #EA580C, #FB923C)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Decoded by AI
+            </span>
+          </h1>
+
+          <p
+            className="ps-hero-sub"
+            style={{
+              marginTop: 18,
+              color: "#9A9A9A",
+              lineHeight: 1.6,
+              maxWidth: 520,
+            }}
+          >
+            Pricing intelligence for retailers, hypermarkets, and omnichannel brands. Monitor every
+            competitor, every channel — then let AI tell you exactly what to price, when, and why.
+          </p>
+
+          <div
+            style={{
+              marginTop: 28,
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+            className="ps-hero-ctas"
+          >
+            <Link
+              to="/signup"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                color: "#FFFFFF",
+                fontSize: 14,
+                fontWeight: 600,
+                padding: "13px 26px",
+                borderRadius: 10,
+                textDecoration: "none",
+                transition: "transform 0.15s, box-shadow 0.15s",
+                boxShadow: "0 12px 30px rgba(234,88,12,0.35)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 16px 40px rgba(234,88,12,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 12px 30px rgba(234,88,12,0.35)";
+              }}
+            >
+              Start free trial
+              <ArrowRight size={14} />
+            </Link>
+            <a
+              href="#features"
+              onClick={(e) => {
+                e.preventDefault();
+                document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                color: "#FAFAF9",
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "13px 26px",
+                borderRadius: 10,
+                textDecoration: "none",
+                transition: "background 0.15s, border-color 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+                e.currentTarget.style.borderColor = "rgba(234,88,12,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+              }}
+            >
+              See it in action
+            </a>
+          </div>
+
+          <p style={{ marginTop: 18, fontSize: 12, color: "#6B6B6B" }}>
+            14-day free trial · No credit card required
+          </p>
         </div>
 
-        <p style={{ marginTop: 20, fontSize: 13, color: "#6B6B6B" }}>
-          No credit card required. 14-day free trial.
-        </p>
-
-        <HeroMockup />
+        {/* Right: hero mockup */}
+        <div className="ps-hero-mock" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <HeroChatMockup />
+        </div>
       </div>
     </section>
   );
 }
 
+/* ============================================================================
+   LOGOS BAR
+   ========================================================================= */
+
 function LogosBar() {
-  const logos = ["Snoonu", "Talabat", "Carrefour Qatar", "Lulu Hypermarket", "Amazon.ae", "Noon"];
+  const logos = ["Snoonu", "Talabat", "Carrefour", "Lulu", "Amazon.ae", "Noon"];
   return (
     <section
       style={{
         background: "#050505",
-        borderTop: "1px solid #1A1A1A",
-        padding: 40,
+        padding: "32px 20px",
       }}
     >
       <p
         style={{
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 500,
-          color: "#6B6B6B",
+          color: "#5C5C5C",
           textAlign: "center",
           textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          letterSpacing: "0.12em",
           margin: 0,
         }}
       >
-        Trusted by commerce brands across the Middle East
+        Trusted in commerce by 200+ brands
       </p>
       <div
         style={{
-          marginTop: 24,
+          marginTop: 18,
           display: "flex",
           justifyContent: "center",
           flexWrap: "wrap",
-          gap: 40,
+          gap: 36,
+          opacity: 0.55,
         }}
       >
         {logos.map((name) => (
           <span
             key={name}
             style={{
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: 600,
-              color: "#3A3A3A",
-              transition: "color 0.15s",
-              cursor: "default",
+              color: "#6B6B6B",
+              letterSpacing: "-0.01em",
+              transition: "color 0.2s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#6B6B6B")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#3A3A3A")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
           >
             {name}
           </span>
@@ -664,222 +579,801 @@ function LogosBar() {
   );
 }
 
-const FEATURES = [
-  {
-    Icon: Crosshair,
-    title: "Competitive price tracking",
-    desc: "Monitor prices, stock levels, and promotions across every competitor in real time. Online and in-store. Know exactly where you stand.",
-  },
-  {
-    Icon: TrendingUp,
-    title: "AI pricing optimizer",
-    desc: "Get specific pricing recommendations built on your sales data, margin targets, and competitor behavior. The model gets smarter every month.",
-  },
-  {
-    Icon: BarChart3,
-    title: "Market intelligence",
-    desc: "See category trends, assortment gaps, and market share estimates. Find the products you should be selling but are not.",
-  },
-  {
-    Icon: Megaphone,
-    title: "Promotion management",
-    desc: "Plan campaigns with ROI predictions. Track competitor promotions. Catch cannibalization before it eats your margins.",
-  },
-  {
-    Icon: MapPin,
-    title: "Field intelligence",
-    desc: "Capture in-store competitor pricing through your field teams. See price gaps between online and physical channels that scrapers cannot detect.",
-  },
-  {
-    Icon: Target,
-    title: "Market benchmarks",
-    desc: "See where you rank against the anonymized market. Your data stays private. The benchmarks get more accurate as the network grows.",
-  },
-];
+/* ============================================================================
+   SPLIT FEATURE SECTIONS
+   ========================================================================= */
 
-function Features() {
+type SplitProps = {
+  eyebrow?: string;
+  title: React.ReactNode;
+  subtitle: string;
+  bullets: { Icon: React.ComponentType<{ size?: number; color?: string }>; title: string; desc: string }[];
+  mockup: React.ReactNode;
+  reverse?: boolean;
+};
+
+function SplitSection({ eyebrow, title, subtitle, bullets, mockup, reverse }: SplitProps) {
   return (
     <section
-      id="features"
-      style={{ background: "#FAFAF9" }}
-      className="px-5 md:px-10 py-[60px] md:py-[100px]"
+      style={{
+        position: "relative",
+        background: "#050505",
+        padding: "80px 20px",
+        overflow: "hidden",
+      }}
     >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#EA580C",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          textAlign: "center",
-          margin: 0,
-        }}
-      >
-        FEATURES
-      </p>
-      <h2 className="ps-section-title" style={{ color: "#1A1A18", textAlign: "center", marginTop: 10 }}>
-        Everything you need to price smarter
-      </h2>
-      <p
-        style={{
-          fontSize: 15,
-          color: "#6B6B6B",
-          textAlign: "center",
-          maxWidth: 600,
-          margin: "14px auto 0",
-          lineHeight: 1.6,
-        }}
-      >
-        One platform for competitive intelligence, AI pricing, promotion management, and market
-        insights across online and physical retail.
-      </p>
-
       <div
-        className="ps-feature-grid"
         style={{
-          marginTop: 48,
+          maxWidth: 1180,
+          margin: "0 auto",
           display: "grid",
-          gap: 20,
-          maxWidth: 1000,
-          marginLeft: "auto",
-          marginRight: "auto",
+          gap: 40,
+          alignItems: "center",
+        }}
+        className={`ps-split ${reverse ? "ps-split-reverse" : ""}`}
+      >
+        <div className="ps-split-mock" style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+          {mockup}
+        </div>
+        <div className="ps-split-copy">
+          {eyebrow && (
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#EA580C",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                margin: 0,
+              }}
+            >
+              {eyebrow}
+            </p>
+          )}
+          <h2
+            style={{
+              fontSize: "clamp(26px, 4vw, 38px)",
+              fontWeight: 700,
+              color: "#FAFAF9",
+              margin: "12px 0 0",
+              lineHeight: 1.15,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {title}
+          </h2>
+          <p style={{ fontSize: 15, color: "#8A8A8A", lineHeight: 1.6, marginTop: 14, maxWidth: 480 }}>
+            {subtitle}
+          </p>
+
+          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
+            {bullets.map((b) => (
+              <div
+                key={b.title}
+                style={{
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
+                  padding: 14,
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-start",
+                  transition: "background 0.2s, border-color 0.2s, transform 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(234,88,12,0.35)";
+                  e.currentTarget.style.background = "rgba(234,88,12,0.04)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                }}
+              >
+                <span
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    boxShadow: "0 6px 16px rgba(234,88,12,0.3)",
+                  }}
+                >
+                  <b.Icon size={16} color="#FFF" />
+                </span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#FAFAF9" }}>{b.title}</div>
+                  <div style={{ fontSize: 13, color: "#8A8A8A", marginTop: 4, lineHeight: 1.5 }}>{b.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* --- Mockup 1: Live competitor watch --- */
+
+function CompetitorMockup() {
+  const [tick, setTick] = useState(0);
+  const reduced = usePrefersReducedMotion();
+  const [ref, inView] = useInView<HTMLDivElement>("0px");
+  useTicker(2000, () => setTick((t) => t + 1), inView && !reduced);
+
+  const rows = [
+    { p: "Galaxy Buds Pro", you: 469, comp: 449 + ((tick % 3) - 1) * 5 },
+    { p: "Nespresso Vertuo", you: 729, comp: 699 + ((tick % 4) - 1) * 8 },
+    { p: "Dyson V12", you: 2199, comp: 2249 + ((tick % 3) - 1) * 10 },
+  ];
+
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%", maxWidth: 460 }}>
+      <GlowBackdrop intensity={0.4} />
+      <div
+        style={{
+          position: "relative",
+          background: "rgba(15,15,15,0.85)",
+          border: "1px solid rgba(234,88,12,0.2)",
+          borderRadius: 14,
+          padding: 16,
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow: "0 30px 60px rgba(234,88,12,0.15)",
         }}
       >
-        {FEATURES.map(({ Icon, title, desc }) => (
-          <div
-            key={title}
-            className="ps-feature-card"
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ fontSize: 11, color: "#9A9A9A", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#22C55E",
+                animation: "ps-pulse 1.6s ease-out infinite",
+              }}
+            />
+            Live · Carrefour Qatar
+          </span>
+          <span
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E5E2DB",
-              borderRadius: 10,
-              padding: 28,
-              transition: "border-color 0.2s, transform 0.2s",
+              fontSize: 10,
+              fontWeight: 700,
+              color: "#EA580C",
+              background: "rgba(234,88,12,0.12)",
+              border: "1px solid rgba(234,88,12,0.3)",
+              padding: "3px 8px",
+              borderRadius: 4,
+            }}
+          >
+            3 ALERTS
+          </span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {rows.map((r) => {
+            const diff = r.comp - r.you;
+            const dColor = diff > 0 ? "#22C55E" : diff < 0 ? "#EF4444" : "#6B6B6B";
+            return (
+              <div
+                key={r.p}
+                style={{
+                  background: "rgba(0,0,0,0.4)",
+                  border: "1px solid rgba(255,255,255,0.04)",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  display: "grid",
+                  gridTemplateColumns: "1.4fr 0.7fr 0.7fr",
+                  gap: 8,
+                  alignItems: "center",
+                  fontSize: 12,
+                }}
+              >
+                <span style={{ color: "#FAFAF9", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {r.p}
+                </span>
+                <span style={{ textAlign: "right", color: "#8A8A8A", fontVariantNumeric: "tabular-nums" }}>
+                  {r.you}
+                </span>
+                <span
+                  key={r.comp}
+                  style={{
+                    textAlign: "right",
+                    color: dColor,
+                    fontWeight: 700,
+                    fontVariantNumeric: "tabular-nums",
+                    animation: reduced ? undefined : "ps-flash 0.5s ease-out",
+                  }}
+                >
+                  {r.comp}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* --- Mockup 2: AI recommendation --- */
+
+function AIRecMockup() {
+  const reduced = usePrefersReducedMotion();
+  return (
+    <div style={{ position: "relative", width: "100%", maxWidth: 460 }}>
+      <GlowBackdrop intensity={0.45} />
+      <div
+        style={{
+          position: "relative",
+          background: "rgba(15,15,15,0.85)",
+          border: "1px solid rgba(234,88,12,0.2)",
+          borderRadius: 14,
+          padding: 18,
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow: "0 30px 60px rgba(234,88,12,0.15)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <span
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 7,
+              background: "linear-gradient(135deg, #EA580C, #C2410C)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 6px 16px rgba(234,88,12,0.4)",
+            }}
+          >
+            <Sparkles size={14} color="#FFF" />
+          </span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#FAFAF9" }}>AI Recommendation</div>
+            <div style={{ fontSize: 10, color: "#8A8A8A" }}>Confidence 92% · 24h window</div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 13, color: "#FAFAF9", lineHeight: 1.5, marginBottom: 12 }}>
+          Raise <strong style={{ color: "#EA580C" }}>Galaxy Buds Pro</strong> by{" "}
+          <strong style={{ color: "#22C55E" }}>+QAR 20</strong>. You're under market by 4.3%.
+        </div>
+
+        {/* Sparkline */}
+        <div
+          style={{
+            background: "rgba(0,0,0,0.4)",
+            border: "1px solid rgba(255,255,255,0.04)",
+            borderRadius: 8,
+            padding: 10,
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span style={{ fontSize: 10, color: "#8A8A8A" }}>Margin trend · 30d</span>
+            <span style={{ fontSize: 11, color: "#22C55E", fontWeight: 600 }}>+2.4%</span>
+          </div>
+          <svg viewBox="0 0 240 50" width="100%" height="50" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="ai-rec-grad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#EA580C" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#EA580C" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,40 C30,38 60,30 90,28 C120,26 150,22 180,15 C200,11 220,8 240,6 L240,50 L0,50 Z"
+              fill="url(#ai-rec-grad)"
+            />
+            <path
+              d="M0,40 C30,38 60,30 90,28 C120,26 150,22 180,15 C200,11 220,8 240,6"
+              fill="none"
+              stroke="#EA580C"
+              strokeWidth="1.5"
+              style={{
+                strokeDasharray: 600,
+                strokeDashoffset: 600,
+                animation: reduced ? undefined : "ps-spark-draw 1.5s ease-out 0.3s forwards",
+              }}
+            />
+          </svg>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            style={{
+              flex: 1,
+              background: "linear-gradient(135deg, #EA580C, #C2410C)",
+              color: "#FFF",
+              border: "none",
+              borderRadius: 8,
+              padding: "9px 12px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 8px 20px rgba(234,88,12,0.3)",
+            }}
+          >
+            Apply +QAR 20
+          </button>
+          <button
+            type="button"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#FAFAF9",
+              borderRadius: 8,
+              padding: "9px 14px",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Snooze
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* --- Mockup 3: ROI simulator --- */
+
+function ROIMockup() {
+  return (
+    <div style={{ position: "relative", width: "100%", maxWidth: 460 }}>
+      <GlowBackdrop intensity={0.4} />
+      <div
+        style={{
+          position: "relative",
+          background: "rgba(15,15,15,0.85)",
+          border: "1px solid rgba(234,88,12,0.2)",
+          borderRadius: 14,
+          padding: 18,
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          boxShadow: "0 30px 60px rgba(234,88,12,0.15)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 11, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Promo simulation
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#FAFAF9", marginTop: 2 }}>Small appliances · 7d</div>
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "#EA580C" }}>1.9×</div>
+        </div>
+
+        {/* Discount slider */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#8A8A8A", marginBottom: 6 }}>
+            <span>Discount depth</span>
+            <span style={{ color: "#FAFAF9", fontWeight: 600 }}>15%</span>
+          </div>
+          <div
+            style={{
+              height: 6,
+              background: "rgba(255,255,255,0.06)",
+              borderRadius: 999,
+              position: "relative",
+              overflow: "hidden",
             }}
           >
             <div
               style={{
-                width: 44,
-                height: 44,
-                background: "rgba(234, 88, 12, 0.08)",
-                borderRadius: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "55%",
+                background: "linear-gradient(90deg, #EA580C, #FB923C)",
+                borderRadius: 999,
+                boxShadow: "0 0 12px rgba(234,88,12,0.5)",
+              }}
+            />
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 8,
+            marginBottom: 12,
+          }}
+        >
+          {[
+            { l: "Incr. orders", v: "+412", c: "#22C55E" },
+            { l: "Net ROI", v: "QAR 18.4k", c: "#FAFAF9" },
+            { l: "Cannib.", v: "Low", c: "#22C55E" },
+          ].map((s) => (
+            <div
+              key={s.l}
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(255,255,255,0.04)",
+                borderRadius: 8,
+                padding: "8px 10px",
               }}
             >
-              <Icon size={22} color="#EA580C" />
+              <div style={{ fontSize: 10, color: "#6B6B6B" }}>{s.l}</div>
+              <div style={{ fontSize: 13, color: s.c, fontWeight: 700, marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                {s.v}
+              </div>
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", marginTop: 16, margin: "16px 0 0" }}>
-              {title}
-            </h3>
-            <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.6, marginTop: 8 }}>{desc}</p>
+          ))}
+        </div>
+
+        <div
+          style={{
+            background: "rgba(34,197,94,0.08)",
+            border: "1px solid rgba(34,197,94,0.25)",
+            color: "#22C55E",
+            borderRadius: 8,
+            padding: "8px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Check size={12} />
+          Healthy promo · go ahead
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   "ULTIMATE INTELLIGENCE HUB" — overview grid
+   ========================================================================= */
+
+function HubSection() {
+  return (
+    <section
+      style={{
+        position: "relative",
+        background: "#050505",
+        padding: "80px 20px",
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
+        <h2
+          style={{
+            fontSize: "clamp(26px, 4vw, 38px)",
+            fontWeight: 700,
+            color: "#FAFAF9",
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          The ultimate{" "}
+          <span
+            style={{
+              background: "linear-gradient(90deg, #EA580C, #FB923C)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            commerce intelligence hub
+          </span>
+        </h2>
+        <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 12 }}>
+          Online. In-store. Cross-border. Every signal in one workspace.
+        </p>
+
+        <div
+          style={{
+            marginTop: 40,
+            display: "grid",
+            gap: 16,
+          }}
+          className="ps-hub-grid"
+        >
+          {/* Big card: market scan */}
+          <div
+            className="ps-hub-card-lg"
+            style={{
+              position: "relative",
+              background:
+                "linear-gradient(135deg, rgba(15,15,15,0.95) 0%, rgba(20,12,8,0.95) 100%)",
+              border: "1px solid rgba(234,88,12,0.2)",
+              borderRadius: 16,
+              padding: 24,
+              textAlign: "left",
+              overflow: "hidden",
+              minHeight: 260,
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: -50,
+                right: -50,
+                width: 220,
+                height: 220,
+                background:
+                  "radial-gradient(circle, rgba(234,88,12,0.5) 0%, rgba(234,88,12,0) 70%)",
+                filter: "blur(30px)",
+              }}
+            />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "#EA580C", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
+                Market scan
+              </p>
+              <h3 style={{ fontSize: 22, fontWeight: 700, color: "#FAFAF9", margin: "8px 0 0", lineHeight: 1.2 }}>
+                See your category at a glance
+              </h3>
+              <p style={{ fontSize: 13, color: "#8A8A8A", marginTop: 8, lineHeight: 1.5 }}>
+                Volatility, top movers, growth pockets, and assortment gaps — across every channel
+                you operate in.
+              </p>
+
+              <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+                {[
+                  { l: "Categories tracked", v: "42" },
+                  { l: "Avg volatility", v: "Low" },
+                  { l: "Assortment gaps", v: "11" },
+                  { l: "Trending up", v: "+18%", c: "#22C55E" },
+                ].map((c) => (
+                  <div
+                    key={c.l}
+                    style={{
+                      background: "rgba(0,0,0,0.4)",
+                      border: "1px solid rgba(255,255,255,0.05)",
+                      borderRadius: 8,
+                      padding: 10,
+                    }}
+                  >
+                    <div style={{ fontSize: 10, color: "#6B6B6B" }}>{c.l}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: c.c || "#FAFAF9", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+                      {c.v}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
+
+          {/* Side cards */}
+          <div className="ps-hub-side" style={{ display: "grid", gap: 16 }}>
+            {[
+              {
+                Icon: MapPin,
+                title: "Field intelligence",
+                desc: "Capture in-store competitor prices through your store teams.",
+              },
+              {
+                Icon: Target,
+                title: "Market benchmarks",
+                desc: "See where you rank against the anonymized network.",
+              },
+              {
+                Icon: Megaphone,
+                title: "Promotion calendar",
+                desc: "Who is running what — across Talabat, Snoonu, Carrefour.",
+              },
+            ].map((c) => (
+              <div
+                key={c.title}
+                style={{
+                  background: "rgba(15,15,15,0.7)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 14,
+                  padding: 18,
+                  display: "flex",
+                  gap: 14,
+                  alignItems: "flex-start",
+                  textAlign: "left",
+                  transition: "border-color 0.2s, transform 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(234,88,12,0.35)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                <span
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 9,
+                    background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    boxShadow: "0 6px 16px rgba(234,88,12,0.3)",
+                  }}
+                >
+                  <c.Icon size={16} color="#FFF" />
+                </span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#FAFAF9" }}>{c.title}</div>
+                  <div style={{ fontSize: 12, color: "#8A8A8A", marginTop: 4, lineHeight: 1.5 }}>{c.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-const STEPS = [
+/* ============================================================================
+   TESTIMONIALS
+   ========================================================================= */
+
+const TESTIMONIALS = [
   {
-    n: "1",
-    title: "Connect your catalog",
-    desc: "Import your product catalog via API, CSV upload, or direct platform integration. We match your products against competitors automatically.",
+    quote:
+      "We replaced three separate tools with PrizeSkout. Margin lift in the first month paid for the whole year. The AI recommendations actually understand our market.",
+    name: "Layla Al-Mansoori",
+    role: "Head of E-Commerce, Hypermarket Group",
   },
   {
-    n: "2",
-    title: "We start monitoring",
-    desc: "Our engine begins tracking competitor prices, stock levels, and promotions across online platforms and physical stores in your market.",
+    quote:
+      "The field intelligence module is a game changer. We finally see what's happening on competitor shelves without hiring an army of mystery shoppers.",
+    name: "Karim Saleh",
+    role: "Director of Pricing, Regional Retail",
   },
   {
-    n: "3",
-    title: "Get intelligence daily",
-    desc: "Receive pricing recommendations, competitive alerts, and market insights from day one. The AI model improves every week with your data.",
+    quote:
+      "Our team checks PrizeSkout before every category meeting. The promo simulator alone saved us from a campaign that would have eaten 14% of our margin.",
+    name: "Noor Hadid",
+    role: "Commercial Lead, Omnichannel Brand",
   },
 ];
 
-function HowItWorks() {
+function Testimonials() {
+  const [idx, setIdx] = useState(0);
+  const reduced = usePrefersReducedMotion();
+  const [ref, inView] = useInView<HTMLDivElement>("0px");
+  useTicker(6500, () => setIdx((i) => (i + 1) % TESTIMONIALS.length), inView && !reduced);
+
+  const t = TESTIMONIALS[idx];
+
   return (
     <section
-      id="how-it-works"
-      style={{ background: "#FAFAF9", borderTop: "1px solid #E5E2DB" }}
-      className="px-5 md:px-10 py-[60px] md:py-[80px]"
+      ref={ref}
+      style={{
+        position: "relative",
+        background: "#050505",
+        padding: "80px 20px",
+        overflow: "hidden",
+      }}
     >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#EA580C",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          textAlign: "center",
-          margin: 0,
-        }}
-      >
-        HOW IT WORKS
-      </p>
-      <h2 className="ps-section-title" style={{ color: "#1A1A18", textAlign: "center", marginTop: 10 }}>
-        From setup to savings in under a week
-      </h2>
+      <div style={{ maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
+        <h2
+          style={{
+            fontSize: "clamp(24px, 3.5vw, 32px)",
+            fontWeight: 700,
+            color: "#FAFAF9",
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Loved by commerce leaders
+        </h2>
+        <p style={{ fontSize: 14, color: "#8A8A8A", marginTop: 10 }}>
+          See what teams across the region are saying.
+        </p>
 
-      <div
-        className="ps-steps"
-        style={{
-          maxWidth: 900,
-          margin: "48px auto 0",
-        }}
-      >
-        {STEPS.map((s, i) => (
-          <div key={s.n} className="ps-step" style={{ position: "relative", textAlign: "center" }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                background: "#EA580C",
-                color: "#FFFFFF",
-                fontSize: 16,
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto",
-                position: "relative",
-                zIndex: 1,
-              }}
-            >
-              {s.n}
-            </div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18", margin: "14px 0 0" }}>
-              {s.title}
-            </h3>
-            <p
-              style={{
-                fontSize: 13,
-                color: "#6B6B6B",
-                lineHeight: 1.6,
-                marginTop: 6,
-                maxWidth: 260,
-                marginLeft: "auto",
-                marginRight: "auto",
-              }}
-            >
-              {s.desc}
-            </p>
-            {i < STEPS.length - 1 && <span className="ps-step-line" aria-hidden />}
+        <div
+          style={{
+            marginTop: 36,
+            position: "relative",
+            background: "rgba(15,15,15,0.7)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 16,
+            padding: "32px 28px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "center", gap: 4, marginBottom: 18 }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Star key={i} size={14} color="#EA580C" fill="#EA580C" />
+            ))}
           </div>
-        ))}
+          <p
+            key={idx}
+            style={{
+              fontSize: 16,
+              color: "#FAFAF9",
+              lineHeight: 1.65,
+              fontStyle: "italic",
+              margin: 0,
+              animation: reduced ? undefined : "ps-fade-in 0.5s ease-out",
+            }}
+          >
+            "{t.quote}"
+          </p>
+          <div style={{ marginTop: 22 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#FAFAF9" }}>{t.name}</div>
+            <div style={{ fontSize: 12, color: "#8A8A8A", marginTop: 2 }}>{t.role}</div>
+          </div>
+
+          {/* Controls */}
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "center", alignItems: "center", gap: 14 }}>
+            <button
+              type="button"
+              onClick={() => setIdx((i) => (i - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)}
+              aria-label="Previous testimonial"
+              style={iconBtnStyle}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <div style={{ display: "flex", gap: 6 }}>
+              {TESTIMONIALS.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  aria-label={`Show testimonial ${i + 1}`}
+                  style={{
+                    width: i === idx ? 18 : 6,
+                    height: 6,
+                    borderRadius: 999,
+                    border: "none",
+                    background: i === idx ? "#EA580C" : "rgba(255,255,255,0.15)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIdx((i) => (i + 1) % TESTIMONIALS.length)}
+              aria-label="Next testimonial"
+              style={iconBtnStyle}
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-const ANNUAL_DISCOUNT = 0.2; // 20% off
+const iconBtnStyle: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: "50%",
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  color: "#FAFAF9",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  transition: "all 0.15s",
+};
+
+/* ============================================================================
+   PRICING (kept, restyled)
+   ========================================================================= */
+
+const ANNUAL_DISCOUNT = 0.2;
 
 type Plan = {
   name: string;
-  monthly: number | null; // null = custom
+  monthly: number | null;
   sub: string;
   features: string[];
   cta: string;
@@ -911,7 +1405,7 @@ const PLANS: Plan[] = [
       "Up to 5,000 products tracked",
       "Unlimited competitor monitors",
       "AI pricing recommendations",
-      "Promotion management and ROI simulator",
+      "Promotion management & ROI simulator",
       "Field intelligence (in-store tracking)",
       "Market benchmarks",
       "API access",
@@ -931,7 +1425,7 @@ const PLANS: Plan[] = [
       "Custom AI model training",
       "White-label option",
       "Dedicated account manager",
-      "ERP and POS integration",
+      "ERP & POS integration",
       "Custom reporting",
       "SLA guarantee",
     ],
@@ -947,220 +1441,249 @@ function Pricing() {
   return (
     <section
       id="pricing"
-      style={{ background: "#050505" }}
-      className="px-5 md:px-10 py-[60px] md:py-[100px]"
+      style={{ position: "relative", background: "#050505", overflow: "hidden" }}
+      className="px-5 md:px-10 py-[80px]"
     >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#EA580C",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          textAlign: "center",
-          margin: 0,
-        }}
-      >
-        PRICING
-      </p>
-      <h2 className="ps-section-title" style={{ color: "#FAFAF9", textAlign: "center", marginTop: 10 }}>
-        Plans that grow with your business
-      </h2>
-      <p style={{ fontSize: 15, color: "#8A8A8A", textAlign: "center", marginTop: 10 }}>
-        Start free. Scale as you grow. No long-term contracts.
-      </p>
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#EA580C",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              margin: 0,
+            }}
+          >
+            PRICING
+          </p>
+          <h2
+            style={{
+              fontSize: "clamp(26px, 4vw, 38px)",
+              fontWeight: 700,
+              color: "#FAFAF9",
+              margin: "10px 0 0",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Plans that grow with your business
+          </h2>
+          <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 10 }}>
+            Start free. Scale as you grow. No long-term contracts.
+          </p>
 
-      {/* Billing toggle */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
-        <div
-          role="tablist"
-          aria-label="Billing period"
-          style={{
-            display: "inline-flex",
-            padding: 4,
-            background: "#0A0A0A",
-            border: "1px solid #1A1A1A",
-            borderRadius: 999,
-            gap: 4,
-          }}
-        >
-          {(["monthly", "annual"] as const).map((opt) => {
-            const active = billing === opt;
-            return (
-              <button
-                key={opt}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setBilling(opt)}
-                style={{
-                  appearance: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  background: active ? "#EA580C" : "transparent",
-                  color: active ? "#FFFFFF" : "#8A8A8A",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  padding: "8px 18px",
-                  borderRadius: 999,
-                  transition: "background 0.15s, color 0.15s",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                {opt === "monthly" ? "Monthly" : "Annual"}
-                {opt === "annual" && (
-                  <span
+          {/* Toggle */}
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 28 }}>
+            <div
+              role="tablist"
+              aria-label="Billing period"
+              style={{
+                display: "inline-flex",
+                padding: 4,
+                background: "rgba(15,15,15,0.85)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 999,
+                gap: 4,
+              }}
+            >
+              {(["monthly", "annual"] as const).map((opt) => {
+                const active = billing === opt;
+                return (
+                  <button
+                    key={opt}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setBilling(opt)}
                     style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: "0.04em",
-                      background: active ? "rgba(255,255,255,0.2)" : "rgba(34, 197, 94, 0.15)",
-                      color: active ? "#FFFFFF" : "#22C55E",
-                      padding: "2px 6px",
-                      borderRadius: 4,
+                      appearance: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      background: active ? "linear-gradient(135deg, #EA580C, #C2410C)" : "transparent",
+                      color: active ? "#FFFFFF" : "#8A8A8A",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      padding: "8px 18px",
+                      borderRadius: 999,
+                      transition: "all 0.15s",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      boxShadow: active ? "0 6px 18px rgba(234,88,12,0.35)" : "none",
                     }}
                   >
-                    SAVE 20%
+                    {opt === "monthly" ? "Monthly" : "Annual"}
+                    {opt === "annual" && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.04em",
+                          background: active ? "rgba(255,255,255,0.2)" : "rgba(34, 197, 94, 0.15)",
+                          color: active ? "#FFFFFF" : "#22C55E",
+                          padding: "2px 6px",
+                          borderRadius: 4,
+                        }}
+                      >
+                        SAVE 20%
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="ps-pricing-grid"
+          style={{
+            maxWidth: 1000,
+            margin: "32px auto 0",
+            display: "grid",
+            gap: 18,
+          }}
+        >
+          {PLANS.map((p) => {
+            const isCustom = p.monthly === null;
+            const monthlyEffective = isCustom
+              ? null
+              : billing === "annual"
+                ? Math.round(p.monthly! * (1 - ANNUAL_DISCOUNT))
+                : p.monthly!;
+            const priceLabel = isCustom ? "Custom" : `$${monthlyEffective}`;
+            const perLabel = isCustom ? "" : "/month";
+            const billedNote = isCustom
+              ? null
+              : billing === "annual"
+                ? `Billed annually ($${monthlyEffective! * 12}/yr)`
+                : "Billed monthly";
+
+            return (
+              <div
+                key={p.name}
+                style={{
+                  position: "relative",
+                  background: p.featured
+                    ? "linear-gradient(135deg, rgba(20,12,8,0.95) 0%, rgba(15,15,15,0.95) 100%)"
+                    : "rgba(15,15,15,0.7)",
+                  border: p.featured
+                    ? "1px solid rgba(234,88,12,0.45)"
+                    : "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 14,
+                  padding: "32px 26px",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxShadow: p.featured ? "0 30px 60px rgba(234,88,12,0.18)" : "none",
+                  overflow: "hidden",
+                }}
+              >
+                {p.featured && (
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      top: -60,
+                      right: -60,
+                      width: 200,
+                      height: 200,
+                      background:
+                        "radial-gradient(circle, rgba(234,88,12,0.4) 0%, rgba(234,88,12,0) 70%)",
+                      filter: "blur(30px)",
+                    }}
+                  />
+                )}
+                {p.featured && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      right: 14,
+                      background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                      color: "#FFFFFF",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      letterSpacing: "0.04em",
+                      boxShadow: "0 6px 14px rgba(234,88,12,0.35)",
+                    }}
+                  >
+                    MOST POPULAR
                   </span>
                 )}
-              </button>
+
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: "#FAFAF9" }}>{p.name}</div>
+                  <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontSize: 38, fontWeight: 700, color: "#FAFAF9", lineHeight: 1 }}>
+                      {priceLabel}
+                    </span>
+                    {perLabel && (
+                      <span style={{ fontSize: 13, fontWeight: 400, color: "#6B6B6B" }}>{perLabel}</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>{p.sub}</div>
+                  {billedNote && (
+                    <div style={{ fontSize: 11, color: "#8A8A8A", marginTop: 6 }}>{billedNote}</div>
+                  )}
+
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "20px 0" }} />
+
+                  <ul
+                    style={{
+                      listStyle: "none",
+                      margin: 0,
+                      padding: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                    }}
+                  >
+                    {p.features.map((f) => (
+                      <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <Check size={14} color="#22C55E" style={{ marginTop: 3, flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, color: "#9A9A9A", lineHeight: 1.5 }}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link
+                  to={p.to}
+                  style={{
+                    marginTop: "auto",
+                    paddingTop: 24,
+                    textDecoration: "none",
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "block",
+                      textAlign: "center",
+                      background: p.featured ? "linear-gradient(135deg, #EA580C, #C2410C)" : "rgba(255,255,255,0.04)",
+                      border: p.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
+                      color: "#FFFFFF",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      padding: "12px",
+                      borderRadius: 10,
+                      transition: "all 0.15s",
+                      boxShadow: p.featured ? "0 8px 24px rgba(234,88,12,0.3)" : "none",
+                    }}
+                  >
+                    {p.cta}
+                  </span>
+                </Link>
+              </div>
             );
           })}
         </div>
+
+        <ComparisonTable />
       </div>
-
-      <div
-        className="ps-pricing-grid"
-        style={{
-          maxWidth: 960,
-          margin: "32px auto 0",
-          display: "grid",
-          gap: 20,
-        }}
-      >
-        {PLANS.map((p) => {
-          const isCustom = p.monthly === null;
-          const monthlyEffective = isCustom
-            ? null
-            : billing === "annual"
-              ? Math.round(p.monthly! * (1 - ANNUAL_DISCOUNT))
-              : p.monthly!;
-          const priceLabel = isCustom ? "Custom" : `$${monthlyEffective}`;
-          const perLabel = isCustom ? "" : "/month";
-          const billedNote = isCustom
-            ? null
-            : billing === "annual"
-              ? `Billed annually ($${monthlyEffective! * 12}/yr)`
-              : "Billed monthly";
-
-          return (
-          <div
-            key={p.name}
-            style={{
-              position: "relative",
-              background: "#0A0A0A",
-              border: p.featured ? "1px solid rgba(234, 88, 12, 0.4)" : "1px solid #1A1A1A",
-              borderRadius: 12,
-              padding: "32px 28px",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {p.featured && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -12,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "#EA580C",
-                  color: "#FFFFFF",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  padding: "4px 12px",
-                  borderRadius: 12,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                Most popular
-              </span>
-            )}
-
-            <div style={{ fontSize: 18, fontWeight: 600, color: "#FAFAF9" }}>{p.name}</div>
-            <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 4 }}>
-              <span style={{ fontSize: 40, fontWeight: 700, color: "#FAFAF9", lineHeight: 1 }}>
-                {priceLabel}
-              </span>
-              {perLabel && (
-                <span style={{ fontSize: 14, fontWeight: 400, color: "#6B6B6B" }}>{perLabel}</span>
-              )}
-            </div>
-            <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>{p.sub}</div>
-            {billedNote && (
-              <div style={{ fontSize: 11, color: "#8A8A8A", marginTop: 6 }}>{billedNote}</div>
-            )}
-
-            <div style={{ borderTop: "1px solid #1A1A1A", margin: "20px 0" }} />
-
-            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-              {p.features.map((f) => (
-                <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <Check size={14} color="#22C55E" style={{ marginTop: 3, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: "#8A8A8A", lineHeight: 1.5 }}>{f}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Link
-              to={p.to}
-              style={{
-                marginTop: "auto",
-                paddingTop: 24,
-                textDecoration: "none",
-              }}
-            >
-              <span
-                style={{
-                  display: "block",
-                  textAlign: "center",
-                  background: p.featured ? "#EA580C" : "transparent",
-                  border: p.featured ? "1px solid #EA580C" : "1px solid #3A3A3A",
-                  color: "#FFFFFF",
-                  fontSize: 14,
-                  fontWeight: p.featured ? 600 : 500,
-                  padding: "12px",
-                  borderRadius: 8,
-                  transition: "background 0.15s, border-color 0.15s, color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  if (p.featured) {
-                    e.currentTarget.style.background = "#C2410C";
-                    e.currentTarget.style.borderColor = "#C2410C";
-                  } else {
-                    e.currentTarget.style.borderColor = "#EA580C";
-                    e.currentTarget.style.color = "#EA580C";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (p.featured) {
-                    e.currentTarget.style.background = "#EA580C";
-                    e.currentTarget.style.borderColor = "#EA580C";
-                  } else {
-                    e.currentTarget.style.borderColor = "#3A3A3A";
-                    e.currentTarget.style.color = "#FAFAF9";
-                  }
-                }}
-              >
-                {p.cta}
-              </span>
-            </Link>
-          </div>
-          );
-        })}
-      </div>
-
-      <ComparisonTable />
     </section>
   );
 }
@@ -1207,20 +1730,8 @@ const COMPARISON_GROUPS: {
 ];
 
 function ComparisonCell({ value }: { value: boolean | string }) {
-  if (value === true) {
-    return (
-      <span style={{ display: "inline-flex" }}>
-        <Check size={16} color="#22C55E" aria-label="Included" />
-      </span>
-    );
-  }
-  if (value === false) {
-    return (
-      <span style={{ display: "inline-flex" }}>
-        <Minus size={16} color="#3A3A3A" aria-label="Not included" />
-      </span>
-    );
-  }
+  if (value === true) return <Check size={16} color="#22C55E" aria-label="Included" />;
+  if (value === false) return <Minus size={16} color="#3A3A3A" aria-label="Not included" />;
   return <span style={{ fontSize: 13, color: "#FAFAF9" }}>{value}</span>;
 }
 
@@ -1228,15 +1739,7 @@ function ComparisonTable() {
   const headers = ["Scout", "Pro", "Enterprise"] as const;
   return (
     <div style={{ maxWidth: 960, margin: "64px auto 0" }}>
-      <h3
-        style={{
-          fontSize: 20,
-          fontWeight: 600,
-          color: "#FAFAF9",
-          textAlign: "center",
-          margin: 0,
-        }}
-      >
+      <h3 style={{ fontSize: 20, fontWeight: 600, color: "#FAFAF9", textAlign: "center", margin: 0 }}>
         Compare every feature
       </h3>
       <p style={{ fontSize: 13, color: "#8A8A8A", textAlign: "center", marginTop: 8 }}>
@@ -1244,41 +1747,38 @@ function ComparisonTable() {
       </p>
 
       <style>{`
-        .ps-compare-wrap { position: relative; margin-top: 32px; }
+        .ps-compare-wrap { position: relative; margin-top: 28px; }
         .ps-compare-scroll {
-          background: #0A0A0A;
-          border: 1px solid #1A1A1A;
-          border-radius: 12px;
+          background: rgba(15,15,15,0.7);
+          border: 1px solid rgba(255,255,255,0.06);
+          border-radius: 14px;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
         }
         .ps-compare-fade {
           pointer-events: none;
           position: absolute;
-          top: 1px;
-          right: 1px;
-          bottom: 1px;
+          top: 1px; right: 1px; bottom: 1px;
           width: 32px;
-          border-top-right-radius: 12px;
-          border-bottom-right-radius: 12px;
-          background: linear-gradient(to right, rgba(10,10,10,0) 0%, rgba(10,10,10,0.95) 100%);
+          border-top-right-radius: 14px;
+          border-bottom-right-radius: 14px;
+          background: linear-gradient(to right, rgba(15,15,15,0) 0%, rgba(15,15,15,0.95) 100%);
         }
         @media (min-width: 720px) { .ps-compare-fade { display: none; } }
         .ps-compare-table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-        .ps-compare-table th, .ps-compare-table td { background: #0A0A0A; }
-        .ps-compare-table tr.ps-group-row > th { background: #050505; }
+        .ps-compare-table th, .ps-compare-table td { background: transparent; }
+        .ps-compare-table tr.ps-group-row > th { background: rgba(0,0,0,0.4); }
         .ps-compare-table .ps-feat {
-          position: sticky;
-          left: 0;
-          z-index: 2;
-          box-shadow: 1px 0 0 0 #1A1A1A;
+          position: sticky; left: 0; z-index: 2;
+          background: rgba(15,15,15,0.95);
+          box-shadow: 1px 0 0 0 rgba(255,255,255,0.06);
         }
       `}</style>
       <div className="ps-compare-wrap">
         <div className="ps-compare-scroll">
           <table className="ps-compare-table">
             <thead>
-              <tr style={{ borderBottom: "1px solid #1A1A1A" }}>
+              <tr>
                 <th
                   scope="col"
                   className="ps-feat"
@@ -1328,15 +1828,15 @@ function ComparisonTable() {
                         color: "#EA580C",
                         textTransform: "uppercase",
                         letterSpacing: "0.08em",
-                        borderTop: "1px solid #1A1A1A",
-                        borderBottom: "1px solid #1A1A1A",
+                        borderTop: "1px solid rgba(255,255,255,0.06)",
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
                       }}
                     >
                       {g.group}
                     </th>
                   </tr>
                   {g.rows.map((row) => (
-                    <tr key={row.label} style={{ borderBottom: "1px solid #141414" }}>
+                    <tr key={row.label}>
                       <th
                         scope="row"
                         className="ps-feat"
@@ -1346,7 +1846,7 @@ function ComparisonTable() {
                           fontWeight: 400,
                           color: "#C7C7C5",
                           fontSize: 13,
-                          borderBottom: "1px solid #141414",
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
                         }}
                       >
                         {row.label}
@@ -1357,7 +1857,7 @@ function ComparisonTable() {
                           style={{
                             textAlign: "center",
                             padding: "14px 20px",
-                            borderBottom: "1px solid #141414",
+                            borderBottom: "1px solid rgba(255,255,255,0.04)",
                           }}
                         >
                           <ComparisonCell value={v} />
@@ -1376,6 +1876,10 @@ function ComparisonTable() {
   );
 }
 
+/* ============================================================================
+   FAQ
+   ========================================================================= */
+
 const FAQS = [
   {
     q: "What types of businesses is PrizeSkout built for?",
@@ -1391,7 +1895,7 @@ const FAQS = [
   },
   {
     q: "What makes PrizeSkout different from tools like Prisync or Competera?",
-    a: "Three things. First, we cover both online and physical retail, not just online. Second, our AI model is trained on your specific data and improves every month, meaning recommendations get more accurate over time. Third, we are built specifically for the Qatar and Middle East market with local platform coverage that global tools do not offer.",
+    a: "Three things. First, we cover both online and physical retail, not just online. Second, our AI model is trained on your specific data and improves every month, meaning recommendations get more accurate over time. Third, we are built specifically for the Middle East market with local platform coverage that global tools do not offer.",
   },
   {
     q: "How long before I see results?",
@@ -1404,304 +1908,340 @@ const FAQS = [
 ];
 
 function FAQ() {
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
   return (
-    <section
-      id="faq"
-      style={{ background: "#FAFAF9" }}
-      className="px-5 md:px-10 py-[60px] md:py-[80px]"
-    >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#EA580C",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          textAlign: "center",
-          margin: 0,
-        }}
-      >
-        FAQ
-      </p>
-      <h2 className="ps-section-title" style={{ color: "#1A1A18", textAlign: "center", marginTop: 10 }}>
-        Common questions
-      </h2>
+    <section id="faq" style={{ background: "#050505", padding: "80px 20px" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <h2
+          style={{
+            fontSize: "clamp(24px, 3.5vw, 32px)",
+            fontWeight: 700,
+            color: "#FAFAF9",
+            textAlign: "center",
+            margin: 0,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Got any{" "}
+          <span
+            style={{
+              background: "linear-gradient(90deg, #EA580C, #FB923C)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Questions?
+          </span>
+        </h2>
 
-      <div style={{ maxWidth: 700, margin: "40px auto 0" }}>
-        {FAQS.map((item, i) => {
-          const isOpen = openIdx === i;
-          return (
-            <div key={i} style={{ borderBottom: "1px solid #E5E2DB" }}>
-              <button
-                onClick={() => setOpenIdx(isOpen ? null : i)}
-                style={{
-                  width: "100%",
-                  background: "none",
-                  border: "none",
-                  padding: "18px 0",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  textAlign: "left",
-                }}
-                className="ps-faq-q"
-              >
-                <span style={{ fontSize: 15, fontWeight: 500, color: "#1A1A18", transition: "color 0.15s" }}>
-                  {item.q}
-                </span>
-                <ChevronDown
-                  size={16}
-                  color="#9A9A9A"
-                  style={{
-                    transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.2s",
-                    flexShrink: 0,
-                    marginLeft: 16,
-                  }}
-                />
-              </button>
+        <div style={{ marginTop: 36, display: "flex", flexDirection: "column", gap: 10 }}>
+          {FAQS.map((item, i) => {
+            const isOpen = openIdx === i;
+            return (
               <div
+                key={i}
                 style={{
-                  display: "grid",
-                  gridTemplateRows: isOpen ? "1fr" : "0fr",
-                  transition: "grid-template-rows 0.25s ease",
+                  background: "rgba(15,15,15,0.7)",
+                  border: `1px solid ${isOpen ? "rgba(234,88,12,0.35)" : "rgba(255,255,255,0.06)"}`,
+                  borderRadius: 12,
+                  transition: "border-color 0.2s",
                 }}
               >
-                <div style={{ overflow: "hidden" }}>
-                  <p
+                <button
+                  onClick={() => setOpenIdx(isOpen ? null : i)}
+                  style={{
+                    width: "100%",
+                    background: "none",
+                    border: "none",
+                    padding: "16px 20px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "#FAFAF9" }}>{item.q}</span>
+                  <span
                     style={{
-                      fontSize: 14,
-                      fontWeight: 400,
-                      color: "#6B6B6B",
-                      lineHeight: 1.65,
-                      paddingTop: 0,
-                      paddingBottom: 18,
-                      margin: 0,
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      background: isOpen ? "rgba(234,88,12,0.15)" : "rgba(255,255,255,0.06)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      marginLeft: 12,
+                      transition: "background 0.2s",
                     }}
                   >
-                    {item.a}
-                  </p>
+                    <ChevronDown
+                      size={14}
+                      color={isOpen ? "#EA580C" : "#9A9A9A"}
+                      style={{
+                        transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.2s",
+                      }}
+                    />
+                  </span>
+                </button>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateRows: isOpen ? "1fr" : "0fr",
+                    transition: "grid-template-rows 0.25s ease",
+                  }}
+                >
+                  <div style={{ overflow: "hidden" }}>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 400,
+                        color: "#9A9A9A",
+                        lineHeight: 1.7,
+                        padding: "0 20px 18px",
+                        margin: 0,
+                      }}
+                    >
+                      {item.a}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </section>
   );
 }
+
+/* ============================================================================
+   FINAL CTA — heavy glow
+   ========================================================================= */
 
 function CTASection() {
   return (
     <section
-      style={{ background: "#050505", textAlign: "center" }}
-      className="px-5 md:px-10 py-[60px] md:py-[80px]"
+      style={{
+        position: "relative",
+        background: "#050505",
+        padding: "100px 20px",
+        textAlign: "center",
+        overflow: "hidden",
+      }}
     >
-      <h2 className="ps-section-title" style={{ color: "#FAFAF9" }}>
-        Ready to price smarter?
-      </h2>
-      <p
+      {/* Big radial glow */}
+      <div
+        aria-hidden
         style={{
-          fontSize: 15,
-          color: "#8A8A8A",
-          marginTop: 12,
-          maxWidth: 500,
-          marginLeft: "auto",
-          marginRight: "auto",
-          lineHeight: 1.6,
+          position: "absolute",
+          inset: "-20% 0",
+          background:
+            "radial-gradient(ellipse at center, rgba(234,88,12,0.45) 0%, rgba(234,88,12,0.15) 30%, rgba(5,5,5,0) 70%)",
+          filter: "blur(40px)",
+          pointerEvents: "none",
         }}
-      >
-        Join commerce brands across Qatar and the Middle East using PrizeSkout to outsmart their
-        competition.
-      </p>
-      <div style={{ marginTop: 28 }}>
-        <Link
-          to="/signup"
+      />
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 720, margin: "0 auto" }}>
+        <p
           style={{
-            display: "inline-block",
-            background: "#EA580C",
-            color: "#FFFFFF",
-            fontSize: 16,
-            fontWeight: 600,
-            padding: "14px 36px",
-            borderRadius: 8,
-            textDecoration: "none",
-            transition: "background 0.15s",
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#EA580C",
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            margin: 0,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
         >
-          Start your free trial
-        </Link>
+          Outsmart the market
+        </p>
+        <h2
+          style={{
+            fontSize: "clamp(32px, 5vw, 52px)",
+            fontWeight: 700,
+            color: "#FAFAF9",
+            margin: "16px 0 0",
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Ready to price on{" "}
+          <span
+            style={{
+              background: "linear-gradient(90deg, #EA580C, #FB923C)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            God Mode?
+          </span>
+        </h2>
+        <p
+          style={{
+            fontSize: 15,
+            color: "#9A9A9A",
+            marginTop: 14,
+            maxWidth: 480,
+            marginLeft: "auto",
+            marginRight: "auto",
+            lineHeight: 1.6,
+          }}
+        >
+          Join commerce brands using PrizeSkout to monitor every competitor and optimize every
+          price across every channel.
+        </p>
+        <div style={{ marginTop: 32 }}>
+          <Link
+            to="/signup"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              background: "linear-gradient(135deg, #EA580C, #C2410C)",
+              color: "#FFFFFF",
+              fontSize: 15,
+              fontWeight: 600,
+              padding: "15px 36px",
+              borderRadius: 12,
+              textDecoration: "none",
+              transition: "transform 0.15s, box-shadow 0.15s",
+              boxShadow: "0 16px 40px rgba(234,88,12,0.45)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 22px 50px rgba(234,88,12,0.55)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 16px 40px rgba(234,88,12,0.45)";
+            }}
+          >
+            Start your free trial
+            <ArrowRight size={15} />
+          </Link>
+        </div>
+        <p style={{ marginTop: 14, fontSize: 12, color: "#6B6B6B" }}>
+          14-day free trial · No credit card required
+        </p>
       </div>
-      <p style={{ marginTop: 12, fontSize: 13, color: "#6B6B6B" }}>
-        No credit card required. Cancel anytime.
-      </p>
     </section>
   );
 }
 
-function FooterLink({ label }: { label: string }) {
-  return (
-    <a
-      href="#"
-      onClick={(e) => e.preventDefault()}
-      style={{
-        fontSize: 13,
-        fontWeight: 400,
-        color: "#6B6B6B",
-        textDecoration: "none",
-        transition: "color 0.15s",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
-    >
-      {label}
-    </a>
-  );
-}
-
-function Footer() {
-  return (
-    <footer
-      style={{
-        background: "#050505",
-        borderTop: "1px solid #1A1A1A",
-        padding: "60px 40px 30px",
-      }}
-    >
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <div className="ps-footer-grid">
-          <div>
-            <button
-              onClick={() => smoothScrollTo("#top")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              <span style={{ width: 24, height: 24, background: "#EA580C", borderRadius: 6 }} />
-              <span style={{ fontSize: 17, fontWeight: 700, color: "#FAFAF9" }}>PrizeSkout</span>
-            </button>
-            <p
-              style={{
-                marginTop: 12,
-                fontSize: 13,
-                color: "#6B6B6B",
-                lineHeight: 1.6,
-                maxWidth: 280,
-              }}
-            >
-              AI-powered pricing intelligence for commerce brands. Monitor, optimize, and outsmart
-              your competition across every channel.
-            </p>
-            <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
-              {[
-                { label: "X", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>X</span> },
-                { label: "in", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>in</span> },
-                { label: "Instagram", node: <Camera size={14} color="#8A8A8A" /> },
-                { label: "YouTube", node: <Play size={14} color="#8A8A8A" /> },
-              ].map((s) => (
-                <a
-                  key={s.label}
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  aria-label={s.label}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    background: "#0A0A0A",
-                    border: "1px solid #1A1A1A",
-                    borderRadius: 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "border-color 0.15s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#EA580C")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1A1A1A")}
-                >
-                  {s.node}
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Product
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterLink label="Features" />
-              <FooterLink label="Pricing" />
-              <FooterLink label="API docs" />
-              <FooterLink label="Changelog" />
-            </div>
-          </div>
-
-          <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Company
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterLink label="About" />
-              <FooterLink label="Blog" />
-              <FooterLink label="Careers" />
-              <FooterLink label="Contact" />
-            </div>
-          </div>
-
-          <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Legal
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterLink label="Privacy policy" />
-              <FooterLink label="Terms of service" />
-              <FooterLink label="Cookie policy" />
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: 40,
-            paddingTop: 20,
-            borderTop: "1px solid #1A1A1A",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: 12, color: "#6B6B6B" }}>
-            © {new Date().getFullYear()} PrizeSkout. All rights reserved.
-          </span>
-          <span style={{ fontSize: 12, color: "#6B6B6B", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <Globe size={12} />
-            Qatar
-          </span>
-        </div>
-      </div>
-    </footer>
-  );
-}
+/* ============================================================================
+   PAGE
+   ========================================================================= */
 
 function LandingPage() {
   return (
     <MarketingShell>
+      <style>{`
+        /* Hero grid */
+        .ps-hero-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 48px;
+          align-items: center;
+          text-align: center;
+        }
+        .ps-hero-copy { display: flex; flex-direction: column; align-items: center; }
+        .ps-hero-ctas { justify-content: center; }
+        .ps-hero-title { font-size: clamp(40px, 7vw, 68px); }
+        .ps-hero-sub { font-size: 15px; }
+
+        /* Split sections */
+        .ps-split { grid-template-columns: 1fr; }
+        .ps-split-copy, .ps-split-mock { width: 100%; }
+
+        /* Hub grid */
+        .ps-hub-grid { grid-template-columns: 1fr; }
+
+        /* Pricing */
+        .ps-pricing-grid { grid-template-columns: 1fr; }
+
+        @media (min-width: 768px) {
+          .ps-hero-grid {
+            grid-template-columns: 1.05fr 1fr;
+            text-align: left;
+          }
+          .ps-hero-copy { align-items: flex-start; }
+          .ps-hero-ctas { justify-content: flex-start; }
+
+          .ps-split { grid-template-columns: 1fr 1fr; gap: 60px; }
+          .ps-split-reverse .ps-split-mock { order: 2; }
+          .ps-split-reverse .ps-split-copy { order: 1; }
+
+          .ps-hub-grid { grid-template-columns: 1.4fr 1fr; }
+
+          .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+      `}</style>
       <Hero />
       <LogosBar />
-      <Features />
-      <HowItWorks />
+
+      <SplitSection
+        eyebrow="Competitive intelligence"
+        title={
+          <>
+            Skip the spreadsheets.{" "}
+            <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              Just ask.
+            </span>
+          </>
+        }
+        subtitle="Stop pulling reports. PrizeSkout monitors competitors in real time across every channel — online and in-store — and answers questions in plain English."
+        bullets={[
+          { Icon: Crosshair, title: "Live price tracking", desc: "Every competitor SKU, every channel, refreshed continuously." },
+          { Icon: BarChart3, title: "Promo & stock signals", desc: "Catch promotions, depletions, and reprice events the moment they happen." },
+          { Icon: MapPin, title: "In-store coverage", desc: "Field intelligence captures what scrapers can't see." },
+        ]}
+        mockup={<CompetitorMockup />}
+      />
+
+      <SplitSection
+        reverse
+        eyebrow="AI Pricing"
+        title={
+          <>
+            Data-driven{" "}
+            <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              "price"
+            </span>{" "}
+            signals.
+          </>
+        }
+        subtitle="The AI learns your margins, elasticity, and market context — then tells you exactly what to price, when, and why. Confidence-scored. Citation-backed."
+        bullets={[
+          { Icon: TrendingUp, title: "Specific recommendations", desc: "Not 'consider raising' — exact numbers with the rationale and risk." },
+          { Icon: Sparkles, title: "Gets smarter weekly", desc: "Your private model improves every week with your data and outcomes." },
+        ]}
+        mockup={<AIRecMockup />}
+      />
+
+      <SplitSection
+        eyebrow="Promotions"
+        title={
+          <>
+            Set it. Forget it.{" "}
+            <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              Save margin.
+            </span>
+          </>
+        }
+        subtitle="Simulate every campaign before it goes live. See ROI, cannibalization, and competitor response — and catch margin-eaters before they cost you."
+        bullets={[
+          { Icon: Megaphone, title: "ROI simulator", desc: "Model depth, duration, and channel mix to find the healthy promo window." },
+          { Icon: Target, title: "Cannibalization alerts", desc: "Know when a promo is stealing from full-price units." },
+        ]}
+        mockup={<ROIMockup />}
+      />
+
+      <HubSection id="features" />
+      <Testimonials />
       <Pricing />
       <FAQ />
       <CTASection />
