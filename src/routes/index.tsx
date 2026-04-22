@@ -153,15 +153,15 @@ const HERO_SIGNALS = [
   },
 ];
 
-function HeroChatMockup() {
+function HeroSignalsMockup() {
   const [idx, setIdx] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
   const [containerRef, inView] = useInView<HTMLDivElement>("0px");
   const animate = inView && !reducedMotion;
 
-  useTicker(4200, () => setIdx((i) => (i + 1) % HERO_REPLIES.length), animate);
+  useTicker(4400, () => setIdx((i) => (i + 1) % HERO_SIGNALS.length), animate);
 
-  const reply = HERO_REPLIES[idx];
+  const signal = HERO_SIGNALS[idx];
 
   return (
     <div
@@ -200,61 +200,88 @@ function HeroChatMockup() {
         }}
       >
         {/* Header chip */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <span
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              background: "linear-gradient(135deg, #EA580C, #C2410C)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 6px 20px rgba(234,88,12,0.4)",
-            }}
-          >
-            <Sparkles size={14} color="#FFF" />
-          </span>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#FAFAF9" }}>
-              PrizeSkout AI
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 7,
+                background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 20px rgba(234,88,12,0.4)",
+              }}
+            >
+              <Crosshair size={14} color="#FFF" />
             </span>
-            <span style={{ fontSize: 10, color: "#22C55E", display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#22C55E",
-                  boxShadow: "0 0 0 0 rgba(34,197,94,0.5)",
-                  animation: "ps-pulse 1.6s ease-out infinite",
-                }}
-              />
-              Live · monitoring 1,428 SKUs
-            </span>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#FAFAF9" }}>
+                Signal feed
+              </span>
+              <span style={{ fontSize: 10, color: "#22C55E", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#22C55E",
+                    boxShadow: "0 0 0 0 rgba(34,197,94,0.5)",
+                    animation: "ps-pulse 1.6s ease-out infinite",
+                  }}
+                />
+                Live · 1,428 SKUs · 6 channels
+              </span>
+            </div>
           </div>
+          <span style={{ fontSize: 10, color: "#6B6B6B", fontVariantNumeric: "tabular-nums" }}>
+            {String(idx + 1).padStart(2, "0")} / {String(HERO_SIGNALS.length).padStart(2, "0")}
+          </span>
         </div>
 
-        {/* User bubble */}
+        {/* Signal header row */}
         <div
-          key={`u-${idx}`}
+          key={`h-${idx}`}
           style={{
-            background: "rgba(234,88,12,0.12)",
-            border: "1px solid rgba(234,88,12,0.25)",
-            borderRadius: 12,
-            padding: "10px 14px",
-            fontSize: 13,
-            color: "#FAFAF9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
             marginBottom: 12,
             animation: reducedMotion ? undefined : "ps-slide-up 0.4s ease-out",
           }}
         >
-          {reply.user}
+          <span
+            style={{
+              fontSize: 11,
+              color: "#9A9A9A",
+              fontWeight: 500,
+              letterSpacing: "0.02em",
+            }}
+          >
+            {signal.head}
+          </span>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: signal.eventColor,
+              background: `${signal.eventColor}1A`,
+              border: `1px solid ${signal.eventColor}55`,
+              padding: "3px 7px",
+              borderRadius: 4,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {signal.eventTag}
+          </span>
         </div>
 
-        {/* AI response card */}
+        {/* Signal detail card */}
         <div
-          key={`a-${idx}`}
+          key={`d-${idx}`}
           style={{
             background: "rgba(0,0,0,0.45)",
             border: "1px solid rgba(255,255,255,0.06)",
@@ -263,11 +290,8 @@ function HeroChatMockup() {
             animation: reducedMotion ? undefined : "ps-slide-up 0.5s 0.1s ease-out both",
           }}
         >
-          <div style={{ fontSize: 11, color: "#8A8A8A", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {reply.response.head}
-          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {reply.response.lines.map((l) => (
+            {signal.lines.map((l: { tag: string; value: string; color?: string }) => (
               <div
                 key={l.tag}
                 style={{
@@ -277,65 +301,58 @@ function HeroChatMockup() {
                   fontSize: 12,
                 }}
               >
-                <span style={{ color: "#6B6B6B", fontWeight: 500 }}>{l.tag}</span>
+                <span style={{ color: "#6B6B6B", fontWeight: 500, letterSpacing: "0.04em" }}>{l.tag}</span>
                 <span style={{ color: l.color || "#FAFAF9", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                   {l.value}
                 </span>
               </div>
             ))}
           </div>
-          <button
-            type="button"
+          <div
             style={{
               marginTop: 14,
-              width: "100%",
-              background: "linear-gradient(135deg, #EA580C, #C2410C)",
-              color: "#FFF",
-              border: "none",
-              borderRadius: 8,
-              padding: "9px 12px",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "inline-flex",
+              paddingTop: 12,
+              borderTop: "1px solid rgba(255,255,255,0.05)",
+              display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              boxShadow: "0 8px 24px rgba(234,88,12,0.3)",
+              gap: 8,
             }}
           >
-            {reply.response.action}
-            <ArrowRight size={12} />
-          </button>
+            <span
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 5,
+                background: "rgba(234,88,12,0.15)",
+                border: "1px solid rgba(234,88,12,0.4)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Sparkles size={10} color="#EA580C" />
+            </span>
+            <span style={{ fontSize: 11, color: "#8A8A8A" }}>Recommended move</span>
+            <span style={{ fontSize: 12, color: signal.actionColor, fontWeight: 600, marginLeft: "auto", textAlign: "right" }}>
+              {signal.action}
+            </span>
+          </div>
         </div>
 
-        {/* Input */}
+        {/* Footer meta */}
         <div
           style={{
             marginTop: 14,
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: 8,
-            background: "rgba(0,0,0,0.45)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 10,
-            padding: "10px 12px",
+            fontSize: 10,
+            color: "#5C5C5C",
           }}
         >
-          <span style={{ fontSize: 12, color: "#6B6B6B", flex: 1 }}>Ask anything about your market…</span>
-          <span
-            style={{
-              width: 26,
-              height: 26,
-              background: "#EA580C",
-              borderRadius: 6,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Send size={12} color="#FFF" />
-          </span>
+          <span>Sources: scrape + field team</span>
+          <span style={{ color: "#8A8A8A" }}>Updated 12s ago</span>
         </div>
       </div>
     </div>
