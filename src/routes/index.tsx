@@ -1181,17 +1181,17 @@ function HubSection() {
               {
                 Icon: MapPin,
                 title: "Field intelligence",
-                desc: "Capture in-store competitor prices through your store teams.",
+                desc: "Your reps log shelf prices, promo collateral, and OOS in seconds — and it lands beside your online data.",
               },
               {
                 Icon: Target,
-                title: "Market benchmarks",
-                desc: "See where you rank against the anonymized network.",
+                title: "Anonymous benchmarks",
+                desc: "See where you sit on price index, promo depth, and assortment versus the network — without exposing your numbers.",
               },
               {
                 Icon: Megaphone,
-                title: "Promotion calendar",
-                desc: "Who is running what — across Talabat, Snoonu, Carrefour.",
+                title: "Promo calendar",
+                desc: "What every competitor is running, when it ends, and how it overlaps with your plan.",
               },
             ].map((c) => (
               <div
