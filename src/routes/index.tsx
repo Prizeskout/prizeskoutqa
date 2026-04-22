@@ -24,17 +24,15 @@ export const Route = createFileRoute("/")({
       { title: "PrizeSkout — Pricing intelligence for retail" },
       {
         name: "description",
-        content:
-          "PrizeSkout gives category teams a continuous read on competitor prices, promotions, and shelf moves — online and in-store — so every pricing decision is grounded in evidence.",
+        content: "PrizeSkout gives category teams a continuous read on competitor prices, promotions, and shelf moves online and in-store, so every pricing decision is grounded in evidence.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout — Pricing intelligence for retail",
+        content: "PrizeSkout - Pricing intelligence for retail",
       },
       {
         property: "og:description",
-        content:
-          "A continuous read on competitor prices, promotions, and shelf moves — online and in-store. Built for category teams that need to defend margin without losing share.",
+        content: "A continuous read on competitor prices, promotions, and shelf moves online and in-store. Built for category teams that need to defend margin without losing share.",
       },
     ],
   }),
