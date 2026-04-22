@@ -1297,10 +1297,10 @@ function Testimonials() {
             letterSpacing: "-0.02em",
           }}
         >
-          Loved by commerce leaders
+          What category teams say
         </h2>
         <p style={{ fontSize: 14, color: "#8A8A8A", marginTop: 10 }}>
-          See what teams across the region are saying.
+          Operators on the ground — pricing, e-commerce, and category leads.
         </p>
 
         <div
