@@ -82,8 +82,34 @@ export async function runScrape(
     const markdown = payload.data?.markdown ?? null;
     const extracted = payload.data?.json ?? {};
     const metadata = payload.data?.metadata ?? {};
-    const price = typeof extracted.price === "number" ? extracted.price : null;
+    const rawPrice = typeof extracted.price === "number" ? extracted.price : null;
     const currency = extracted.currency ?? null;
+
+    // Guard: Firecrawl sometimes returns price=0 when it can't actually find a
+    // product price on the page (e.g. category/listing pages instead of a PDP).
+    // Treat that as a failed extraction so the row doesn't get a LIVE pill
+    // backed by a meaningless zero.
+    if (rawPrice === null || rawPrice <= 0) {
+      const reason =
+        rawPrice === null
+          ? "Firecrawl did not return a numeric price"
+          : "Firecrawl returned price=0 (likely not a product detail page)";
+      await (supabase.from("competitor_scrapes") as any).insert({
+        user_id: job.userId,
+        url: job.url,
+        competitor: job.competitor ?? null,
+        product: job.product ?? null,
+        price: null,
+        currency,
+        markdown,
+        metadata,
+        status: "error",
+        error: reason,
+      });
+      return { ok: false, url: job.url, error: reason };
+    }
+
+    const price = rawPrice;
 
     const { error } = await (supabase.from("competitor_scrapes") as any).insert({
       user_id: job.userId,
