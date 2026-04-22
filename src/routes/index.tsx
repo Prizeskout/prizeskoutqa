@@ -1063,16 +1063,28 @@ function HubSection() {
       }}
     >
       <div style={{ maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
+        <p
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#EA580C",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            margin: 0,
+          }}
+        >
+          What's inside
+        </p>
         <h2
           style={{
             fontSize: "clamp(26px, 4vw, 38px)",
             fontWeight: 700,
             color: "#FAFAF9",
-            margin: 0,
+            margin: "10px 0 0",
             letterSpacing: "-0.02em",
           }}
         >
-          The ultimate{" "}
+          One workspace.{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -1081,11 +1093,12 @@ function HubSection() {
               backgroundClip: "text",
             }}
           >
-            commerce intelligence hub
+            Every channel you sell on.
           </span>
         </h2>
         <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 12 }}>
-          Online. In-store. Cross-border. Every signal in one workspace.
+          Online marketplaces, delivery apps, hypermarkets, your own stores — read together, not in
+          separate tabs.
         </p>
 
         <div
