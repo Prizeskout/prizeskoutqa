@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { type OverviewAlert, formatRelativeTime } from "@/lib/overview-data";
+
+// Map each alert type to the dashboard surface that owns the underlying data.
+// Clicking an alert deep-links the user to that page so they can act on it.
+const ALERT_ROUTE: Record<AlertType, string> = {
+  price: "/dashboard/competitors",
+  stock: "/dashboard/field-intel",
+  promo: "/dashboard/competitors",
+  pattern: "/dashboard/competitors",
+  insight: "/dashboard/market",
+};
 
 type AlertType = "price" | "stock" | "promo" | "pattern" | "insight";
 type Channel = "online" | "in-store";
@@ -85,7 +96,13 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
           display: flex;
           flex-direction: column;
           gap: 8px;
-          padding: 12px 0;
+          padding: 12px 4px;
+          border-radius: 6px;
+          margin: 0 -4px;
+          transition: background-color 0.12s ease;
+        }
+        .live-alert-row:hover {
+          background-color: #FAFAF9;
         }
         .live-alert-meta {
           display: flex;
@@ -142,37 +159,47 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
             const c = CHANNEL_STYLES[a.channel];
             const s = SEVERITY_STYLES[a.severity];
             const isLast = i === alerts.length - 1;
+            const href = ALERT_ROUTE[a.alert_type] ?? "/dashboard";
             return (
               <li
                 key={a.id}
-                className="live-alert-row"
                 style={{ borderBottom: isLast ? "none" : "1px solid #E5E2DB" }}
               >
-                <div className="live-alert-meta">
-                  <Pill bg={t.bg} color={t.color}>
-                    {a.alert_type}
-                  </Pill>
-                  <Pill bg={c.bg} color={c.color} fontSize={10}>
-                    {a.channel}
-                  </Pill>
-                </div>
-                <span
+                <Link
+                  to={href}
+                  className="live-alert-row"
                   style={{
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: 13,
-                    fontWeight: 400,
-                    color: "#1A1A18",
+                    color: "inherit",
+                    textDecoration: "none",
+                    cursor: "pointer",
                   }}
                 >
-                  {a.message}
-                </span>
-                <div className="live-alert-meta">
-                  <Pill bg={s.bg} color={s.color}>
-                    {a.severity}
-                  </Pill>
-                  <RelativeTime iso={a.occurred_at} />
-                </div>
+                  <div className="live-alert-meta">
+                    <Pill bg={t.bg} color={t.color}>
+                      {a.alert_type}
+                    </Pill>
+                    <Pill bg={c.bg} color={c.color} fontSize={10}>
+                      {a.channel}
+                    </Pill>
+                  </div>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: 13,
+                      fontWeight: 400,
+                      color: "#1A1A18",
+                    }}
+                  >
+                    {a.message}
+                  </span>
+                  <div className="live-alert-meta">
+                    <Pill bg={s.bg} color={s.color}>
+                      {a.severity}
+                    </Pill>
+                    <RelativeTime iso={a.occurred_at} />
+                  </div>
+                </Link>
               </li>
             );
           })}
