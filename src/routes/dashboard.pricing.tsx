@@ -5,6 +5,7 @@ import { ModelStatusBanner } from "@/components/dashboard/pricing/ModelStatusBan
 import { RecommendationsList } from "@/components/dashboard/pricing/RecommendationsList";
 import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
+import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { PricingPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,13 +15,16 @@ import type {
   PricingRecommendation,
   PricingRule,
 } from "@/lib/pricing-data";
+import type { AIInsight } from "@/server/ai-insights.functions";
 
-async function loadPricing(): Promise<PricingData> {
+type PricingPageData = PricingData & { insight: AIInsight | null };
+
+async function loadPricing(): Promise<PricingPageData> {
   // During SSR keep the route in its pending state so the skeleton is what
   // serializes into the SSR HTML. Client-side the loader runs with the real
   // session.
   if (typeof window === "undefined") {
-    return pendingOnSSR<PricingData>();
+    return pendingOnSSR<PricingPageData>();
   }
 
   const {
@@ -30,7 +34,7 @@ async function loadPricing(): Promise<PricingData> {
     throw redirect({ to: "/login", search: { redirect: "/dashboard/pricing" } });
   }
 
-  const [metricsRes, recsRes, rulesRes] = await Promise.all([
+  const [metricsRes, recsRes, rulesRes, insightRes] = await Promise.all([
     supabase
       .from("pricing_metrics")
       .select("*")
@@ -43,6 +47,7 @@ async function loadPricing(): Promise<PricingData> {
       .from("pricing_rules")
       .select("*")
       .order("position", { ascending: true }),
+    supabase.from("ai_insights").select("*").eq("page", "pricing").maybeSingle(),
   ]);
 
   if (metricsRes.error) throw metricsRes.error;
@@ -53,6 +58,7 @@ async function loadPricing(): Promise<PricingData> {
     metrics: (metricsRes.data ?? []) as PricingMetric[],
     recommendations: (recsRes.data ?? []) as unknown as PricingRecommendation[],
     rules: (rulesRes.data ?? []) as PricingRule[],
+    insight: (insightRes.data as AIInsight | null) ?? null,
   };
 }
 
@@ -73,6 +79,7 @@ function PricingPage() {
     <DashboardLayout title="Pricing">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <MetricsRow metrics={data.metrics} />
+        <AIInsightsCard page="pricing" initial={data.insight} />
         <ModelStatusBanner />
         <RecommendationsList recommendations={data.recommendations} />
         <PricingRules rules={data.rules} />
