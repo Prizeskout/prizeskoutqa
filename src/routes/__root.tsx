@@ -3,8 +3,6 @@ import { AuthProvider } from "@/lib/auth-context";
 
 import appCss from "../styles.css?url";
 
-const FAVICON_SVG =
-  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23EA580C'/><text x='16' y='22' text-anchor='middle' font-family='Arial' font-weight='700' font-size='18' fill='white'>P</text></svg>";
 
 const SITE_TITLE = "PrizeSkout | Commerce Intelligence";
 const SITE_DESCRIPTION =
@@ -191,7 +189,9 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: SITE_DESCRIPTION },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: FAVICON_SVG },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
