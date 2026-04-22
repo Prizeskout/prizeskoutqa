@@ -396,26 +396,6 @@ function Hero() {
       >
         {/* Left: copy */}
         <div className="ps-hero-copy">
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "rgba(234,88,12,0.10)",
-              border: "1px solid rgba(234,88,12,0.25)",
-              borderRadius: 999,
-              padding: "5px 14px",
-              fontSize: 11,
-              fontWeight: 600,
-              color: "#EA580C",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-            }}
-          >
-            <Crosshair size={11} />
-            Pricing intelligence for retail
-          </span>
-
           <h1
             className="ps-hero-title"
             style={{
