@@ -96,7 +96,13 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
           display: flex;
           flex-direction: column;
           gap: 8px;
-          padding: 12px 0;
+          padding: 12px 4px;
+          border-radius: 6px;
+          margin: 0 -4px;
+          transition: background-color 0.12s ease;
+        }
+        .live-alert-row:hover {
+          background-color: #FAFAF9;
         }
         .live-alert-meta {
           display: flex;
