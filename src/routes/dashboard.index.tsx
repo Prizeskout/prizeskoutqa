@@ -5,6 +5,7 @@ import { LiveAlerts } from "@/components/dashboard/overview/LiveAlerts";
 import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
+import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,13 +16,16 @@ import type {
   OverviewMetric,
   OverviewQuickAction,
 } from "@/lib/overview-data";
+import type { AIInsight } from "@/server/ai-insights.functions";
 
-async function loadOverview(): Promise<OverviewData> {
+type OverviewPageData = OverviewData & { insight: AIInsight | null };
+
+async function loadOverview(): Promise<OverviewPageData> {
   // During SSR there is no auth session — keep the route in its pending state
   // so the SSR HTML serializes the skeleton. Client-side the loader runs
   // normally with the real session.
   if (typeof window === "undefined") {
-    return pendingOnSSR<OverviewData>();
+    return pendingOnSSR<OverviewPageData>();
   }
 
   const {
@@ -31,7 +35,7 @@ async function loadOverview(): Promise<OverviewData> {
     throw redirect({ to: "/login", search: { redirect: "/dashboard" } });
   }
 
-  const [metricsRes, alertsRes, channelsRes, actionsRes] = await Promise.all([
+  const [metricsRes, alertsRes, channelsRes, actionsRes, insightRes] = await Promise.all([
     supabase
       .from("overview_metrics")
       .select("*")
@@ -49,6 +53,11 @@ async function loadOverview(): Promise<OverviewData> {
       .from("overview_quick_actions")
       .select("*")
       .order("position", { ascending: true }),
+    supabase
+      .from("ai_insights")
+      .select("*")
+      .eq("page", "overview")
+      .maybeSingle(),
   ]);
 
   if (metricsRes.error) throw metricsRes.error;
@@ -61,6 +70,7 @@ async function loadOverview(): Promise<OverviewData> {
     alerts: (alertsRes.data ?? []) as OverviewAlert[],
     channels: (channelsRes.data ?? []) as OverviewChannel[],
     quickActions: (actionsRes.data ?? []) as OverviewQuickAction[],
+    insight: (insightRes.data as AIInsight | null) ?? null,
   };
 }
 
@@ -81,6 +91,7 @@ function OverviewPage() {
     <DashboardLayout title="Overview">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <MetricsRow metrics={data.metrics} />
+        <AIInsightsCard page="overview" initial={data.insight} />
         <LiveAlerts alerts={data.alerts} />
 
         <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
