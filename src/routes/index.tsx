@@ -2240,7 +2240,10 @@ function LandingPage() {
         mockup={<ROIMockup />}
       />
 
-      <HubSection id="features" />
+      <div id="features">
+        <HubSection />
+      </div>
+      <div id="how-it-works" />
       <Testimonials />
       <Pricing />
       <FAQ />
