@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Mail, MapPin, MessageSquare } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { MarketingHero, MarketingBody } from "@/components/marketing/MarketingPage";
+import { submitContactMessage } from "@/server/contact.functions";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -46,6 +49,33 @@ const CHANNELS = [
 
 function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const submit = useServerFn(submitContactMessage);
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) return;
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const payload = {
+      name: String(fd.get("name") ?? "").trim(),
+      company: String(fd.get("company") ?? "").trim() || null,
+      email: String(fd.get("email") ?? "").trim(),
+      message: String(fd.get("message") ?? "").trim(),
+    };
+    setBusy(true);
+    try {
+      await submit({ data: payload });
+      setSubmitted(true);
+      form.reset();
+      toast.success("Thanks! We will get back to you shortly.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <MarketingShell>
@@ -128,48 +158,74 @@ function ContactPage() {
               }}
             >
               Thanks for reaching out. We will get back to you shortly.
+              <button
+                type="button"
+                onClick={() => setSubmitted(false)}
+                style={{
+                  display: "block",
+                  marginTop: 12,
+                  background: "transparent",
+                  border: "none",
+                  color: "#15803D",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                  textDecoration: "underline",
+                }}
+              >
+                Send another message
+              </button>
             </div>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubmitted(true);
-              }}
-              style={{ marginTop: 20, display: "grid", gap: 14 }}
-            >
+            <form onSubmit={onSubmit} style={{ marginTop: 20, display: "grid", gap: 14 }}>
               <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
-                <Field label="Name" name="name" placeholder="Your full name" required />
-                <Field label="Company" name="company" placeholder="Brand or retailer" />
+                <Field label="Name" name="name" placeholder="Your full name" required maxLength={200} />
+                <Field label="Company" name="company" placeholder="Brand or retailer" maxLength={200} />
               </div>
-              <Field label="Work email" name="email" type="email" placeholder="you@company.com" required />
+              <Field
+                label="Work email"
+                name="email"
+                type="email"
+                placeholder="you@company.com"
+                required
+                maxLength={320}
+              />
               <div>
                 <label style={labelStyle}>Message</label>
                 <textarea
+                  name="message"
                   required
                   rows={5}
+                  maxLength={5000}
                   placeholder="What would you like to know?"
                   style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
                 />
               </div>
               <button
                 type="submit"
+                disabled={busy}
                 style={{
                   marginTop: 4,
-                  background: "#EA580C",
+                  background: busy ? "#9A9A9A" : "#EA580C",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "12px 22px",
                   borderRadius: 8,
                   fontSize: 14,
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: busy ? "wait" : "pointer",
                   justifySelf: "start",
                   transition: "background 0.15s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
+                onMouseEnter={(e) => {
+                  if (!busy) e.currentTarget.style.background = "#C2410C";
+                }}
+                onMouseLeave={(e) => {
+                  if (!busy) e.currentTarget.style.background = "#EA580C";
+                }}
               >
-                Send message
+                {busy ? "Sending..." : "Send message"}
               </button>
             </form>
           )}
@@ -205,12 +261,14 @@ function Field({
   type = "text",
   placeholder,
   required,
+  maxLength,
 }: {
   label: string;
   name: string;
   type?: string;
   placeholder?: string;
   required?: boolean;
+  maxLength?: number;
 }) {
   return (
     <div>
@@ -223,6 +281,7 @@ function Field({
         type={type}
         placeholder={placeholder}
         required={required}
+        maxLength={maxLength}
         style={inputStyle}
       />
     </div>
