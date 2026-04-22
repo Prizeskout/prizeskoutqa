@@ -42,7 +42,7 @@ export function PriceHistory({ history }: { history: PriceHistoryRow[] }) {
           color: "#6B6B6B",
         }}
       >
-        No price history yet - your dashboard will populate as we track competitor prices over
+        No price history yet. Your dashboard will populate as we track competitor prices over
         time.
       </div>
     );

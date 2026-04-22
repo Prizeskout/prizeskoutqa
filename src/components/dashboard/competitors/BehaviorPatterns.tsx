@@ -50,7 +50,7 @@ export function BehaviorPatterns({ patterns }: { patterns: BehaviorPattern[] }) 
           color: "#6B6B6B",
         }}
       >
-        No behavior patterns detected yet - patterns appear once we have at least 8 months of
+        No behavior patterns detected yet. Patterns appear once we have at least 8 months of
         competitor tracking data.
       </div>
     );
