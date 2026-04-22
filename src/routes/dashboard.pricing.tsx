@@ -6,6 +6,7 @@ import { RecommendationsList } from "@/components/dashboard/pricing/Recommendati
 import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
+import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { PricingPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +79,9 @@ function PricingPage() {
   return (
     <DashboardLayout title="Pricing">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ExportInsightsButton />
+        </div>
         <MetricsRow metrics={data.metrics} />
         <AIInsightsCard page="pricing" initial={data.insight} />
         <ModelStatusBanner />

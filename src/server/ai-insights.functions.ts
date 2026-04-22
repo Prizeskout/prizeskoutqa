@@ -4,12 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const PAGES = ["overview", "pricing", "competitors", "market"] as const;
 type Page = (typeof PAGES)[number];
 
+const WINDOWS = ["24h", "7d", "30d"] as const;
+export type InsightWindow = (typeof WINDOWS)[number];
+
+const WINDOW_LABEL: Record<InsightWindow, string> = {
+  "24h": "last 24 hours",
+  "7d": "last 7 days",
+  "30d": "last 30 days",
+};
+
+const WINDOW_HOURS: Record<InsightWindow, number> = {
+  "24h": 24,
+  "7d": 24 * 7,
+  "30d": 24 * 30,
+};
+
 const MODEL = "google/gemini-3-flash-preview";
 
 export type Citation = {
-  /** Short human label, e.g. "Sony WH-1000XM5" or "Carrefour Electronics pattern". */
   label: string;
-  /** What kind of record this points to (used for the chip color/icon). */
   kind:
     | "recommendation"
     | "rule"
@@ -22,13 +35,11 @@ export type Citation = {
     | "assortment_gap"
     | "cross_border"
     | "trending";
-  /** Optional secondary detail, e.g. "QAR 1,299 → 1,199" or "Carrefour, 94% confidence". */
   ref?: string;
 };
 
 export type InsightBullet = {
   text: string;
-  /** 1-indexed citation numbers referencing entries in `citations`. */
   cites: number[];
 };
 
@@ -41,6 +52,7 @@ export type InsightAction = {
 export type AIInsight = {
   id: string;
   page: Page;
+  window: InsightWindow;
   headline: string;
   bullets: InsightBullet[];
   actions: InsightAction[];
@@ -52,6 +64,10 @@ export type AIInsight = {
 
 function isPage(value: unknown): value is Page {
   return typeof value === "string" && (PAGES as readonly string[]).includes(value);
+}
+
+function isWindow(value: unknown): value is InsightWindow {
+  return typeof value === "string" && (WINDOWS as readonly string[]).includes(value);
 }
 
 function normalizeBullets(raw: unknown): InsightBullet[] {
@@ -105,9 +121,11 @@ function normalizeCitations(raw: unknown): Citation[] {
 }
 
 function rowToInsight(row: any): AIInsight {
+  const w = isWindow(row.time_window) ? row.time_window : "24h";
   return {
     id: row.id,
     page: row.page,
+    window: w,
     headline: row.headline ?? "",
     bullets: normalizeBullets(row.bullets),
     actions: normalizeActions(row.actions),
@@ -118,20 +136,22 @@ function rowToInsight(row: any): AIInsight {
   };
 }
 
-/** Read cached insight for a page (returns null if none exists yet). */
+/** Read cached insight for a page+window (returns null if none exists yet). */
 export const getInsight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { page: string }) => {
+  .inputValidator((input: { page: string; window?: string }) => {
     if (!isPage(input.page)) throw new Error("Invalid page");
-    return { page: input.page };
+    const w: InsightWindow = isWindow(input.window) ? input.window : "24h";
+    return { page: input.page, window: w };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: row, error } = await supabase
+    const { data: row, error } = await (supabase as any)
       .from("ai_insights")
       .select("*")
       .eq("user_id", userId)
       .eq("page", data.page)
+      .eq("time_window", data.window)
       .maybeSingle();
     if (error) throw new Error(error.message);
     return { insight: row ? rowToInsight(row) : null };
@@ -141,9 +161,13 @@ async function gatherContext(
   supabase: any,
   userId: string,
   page: Page,
+  window: InsightWindow,
 ): Promise<string> {
-  // Pull a compact snapshot of each page's data for the AI.
   const limit = 50;
+  const sinceIso = new Date(
+    Date.now() - WINDOW_HOURS[window] * 60 * 60 * 1000,
+  ).toISOString();
+
   if (page === "overview") {
     const [m, a, c] = await Promise.all([
       supabase.from("overview_metrics").select("label,value,footer_text").eq("user_id", userId),
@@ -151,11 +175,13 @@ async function gatherContext(
         .from("overview_alerts")
         .select("alert_type,channel,severity,message,occurred_at")
         .eq("user_id", userId)
+        .gte("occurred_at", sinceIso)
         .order("occurred_at", { ascending: false })
         .limit(limit),
       supabase.from("overview_channels").select("label,amount,share_text,percent").eq("user_id", userId),
     ]);
     return JSON.stringify({
+      window: WINDOW_LABEL[window],
       metrics: m.data ?? [],
       recent_alerts: a.data ?? [],
       channel_mix: c.data ?? [],
@@ -167,7 +193,7 @@ async function gatherContext(
       supabase
         .from("pricing_recommendations")
         .select(
-          "product,category,channel,current_price,recommended_price,reason,unit_impact,margin_impact,net_monthly,confidence",
+          "product,category,channel,current_price,recommended_price,reason,unit_impact,margin_impact,net_monthly,confidence,updated_at",
         )
         .eq("user_id", userId)
         .order("position", { ascending: true })
@@ -175,13 +201,14 @@ async function gatherContext(
       supabase.from("pricing_rules").select("rule_text,enabled").eq("user_id", userId),
     ]);
     return JSON.stringify({
+      window: WINDOW_LABEL[window],
       metrics: m.data ?? [],
       recommendations: r.data ?? [],
       rules: rules.data ?? [],
     });
   }
   if (page === "competitors") {
-    const [m, p, patterns] = await Promise.all([
+    const [m, p, patterns, scrapes] = await Promise.all([
       supabase.from("competitor_metrics").select("label,value,footer_text").eq("user_id", userId),
       supabase
         .from("competitor_prices")
@@ -195,11 +222,21 @@ async function gatherContext(
         .eq("user_id", userId)
         .order("position", { ascending: true })
         .limit(20),
+      supabase
+        .from("competitor_scrapes")
+        .select("product,competitor,price,currency,scraped_at,status")
+        .eq("user_id", userId)
+        .eq("status", "success")
+        .gte("scraped_at", sinceIso)
+        .order("scraped_at", { ascending: false })
+        .limit(50),
     ]);
     return JSON.stringify({
+      window: WINDOW_LABEL[window],
       metrics: m.data ?? [],
       price_grid: p.data ?? [],
       patterns: patterns.data ?? [],
+      recent_competitor_scrapes: scrapes.data ?? [],
     });
   }
   // market
@@ -231,6 +268,7 @@ async function gatherContext(
       .limit(20),
   ]);
   return JSON.stringify({
+    window: WINDOW_LABEL[window],
     metrics: m.data ?? [],
     categories: cats.data ?? [],
     assortment_gaps: gaps.data ?? [],
@@ -255,15 +293,16 @@ const ALLOWED_KINDS = [
 
 const SYSTEM_PROMPT = `You are a senior retail pricing & e-commerce analyst for PrizeSkout, a competitive intelligence platform for grocery & retail brands in Qatar.
 
-You will receive a JSON snapshot of one dashboard page. Generate concise, decision-ready insights for the brand operator viewing this page.
+You will receive a JSON snapshot of one dashboard page, scoped to a specific time window (e.g. last 24 hours, 7 days, 30 days). Generate concise, decision-ready insights for the brand operator viewing this page, framed against that window.
 
 Rules:
+- Reference the time window naturally in the headline or first bullet (e.g. "In the last 24 hours…").
 - Be specific. Reference actual products, competitors, categories, and numbers from the data.
 - Use Qatari Riyal (QAR) when referring to money.
 - Tone: confident, executive, no fluff, no hedging language like "consider".
 - 3-5 bullets, each one short (max ~22 words).
 - 2-4 actions. Each action has a short title (max 6 words) and a detail (one sentence).
-- Headline: one bold-friendly sentence (max 14 words) summarizing the most important read.
+- Headline: one bold-friendly sentence (max 16 words) summarizing the most important read.
 
 CITATIONS — required:
 - Build a "citations" array listing the specific records you used (products, rules, competitor rows, patterns, categories, etc.).
@@ -351,11 +390,15 @@ type RawInsightPayload = {
   citations: unknown;
 };
 
-async function callLovableAI(page: Page, contextJson: string): Promise<RawInsightPayload> {
+async function callLovableAI(
+  page: Page,
+  window: InsightWindow,
+  contextJson: string,
+): Promise<RawInsightPayload> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
-  const userPrompt = `Page: ${page}\n\nData snapshot:\n${contextJson}\n\nProduce insights now.`;
+  const userPrompt = `Page: ${page}\nTime window: ${WINDOW_LABEL[window]}\n\nData snapshot:\n${contextJson}\n\nProduce insights now.`;
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -399,22 +442,22 @@ async function callLovableAI(page: Page, contextJson: string): Promise<RawInsigh
   return parsed;
 }
 
-/** Generate fresh insights for a page and cache them. */
+/** Generate fresh insights for a page+window and cache them. */
 export const generateInsight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { page: string }) => {
+  .inputValidator((input: { page: string; window?: string }) => {
     if (!isPage(input.page)) throw new Error("Invalid page");
-    return { page: input.page };
+    const w: InsightWindow = isWindow(input.window) ? input.window : "24h";
+    return { page: input.page, window: w };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const contextJson = await gatherContext(supabase, userId, data.page);
-    const result = await callLovableAI(data.page, contextJson);
+    const contextJson = await gatherContext(supabase, userId, data.page, data.window);
+    const result = await callLovableAI(data.page, data.window, contextJson);
 
     const citations = normalizeCitations(result.citations);
     const maxIdx = citations.length;
 
-    // Clamp out-of-range citation indexes so the UI never points at a missing source.
     const clampCites = (cites: number[]) =>
       cites.filter((n) => n >= 1 && n <= maxIdx);
 
@@ -427,9 +470,10 @@ export const generateInsight = createServerFn({ method: "POST" })
       cites: clampCites(a.cites),
     }));
 
-    const payload = {
+    const payload: any = {
       user_id: userId,
       page: data.page,
+      time_window: data.window,
       headline: result.headline,
       bullets,
       actions,
@@ -438,9 +482,9 @@ export const generateInsight = createServerFn({ method: "POST" })
       generated_at: new Date().toISOString(),
     };
 
-    const { data: row, error } = await supabase
+    const { data: row, error } = await (supabase as any)
       .from("ai_insights")
-      .upsert(payload, { onConflict: "user_id,page" })
+      .upsert(payload, { onConflict: "user_id,page,time_window" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);

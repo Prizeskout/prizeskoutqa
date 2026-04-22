@@ -1,14 +1,22 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Sparkles, RefreshCw, ArrowRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   generateInsight,
+  getInsight,
   type AIInsight,
   type Citation,
+  type InsightWindow,
 } from "@/server/ai-insights.functions";
 import { toast } from "sonner";
 
 type Page = "overview" | "pricing" | "competitors" | "market";
+
+const WINDOWS: { value: InsightWindow; label: string }[] = [
+  { value: "24h", label: "24h" },
+  { value: "7d", label: "7d" },
+  { value: "30d", label: "30d" },
+];
 
 const KIND_LABEL: Record<Citation["kind"], string> = {
   recommendation: "Pricing rec",
@@ -103,14 +111,48 @@ export function AIInsightsCard({
   page: Page;
   initial: AIInsight | null;
 }) {
-  const [insight, setInsight] = useState<AIInsight | null>(initial);
+  const [window, setWindow] = useState<InsightWindow>("24h");
+  // Cache per window so switching is instant after first generation/load.
+  const cacheRef = useRef<Record<InsightWindow, AIInsight | null>>({
+    "24h": initial && initial.window === "24h" ? initial : null,
+    "7d": initial && initial.window === "7d" ? initial : null,
+    "30d": initial && initial.window === "30d" ? initial : null,
+  });
+  const [insight, setInsight] = useState<AIInsight | null>(cacheRef.current[window]);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const generate = useServerFn(generateInsight);
+  const fetchOne = useServerFn(getInsight);
+
+  // When window changes, hydrate from cache, else fetch from server.
+  useEffect(() => {
+    const cached = cacheRef.current[window];
+    setInsight(cached);
+    if (cached) return;
+    let cancelled = false;
+    setFetching(true);
+    fetchOne({ data: { page, window } })
+      .then(({ insight: row }) => {
+        if (cancelled) return;
+        cacheRef.current[window] = row;
+        setInsight(row);
+      })
+      .catch(() => {
+        // silent — UI will show empty state
+      })
+      .finally(() => {
+        if (!cancelled) setFetching(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [window, page, fetchOne]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const { insight: fresh } = await generate({ data: { page } });
+      const { insight: fresh } = await generate({ data: { page, window } });
+      cacheRef.current[window] = fresh;
       setInsight(fresh);
       toast.success("Insights refreshed");
     } catch (err) {
@@ -119,10 +161,11 @@ export function AIInsightsCard({
     } finally {
       setLoading(false);
     }
-  }, [generate, page]);
+  }, [generate, page, window]);
 
   const isEmpty = !insight;
   const citations = useMemo(() => insight?.citations ?? [], [insight]);
+  const showSkeleton = fetching && !insight;
 
   return (
     <div
@@ -153,6 +196,7 @@ export function AIInsightsCard({
           justifyContent: "space-between",
           gap: 12,
           marginBottom: 12,
+          flexWrap: "wrap",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -181,39 +225,57 @@ export function AIInsightsCard({
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={refresh}
-          disabled={loading}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "6px 12px",
-            borderRadius: 8,
-            border: "1px solid #E5E2DB",
-            backgroundColor: loading ? "#F5F2EC" : "#FFFFFF",
-            color: "#1A1A18",
-            fontSize: 12,
-            fontWeight: 500,
-            cursor: loading ? "wait" : "pointer",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <RefreshCw
-            size={12}
-            strokeWidth={2}
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <WindowSelector value={window} onChange={setWindow} disabled={loading} />
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading}
             style={{
-              animation: loading ? "ai-spin 1s linear infinite" : undefined,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              borderRadius: 8,
+              border: "1px solid #E5E2DB",
+              backgroundColor: loading ? "#F5F2EC" : "#FFFFFF",
+              color: "#1A1A18",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: loading ? "wait" : "pointer",
+              whiteSpace: "nowrap",
             }}
-          />
-          {loading ? "Generating…" : isEmpty ? "Generate insights" : "Refresh"}
-        </button>
+          >
+            <RefreshCw
+              size={12}
+              strokeWidth={2}
+              style={{
+                animation: loading ? "ai-spin 1s linear infinite" : undefined,
+              }}
+            />
+            {loading ? "Generating…" : isEmpty ? "Generate insights" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       <style>{`@keyframes ai-spin { to { transform: rotate(360deg); } }`}</style>
 
-      {isEmpty ? (
+      {showSkeleton ? (
+        <div
+          style={{
+            padding: "20px 16px",
+            textAlign: "center",
+            backgroundColor: "#FAF8F3",
+            borderRadius: 10,
+            border: "1px dashed #E5E2DB",
+            fontSize: 12,
+            color: "#9A9A9A",
+          }}
+        >
+          Loading {window} insights…
+        </div>
+      ) : isEmpty ? (
         <div
           style={{
             padding: "20px 16px",
@@ -224,7 +286,8 @@ export function AIInsightsCard({
           }}
         >
           <p style={{ fontSize: 13, color: "#6B6B6B", margin: 0, lineHeight: 1.5 }}>
-            Generate an AI summary of this page&rsquo;s data — headline read, top observations,
+            No {window} insights yet. Press &ldquo;Generate insights&rdquo; to summarize this
+            page&rsquo;s data for the {windowLabel(window)} — headline read, top observations,
             recommended actions, plus the specific records each insight is based on.
           </p>
         </div>
@@ -411,6 +474,64 @@ export function AIInsightsCard({
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function windowLabel(w: InsightWindow): string {
+  if (w === "24h") return "last 24 hours";
+  if (w === "7d") return "last 7 days";
+  return "last 30 days";
+}
+
+function WindowSelector({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: InsightWindow;
+  onChange: (w: InsightWindow) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Time window"
+      style={{
+        display: "inline-flex",
+        border: "1px solid #E5E2DB",
+        borderRadius: 8,
+        padding: 2,
+        backgroundColor: "#FFFFFF",
+      }}
+    >
+      {WINDOWS.map((w) => {
+        const active = value === w.value;
+        return (
+          <button
+            key={w.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            disabled={disabled}
+            onClick={() => onChange(w.value)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "none",
+              backgroundColor: active ? "#1A1A18" : "transparent",
+              color: active ? "#FFFFFF" : "#6B6B6B",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              cursor: disabled ? "wait" : "pointer",
+              transition: "background-color 120ms ease, color 120ms ease",
+            }}
+          >
+            {w.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
