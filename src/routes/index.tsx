@@ -1251,19 +1251,19 @@ function HubSection() {
 const TESTIMONIALS = [
   {
     quote:
-      "We replaced three separate tools with PrizeSkout. Margin lift in the first month paid for the whole year. The AI recommendations actually understand our market.",
+      "We used to find out about a competitor price drop two days late, from a customer complaint. Now we see it within the hour, with the recommendation already drafted. That's the whole job.",
     name: "Layla Al-Mansoori",
     role: "Head of E-Commerce, Hypermarket Group",
   },
   {
     quote:
-      "The field intelligence module is a game changer. We finally see what's happening on competitor shelves without hiring an army of mystery shoppers.",
+      "The field module is what sold us. Our reps were already in the stores; getting that data into the same view as Talabat and Carrefour finally closed the loop.",
     name: "Karim Saleh",
     role: "Director of Pricing, Regional Retail",
   },
   {
     quote:
-      "Our team checks PrizeSkout before every category meeting. The promo simulator alone saved us from a campaign that would have eaten 14% of our margin.",
+      "We almost ran a 25% promo on small appliances last quarter. The simulator flagged 41% cannibalisation. We pulled it back to 12% on three SKUs and beat our GMV target without burning the margin.",
     name: "Noor Hadid",
     role: "Commercial Lead, Omnichannel Brand",
   },
