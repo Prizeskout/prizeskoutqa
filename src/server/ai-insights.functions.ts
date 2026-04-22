@@ -6,12 +6,45 @@ type Page = (typeof PAGES)[number];
 
 const MODEL = "google/gemini-3-flash-preview";
 
+export type Citation = {
+  /** Short human label, e.g. "Sony WH-1000XM5" or "Carrefour Electronics pattern". */
+  label: string;
+  /** What kind of record this points to (used for the chip color/icon). */
+  kind:
+    | "recommendation"
+    | "rule"
+    | "metric"
+    | "competitor_price"
+    | "behavior_pattern"
+    | "alert"
+    | "channel"
+    | "category"
+    | "assortment_gap"
+    | "cross_border"
+    | "trending";
+  /** Optional secondary detail, e.g. "QAR 1,299 → 1,199" or "Carrefour, 94% confidence". */
+  ref?: string;
+};
+
+export type InsightBullet = {
+  text: string;
+  /** 1-indexed citation numbers referencing entries in `citations`. */
+  cites: number[];
+};
+
+export type InsightAction = {
+  title: string;
+  detail: string;
+  cites: number[];
+};
+
 export type AIInsight = {
   id: string;
   page: Page;
   headline: string;
-  bullets: string[];
-  actions: { title: string; detail: string }[];
+  bullets: InsightBullet[];
+  actions: InsightAction[];
+  citations: Citation[];
   model: string | null;
   generated_at: string;
   updated_at: string;
@@ -21,13 +54,64 @@ function isPage(value: unknown): value is Page {
   return typeof value === "string" && (PAGES as readonly string[]).includes(value);
 }
 
+function normalizeBullets(raw: unknown): InsightBullet[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b): InsightBullet | null => {
+      if (typeof b === "string") return { text: b, cites: [] };
+      if (b && typeof b === "object") {
+        const text = typeof (b as any).text === "string" ? (b as any).text : "";
+        if (!text) return null;
+        const citesRaw = (b as any).cites;
+        const cites = Array.isArray(citesRaw)
+          ? citesRaw.filter((n): n is number => Number.isInteger(n) && n > 0)
+          : [];
+        return { text, cites };
+      }
+      return null;
+    })
+    .filter((b): b is InsightBullet => b !== null);
+}
+
+function normalizeActions(raw: unknown): InsightAction[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((a): InsightAction | null => {
+      if (!a || typeof a !== "object") return null;
+      const title = typeof (a as any).title === "string" ? (a as any).title : "";
+      const detail = typeof (a as any).detail === "string" ? (a as any).detail : "";
+      if (!title || !detail) return null;
+      const citesRaw = (a as any).cites;
+      const cites = Array.isArray(citesRaw)
+        ? citesRaw.filter((n): n is number => Number.isInteger(n) && n > 0)
+        : [];
+      return { title, detail, cites };
+    })
+    .filter((a): a is InsightAction => a !== null);
+}
+
+function normalizeCitations(raw: unknown): Citation[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((c): Citation | null => {
+      if (!c || typeof c !== "object") return null;
+      const label = typeof (c as any).label === "string" ? (c as any).label : "";
+      const kind = (c as any).kind;
+      if (!label || typeof kind !== "string") return null;
+      const ref = typeof (c as any).ref === "string" ? (c as any).ref : undefined;
+      return { label, kind: kind as Citation["kind"], ref };
+    })
+    .filter((c): c is Citation => c !== null);
+}
+
 function rowToInsight(row: any): AIInsight {
   return {
     id: row.id,
     page: row.page,
     headline: row.headline ?? "",
-    bullets: Array.isArray(row.bullets) ? row.bullets : [],
-    actions: Array.isArray(row.actions) ? row.actions : [],
+    bullets: normalizeBullets(row.bullets),
+    actions: normalizeActions(row.actions),
+    citations: normalizeCitations(row.citations),
     model: row.model ?? null,
     generated_at: row.generated_at,
     updated_at: row.updated_at,
