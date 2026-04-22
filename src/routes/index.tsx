@@ -491,7 +491,7 @@ function Hero() {
                 e.currentTarget.style.boxShadow = "0 12px 30px rgba(234,88,12,0.35)";
               }}
             >
-              Start free trial
+              Start tracking competitors
               <ArrowRight size={14} />
             </Link>
             <a
@@ -520,18 +520,18 @@ function Hero() {
                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
               }}
             >
-              See it in action
+              Tour the platform
             </a>
           </div>
 
           <p style={{ marginTop: 18, fontSize: 12, color: "#6B6B6B" }}>
-            14-day free trial · No credit card required
+            14-day trial · No card required · Live data on day one
           </p>
         </div>
 
         {/* Right: hero mockup */}
         <div className="ps-hero-mock" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <HeroChatMockup />
+          <HeroSignalsMockup />
         </div>
       </div>
     </section>
