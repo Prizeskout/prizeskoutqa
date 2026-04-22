@@ -114,42 +114,42 @@ function GlowBackdrop({
    HERO
    ========================================================================= */
 
-const HERO_REPLIES = [
+const HERO_SIGNALS = [
   {
-    user: "What is Carrefour pricing Galaxy Buds Pro at right now?",
-    response: {
-      head: "Carrefour Qatar · Galaxy Buds Pro 2",
-      lines: [
-        { tag: "PRICE", value: "QAR 449" },
-        { tag: "VS YOU", value: "−QAR 20", color: "#22C55E" },
-        { tag: "STOCK", value: "In stock · 3 stores" },
-      ],
-      action: "Recommend a counter-move",
-    },
+    head: "Carrefour Qatar · Galaxy Buds 2 Pro",
+    eventTag: "PRICE DROP",
+    eventColor: "#EF4444",
+    lines: [
+      { tag: "WAS", value: "QAR 469" },
+      { tag: "NOW", value: "QAR 449", color: "#EF4444" },
+      { tag: "VS YOU", value: "−QAR 20 below", color: "#EF4444" },
+    ],
+    action: "Hold price · margin protected",
+    actionColor: "#22C55E",
   },
   {
-    user: "Where am I losing margin this week?",
-    response: {
-      head: "3 SKUs eroding margin · Talabat",
-      lines: [
-        { tag: "SKU", value: "Nespresso Vertuo" },
-        { tag: "GAP", value: "−QAR 30 vs market", color: "#EF4444" },
-        { tag: "IMPACT", value: "−QAR 4,200 / mo" },
-      ],
-      action: "Auto-tune prices",
-    },
+    head: "Talabat · Nespresso Vertuo Plus",
+    eventTag: "PROMO LIVE",
+    eventColor: "#EA580C",
+    lines: [
+      { tag: "DEPTH", value: "−15% · 7 days" },
+      { tag: "VS YOU", value: "−QAR 30 gap", color: "#EF4444" },
+      { tag: "IMPACT", value: "−QAR 4,200 / mo" },
+    ],
+    action: "Match on Talabat only · skip Snoonu",
+    actionColor: "#FAFAF9",
   },
   {
-    user: "Which categories should I push promotions on?",
-    response: {
-      head: "Top promo opportunity · Small appliances",
-      lines: [
-        { tag: "DEMAND", value: "+18% WoW" },
-        { tag: "ROI", value: "1.9× est.", color: "#22C55E" },
-        { tag: "RISK", value: "Low cannibalization" },
-      ],
-      action: "Build the campaign",
-    },
+    head: "Small appliances · category view",
+    eventTag: "OPPORTUNITY",
+    eventColor: "#22C55E",
+    lines: [
+      { tag: "DEMAND", value: "+18% WoW", color: "#22C55E" },
+      { tag: "MARKET GAP", value: "Under-promoted" },
+      { tag: "EST. ROI", value: "1.9× · low cannib.", color: "#22C55E" },
+    ],
+    action: "Run a 5-day promo on top 12 SKUs",
+    actionColor: "#FAFAF9",
   },
 ];
 
