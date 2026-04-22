@@ -562,7 +562,7 @@ function LogosBar() {
           margin: 0,
         }}
       >
-        Trusted in commerce by 200+ brands
+        Tracking pricing across the channels your buyers actually shop
       </p>
       <div
         style={{
