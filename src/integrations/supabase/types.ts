@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           actions: Json
           bullets: Json
+          citations: Json
           created_at: string
           generated_at: string
           headline: string
@@ -30,6 +31,7 @@ export type Database = {
         Insert: {
           actions?: Json
           bullets?: Json
+          citations?: Json
           created_at?: string
           generated_at?: string
           headline: string
@@ -42,6 +44,7 @@ export type Database = {
         Update: {
           actions?: Json
           bullets?: Json
+          citations?: Json
           created_at?: string
           generated_at?: string
           headline?: string

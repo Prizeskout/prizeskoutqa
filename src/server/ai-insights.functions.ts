@@ -6,12 +6,45 @@ type Page = (typeof PAGES)[number];
 
 const MODEL = "google/gemini-3-flash-preview";
 
+export type Citation = {
+  /** Short human label, e.g. "Sony WH-1000XM5" or "Carrefour Electronics pattern". */
+  label: string;
+  /** What kind of record this points to (used for the chip color/icon). */
+  kind:
+    | "recommendation"
+    | "rule"
+    | "metric"
+    | "competitor_price"
+    | "behavior_pattern"
+    | "alert"
+    | "channel"
+    | "category"
+    | "assortment_gap"
+    | "cross_border"
+    | "trending";
+  /** Optional secondary detail, e.g. "QAR 1,299 → 1,199" or "Carrefour, 94% confidence". */
+  ref?: string;
+};
+
+export type InsightBullet = {
+  text: string;
+  /** 1-indexed citation numbers referencing entries in `citations`. */
+  cites: number[];
+};
+
+export type InsightAction = {
+  title: string;
+  detail: string;
+  cites: number[];
+};
+
 export type AIInsight = {
   id: string;
   page: Page;
   headline: string;
-  bullets: string[];
-  actions: { title: string; detail: string }[];
+  bullets: InsightBullet[];
+  actions: InsightAction[];
+  citations: Citation[];
   model: string | null;
   generated_at: string;
   updated_at: string;
@@ -21,13 +54,64 @@ function isPage(value: unknown): value is Page {
   return typeof value === "string" && (PAGES as readonly string[]).includes(value);
 }
 
+function normalizeBullets(raw: unknown): InsightBullet[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b): InsightBullet | null => {
+      if (typeof b === "string") return { text: b, cites: [] };
+      if (b && typeof b === "object") {
+        const text = typeof (b as any).text === "string" ? (b as any).text : "";
+        if (!text) return null;
+        const citesRaw = (b as any).cites;
+        const cites = Array.isArray(citesRaw)
+          ? citesRaw.filter((n): n is number => Number.isInteger(n) && n > 0)
+          : [];
+        return { text, cites };
+      }
+      return null;
+    })
+    .filter((b): b is InsightBullet => b !== null);
+}
+
+function normalizeActions(raw: unknown): InsightAction[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((a): InsightAction | null => {
+      if (!a || typeof a !== "object") return null;
+      const title = typeof (a as any).title === "string" ? (a as any).title : "";
+      const detail = typeof (a as any).detail === "string" ? (a as any).detail : "";
+      if (!title || !detail) return null;
+      const citesRaw = (a as any).cites;
+      const cites = Array.isArray(citesRaw)
+        ? citesRaw.filter((n): n is number => Number.isInteger(n) && n > 0)
+        : [];
+      return { title, detail, cites };
+    })
+    .filter((a): a is InsightAction => a !== null);
+}
+
+function normalizeCitations(raw: unknown): Citation[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((c): Citation | null => {
+      if (!c || typeof c !== "object") return null;
+      const label = typeof (c as any).label === "string" ? (c as any).label : "";
+      const kind = (c as any).kind;
+      if (!label || typeof kind !== "string") return null;
+      const ref = typeof (c as any).ref === "string" ? (c as any).ref : undefined;
+      return { label, kind: kind as Citation["kind"], ref };
+    })
+    .filter((c): c is Citation => c !== null);
+}
+
 function rowToInsight(row: any): AIInsight {
   return {
     id: row.id,
     page: row.page,
     headline: row.headline ?? "",
-    bullets: Array.isArray(row.bullets) ? row.bullets : [],
-    actions: Array.isArray(row.actions) ? row.actions : [],
+    bullets: normalizeBullets(row.bullets),
+    actions: normalizeActions(row.actions),
+    citations: normalizeCitations(row.citations),
     model: row.model ?? null,
     generated_at: row.generated_at,
     updated_at: row.updated_at,
@@ -155,6 +239,20 @@ async function gatherContext(
   });
 }
 
+const ALLOWED_KINDS = [
+  "recommendation",
+  "rule",
+  "metric",
+  "competitor_price",
+  "behavior_pattern",
+  "alert",
+  "channel",
+  "category",
+  "assortment_gap",
+  "cross_border",
+  "trending",
+] as const;
+
 const SYSTEM_PROMPT = `You are a senior retail pricing & e-commerce analyst for PrizeSkout, a competitive intelligence platform for grocery & retail brands in Qatar.
 
 You will receive a JSON snapshot of one dashboard page. Generate concise, decision-ready insights for the brand operator viewing this page.
@@ -167,22 +265,57 @@ Rules:
 - 2-4 actions. Each action has a short title (max 6 words) and a detail (one sentence).
 - Headline: one bold-friendly sentence (max 14 words) summarizing the most important read.
 
+CITATIONS — required:
+- Build a "citations" array listing the specific records you used (products, rules, competitor rows, patterns, categories, etc.).
+- Each citation has { label, kind, ref }. Use the exact product name, competitor name, rule text or category from the snapshot in "label". Put numeric evidence (price, gap %, confidence, etc.) in "ref".
+- "kind" MUST be one of: ${ALLOWED_KINDS.join(", ")}.
+- Every bullet and every action MUST include a "cites" array of 1-indexed positions into "citations" identifying the records that back it. Use 1-3 cites per item.
+- Do not invent products, competitors or numbers that are not in the snapshot.
+
 Return ONLY a tool call to "emit_insights".`;
 
 const TOOL_SCHEMA = {
   type: "function" as const,
   function: {
     name: "emit_insights",
-    description: "Emit dashboard insights for the operator.",
+    description: "Emit dashboard insights for the operator with citations.",
     parameters: {
       type: "object",
       properties: {
         headline: { type: "string", maxLength: 200 },
+        citations: {
+          type: "array",
+          minItems: 2,
+          maxItems: 12,
+          items: {
+            type: "object",
+            properties: {
+              label: { type: "string", maxLength: 120 },
+              kind: { type: "string", enum: [...ALLOWED_KINDS] },
+              ref: { type: "string", maxLength: 160 },
+            },
+            required: ["label", "kind"],
+            additionalProperties: false,
+          },
+        },
         bullets: {
           type: "array",
           minItems: 3,
           maxItems: 5,
-          items: { type: "string", maxLength: 200 },
+          items: {
+            type: "object",
+            properties: {
+              text: { type: "string", maxLength: 220 },
+              cites: {
+                type: "array",
+                minItems: 1,
+                maxItems: 3,
+                items: { type: "integer", minimum: 1 },
+              },
+            },
+            required: ["text", "cites"],
+            additionalProperties: false,
+          },
         },
         actions: {
           type: "array",
@@ -193,19 +326,32 @@ const TOOL_SCHEMA = {
             properties: {
               title: { type: "string", maxLength: 60 },
               detail: { type: "string", maxLength: 240 },
+              cites: {
+                type: "array",
+                minItems: 1,
+                maxItems: 3,
+                items: { type: "integer", minimum: 1 },
+              },
             },
-            required: ["title", "detail"],
+            required: ["title", "detail", "cites"],
             additionalProperties: false,
           },
         },
       },
-      required: ["headline", "bullets", "actions"],
+      required: ["headline", "bullets", "actions", "citations"],
       additionalProperties: false,
     },
   },
 };
 
-async function callLovableAI(page: Page, contextJson: string) {
+type RawInsightPayload = {
+  headline: string;
+  bullets: unknown;
+  actions: unknown;
+  citations: unknown;
+};
+
+async function callLovableAI(page: Page, contextJson: string): Promise<RawInsightPayload> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -244,7 +390,7 @@ async function callLovableAI(page: Page, contextJson: string) {
   const toolCall = json?.choices?.[0]?.message?.tool_calls?.[0];
   const argsRaw = toolCall?.function?.arguments;
   if (!argsRaw) throw new Error("AI returned no insights");
-  let parsed: { headline: string; bullets: string[]; actions: { title: string; detail: string }[] };
+  let parsed: RawInsightPayload;
   try {
     parsed = typeof argsRaw === "string" ? JSON.parse(argsRaw) : argsRaw;
   } catch {
@@ -265,12 +411,29 @@ export const generateInsight = createServerFn({ method: "POST" })
     const contextJson = await gatherContext(supabase, userId, data.page);
     const result = await callLovableAI(data.page, contextJson);
 
+    const citations = normalizeCitations(result.citations);
+    const maxIdx = citations.length;
+
+    // Clamp out-of-range citation indexes so the UI never points at a missing source.
+    const clampCites = (cites: number[]) =>
+      cites.filter((n) => n >= 1 && n <= maxIdx);
+
+    const bullets = normalizeBullets(result.bullets).map((b) => ({
+      ...b,
+      cites: clampCites(b.cites),
+    }));
+    const actions = normalizeActions(result.actions).map((a) => ({
+      ...a,
+      cites: clampCites(a.cites),
+    }));
+
     const payload = {
       user_id: userId,
       page: data.page,
       headline: result.headline,
-      bullets: result.bullets,
-      actions: result.actions,
+      bullets,
+      actions,
+      citations,
       model: MODEL,
       generated_at: new Date().toISOString(),
     };

@@ -1,10 +1,42 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Sparkles, RefreshCw, ArrowRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { generateInsight, type AIInsight } from "@/server/ai-insights.functions";
+import {
+  generateInsight,
+  type AIInsight,
+  type Citation,
+} from "@/server/ai-insights.functions";
 import { toast } from "sonner";
 
 type Page = "overview" | "pricing" | "competitors" | "market";
+
+const KIND_LABEL: Record<Citation["kind"], string> = {
+  recommendation: "Pricing rec",
+  rule: "Pricing rule",
+  metric: "Metric",
+  competitor_price: "Competitor price",
+  behavior_pattern: "Behavior pattern",
+  alert: "Alert",
+  channel: "Channel",
+  category: "Category",
+  assortment_gap: "Assortment gap",
+  cross_border: "Cross-border",
+  trending: "Trending product",
+};
+
+const KIND_COLOR: Record<Citation["kind"], string> = {
+  recommendation: "#7C3AED",
+  rule: "#0EA5E9",
+  metric: "#6B6B6B",
+  competitor_price: "#EA580C",
+  behavior_pattern: "#7C3AED",
+  alert: "#EF4444",
+  channel: "#3B82F6",
+  category: "#22C55E",
+  assortment_gap: "#F59E0B",
+  cross_border: "#EF4444",
+  trending: "#22C55E",
+};
 
 function formatGeneratedAt(iso: string | null): string {
   if (!iso) return "Not generated yet";
@@ -17,6 +49,51 @@ function formatGeneratedAt(iso: string | null): string {
   if (hrs < 24) return `${hrs} hr${hrs === 1 ? "" : "s"} ago`;
   const days = Math.floor(hrs / 24);
   return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function CiteChips({ cites }: { cites: number[] }) {
+  if (!cites.length) return null;
+  return (
+    <span style={{ display: "inline-flex", gap: 4, marginLeft: 6 }}>
+      {cites.map((n) => (
+        <a
+          key={n}
+          href={`#ai-cite-${n}`}
+          onClick={(e) => {
+            e.preventDefault();
+            const el = document.getElementById(`ai-cite-${n}`);
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              el.style.transition = "background-color 0.4s";
+              const prev = el.style.backgroundColor;
+              el.style.backgroundColor = "#FEF3C7";
+              window.setTimeout(() => {
+                el.style.backgroundColor = prev;
+              }, 1200);
+            }
+          }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 18,
+            height: 18,
+            padding: "0 5px",
+            borderRadius: 4,
+            backgroundColor: "#F1ECDF",
+            color: "#7C3AED",
+            fontSize: 10,
+            fontWeight: 600,
+            lineHeight: 1,
+            textDecoration: "none",
+            verticalAlign: "middle",
+          }}
+        >
+          {n}
+        </a>
+      ))}
+    </span>
+  );
 }
 
 export function AIInsightsCard({
@@ -45,6 +122,7 @@ export function AIInsightsCard({
   }, [generate, page]);
 
   const isEmpty = !insight;
+  const citations = useMemo(() => insight?.citations ?? [], [insight]);
 
   return (
     <div
@@ -57,7 +135,6 @@ export function AIInsightsCard({
         overflow: "hidden",
       }}
     >
-      {/* subtle gradient accent strip */}
       <div
         style={{
           position: "absolute",
@@ -98,7 +175,9 @@ export function AIInsightsCard({
               AI Insights
             </div>
             <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
-              {isEmpty ? "Powered by Lovable AI" : `Updated ${formatGeneratedAt(insight!.generated_at)}`}
+              {isEmpty
+                ? "Powered by Lovable AI"
+                : `Updated ${formatGeneratedAt(insight!.generated_at)} · ${citations.length} source${citations.length === 1 ? "" : "s"}`}
             </div>
           </div>
         </div>
@@ -146,7 +225,7 @@ export function AIInsightsCard({
         >
           <p style={{ fontSize: 13, color: "#6B6B6B", margin: 0, lineHeight: 1.5 }}>
             Generate an AI summary of this page&rsquo;s data — headline read, top observations,
-            and recommended actions.
+            recommended actions, plus the specific records each insight is based on.
           </p>
         </div>
       ) : (
@@ -188,7 +267,10 @@ export function AIInsightsCard({
                       flexShrink: 0,
                     }}
                   />
-                  <span>{b}</span>
+                  <span>
+                    {b.text}
+                    <CiteChips cites={b.cites} />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -200,6 +282,7 @@ export function AIInsightsCard({
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                 gap: 10,
+                marginBottom: citations.length > 0 ? 16 : 0,
               }}
             >
               {insight!.actions.map((a, i) => (
@@ -224,13 +307,106 @@ export function AIInsightsCard({
                     }}
                   >
                     <ArrowRight size={12} strokeWidth={2.5} />
-                    {a.title}
+                    <span>
+                      {a.title}
+                      <CiteChips cites={a.cites} />
+                    </span>
                   </div>
                   <div style={{ fontSize: 12, color: "#6B6B6B", lineHeight: 1.5 }}>
                     {a.detail}
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {citations.length > 0 && (
+            <div
+              style={{
+                borderTop: "1px solid #EFEAE0",
+                paddingTop: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#9A9A9A",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                Sources
+              </div>
+              <ol
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                }}
+              >
+                {citations.map((c, i) => {
+                  const idx = i + 1;
+                  return (
+                    <li
+                      key={idx}
+                      id={`ai-cite-${idx}`}
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "baseline",
+                        fontSize: 12,
+                        color: "#3A3A38",
+                        lineHeight: 1.5,
+                        padding: "4px 6px",
+                        borderRadius: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minWidth: 18,
+                          height: 18,
+                          padding: "0 5px",
+                          borderRadius: 4,
+                          backgroundColor: "#F1ECDF",
+                          color: "#7C3AED",
+                          fontSize: 10,
+                          fontWeight: 600,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {idx}
+                      </span>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "1px 6px",
+                          borderRadius: 4,
+                          fontSize: 10,
+                          fontWeight: 600,
+                          color: "#FFFFFF",
+                          backgroundColor: KIND_COLOR[c.kind] ?? "#6B6B6B",
+                          flexShrink: 0,
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {KIND_LABEL[c.kind] ?? c.kind}
+                      </span>
+                      <span style={{ fontWeight: 500, color: "#1A1A18" }}>{c.label}</span>
+                      {c.ref && (
+                        <span style={{ color: "#6B6B6B" }}>— {c.ref}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
           )}
         </>
