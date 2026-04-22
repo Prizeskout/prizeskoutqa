@@ -9,6 +9,8 @@ import { OmnichannelGaps } from "@/components/dashboard/competitors/OmnichannelG
 import { SubTabs, type CompetitorsSubTab } from "@/components/dashboard/competitors/SubTabs";
 import { BehaviorPatterns } from "@/components/dashboard/competitors/BehaviorPatterns";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
+import { CompetitorPriceChanges } from "@/components/dashboard/competitors/CompetitorPriceChanges";
+import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import {
   type Category,
   type ChannelOpt,
@@ -138,8 +140,18 @@ function CompetitorsPage() {
 
   return (
     <DashboardLayout title="Competitors">
-      <div style={{ marginBottom: 12 }}>
+      <div
+        style={{
+          marginBottom: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <HeaderLivePill liveCount={liveCount} />
+        <ExportInsightsButton />
       </div>
       <SubTabs active={tab} onChange={setTab} />
       <div
@@ -150,7 +162,16 @@ function CompetitorsPage() {
         }}
       >
         <CompetitorMetrics metrics={data.metrics} />
-        <AIInsightsCard page="competitors" initial={data.insight} />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: 14,
+          }}
+        >
+          <AIInsightsCard page="competitors" initial={data.insight} />
+          <CompetitorPriceChanges />
+        </div>
         <FilterBar
           category={category}
           setCategory={setCategory}
