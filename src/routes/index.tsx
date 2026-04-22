@@ -12,8 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Send,
-  Zap,
   ArrowRight,
   Minus,
   Star,
@@ -23,20 +21,20 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Commerce Intelligence" },
+      { title: "PrizeSkout — Pricing intelligence for retail" },
       {
         name: "description",
         content:
-          "AI-powered pricing intelligence for e-commerce platforms, physical retailers, and omnichannel brands. Monitor competitors and optimize prices across every channel.",
+          "PrizeSkout gives category teams a continuous read on competitor prices, promotions, and shelf moves — online and in-store — so every pricing decision is grounded in evidence.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout | Commerce Intelligence",
+        content: "PrizeSkout — Pricing intelligence for retail",
       },
       {
         property: "og:description",
         content:
-          "Monitor competitors, optimize prices, and outsmart the market across every channel.",
+          "A continuous read on competitor prices, promotions, and shelf moves — online and in-store. Built for category teams that need to defend margin without losing share.",
       },
     ],
   }),
@@ -114,54 +112,54 @@ function GlowBackdrop({
    HERO
    ========================================================================= */
 
-const HERO_REPLIES = [
+const HERO_SIGNALS = [
   {
-    user: "What is Carrefour pricing Galaxy Buds Pro at right now?",
-    response: {
-      head: "Carrefour Qatar · Galaxy Buds Pro 2",
-      lines: [
-        { tag: "PRICE", value: "QAR 449" },
-        { tag: "VS YOU", value: "−QAR 20", color: "#22C55E" },
-        { tag: "STOCK", value: "In stock · 3 stores" },
-      ],
-      action: "Recommend a counter-move",
-    },
+    head: "Carrefour Qatar · Galaxy Buds 2 Pro",
+    eventTag: "PRICE DROP",
+    eventColor: "#EF4444",
+    lines: [
+      { tag: "WAS", value: "QAR 469" },
+      { tag: "NOW", value: "QAR 449", color: "#EF4444" },
+      { tag: "VS YOU", value: "−QAR 20 below", color: "#EF4444" },
+    ],
+    action: "Hold price · margin protected",
+    actionColor: "#22C55E",
   },
   {
-    user: "Where am I losing margin this week?",
-    response: {
-      head: "3 SKUs eroding margin · Talabat",
-      lines: [
-        { tag: "SKU", value: "Nespresso Vertuo" },
-        { tag: "GAP", value: "−QAR 30 vs market", color: "#EF4444" },
-        { tag: "IMPACT", value: "−QAR 4,200 / mo" },
-      ],
-      action: "Auto-tune prices",
-    },
+    head: "Talabat · Nespresso Vertuo Plus",
+    eventTag: "PROMO LIVE",
+    eventColor: "#EA580C",
+    lines: [
+      { tag: "DEPTH", value: "−15% · 7 days" },
+      { tag: "VS YOU", value: "−QAR 30 gap", color: "#EF4444" },
+      { tag: "IMPACT", value: "−QAR 4,200 / mo" },
+    ],
+    action: "Match on Talabat only · skip Snoonu",
+    actionColor: "#FAFAF9",
   },
   {
-    user: "Which categories should I push promotions on?",
-    response: {
-      head: "Top promo opportunity · Small appliances",
-      lines: [
-        { tag: "DEMAND", value: "+18% WoW" },
-        { tag: "ROI", value: "1.9× est.", color: "#22C55E" },
-        { tag: "RISK", value: "Low cannibalization" },
-      ],
-      action: "Build the campaign",
-    },
+    head: "Small appliances · category view",
+    eventTag: "OPPORTUNITY",
+    eventColor: "#22C55E",
+    lines: [
+      { tag: "DEMAND", value: "+18% WoW", color: "#22C55E" },
+      { tag: "MARKET GAP", value: "Under-promoted" },
+      { tag: "EST. ROI", value: "1.9× · low cannib.", color: "#22C55E" },
+    ],
+    action: "Run a 5-day promo on top 12 SKUs",
+    actionColor: "#FAFAF9",
   },
 ];
 
-function HeroChatMockup() {
+function HeroSignalsMockup() {
   const [idx, setIdx] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
   const [containerRef, inView] = useInView<HTMLDivElement>("0px");
   const animate = inView && !reducedMotion;
 
-  useTicker(4200, () => setIdx((i) => (i + 1) % HERO_REPLIES.length), animate);
+  useTicker(4400, () => setIdx((i) => (i + 1) % HERO_SIGNALS.length), animate);
 
-  const reply = HERO_REPLIES[idx];
+  const signal = HERO_SIGNALS[idx];
 
   return (
     <div
@@ -200,61 +198,88 @@ function HeroChatMockup() {
         }}
       >
         {/* Header chip */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <span
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              background: "linear-gradient(135deg, #EA580C, #C2410C)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 6px 20px rgba(234,88,12,0.4)",
-            }}
-          >
-            <Sparkles size={14} color="#FFF" />
-          </span>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#FAFAF9" }}>
-              PrizeSkout AI
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 7,
+                background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 20px rgba(234,88,12,0.4)",
+              }}
+            >
+              <Crosshair size={14} color="#FFF" />
             </span>
-            <span style={{ fontSize: 10, color: "#22C55E", display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#22C55E",
-                  boxShadow: "0 0 0 0 rgba(34,197,94,0.5)",
-                  animation: "ps-pulse 1.6s ease-out infinite",
-                }}
-              />
-              Live · monitoring 1,428 SKUs
-            </span>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#FAFAF9" }}>
+                Signal feed
+              </span>
+              <span style={{ fontSize: 10, color: "#22C55E", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#22C55E",
+                    boxShadow: "0 0 0 0 rgba(34,197,94,0.5)",
+                    animation: "ps-pulse 1.6s ease-out infinite",
+                  }}
+                />
+                Live · 1,428 SKUs · 6 channels
+              </span>
+            </div>
           </div>
+          <span style={{ fontSize: 10, color: "#6B6B6B", fontVariantNumeric: "tabular-nums" }}>
+            {String(idx + 1).padStart(2, "0")} / {String(HERO_SIGNALS.length).padStart(2, "0")}
+          </span>
         </div>
 
-        {/* User bubble */}
+        {/* Signal header row */}
         <div
-          key={`u-${idx}`}
+          key={`h-${idx}`}
           style={{
-            background: "rgba(234,88,12,0.12)",
-            border: "1px solid rgba(234,88,12,0.25)",
-            borderRadius: 12,
-            padding: "10px 14px",
-            fontSize: 13,
-            color: "#FAFAF9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
             marginBottom: 12,
             animation: reducedMotion ? undefined : "ps-slide-up 0.4s ease-out",
           }}
         >
-          {reply.user}
+          <span
+            style={{
+              fontSize: 11,
+              color: "#9A9A9A",
+              fontWeight: 500,
+              letterSpacing: "0.02em",
+            }}
+          >
+            {signal.head}
+          </span>
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: signal.eventColor,
+              background: `${signal.eventColor}1A`,
+              border: `1px solid ${signal.eventColor}55`,
+              padding: "3px 7px",
+              borderRadius: 4,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {signal.eventTag}
+          </span>
         </div>
 
-        {/* AI response card */}
+        {/* Signal detail card */}
         <div
-          key={`a-${idx}`}
+          key={`d-${idx}`}
           style={{
             background: "rgba(0,0,0,0.45)",
             border: "1px solid rgba(255,255,255,0.06)",
@@ -263,11 +288,8 @@ function HeroChatMockup() {
             animation: reducedMotion ? undefined : "ps-slide-up 0.5s 0.1s ease-out both",
           }}
         >
-          <div style={{ fontSize: 11, color: "#8A8A8A", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {reply.response.head}
-          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {reply.response.lines.map((l) => (
+            {signal.lines.map((l: { tag: string; value: string; color?: string }) => (
               <div
                 key={l.tag}
                 style={{
@@ -277,65 +299,58 @@ function HeroChatMockup() {
                   fontSize: 12,
                 }}
               >
-                <span style={{ color: "#6B6B6B", fontWeight: 500 }}>{l.tag}</span>
+                <span style={{ color: "#6B6B6B", fontWeight: 500, letterSpacing: "0.04em" }}>{l.tag}</span>
                 <span style={{ color: l.color || "#FAFAF9", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                   {l.value}
                 </span>
               </div>
             ))}
           </div>
-          <button
-            type="button"
+          <div
             style={{
               marginTop: 14,
-              width: "100%",
-              background: "linear-gradient(135deg, #EA580C, #C2410C)",
-              color: "#FFF",
-              border: "none",
-              borderRadius: 8,
-              padding: "9px 12px",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "inline-flex",
+              paddingTop: 12,
+              borderTop: "1px solid rgba(255,255,255,0.05)",
+              display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              boxShadow: "0 8px 24px rgba(234,88,12,0.3)",
+              gap: 8,
             }}
           >
-            {reply.response.action}
-            <ArrowRight size={12} />
-          </button>
+            <span
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 5,
+                background: "rgba(234,88,12,0.15)",
+                border: "1px solid rgba(234,88,12,0.4)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Sparkles size={10} color="#EA580C" />
+            </span>
+            <span style={{ fontSize: 11, color: "#8A8A8A" }}>Recommended move</span>
+            <span style={{ fontSize: 12, color: signal.actionColor, fontWeight: 600, marginLeft: "auto", textAlign: "right" }}>
+              {signal.action}
+            </span>
+          </div>
         </div>
 
-        {/* Input */}
+        {/* Footer meta */}
         <div
           style={{
             marginTop: 14,
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: 8,
-            background: "rgba(0,0,0,0.45)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 10,
-            padding: "10px 12px",
+            fontSize: 10,
+            color: "#5C5C5C",
           }}
         >
-          <span style={{ fontSize: 12, color: "#6B6B6B", flex: 1 }}>Ask anything about your market…</span>
-          <span
-            style={{
-              width: 26,
-              height: 26,
-              background: "#EA580C",
-              borderRadius: 6,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Send size={12} color="#FFF" />
-          </span>
+          <span>Sources: scrape + field team</span>
+          <span style={{ color: "#8A8A8A" }}>Updated 12s ago</span>
         </div>
       </div>
     </div>
@@ -399,8 +414,8 @@ function Hero() {
               textTransform: "uppercase",
             }}
           >
-            <Zap size={11} />
-            AI Commerce Intelligence
+            <Crosshair size={11} />
+            Pricing intelligence for retail
           </span>
 
           <h1
@@ -414,7 +429,7 @@ function Hero() {
               margin: "22px 0 0",
             }}
           >
-            Pricing,
+            Every move your competitors make.
             <br />
             <span
               style={{
@@ -424,7 +439,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              Decoded by AI
+              On the record.
             </span>
           </h1>
 
@@ -437,8 +452,9 @@ function Hero() {
               maxWidth: 520,
             }}
           >
-            Pricing intelligence for retailers, hypermarkets, and omnichannel brands. Monitor every
-            competitor, every channel — then let AI tell you exactly what to price, when, and why.
+            PrizeSkout watches competitor prices, promotions, and shelf moves across every channel
+            you sell on — online and in-store. Category teams use it to defend margin, time
+            promotions, and stop losing share to moves they didn't see coming.
           </p>
 
           <div
@@ -475,7 +491,7 @@ function Hero() {
                 e.currentTarget.style.boxShadow = "0 12px 30px rgba(234,88,12,0.35)";
               }}
             >
-              Start free trial
+              Start tracking competitors
               <ArrowRight size={14} />
             </Link>
             <a
@@ -504,18 +520,18 @@ function Hero() {
                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
               }}
             >
-              See it in action
+              Tour the platform
             </a>
           </div>
 
           <p style={{ marginTop: 18, fontSize: 12, color: "#6B6B6B" }}>
-            14-day free trial · No credit card required
+            14-day trial · No card required · Live data on day one
           </p>
         </div>
 
         {/* Right: hero mockup */}
         <div className="ps-hero-mock" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <HeroChatMockup />
+          <HeroSignalsMockup />
         </div>
       </div>
     </section>
@@ -546,7 +562,7 @@ function LogosBar() {
           margin: 0,
         }}
       >
-        Trusted in commerce by 200+ brands
+        Tracking pricing across the channels your buyers actually shop
       </p>
       <div
         style={{
@@ -1047,16 +1063,28 @@ function HubSection() {
       }}
     >
       <div style={{ maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
+        <p
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#EA580C",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            margin: 0,
+          }}
+        >
+          What's inside
+        </p>
         <h2
           style={{
             fontSize: "clamp(26px, 4vw, 38px)",
             fontWeight: 700,
             color: "#FAFAF9",
-            margin: 0,
+            margin: "10px 0 0",
             letterSpacing: "-0.02em",
           }}
         >
-          The ultimate{" "}
+          One workspace.{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -1065,11 +1093,12 @@ function HubSection() {
               backgroundClip: "text",
             }}
           >
-            commerce intelligence hub
+            Every channel you sell on.
           </span>
         </h2>
         <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 12 }}>
-          Online. In-store. Cross-border. Every signal in one workspace.
+          Online marketplaces, delivery apps, hypermarkets, your own stores — read together, not in
+          separate tabs.
         </p>
 
         <div
@@ -1110,14 +1139,14 @@ function HubSection() {
             />
             <div style={{ position: "relative", zIndex: 1 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: "#EA580C", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
-                Market scan
+                Category read
               </p>
               <h3 style={{ fontSize: 22, fontWeight: 700, color: "#FAFAF9", margin: "8px 0 0", lineHeight: 1.2 }}>
-                See your category at a glance
+                The category, on one screen
               </h3>
               <p style={{ fontSize: 13, color: "#8A8A8A", marginTop: 8, lineHeight: 1.5 }}>
-                Volatility, top movers, growth pockets, and assortment gaps — across every channel
-                you operate in.
+                Volatility, top movers, growth pockets, and assortment gaps — read together so the
+                story of the category is obvious before the meeting starts.
               </p>
 
               <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
@@ -1152,17 +1181,17 @@ function HubSection() {
               {
                 Icon: MapPin,
                 title: "Field intelligence",
-                desc: "Capture in-store competitor prices through your store teams.",
+                desc: "Your reps log shelf prices, promo collateral, and OOS in seconds — and it lands beside your online data.",
               },
               {
                 Icon: Target,
-                title: "Market benchmarks",
-                desc: "See where you rank against the anonymized network.",
+                title: "Anonymous benchmarks",
+                desc: "See where you sit on price index, promo depth, and assortment versus the network — without exposing your numbers.",
               },
               {
                 Icon: Megaphone,
-                title: "Promotion calendar",
-                desc: "Who is running what — across Talabat, Snoonu, Carrefour.",
+                title: "Promo calendar",
+                desc: "What every competitor is running, when it ends, and how it overlaps with your plan.",
               },
             ].map((c) => (
               <div
@@ -1222,19 +1251,19 @@ function HubSection() {
 const TESTIMONIALS = [
   {
     quote:
-      "We replaced three separate tools with PrizeSkout. Margin lift in the first month paid for the whole year. The AI recommendations actually understand our market.",
+      "We used to find out about a competitor price drop two days late, from a customer complaint. Now we see it within the hour, with the recommendation already drafted. That's the whole job.",
     name: "Layla Al-Mansoori",
     role: "Head of E-Commerce, Hypermarket Group",
   },
   {
     quote:
-      "The field intelligence module is a game changer. We finally see what's happening on competitor shelves without hiring an army of mystery shoppers.",
+      "The field module is what sold us. Our reps were already in the stores; getting that data into the same view as Talabat and Carrefour finally closed the loop.",
     name: "Karim Saleh",
     role: "Director of Pricing, Regional Retail",
   },
   {
     quote:
-      "Our team checks PrizeSkout before every category meeting. The promo simulator alone saved us from a campaign that would have eaten 14% of our margin.",
+      "We almost ran a 25% promo on small appliances last quarter. The simulator flagged 41% cannibalisation. We pulled it back to 12% on three SKUs and beat our GMV target without burning the margin.",
     name: "Noor Hadid",
     role: "Commercial Lead, Omnichannel Brand",
   },
@@ -1268,10 +1297,10 @@ function Testimonials() {
             letterSpacing: "-0.02em",
           }}
         >
-          Loved by commerce leaders
+          What category teams say
         </h2>
         <p style={{ fontSize: 14, color: "#8A8A8A", marginTop: 10 }}>
-          See what teams across the region are saying.
+          Operators on the ground — pricing, e-commerce, and category leads.
         </p>
 
         <div
@@ -1456,7 +1485,7 @@ function Pricing() {
               margin: 0,
             }}
           >
-            PRICING
+            Pricing
           </p>
           <h2
             style={{
@@ -1467,10 +1496,10 @@ function Pricing() {
               letterSpacing: "-0.02em",
             }}
           >
-            Plans that grow with your business
+            Priced like a tool you'll actually use
           </h2>
           <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 10 }}>
-            Start free. Scale as you grow. No long-term contracts.
+            One location to start. Add channels and SKUs as the value compounds. No long-term lock-in.
           </p>
 
           {/* Toggle */}
@@ -1922,7 +1951,7 @@ function FAQ() {
             letterSpacing: "-0.02em",
           }}
         >
-          Got any{" "}
+          The questions{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -1931,7 +1960,7 @@ function FAQ() {
               backgroundClip: "text",
             }}
           >
-            Questions?
+            buyers usually ask
           </span>
         </h2>
 
@@ -2056,7 +2085,7 @@ function CTASection() {
             margin: 0,
           }}
         >
-          Outsmart the market
+          For category teams
         </p>
         <h2
           style={{
@@ -2068,7 +2097,7 @@ function CTASection() {
             letterSpacing: "-0.02em",
           }}
         >
-          Ready to price on{" "}
+          Stop pricing in{" "}
           <span
             style={{
               background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -2077,7 +2106,7 @@ function CTASection() {
               backgroundClip: "text",
             }}
           >
-            God Mode?
+            the dark.
           </span>
         </h2>
         <p
@@ -2085,14 +2114,14 @@ function CTASection() {
             fontSize: 15,
             color: "#9A9A9A",
             marginTop: 14,
-            maxWidth: 480,
+            maxWidth: 520,
             marginLeft: "auto",
             marginRight: "auto",
             lineHeight: 1.6,
           }}
         >
-          Join commerce brands using PrizeSkout to monitor every competitor and optimize every
-          price across every channel.
+          Plug your catalog in. Live competitor data on day one. A first set of recommendations
+          inside the first week. Cancel any time — but you won't.
         </p>
         <div style={{ marginTop: 32 }}>
           <Link
@@ -2120,12 +2149,12 @@ function CTASection() {
               e.currentTarget.style.boxShadow = "0 16px 40px rgba(234,88,12,0.45)";
             }}
           >
-            Start your free trial
+            Start a 14-day trial
             <ArrowRight size={15} />
           </Link>
         </div>
         <p style={{ marginTop: 14, fontSize: 12, color: "#6B6B6B" }}>
-          14-day free trial · No credit card required
+          No card required · Live data on day one · Cancel any time
         </p>
       </div>
     </section>
@@ -2184,40 +2213,39 @@ function LandingPage() {
       <LogosBar />
 
       <SplitSection
-        eyebrow="Competitive intelligence"
+        eyebrow="Competitive watch"
         title={
           <>
-            Skip the spreadsheets.{" "}
+            Know the price{" "}
             <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Just ask.
+              before the customer does.
             </span>
           </>
         }
-        subtitle="Stop pulling reports. PrizeSkout monitors competitors in real time across every channel — online and in-store — and answers questions in plain English."
+        subtitle="A continuous read on every competitor SKU across the channels you sell on. Online prices are scraped on a schedule you control. Shelf prices come in from your field team through a workflow that takes seconds. Every change is timestamped, every source is cited."
         bullets={[
-          { Icon: Crosshair, title: "Live price tracking", desc: "Every competitor SKU, every channel, refreshed continuously." },
-          { Icon: BarChart3, title: "Promo & stock signals", desc: "Catch promotions, depletions, and reprice events the moment they happen." },
-          { Icon: MapPin, title: "In-store coverage", desc: "Field intelligence captures what scrapers can't see." },
+          { Icon: Crosshair, title: "SKU-level price tracking", desc: "Match by name, EAN, or your own catalog. No noisy fuzzy matches." },
+          { Icon: BarChart3, title: "Promo and stock signals", desc: "Catches markdowns, depletions, and reprice events as they happen." },
+          { Icon: MapPin, title: "Online and in-store, one view", desc: "Field intelligence captures shelf prices, promo collateral, and OOS." },
         ]}
         mockup={<CompetitorMockup />}
       />
 
       <SplitSection
         reverse
-        eyebrow="AI Pricing"
+        eyebrow="Decision support"
         title={
           <>
-            Data-driven{" "}
+            A reason behind{" "}
             <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              "price"
-            </span>{" "}
-            signals.
+              every price you set.
+            </span>
           </>
         }
-        subtitle="The AI learns your margins, elasticity, and market context — then tells you exactly what to price, when, and why. Confidence-scored. Citation-backed."
+        subtitle="Recommendations come with the math: the competitor evidence, the elasticity read, the expected unit and margin impact. Approve, edit, or override — it's your call. The model learns from what you ship and what you reject."
         bullets={[
-          { Icon: TrendingUp, title: "Specific recommendations", desc: "Not 'consider raising' — exact numbers with the rationale and risk." },
-          { Icon: Sparkles, title: "Gets smarter weekly", desc: "Your private model improves every week with your data and outcomes." },
+          { Icon: TrendingUp, title: "Specific moves, not 'consider'", desc: "Exact prices, expected impact, and a confidence score for each one." },
+          { Icon: Sparkles, title: "Sharper every cycle", desc: "Your private model improves with every approval, override, and outcome." },
         ]}
         mockup={<AIRecMockup />}
       />
@@ -2226,16 +2254,16 @@ function LandingPage() {
         eyebrow="Promotions"
         title={
           <>
-            Set it. Forget it.{" "}
+            Test the campaign{" "}
             <span style={{ background: "linear-gradient(90deg, #EA580C, #FB923C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Save margin.
+              before you fund it.
             </span>
           </>
         }
-        subtitle="Simulate every campaign before it goes live. See ROI, cannibalization, and competitor response — and catch margin-eaters before they cost you."
+        subtitle="Model depth, duration, and channel mix and see the likely outcome before a single banner goes live. Catches cannibalisation early so you stop subsidising units you would have sold at full price."
         bullets={[
-          { Icon: Megaphone, title: "ROI simulator", desc: "Model depth, duration, and channel mix to find the healthy promo window." },
-          { Icon: Target, title: "Cannibalization alerts", desc: "Know when a promo is stealing from full-price units." },
+          { Icon: Megaphone, title: "Promo ROI simulator", desc: "Forecast incremental orders, net margin, and cannibalisation by category." },
+          { Icon: Target, title: "Calendar-aware planning", desc: "See what competitors are running so your campaign doesn't collide with theirs." },
         ]}
         mockup={<ROIMockup />}
       />
