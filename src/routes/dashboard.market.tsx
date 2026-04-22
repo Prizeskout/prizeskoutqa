@@ -5,6 +5,7 @@ import { CategoryPerformance } from "@/components/dashboard/market/CategoryPerfo
 import { AssortmentGaps } from "@/components/dashboard/market/AssortmentGaps";
 import { CrossBorderRadar } from "@/components/dashboard/market/CrossBorderRadar";
 import { TrendingProducts } from "@/components/dashboard/market/TrendingProducts";
+import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { MarketPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,10 +17,13 @@ import type {
   AssortmentGapRow,
   CrossBorderRadarRow,
 } from "@/lib/market-data";
+import type { AIInsight } from "@/server/ai-insights.functions";
 
-async function loadMarket(): Promise<MarketData> {
+type MarketPageData = MarketData & { insight: AIInsight | null };
+
+async function loadMarket(): Promise<MarketPageData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<MarketData>();
+    return pendingOnSSR<MarketPageData>();
   }
   const {
     data: { session },
@@ -28,12 +32,13 @@ async function loadMarket(): Promise<MarketData> {
     throw redirect({ to: "/login", search: { redirect: "/dashboard/market" } });
   }
 
-  const [metricsRes, catsRes, trendRes, gapsRes, cbRes] = await Promise.all([
+  const [metricsRes, catsRes, trendRes, gapsRes, cbRes, insightRes] = await Promise.all([
     supabase.from("market_metrics").select("*").order("position", { ascending: true }),
     supabase.from("category_performance").select("*").order("position", { ascending: true }),
     supabase.from("trending_products").select("*").order("position", { ascending: true }),
     supabase.from("assortment_gaps").select("*").order("position", { ascending: true }),
     supabase.from("cross_border_radar").select("*").order("position", { ascending: true }),
+    supabase.from("ai_insights").select("*").eq("page", "market").maybeSingle(),
   ]);
 
   if (metricsRes.error) throw metricsRes.error;
@@ -53,6 +58,7 @@ async function loadMarket(): Promise<MarketData> {
       competitors: Array.isArray(g.competitors) ? (g.competitors as string[]) : [],
     })) as AssortmentGapRow[],
     crossBorder: (cbRes.data ?? []) as unknown as CrossBorderRadarRow[],
+    insight: (insightRes.data as AIInsight | null) ?? null,
   };
 }
 
@@ -67,11 +73,12 @@ export const Route = createFileRoute("/dashboard/market")({
 });
 
 function MarketPage() {
-  const data = Route.useLoaderData() as MarketData;
+  const data = Route.useLoaderData() as MarketPageData;
   return (
     <DashboardLayout title="Market">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <MarketMetrics metrics={data.metrics} />
+        <AIInsightsCard page="market" initial={data.insight} />
         <CategoryPerformance rows={data.categories} />
         <AssortmentGaps gaps={data.gaps} />
         <CrossBorderRadar rows={data.crossBorder} />

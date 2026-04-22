@@ -8,6 +8,7 @@ import { PriceHistory } from "@/components/dashboard/competitors/PriceHistory";
 import { OmnichannelGaps } from "@/components/dashboard/competitors/OmnichannelGaps";
 import { SubTabs, type CompetitorsSubTab } from "@/components/dashboard/competitors/SubTabs";
 import { BehaviorPatterns } from "@/components/dashboard/competitors/BehaviorPatterns";
+import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import {
   type Category,
   type ChannelOpt,
@@ -27,10 +28,13 @@ import {
   type PriceHistoryRow,
   type BehaviorPattern,
 } from "@/lib/competitors-data";
+import type { AIInsight } from "@/server/ai-insights.functions";
 
-async function loadCompetitors(): Promise<CompetitorsData> {
+type CompetitorsPageData = CompetitorsData & { insight: AIInsight | null };
+
+async function loadCompetitors(): Promise<CompetitorsPageData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<CompetitorsData>();
+    return pendingOnSSR<CompetitorsPageData>();
   }
   const {
     data: { session },
@@ -39,7 +43,7 @@ async function loadCompetitors(): Promise<CompetitorsData> {
     throw redirect({ to: "/login", search: { redirect: "/dashboard/competitors" } });
   }
 
-  const [metricsRes, pricesRes, historyRes, patternsRes] = await Promise.all([
+  const [metricsRes, pricesRes, historyRes, patternsRes, insightRes] = await Promise.all([
     supabase.from("competitor_metrics").select("*").order("position", { ascending: true }),
     supabase.from("competitor_prices").select("*").order("position", { ascending: true }),
     supabase
@@ -47,6 +51,7 @@ async function loadCompetitors(): Promise<CompetitorsData> {
       .select("*")
       .order("position", { ascending: true }),
     supabase.from("behavior_patterns").select("*").order("position", { ascending: true }),
+    supabase.from("ai_insights").select("*").eq("page", "competitors").maybeSingle(),
   ]);
 
   if (metricsRes.error) throw metricsRes.error;
@@ -59,6 +64,7 @@ async function loadCompetitors(): Promise<CompetitorsData> {
     prices: (pricesRes.data ?? []) as unknown as CompetitorPriceRow[],
     history: (historyRes.data ?? []) as unknown as PriceHistoryRow[],
     patterns: (patternsRes.data ?? []) as unknown as BehaviorPattern[],
+    insight: (insightRes.data as AIInsight | null) ?? null,
   };
 }
 
@@ -75,7 +81,7 @@ export const Route = createFileRoute("/dashboard/competitors")({
 const SIGNAL_ORDER = { WATCH: 0, LOWER: 1, HOLD: 2, RAISE: 3 } as const;
 
 function CompetitorsPage() {
-  const data = Route.useLoaderData() as CompetitorsData;
+  const data = Route.useLoaderData() as CompetitorsPageData;
   const [tab, setTab] = useState<CompetitorsSubTab>("Price tracker");
   const [category, setCategory] = useState<Category>("All");
   const [channel, setChannel] = useState<ChannelOpt>("All Channels");
@@ -144,6 +150,7 @@ function CompetitorsPage() {
         }}
       >
         <CompetitorMetrics metrics={data.metrics} />
+        <AIInsightsCard page="competitors" initial={data.insight} />
         <FilterBar
           category={category}
           setCategory={setCategory}
