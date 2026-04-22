@@ -6,6 +6,7 @@ import { NetworkValueCallout } from "@/components/dashboard/benchmarks/NetworkVa
 import { ModelMaturity } from "@/components/dashboard/benchmarks/ModelMaturity";
 import { ModelKnowledge } from "@/components/dashboard/benchmarks/ModelKnowledge";
 import { SwitchingCost } from "@/components/dashboard/benchmarks/SwitchingCost";
+import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { BenchmarksPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,9 @@ function BenchmarksPage() {
   return (
     <DashboardLayout title="Benchmarks">
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ExportInsightsButton />
+        </div>
         <BenchmarksMetrics metrics={data.metrics} />
         <MarketBenchmarks benchmarks={data.benchmarks} />
         <NetworkValueCallout data={data.networkValue} />

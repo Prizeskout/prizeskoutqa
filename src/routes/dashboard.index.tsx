@@ -6,6 +6,7 @@ import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
+import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +91,9 @@ function OverviewPage() {
   return (
     <DashboardLayout title="Overview">
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <ExportInsightsButton />
+        </div>
         <MetricsRow metrics={data.metrics} />
         <AIInsightsCard page="overview" initial={data.insight} />
         <LiveAlerts alerts={data.alerts} />

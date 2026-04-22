@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Bell, Mail, Smartphone } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardSubtitle, CardTitle, Toggle } from "./primitives";
+import { supabase } from "@/integrations/supabase/client";
 
 type Setting = { key: string; name: string; desc: string; def: boolean };
 
@@ -59,21 +61,21 @@ type Channel = { key: string; icon: ReactNode; name: string; status: string; def
 
 const CHANNELS: Channel[] = [
   {
-    key: "email",
+    key: "channel_email",
     icon: <Mail size={18} color="#6B6B6B" />,
     name: "Email",
     status: "pricing@snoonu.com",
     def: true,
   },
   {
-    key: "sms",
+    key: "channel_sms",
     icon: <Smartphone size={18} color="#6B6B6B" />,
     name: "SMS",
     status: "+974 4000 0000",
     def: false,
   },
   {
-    key: "in_app",
+    key: "channel_in_app",
     icon: <Bell size={18} color="#6B6B6B" />,
     name: "In-app",
     status: "Always active",
@@ -88,6 +90,77 @@ export function NotificationsTab() {
   const [channelStates, setChannelStates] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CHANNELS.map((c) => [c.key, c.def])),
   );
+  const [loaded, setLoaded] = useState(false);
+
+  // Load persisted preferences once on mount.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (active) setLoaded(true);
+        return;
+      }
+      const { data } = await supabase
+        .from("user_notification_settings")
+        .select("pref_key, enabled")
+        .eq("user_id", user.id);
+      if (!active) return;
+      if (data && data.length > 0) {
+        const map = new Map(data.map((r) => [r.pref_key, r.enabled]));
+        setStates((prev) => {
+          const next = { ...prev };
+          for (const k of Object.keys(prev)) {
+            if (map.has(k)) next[k] = !!map.get(k);
+          }
+          return next;
+        });
+        setChannelStates((prev) => {
+          const next = { ...prev };
+          for (const k of Object.keys(prev)) {
+            if (map.has(k)) next[k] = !!map.get(k);
+          }
+          return next;
+        });
+      }
+      setLoaded(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const persist = async (key: string, enabled: boolean) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Please sign in again to save preferences");
+      return;
+    }
+    const { error } = await supabase
+      .from("user_notification_settings")
+      .upsert(
+        { user_id: user.id, pref_key: key, enabled },
+        { onConflict: "user_id,pref_key" },
+      );
+    if (error) {
+      console.error(error);
+      toast.error("Could not save preference");
+    }
+  };
+
+  const toggleSetting = (key: string, value: boolean) => {
+    setStates((prev) => ({ ...prev, [key]: value }));
+    if (loaded) void persist(key, value);
+  };
+
+  const toggleChannel = (key: string, value: boolean) => {
+    setChannelStates((prev) => ({ ...prev, [key]: value }));
+    if (loaded) void persist(key, value);
+  };
 
   return (
     <Card>
@@ -113,10 +186,7 @@ export function NotificationsTab() {
                 <div style={{ fontSize: 14, fontWeight: 500, color: "#1A1A18" }}>{s.name}</div>
                 <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 2 }}>{s.desc}</div>
               </div>
-              <Toggle
-                on={states[s.key]}
-                onChange={(v) => setStates((prev) => ({ ...prev, [s.key]: v }))}
-              />
+              <Toggle on={states[s.key]} onChange={(v) => toggleSetting(s.key, v)} />
             </div>
           );
         })}
@@ -165,7 +235,7 @@ export function NotificationsTab() {
             <Toggle
               size="sm"
               on={channelStates[c.key]}
-              onChange={(v) => setChannelStates((prev) => ({ ...prev, [c.key]: v }))}
+              onChange={(v) => toggleChannel(c.key, v)}
             />
           </div>
         ))}

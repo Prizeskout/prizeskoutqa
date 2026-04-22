@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardTitle,
@@ -10,7 +10,9 @@ import {
   TextareaField,
 } from "./primitives";
 import { Check } from "lucide-react";
+import { toast } from "sonner";
 import { getCompany, setCompany } from "@/lib/companyStore";
+import { supabase } from "@/integrations/supabase/client";
 
 const INDUSTRIES = [
   "E-commerce / Quick commerce",
@@ -48,11 +50,80 @@ export function AccountTab() {
     "Qatar's leading super-app for delivery, grocery, and lifestyle services. Operating across food, grocery, electronics, fashion, and more.",
   );
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const onSave = () => {
-    setCompany({ name: companyName.trim() || "Company" });
-    setSavedAt(Date.now());
-    window.setTimeout(() => setSavedAt(null), 1800);
+  // Load persisted settings on mount
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (active) setLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("user_account_settings")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!active) return;
+      if (data) {
+        if (data.company_name) setCompanyName(data.company_name);
+        if (data.industry) setIndustry(data.industry);
+        if (data.country) setCountry(data.country);
+        if (data.currency) setCurrency(data.currency);
+        if (data.contact_email) setEmail(data.contact_email);
+        if (data.contact_phone) setPhone(data.contact_phone);
+        if (data.description) setDescription(data.description);
+      }
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const onSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in again to save changes");
+        return;
+      }
+      const trimmedCompany = companyName.trim() || "Company";
+      const { error } = await supabase
+        .from("user_account_settings")
+        .upsert(
+          {
+            user_id: user.id,
+            company_name: trimmedCompany,
+            industry,
+            country,
+            currency,
+            contact_email: email.trim() || null,
+            contact_phone: phone.trim() || null,
+            description: description.trim() || null,
+          },
+          { onConflict: "user_id" },
+        );
+      if (error) throw error;
+      setCompany({ name: trimmedCompany });
+      setSavedAt(Date.now());
+      window.setTimeout(() => setSavedAt(null), 1800);
+      toast.success("Account settings saved");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not save settings";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -88,7 +159,9 @@ export function AccountTab() {
             <TextareaField value={description} onChange={setDescription} />
           </Field>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <PrimaryButton onClick={onSave}>Save changes</PrimaryButton>
+            <PrimaryButton onClick={onSave}>
+              {saving ? "Saving..." : loading ? "Loading..." : "Save changes"}
+            </PrimaryButton>
             {savedAt !== null && (
               <span
                 style={{
@@ -148,20 +221,6 @@ export function AccountTab() {
         </div>
         <div style={{ marginTop: 4, fontSize: 12, color: "#9A9A9A" }}>
           Next invoice: May 1, 2026
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              fontSize: 13,
-              fontWeight: 500,
-              color: "#EA580C",
-              textDecoration: "none",
-            }}
-          >
-            Manage billing
-          </a>
         </div>
       </Card>
     </div>
