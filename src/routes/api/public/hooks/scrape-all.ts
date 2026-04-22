@@ -27,7 +27,7 @@ async function runJobs<T, R>(items: T[], fn: (item: T) => Promise<R>, concurrenc
   return results;
 }
 
-export const Route = createFileRoute("/hooks/scrape-all")({
+export const Route = createFileRoute("/api/public/hooks/scrape-all")({
   server: {
     handlers: {
       POST: async ({ request }) => {
