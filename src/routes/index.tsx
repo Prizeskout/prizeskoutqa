@@ -1075,7 +1075,7 @@ function HubSection() {
           </span>
         </h2>
         <p style={{ fontSize: 15, color: "#8A8A8A", marginTop: 12 }}>
-          Online marketplaces, delivery apps, hypermarkets, your own stores - read together, not in
+          Online marketplaces, delivery apps, hypermarkets, your own stores, read together, not in
           separate tabs.
         </p>
 
@@ -1123,7 +1123,7 @@ function HubSection() {
                 The category, on one screen
               </h3>
               <p style={{ fontSize: 13, color: "#8A8A8A", marginTop: 8, lineHeight: 1.5 }}>
-                Volatility, top movers, growth pockets, and assortment gaps - read together so the
+                Volatility, top movers, growth pockets, and assortment gaps, read together so the
                 story of the category is obvious before the meeting starts.
               </p>
 
@@ -1278,7 +1278,7 @@ function Testimonials() {
           What category teams say
         </h2>
         <p style={{ fontSize: 14, color: "#8A8A8A", marginTop: 10 }}>
-          Operators on the ground - pricing, e-commerce, and category leads.
+          Operators on the ground: pricing, e-commerce, and category leads.
         </p>
 
         <div
@@ -2099,7 +2099,7 @@ function CTASection() {
           }}
         >
           Plug your catalog in. Live competitor data on day one. A first set of recommendations
-          inside the first week. Cancel any time - but you won't.
+          inside the first week. Cancel any time, but you won't.
         </p>
         <div style={{ marginTop: 32 }}>
           <Link
