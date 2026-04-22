@@ -89,7 +89,7 @@ function SignupPage() {
       return;
     }
     if (pwScore.score < 2) {
-      setError("Please choose a stronger password - mix letters, numbers, and symbols.");
+      setError("Please choose a stronger password. Mix letters, numbers, and symbols.");
       return;
     }
     if (!agreed) {

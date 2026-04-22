@@ -47,7 +47,7 @@ export function LiveBadge({ live, scrapedAt }: Props) {
   }
   return (
     <span
-      title="No live scrape yet - showing seed data"
+      title="No live scrape yet, showing seed data"
       style={{
         display: "inline-block",
         padding: "2px 7px",
