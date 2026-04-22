@@ -26,10 +26,10 @@ type Diff = {
   key: string;
   product: string;
   competitor: string;
-  before: number | null;
+  before: number;
   after: number;
   currency: string;
-  delta: number; // after - before (null when no baseline)
+  delta: number; // after - before
   pct: number | null;
   scrapedAt: string;
 };
