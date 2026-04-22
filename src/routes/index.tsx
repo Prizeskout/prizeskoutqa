@@ -21,14 +21,14 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout - Pricing intelligence for retail" },
+      { title: "PrizeSkout | Pricing intelligence for retail" },
       {
         name: "description",
         content: "PrizeSkout gives category teams a continuous read on competitor prices, promotions, and shelf moves online and in-store, so every pricing decision is grounded in evidence.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout - Pricing intelligence for retail",
+        content: "PrizeSkout | Pricing intelligence for retail",
       },
       {
         property: "og:description",
@@ -431,7 +431,7 @@ function Hero() {
             }}
           >
             PrizeSkout watches competitor prices, promotions, and shelf moves across every channel
-            you sell on - online and in-store. Category teams use it to defend margin, time
+            you sell on, online and in-store. Category teams use it to defend margin, time
             promotions, and stop losing share to moves they didn't see coming.
           </p>
 
@@ -1159,12 +1159,12 @@ function HubSection() {
               {
                 Icon: MapPin,
                 title: "Field intelligence",
-                desc: "Your reps log shelf prices, promo collateral, and OOS in seconds - and it lands beside your online data.",
+                desc: "Your reps log shelf prices, promo collateral, and OOS in seconds, and it lands beside your online data.",
               },
               {
                 Icon: Target,
                 title: "Anonymous benchmarks",
-                desc: "See where you sit on price index, promo depth, and assortment versus the network - without exposing your numbers.",
+                desc: "See where you sit on price index, promo depth, and assortment versus the network, without exposing your numbers.",
               },
               {
                 Icon: Megaphone,
@@ -2220,7 +2220,7 @@ function LandingPage() {
             </span>
           </>
         }
-        subtitle="Recommendations come with the math: the competitor evidence, the elasticity read, the expected unit and margin impact. Approve, edit, or override - it's your call. The model learns from what you ship and what you reject."
+        subtitle="Recommendations come with the math: the competitor evidence, the elasticity read, the expected unit and margin impact. Approve, edit, or override. It's your call, and the model learns from what you ship and what you reject."
         bullets={[
           { Icon: TrendingUp, title: "Specific moves, not 'consider'", desc: "Exact prices, expected impact, and a confidence score for each one." },
           { Icon: Sparkles, title: "Sharper every cycle", desc: "Your private model improves with every approval, override, and outcome." },
