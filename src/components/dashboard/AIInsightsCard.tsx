@@ -242,7 +242,7 @@ export function AIInsightsCard({
             </div>
             <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
               {isEmpty
-                ? "Powered by Lovable AI"
+                ? "Automated summaries from your latest data"
                 : `Updated ${formatGeneratedAt(insight!.generated_at)} · ${citations.length} source${citations.length === 1 ? "" : "s"}`}
             </div>
           </div>

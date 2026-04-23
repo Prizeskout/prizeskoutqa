@@ -243,7 +243,7 @@ function HeaderLivePill({ liveCount }: { liveCount: number }) {
           display: "inline-block",
         }}
       />
-      {live ? `LIVE DATA · ${liveCount} product${liveCount === 1 ? "" : "s"}` : "MOCK DATA"}
+      {live ? `LIVE DATA · ${liveCount} product${liveCount === 1 ? "" : "s"}` : "AWAITING LIVE DATA"}
     </span>
   );
 }
