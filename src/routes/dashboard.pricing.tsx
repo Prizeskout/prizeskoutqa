@@ -26,7 +26,12 @@ async function loadPricing(): Promise<PricingPageData> {
   // serializes into the SSR HTML. Client-side the loader runs with the real
   // session.
   if (typeof window === "undefined") {
-    return pendingOnSSR<PricingPageData>();
+    return pendingOnSSR<PricingPageData>({
+      metrics: [],
+      recommendations: [],
+      rules: [],
+      insight: null,
+    });
   }
 
   const {

@@ -20,7 +20,12 @@ import type {
 
 async function loadFieldIntel(): Promise<FieldIntelData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<FieldIntelData>();
+    return pendingOnSSR<FieldIntelData>({
+      metrics: [],
+      observations: [],
+      gaps: [],
+      activity: [],
+    });
   }
   const {
     data: { session },

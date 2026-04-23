@@ -32,7 +32,15 @@ async function loadOverview(): Promise<OverviewPageData> {
   // so the SSR HTML serializes the skeleton. Client-side the loader runs
   // normally with the real session.
   if (typeof window === "undefined") {
-    return pendingOnSSR<OverviewPageData>();
+    return pendingOnSSR<OverviewPageData>({
+      metrics: [],
+      alerts: [],
+      channels: [],
+      quickActions: [],
+      insight: null,
+      pricingCount: 0,
+      competitorChangeCount: 0,
+    });
   }
 
   const {
