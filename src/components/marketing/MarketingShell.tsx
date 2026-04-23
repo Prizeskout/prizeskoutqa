@@ -1,97 +1,66 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
-import {
-  Menu,
-  X,
-  Camera,
-  Play,
-  Globe,
-  ChevronDown,
-  LineChart,
-  Tags,
-  Megaphone,
-  Map,
-  ClipboardList,
-  BookOpen,
-  Calculator,
-  FileText,
-  
-  Mail,
-  Newspaper,
-  ShieldCheck,
-  Code2,
-  Terminal,
-  Webhook,
-  KeyRound,
-  GitBranch,
-} from "lucide-react";
+import { Menu, X } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
 
-type InternalTo =
-  | "/contact"
-  | "/privacy"
-  | "/terms"
-  | "/changelog"
-  | "/roi-calculator"
-  | "/docs"
-  | "/api-reference"
-  | "/products/pricing"
-  | "/products/competitors"
-  | "/products/promotions"
-  | "/products/market"
-  | "/products/field-intel";
-
-type DropdownItem = {
+type SimpleNavItem = {
   label: string;
-  desc: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  to?: InternalTo;
+  to?: "/docs" | "/changelog";
   hash?: string;
 };
 
-type DropdownMenu = {
-  label: string;
-  wide?: boolean;
-  items: DropdownItem[];
-};
+const NAV_ITEMS: SimpleNavItem[] = [
+  { label: "Docs", to: "/docs" },
+  { label: "Pricing", hash: "pricing" },
+  { label: "Changelog", to: "/changelog" },
+];
 
-const PRODUCTS_MENU: DropdownMenu = {
-  label: "Products",
-  wide: true,
-  items: [
-    { label: "Pricing Recommendations", desc: "AI price decisions with P&L impact", icon: Tags, to: "/products/pricing" },
-    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, to: "/products/competitors" },
-    { label: "Promotions & ROI", desc: "Simulate campaigns, read the promo calendar", icon: Megaphone, to: "/products/promotions" },
-    { label: "Market Signals", desc: "Trends, gaps, cross-border radar", icon: Map, to: "/products/market" },
-    { label: "Field Intel", desc: "Ingest in-store observations via API", icon: ClipboardList, to: "/products/field-intel" },
-    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
-  ],
-};
-
-const DEVELOPERS_MENU: DropdownMenu = {
-  label: "Developers",
-  wide: true,
-  items: [
-    { label: "Documentation", desc: "Guides, SDKs, integration walkthroughs", icon: BookOpen, to: "/docs" },
-    { label: "API Reference", desc: "Every endpoint and schema", icon: Code2, to: "/api-reference" },
-    { label: "Quickstart", desc: "Zero to first call in 3 minutes", icon: Terminal, hash: "quickstart" },
-    { label: "Webhooks", desc: "Signed events with retry and replay", icon: Webhook, to: "/docs" },
-    { label: "Authentication", desc: "Scoped API keys and rotation", icon: KeyRound, to: "/docs" },
-    { label: "Changelog", desc: "API and platform updates", icon: GitBranch, to: "/changelog" },
-  ],
-};
-
-const COMPANY_MENU: DropdownMenu = {
-  label: "Company",
-  items: [
-    { label: "Contact", desc: "Talk to a solutions engineer", icon: Mail, to: "/contact" },
-    { label: "Changelog", desc: "What's new on the platform", icon: Newspaper, to: "/changelog" },
-    { label: "Privacy", desc: "How we handle your data", icon: ShieldCheck, to: "/privacy" },
-    { label: "Terms", desc: "Service terms and SLAs", icon: FileText, to: "/terms" },
-  ],
-};
-
-const NAV_MENUS: DropdownMenu[] = [PRODUCTS_MENU, DEVELOPERS_MENU, COMPANY_MENU];
+function NavLink({
+  item,
+  onHashItem,
+}: {
+  item: SimpleNavItem;
+  onHashItem: (hash: string) => void;
+}) {
+  const baseStyle: React.CSSProperties = {
+    padding: "8px 14px",
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#A8A8A8",
+    textDecoration: "none",
+    transition: "color 0.15s",
+    fontFamily: "inherit",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+  };
+  if (item.to) {
+    return (
+      <Link
+        to={item.to}
+        style={baseStyle}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
+      >
+        {item.label}
+      </Link>
+    );
+  }
+  return (
+    <a
+      href={`/#${item.hash ?? ""}`}
+      onClick={(e) => {
+        e.preventDefault();
+        if (item.hash) onHashItem(item.hash);
+      }}
+      style={baseStyle}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
+    >
+      {item.label}
+    </a>
+  );
+}
 
 function smoothScrollToHash(hash: string) {
   if (!hash) {
@@ -102,306 +71,6 @@ function smoothScrollToHash(hash: string) {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function NavDropdown({
-  menu,
-  onHashItem,
-}: {
-  menu: DropdownMenu;
-  onHashItem: (hash: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const cancelClose = () => {
-    if (closeTimer.current) {
-      clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-  };
-  const scheduleClose = () => {
-    cancelClose();
-    closeTimer.current = setTimeout(() => setOpen(false), 180);
-  };
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ position: "relative" }}
-      onMouseEnter={() => {
-        cancelClose();
-        setOpen(true);
-      }}
-      onMouseLeave={scheduleClose}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-          padding: "8px 14px",
-          fontSize: 14,
-          fontWeight: 500,
-          color: open ? "#FAFAF9" : "#A8A8A8",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          borderRadius: 6,
-          transition: "color 0.15s",
-          fontFamily: "inherit",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = open ? "#FAFAF9" : "#A8A8A8")}
-        aria-expanded={open}
-      >
-        {menu.label}
-        <ChevronDown
-          size={13}
-          strokeWidth={2.2}
-          style={{
-            transition: "transform 0.18s ease",
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        />
-      </button>
-
-      {open && (
-        <>
-          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, height: 12 }} />
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% + 10px)",
-              left: 0,
-              width: menu.wide ? 560 : 320,
-              background: "rgba(10,10,10,0.96)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid #1F1F1F",
-              borderRadius: 14,
-              boxShadow: "0 24px 60px -12px rgba(0,0,0,0.7)",
-              padding: 8,
-              animation: "ps-dropdown-in 0.16s ease",
-              zIndex: 60,
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: menu.wide ? "1fr 1fr" : "1fr",
-                gap: 2,
-              }}
-            >
-              {menu.items.map((item, idx) => {
-                const Icon = item.icon;
-                const hovered = hoveredIdx === idx;
-                const inner = (
-                  <div
-                    onMouseEnter={() => setHoveredIdx(idx)}
-                    onMouseLeave={() => setHoveredIdx(null)}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 12,
-                      padding: "12px 12px",
-                      borderRadius: 10,
-                      background: hovered ? "rgba(234,88,12,0.08)" : "transparent",
-                      transition: "background 0.12s",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 8,
-                        background: hovered ? "rgba(234,88,12,0.18)" : "#141414",
-                        border: "1px solid #1F1F1F",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        transition: "background 0.12s",
-                      }}
-                    >
-                      <Icon size={16} color={hovered ? "#FB923C" : "#C4C4C4"} strokeWidth={2} />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 13.5,
-                          fontWeight: 600,
-                          color: "#FAFAF9",
-                          lineHeight: 1.3,
-                          marginBottom: 3,
-                        }}
-                      >
-                        {item.label}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#8A8A8A",
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {item.desc}
-                      </div>
-                    </div>
-                  </div>
-                );
-
-                if (item.to) {
-                  return (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      onClick={() => setOpen(false)}
-                      style={{ textDecoration: "none" }}
-                    >
-                      {inner}
-                    </Link>
-                  );
-                }
-                return (
-                  <a
-                    key={item.label}
-                    href={`/#${item.hash ?? ""}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setOpen(false);
-                      if (item.hash) onHashItem(item.hash);
-                    }}
-                    style={{ textDecoration: "none" }}
-                  >
-                    {inner}
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function MobileNavSection({
-  menu,
-  onNavigate,
-}: {
-  menu: DropdownMenu;
-  onNavigate: (item: DropdownItem) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div style={{ borderBottom: "1px solid #141414" }}>
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: "16px 4px",
-          background: "transparent",
-          border: "none",
-          color: "#FAFAF9",
-          fontSize: 16,
-          fontWeight: 500,
-          cursor: "pointer",
-          fontFamily: "inherit",
-        }}
-      >
-        {menu.label}
-        <ChevronDown
-          size={16}
-          color="#8A8A8A"
-          style={{
-            transition: "transform 0.18s ease",
-            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        />
-      </button>
-      {expanded && (
-        <div style={{ paddingBottom: 12, display: "flex", flexDirection: "column", gap: 2 }}>
-          {menu.items.map((item) => {
-            const Icon = item.icon;
-            const inner = (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "10px 4px",
-                }}
-              >
-                <div
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 7,
-                    background: "#141414",
-                    border: "1px solid #1F1F1F",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={14} color="#C4C4C4" strokeWidth={2} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: "#FAFAF9" }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: "#8A8A8A", marginTop: 2 }}>{item.desc}</div>
-                </div>
-              </div>
-            );
-            if (item.to) {
-              return (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  onClick={() => onNavigate(item)}
-                  style={{ textDecoration: "none" }}
-                >
-                  {inner}
-                </Link>
-              );
-            }
-            return (
-              <a
-                key={item.label}
-                href={`/#${item.hash ?? ""}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate(item);
-                }}
-                style={{ textDecoration: "none" }}
-              >
-                {inner}
-              </a>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -489,31 +158,15 @@ function Header() {
           </a>
 
           <nav className="hidden md:flex" style={{ gap: 4, alignItems: "center" }}>
-            {NAV_MENUS.map((menu) => (
-              <NavDropdown
-                key={menu.label}
-                menu={menu}
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.label}
+                item={item}
                 onHashItem={(hash) =>
                   handleNavClick({ preventDefault: () => {} } as React.MouseEvent, hash)
                 }
               />
             ))}
-            <a
-              href="/#pricing"
-              onClick={(e) => handleNavClick(e, "pricing")}
-              style={{
-                padding: "8px 14px",
-                fontSize: 14,
-                fontWeight: 500,
-                color: "#A8A8A8",
-                textDecoration: "none",
-                transition: "color 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
-            >
-              Pricing
-            </a>
           </nav>
 
           <div className="hidden md:flex" style={{ alignItems: "center", gap: 18 }}>
@@ -607,27 +260,59 @@ function Header() {
           </div>
 
           <nav style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 4 }}>
-            {NAV_MENUS.map((menu) => (
-              <MobileNavSection
-                key={menu.label}
-                menu={menu}
-                onNavigate={(item) => {
-                  setMobileOpen(false);
-                  if (item.hash) {
-                    const hash = item.hash;
-                    setTimeout(() => {
-                      if (onLanding) {
-                        smoothScrollToHash(hash);
-                      } else {
-                        router.navigate({ to: "/", hash }).then(() => {
-                          setTimeout(() => smoothScrollToHash(hash), 100);
-                        });
-                      }
-                    }, 50);
-                  }
-                }}
-              />
-            ))}
+            {NAV_ITEMS.map((item) => {
+              if (item.to) {
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 500,
+                      color: "#FAFAF9",
+                      textDecoration: "none",
+                      padding: "16px 4px",
+                      borderBottom: "1px solid #141414",
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+              return (
+                <a
+                  key={item.label}
+                  href={`/#${item.hash ?? ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileOpen(false);
+                    if (item.hash) {
+                      const hash = item.hash;
+                      setTimeout(() => {
+                        if (onLanding) {
+                          smoothScrollToHash(hash);
+                        } else {
+                          router.navigate({ to: "/", hash }).then(() => {
+                            setTimeout(() => smoothScrollToHash(hash), 100);
+                          });
+                        }
+                      }, 50);
+                    }
+                  }}
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 500,
+                    color: "#FAFAF9",
+                    textDecoration: "none",
+                    padding: "16px 4px",
+                    borderBottom: "1px solid #141414",
+                  }}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
             <div style={{ height: 1, background: "#1A1A1A", margin: "16px 0" }} />
             <Link
               to="/login"
@@ -769,15 +454,13 @@ function Footer() {
                 maxWidth: 280,
               }}
             >
-              Pricing intelligence APIs for retail developers. Competitor data,
-              recommendations, ROI, and field intel — as a clean REST surface.
+              Pricing intelligence APIs for retail teams. A clean REST surface
+              for competitor data, recommendations, ROI, and field intel.
             </p>
             <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
               {[
                 { label: "X", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>X</span> },
-                { label: "in", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>in</span> },
-                { label: "Instagram", node: <Camera size={14} color="#8A8A8A" /> },
-                { label: "YouTube", node: <Play size={14} color="#8A8A8A" /> },
+                { label: "LinkedIn", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>in</span> },
               ].map((s) => (
                 <a
                   key={s.label}
@@ -866,7 +549,6 @@ function Footer() {
               gap: 6,
             }}
           >
-            <Globe size={12} />
             Qatar
           </span>
         </div>
