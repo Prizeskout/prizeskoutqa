@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { KeyRound, Copy, Check, Trash2, Ban, Plus } from "lucide-react";
+import { KeyRound, Copy, Check, Trash2, Ban, Plus, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -34,7 +34,10 @@ function ApiKeysPage() {
   const [mode, setMode] = useState<"test" | "live">("test");
   const [creating, setCreating] = useState(false);
   const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [newKeyMeta, setNewKeyMeta] = useState<{ name: string; mode: "test" | "live" } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [ackStored, setAckStored] = useState(false);
 
   const createFn = useServerFn(createApiKey);
   const revokeFn = useServerFn(revokeApiKey);
@@ -58,8 +61,13 @@ function ApiKeysPage() {
     if (!name.trim() || creating) return;
     setCreating(true);
     try {
-      const res = await createFn({ data: { name: name.trim(), mode } });
+      const currentName = name.trim();
+      const currentMode = mode;
+      const res = await createFn({ data: { name: currentName, mode: currentMode } });
       setNewSecret(res.secret);
+      setNewKeyMeta({ name: currentName, mode: currentMode });
+      setRevealed(false);
+      setAckStored(false);
       setName("");
       await load();
     } catch (e) {
@@ -81,12 +89,34 @@ function ApiKeysPage() {
     await load();
   };
 
-  const copySecret = () => {
+  const copySecret = async () => {
     if (!newSecret) return;
-    navigator.clipboard.writeText(newSecret);
+    try {
+      await navigator.clipboard.writeText(newSecret);
+    } catch {
+      // Fallback for environments without clipboard permission.
+      const ta = document.createElement("textarea");
+      ta.value = newSecret;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const dismissSecret = () => {
+    setNewSecret(null);
+    setNewKeyMeta(null);
+    setRevealed(false);
+    setAckStored(false);
+    setCopied(false);
+  };
+
+  const maskedSecret = newSecret
+    ? `${newSecret.slice(0, 12)}${"•".repeat(Math.max(0, newSecret.length - 16))}${newSecret.slice(-4)}`
+    : "";
 
   return (
     <DashboardLayout
@@ -121,70 +151,160 @@ function ApiKeysPage() {
     >
       {newSecret && (
         <div
+          role="dialog"
+          aria-modal="true"
           style={{
-            border: "1px solid #FBBF24",
-            backgroundColor: "#FFFBEB",
-            borderRadius: 12,
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(17, 24, 39, 0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             padding: 16,
-            marginBottom: 20,
+            zIndex: 60,
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#92400E", marginBottom: 4 }}>
-            Save this secret now
-          </div>
-          <div style={{ fontSize: 12, color: "#78350F", marginBottom: 10 }}>
-            This is the only time you'll see the full key. Store it in your secret manager.
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <code
-              style={{
-                flex: 1,
-                fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                fontSize: 12.5,
-                backgroundColor: "#fff",
-                border: "1px solid #FDE68A",
-                borderRadius: 6,
-                padding: "8px 10px",
-                overflow: "auto",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {newSecret}
-            </code>
-            <button
-              type="button"
-              onClick={copySecret}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 12px",
-                backgroundColor: "#fff",
-                border: "1px solid #FDE68A",
-                borderRadius: 6,
-                fontSize: 12.5,
-                fontWeight: 600,
-                cursor: "pointer",
-                color: "#92400E",
-              }}
-            >
-              {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied" : "Copy"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setNewSecret(null)}
-              style={{
-                padding: "8px 12px",
-                backgroundColor: "transparent",
-                border: "1px solid #FDE68A",
-                borderRadius: 6,
-                fontSize: 12.5,
-                cursor: "pointer",
-                color: "#92400E",
-              }}
-            >
-              Done
-            </button>
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              backgroundColor: "#fff",
+              borderRadius: 14,
+              border: "1px solid #E5E2DB",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "18px 20px 6px", borderBottom: "1px solid #FDE68A", backgroundColor: "#FFFBEB" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <AlertTriangle size={16} color="#B45309" />
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#92400E" }}>
+                  Save this secret now — it will never be shown again
+                </div>
+              </div>
+              <div style={{ fontSize: 12.5, color: "#78350F" }}>
+                {newKeyMeta ? (
+                  <>
+                    Key <strong>{newKeyMeta.name}</strong> ({newKeyMeta.mode} mode) was created. Copy
+                    the secret into your secret manager (1Password, AWS Secrets Manager, etc.) before
+                    closing this dialog. PrizeSkout only stores a one-way hash and cannot recover it.
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            <div style={{ padding: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+                Secret key
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <code
+                  style={{
+                    flex: 1,
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                    fontSize: 12.5,
+                    backgroundColor: "#FAFAF9",
+                    border: "1px solid #E5E2DB",
+                    borderRadius: 8,
+                    padding: "10px 12px",
+                    overflow: "auto",
+                    whiteSpace: "nowrap",
+                    color: revealed ? "#1A1A18" : "#6B6B6B",
+                    letterSpacing: revealed ? 0 : "0.02em",
+                  }}
+                >
+                  {revealed ? newSecret : maskedSecret}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => setRevealed((v) => !v)}
+                  title={revealed ? "Hide" : "Reveal"}
+                  aria-pressed={revealed}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "10px 12px",
+                    backgroundColor: "#fff",
+                    border: "1px solid #E5E2DB",
+                    borderRadius: 8,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    color: "#6B6B6B",
+                  }}
+                >
+                  {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {revealed ? "Hide" : "Reveal"}
+                </button>
+                <button
+                  type="button"
+                  onClick={copySecret}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "10px 14px",
+                    backgroundColor: "#EA580C",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  {copied ? "Copied" : "Copy secret"}
+                </button>
+              </div>
+              <div style={{ fontSize: 11.5, color: "#8A8A8A", marginTop: 8 }}>
+                Treat this like a password. Anyone with it can call the PrizeSkout API as you.
+              </div>
+
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  marginTop: 18,
+                  fontSize: 13,
+                  color: "#1A1A18",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={ackStored}
+                  onChange={(e) => setAckStored(e.target.checked)}
+                  style={{ marginTop: 3 }}
+                />
+                <span>
+                  I've copied this secret and stored it somewhere safe. I understand it will not be
+                  shown again.
+                </span>
+              </label>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}>
+                <button
+                  type="button"
+                  onClick={dismissSecret}
+                  disabled={!ackStored}
+                  style={{
+                    padding: "9px 16px",
+                    backgroundColor: ackStored ? "#1A1A18" : "#E5E2DB",
+                    color: ackStored ? "#fff" : "#9A9A9A",
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: ackStored ? "pointer" : "not-allowed",
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
