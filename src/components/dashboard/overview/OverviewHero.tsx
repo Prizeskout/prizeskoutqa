@@ -255,6 +255,8 @@ function CountBadge({ value, variant }: { value: number; variant: "onDark" | "on
     </span>
   );
 }
+
+function StatusChip({
   dotColor,
   label,
   active,
