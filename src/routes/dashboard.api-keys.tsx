@@ -61,8 +61,13 @@ function ApiKeysPage() {
     if (!name.trim() || creating) return;
     setCreating(true);
     try {
-      const res = await createFn({ data: { name: name.trim(), mode } });
+      const currentName = name.trim();
+      const currentMode = mode;
+      const res = await createFn({ data: { name: currentName, mode: currentMode } });
       setNewSecret(res.secret);
+      setNewKeyMeta({ name: currentName, mode: currentMode });
+      setRevealed(false);
+      setAckStored(false);
       setName("");
       await load();
     } catch (e) {
@@ -84,12 +89,34 @@ function ApiKeysPage() {
     await load();
   };
 
-  const copySecret = () => {
+  const copySecret = async () => {
     if (!newSecret) return;
-    navigator.clipboard.writeText(newSecret);
+    try {
+      await navigator.clipboard.writeText(newSecret);
+    } catch {
+      // Fallback for environments without clipboard permission.
+      const ta = document.createElement("textarea");
+      ta.value = newSecret;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      document.body.removeChild(ta);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const dismissSecret = () => {
+    setNewSecret(null);
+    setNewKeyMeta(null);
+    setRevealed(false);
+    setAckStored(false);
+    setCopied(false);
+  };
+
+  const maskedSecret = newSecret
+    ? `${newSecret.slice(0, 12)}${"•".repeat(Math.max(0, newSecret.length - 16))}${newSecret.slice(-4)}`
+    : "";
 
   return (
     <DashboardLayout
