@@ -9,6 +9,20 @@ import {
   type InsightWindow,
 } from "@/server/ai-insights.functions";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth-context";
+
+async function safeMessage(err: unknown, fallback: string): Promise<string> {
+  if (err instanceof Response) {
+    try {
+      const text = await err.text();
+      return text || `${fallback} (${err.status})`;
+    } catch {
+      return `${fallback} (${err.status})`;
+    }
+  }
+  if (err instanceof Error) return err.message;
+  return fallback;
+}
 
 type Page = "overview" | "pricing" | "competitors" | "market";
 
@@ -111,6 +125,7 @@ export function AIInsightsCard({
   page: Page;
   initial: AIInsight | null;
 }) {
+  const { session, loading: authLoading } = useAuth();
   const [window, setWindow] = useState<InsightWindow>("24h");
   // Cache per window so switching is instant after first generation/load.
   const cacheRef = useRef<Record<InsightWindow, AIInsight | null>>({
@@ -125,10 +140,12 @@ export function AIInsightsCard({
   const fetchOne = useServerFn(getInsight);
 
   // When window changes, hydrate from cache, else fetch from server.
+  // Wait for auth to resolve and a session to exist before calling protected server fns.
   useEffect(() => {
     const cached = cacheRef.current[window];
     setInsight(cached);
     if (cached) return;
+    if (authLoading || !session) return;
     let cancelled = false;
     setFetching(true);
     fetchOne({ data: { page, window } })
@@ -137,8 +154,9 @@ export function AIInsightsCard({
         cacheRef.current[window] = row;
         setInsight(row);
       })
-      .catch(() => {
-        // silent - UI will show empty state
+      .catch((err) => {
+        // Swallow — UI shows empty state. Log for debugging.
+        console.warn("[AIInsights] fetch failed", err);
       })
       .finally(() => {
         if (!cancelled) setFetching(false);
@@ -146,9 +164,13 @@ export function AIInsightsCard({
     return () => {
       cancelled = true;
     };
-  }, [window, page, fetchOne]);
+  }, [window, page, fetchOne, authLoading, session]);
 
   const refresh = useCallback(async () => {
+    if (!session) {
+      toast.error("Please sign in to generate insights");
+      return;
+    }
     setLoading(true);
     try {
       const { insight: fresh } = await generate({ data: { page, window } });
@@ -156,12 +178,12 @@ export function AIInsightsCard({
       setInsight(fresh);
       toast.success("Insights refreshed");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to generate insights";
+      const msg = await safeMessage(err, "Failed to generate insights");
       toast.error(msg);
     } finally {
       setLoading(false);
     }
-  }, [generate, page, window]);
+  }, [generate, page, window, session]);
 
   const isEmpty = !insight;
   const citations = useMemo(() => insight?.citations ?? [], [insight]);
