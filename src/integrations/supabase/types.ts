@@ -59,6 +59,107 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_four: string
+          last_used_at: string | null
+          mode: string
+          name: string
+          revoked_at: string | null
+          scopes: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_four: string
+          last_used_at?: string | null
+          mode: string
+          name: string
+          revoked_at?: string | null
+          scopes?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_four?: string
+          last_used_at?: string | null
+          mode?: string
+          name?: string
+          revoked_at?: string | null
+          scopes?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_request_logs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          ip: string | null
+          method: string
+          occurred_at: string
+          path: string
+          request_id: string | null
+          status_code: number
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          ip?: string | null
+          method: string
+          occurred_at?: string
+          path: string
+          request_id?: string | null
+          status_code: number
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          ip?: string | null
+          method?: string
+          occurred_at?: string
+          path?: string
+          request_id?: string | null
+          status_code?: number
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_request_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assortment_gaps: {
         Row: {
           competitors: Json
@@ -1571,6 +1672,44 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_events: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          occurred_at: string
+          units: number
+          user_id: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          occurred_at?: string
+          units?: number
+          user_id: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          occurred_at?: string
+          units?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_events_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_account_settings: {
         Row: {
           company_name: string | null
@@ -1648,6 +1787,98 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_deliveries: {
+        Row: {
+          attempt: number
+          created_at: string
+          delivered_at: string
+          endpoint_id: string
+          error: string | null
+          event_type: string
+          id: string
+          payload_preview: string | null
+          status_code: number | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          attempt?: number
+          created_at?: string
+          delivered_at?: string
+          endpoint_id: string
+          error?: string | null
+          event_type: string
+          id?: string
+          payload_preview?: string | null
+          status_code?: number | null
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          delivered_at?: string
+          endpoint_id?: string
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload_preview?: string | null
+          status_code?: number | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_endpoints: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          events: Json
+          id: string
+          last_delivery_at: string | null
+          last_delivery_success: boolean | null
+          signing_secret: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          events?: Json
+          id?: string
+          last_delivery_at?: string | null
+          last_delivery_success?: boolean | null
+          signing_secret: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          events?: Json
+          id?: string
+          last_delivery_at?: string | null
+          last_delivery_success?: boolean | null
+          signing_secret?: string
+          updated_at?: string
+          url?: string
           user_id?: string
         }
         Relationships: []
