@@ -184,23 +184,32 @@ function Header() {
             >
               Sign in
             </Link>
-            <Link
-              to="/signup"
-              style={{
-                background: "#EA580C",
-                color: "#FFFFFF",
-                fontSize: 14,
-                fontWeight: 600,
-                padding: "9px 20px",
-                borderRadius: 8,
-                textDecoration: "none",
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
-            >
-              Get keys
-            </Link>
+            <div className="ps-tip-wrap" style={{ position: "relative" }}>
+              <Link
+                to="/signup"
+                aria-label="Get API keys — create a free account, no credit card"
+                title="Free account · no credit card · test keys instantly"
+                style={{
+                  background: "#EA580C",
+                  color: "#FFFFFF",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  padding: "9px 20px",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  transition: "background 0.15s",
+                  display: "inline-block",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
+              >
+                Get keys
+              </Link>
+              <span className="ps-tip" role="tooltip">
+                Free account · no card · test keys instantly
+                <span className="ps-tip-arrow" aria-hidden />
+              </span>
+            </div>
           </div>
 
           <button
