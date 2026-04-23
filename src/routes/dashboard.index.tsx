@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { MetricsRow } from "@/components/dashboard/overview/MetricsRow";
@@ -5,6 +6,7 @@ import { LiveAlerts } from "@/components/dashboard/overview/LiveAlerts";
 import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
+import { OverviewHero } from "@/components/dashboard/overview/OverviewHero";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
@@ -90,25 +92,91 @@ function OverviewPage() {
 
   return (
     <DashboardLayout title="Overview">
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <ExportInsightsButton />
-        </div>
-        <MetricsRow metrics={data.metrics} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {/* 1. Hero — greeting + briefing + primary CTAs */}
+        <OverviewHero alerts={data.alerts} />
+
+        {/* 2. AI summary — the smartest read on the page */}
+        <SectionLabel
+          title="What AI sees"
+          subtitle="A plain-English read on your market right now."
+          right={<ExportInsightsButton />}
+        />
         <AIInsightsCard page="overview" initial={data.insight} />
+
+        {/* 3. What changed — actionable alerts */}
+        <SectionLabel
+          title="What changed"
+          subtitle="Recent moves from competitors and your channels. Click any row to act."
+        />
         <LiveAlerts alerts={data.alerts} />
 
-        <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
-          <div style={{ flex: "0 0 60%", minWidth: 0 }}>
+        {/* 4. What to do next — guided actions */}
+        <SectionLabel
+          title="What to do next"
+          subtitle="Jump straight into the workflows that matter most today."
+        />
+        <QuickActions actions={data.quickActions} />
+
+        {/* 5. Where you stand — context & reference data */}
+        <SectionLabel
+          title="Where you stand"
+          subtitle="Headline numbers and your position vs the market."
+        />
+        <MetricsRow metrics={data.metrics} />
+        <div style={{ display: "flex", gap: 14, alignItems: "stretch", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 480px", minWidth: 0 }}>
             <MarketPosition />
           </div>
-          <div style={{ flex: "0 0 calc(40% - 14px)", minWidth: 0 }}>
+          <div style={{ flex: "1 1 320px", minWidth: 0 }}>
             <ChannelBreakdown channels={data.channels} />
           </div>
         </div>
-
-        <QuickActions actions={data.quickActions} />
       </div>
     </DashboardLayout>
+  );
+}
+
+function SectionLabel({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        gap: 12,
+        marginTop: 4,
+        flexWrap: "wrap",
+      }}
+    >
+      <div>
+        <h2
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#1A1A18",
+            margin: 0,
+            letterSpacing: "0.02em",
+            textTransform: "uppercase",
+          }}
+        >
+          {title}
+        </h2>
+        {subtitle && (
+          <p style={{ fontSize: 13, color: "#6B6B6B", margin: "4px 0 0", lineHeight: 1.4 }}>
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {right}
+    </div>
   );
 }
