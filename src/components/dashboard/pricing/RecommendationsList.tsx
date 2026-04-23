@@ -1,5 +1,7 @@
+import { Sparkles } from "lucide-react";
 import { RecommendationCard, type Recommendation } from "./RecommendationCard";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { exportPricingPdf } from "./exportPricingPdf";
 import type { PricingRecommendation } from "@/lib/pricing-data";
 
@@ -31,15 +33,15 @@ export function RecommendationsList({
       <div
         style={{
           backgroundColor: "#FFFFFF",
-          border: "1px dashed #E5E2DB",
-          borderRadius: 10,
-          padding: "20px 24px",
-          fontSize: 13,
-          color: "#6B6B6B",
+          border: "1px solid var(--color-light-border, #E5E2DB)",
+          borderRadius: "var(--radius-card, 12px)",
         }}
       >
-        No pricing recommendations yet - your dashboard will populate as the model learns
-        your sales and competitor data.
+        <EmptyState
+          icon={<Sparkles size={20} strokeWidth={1.75} />}
+          title="No pricing recommendations yet"
+          description="Your dashboard will populate as the model learns your sales and competitor data — usually within 24 hours of connecting your first source."
+        />
       </div>
     );
   }

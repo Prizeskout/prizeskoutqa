@@ -7,6 +7,7 @@ import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
+import { NewSinceBanner } from "@/components/dashboard/NewSinceBanner";
 import { PricingPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,9 @@ async function loadPricing(): Promise<PricingPageData> {
 
 export const Route = createFileRoute("/dashboard/pricing")({
   head: () => ({ meta: [{ title: "Pricing | PrizeSkout" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    from: typeof search.from === "string" ? search.from : undefined,
+  }),
   loader: () => loadPricing(),
   staleTime: 0,
   pendingMs: 0,
@@ -86,6 +90,12 @@ function PricingPage() {
         "Pricing rules at the bottom constrain the model — toggle them to enforce floors, parity, etc.",
       ]}
     >
+      <NewSinceBanner
+        pageKey="pricing"
+        count={data.recommendations.length}
+        label="pricing recommendation"
+        fromParam="overview"
+      />
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportInsightsButton />
