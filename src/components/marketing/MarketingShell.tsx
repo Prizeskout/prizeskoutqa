@@ -500,9 +500,25 @@ function Header() {
                 }
               />
             ))}
+            <a
+              href="/#pricing"
+              onClick={(e) => handleNavClick(e, "pricing")}
+              style={{
+                padding: "8px 14px",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "#A8A8A8",
+                textDecoration: "none",
+                transition: "color 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
+            >
+              Pricing
+            </a>
           </nav>
 
-          <div className="hidden md:flex" style={{ alignItems: "center", gap: 20 }}>
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: 18 }}>
             <Link
               to="/login"
               style={{
@@ -524,7 +540,7 @@ function Header() {
                 color: "#FFFFFF",
                 fontSize: 14,
                 fontWeight: 600,
-                padding: "9px 22px",
+                padding: "9px 20px",
                 borderRadius: 8,
                 textDecoration: "none",
                 transition: "background 0.15s",
@@ -532,7 +548,7 @@ function Header() {
               onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
             >
-              Get started
+              Get API keys
             </Link>
           </div>
 
