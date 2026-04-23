@@ -5,14 +5,14 @@ import logoDark from "@/assets/logo-dark.svg";
 
 type SimpleNavItem = {
   label: string;
-  to?: "/docs" | "/changelog";
+  to?: "/docs" | "/docs/changelog";
   hash?: string;
 };
 
 const NAV_ITEMS: SimpleNavItem[] = [
   { label: "Docs", to: "/docs" },
   { label: "Pricing", hash: "pricing" },
-  { label: "Changelog", to: "/changelog" },
+  { label: "Changelog", to: "/docs/changelog" },
 ];
 
 function NavLink({
@@ -380,7 +380,7 @@ type FooterTo =
   | "/contact"
   | "/privacy"
   | "/terms"
-  | "/changelog"
+  | "/docs/changelog"
   | "/roi-calculator"
   | "/docs"
   | "/api-reference"
@@ -516,7 +516,7 @@ function Footer() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <FooterRouteLink label="Documentation" to="/docs" />
               <FooterRouteLink label="API Reference" to="/api-reference" />
-              <FooterRouteLink label="Changelog" to="/changelog" />
+              <FooterRouteLink label="Changelog" to="/docs/changelog" />
               <FooterHashLink label="Pricing" hash="pricing" />
               <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
             </div>
