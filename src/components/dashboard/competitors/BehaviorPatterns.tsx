@@ -51,7 +51,7 @@ export function BehaviorPatterns({ patterns }: { patterns: BehaviorPattern[] }) 
         <EmptyState
           icon={<Activity size={20} strokeWidth={1.75} />}
           title="No behavior patterns detected yet"
-          description="Patterns surface once we have at least 8 months of continuous competitor tracking. Keep your scrapes running — early signals will appear here as soon as the model is confident."
+          description="Patterns surface once we have at least eight months of continuous competitor tracking. Keep your scrapes running and early signals will appear here as soon as the model is confident."
         />
       </div>
     );

@@ -85,9 +85,9 @@ function PromotionsPage() {
       title="Promotions"
       subtitle="Plan campaigns, simulate ROI, and learn from past discount cannibalization."
       helpItems={[
-        "Use the ROI simulator to test depth × duration before launching a campaign.",
-        "Past campaigns show real cannibalization — copy what worked, avoid what didn't.",
-        "The calendar shows competitor promo windows so you can avoid head-to-head clashes.",
+        "Use the ROI simulator to test depth and duration before you launch a campaign.",
+        "Past campaigns show real cannibalisation. Copy what worked, drop what didn't.",
+        "The calendar shows competitor promo windows so you can avoid clashing head to head.",
       ]}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

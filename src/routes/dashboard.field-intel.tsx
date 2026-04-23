@@ -70,10 +70,10 @@ function FieldIntelPage() {
   return (
     <DashboardLayout
       title="Field Intel"
-      subtitle="In-store observations and price gaps reported by your field team — synced with online prices."
+      subtitle="In-store observations and price gaps from your field team, synced against your online prices."
       helpItems={[
         "Submit a new observation right here when an agent spots a price, promo, or stock change.",
-        "Price gaps highlight where in-store and online disagree — usually a quick win.",
+        "Price gaps highlight where shelf prices and online prices disagree. Usually a quick win.",
         "Recent observations are tagged with agent + store so you can validate fast.",
       ]}
     >

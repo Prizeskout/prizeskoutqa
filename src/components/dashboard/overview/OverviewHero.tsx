@@ -55,9 +55,9 @@ export function OverviewHero({
       return `${counts.opportunity} ${counts.opportunity === 1 ? "opportunity" : "opportunities"} worth a look today.`;
     }
     if (counts.intel > 0) {
-      return `Quiet day — ${counts.intel} new market signal${counts.intel === 1 ? "" : "s"} to review.`;
+      return `Quiet day. ${counts.intel} new market signal${counts.intel === 1 ? "" : "s"} to review.`;
     }
-    return "All clear. Your market is steady — explore what's moving.";
+    return "All clear. Your market is steady. Take a look at what's moving.";
   }, [counts]);
 
   return (

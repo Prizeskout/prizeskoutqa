@@ -40,7 +40,7 @@ export function RecommendationsList({
         <EmptyState
           icon={<Sparkles size={20} strokeWidth={1.75} />}
           title="No pricing recommendations yet"
-          description="Your dashboard will populate as the model learns your sales and competitor data — usually within 24 hours of connecting your first source."
+          description="Your dashboard fills in as the model learns from your sales and competitor data. That usually takes about 24 hours after you connect your first source."
         />
       </div>
     );
