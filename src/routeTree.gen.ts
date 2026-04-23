@@ -39,6 +39,7 @@ import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.com
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
 const TermsRoute = TermsRouteImport.update({
@@ -191,6 +192,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
+  id: '/api/v1/$',
+  path: '/api/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   id: '/api/public/hooks/scrape-all',
   path: '/api/public/hooks/scrape-all',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
 }
 export interface FileRoutesByTo {
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
 }
 export interface FileRoutesById {
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
 }
 export interface FileRouteTypes {
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/api/v1/$'
     | '/api/public/hooks/scrape-all'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard'
+    | '/api/v1/$'
     | '/api/public/hooks/scrape-all'
   id:
     | '__root__'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/api/v1/$'
     | '/api/public/hooks/scrape-all'
   fileRoutesById: FileRoutesById
 }
@@ -415,6 +427,7 @@ export interface RootRouteChildren {
   ProductsMarketRoute: typeof ProductsMarketRoute
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
+  ApiV1SplatRoute: typeof ApiV1SplatRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
 }
 
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/v1/$': {
+      id: '/api/v1/$'
+      path: '/api/v1/$'
+      fullPath: '/api/v1/$'
+      preLoaderRoute: typeof ApiV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/scrape-all': {
       id: '/api/public/hooks/scrape-all'
       path: '/api/public/hooks/scrape-all'
@@ -694,6 +714,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsMarketRoute: ProductsMarketRoute,
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
+  ApiV1SplatRoute: ApiV1SplatRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
 }
 export const routeTree = rootRouteImport
