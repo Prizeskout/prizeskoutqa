@@ -15,7 +15,7 @@ function SettingsPage() {
       helpItems={[
         "Use the tabs to navigate between Account, Team, Locations, Integrations, and ROI model.",
         "Branding controls how the app and exported PDFs look for your team.",
-        "ROI model parameters drive the Promotions simulator — keep them current.",
+        "ROI model parameters drive the Promotions simulator. Keep them current.",
       ]}
     >
       <SettingsTabs />

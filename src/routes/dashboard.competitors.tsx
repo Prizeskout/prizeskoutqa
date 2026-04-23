@@ -151,11 +151,11 @@ function CompetitorsPage() {
   return (
     <DashboardLayout
       title="Competitors"
-      subtitle="Track competitor prices, promo timing, and behavior patterns across rivals — in real time."
+      subtitle="Track competitor prices, promo timing, and behaviour patterns in real time, across every rival you sell against."
       helpItems={[
-        "Use the sub-tabs to flip between Prices, History, and Behavior patterns.",
-        "Click any row in Live prices to deep-link into the source URL or trigger a fresh scrape.",
-        "Behavior patterns highlight repeat tactics — use them to predict the next promo.",
+        "Use the sub-tabs to flip between Prices, History, and Behaviour patterns.",
+        "Click any row in Live prices to jump to the source URL or trigger a fresh scrape.",
+        "Behaviour patterns surface tactics competitors repeat. Use them to predict the next promo.",
       ]}
     >
       <NewSinceBanner
