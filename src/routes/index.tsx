@@ -491,7 +491,7 @@ const API_CATALOG: ApiEntry[] = [
   {
     name: "Pricing Recommendations API",
     endpoint: "/v1/pricing/recommendations",
-    desc: "AI-driven price decisions with expected P&L impact, confidence, and signal attribution per SKU and channel.",
+    desc: "Smart price decisions per SKU and channel, with expected P&L impact and a confidence score.",
     icon: Tags,
     to: "/products/pricing",
     methods: ["GET", "POST"],
@@ -499,7 +499,7 @@ const API_CATALOG: ApiEntry[] = [
   {
     name: "Competitor Intelligence API",
     endpoint: "/v1/competitors/prices",
-    desc: "Live competitor prices, promo depth, and behavior patterns across marketplaces and delivery apps.",
+    desc: "Live prices and promo depth across marketplaces and delivery apps. Refreshed hourly.",
     icon: LineChart,
     to: "/products/competitors",
     methods: ["GET"],
@@ -507,7 +507,7 @@ const API_CATALOG: ApiEntry[] = [
   {
     name: "Promotions & ROI API",
     endpoint: "/v1/promotions/simulate",
-    desc: "Simulate campaign ROI with elasticity and cannibalization. Read the live promo calendar for competitors.",
+    desc: "Simulate campaign ROI before you launch. Read the live promo calendar for competitors.",
     icon: Megaphone,
     to: "/products/promotions",
     methods: ["GET", "POST"],
@@ -515,7 +515,7 @@ const API_CATALOG: ApiEntry[] = [
   {
     name: "Market Signals API",
     endpoint: "/v1/market/trends",
-    desc: "Category growth, assortment gaps, cross-border price radar. Feed merchandising and planning systems.",
+    desc: "Category trends, assortment gaps, and cross-border price radar in one feed.",
     icon: MapIcon,
     to: "/products/market",
     methods: ["GET"],
@@ -523,7 +523,7 @@ const API_CATALOG: ApiEntry[] = [
   {
     name: "Field Intel API",
     endpoint: "/v1/field-intel/observations",
-    desc: "Ingest in-store observations from field reps. Reconcile online vs in-store prices programmatically.",
+    desc: "Send in-store observations from your reps. Compare online and shelf prices in code.",
     icon: ClipboardList,
     to: "/products/field-intel",
     methods: ["GET", "POST"],
@@ -547,20 +547,20 @@ function ApiCatalog() {
             className="ps-section-title"
             style={{ color: "#FAFAF9", marginTop: 14 }}
           >
-            Five APIs. One consistent surface.
+            Five APIs. One clean surface.
           </h2>
           <p
             style={{
               marginTop: 14,
               color: "#9A9A9A",
-              maxWidth: 600,
+              maxWidth: 540,
               margin: "14px auto 0",
               fontSize: 15,
               lineHeight: 1.6,
             }}
           >
-            Every endpoint returns typed, versioned JSON. Pagination, idempotency
-            keys, and webhook delivery follow the same rules across the platform.
+            Typed JSON. Same auth, same pagination, same webhook rules across
+            every endpoint.
           </p>
         </div>
 
@@ -689,19 +689,19 @@ function Quickstart() {
     {
       n: "01",
       title: "Create an API key",
-      desc: "Sign up and mint a scoped key from the dashboard. Test-mode keys give you sandbox data with no rate limits.",
+      desc: "Sign up and mint a scoped key from the dashboard. Test keys hit a sandbox with no rate limits.",
       code: `# Your test key\nsk_test_4eC39HqLyjWDarjtT1zdp7dc`,
     },
     {
       n: "02",
       title: "Install the SDK",
-      desc: "Official SDKs for Node, Python, and Go. Or call the REST API directly from any language.",
+      desc: "Official SDKs for Node, Python, and Go. Or hit the REST API from any language.",
       code: `npm install @prizeskout/node\n# or\npip install prizeskout`,
     },
     {
       n: "03",
       title: "Make your first call",
-      desc: "Fetch a pricing recommendation for a SKU. Responses are deterministic, typed, and audit-logged.",
+      desc: "Fetch a price recommendation for a SKU. Responses are typed and audit-logged.",
       code: `const rec = await ps.pricing\n  .recommendations\n  .retrieve("sku_123");`,
     },
   ];
@@ -815,32 +815,32 @@ function BuiltForDevs() {
     {
       icon: Package,
       title: "Typed SDKs",
-      desc: "First-class TypeScript, Python, and Go SDKs. Every request and response is fully typed against the OpenAPI spec.",
+      desc: "First-class TypeScript, Python, and Go. Every request and response is typed.",
     },
     {
       icon: Webhook,
       title: "Reliable webhooks",
-      desc: "Signed payloads, exponential backoff retries, and a replay log. Subscribe to price drops, promo events, and recommendation changes.",
+      desc: "Signed payloads, retries with backoff, and a replay log. Subscribe to price drops and promo events.",
     },
     {
       icon: Zap,
-      title: "Low-latency reads",
-      desc: "p95 under 150ms on recommendation reads. Regional caches in EMEA and APAC keep hot paths fast.",
+      title: "Fast reads",
+      desc: "p95 under 150ms on recommendation reads. Regional caches keep hot paths quick.",
     },
     {
       icon: Shield,
-      title: "Scoped keys & audit logs",
-      desc: "Restrict keys per environment, per API, per IP. Every call is audit-logged with request IDs you can cite in support.",
+      title: "Scoped keys",
+      desc: "Keys per environment, per API, per IP. Every call is logged with a request ID.",
     },
     {
       icon: GitBranch,
-      title: "Versioned, forever",
-      desc: "Breaking changes ship under new API versions. Pin a version at key creation and upgrade on your schedule.",
+      title: "Versioned forever",
+      desc: "Breaking changes ship under new versions. Pin one at key creation. Upgrade when ready.",
     },
     {
       icon: Activity,
-      title: "Observable by default",
-      desc: "Per-endpoint latency, error rates, and usage broken down by API key. Stream events to Datadog or your SIEM.",
+      title: "Observable",
+      desc: "Latency, error rates, and usage broken down by API key. Stream events to your tools.",
     },
   ];
 
@@ -860,7 +860,7 @@ function BuiltForDevs() {
             className="ps-section-title"
             style={{ color: "#FAFAF9", marginTop: 14 }}
           >
-            A platform your team will actually want to integrate against.
+            A platform your team will want to ship against.
           </h2>
         </div>
 
@@ -936,11 +936,11 @@ function PricingSection() {
       name: "Developer",
       price: "Free",
       priceSub: "Test mode",
-      desc: "Everything you need to prototype an integration end-to-end.",
+      desc: "Everything you need to prototype an integration end to end.",
       features: [
-        "Unlimited test-mode requests",
+        "Unlimited test requests",
         "All APIs in sandbox",
-        "1 project · 2 API keys",
+        "1 project, 2 keys",
         "Community support",
       ],
       cta: "Start building",
@@ -949,13 +949,13 @@ function PricingSection() {
     {
       name: "Growth",
       price: "$0.004",
-      priceSub: "per API call",
-      desc: "Usage-based pricing for teams going live. Pay only for what you call.",
+      priceSub: "per call",
+      desc: "Pay only for what you call. Volume discounts kick in automatically.",
       features: [
         "All production APIs",
         "Signed webhooks, unlimited",
         "Up to 100 req/s sustained",
-        "Email support · 24h response",
+        "Email support",
         "99.9% uptime SLA",
       ],
       cta: "Activate live mode",
@@ -964,14 +964,14 @@ function PricingSection() {
     {
       name: "Enterprise",
       price: "Custom",
-      priceSub: "Volume contracts",
+      priceSub: "Volume",
       desc: "For teams with compliance, residency, or dedicated capacity needs.",
       features: [
         "Committed-use discounts",
-        "Data residency · on-prem option",
+        "Data residency options",
         "99.95% uptime SLA",
-        "Dedicated support engineer",
-        "Security review · DPA · MSA",
+        "Dedicated support",
+        "Security review, DPA, MSA",
       ],
       cta: "Contact sales",
       highlight: false,
@@ -992,20 +992,19 @@ function PricingSection() {
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <SectionEyebrow>Pricing</SectionEyebrow>
           <h2 className="ps-section-title" style={{ color: "#FAFAF9", marginTop: 14 }}>
-            Usage-based. No seats. No surprises.
+            Usage based. No seats. No surprises.
           </h2>
           <p
             style={{
               marginTop: 14,
               color: "#9A9A9A",
-              maxWidth: 560,
+              maxWidth: 520,
               margin: "14px auto 0",
               fontSize: 15,
               lineHeight: 1.6,
             }}
           >
-            Test mode is free forever. In production, you pay per API call.
-            Volume discounts kick in automatically.
+            Test mode is free forever. In production, you pay per call.
           </p>
         </div>
 
@@ -1139,7 +1138,7 @@ function FinalCTA() {
           className="ps-section-title"
           style={{ color: "#FAFAF9" }}
         >
-          Start with a key, ship with an SDK.
+          Start with a key. Ship today.
         </h2>
         <p
           style={{
@@ -1147,12 +1146,11 @@ function FinalCTA() {
             fontSize: 15,
             color: "#9A9A9A",
             lineHeight: 1.6,
-            maxWidth: 560,
+            maxWidth: 520,
             margin: "16px auto 0",
           }}
         >
-          Test mode is free. Live mode is pay-as-you-go. Your first production
-          call can ship this afternoon.
+          Test mode is free. Live mode is pay as you go.
         </p>
         <div
           style={{
