@@ -144,7 +144,7 @@ function SectionLabel({
 }: {
   title: string;
   subtitle?: string;
-  right?: React.ReactNode;
+  right?: ReactNode;
 }) {
   return (
     <div
