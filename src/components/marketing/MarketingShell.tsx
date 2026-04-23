@@ -278,21 +278,33 @@ function Header() {
             </button>
           </div>
 
-          <nav style={{ marginTop: 48, display: "flex", flexDirection: "column", gap: 24 }}>
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.hash}
-                href={`/#${l.hash}`}
-                onClick={(e) => handleNavClick(e, l.hash)}
-                style={{ fontSize: 18, fontWeight: 500, color: "#FAFAF9", textDecoration: "none" }}
-              >
-                {l.label}
-              </a>
+          <nav style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 4 }}>
+            {NAV_MENUS.map((menu) => (
+              <MobileNavSection
+                key={menu.label}
+                menu={menu}
+                onNavigate={(item) => {
+                  setMobileOpen(false);
+                  if (item.hash) {
+                    const hash = item.hash;
+                    setTimeout(() => {
+                      if (onLanding) {
+                        smoothScrollToHash(hash);
+                      } else {
+                        router.navigate({ to: "/", hash }).then(() => {
+                          setTimeout(() => smoothScrollToHash(hash), 100);
+                        });
+                      }
+                    }, 50);
+                  }
+                }}
+              />
             ))}
+            <div style={{ height: 1, background: "#1A1A1A", margin: "16px 0" }} />
             <Link
               to="/login"
               onClick={() => setMobileOpen(false)}
-              style={{ fontSize: 18, fontWeight: 500, color: "#FAFAF9", textDecoration: "none" }}
+              style={{ fontSize: 16, fontWeight: 500, color: "#FAFAF9", textDecoration: "none", padding: "12px 4px" }}
             >
               Sign in
             </Link>
