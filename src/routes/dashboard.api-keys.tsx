@@ -191,6 +191,39 @@ function ApiKeysPage() {
         </button>
       }
     >
+      <LiveAccessBanner
+        status={liveStatus}
+        decisionNote={account?.decision_note ?? null}
+        onRequest={() => {
+          setReqEmail(account?.billing_email ?? "");
+          setReqCompany(account?.company_name ?? "");
+          setReqDomain(account?.company_domain ?? "");
+          setReqVolume(account?.expected_volume ?? "");
+          setReqUseCase(account?.use_case ?? "");
+          setShowRequest(true);
+        }}
+      />
+
+      {showRequest && (
+        <RequestLiveAccessModal
+          company={reqCompany}
+          domain={reqDomain}
+          email={reqEmail}
+          volume={reqVolume}
+          useCase={reqUseCase}
+          submitting={submittingRequest}
+          onChange={(field, value) => {
+            if (field === "company") setReqCompany(value);
+            else if (field === "domain") setReqDomain(value);
+            else if (field === "email") setReqEmail(value);
+            else if (field === "volume") setReqVolume(value);
+            else if (field === "useCase") setReqUseCase(value);
+          }}
+          onCancel={() => setShowRequest(false)}
+          onSubmit={handleSubmitLiveRequest}
+        />
+      )}
+
       {newSecret && (
         <div
           role="dialog"
