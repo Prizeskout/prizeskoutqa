@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { MetricsRow } from "@/components/dashboard/overview/MetricsRow";
