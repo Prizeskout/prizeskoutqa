@@ -332,7 +332,7 @@ function Hero() {
         <div className="ps-hero-copy">
           <SectionEyebrow>
             <Code2 size={11} strokeWidth={2.4} />
-            Developer platform
+            Commerce intelligence APIs
           </SectionEyebrow>
 
           <h1
@@ -346,7 +346,7 @@ function Hero() {
               margin: "18px 0 0",
             }}
           >
-            Pricing intelligence,{" "}
+            Price smarter.{" "}
             <span
               style={{
                 background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -355,7 +355,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              as an API.
+              Ship it with one API call.
             </span>
           </h1>
 
@@ -365,66 +365,32 @@ function Hero() {
               marginTop: 18,
               color: "#9A9A9A",
               lineHeight: 1.6,
-              maxWidth: 540,
+              maxWidth: 560,
             }}
           >
-            REST APIs, typed SDKs, and webhooks for competitor prices, pricing
-            recommendations, promotion ROI, and field observations. Ship
-            margin-aware pricing logic into your commerce stack without building
-            the data plane yourself.
+            The commerce intelligence platform for pricing, promotions, and competitor
+            data — built for the engineers wiring it into your stack. Stream live
+            competitor prices, margin-aware recommendations, and promo ROI into your
+            commerce systems. Skip the scrapers, the spreadsheets, and the six-month
+            data project.
           </p>
-
+...
           <div
             style={{
-              marginTop: 28,
-              display: "flex",
-              gap: 12,
-              flexWrap: "wrap",
+              marginTop: 22,
+              fontSize: 13,
+              color: "#B8B8B8",
+              lineHeight: 1.55,
+              maxWidth: 560,
             }}
           >
-            <Link
-              to="/signup"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "linear-gradient(135deg, #EA580C, #C2410C)",
-                color: "#FFFFFF",
-                fontSize: 14,
-                fontWeight: 600,
-                padding: "12px 22px",
-                borderRadius: 8,
-                textDecoration: "none",
-                boxShadow: "0 10px 28px rgba(234,88,12,0.32)",
-              }}
-            >
-              Get API keys
-              <ArrowRight size={14} />
-            </Link>
-            <Link
-              to="/docs"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.10)",
-                color: "#FAFAF9",
-                fontSize: 14,
-                fontWeight: 500,
-                padding: "12px 22px",
-                borderRadius: 8,
-                textDecoration: "none",
-              }}
-            >
-              <FileCode size={14} />
-              Read the docs
-            </Link>
+            Trusted by pricing and e-commerce teams across the GCC to price live SKUs
+            against Carrefour, Lulu, Talabat, Amazon, and Noon — every hour, every day.
           </div>
 
           <div
             style={{
-              marginTop: 24,
+              marginTop: 14,
               display: "flex",
               gap: 18,
               flexWrap: "wrap",
