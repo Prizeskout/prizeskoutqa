@@ -29,6 +29,10 @@ type ApiKeyRow = {
 };
 
 function ApiKeysPage() {
+  const { data: account, refetch: refetchAccount } = useAccount();
+  const liveStatus = account?.live_status ?? "none";
+  const liveApproved = liveStatus === "approved";
+
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -41,9 +45,19 @@ function ApiKeysPage() {
   const [revealed, setRevealed] = useState(false);
   const [ackStored, setAckStored] = useState(false);
 
+  // Live-access request
+  const [showRequest, setShowRequest] = useState(false);
+  const [reqCompany, setReqCompany] = useState("");
+  const [reqDomain, setReqDomain] = useState("");
+  const [reqEmail, setReqEmail] = useState("");
+  const [reqVolume, setReqVolume] = useState("");
+  const [reqUseCase, setReqUseCase] = useState("");
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+
   const createFn = useServerFn(createApiKey);
   const revokeFn = useServerFn(revokeApiKey);
   const deleteFn = useServerFn(deleteApiKey);
+  const requestFn = useServerFn(requestLiveAccess);
 
   const load = async () => {
     setLoading(true);
