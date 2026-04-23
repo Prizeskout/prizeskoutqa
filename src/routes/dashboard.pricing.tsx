@@ -77,7 +77,15 @@ function PricingPage() {
   const data = Route.useLoaderData();
 
   return (
-    <DashboardLayout title="Pricing">
+    <DashboardLayout
+      title="Pricing"
+      subtitle="AI-driven price recommendations with explainable reasoning and projected margin impact."
+      helpItems={[
+        "Each card explains why the model recommends a new price and the expected unit & monthly impact.",
+        "Confidence reflects how strong the underlying signals are — review low-confidence ones manually.",
+        "Pricing rules at the bottom constrain the model — toggle them to enforce floors, parity, etc.",
+      ]}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportInsightsButton />

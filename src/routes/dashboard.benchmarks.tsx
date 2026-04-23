@@ -72,7 +72,15 @@ function BenchmarksPage() {
   const data = Route.useLoaderData() as BenchmarksData;
 
   return (
-    <DashboardLayout title="Benchmarks">
+    <DashboardLayout
+      title="Benchmarks"
+      subtitle="Where you stand vs the market — and how the model improves as it learns from your data."
+      helpItems={[
+        "Compare your performance to market averages and the top decile per metric.",
+        "Model maturity tracks accuracy gains over time — more data, sharper recommendations.",
+        "Switching cost & network value explain the moat your data builds.",
+      ]}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportInsightsButton />

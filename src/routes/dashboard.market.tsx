@@ -76,7 +76,15 @@ export const Route = createFileRoute("/dashboard/market")({
 function MarketPage() {
   const data = Route.useLoaderData() as MarketPageData;
   return (
-    <DashboardLayout title="Market">
+    <DashboardLayout
+      title="Market"
+      subtitle="Category trends, assortment gaps, and cross-border arbitrage signals shaping demand."
+      helpItems={[
+        "Trending products show what's gaining share — prioritize listings and stock there.",
+        "Assortment gaps surface SKUs competitors carry that you don't.",
+        "Cross-border radar flags where international platforms undercut your prices.",
+      ]}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportInsightsButton />

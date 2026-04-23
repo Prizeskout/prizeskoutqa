@@ -22,14 +22,34 @@ type NavItem = {
   icon: LucideIcon;
 };
 
-const primaryNav: NavItem[] = [
-  { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { to: "/dashboard/competitors", label: "Competitors", icon: Crosshair },
-  { to: "/dashboard/pricing", label: "Pricing", icon: TrendingUp },
-  { to: "/dashboard/market", label: "Market", icon: BarChart3 },
-  { to: "/dashboard/promotions", label: "Promotions", icon: Megaphone },
-  { to: "/dashboard/benchmarks", label: "Benchmarks", icon: Target },
-  { to: "/dashboard/field-intel", label: "Field Intel", icon: MapPin },
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Monitor",
+    items: [
+      { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+      { to: "/dashboard/competitors", label: "Competitors", icon: Crosshair },
+      { to: "/dashboard/field-intel", label: "Field Intel", icon: MapPin },
+    ],
+  },
+  {
+    label: "Decide",
+    items: [
+      { to: "/dashboard/pricing", label: "Pricing", icon: TrendingUp },
+      { to: "/dashboard/promotions", label: "Promotions", icon: Megaphone },
+    ],
+  },
+  {
+    label: "Benchmark",
+    items: [
+      { to: "/dashboard/market", label: "Market", icon: BarChart3 },
+      { to: "/dashboard/benchmarks", label: "Benchmarks", icon: Target },
+    ],
+  },
 ];
 
 const settingsNav: NavItem = {
@@ -110,15 +130,31 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         )}
       </div>
 
-      {/* Primary nav */}
-      <nav aria-label="Primary navigation" className="mt-8 flex flex-col">
-        {primaryNav.map((item) => (
-          <NavLinkItem
-            key={item.to}
-            item={item}
-            active={isActive(item.to)}
-            onNavigate={onNavigate}
-          />
+      {/* Primary nav grouped by intent */}
+      <nav aria-label="Primary navigation" className="mt-6 flex flex-col gap-1">
+        {navGroups.map((group) => (
+          <div key={group.label} className="flex flex-col">
+            <div
+              style={{
+                padding: "10px 20px 4px",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "#5A5A5A",
+              }}
+            >
+              {group.label}
+            </div>
+            {group.items.map((item) => (
+              <NavLinkItem
+                key={item.to}
+                item={item}
+                active={isActive(item.to)}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </div>
         ))}
       </nav>
 
