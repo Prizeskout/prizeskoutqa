@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { type OverviewAlert, formatRelativeTime } from "@/lib/overview-data";
+import { FreshnessPill } from "@/components/dashboard/FreshnessPill";
 
 // Map each alert type to the dashboard surface that owns the underlying data.
 // Clicking an alert deep-links the user to that page so they can act on it.
@@ -78,6 +79,14 @@ function RelativeTime({ iso }: { iso: string }) {
 }
 
 export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
+  const newest = useMemo(() => {
+    if (!alerts.length) return null;
+    return alerts.reduce((acc, a) => {
+      const t = new Date(a.occurred_at).getTime();
+      return Number.isNaN(t) ? acc : Math.max(acc, t);
+    }, 0);
+  }, [alerts]);
+
   return (
     <div
       style={{
@@ -132,20 +141,31 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
         }
       `}</style>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span
-          aria-hidden
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 9999,
-            backgroundColor: "#EF4444",
-            animation: "prizeskout-pulse-dot 2s ease-in-out infinite",
-          }}
-        />
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: 0 }}>
-          Live alerts
-        </h2>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            aria-hidden
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 9999,
+              backgroundColor: "#EF4444",
+              animation: "prizeskout-pulse-dot 2s ease-in-out infinite",
+            }}
+          />
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: 0 }}>
+            Live alerts
+          </h2>
+        </div>
+        {newest && <FreshnessPill timestamp={newest} prefix="Latest" />}
       </div>
 
       {alerts.length === 0 ? (

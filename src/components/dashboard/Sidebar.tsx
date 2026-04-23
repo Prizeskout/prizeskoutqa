@@ -10,11 +10,14 @@ import {
   Settings,
   X,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import logoDark from "@/assets/logo-dark.svg";
+import { useSidebarCollapse } from "./SidebarCollapseContext";
 
 type NavItem = {
   to: string;
@@ -61,10 +64,12 @@ const settingsNav: NavItem = {
 function NavLinkItem({
   item,
   active,
+  collapsed,
   onNavigate,
 }: {
   item: NavItem;
   active: boolean;
+  collapsed: boolean;
   onNavigate?: () => void;
 }) {
   const Icon = item.icon;
@@ -72,8 +77,12 @@ function NavLinkItem({
     <Link
       to={item.to}
       onClick={onNavigate}
-      className="relative flex items-center gap-3 px-5 py-2.5 text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-inset"
+      title={collapsed ? item.label : undefined}
+      aria-label={collapsed ? item.label : undefined}
+      className="relative flex items-center gap-3 text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-inset"
       style={{
+        padding: collapsed ? "10px 0" : "10px 20px",
+        justifyContent: collapsed ? "center" : "flex-start",
         color: active ? "#FAFAF9" : "#8A8A8A",
         backgroundColor: active ? "rgba(234, 88, 12, 0.06)" : "transparent",
       }}
@@ -92,13 +101,22 @@ function NavLinkItem({
         />
       )}
       <Icon size={18} strokeWidth={1.75} />
-      <span>{item.label}</span>
+      {!collapsed && <span>{item.label}</span>}
     </Link>
   );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({
+  onNavigate,
+  collapsed = false,
+  showCollapseToggle = false,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+  showCollapseToggle?: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { toggle } = useSidebarCollapse();
 
   const isActive = (to: string) =>
     to === "/dashboard" ? pathname === "/dashboard" : pathname === to || pathname.startsWith(to + "/");
@@ -106,18 +124,41 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 pt-6">
-        <Link to="/dashboard" onClick={onNavigate} aria-label="PrizeSkout home" className="flex flex-col gap-1">
-          <img
-            src={logoDark}
-            alt="PrizeSkout"
-            style={{ height: 28, width: "auto", display: "block" }}
-          />
-          <span style={{ fontSize: 11, fontWeight: 400, color: "#8A8A8A", paddingLeft: 2 }}>
-            Commerce Intelligence
-          </span>
-        </Link>
-        {onNavigate && (
+      <div
+        className="flex items-center justify-between"
+        style={{ padding: collapsed ? "20px 0 0" : "24px 20px 0" }}
+      >
+        {collapsed ? (
+          <Link
+            to="/dashboard"
+            onClick={onNavigate}
+            aria-label="PrizeSkout home"
+            className="mx-auto flex items-center justify-center"
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              backgroundColor: "#EA580C",
+              color: "#FFFFFF",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            P
+          </Link>
+        ) : (
+          <Link to="/dashboard" onClick={onNavigate} aria-label="PrizeSkout home" className="flex flex-col gap-1">
+            <img
+              src={logoDark}
+              alt="PrizeSkout"
+              style={{ height: 28, width: "auto", display: "block" }}
+            />
+            <span style={{ fontSize: 11, fontWeight: 400, color: "#8A8A8A", paddingLeft: 2 }}>
+              Commerce Intelligence
+            </span>
+          </Link>
+        )}
+        {onNavigate && !collapsed && (
           <button
             type="button"
             aria-label="Close menu"
@@ -134,23 +175,35 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <nav aria-label="Primary navigation" className="mt-6 flex flex-col gap-1">
         {navGroups.map((group) => (
           <div key={group.label} className="flex flex-col">
-            <div
-              style={{
-                padding: "10px 20px 4px",
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "#5A5A5A",
-              }}
-            >
-              {group.label}
-            </div>
+            {!collapsed ? (
+              <div
+                style={{
+                  padding: "10px 20px 4px",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#5A5A5A",
+                }}
+              >
+                {group.label}
+              </div>
+            ) : (
+              <div
+                aria-hidden
+                style={{
+                  margin: "8px 12px 4px",
+                  height: 1,
+                  backgroundColor: "#1A1A1A",
+                }}
+              />
+            )}
             {group.items.map((item) => (
               <NavLinkItem
                 key={item.to}
                 item={item}
                 active={isActive(item.to)}
+                collapsed={collapsed}
                 onNavigate={onNavigate}
               />
             ))}
@@ -167,12 +220,50 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <NavLinkItem
           item={settingsNav}
           active={isActive(settingsNav.to)}
+          collapsed={collapsed}
           onNavigate={onNavigate}
         />
       </nav>
 
+      {/* Collapse toggle (desktop only) */}
+      {showCollapseToggle && (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+          style={{
+            margin: collapsed ? "4px auto 8px" : "4px 16px 8px",
+            padding: collapsed ? 8 : "8px 12px",
+            gap: 8,
+            justifyContent: collapsed ? "center" : "flex-start",
+            width: collapsed ? 32 : "calc(100% - 32px)",
+            borderRadius: 8,
+            background: "transparent",
+            border: "1px solid #1A1A1A",
+            color: "#8A8A8A",
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "color 0.15s, background-color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#FAFAF9";
+            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#8A8A8A";
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
+          {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          {!collapsed && <span>Collapse</span>}
+        </button>
+      )}
+
       {/* User */}
-      <UserPanel />
+      <UserPanel collapsed={collapsed} />
     </>
   );
 }
@@ -185,7 +276,7 @@ function getInitials(name: string | null | undefined, email: string | null | und
   return source.slice(0, 2).toUpperCase();
 }
 
-function UserPanel() {
+function UserPanel({ collapsed = false }: { collapsed?: boolean }) {
   const { user } = useAuth();
   const router = useRouter();
   const navigate = useNavigate();
@@ -200,6 +291,57 @@ function UserPanel() {
     await router.invalidate();
     navigate({ to: "/login" });
   };
+
+  if (collapsed) {
+    return (
+      <div
+        className="flex flex-col items-center"
+        style={{ padding: "8px 0 16px", gap: 8 }}
+      >
+        <div
+          className="flex items-center justify-center"
+          title={displayName}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 9999,
+            backgroundColor: "#EA580C",
+            color: "#FFFFFF",
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          {getInitials(displayName, user?.email)}
+        </div>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          title="Sign out"
+          className="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 6,
+            background: "transparent",
+            border: "none",
+            color: "#8A8A8A",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#FAFAF9";
+            e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#8A8A8A";
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
+          <LogOut size={15} strokeWidth={1.75} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 pb-4 pt-2">
@@ -275,17 +417,19 @@ function UserPanel() {
 }
 
 export function Sidebar() {
+  const { collapsed } = useSidebarCollapse();
   return (
     <aside
       className="dark-scroll fixed left-0 top-0 hidden h-screen flex-col md:flex"
       style={{
-        width: 240,
+        width: collapsed ? 64 : 240,
         backgroundColor: "#050505",
         borderRight: "1px solid #1A1A1A",
         zIndex: 30,
+        transition: "width 0.2s ease",
       }}
     >
-      <SidebarContent />
+      <SidebarContent collapsed={collapsed} showCollapseToggle />
     </aside>
   );
 }

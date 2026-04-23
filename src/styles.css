@@ -134,6 +134,42 @@
     background: rgba(255, 255, 255, 0.12);
   }
 
+  /*
+   * Standardized card container — use everywhere data is grouped on a light
+   * surface. Pairs with --space-card / --radius-card tokens so spacing and
+   * radius stay consistent across the dashboard.
+   */
+  .ps-card {
+    background-color: var(--color-light-surface);
+    border: 1px solid var(--color-light-border);
+    border-radius: var(--radius-card);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-card);
+  }
+  .ps-card-tight {
+    padding: 14px 16px;
+  }
+  .ps-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .ps-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .ps-card-subtitle {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    margin: 3px 0 0;
+  }
+
   @keyframes pulse-dot {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
