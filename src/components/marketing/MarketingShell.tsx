@@ -454,8 +454,8 @@ function Footer() {
                 maxWidth: 280,
               }}
             >
-              Pricing intelligence APIs for retail developers. Competitor data,
-              recommendations, ROI, and field intel — as a clean REST surface.
+              Pricing intelligence APIs for retail teams. A clean REST surface
+              for competitor data, recommendations, ROI, and field intel.
             </p>
             <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
               {[
