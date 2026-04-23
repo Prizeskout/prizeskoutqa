@@ -683,7 +683,6 @@ function FooterAnchor({ label }: { label: string }) {
 }
 
 type FooterTo =
-  | "/about"
   | "/contact"
   | "/privacy"
   | "/terms"
