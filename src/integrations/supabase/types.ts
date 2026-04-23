@@ -1796,11 +1796,16 @@ export type Database = {
           attempt: number
           created_at: string
           delivered_at: string
+          duration_ms: number | null
           endpoint_id: string
           error: string | null
           event_type: string
           id: string
+          max_attempts: number
+          next_retry_at: string | null
+          payload: Json | null
           payload_preview: string | null
+          response_body: string | null
           status_code: number | null
           success: boolean
           user_id: string
@@ -1809,11 +1814,16 @@ export type Database = {
           attempt?: number
           created_at?: string
           delivered_at?: string
+          duration_ms?: number | null
           endpoint_id: string
           error?: string | null
           event_type: string
           id?: string
+          max_attempts?: number
+          next_retry_at?: string | null
+          payload?: Json | null
           payload_preview?: string | null
+          response_body?: string | null
           status_code?: number | null
           success?: boolean
           user_id: string
@@ -1822,11 +1832,16 @@ export type Database = {
           attempt?: number
           created_at?: string
           delivered_at?: string
+          duration_ms?: number | null
           endpoint_id?: string
           error?: string | null
           event_type?: string
           id?: string
+          max_attempts?: number
+          next_retry_at?: string | null
+          payload?: Json | null
           payload_preview?: string | null
+          response_body?: string | null
           status_code?: number | null
           success?: boolean
           user_id?: string
@@ -1843,6 +1858,7 @@ export type Database = {
       }
       webhook_endpoints: {
         Row: {
+          backoff_seconds: number
           created_at: string
           description: string | null
           enabled: boolean
@@ -1850,12 +1866,14 @@ export type Database = {
           id: string
           last_delivery_at: string | null
           last_delivery_success: boolean | null
+          max_attempts: number
           signing_secret: string
           updated_at: string
           url: string
           user_id: string
         }
         Insert: {
+          backoff_seconds?: number
           created_at?: string
           description?: string | null
           enabled?: boolean
@@ -1863,12 +1881,14 @@ export type Database = {
           id?: string
           last_delivery_at?: string | null
           last_delivery_success?: boolean | null
+          max_attempts?: number
           signing_secret: string
           updated_at?: string
           url: string
           user_id: string
         }
         Update: {
+          backoff_seconds?: number
           created_at?: string
           description?: string | null
           enabled?: boolean
@@ -1876,6 +1896,7 @@ export type Database = {
           id?: string
           last_delivery_at?: string | null
           last_delivery_success?: boolean | null
+          max_attempts?: number
           signing_secret?: string
           updated_at?: string
           url?: string
