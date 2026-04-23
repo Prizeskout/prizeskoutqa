@@ -40,6 +40,7 @@ import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.com
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
@@ -198,6 +199,12 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DocsGuidesAuthenticationRoute =
+  DocsGuidesAuthenticationRouteImport.update({
+    id: '/authentication',
+    path: '/authentication',
+    getParentRoute: () => DocsGuidesRoute,
+  } as any)
 const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   id: '/api/public/v1/$',
   path: '/api/public/v1/$',
@@ -234,13 +241,14 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
-  '/docs/guides': typeof DocsGuidesRoute
+  '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
@@ -268,13 +276,14 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
-  '/docs/guides': typeof DocsGuidesRoute
+  '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
@@ -304,13 +313,14 @@ export interface FileRoutesById {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
-  '/docs/guides': typeof DocsGuidesRoute
+  '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/docs/guides/authentication'
     | '/api/public/hooks/scrape-all'
     | '/api/public/v1/$'
   fileRoutesByTo: FileRoutesByTo
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard'
+    | '/docs/guides/authentication'
     | '/api/public/hooks/scrape-all'
     | '/api/public/v1/$'
   id:
@@ -417,6 +429,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/docs/guides/authentication'
     | '/api/public/hooks/scrape-all'
     | '/api/public/v1/$'
   fileRoutesById: FileRoutesById
@@ -662,6 +675,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/docs/guides/authentication': {
+      id: '/docs/guides/authentication'
+      path: '/authentication'
+      fullPath: '/docs/guides/authentication'
+      preLoaderRoute: typeof DocsGuidesAuthenticationRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
     '/api/public/v1/$': {
       id: '/api/public/v1/$'
       path: '/api/public/v1/$'
@@ -715,12 +735,24 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface DocsGuidesRouteChildren {
+  DocsGuidesAuthenticationRoute: typeof DocsGuidesAuthenticationRoute
+}
+
+const DocsGuidesRouteChildren: DocsGuidesRouteChildren = {
+  DocsGuidesAuthenticationRoute: DocsGuidesAuthenticationRoute,
+}
+
+const DocsGuidesRouteWithChildren = DocsGuidesRoute._addFileChildren(
+  DocsGuidesRouteChildren,
+)
+
 interface DocsRouteChildren {
-  DocsGuidesRoute: typeof DocsGuidesRoute
+  DocsGuidesRoute: typeof DocsGuidesRouteWithChildren
 }
 
 const DocsRouteChildren: DocsRouteChildren = {
-  DocsGuidesRoute: DocsGuidesRoute,
+  DocsGuidesRoute: DocsGuidesRouteWithChildren,
 }
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)

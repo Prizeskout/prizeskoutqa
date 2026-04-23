@@ -34,7 +34,13 @@ export const Route = createFileRoute("/docs/guides")({
   component: GuidesPage,
 });
 
-const GUIDES = [
+const GUIDES: {
+  icon: typeof Zap;
+  title: string;
+  desc: string;
+  eta: string;
+  to?: "/docs/guides/authentication";
+}[] = [
   {
     icon: Zap,
     title: "Quickstart",
@@ -46,6 +52,7 @@ const GUIDES = [
     title: "Authentication",
     desc: "API keys, scopes, test vs live mode, and rotation.",
     eta: "4 min read",
+    to: "/docs/guides/authentication",
   },
   {
     icon: Webhook,
@@ -110,17 +117,8 @@ function GuidesPage() {
           >
             {GUIDES.map((g) => {
               const Icon = g.icon;
-              return (
-                <div
-                  key={g.title}
-                  style={{
-                    background: "#FFF",
-                    border: "1px solid #E8E8E5",
-                    borderRadius: 10,
-                    padding: 20,
-                    transition: "border-color 0.15s",
-                  }}
-                >
+              const cardInner = (
+                <>
                   <div
                     style={{
                       width: 34,
@@ -147,11 +145,30 @@ function GuidesPage() {
                       fontWeight: 600,
                       letterSpacing: "0.08em",
                       textTransform: "uppercase",
-                      color: "#8A8A8A",
+                      color: g.to ? "#EA580C" : "#8A8A8A",
                     }}
                   >
-                    {g.eta}
+                    {g.to ? "Read guide →" : g.eta}
                   </div>
+                </>
+              );
+              const cardStyle: React.CSSProperties = {
+                background: "#FFF",
+                border: "1px solid #E8E8E5",
+                borderRadius: 10,
+                padding: 20,
+                transition: "border-color 0.15s",
+                textDecoration: "none",
+                display: "block",
+                cursor: g.to ? "pointer" : "default",
+              };
+              return g.to ? (
+                <Link key={g.title} to={g.to} style={cardStyle}>
+                  {cardInner}
+                </Link>
+              ) : (
+                <div key={g.title} style={cardStyle}>
+                  {cardInner}
                 </div>
               );
             })}

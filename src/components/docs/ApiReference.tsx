@@ -4,7 +4,8 @@
 // Right: cURL/JS request examples + sample response + live "Try it out".
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, ChevronDown, Copy, Check, Play, Loader2, Lock, Menu, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Search, ChevronDown, Copy, Check, Play, Loader2, Menu, X, ArrowRight } from "lucide-react";
 import {
   API_GROUPS,
   API_BASE_URL,
@@ -609,51 +610,57 @@ function EndpointDetail({ group, endpoint }: { group: GroupSpec; endpoint: Endpo
         <span>{endpoint.path}</span>
       </div>
 
-      <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#3A3A38", marginBottom: 28 }}>{endpoint.summary}</p>
+      <p style={{ fontSize: 14.5, lineHeight: 1.65, color: "#3A3A38", marginBottom: 18 }}>{endpoint.summary}</p>
       {endpoint.description && (
-        <p style={{ fontSize: 14, lineHeight: 1.65, color: "#3A3A38", marginBottom: 28 }}>{endpoint.description}</p>
+        <p style={{ fontSize: 14, lineHeight: 1.65, color: "#3A3A38", marginBottom: 18 }}>{endpoint.description}</p>
       )}
 
-      {/* Auth */}
-      <section style={{ marginBottom: 28 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#1A1A18" }}>Authentication</h3>
-        <div
+      {/* Scope chip + link to auth guide */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          marginBottom: 28,
+          fontSize: 12.5,
+          color: "#5A5A58",
+        }}
+      >
+        <span style={{ fontWeight: 500 }}>
+          Requires scope{endpoint.scopes.length > 1 ? "s" : ""}:
+        </span>
+        {endpoint.scopes.map((s) => (
+          <code
+            key={s}
+            style={{
+              fontFamily: FONT_MONO,
+              background: "#FFF",
+              border: "1px solid #E8E8E5",
+              padding: "2px 7px",
+              borderRadius: 4,
+              fontSize: 11.5,
+              color: "#1A1A18",
+            }}
+          >
+            {s}
+          </code>
+        ))}
+        <Link
+          to="/docs/guides/authentication"
           style={{
-            padding: "14px 16px",
-            background: "rgba(234, 88, 12, 0.05)",
-            border: "1px solid rgba(234, 88, 12, 0.18)",
-            borderRadius: 8,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            color: "#EA580C",
+            fontWeight: 500,
+            textDecoration: "none",
+            marginLeft: "auto",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <Lock size={14} color="#EA580C" />
-            <span style={{ fontWeight: 600, fontSize: 13.5, color: "#1A1A18" }}>Bearer token</span>
-          </div>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 12.5, color: "#3A3A38" }}>
-            Authorization: Bearer &lt;your_api_key&gt;
-          </div>
-          <div style={{ marginTop: 10, fontSize: 12.5, color: "#5A5A58" }}>
-            Required scope{endpoint.scopes.length > 1 ? "s" : ""}:{" "}
-            {endpoint.scopes.map((s, i) => (
-              <span key={s}>
-                <code
-                  style={{
-                    fontFamily: FONT_MONO,
-                    background: "#FFF",
-                    border: "1px solid #E8E8E5",
-                    padding: "1px 6px",
-                    borderRadius: 4,
-                    fontSize: 11.5,
-                  }}
-                >
-                  {s}
-                </code>
-                {i < endpoint.scopes.length - 1 ? ", " : ""}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+          How to authenticate <ArrowRight size={11} />
+        </Link>
+      </div>
 
       {endpoint.pathParams && endpoint.pathParams.length > 0 && (
         <FieldsTable title="Path parameters" fields={endpoint.pathParams} />
