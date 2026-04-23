@@ -201,6 +201,7 @@ export function OverviewHero({
           >
             <Zap size={14} strokeWidth={2.25} />
             Review pricing recommendations
+            <CountBadge value={pricingCount} variant="onDark" />
             <ArrowRight size={14} strokeWidth={2} />
           </Link>
           <Link
@@ -220,6 +221,7 @@ export function OverviewHero({
             }}
           >
             See what competitors changed
+            <CountBadge value={competitorChangeCount} variant="onLight" />
             <ArrowRight size={14} strokeWidth={2} />
           </Link>
         </div>
