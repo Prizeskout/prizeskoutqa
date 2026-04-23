@@ -28,6 +28,7 @@ import { Route as ProductsMarketRouteImport } from './routes/products.market'
 import { Route as ProductsFieldIntelRouteImport } from './routes/products.field-intel'
 import { Route as ProductsCompetitorsRouteImport } from './routes/products.competitors'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
+import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DashboardWebhooksRouteImport } from './routes/dashboard.webhooks'
 import { Route as DashboardUsageRouteImport } from './routes/dashboard.usage'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
@@ -139,6 +140,11 @@ const DocsGuidesRoute = DocsGuidesRouteImport.update({
   path: '/guides',
   getParentRoute: () => DocsRoute,
 } as any)
+const DocsChangelogRoute = DocsChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
+  getParentRoute: () => DocsRoute,
+} as any)
 const DashboardWebhooksRoute = DashboardWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
+  '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
+  '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
@@ -313,6 +321,7 @@ export interface FileRoutesById {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
+  '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
+    | '/docs/changelog'
     | '/docs/guides'
     | '/products/competitors'
     | '/products/field-intel'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
+    | '/docs/changelog'
     | '/docs/guides'
     | '/products/competitors'
     | '/products/field-intel'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
+    | '/docs/changelog'
     | '/docs/guides'
     | '/products/competitors'
     | '/products/field-intel'
@@ -591,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsGuidesRouteImport
       parentRoute: typeof DocsRoute
     }
+    '/docs/changelog': {
+      id: '/docs/changelog'
+      path: '/changelog'
+      fullPath: '/docs/changelog'
+      preLoaderRoute: typeof DocsChangelogRouteImport
+      parentRoute: typeof DocsRoute
+    }
     '/dashboard/webhooks': {
       id: '/dashboard/webhooks'
       path: '/webhooks'
@@ -748,10 +767,12 @@ const DocsGuidesRouteWithChildren = DocsGuidesRoute._addFileChildren(
 )
 
 interface DocsRouteChildren {
+  DocsChangelogRoute: typeof DocsChangelogRoute
   DocsGuidesRoute: typeof DocsGuidesRouteWithChildren
 }
 
 const DocsRouteChildren: DocsRouteChildren = {
+  DocsChangelogRoute: DocsChangelogRoute,
   DocsGuidesRoute: DocsGuidesRouteWithChildren,
 }
 
