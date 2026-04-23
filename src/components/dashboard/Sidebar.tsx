@@ -12,6 +12,10 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  KeyRound,
+  Activity,
+  FileCode2,
+  Webhook,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -32,23 +36,22 @@ type NavGroup = {
 
 const navGroups: NavGroup[] = [
   {
-    label: "Monitor",
+    label: "Developers",
     items: [
       { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+      { to: "/dashboard/api-keys", label: "API Keys", icon: KeyRound },
+      { to: "/dashboard/usage", label: "Usage", icon: Activity },
+      { to: "/dashboard/logs", label: "Logs", icon: FileCode2 },
+      { to: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
       { to: "/dashboard/competitors", label: "Competitors", icon: Crosshair },
       { to: "/dashboard/field-intel", label: "Field Intel", icon: MapPin },
-    ],
-  },
-  {
-    label: "Decide",
-    items: [
       { to: "/dashboard/pricing", label: "Pricing", icon: TrendingUp },
       { to: "/dashboard/promotions", label: "Promotions", icon: Megaphone },
-    ],
-  },
-  {
-    label: "Benchmark",
-    items: [
       { to: "/dashboard/market", label: "Market", icon: BarChart3 },
       { to: "/dashboard/benchmarks", label: "Benchmarks", icon: Target },
     ],
