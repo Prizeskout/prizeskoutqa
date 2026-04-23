@@ -154,7 +154,7 @@ const ORGANIZATION_JSON_LD = {
     {
       "@type": "ContactPoint",
       contactType: "customer support",
-      email: "support@prizeskout.com",
+      email: "support@prizeskout.qa",
       availableLanguage: ["English", "Arabic"],
     },
   ],

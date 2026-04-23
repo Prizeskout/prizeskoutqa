@@ -38,7 +38,7 @@ export const Route = createFileRoute("/products/field-intel")({
         "Photo attachments stored securely and returned with signed URLs",
         "Works with any mobile tool — our SDKs wrap the REST API for Android and iOS",
       ]}
-      sampleRequest={`curl https://api.prizeskout.com/v1/field-intel/observations \\
+      sampleRequest={`curl https://api.prizeskout.qa/v1/field-intel/observations \\
   -H "Authorization: Bearer sk_live_••••" \\
   -H "Content-Type: application/json" \\
   -d '{

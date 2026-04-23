@@ -82,7 +82,7 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 type Lang = "curl" | "node" | "python";
 
 const CODE_SAMPLES: Record<Lang, string> = {
-  curl: `curl https://api.prizeskout.com/v1/pricing/recommendations \\
+  curl: `curl https://api.prizeskout.qa/v1/pricing/recommendations \\
   -H "Authorization: Bearer sk_live_••••" \\
   -H "Content-Type: application/json" \\
   -d '{

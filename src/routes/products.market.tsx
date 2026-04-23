@@ -38,7 +38,7 @@ export const Route = createFileRoute("/products/market")({
         "Historical pull for backtesting planning models",
         "Scoped keys so planning and pricing teams can each consume only what they need",
       ]}
-      sampleRequest={`curl "https://api.prizeskout.com/v1/market/assortment-gaps?limit=10" \\
+      sampleRequest={`curl "https://api.prizeskout.qa/v1/market/assortment-gaps?limit=10" \\
   -H "Authorization: Bearer sk_live_••••"`}
       sampleResponse={`{
   "data": [

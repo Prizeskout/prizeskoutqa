@@ -37,7 +37,7 @@ export const Route = createFileRoute("/products/promotions")({
         "Webhook events when competitors launch or extend promotions",
         "Tie every live campaign back to the recommendation or signal that triggered it",
       ]}
-      sampleRequest={`curl https://api.prizeskout.com/v1/promotions/simulate \\
+      sampleRequest={`curl https://api.prizeskout.qa/v1/promotions/simulate \\
   -H "Authorization: Bearer sk_live_••••" \\
   -H "Content-Type: application/json" \\
   -d '{
