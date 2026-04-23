@@ -835,6 +835,10 @@ function Footer() {
 
 const SHELL_STYLES = `
   @keyframes ps-fade-in { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes ps-dropdown-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
   @keyframes ps-mockup-in {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
