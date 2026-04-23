@@ -122,6 +122,15 @@ function SidebarContent({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { toggle } = useSidebarCollapse();
+  const { data: isAdmin } = useIsAdmin();
+
+  const groups: NavGroup[] = isAdmin
+    ? navGroups.map((g) =>
+        g.label === "Developers"
+          ? { ...g, items: [...g.items, { to: "/dashboard/admin", label: "Admin", icon: ShieldCheck }] }
+          : g,
+      )
+    : navGroups;
 
   const isActive = (to: string) =>
     to === "/dashboard" ? pathname === "/dashboard" : pathname === to || pathname.startsWith(to + "/");
