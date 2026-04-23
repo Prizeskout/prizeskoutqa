@@ -12,24 +12,41 @@ import {
   Megaphone,
   Map,
   ClipboardList,
-  Gauge,
   BookOpen,
   Calculator,
   FileText,
-  HelpCircle,
   Building2,
   Mail,
   Newspaper,
-  Workflow,
   ShieldCheck,
+  Code2,
+  Terminal,
+  Webhook,
+  KeyRound,
+  GitBranch,
 } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
+
+type InternalTo =
+  | "/about"
+  | "/contact"
+  | "/privacy"
+  | "/terms"
+  | "/changelog"
+  | "/roi-calculator"
+  | "/docs"
+  | "/api-reference"
+  | "/products/pricing"
+  | "/products/competitors"
+  | "/products/promotions"
+  | "/products/market"
+  | "/products/field-intel";
 
 type DropdownItem = {
   label: string;
   desc: string;
   icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  to?: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" | "/roi-calculator";
+  to?: InternalTo;
   hash?: string;
 };
 
@@ -39,25 +56,29 @@ type DropdownMenu = {
   items: DropdownItem[];
 };
 
-const PLATFORM_MENU: DropdownMenu = {
-  label: "Platform",
+const PRODUCTS_MENU: DropdownMenu = {
+  label: "Products",
   wide: true,
   items: [
-    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, hash: "features" },
-    { label: "Pricing Recommendations", desc: "AI-driven decisions with P&L impact", icon: Tags, hash: "features" },
-    { label: "Promotion Planning", desc: "Calendar, ROI sim, cannibalization", icon: Megaphone, hash: "features" },
-    { label: "Market & Assortment", desc: "Trends, gaps, cross-border radar", icon: Map, hash: "features" },
-    { label: "Field Intel", desc: "In-store observations from your reps", icon: ClipboardList, hash: "features" },
-    { label: "Benchmarks", desc: "You vs market, model maturity", icon: Gauge, hash: "features" },
+    { label: "Pricing Recommendations", desc: "AI price decisions with P&L impact", icon: Tags, to: "/products/pricing" },
+    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, to: "/products/competitors" },
+    { label: "Promotions & ROI", desc: "Simulate campaigns, read the promo calendar", icon: Megaphone, to: "/products/promotions" },
+    { label: "Market Signals", desc: "Trends, gaps, cross-border radar", icon: Map, to: "/products/market" },
+    { label: "Field Intel", desc: "Ingest in-store observations via API", icon: ClipboardList, to: "/products/field-intel" },
+    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
   ],
 };
 
-const SOLUTIONS_MENU: DropdownMenu = {
-  label: "Solutions",
+const DEVELOPERS_MENU: DropdownMenu = {
+  label: "Developers",
+  wide: true,
   items: [
-    { label: "How it works", desc: "Observe, learn, recommend, act", icon: Workflow, hash: "how-it-works" },
-    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
-    { label: "Pricing", desc: "Plans for every retail size", icon: Tags, hash: "pricing" },
+    { label: "Documentation", desc: "Guides, SDKs, integration walkthroughs", icon: BookOpen, to: "/docs" },
+    { label: "API Reference", desc: "Every endpoint and schema", icon: Code2, to: "/api-reference" },
+    { label: "Quickstart", desc: "Zero to first call in 3 minutes", icon: Terminal, hash: "quickstart" },
+    { label: "Webhooks", desc: "Signed events with retry and replay", icon: Webhook, to: "/docs" },
+    { label: "Authentication", desc: "Scoped API keys and rotation", icon: KeyRound, to: "/docs" },
+    { label: "Changelog", desc: "API and platform updates", icon: GitBranch, to: "/changelog" },
   ],
 };
 
@@ -65,22 +86,14 @@ const COMPANY_MENU: DropdownMenu = {
   label: "Company",
   items: [
     { label: "About", desc: "Mission, team, market thesis", icon: Building2, to: "/about" },
-    { label: "Contact", desc: "Talk to our commercial team", icon: Mail, to: "/contact" },
-    { label: "Changelog", desc: "What's new in the platform", icon: Newspaper, to: "/changelog" },
-  ],
-};
-
-const RESOURCES_MENU: DropdownMenu = {
-  label: "Resources",
-  items: [
-    { label: "FAQ", desc: "Common questions answered", icon: HelpCircle, hash: "faq" },
+    { label: "Contact", desc: "Talk to a solutions engineer", icon: Mail, to: "/contact" },
+    { label: "Changelog", desc: "What's new on the platform", icon: Newspaper, to: "/changelog" },
     { label: "Privacy", desc: "How we handle your data", icon: ShieldCheck, to: "/privacy" },
     { label: "Terms", desc: "Service terms and SLAs", icon: FileText, to: "/terms" },
-    { label: "Documentation", desc: "Guides for your team", icon: BookOpen, hash: "features" },
   ],
 };
 
-const NAV_MENUS: DropdownMenu[] = [PLATFORM_MENU, SOLUTIONS_MENU, COMPANY_MENU, RESOURCES_MENU];
+const NAV_MENUS: DropdownMenu[] = [PRODUCTS_MENU, DEVELOPERS_MENU, COMPANY_MENU];
 
 function smoothScrollToHash(hash: string) {
   if (!hash) {

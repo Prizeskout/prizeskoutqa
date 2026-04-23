@@ -23,6 +23,11 @@ import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as ProductsPromotionsRouteImport } from './routes/products.promotions'
+import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
+import { Route as ProductsMarketRouteImport } from './routes/products.market'
+import { Route as ProductsFieldIntelRouteImport } from './routes/products.field-intel'
+import { Route as ProductsCompetitorsRouteImport } from './routes/products.competitors'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
@@ -102,6 +107,31 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ProductsPromotionsRoute = ProductsPromotionsRouteImport.update({
+  id: '/products/promotions',
+  path: '/products/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsPricingRoute = ProductsPricingRouteImport.update({
+  id: '/products/pricing',
+  path: '/products/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsMarketRoute = ProductsMarketRouteImport.update({
+  id: '/products/market',
+  path: '/products/market',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsFieldIntelRoute = ProductsFieldIntelRouteImport.update({
+  id: '/products/field-intel',
+  path: '/products/field-intel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsCompetitorsRoute = ProductsCompetitorsRouteImport.update({
+  id: '/products/competitors',
+  path: '/products/competitors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -164,6 +194,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/products/competitors': typeof ProductsCompetitorsRoute
+  '/products/field-intel': typeof ProductsFieldIntelRoute
+  '/products/market': typeof ProductsMarketRoute
+  '/products/pricing': typeof ProductsPricingRoute
+  '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
 }
@@ -187,6 +222,11 @@ export interface FileRoutesByTo {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/products/competitors': typeof ProductsCompetitorsRoute
+  '/products/field-intel': typeof ProductsFieldIntelRoute
+  '/products/market': typeof ProductsMarketRoute
+  '/products/pricing': typeof ProductsPricingRoute
+  '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
 }
@@ -212,6 +252,11 @@ export interface FileRoutesById {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/products/competitors': typeof ProductsCompetitorsRoute
+  '/products/field-intel': typeof ProductsFieldIntelRoute
+  '/products/market': typeof ProductsMarketRoute
+  '/products/pricing': typeof ProductsPricingRoute
+  '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
 }
@@ -238,6 +283,11 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/products/competitors'
+    | '/products/field-intel'
+    | '/products/market'
+    | '/products/pricing'
+    | '/products/promotions'
     | '/dashboard/'
     | '/api/public/hooks/scrape-all'
   fileRoutesByTo: FileRoutesByTo
@@ -261,6 +311,11 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/products/competitors'
+    | '/products/field-intel'
+    | '/products/market'
+    | '/products/pricing'
+    | '/products/promotions'
     | '/dashboard'
     | '/api/public/hooks/scrape-all'
   id:
@@ -285,6 +340,11 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/products/competitors'
+    | '/products/field-intel'
+    | '/products/market'
+    | '/products/pricing'
+    | '/products/promotions'
     | '/dashboard/'
     | '/api/public/hooks/scrape-all'
   fileRoutesById: FileRoutesById
@@ -303,6 +363,11 @@ export interface RootRouteChildren {
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  ProductsCompetitorsRoute: typeof ProductsCompetitorsRoute
+  ProductsFieldIntelRoute: typeof ProductsFieldIntelRoute
+  ProductsMarketRoute: typeof ProductsMarketRoute
+  ProductsPricingRoute: typeof ProductsPricingRoute
+  ProductsPromotionsRoute: typeof ProductsPromotionsRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
 }
 
@@ -406,6 +471,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/products/promotions': {
+      id: '/products/promotions'
+      path: '/products/promotions'
+      fullPath: '/products/promotions'
+      preLoaderRoute: typeof ProductsPromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products/pricing': {
+      id: '/products/pricing'
+      path: '/products/pricing'
+      fullPath: '/products/pricing'
+      preLoaderRoute: typeof ProductsPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products/market': {
+      id: '/products/market'
+      path: '/products/market'
+      fullPath: '/products/market'
+      preLoaderRoute: typeof ProductsMarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products/field-intel': {
+      id: '/products/field-intel'
+      path: '/products/field-intel'
+      fullPath: '/products/field-intel'
+      preLoaderRoute: typeof ProductsFieldIntelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products/competitors': {
+      id: '/products/competitors'
+      path: '/products/competitors'
+      fullPath: '/products/competitors'
+      preLoaderRoute: typeof ProductsCompetitorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -505,6 +605,11 @@ const rootRouteChildren: RootRouteChildren = {
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  ProductsCompetitorsRoute: ProductsCompetitorsRoute,
+  ProductsFieldIntelRoute: ProductsFieldIntelRoute,
+  ProductsMarketRoute: ProductsMarketRoute,
+  ProductsPricingRoute: ProductsPricingRoute,
+  ProductsPromotionsRoute: ProductsPromotionsRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
 }
 export const routeTree = rootRouteImport
