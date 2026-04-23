@@ -6,15 +6,16 @@ import { Link, useLocation } from "@tanstack/react-router";
 const TABS = [
   { label: "API Reference", to: "/docs" as const },
   { label: "Guides", to: "/docs/guides" as const },
-  { label: "Changelog", to: "/changelog" as const },
+  { label: "Changelog", to: "/docs/changelog" as const },
 ];
 
 export function DocsSubNav() {
   const loc = useLocation();
   const path = loc.pathname;
   const isActive = (to: string) => {
-    if (to === "/docs") return path === "/docs" || (path.startsWith("/docs") && !path.startsWith("/docs/guides"));
+    if (to === "/docs/changelog") return path === "/docs/changelog";
     if (to === "/docs/guides") return path.startsWith("/docs/guides");
+    if (to === "/docs") return path === "/docs" || (path.startsWith("/docs") && !path.startsWith("/docs/guides") && !path.startsWith("/docs/changelog"));
     return path === to;
   };
 
