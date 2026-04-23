@@ -385,6 +385,7 @@ export type Database = {
       }
       competitor_product_urls: {
         Row: {
+          category: string | null
           competitor: string
           created_at: string
           id: string
@@ -394,6 +395,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           competitor?: string
           created_at?: string
           id?: string
@@ -403,6 +405,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           competitor?: string
           created_at?: string
           id?: string
@@ -1147,6 +1150,7 @@ export type Database = {
           product: string
           reason: string
           recommended_price: number
+          source: string
           unit_impact: string
           updated_at: string
           user_id: string
@@ -1164,6 +1168,7 @@ export type Database = {
           product: string
           reason: string
           recommended_price: number
+          source?: string
           unit_impact: string
           updated_at?: string
           user_id: string
@@ -1181,6 +1186,7 @@ export type Database = {
           product?: string
           reason?: string
           recommended_price?: number
+          source?: string
           unit_impact?: string
           updated_at?: string
           user_id?: string

@@ -12,6 +12,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runScrape } from "@/server/scrape-runner";
+import { runPricingEngineForUser } from "@/server/pricing-engine";
 
 const CONCURRENCY = 3;
 
@@ -73,12 +74,43 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
         const ok = results.filter((r) => r.ok).length;
         const failed = results.length - ok;
 
+        // After scrapes land, regenerate pricing recommendations for every
+        // user that had at least one URL processed. Engine failures are
+        // logged but never fail the cron - scrape data is still useful even
+        // if the engine has a bug.
+        const affectedUserIds = Array.from(new Set(jobs.map((j) => j.user_id)));
+        let engineWritten = 0;
+        let engineSeedsWiped = 0;
+        const engineFailures: { userId: string; error: string }[] = [];
+
+        for (const userId of affectedUserIds) {
+          try {
+            const r = await runPricingEngineForUser(supabaseAdmin, userId);
+            engineWritten += r.written;
+            engineSeedsWiped += r.seedsWiped;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "engine error";
+            console.error(`pricing-engine failed for ${userId}`, err);
+            engineFailures.push({ userId, error: msg });
+          }
+        }
+
+        console.log(
+          `scrape-all: engine wrote ${engineWritten} recs, wiped ${engineSeedsWiped} seeds across ${affectedUserIds.length} users (${engineFailures.length} failures)`,
+        );
+
         return new Response(
           JSON.stringify({
             success: true,
             processed: results.length,
             ok,
             failed,
+            engine: {
+              users: affectedUserIds.length,
+              written: engineWritten,
+              seedsWiped: engineSeedsWiped,
+              failures: engineFailures.length,
+            },
             timestamp: new Date().toISOString(),
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
