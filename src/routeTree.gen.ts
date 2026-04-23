@@ -27,13 +27,17 @@ import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
 import { Route as ProductsMarketRouteImport } from './routes/products.market'
 import { Route as ProductsFieldIntelRouteImport } from './routes/products.field-intel'
 import { Route as ProductsCompetitorsRouteImport } from './routes/products.competitors'
+import { Route as DashboardWebhooksRouteImport } from './routes/dashboard.webhooks'
+import { Route as DashboardUsageRouteImport } from './routes/dashboard.usage'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
 import { Route as DashboardMarketRouteImport } from './routes/dashboard.market'
+import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.field-intel'
 import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
+import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
 const TermsRoute = TermsRouteImport.update({
@@ -126,6 +130,16 @@ const ProductsCompetitorsRoute = ProductsCompetitorsRouteImport.update({
   path: '/products/competitors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardWebhooksRoute = DashboardWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardUsageRoute = DashboardUsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -146,6 +160,11 @@ const DashboardMarketRoute = DashboardMarketRouteImport.update({
   path: '/market',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardLogsRoute = DashboardLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardFieldIntelRoute = DashboardFieldIntelRouteImport.update({
   id: '/field-intel',
   path: '/field-intel',
@@ -159,6 +178,11 @@ const DashboardCompetitorsRoute = DashboardCompetitorsRouteImport.update({
 const DashboardBenchmarksRoute = DashboardBenchmarksRouteImport.update({
   id: '/benchmarks',
   path: '/benchmarks',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardApiKeysRoute = DashboardApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
   getParentRoute: () => DashboardRoute,
 } as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
@@ -180,13 +204,17 @@ export interface FileRoutesByFullPath {
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/usage': typeof DashboardUsageRoute
+  '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -207,13 +235,17 @@ export interface FileRoutesByTo {
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/usage': typeof DashboardUsageRoute
+  '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -236,13 +268,17 @@ export interface FileRoutesById {
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/usage': typeof DashboardUsageRoute
+  '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -266,13 +302,17 @@ export interface FileRouteTypes {
     | '/roi-calculator'
     | '/signup'
     | '/terms'
+    | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
+    | '/dashboard/logs'
     | '/dashboard/market'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/dashboard/usage'
+    | '/dashboard/webhooks'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -293,13 +333,17 @@ export interface FileRouteTypes {
     | '/roi-calculator'
     | '/signup'
     | '/terms'
+    | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
+    | '/dashboard/logs'
     | '/dashboard/market'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/dashboard/usage'
+    | '/dashboard/webhooks'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -321,13 +365,17 @@ export interface FileRouteTypes {
     | '/roi-calculator'
     | '/signup'
     | '/terms'
+    | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
+    | '/dashboard/logs'
     | '/dashboard/market'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
+    | '/dashboard/usage'
+    | '/dashboard/webhooks'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -486,6 +534,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsCompetitorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/webhooks': {
+      id: '/dashboard/webhooks'
+      path: '/webhooks'
+      fullPath: '/dashboard/webhooks'
+      preLoaderRoute: typeof DashboardWebhooksRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/usage': {
+      id: '/dashboard/usage'
+      path: '/usage'
+      fullPath: '/dashboard/usage'
+      preLoaderRoute: typeof DashboardUsageRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/settings': {
       id: '/dashboard/settings'
       path: '/settings'
@@ -514,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardMarketRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/logs': {
+      id: '/dashboard/logs'
+      path: '/logs'
+      fullPath: '/dashboard/logs'
+      preLoaderRoute: typeof DashboardLogsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/field-intel': {
       id: '/dashboard/field-intel'
       path: '/field-intel'
@@ -535,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBenchmarksRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/api-keys': {
+      id: '/dashboard/api-keys'
+      path: '/api-keys'
+      fullPath: '/dashboard/api-keys'
+      preLoaderRoute: typeof DashboardApiKeysRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/public/hooks/scrape-all': {
       id: '/api/public/hooks/scrape-all'
       path: '/api/public/hooks/scrape-all'
@@ -546,24 +622,32 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
   DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
+  DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMarketRoute: typeof DashboardMarketRoute
   DashboardPricingRoute: typeof DashboardPricingRoute
   DashboardPromotionsRoute: typeof DashboardPromotionsRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardUsageRoute: typeof DashboardUsageRoute
+  DashboardWebhooksRoute: typeof DashboardWebhooksRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,
+  DashboardLogsRoute: DashboardLogsRoute,
   DashboardMarketRoute: DashboardMarketRoute,
   DashboardPricingRoute: DashboardPricingRoute,
   DashboardPromotionsRoute: DashboardPromotionsRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardUsageRoute: DashboardUsageRoute,
+  DashboardWebhooksRoute: DashboardWebhooksRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
