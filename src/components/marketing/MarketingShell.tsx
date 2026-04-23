@@ -653,7 +653,7 @@ function Header() {
                 marginTop: 8,
               }}
             >
-              Get started
+              Get API keys
             </Link>
           </nav>
         </div>
@@ -684,7 +684,22 @@ function FooterAnchor({ label }: { label: string }) {
   );
 }
 
-function FooterRouteLink({ label, to }: { label: string; to: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" | "/roi-calculator" }) {
+type FooterTo =
+  | "/about"
+  | "/contact"
+  | "/privacy"
+  | "/terms"
+  | "/changelog"
+  | "/roi-calculator"
+  | "/docs"
+  | "/api-reference"
+  | "/products/pricing"
+  | "/products/competitors"
+  | "/products/promotions"
+  | "/products/market"
+  | "/products/field-intel";
+
+function FooterRouteLink({ label, to }: { label: string; to: FooterTo }) {
   return (
     <Link
       to={to}
@@ -757,8 +772,8 @@ function Footer() {
                 maxWidth: 280,
               }}
             >
-              AI-powered pricing intelligence for commerce brands. Monitor, optimize, and outsmart
-              your competition across every channel.
+              Pricing intelligence APIs for retail developers. Competitor data,
+              recommendations, ROI, and field intel — as a clean REST surface.
             </p>
             <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
               {[
@@ -794,26 +809,27 @@ function Footer() {
 
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Product
+              Products
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterHashLink label="Features" hash="features" />
-              <FooterHashLink label="Pricing" hash="pricing" />
-              <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
-              <FooterAnchor label="API docs" />
-              <FooterRouteLink label="Changelog" to="/changelog" />
+              <FooterRouteLink label="Pricing Recommendations" to="/products/pricing" />
+              <FooterRouteLink label="Competitor Intelligence" to="/products/competitors" />
+              <FooterRouteLink label="Promotions & ROI" to="/products/promotions" />
+              <FooterRouteLink label="Market Signals" to="/products/market" />
+              <FooterRouteLink label="Field Intel" to="/products/field-intel" />
             </div>
           </div>
 
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Company
+              Developers
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterRouteLink label="About" to="/about" />
-              <FooterAnchor label="Blog" />
-              <FooterAnchor label="Careers" />
-              <FooterRouteLink label="Contact" to="/contact" />
+              <FooterRouteLink label="Documentation" to="/docs" />
+              <FooterRouteLink label="API Reference" to="/api-reference" />
+              <FooterRouteLink label="Changelog" to="/changelog" />
+              <FooterHashLink label="Pricing" hash="pricing" />
+              <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
             </div>
           </div>
 
