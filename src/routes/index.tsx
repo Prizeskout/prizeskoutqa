@@ -407,8 +407,7 @@ function Hero() {
               margin: "22px 0 0",
             }}
           >
-            Every move your competitors make.
-            <br />
+            Stop losing margin to{" "}
             <span
               style={{
                 background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -417,7 +416,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              On the record.
+              price moves you don't see.
             </span>
           </h1>
 
@@ -430,9 +429,9 @@ function Hero() {
               maxWidth: 520,
             }}
           >
-            PrizeSkout watches competitor prices, promotions, and shelf moves across every channel
-            you sell on, online and in-store. Category teams use it to defend margin, time
-            promotions, and stop losing share to moves they didn't see coming.
+            Category teams using PrizeSkout recover 3 to 7 percent of margin every year by reacting to
+            competitor pricing, promotions, and shelf moves the day they happen, instead of the week after.
+            Live signals across every channel you sell on, online and in-store.
           </p>
 
           <div
@@ -469,15 +468,11 @@ function Hero() {
                 e.currentTarget.style.boxShadow = "0 12px 30px rgba(234,88,12,0.35)";
               }}
             >
-              Start tracking competitors
+              See what you'd recover
               <ArrowRight size={14} />
             </Link>
-            <a
-              href="#features"
-              onClick={(e) => {
-                e.preventDefault();
-                document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" });
-              }}
+            <Link
+              to="/roi-calculator"
               style={{
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.10)",

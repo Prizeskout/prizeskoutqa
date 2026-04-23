@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as RoiCalculatorRouteImport } from './routes/roi-calculator'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -37,6 +38,11 @@ const TermsRoute = TermsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoiCalculatorRoute = RoiCalculatorRouteImport.update({
+  id: '/roi-calculator',
+  path: '/roi-calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
+  '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/privacy'
+    | '/roi-calculator'
     | '/signup'
     | '/terms'
     | '/dashboard/benchmarks'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/privacy'
+    | '/roi-calculator'
     | '/signup'
     | '/terms'
     | '/dashboard/benchmarks'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/privacy'
+    | '/roi-calculator'
     | '/signup'
     | '/terms'
     | '/dashboard/benchmarks'
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
+  RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
@@ -281,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roi-calculator': {
+      id: '/roi-calculator'
+      path: '/roi-calculator'
+      fullPath: '/roi-calculator'
+      preLoaderRoute: typeof RoiCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -440,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
+  RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
