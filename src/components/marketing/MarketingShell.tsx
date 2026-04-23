@@ -591,6 +591,41 @@ const SHELL_STYLES = `
     to { opacity: 1; transform: translateY(0); }
   }
   html { scroll-behavior: smooth; }
+  .ps-tip-wrap .ps-tip {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    white-space: nowrap;
+    background: #0A0A0A;
+    color: #FAFAF9;
+    border: 1px solid #1F1F1F;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 60;
+  }
+  .ps-tip-wrap:hover .ps-tip,
+  .ps-tip-wrap:focus-within .ps-tip {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .ps-tip-arrow {
+    position: absolute;
+    top: -5px;
+    right: 22px;
+    width: 8px;
+    height: 8px;
+    background: #0A0A0A;
+    border-left: 1px solid #1F1F1F;
+    border-top: 1px solid #1F1F1F;
+    transform: rotate(45deg);
+  }
   .ps-hero-title { font-size: 32px; }
   .ps-hero-sub { font-size: 15px; }
   .ps-section-title { font-size: 26px; font-weight: 700; line-height: 1.2; margin: 0; }
