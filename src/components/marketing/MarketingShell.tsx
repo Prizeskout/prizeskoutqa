@@ -15,7 +15,7 @@ import {
   BookOpen,
   Calculator,
   FileText,
-  Building2,
+  
   Mail,
   Newspaper,
   ShieldCheck,
