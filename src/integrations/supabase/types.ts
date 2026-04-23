@@ -1040,6 +1040,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_decisions: {
+        Row: {
+          category: string
+          channel: string
+          created_at: string
+          current_price: number
+          decision: string
+          expected_net_monthly: string | null
+          id: string
+          note: string | null
+          product: string
+          recommendation_id: string
+          recommended_price: number
+          snooze_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          channel: string
+          created_at?: string
+          current_price: number
+          decision: string
+          expected_net_monthly?: string | null
+          id?: string
+          note?: string | null
+          product: string
+          recommendation_id: string
+          recommended_price: number
+          snooze_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          channel?: string
+          created_at?: string
+          current_price?: number
+          decision?: string
+          expected_net_monthly?: string | null
+          id?: string
+          note?: string | null
+          product?: string
+          recommendation_id?: string
+          recommended_price?: number
+          snooze_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pricing_metrics: {
         Row: {
           created_at: string
