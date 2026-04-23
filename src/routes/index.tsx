@@ -330,20 +330,14 @@ function Hero() {
         className="ps-hero-grid"
       >
         <div className="ps-hero-copy">
-          <SectionEyebrow>
-            <Code2 size={11} strokeWidth={2.4} />
-            Commerce intelligence APIs
-          </SectionEyebrow>
-
           <h1
             className="ps-hero-title"
             style={{
-              marginTop: 18,
               fontWeight: 700,
               color: "#FAFAF9",
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
-              margin: "18px 0 0",
+              margin: 0,
             }}
           >
             Pricing intelligence,{" "}
@@ -368,44 +362,8 @@ function Hero() {
               maxWidth: 520,
             }}
           >
-            Live competitor prices, smart price recommendations, and promo ROI.
-            All as REST APIs. No scrapers to babysit.
+            Live competitor prices, price recommendations, and promo ROI. As REST APIs.
           </p>
-
-          <div
-            style={{
-              marginTop: 22,
-              fontSize: 13,
-              color: "#B8B8B8",
-              lineHeight: 1.55,
-              maxWidth: 520,
-            }}
-          >
-            Used by retail teams across the GCC. We track Carrefour, Lulu,
-            Talabat, Amazon and Noon. Hourly.
-          </div>
-
-          <div
-            style={{
-              marginTop: 14,
-              display: "flex",
-              gap: 18,
-              flexWrap: "wrap",
-              fontSize: 12,
-              color: "#6B6B6B",
-              fontFamily: MONO_STACK,
-            }}
-          >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <Check size={12} color="#22C55E" /> 99.95% uptime
-            </span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <Check size={12} color="#22C55E" /> Idempotent writes
-            </span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <Check size={12} color="#22C55E" /> Webhook retries
-            </span>
-          </div>
         </div>
 
         <div className="ps-hero-mock">
@@ -542,26 +500,12 @@ function ApiCatalog() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <SectionEyebrow>API catalog</SectionEyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9", marginTop: 14 }}
+            style={{ color: "#FAFAF9" }}
           >
             Five APIs. One clean surface.
           </h2>
-          <p
-            style={{
-              marginTop: 14,
-              color: "#9A9A9A",
-              maxWidth: 540,
-              margin: "14px auto 0",
-              fontSize: 15,
-              lineHeight: 1.6,
-            }}
-          >
-            Typed JSON. Same auth, same pagination, same webhook rules across
-            every endpoint.
-          </p>
         </div>
 
         <div
@@ -718,15 +662,11 @@ function Quickstart() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <SectionEyebrow>
-            <Terminal size={11} strokeWidth={2.4} />
-            Quickstart
-          </SectionEyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9", marginTop: 14 }}
+            style={{ color: "#FAFAF9" }}
           >
-            From zero to first call in 3 minutes.
+            Zero to first call in 3 minutes.
           </h2>
         </div>
 
@@ -989,22 +929,9 @@ function PricingSection() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <SectionEyebrow>Pricing</SectionEyebrow>
-          <h2 className="ps-section-title" style={{ color: "#FAFAF9", marginTop: 14 }}>
-            Usage based. No seats. No surprises.
+          <h2 className="ps-section-title" style={{ color: "#FAFAF9" }}>
+            Pay per call. No seats.
           </h2>
-          <p
-            style={{
-              marginTop: 14,
-              color: "#9A9A9A",
-              maxWidth: 520,
-              margin: "14px auto 0",
-              fontSize: 15,
-              lineHeight: 1.6,
-            }}
-          >
-            Test mode is free forever. In production, you pay per call.
-          </p>
         </div>
 
         <div
@@ -1139,18 +1066,6 @@ function FinalCTA() {
         >
           Start with a key. Ship today.
         </h2>
-        <p
-          style={{
-            marginTop: 16,
-            fontSize: 15,
-            color: "#9A9A9A",
-            lineHeight: 1.6,
-            maxWidth: 520,
-            margin: "16px auto 0",
-          }}
-        >
-          Test mode is free. Live mode is pay as you go.
-        </p>
         <div
           style={{
             marginTop: 32,
@@ -1192,7 +1107,7 @@ function FinalCTA() {
               textDecoration: "none",
             }}
           >
-            Talk to an engineer
+            Talk to us
           </Link>
         </div>
       </div>
