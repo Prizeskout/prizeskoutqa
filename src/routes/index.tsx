@@ -25,20 +25,20 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Price smarter. Ship it with one API call." },
+      { title: "PrizeSkout | Pricing intelligence APIs" },
       {
         name: "description",
         content:
-          "The commerce intelligence platform for pricing, promotions, and competitor data — built for the engineers wiring it into your stack. Live competitor prices, margin-aware recommendations, and promo ROI, via REST APIs and SDKs.",
+          "Live competitor prices, pricing recommendations, and promo ROI. Built as APIs your team can ship in an afternoon.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout | Price smarter. Ship it with one API call.",
+        content: "PrizeSkout | Pricing intelligence APIs",
       },
       {
         property: "og:description",
         content:
-          "Live competitor prices, margin-aware pricing recommendations, and promo ROI — as APIs your engineering team can integrate in an afternoon.",
+          "Live competitor prices, pricing recommendations, and promo ROI. Built as APIs your team can ship in an afternoon.",
       },
     ],
   }),
@@ -346,7 +346,7 @@ function Hero() {
               margin: "18px 0 0",
             }}
           >
-            Price smarter.{" "}
+            Pricing intelligence,{" "}
             <span
               style={{
                 background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -355,7 +355,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              Ship it with one API call.
+              one API call away.
             </span>
           </h1>
 
@@ -365,27 +365,24 @@ function Hero() {
               marginTop: 18,
               color: "#9A9A9A",
               lineHeight: 1.6,
-              maxWidth: 560,
+              maxWidth: 520,
             }}
           >
-            The commerce intelligence platform for pricing, promotions, and competitor
-            data — built for the engineers wiring it into your stack. Stream live
-            competitor prices, margin-aware recommendations, and promo ROI into your
-            commerce systems. Skip the scrapers, the spreadsheets, and the six-month
-            data project.
+            Live competitor prices, smart price recommendations, and promo ROI.
+            All as REST APIs. No scrapers to babysit.
           </p>
-...
+
           <div
             style={{
               marginTop: 22,
               fontSize: 13,
               color: "#B8B8B8",
               lineHeight: 1.55,
-              maxWidth: 560,
+              maxWidth: 520,
             }}
           >
-            Trusted by pricing and e-commerce teams across the GCC to price live SKUs
-            against Carrefour, Lulu, Talabat, Amazon, and Noon — every hour, every day.
+            Used by retail teams across the GCC. We track Carrefour, Lulu,
+            Talabat, Amazon and Noon. Hourly.
           </div>
 
           <div
@@ -400,7 +397,7 @@ function Hero() {
             }}
           >
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <Check size={12} color="#22C55E" /> 99.95% uptime SLA
+              <Check size={12} color="#22C55E" /> 99.95% uptime
             </span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
               <Check size={12} color="#22C55E" /> Idempotent writes
