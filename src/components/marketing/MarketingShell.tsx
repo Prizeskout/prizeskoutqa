@@ -28,7 +28,6 @@ import {
 import logoDark from "@/assets/logo-dark.svg";
 
 type InternalTo =
-  | "/about"
   | "/contact"
   | "/privacy"
   | "/terms"
