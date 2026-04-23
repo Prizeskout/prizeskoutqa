@@ -230,7 +230,31 @@ export function OverviewHero({
   );
 }
 
-function StatusChip({
+function CountBadge({ value, variant }: { value: number; variant: "onDark" | "onLight" }) {
+  if (value <= 0) return null;
+  const isDark = variant === "onDark";
+  return (
+    <span
+      aria-label={`${value} items`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minWidth: 20,
+        height: 20,
+        padding: "0 6px",
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 700,
+        lineHeight: 1,
+        backgroundColor: isDark ? "rgba(255,255,255,0.18)" : "#1A1A18",
+        color: "#FFFFFF",
+      }}
+    >
+      {value > 99 ? "99+" : value}
+    </span>
+  );
+}
   dotColor,
   label,
   active,
