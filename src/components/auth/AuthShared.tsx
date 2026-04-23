@@ -1,6 +1,8 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Crosshair, TrendingUp, Target } from "lucide-react";
+import logoDark from "@/assets/logo-dark.svg";
+import logoLight from "@/assets/logo-light.svg";
 
 export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) {
   const color = tone === "light" ? "#6B6B6B" : "#8A8A8A";
