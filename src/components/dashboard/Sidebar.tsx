@@ -434,10 +434,47 @@ export function Sidebar() {
   );
 }
 
+/**
+ * Mobile sidebar.
+ *
+ * Two modes, both controlled by the same `collapsed` setting that drives
+ * desktop:
+ *   - collapsed=true  → a thin always-visible icon rail (56px) on the left
+ *   - collapsed=false → an off-canvas drawer that opens when the user taps
+ *     the hamburger in TopBar. Tapping a nav item or the overlay closes it.
+ *
+ * The rail itself exposes the collapse toggle so users can switch between
+ * the two modes on small screens too. The setting is persisted in
+ * localStorage by SidebarCollapseProvider.
+ */
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { collapsed } = useSidebarCollapse();
+
   return (
     <>
-      {/* Overlay */}
+      {/* Always-on icon rail when collapsed (mobile only) */}
+      {collapsed && (
+        <aside
+          className="dark-scroll md:hidden"
+          aria-label="Primary navigation"
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 56,
+            backgroundColor: "#050505",
+            borderRight: "1px solid #1A1A1A",
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 30,
+          }}
+        >
+          <SidebarContent collapsed showCollapseToggle />
+        </aside>
+      )}
+
+      {/* Off-canvas overlay drawer (only meaningful when expanded) */}
       <div
         onClick={onClose}
         aria-hidden
@@ -446,15 +483,15 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
           position: "fixed",
           inset: 0,
           backgroundColor: "rgba(0,0,0,0.5)",
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? "auto" : "none",
+          opacity: open && !collapsed ? 1 : 0,
+          pointerEvents: open && !collapsed ? "auto" : "none",
           transition: "opacity 0.2s",
           zIndex: 40,
         }}
       />
-      {/* Drawer */}
       <aside
         className="dark-scroll md:hidden"
+        aria-hidden={!open || collapsed}
         style={{
           position: "fixed",
           left: 0,
@@ -465,13 +502,14 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
           borderRight: "1px solid #1A1A1A",
           display: "flex",
           flexDirection: "column",
-          transform: open ? "translateX(0)" : "translateX(-100%)",
+          transform: open && !collapsed ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.25s ease-out",
           zIndex: 50,
         }}
       >
-        <SidebarContent onNavigate={onClose} />
+        <SidebarContent onNavigate={onClose} showCollapseToggle />
       </aside>
     </>
   );
 }
+
