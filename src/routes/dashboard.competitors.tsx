@@ -37,7 +37,13 @@ type CompetitorsPageData = CompetitorsData & { insight: AIInsight | null };
 
 async function loadCompetitors(): Promise<CompetitorsPageData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<CompetitorsPageData>();
+    return pendingOnSSR<CompetitorsPageData>({
+      metrics: [],
+      prices: [],
+      history: [],
+      patterns: [],
+      insight: null,
+    });
   }
   const {
     data: { session },

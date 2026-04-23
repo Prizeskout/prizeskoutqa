@@ -24,7 +24,14 @@ type MarketPageData = MarketData & { insight: AIInsight | null };
 
 async function loadMarket(): Promise<MarketPageData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<MarketPageData>();
+    return pendingOnSSR<MarketPageData>({
+      metrics: [],
+      categories: [],
+      trending: [],
+      gaps: [],
+      crossBorder: [],
+      insight: null,
+    });
   }
   const {
     data: { session },

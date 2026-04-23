@@ -22,7 +22,14 @@ import type {
 
 async function loadBenchmarks(): Promise<BenchmarksData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<BenchmarksData>();
+    return pendingOnSSR<BenchmarksData>({
+      metrics: [],
+      benchmarks: [],
+      knowledge: [],
+      maturity: [],
+      switchingCost: null,
+      networkValue: null,
+    });
   }
   const {
     data: { session },

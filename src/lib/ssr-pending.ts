@@ -1,18 +1,18 @@
 /**
  * On the server, our Supabase auth session lives in localStorage and is
- * unavailable. Rather than resolve the loader with empty arrays (which causes
- * an empty flash followed by a client-side refetch), we return a promise that
- * never resolves during SSR. TanStack Router keeps the route in its pending
- * state, which serializes as the route's `pendingComponent` (the skeleton).
+ * unavailable. Previously this returned a never-resolving promise so that
+ * TanStack Router would keep the route in its `pendingComponent` during SSR.
  *
- * On the client, the loader runs normally with the real session and resolves
- * with data on first paint - no double-fetch.
+ * That approach is incompatible with the Cloudflare Worker runtime: a request
+ * that never resolves trips the Worker's "code hung" guard and returns a 502
+ * before the streaming pending HTML can be flushed.
+ *
+ * New strategy: callers pass an empty default that matches their loader's
+ * return shape. The SSR pass resolves immediately with that empty payload,
+ * route components render an empty shell, and on the client `staleTime: 0`
+ * causes the loader to re-run with the real Supabase session and replace
+ * the empty shell with real data on first paint.
  */
-export function pendingOnSSR<T>(): Promise<T> {
-  if (typeof window === "undefined") {
-    // Never resolves - route stays in pendingComponent during SSR.
-    return new Promise<T>(() => {});
-  }
-  // Should not be reached on the client; callers branch on `typeof window`.
-  return Promise.resolve(undefined as unknown as T);
+export function pendingOnSSR<T>(empty: T): Promise<T> {
+  return Promise.resolve(empty);
 }

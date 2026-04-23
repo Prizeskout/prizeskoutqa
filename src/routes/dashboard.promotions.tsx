@@ -20,7 +20,14 @@ import type { RoiModelCategory, ScenarioRow } from "@/lib/roi-model";
 
 async function loadPromotions(): Promise<PromotionsData> {
   if (typeof window === "undefined") {
-    return pendingOnSSR<PromotionsData>();
+    return pendingOnSSR<PromotionsData>({
+      metrics: [],
+      calendar: [],
+      campaigns: [],
+      insights: [],
+      roiModel: [],
+      scenarios: [],
+    });
   }
   const {
     data: { session },
