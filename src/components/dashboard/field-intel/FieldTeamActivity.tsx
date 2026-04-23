@@ -73,6 +73,7 @@ export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
