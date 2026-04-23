@@ -415,29 +415,46 @@ function ApiKeysPage() {
               />
             </label>
             <div style={{ display: "flex", gap: 8 }}>
-              {(["test", "live"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    border: `1px solid ${mode === m ? "#EA580C" : "#E5E2DB"}`,
-                    backgroundColor: mode === m ? "#FFF7ED" : "#fff",
-                    color: mode === m ? "#EA580C" : "#6B6B6B",
-                    cursor: "pointer",
-                  }}
-                >
-                  {m === "test" ? "Test mode" : "Live mode"}
-                </button>
-              ))}
+              {(["test", "live"] as const).map((m) => {
+                const disabled = m === "live" && !liveApproved;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => !disabled && setMode(m)}
+                    disabled={disabled}
+                    title={
+                      disabled
+                        ? "Live keys are locked until your live access request is approved."
+                        : undefined
+                    }
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      border: `1px solid ${mode === m && !disabled ? "#EA580C" : "#E5E2DB"}`,
+                      backgroundColor: disabled
+                        ? "#F5F5F4"
+                        : mode === m
+                          ? "#FFF7ED"
+                          : "#fff",
+                      color: disabled ? "#A8A29E" : mode === m ? "#EA580C" : "#6B6B6B",
+                      cursor: disabled ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    {disabled && <Lock size={11} />}
+                    {m === "test" ? "Test mode" : "Live mode"}
+                  </button>
+                );
+              })}
             </div>
-            {mode === "live" && (
+            {mode === "live" && !liveApproved && (
               <div style={{ fontSize: 12, color: "#B45309" }}>
-                Live keys require account approval. We'll create the key as pending until approved.
+                Live keys require account approval. Submit a request from the banner above to unlock.
               </div>
             )}
             <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
