@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SearchX } from "lucide-react";
 import {
   type Product,
   type CompetitorPrice,
@@ -8,6 +9,7 @@ import {
 } from "./types";
 import { LiveBadge } from "./LiveBadge";
 import { TriggerScrapeButton } from "./TriggerScrapeButton";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import type { LiveScrape } from "@/hooks/useLiveScrapes";
 
 const COMP_KEYS = ["talabat", "carrefour", "lulu", "amazon", "noon"] as const;
@@ -154,11 +156,12 @@ export function PriceTable({
         <tbody>
           {products.length === 0 ? (
             <tr>
-              <td
-                colSpan={9}
-                style={{ padding: 40, textAlign: "center", fontSize: 13, color: "#9A9A9A" }}
-              >
-                No products match your filters.
+              <td colSpan={9} style={{ padding: 0 }}>
+                <EmptyState
+                  icon={<SearchX size={20} strokeWidth={1.75} />}
+                  title="No products match your filters"
+                  description="Try clearing the search or switching the category and channel filters above."
+                />
               </td>
             </tr>
           ) : (
