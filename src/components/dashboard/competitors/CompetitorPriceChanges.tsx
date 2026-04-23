@@ -122,6 +122,13 @@ export function CompetitorPriceChanges() {
 
   const drops = diffs.filter((d) => d.delta < 0).length;
   const rises = diffs.filter((d) => d.delta > 0).length;
+  const newest = useMemo(() => {
+    if (!rows.length) return null;
+    return rows.reduce((acc, r) => {
+      const t = new Date(r.scraped_at).getTime();
+      return Number.isNaN(t) ? acc : Math.max(acc, t);
+    }, 0);
+  }, [rows]);
 
   return (
     <div
@@ -150,7 +157,10 @@ export function CompetitorPriceChanges() {
             What moved in the {windowSentence(window)} · {drops} drops · {rises} rises
           </div>
         </div>
-        <WindowPill value={window} onChange={setWindow} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {newest && <FreshnessPill timestamp={newest} />}
+          <WindowPill value={window} onChange={setWindow} />
+        </div>
       </div>
 
       {loading ? (
