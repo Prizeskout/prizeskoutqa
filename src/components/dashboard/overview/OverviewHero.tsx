@@ -23,10 +23,14 @@ export function OverviewHero({
   alerts,
   activeFilter,
   onFilterChange,
+  pricingCount,
+  competitorChangeCount,
 }: {
   alerts: OverviewAlert[];
   activeFilter: SeverityFilter;
   onFilterChange: (next: SeverityFilter) => void;
+  pricingCount: number;
+  competitorChangeCount: number;
 }) {
   const { user } = useAuth();
   // Greeting depends on local time → render only on client to avoid hydration drift.

@@ -128,6 +128,8 @@ function OverviewPage() {
           alerts={data.alerts}
           activeFilter={severityFilter}
           onFilterChange={setSeverityFilter}
+          pricingCount={data.pricingCount}
+          competitorChangeCount={data.competitorChangeCount}
         />
 
         {/* 2. AI summary — the smartest read on the page */}
