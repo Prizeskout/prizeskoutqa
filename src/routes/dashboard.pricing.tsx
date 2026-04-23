@@ -19,7 +19,18 @@ import type {
 } from "@/lib/pricing-data";
 import type { AIInsight } from "@/server/ai-insights.functions";
 
-type PricingPageData = PricingData & { insight: AIInsight | null };
+export type PricingDecision = {
+  id: string;
+  recommendation_id: string;
+  decision: "applied" | "dismissed" | "snoozed";
+  snooze_until: string | null;
+  created_at: string;
+};
+
+type PricingPageData = PricingData & {
+  insight: AIInsight | null;
+  decisions: PricingDecision[];
+};
 
 async function loadPricing(): Promise<PricingPageData> {
   // During SSR keep the route in its pending state so the skeleton is what
@@ -31,6 +42,7 @@ async function loadPricing(): Promise<PricingPageData> {
       recommendations: [],
       rules: [],
       insight: null,
+      decisions: [],
     });
   }
 
@@ -41,7 +53,7 @@ async function loadPricing(): Promise<PricingPageData> {
     throw redirect({ to: "/login", search: { redirect: "/dashboard/pricing" } });
   }
 
-  const [metricsRes, recsRes, rulesRes, insightRes] = await Promise.all([
+  const [metricsRes, recsRes, rulesRes, insightRes, decisionsRes] = await Promise.all([
     supabase
       .from("pricing_metrics")
       .select("*")
@@ -55,6 +67,10 @@ async function loadPricing(): Promise<PricingPageData> {
       .select("*")
       .order("position", { ascending: true }),
     supabase.from("ai_insights").select("*").eq("page", "pricing").maybeSingle(),
+    supabase
+      .from("pricing_decisions")
+      .select("id, recommendation_id, decision, snooze_until, created_at")
+      .order("created_at", { ascending: false }),
   ]);
 
   if (metricsRes.error) throw metricsRes.error;
@@ -66,6 +82,7 @@ async function loadPricing(): Promise<PricingPageData> {
     recommendations: (recsRes.data ?? []) as unknown as PricingRecommendation[],
     rules: (rulesRes.data ?? []) as PricingRule[],
     insight: (insightRes.data as AIInsight | null) ?? null,
+    decisions: (decisionsRes.data ?? []) as PricingDecision[],
   };
 }
 
@@ -108,7 +125,10 @@ function PricingPage() {
         <MetricsRow metrics={data.metrics} />
         <AIInsightsCard page="pricing" initial={data.insight} />
         <ModelStatusBanner />
-        <RecommendationsList recommendations={data.recommendations} />
+        <RecommendationsList
+          recommendations={data.recommendations}
+          decisions={data.decisions}
+        />
         <PricingRules rules={data.rules} />
         <ModelLearningCallout />
       </div>
