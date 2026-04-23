@@ -279,7 +279,7 @@ function FooterAnchor({ label }: { label: string }) {
   );
 }
 
-function FooterRouteLink({ label, to }: { label: string; to: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" }) {
+function FooterRouteLink({ label, to }: { label: string; to: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" | "/roi-calculator" }) {
   return (
     <Link
       to={to}
@@ -394,6 +394,7 @@ function Footer() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <FooterHashLink label="Features" hash="features" />
               <FooterHashLink label="Pricing" hash="pricing" />
+              <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
               <FooterAnchor label="API docs" />
               <FooterRouteLink label="Changelog" to="/changelog" />
             </div>
