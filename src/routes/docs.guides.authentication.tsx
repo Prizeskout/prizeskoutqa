@@ -2,7 +2,7 @@
 // Linked from every endpoint in the API reference via the scope chip row.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, KeyRound, Shield, RefreshCw, AlertTriangle } from "lucide-react";
+import { ArrowLeft, KeyRound, Shield, RefreshCw, AlertTriangle, Webhook } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { DocsSubNav } from "@/components/docs/DocsSubNav";
 
@@ -296,6 +296,150 @@ function AuthenticationGuide() {
           >
             Revoke it immediately, even before rolling out the replacement. A few minutes of failing
             requests is far cheaper than an attacker with read/write access to your pricing data.
+          </Callout>
+
+          <H2 id="webhooks">Webhook authentication</H2>
+          <P>
+            Inbound API requests use Bearer tokens. <strong>Outbound webhooks</strong> — events
+            PrizeSkout sends to your endpoint — use a different scheme: an HMAC-SHA256 signature over
+            the raw request body, plus a timestamp to prevent replay attacks. You verify both before
+            trusting the payload.
+          </P>
+
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18", marginTop: 24, marginBottom: 10 }}>
+            Headers we send
+          </h3>
+          <P>
+            Every webhook delivery includes these headers. The signing secret is shown once when you
+            create the endpoint in <strong>Dashboard → Webhooks</strong>; rotate it any time from the
+            same screen.
+          </P>
+          <div style={{ border: "1px solid #E8E8E5", borderRadius: 8, overflow: "hidden", background: "#FFF", marginBottom: 20 }}>
+            {[
+              { h: "PrizeSkout-Signature", v: "Hex-encoded HMAC-SHA256 of `{timestamp}.{raw_body}` using your endpoint's signing secret." },
+              { h: "PrizeSkout-Timestamp", v: "Unix epoch seconds when we generated the signature. Compare against your server clock to reject replays." },
+              { h: "PrizeSkout-Event", v: "Event type, e.g. `competitor.price_changed`, `pricing.recommendation_created`, `field_intel.observation_submitted`." },
+              { h: "PrizeSkout-Delivery", v: "Unique ID for this delivery attempt. Use it to dedupe — retries reuse the same ID." },
+              { h: "PrizeSkout-Attempt", v: "1 for the first delivery, 2+ for retries (exponential backoff up to your endpoint's max_attempts)." },
+            ].map((row, i, arr) => (
+              <div
+                key={row.h}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "220px 1fr",
+                  padding: "10px 14px",
+                  borderBottom: i === arr.length - 1 ? "none" : "1px solid #F0F0EE",
+                  fontSize: 13,
+                  alignItems: "start",
+                }}
+              >
+                <code style={{ fontFamily: FONT_MONO, fontSize: 12, color: "#1A1A18", fontWeight: 600 }}>
+                  {row.h}
+                </code>
+                <span style={{ color: "#3A3A38", lineHeight: 1.55 }}>{row.v}</span>
+              </div>
+            ))}
+          </div>
+
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18", marginTop: 24, marginBottom: 10 }}>
+            Verification algorithm
+          </h3>
+          <P>Three checks, in this order. Skip any one and your endpoint is exploitable.</P>
+          <ol style={{ paddingLeft: 22, marginBottom: 16, fontSize: 14.5, color: "#3A3A38", lineHeight: 1.75 }}>
+            <li style={{ marginBottom: 6 }}>
+              <strong>Read the raw body</strong> as a string before parsing JSON. Re-serialising parsed
+              JSON changes byte order and whitespace, which breaks the signature.
+            </li>
+            <li style={{ marginBottom: 6 }}>
+              <strong>Check the timestamp.</strong> Reject if{" "}
+              <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>
+                |now − PrizeSkout-Timestamp| &gt; 300 seconds
+              </code>
+              . This is the replay-protection window.
+            </li>
+            <li>
+              <strong>Compute</strong>{" "}
+              <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>
+                HMAC_SHA256(secret, "{`{timestamp}.{raw_body}`}")
+              </code>{" "}
+              and compare to <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>PrizeSkout-Signature</code> using a{" "}
+              <strong>constant-time</strong> comparison (e.g. <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>crypto.timingSafeEqual</code>). Never use{" "}
+              <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>===</code> — it leaks information via timing side-channels.
+            </li>
+          </ol>
+
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18", marginTop: 24, marginBottom: 10 }}>
+            Node.js example
+          </h3>
+          <CodeBlock>{`import { createHmac, timingSafeEqual } from "node:crypto";
+
+const TOLERANCE_SECONDS = 300;
+const SECRET = process.env.PRIZESKOUT_WEBHOOK_SECRET!;
+
+export async function handleWebhook(req: Request): Promise<Response> {
+  const signature = req.headers.get("PrizeSkout-Signature");
+  const timestamp = req.headers.get("PrizeSkout-Timestamp");
+  const rawBody = await req.text(); // read BEFORE JSON.parse
+
+  if (!signature || !timestamp) {
+    return new Response("missing signature headers", { status: 400 });
+  }
+
+  // 1. Replay protection
+  const skew = Math.abs(Date.now() / 1000 - Number(timestamp));
+  if (!Number.isFinite(skew) || skew > TOLERANCE_SECONDS) {
+    return new Response("timestamp outside tolerance", { status: 400 });
+  }
+
+  // 2. Signature check (constant-time)
+  const expected = createHmac("sha256", SECRET)
+    .update(\`\${timestamp}.\${rawBody}\`)
+    .digest("hex");
+  const sigBuf = Buffer.from(signature, "hex");
+  const expBuf = Buffer.from(expected, "hex");
+  if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
+    return new Response("invalid signature", { status: 401 });
+  }
+
+  // 3. Safe to parse and process
+  const event = JSON.parse(rawBody);
+  await handleEvent(event);
+  return new Response("ok", { status: 200 });
+}`}</CodeBlock>
+
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18", marginTop: 24, marginBottom: 10 }}>
+            Replay & idempotency
+          </h3>
+          <P>
+            The 5-minute timestamp window blocks an attacker from re-sending an old, captured payload.
+            But legitimate <em>retries</em> from PrizeSkout will reuse the same{" "}
+            <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>PrizeSkout-Delivery</code> ID — store seen IDs for at least 24 hours and
+            short-circuit duplicates with a 200. Returning a non-2xx triggers our retry logic
+            (exponential backoff, up to your endpoint's <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>max_attempts</code>).
+          </P>
+
+          <Callout
+            tone="warning"
+            icon={<Webhook size={14} />}
+            title="Common pitfalls"
+          >
+            <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
+              <li>Parsing JSON before computing the signature — re-serialisation changes the bytes.</li>
+              <li>Using string equality (<code style={{ fontFamily: FONT_MONO }}>===</code>) instead of constant-time compare.</li>
+              <li>Skipping the timestamp check — signature alone does not prevent replay.</li>
+              <li>Returning 200 before the work is durably persisted — if your handler crashes after the 200, the event is lost.</li>
+            </ul>
+          </Callout>
+
+          <Callout
+            tone="info"
+            icon={<RefreshCw size={14} />}
+            title="Rotating a webhook secret"
+          >
+            Rotating the signing secret in the dashboard takes effect immediately for new deliveries.
+            There is no overlap window, so rotate during a low-traffic period and update your endpoint's
+            secret first if you can briefly tolerate signature failures, or stand up a second endpoint
+            with the new secret and switch over.
           </Callout>
 
           <H2 id="best-practices">Best practices</H2>
