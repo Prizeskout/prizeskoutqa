@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Clock, Undo2 } from "lucide-react";
+import { toast } from "sonner";
 import { useBranding } from "@/hooks/useBranding";
+import { supabase } from "@/integrations/supabase/client";
+import type { PricingDecision } from "@/routes/dashboard.pricing";
 
 export type Recommendation = {
   id: string;
@@ -15,6 +18,8 @@ export type Recommendation = {
   netMonthly: string;
   confidence: number;
 };
+
+type Status = "pending" | "applied" | "dismissed" | "snoozed";
 
 function confidenceColor(score: number) {
   if (score > 85) return "#22C55E";
@@ -50,23 +55,121 @@ function ChannelPill({ channel }: { channel: "Online" | "In-Store" }) {
   );
 }
 
-export function RecommendationCard({ rec }: { rec: Recommendation }) {
-  const [status, setStatus] = useState<"pending" | "applied" | "dismissed">("pending");
+export function RecommendationCard({
+  rec,
+  initialDecision,
+}: {
+  rec: Recommendation;
+  initialDecision: PricingDecision | null;
+}) {
+  const initialStatus: Status = initialDecision?.decision ?? "pending";
+  const [status, setStatus] = useState<Status>(initialStatus);
+  const [decisionId, setDecisionId] = useState<string | null>(initialDecision?.id ?? null);
+  const [snoozeUntil, setSnoozeUntil] = useState<string | null>(
+    initialDecision?.snooze_until ?? null,
+  );
+  const [busy, setBusy] = useState(false);
   const { accentColor } = useBranding();
 
-  if (status === "dismissed") return null;
+  const cColor = confidenceColor(rec.confidence);
+
+  async function recordDecision(
+    decision: "applied" | "dismissed" | "snoozed",
+    snoozeDays?: number,
+  ) {
+    setBusy(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId) {
+        toast.error("Please sign in again");
+        return;
+      }
+
+      const snoozeIso =
+        decision === "snoozed" && snoozeDays
+          ? new Date(Date.now() + snoozeDays * 24 * 60 * 60 * 1000).toISOString()
+          : null;
+
+      const { data, error } = await supabase
+        .from("pricing_decisions")
+        .upsert(
+          {
+            user_id: userId,
+            recommendation_id: rec.id,
+            product: rec.product,
+            category: rec.category,
+            channel: rec.channel,
+            current_price: rec.current,
+            recommended_price: rec.recommended,
+            expected_net_monthly: rec.netMonthly,
+            decision,
+            snooze_until: snoozeIso,
+          },
+          { onConflict: "user_id,recommendation_id" },
+        )
+        .select("id, snooze_until")
+        .single();
+
+      if (error) throw error;
+
+      setStatus(decision);
+      setDecisionId(data?.id ?? null);
+      setSnoozeUntil(data?.snooze_until ?? null);
+
+      if (decision === "applied") toast.success("Marked as applied");
+      else if (decision === "dismissed") toast("Dismissed");
+      else if (decision === "snoozed") toast(`Snoozed for ${snoozeDays} day${snoozeDays === 1 ? "" : "s"}`);
+    } catch (err) {
+      console.error("Failed to record decision", err);
+      toast.error("Could not save your decision. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function undoDecision() {
+    if (!decisionId) {
+      setStatus("pending");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("pricing_decisions").delete().eq("id", decisionId);
+      if (error) throw error;
+      setStatus("pending");
+      setDecisionId(null);
+      setSnoozeUntil(null);
+      toast("Reverted");
+    } catch (err) {
+      console.error("Failed to undo decision", err);
+      toast.error("Could not undo. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (status === "dismissed") {
+    // Hidden by parent; render nothing as a safety net.
+    return null;
+  }
 
   const applied = status === "applied";
-  const cColor = confidenceColor(rec.confidence);
+  const snoozed = status === "snoozed";
+  const borderColor = applied
+    ? "#22C55E"
+    : snoozed
+      ? "#F59E0B"
+      : "#E5E2DB";
 
   return (
     <div
       style={{
         backgroundColor: "#FFFFFF",
-        border: applied ? "1px solid #22C55E" : "1px solid #E5E2DB",
+        border: `1px solid ${borderColor}`,
         borderRadius: 10,
         padding: "22px 26px",
-        transition: "opacity 200ms ease, border-color 200ms ease",
+        transition: "border-color 200ms ease",
       }}
     >
       {/* TOP ROW */}
@@ -228,45 +331,111 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-          {applied ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#22C55E",
-                padding: "8px 14px",
-              }}
-            >
-              <Check size={14} />
-              Applied
-            </div>
-          ) : (
+          {applied && (
             <>
-              <button
-                onClick={() => setStatus("applied")}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              <div
                 style={{
-                  backgroundColor: accentColor,
-                  color: "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
                   fontSize: 12,
                   fontWeight: 600,
-                  padding: "8px 18px",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "opacity 150ms ease",
+                  color: "#22C55E",
+                  padding: "8px 14px",
                 }}
               >
-                Apply
+                <Check size={14} />
+                Applied
+              </div>
+              <button
+                onClick={undoDecision}
+                disabled={busy}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px solid #E5E2DB",
+                  color: "#6B6B6B",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  cursor: busy ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Undo2 size={12} />
+                Undo
+              </button>
+            </>
+          )}
+
+          {snoozed && (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#F59E0B",
+                  padding: "8px 14px",
+                }}
+              >
+                <Clock size={14} />
+                Snoozed
+                {snoozeUntil ? ` until ${new Date(snoozeUntil).toLocaleDateString()}` : ""}
+              </div>
+              <button
+                onClick={undoDecision}
+                disabled={busy}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px solid #E5E2DB",
+                  color: "#6B6B6B",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  cursor: busy ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Undo2 size={12} />
+                Undo
+              </button>
+            </>
+          )}
+
+          {status === "pending" && (
+            <>
+              <button
+                onClick={() => recordDecision("snoozed", 7)}
+                disabled={busy}
+                title="Snooze for 7 days"
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px solid #E5E2DB",
+                  color: "#6B6B6B",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  cursor: busy ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Clock size={12} />
+                Snooze 7d
               </button>
               <button
-                onClick={() => setStatus("dismissed")}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = accentColor)}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E5E2DB")}
+                onClick={() => recordDecision("dismissed")}
+                disabled={busy}
                 style={{
                   backgroundColor: "transparent",
                   border: "1px solid #E5E2DB",
@@ -275,11 +444,27 @@ export function RecommendationCard({ rec }: { rec: Recommendation }) {
                   fontWeight: 500,
                   padding: "8px 14px",
                   borderRadius: 8,
-                  cursor: "pointer",
-                  transition: "border-color 150ms ease",
+                  cursor: busy ? "not-allowed" : "pointer",
                 }}
               >
                 Dismiss
+              </button>
+              <button
+                onClick={() => recordDecision("applied")}
+                disabled={busy}
+                style={{
+                  backgroundColor: accentColor,
+                  color: "#FFFFFF",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  padding: "8px 18px",
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  opacity: busy ? 0.7 : 1,
+                }}
+              >
+                Apply
               </button>
             </>
           )}
