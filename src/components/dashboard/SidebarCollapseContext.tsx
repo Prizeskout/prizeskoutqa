@@ -36,6 +36,34 @@ export function SidebarCollapseProvider({ children }: { children: ReactNode }) {
 
   const toggle = useCallback(() => setCollapsed(!collapsed), [collapsed, setCollapsed]);
 
+  // Global keyboard shortcut: Cmd+B (macOS) / Ctrl+B (others) toggles the
+  // sidebar between expanded and icon-rail collapsed mode. Ignored while the
+  // user is typing in inputs/textareas/contenteditable surfaces so it doesn't
+  // hijack normal text editing (e.g. browser "bold" inside a rich editor).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      if (e.key.toLowerCase() !== "b") return;
+      if (e.altKey || e.shiftKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+      e.preventDefault();
+      toggle();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [toggle]);
+
   return (
     <SidebarCollapseContext.Provider value={{ collapsed, toggle, setCollapsed }}>
       {children}
