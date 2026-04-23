@@ -855,10 +855,9 @@ function BuiltForDevs() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <SectionEyebrow>Built for developers</SectionEyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9", marginTop: 14 }}
+            style={{ color: "#FAFAF9" }}
           >
             A platform your team will want to ship against.
           </h2>
