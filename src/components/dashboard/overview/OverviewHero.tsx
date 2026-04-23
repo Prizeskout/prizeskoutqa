@@ -23,10 +23,14 @@ export function OverviewHero({
   alerts,
   activeFilter,
   onFilterChange,
+  pricingCount,
+  competitorChangeCount,
 }: {
   alerts: OverviewAlert[];
   activeFilter: SeverityFilter;
   onFilterChange: (next: SeverityFilter) => void;
+  pricingCount: number;
+  competitorChangeCount: number;
 }) {
   const { user } = useAuth();
   // Greeting depends on local time → render only on client to avoid hydration drift.
@@ -197,6 +201,7 @@ export function OverviewHero({
           >
             <Zap size={14} strokeWidth={2.25} />
             Review pricing recommendations
+            <CountBadge value={pricingCount} variant="onDark" />
             <ArrowRight size={14} strokeWidth={2} />
           </Link>
           <Link
@@ -216,11 +221,38 @@ export function OverviewHero({
             }}
           >
             See what competitors changed
+            <CountBadge value={competitorChangeCount} variant="onLight" />
             <ArrowRight size={14} strokeWidth={2} />
           </Link>
         </div>
       </div>
     </section>
+  );
+}
+
+function CountBadge({ value, variant }: { value: number; variant: "onDark" | "onLight" }) {
+  if (value <= 0) return null;
+  const isDark = variant === "onDark";
+  return (
+    <span
+      aria-label={`${value} items`}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minWidth: 20,
+        height: 20,
+        padding: "0 6px",
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 700,
+        lineHeight: 1,
+        backgroundColor: isDark ? "rgba(255,255,255,0.18)" : "#1A1A18",
+        color: "#FFFFFF",
+      }}
+    >
+      {value > 99 ? "99+" : value}
+    </span>
   );
 }
 
