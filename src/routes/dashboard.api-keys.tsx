@@ -130,6 +130,32 @@ function ApiKeysPage() {
     setCopied(false);
   };
 
+  const handleSubmitLiveRequest = async () => {
+    if (submittingRequest) return;
+    if (!reqCompany.trim() || !reqEmail.trim() || !reqUseCase.trim()) {
+      alert("Company name, billing email, and use case are required.");
+      return;
+    }
+    setSubmittingRequest(true);
+    try {
+      await requestFn({
+        data: {
+          companyName: reqCompany.trim(),
+          companyDomain: reqDomain.trim(),
+          billingEmail: reqEmail.trim(),
+          expectedVolume: reqVolume.trim(),
+          useCase: reqUseCase.trim(),
+        },
+      });
+      setShowRequest(false);
+      await refetchAccount();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
   const maskedSecret = newSecret
     ? `${newSecret.slice(0, 12)}${"•".repeat(Math.max(0, newSecret.length - 16))}${newSecret.slice(-4)}`
     : "";
