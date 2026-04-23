@@ -250,6 +250,11 @@ function DashboardLayoutInner({
   const { collapsed } = useSidebarCollapse();
   const sidebarWidth = collapsed ? 64 : 240;
 
+  // On mobile, when collapsed, the icon rail is always visible (56px) and the
+  // main content shifts right to make room. When expanded, the rail is hidden
+  // and the off-canvas drawer takes over.
+  const mobileShift = collapsed ? 56 : 0;
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FAFAF9" }}>
       <Sidebar />
@@ -260,8 +265,9 @@ function DashboardLayoutInner({
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          // Inline override beats the @media rule below for desktop widths.
+          // CSS vars consumed by the @media rules below.
           ["--ps-sidebar-w" as string]: `${sidebarWidth}px`,
+          ["--ps-sidebar-mobile-w" as string]: `${mobileShift}px`,
         }}
       >
         <TopBar
@@ -269,6 +275,7 @@ function DashboardLayoutInner({
           channel={channel}
           onChannelChange={setChannel}
           onMenuClick={() => setMobileOpen(true)}
+          showMenuButton={!collapsed}
         />
         <main
           id="main-content"
@@ -300,7 +307,10 @@ function DashboardLayoutInner({
         </main>
       </div>
       <style>{`
-        .dashboard-main-shift { margin-left: 0; transition: margin-left 0.2s ease; }
+        .dashboard-main-shift {
+          margin-left: var(--ps-sidebar-mobile-w, 0px);
+          transition: margin-left 0.2s ease;
+        }
         .dashboard-main-content { padding: 16px; }
         @media (min-width: 768px) {
           .dashboard-main-shift { margin-left: var(--ps-sidebar-w, 240px); }

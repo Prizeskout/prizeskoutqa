@@ -76,11 +76,14 @@ export function TopBar({
   channel,
   onChannelChange,
   onMenuClick,
+  showMenuButton = true,
 }: {
   title: string;
   channel: Channel;
   onChannelChange: (c: Channel) => void;
   onMenuClick?: () => void;
+  // Hide the hamburger when the mobile icon rail is already visible.
+  showMenuButton?: boolean;
 }) {
   return (
     <header
@@ -93,15 +96,17 @@ export function TopBar({
       }}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <button
-          type="button"
-          aria-label="Open menu"
-          onClick={onMenuClick}
-          className="flex items-center justify-center md:hidden"
-          style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }}
-        >
-          <Menu size={20} strokeWidth={1.75} color="#1A1A18" />
-        </button>
+        {showMenuButton && (
+          <button
+            type="button"
+            aria-label="Open menu"
+            onClick={onMenuClick}
+            className="flex items-center justify-center md:hidden"
+            style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }}
+          >
+            <Menu size={20} strokeWidth={1.75} color="#1A1A18" />
+          </button>
+        )}
         <h1
           style={{
             fontSize: 18,
