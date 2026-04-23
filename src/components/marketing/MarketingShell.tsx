@@ -1,14 +1,86 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
-import { Menu, X, Camera, Play, Globe } from "lucide-react";
+import {
+  Menu,
+  X,
+  Camera,
+  Play,
+  Globe,
+  ChevronDown,
+  LineChart,
+  Tags,
+  Megaphone,
+  Map,
+  ClipboardList,
+  Gauge,
+  BookOpen,
+  Calculator,
+  FileText,
+  HelpCircle,
+  Building2,
+  Mail,
+  Newspaper,
+  Workflow,
+  ShieldCheck,
+} from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
 
-const NAV_LINKS = [
-  { label: "Features", hash: "features" },
-  { label: "How it works", hash: "how-it-works" },
-  { label: "Pricing", hash: "pricing" },
-  { label: "FAQ", hash: "faq" },
-];
+type DropdownItem = {
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  to?: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" | "/roi-calculator";
+  hash?: string;
+};
+
+type DropdownMenu = {
+  label: string;
+  wide?: boolean;
+  items: DropdownItem[];
+};
+
+const PLATFORM_MENU: DropdownMenu = {
+  label: "Platform",
+  wide: true,
+  items: [
+    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, hash: "features" },
+    { label: "Pricing Recommendations", desc: "AI-driven decisions with P&L impact", icon: Tags, hash: "features" },
+    { label: "Promotion Planning", desc: "Calendar, ROI sim, cannibalization", icon: Megaphone, hash: "features" },
+    { label: "Market & Assortment", desc: "Trends, gaps, cross-border radar", icon: Map, hash: "features" },
+    { label: "Field Intel", desc: "In-store observations from your reps", icon: ClipboardList, hash: "features" },
+    { label: "Benchmarks", desc: "You vs market, model maturity", icon: Gauge, hash: "features" },
+  ],
+};
+
+const SOLUTIONS_MENU: DropdownMenu = {
+  label: "Solutions",
+  items: [
+    { label: "How it works", desc: "Observe, learn, recommend, act", icon: Workflow, hash: "how-it-works" },
+    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
+    { label: "Pricing", desc: "Plans for every retail size", icon: Tags, hash: "pricing" },
+  ],
+};
+
+const COMPANY_MENU: DropdownMenu = {
+  label: "Company",
+  items: [
+    { label: "About", desc: "Mission, team, market thesis", icon: Building2, to: "/about" },
+    { label: "Contact", desc: "Talk to our commercial team", icon: Mail, to: "/contact" },
+    { label: "Changelog", desc: "What's new in the platform", icon: Newspaper, to: "/changelog" },
+  ],
+};
+
+const RESOURCES_MENU: DropdownMenu = {
+  label: "Resources",
+  items: [
+    { label: "FAQ", desc: "Common questions answered", icon: HelpCircle, hash: "faq" },
+    { label: "Privacy", desc: "How we handle your data", icon: ShieldCheck, to: "/privacy" },
+    { label: "Terms", desc: "Service terms and SLAs", icon: FileText, to: "/terms" },
+    { label: "Documentation", desc: "Guides for your team", icon: BookOpen, hash: "features" },
+  ],
+};
+
+const NAV_MENUS: DropdownMenu[] = [PLATFORM_MENU, SOLUTIONS_MENU, COMPANY_MENU, RESOURCES_MENU];
 
 function smoothScrollToHash(hash: string) {
   if (!hash) {
