@@ -66,6 +66,7 @@ export function BrandLogoLight() {
   );
 }
 
+export function AuthLeftPanel() {
   const bullets = [
     {
       Icon: Crosshair,
