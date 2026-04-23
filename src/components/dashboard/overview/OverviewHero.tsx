@@ -197,20 +197,48 @@ export function OverviewHero({
   );
 }
 
-function StatusChip({ dotColor, label }: { dotColor: string; label: string }) {
+function StatusChip({
+  dotColor,
+  label,
+  active,
+  disabled,
+  onClick,
+}: {
+  dotColor: string;
+  label: string;
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
   return (
-    <span
+    <button
+      type="button"
+      onClick={() => {
+        if (disabled) return;
+        onClick();
+        if (typeof window !== "undefined") {
+          window.requestAnimationFrame(() => {
+            const el = document.getElementById("overview-live-alerts");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+      }}
+      aria-pressed={active}
+      disabled={disabled}
       style={{
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
-        backgroundColor: "#FAF8F3",
-        border: "1px solid #EFEAE0",
+        backgroundColor: active ? "#1A1A18" : "#FAF8F3",
+        border: `1px solid ${active ? "#1A1A18" : "#EFEAE0"}`,
         borderRadius: 999,
         padding: "5px 12px",
         fontSize: 12,
         fontWeight: 500,
-        color: "#3A3A38",
+        color: active ? "#FFFFFF" : "#3A3A38",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        transition: "background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease",
       }}
     >
       <span
@@ -223,6 +251,6 @@ function StatusChip({ dotColor, label }: { dotColor: string; label: string }) {
         }}
       />
       {label}
-    </span>
+    </button>
   );
 }

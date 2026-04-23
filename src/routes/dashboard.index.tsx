@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { MetricsRow } from "@/components/dashboard/overview/MetricsRow";
@@ -6,7 +6,7 @@ import { LiveAlerts } from "@/components/dashboard/overview/LiveAlerts";
 import { MarketPosition } from "@/components/dashboard/overview/MarketPosition";
 import { ChannelBreakdown } from "@/components/dashboard/overview/ChannelBreakdown";
 import { QuickActions } from "@/components/dashboard/overview/QuickActions";
-import { OverviewHero } from "@/components/dashboard/overview/OverviewHero";
+import { OverviewHero, type SeverityFilter } from "@/components/dashboard/overview/OverviewHero";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
@@ -89,12 +89,22 @@ export const Route = createFileRoute("/dashboard/")({
 
 function OverviewPage() {
   const data = Route.useLoaderData();
+  const [severityFilter, setSeverityFilter] = useState<SeverityFilter>(null);
+
+  const filteredAlerts = useMemo(() => {
+    if (!severityFilter) return data.alerts;
+    return data.alerts.filter((a) => a.severity === severityFilter);
+  }, [data.alerts, severityFilter]);
 
   return (
     <DashboardLayout title="Overview">
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {/* 1. Hero — greeting + briefing + primary CTAs */}
-        <OverviewHero alerts={data.alerts} />
+        <OverviewHero
+          alerts={data.alerts}
+          activeFilter={severityFilter}
+          onFilterChange={setSeverityFilter}
+        />
 
         {/* 2. AI summary — the smartest read on the page */}
         <SectionLabel
@@ -106,10 +116,16 @@ function OverviewPage() {
 
         {/* 3. What changed — actionable alerts */}
         <SectionLabel
-          title="What changed"
-          subtitle="Recent moves from competitors and your channels. Click any row to act."
+          title={severityFilter ? `What changed · ${severityFilter}` : "What changed"}
+          subtitle={
+            severityFilter
+              ? `Showing ${filteredAlerts.length} ${severityFilter} alert${filteredAlerts.length === 1 ? "" : "s"}. Click "Clear filter" in the hero to see all.`
+              : "Recent moves from competitors and your channels. Click any row to act."
+          }
         />
-        <LiveAlerts alerts={data.alerts} />
+        <div id="overview-live-alerts" style={{ scrollMarginTop: 16 }}>
+          <LiveAlerts alerts={filteredAlerts} />
+        </div>
 
         {/* 4. What to do next — guided actions */}
         <SectionLabel
