@@ -70,107 +70,7 @@ function smoothScrollToHash(hash: string) {
   const el = document.querySelector(`#${hash}`);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-  onNavigate,
-}: {
-  menu: DropdownMenu;
-  onNavigate: (item: DropdownItem) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div style={{ borderBottom: "1px solid #141414" }}>
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: "16px 4px",
-          background: "transparent",
-          border: "none",
-          color: "#FAFAF9",
-          fontSize: 16,
-          fontWeight: 500,
-          cursor: "pointer",
-          fontFamily: "inherit",
-        }}
-      >
-        {menu.label}
-        <ChevronDown
-          size={16}
-          color="#8A8A8A"
-          style={{
-            transition: "transform 0.18s ease",
-            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        />
-      </button>
-      {expanded && (
-        <div style={{ paddingBottom: 12, display: "flex", flexDirection: "column", gap: 2 }}>
-          {menu.items.map((item) => {
-            const Icon = item.icon;
-            const inner = (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "10px 4px",
-                }}
-              >
-                <div
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 7,
-                    background: "#141414",
-                    border: "1px solid #1F1F1F",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon size={14} color="#C4C4C4" strokeWidth={2} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: "#FAFAF9" }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: "#8A8A8A", marginTop: 2 }}>{item.desc}</div>
-                </div>
-              </div>
-            );
-            if (item.to) {
-              return (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  onClick={() => onNavigate(item)}
-                  style={{ textDecoration: "none" }}
-                >
-                  {inner}
-                </Link>
-              );
-            }
-            return (
-              <a
-                key={item.label}
-                href={`/#${item.hash ?? ""}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate(item);
-                }}
-                style={{ textDecoration: "none" }}
-              >
-                {inner}
-              </a>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+
 
 function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -258,31 +158,15 @@ function Header() {
           </a>
 
           <nav className="hidden md:flex" style={{ gap: 4, alignItems: "center" }}>
-            {NAV_MENUS.map((menu) => (
-              <NavDropdown
-                key={menu.label}
-                menu={menu}
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.label}
+                item={item}
                 onHashItem={(hash) =>
                   handleNavClick({ preventDefault: () => {} } as React.MouseEvent, hash)
                 }
               />
             ))}
-            <a
-              href="/#pricing"
-              onClick={(e) => handleNavClick(e, "pricing")}
-              style={{
-                padding: "8px 14px",
-                fontSize: 14,
-                fontWeight: 500,
-                color: "#A8A8A8",
-                textDecoration: "none",
-                transition: "color 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
-            >
-              Pricing
-            </a>
           </nav>
 
           <div className="hidden md:flex" style={{ alignItems: "center", gap: 18 }}>
@@ -376,27 +260,59 @@ function Header() {
           </div>
 
           <nav style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 4 }}>
-            {NAV_MENUS.map((menu) => (
-              <MobileNavSection
-                key={menu.label}
-                menu={menu}
-                onNavigate={(item) => {
-                  setMobileOpen(false);
-                  if (item.hash) {
-                    const hash = item.hash;
-                    setTimeout(() => {
-                      if (onLanding) {
-                        smoothScrollToHash(hash);
-                      } else {
-                        router.navigate({ to: "/", hash }).then(() => {
-                          setTimeout(() => smoothScrollToHash(hash), 100);
-                        });
-                      }
-                    }, 50);
-                  }
-                }}
-              />
-            ))}
+            {NAV_ITEMS.map((item) => {
+              if (item.to) {
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 500,
+                      color: "#FAFAF9",
+                      textDecoration: "none",
+                      padding: "16px 4px",
+                      borderBottom: "1px solid #141414",
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+              return (
+                <a
+                  key={item.label}
+                  href={`/#${item.hash ?? ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileOpen(false);
+                    if (item.hash) {
+                      const hash = item.hash;
+                      setTimeout(() => {
+                        if (onLanding) {
+                          smoothScrollToHash(hash);
+                        } else {
+                          router.navigate({ to: "/", hash }).then(() => {
+                            setTimeout(() => smoothScrollToHash(hash), 100);
+                          });
+                        }
+                      }, 50);
+                    }
+                  }}
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 500,
+                    color: "#FAFAF9",
+                    textDecoration: "none",
+                    padding: "16px 4px",
+                    borderBottom: "1px solid #141414",
+                  }}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
             <div style={{ height: 1, background: "#1A1A1A", margin: "16px 0" }} />
             <Link
               to="/login"
