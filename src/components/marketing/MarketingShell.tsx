@@ -91,7 +91,308 @@ function smoothScrollToHash(hash: string) {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function Header() {
+function NavDropdown({
+  menu,
+  onHashItem,
+}: {
+  menu: DropdownMenu;
+  onHashItem: (hash: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelClose = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 180);
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ position: "relative" }}
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          padding: "8px 14px",
+          fontSize: 14,
+          fontWeight: 500,
+          color: open ? "#FAFAF9" : "#A8A8A8",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          borderRadius: 6,
+          transition: "color 0.15s",
+          fontFamily: "inherit",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = open ? "#FAFAF9" : "#A8A8A8")}
+        aria-expanded={open}
+      >
+        {menu.label}
+        <ChevronDown
+          size={13}
+          strokeWidth={2.2}
+          style={{
+            transition: "transform 0.18s ease",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
+      </button>
+
+      {open && (
+        <>
+          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, height: 12 }} />
+          <div
+            style={{
+              position: "absolute",
+              top: "calc(100% + 10px)",
+              left: 0,
+              width: menu.wide ? 560 : 320,
+              background: "rgba(10,10,10,0.96)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid #1F1F1F",
+              borderRadius: 14,
+              boxShadow: "0 24px 60px -12px rgba(0,0,0,0.7)",
+              padding: 8,
+              animation: "ps-dropdown-in 0.16s ease",
+              zIndex: 60,
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: menu.wide ? "1fr 1fr" : "1fr",
+                gap: 2,
+              }}
+            >
+              {menu.items.map((item, idx) => {
+                const Icon = item.icon;
+                const hovered = hoveredIdx === idx;
+                const inner = (
+                  <div
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 12,
+                      padding: "12px 12px",
+                      borderRadius: 10,
+                      background: hovered ? "rgba(234,88,12,0.08)" : "transparent",
+                      transition: "background 0.12s",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: 8,
+                        background: hovered ? "rgba(234,88,12,0.18)" : "#141414",
+                        border: "1px solid #1F1F1F",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        transition: "background 0.12s",
+                      }}
+                    >
+                      <Icon size={16} color={hovered ? "#FB923C" : "#C4C4C4"} strokeWidth={2} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 13.5,
+                          fontWeight: 600,
+                          color: "#FAFAF9",
+                          lineHeight: 1.3,
+                          marginBottom: 3,
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#8A8A8A",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {item.desc}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+                if (item.to) {
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      onClick={() => setOpen(false)}
+                      style={{ textDecoration: "none" }}
+                    >
+                      {inner}
+                    </Link>
+                  );
+                }
+                return (
+                  <a
+                    key={item.label}
+                    href={`/#${item.hash ?? ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      if (item.hash) onHashItem(item.hash);
+                    }}
+                    style={{ textDecoration: "none" }}
+                  >
+                    {inner}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function MobileNavSection({
+  menu,
+  onNavigate,
+}: {
+  menu: DropdownMenu;
+  onNavigate: (item: DropdownItem) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div style={{ borderBottom: "1px solid #141414" }}>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          padding: "16px 4px",
+          background: "transparent",
+          border: "none",
+          color: "#FAFAF9",
+          fontSize: 16,
+          fontWeight: 500,
+          cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
+        {menu.label}
+        <ChevronDown
+          size={16}
+          color="#8A8A8A"
+          style={{
+            transition: "transform 0.18s ease",
+            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
+      </button>
+      {expanded && (
+        <div style={{ paddingBottom: 12, display: "flex", flexDirection: "column", gap: 2 }}>
+          {menu.items.map((item) => {
+            const Icon = item.icon;
+            const inner = (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "10px 4px",
+                }}
+              >
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 7,
+                    background: "#141414",
+                    border: "1px solid #1F1F1F",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={14} color="#C4C4C4" strokeWidth={2} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: "#FAFAF9" }}>{item.label}</div>
+                  <div style={{ fontSize: 12, color: "#8A8A8A", marginTop: 2 }}>{item.desc}</div>
+                </div>
+              </div>
+            );
+            if (item.to) {
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={() => onNavigate(item)}
+                  style={{ textDecoration: "none" }}
+                >
+                  {inner}
+                </Link>
+              );
+            }
+            return (
+              <a
+                key={item.label}
+                href={`/#${item.hash ?? ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate(item);
+                }}
+                style={{ textDecoration: "none" }}
+              >
+                {inner}
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
