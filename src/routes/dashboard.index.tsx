@@ -21,7 +21,11 @@ import type {
 } from "@/lib/overview-data";
 import type { AIInsight } from "@/server/ai-insights.functions";
 
-type OverviewPageData = OverviewData & { insight: AIInsight | null };
+type OverviewPageData = OverviewData & {
+  insight: AIInsight | null;
+  pricingCount: number;
+  competitorChangeCount: number;
+};
 
 async function loadOverview(): Promise<OverviewPageData> {
   // During SSR there is no auth session - keep the route in its pending state
@@ -38,7 +42,17 @@ async function loadOverview(): Promise<OverviewPageData> {
     throw redirect({ to: "/login", search: { redirect: "/dashboard" } });
   }
 
-  const [metricsRes, alertsRes, channelsRes, actionsRes, insightRes] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [
+    metricsRes,
+    alertsRes,
+    channelsRes,
+    actionsRes,
+    insightRes,
+    pricingCountRes,
+    competitorChangesRes,
+  ] = await Promise.all([
     supabase
       .from("overview_metrics")
       .select("*")
@@ -61,6 +75,14 @@ async function loadOverview(): Promise<OverviewPageData> {
       .select("*")
       .eq("page", "overview")
       .maybeSingle(),
+    supabase
+      .from("pricing_recommendations")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("competitor_scrapes")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "success")
+      .gte("scraped_at", sevenDaysAgo),
   ]);
 
   if (metricsRes.error) throw metricsRes.error;
@@ -74,6 +96,8 @@ async function loadOverview(): Promise<OverviewPageData> {
     channels: (channelsRes.data ?? []) as OverviewChannel[],
     quickActions: (actionsRes.data ?? []) as OverviewQuickAction[],
     insight: (insightRes.data as AIInsight | null) ?? null,
+    pricingCount: pricingCountRes.count ?? 0,
+    competitorChangeCount: competitorChangesRes.count ?? 0,
   };
 }
 
