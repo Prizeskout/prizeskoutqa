@@ -121,27 +121,54 @@ export function OverviewHero({
           {headline}
         </p>
 
-        {/* Status strip */}
+        {/* Status strip — click to filter the alerts list below */}
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             gap: 8,
             marginTop: 16,
+            alignItems: "center",
           }}
         >
           <StatusChip
             dotColor="#DC2626"
             label={`${counts.action} ${counts.action === 1 ? "action" : "actions"}`}
+            active={activeFilter === "action"}
+            disabled={counts.action === 0}
+            onClick={() => onFilterChange(activeFilter === "action" ? null : "action")}
           />
           <StatusChip
             dotColor="#16A34A"
             label={`${counts.opportunity} ${counts.opportunity === 1 ? "opportunity" : "opportunities"}`}
+            active={activeFilter === "opportunity"}
+            disabled={counts.opportunity === 0}
+            onClick={() => onFilterChange(activeFilter === "opportunity" ? null : "opportunity")}
           />
           <StatusChip
             dotColor="#2563EB"
             label={`${counts.intel} market signal${counts.intel === 1 ? "" : "s"}`}
+            active={activeFilter === "intel"}
+            disabled={counts.intel === 0}
+            onClick={() => onFilterChange(activeFilter === "intel" ? null : "intel")}
           />
+          {activeFilter && (
+            <button
+              type="button"
+              onClick={() => onFilterChange(null)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#7C3AED",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "5px 6px",
+              }}
+            >
+              Clear filter
+            </button>
+          )}
         </div>
 
         {/* Primary CTAs */}
