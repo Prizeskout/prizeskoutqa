@@ -5,6 +5,7 @@ import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { PageHeader } from "./PageHeader";
 import type { Channel } from "./ChannelFilter";
+import { SidebarCollapseProvider, useSidebarCollapse } from "./SidebarCollapseContext";
 
 function formatRelative(ts: number, now: number) {
   const seconds = Math.max(0, Math.floor((now - ts) / 1000));
@@ -218,30 +219,51 @@ function Breadcrumbs({ title, pathname }: { title: string; pathname: string }) {
   );
 }
 
-export function DashboardLayout({
-  title,
-  subtitle,
-  primaryAction,
-  helpItems,
-  statusChips,
-  children,
-}: {
+type DashboardLayoutProps = {
   title: string;
   subtitle?: string;
   primaryAction?: ReactNode;
   helpItems?: string[];
   statusChips?: ReactNode;
   children: ReactNode;
-}) {
+};
+
+export function DashboardLayout(props: DashboardLayoutProps) {
+  return (
+    <SidebarCollapseProvider>
+      <DashboardLayoutInner {...props} />
+    </SidebarCollapseProvider>
+  );
+}
+
+function DashboardLayoutInner({
+  title,
+  subtitle,
+  primaryAction,
+  helpItems,
+  statusChips,
+  children,
+}: DashboardLayoutProps) {
   const [channel, setChannel] = useState<Channel>("All Channels");
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { collapsed } = useSidebarCollapse();
+  const sidebarWidth = collapsed ? 64 : 240;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FAFAF9" }}>
       <Sidebar />
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
-      <div className="dashboard-main-shift" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <div
+        className="dashboard-main-shift"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+          // Inline override beats the @media rule below for desktop widths.
+          ["--ps-sidebar-w" as string]: `${sidebarWidth}px`,
+        }}
+      >
         <TopBar
           title={title}
           channel={channel}
@@ -278,10 +300,10 @@ export function DashboardLayout({
         </main>
       </div>
       <style>{`
-        .dashboard-main-shift { margin-left: 0; }
+        .dashboard-main-shift { margin-left: 0; transition: margin-left 0.2s ease; }
         .dashboard-main-content { padding: 16px; }
         @media (min-width: 768px) {
-          .dashboard-main-shift { margin-left: 240px; }
+          .dashboard-main-shift { margin-left: var(--ps-sidebar-w, 240px); }
           .dashboard-main-content { padding: 24px; }
         }
         @keyframes dashboardPageFade {
@@ -293,6 +315,7 @@ export function DashboardLayout({
         }
         @media (prefers-reduced-motion: reduce) {
           .dashboard-page-fade { animation: none; }
+          .dashboard-main-shift { transition: none; }
         }
       `}</style>
     </div>
