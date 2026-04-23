@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Sparkles, RefreshCw, ArrowRight } from "lucide-react";
+import { Brain, RefreshCw, ArrowRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   generateInsight,
@@ -234,7 +234,7 @@ export function AIInsightsCard({
               flexShrink: 0,
             }}
           >
-            <Sparkles size={16} color="#FFFFFF" strokeWidth={2} />
+            <Brain size={16} color="#FFFFFF" strokeWidth={2} />
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1A18", lineHeight: 1.2 }}>
