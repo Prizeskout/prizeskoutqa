@@ -1,6 +1,8 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Crosshair, TrendingUp, Target } from "lucide-react";
+import logoDark from "@/assets/logo-dark.svg";
+import logoLight from "@/assets/logo-light.svg";
 
 export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) {
   const color = tone === "light" ? "#6B6B6B" : "#8A8A8A";
@@ -30,26 +32,17 @@ export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) 
 export function BrandLogo() {
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 7,
-            backgroundColor: "#EA580C",
-          }}
-        />
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#FAFAF9" }}>
-          PrizeSkout
-        </div>
-      </div>
+      <img
+        src={logoDark}
+        alt="PrizeSkout"
+        style={{ height: 32, width: "auto", display: "block" }}
+      />
       <div
         style={{
           fontSize: 12,
           fontWeight: 400,
           color: "#8A8A8A",
-          marginTop: 6,
-          marginLeft: 38,
+          marginTop: 8,
         }}
       >
         Commerce Intelligence
@@ -60,22 +53,14 @@ export function BrandLogo() {
 
 export function BrandLogoLight() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: 7,
-          backgroundColor: "#EA580C",
-        }}
+    <div>
+      <img
+        src={logoLight}
+        alt="PrizeSkout"
+        style={{ height: 28, width: "auto", display: "block" }}
       />
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#1A1A18", lineHeight: 1.1 }}>
-          PrizeSkout
-        </div>
-        <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
-          Commerce Intelligence
-        </div>
+      <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 4 }}>
+        Commerce Intelligence
       </div>
     </div>
   );
