@@ -2,7 +2,7 @@
 // Linked from every endpoint in the API reference via the scope chip row.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, KeyRound, Shield, RefreshCw, AlertTriangle } from "lucide-react";
+import { ArrowLeft, KeyRound, Shield, RefreshCw, AlertTriangle, Webhook } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { DocsSubNav } from "@/components/docs/DocsSubNav";
 
