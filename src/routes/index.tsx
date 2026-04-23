@@ -493,8 +493,8 @@ function Hero() {
                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
               }}
             >
-              Tour the platform
-            </a>
+              Calculate my ROI
+            </Link>
           </div>
 
           <p style={{ marginTop: 18, fontSize: 12, color: "#6B6B6B" }}>
