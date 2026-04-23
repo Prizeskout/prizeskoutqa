@@ -199,7 +199,7 @@ function Header() {
               onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
             >
-              Get API keys
+              Get keys
             </Link>
           </div>
 
