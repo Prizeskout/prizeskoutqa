@@ -11,6 +11,7 @@ import { BehaviorPatterns } from "@/components/dashboard/competitors/BehaviorPat
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { CompetitorPriceChanges } from "@/components/dashboard/competitors/CompetitorPriceChanges";
 import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
+import { NewSinceBanner } from "@/components/dashboard/NewSinceBanner";
 import {
   type Category,
   type ChannelOpt,

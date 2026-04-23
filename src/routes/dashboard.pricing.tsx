@@ -7,6 +7,7 @@ import { PricingRules } from "@/components/dashboard/pricing/PricingRules";
 import { ModelLearningCallout } from "@/components/dashboard/pricing/ModelLearningCallout";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
+import { NewSinceBanner } from "@/components/dashboard/NewSinceBanner";
 import { PricingPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
