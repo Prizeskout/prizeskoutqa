@@ -1,9 +1,16 @@
 import { Users } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { FreshnessPill } from "@/components/dashboard/FreshnessPill";
 import type { FieldTeamActivityRow } from "@/lib/field-intel-data";
 
 export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow[] }) {
   const max = activity.reduce((m, a) => Math.max(m, a.observation_count), 1);
+  const latest = activity.reduce<string | null>((acc, a) => {
+    const t = a.updated_at ?? null;
+    if (!t) return acc;
+    if (!acc) return t;
+    return new Date(t).getTime() > new Date(acc).getTime() ? t : acc;
+  }, null);
   return (
     <div
       style={{
@@ -13,7 +20,10 @@ export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow
         padding: "20px 24px",
       }}
     >
-      <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Field team activity</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Field team activity</div>
+        <FreshnessPill timestamp={latest} />
+      </div>
       <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
         Observation volume by team member this week
       </div>
