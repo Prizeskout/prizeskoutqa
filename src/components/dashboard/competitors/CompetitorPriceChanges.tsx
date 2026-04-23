@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { InsightWindow } from "@/server/ai-insights.functions";
+import { FreshnessPill } from "@/components/dashboard/FreshnessPill";
 
 type ScrapeRow = {
   product: string | null;
