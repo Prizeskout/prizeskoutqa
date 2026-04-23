@@ -186,6 +186,7 @@ export function OverviewHero({
         >
           <Link
             to="/dashboard/pricing"
+            search={{ from: "overview" }}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -206,6 +207,7 @@ export function OverviewHero({
           </Link>
           <Link
             to="/dashboard/competitors"
+            search={{ from: "overview" }}
             style={{
               display: "inline-flex",
               alignItems: "center",
