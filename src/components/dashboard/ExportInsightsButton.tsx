@@ -37,7 +37,13 @@ export function ExportInsightsButton() {
       ]);
       toast.success("AI insights PDF generated");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to export PDF";
+      let msg = "Failed to export PDF";
+      if (err instanceof Response) {
+        try { msg = (await err.text()) || `Export failed (${err.status})`; }
+        catch { msg = `Export failed (${err.status})`; }
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
       toast.error(msg);
     } finally {
       setBusy(false);
