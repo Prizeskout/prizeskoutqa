@@ -1,97 +1,19 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
-import {
-  Menu,
-  X,
-  Camera,
-  Play,
-  Globe,
-  ChevronDown,
-  LineChart,
-  Tags,
-  Megaphone,
-  Map,
-  ClipboardList,
-  BookOpen,
-  Calculator,
-  FileText,
-  
-  Mail,
-  Newspaper,
-  ShieldCheck,
-  Code2,
-  Terminal,
-  Webhook,
-  KeyRound,
-  GitBranch,
-} from "lucide-react";
+import { Menu, X } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
 
-type InternalTo =
-  | "/contact"
-  | "/privacy"
-  | "/terms"
-  | "/changelog"
-  | "/roi-calculator"
-  | "/docs"
-  | "/api-reference"
-  | "/products/pricing"
-  | "/products/competitors"
-  | "/products/promotions"
-  | "/products/market"
-  | "/products/field-intel";
-
-type DropdownItem = {
+type SimpleNavItem = {
   label: string;
-  desc: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  to?: InternalTo;
+  to?: "/docs" | "/changelog";
   hash?: string;
 };
 
-type DropdownMenu = {
-  label: string;
-  wide?: boolean;
-  items: DropdownItem[];
-};
-
-const PRODUCTS_MENU: DropdownMenu = {
-  label: "Products",
-  wide: true,
-  items: [
-    { label: "Pricing Recommendations", desc: "AI price decisions with P&L impact", icon: Tags, to: "/products/pricing" },
-    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, to: "/products/competitors" },
-    { label: "Promotions & ROI", desc: "Simulate campaigns, read the promo calendar", icon: Megaphone, to: "/products/promotions" },
-    { label: "Market Signals", desc: "Trends, gaps, cross-border radar", icon: Map, to: "/products/market" },
-    { label: "Field Intel", desc: "Ingest in-store observations via API", icon: ClipboardList, to: "/products/field-intel" },
-    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
-  ],
-};
-
-const DEVELOPERS_MENU: DropdownMenu = {
-  label: "Developers",
-  wide: true,
-  items: [
-    { label: "Documentation", desc: "Guides, SDKs, integration walkthroughs", icon: BookOpen, to: "/docs" },
-    { label: "API Reference", desc: "Every endpoint and schema", icon: Code2, to: "/api-reference" },
-    { label: "Quickstart", desc: "Zero to first call in 3 minutes", icon: Terminal, hash: "quickstart" },
-    { label: "Webhooks", desc: "Signed events with retry and replay", icon: Webhook, to: "/docs" },
-    { label: "Authentication", desc: "Scoped API keys and rotation", icon: KeyRound, to: "/docs" },
-    { label: "Changelog", desc: "API and platform updates", icon: GitBranch, to: "/changelog" },
-  ],
-};
-
-const COMPANY_MENU: DropdownMenu = {
-  label: "Company",
-  items: [
-    { label: "Contact", desc: "Talk to a solutions engineer", icon: Mail, to: "/contact" },
-    { label: "Changelog", desc: "What's new on the platform", icon: Newspaper, to: "/changelog" },
-    { label: "Privacy", desc: "How we handle your data", icon: ShieldCheck, to: "/privacy" },
-    { label: "Terms", desc: "Service terms and SLAs", icon: FileText, to: "/terms" },
-  ],
-};
-
-const NAV_MENUS: DropdownMenu[] = [PRODUCTS_MENU, DEVELOPERS_MENU, COMPANY_MENU];
+const NAV_ITEMS: SimpleNavItem[] = [
+  { label: "Docs", to: "/docs" },
+  { label: "Pricing", hash: "pricing" },
+  { label: "Changelog", to: "/changelog" },
+];
 
 function smoothScrollToHash(hash: string) {
   if (!hash) {
