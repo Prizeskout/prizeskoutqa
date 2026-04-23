@@ -4,6 +4,8 @@ import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import type { OverviewAlert } from "@/lib/overview-data";
 
+export type SeverityFilter = "action" | "opportunity" | "intel" | null;
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -17,7 +19,15 @@ function getFirstName(name: string | null | undefined, email: string | null | un
   return "there";
 }
 
-export function OverviewHero({ alerts }: { alerts: OverviewAlert[] }) {
+export function OverviewHero({
+  alerts,
+  activeFilter,
+  onFilterChange,
+}: {
+  alerts: OverviewAlert[];
+  activeFilter: SeverityFilter;
+  onFilterChange: (next: SeverityFilter) => void;
+}) {
   const { user } = useAuth();
   // Greeting depends on local time → render only on client to avoid hydration drift.
   const [mounted, setMounted] = useState(false);
@@ -111,27 +121,54 @@ export function OverviewHero({ alerts }: { alerts: OverviewAlert[] }) {
           {headline}
         </p>
 
-        {/* Status strip */}
+        {/* Status strip — click to filter the alerts list below */}
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
             gap: 8,
             marginTop: 16,
+            alignItems: "center",
           }}
         >
           <StatusChip
             dotColor="#DC2626"
             label={`${counts.action} ${counts.action === 1 ? "action" : "actions"}`}
+            active={activeFilter === "action"}
+            disabled={counts.action === 0}
+            onClick={() => onFilterChange(activeFilter === "action" ? null : "action")}
           />
           <StatusChip
             dotColor="#16A34A"
             label={`${counts.opportunity} ${counts.opportunity === 1 ? "opportunity" : "opportunities"}`}
+            active={activeFilter === "opportunity"}
+            disabled={counts.opportunity === 0}
+            onClick={() => onFilterChange(activeFilter === "opportunity" ? null : "opportunity")}
           />
           <StatusChip
             dotColor="#2563EB"
             label={`${counts.intel} market signal${counts.intel === 1 ? "" : "s"}`}
+            active={activeFilter === "intel"}
+            disabled={counts.intel === 0}
+            onClick={() => onFilterChange(activeFilter === "intel" ? null : "intel")}
           />
+          {activeFilter && (
+            <button
+              type="button"
+              onClick={() => onFilterChange(null)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#7C3AED",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "5px 6px",
+              }}
+            >
+              Clear filter
+            </button>
+          )}
         </div>
 
         {/* Primary CTAs */}
@@ -187,20 +224,48 @@ export function OverviewHero({ alerts }: { alerts: OverviewAlert[] }) {
   );
 }
 
-function StatusChip({ dotColor, label }: { dotColor: string; label: string }) {
+function StatusChip({
+  dotColor,
+  label,
+  active,
+  disabled,
+  onClick,
+}: {
+  dotColor: string;
+  label: string;
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
   return (
-    <span
+    <button
+      type="button"
+      onClick={() => {
+        if (disabled) return;
+        onClick();
+        if (typeof window !== "undefined") {
+          window.requestAnimationFrame(() => {
+            const el = document.getElementById("overview-live-alerts");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+      }}
+      aria-pressed={active}
+      disabled={disabled}
       style={{
         display: "inline-flex",
         alignItems: "center",
         gap: 8,
-        backgroundColor: "#FAF8F3",
-        border: "1px solid #EFEAE0",
+        backgroundColor: active ? "#1A1A18" : "#FAF8F3",
+        border: `1px solid ${active ? "#1A1A18" : "#EFEAE0"}`,
         borderRadius: 999,
         padding: "5px 12px",
         fontSize: 12,
         fontWeight: 500,
-        color: "#3A3A38",
+        color: active ? "#FFFFFF" : "#3A3A38",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        transition: "background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease",
       }}
     >
       <span
@@ -213,6 +278,6 @@ function StatusChip({ dotColor, label }: { dotColor: string; label: string }) {
         }}
       />
       {label}
-    </span>
+    </button>
   );
 }
