@@ -12,24 +12,41 @@ import {
   Megaphone,
   Map,
   ClipboardList,
-  Gauge,
   BookOpen,
   Calculator,
   FileText,
-  HelpCircle,
   Building2,
   Mail,
   Newspaper,
-  Workflow,
   ShieldCheck,
+  Code2,
+  Terminal,
+  Webhook,
+  KeyRound,
+  GitBranch,
 } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
+
+type InternalTo =
+  | "/about"
+  | "/contact"
+  | "/privacy"
+  | "/terms"
+  | "/changelog"
+  | "/roi-calculator"
+  | "/docs"
+  | "/api-reference"
+  | "/products/pricing"
+  | "/products/competitors"
+  | "/products/promotions"
+  | "/products/market"
+  | "/products/field-intel";
 
 type DropdownItem = {
   label: string;
   desc: string;
   icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  to?: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" | "/roi-calculator";
+  to?: InternalTo;
   hash?: string;
 };
 
@@ -39,25 +56,29 @@ type DropdownMenu = {
   items: DropdownItem[];
 };
 
-const PLATFORM_MENU: DropdownMenu = {
-  label: "Platform",
+const PRODUCTS_MENU: DropdownMenu = {
+  label: "Products",
   wide: true,
   items: [
-    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, hash: "features" },
-    { label: "Pricing Recommendations", desc: "AI-driven decisions with P&L impact", icon: Tags, hash: "features" },
-    { label: "Promotion Planning", desc: "Calendar, ROI sim, cannibalization", icon: Megaphone, hash: "features" },
-    { label: "Market & Assortment", desc: "Trends, gaps, cross-border radar", icon: Map, hash: "features" },
-    { label: "Field Intel", desc: "In-store observations from your reps", icon: ClipboardList, hash: "features" },
-    { label: "Benchmarks", desc: "You vs market, model maturity", icon: Gauge, hash: "features" },
+    { label: "Pricing Recommendations", desc: "AI price decisions with P&L impact", icon: Tags, to: "/products/pricing" },
+    { label: "Competitor Intelligence", desc: "Live prices across every channel", icon: LineChart, to: "/products/competitors" },
+    { label: "Promotions & ROI", desc: "Simulate campaigns, read the promo calendar", icon: Megaphone, to: "/products/promotions" },
+    { label: "Market Signals", desc: "Trends, gaps, cross-border radar", icon: Map, to: "/products/market" },
+    { label: "Field Intel", desc: "Ingest in-store observations via API", icon: ClipboardList, to: "/products/field-intel" },
+    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
   ],
 };
 
-const SOLUTIONS_MENU: DropdownMenu = {
-  label: "Solutions",
+const DEVELOPERS_MENU: DropdownMenu = {
+  label: "Developers",
+  wide: true,
   items: [
-    { label: "How it works", desc: "Observe, learn, recommend, act", icon: Workflow, hash: "how-it-works" },
-    { label: "ROI Calculator", desc: "Quantify the upside in minutes", icon: Calculator, to: "/roi-calculator" },
-    { label: "Pricing", desc: "Plans for every retail size", icon: Tags, hash: "pricing" },
+    { label: "Documentation", desc: "Guides, SDKs, integration walkthroughs", icon: BookOpen, to: "/docs" },
+    { label: "API Reference", desc: "Every endpoint and schema", icon: Code2, to: "/api-reference" },
+    { label: "Quickstart", desc: "Zero to first call in 3 minutes", icon: Terminal, hash: "quickstart" },
+    { label: "Webhooks", desc: "Signed events with retry and replay", icon: Webhook, to: "/docs" },
+    { label: "Authentication", desc: "Scoped API keys and rotation", icon: KeyRound, to: "/docs" },
+    { label: "Changelog", desc: "API and platform updates", icon: GitBranch, to: "/changelog" },
   ],
 };
 
@@ -65,22 +86,14 @@ const COMPANY_MENU: DropdownMenu = {
   label: "Company",
   items: [
     { label: "About", desc: "Mission, team, market thesis", icon: Building2, to: "/about" },
-    { label: "Contact", desc: "Talk to our commercial team", icon: Mail, to: "/contact" },
-    { label: "Changelog", desc: "What's new in the platform", icon: Newspaper, to: "/changelog" },
-  ],
-};
-
-const RESOURCES_MENU: DropdownMenu = {
-  label: "Resources",
-  items: [
-    { label: "FAQ", desc: "Common questions answered", icon: HelpCircle, hash: "faq" },
+    { label: "Contact", desc: "Talk to a solutions engineer", icon: Mail, to: "/contact" },
+    { label: "Changelog", desc: "What's new on the platform", icon: Newspaper, to: "/changelog" },
     { label: "Privacy", desc: "How we handle your data", icon: ShieldCheck, to: "/privacy" },
     { label: "Terms", desc: "Service terms and SLAs", icon: FileText, to: "/terms" },
-    { label: "Documentation", desc: "Guides for your team", icon: BookOpen, hash: "features" },
   ],
 };
 
-const NAV_MENUS: DropdownMenu[] = [PLATFORM_MENU, SOLUTIONS_MENU, COMPANY_MENU, RESOURCES_MENU];
+const NAV_MENUS: DropdownMenu[] = [PRODUCTS_MENU, DEVELOPERS_MENU, COMPANY_MENU];
 
 function smoothScrollToHash(hash: string) {
   if (!hash) {
@@ -487,9 +500,25 @@ function Header() {
                 }
               />
             ))}
+            <a
+              href="/#pricing"
+              onClick={(e) => handleNavClick(e, "pricing")}
+              style={{
+                padding: "8px 14px",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "#A8A8A8",
+                textDecoration: "none",
+                transition: "color 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
+            >
+              Pricing
+            </a>
           </nav>
 
-          <div className="hidden md:flex" style={{ alignItems: "center", gap: 20 }}>
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: 18 }}>
             <Link
               to="/login"
               style={{
@@ -511,7 +540,7 @@ function Header() {
                 color: "#FFFFFF",
                 fontSize: 14,
                 fontWeight: 600,
-                padding: "9px 22px",
+                padding: "9px 20px",
                 borderRadius: 8,
                 textDecoration: "none",
                 transition: "background 0.15s",
@@ -519,7 +548,7 @@ function Header() {
               onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
             >
-              Get started
+              Get API keys
             </Link>
           </div>
 
@@ -624,7 +653,7 @@ function Header() {
                 marginTop: 8,
               }}
             >
-              Get started
+              Get API keys
             </Link>
           </nav>
         </div>
@@ -655,7 +684,22 @@ function FooterAnchor({ label }: { label: string }) {
   );
 }
 
-function FooterRouteLink({ label, to }: { label: string; to: "/about" | "/contact" | "/privacy" | "/terms" | "/changelog" | "/roi-calculator" }) {
+type FooterTo =
+  | "/about"
+  | "/contact"
+  | "/privacy"
+  | "/terms"
+  | "/changelog"
+  | "/roi-calculator"
+  | "/docs"
+  | "/api-reference"
+  | "/products/pricing"
+  | "/products/competitors"
+  | "/products/promotions"
+  | "/products/market"
+  | "/products/field-intel";
+
+function FooterRouteLink({ label, to }: { label: string; to: FooterTo }) {
   return (
     <Link
       to={to}
@@ -728,8 +772,8 @@ function Footer() {
                 maxWidth: 280,
               }}
             >
-              AI-powered pricing intelligence for commerce brands. Monitor, optimize, and outsmart
-              your competition across every channel.
+              Pricing intelligence APIs for retail developers. Competitor data,
+              recommendations, ROI, and field intel — as a clean REST surface.
             </p>
             <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
               {[
@@ -765,26 +809,27 @@ function Footer() {
 
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Product
+              Products
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterHashLink label="Features" hash="features" />
-              <FooterHashLink label="Pricing" hash="pricing" />
-              <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
-              <FooterAnchor label="API docs" />
-              <FooterRouteLink label="Changelog" to="/changelog" />
+              <FooterRouteLink label="Pricing Recommendations" to="/products/pricing" />
+              <FooterRouteLink label="Competitor Intelligence" to="/products/competitors" />
+              <FooterRouteLink label="Promotions & ROI" to="/products/promotions" />
+              <FooterRouteLink label="Market Signals" to="/products/market" />
+              <FooterRouteLink label="Field Intel" to="/products/field-intel" />
             </div>
           </div>
 
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Company
+              Developers
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterRouteLink label="About" to="/about" />
-              <FooterAnchor label="Blog" />
-              <FooterAnchor label="Careers" />
-              <FooterRouteLink label="Contact" to="/contact" />
+              <FooterRouteLink label="Documentation" to="/docs" />
+              <FooterRouteLink label="API Reference" to="/api-reference" />
+              <FooterRouteLink label="Changelog" to="/changelog" />
+              <FooterHashLink label="Pricing" hash="pricing" />
+              <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
             </div>
           </div>
 
