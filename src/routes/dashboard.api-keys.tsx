@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { KeyRound, Copy, Check, Trash2, Ban, Plus, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { KeyRound, Copy, Check, Trash2, Ban, Plus, Eye, EyeOff, AlertTriangle, ShieldCheck, Clock, ShieldAlert, Lock } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAccount } from "@/hooks/useAccount";
 import {
   createApiKey,
   revokeApiKey,
   deleteApiKey,
+  requestLiveAccess,
 } from "@/server/developer-console.functions";
 
 export const Route = createFileRoute("/dashboard/api-keys")({
