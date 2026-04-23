@@ -9,6 +9,7 @@ import { QuickActions } from "@/components/dashboard/overview/QuickActions";
 import { OverviewHero, type SeverityFilter } from "@/components/dashboard/overview/OverviewHero";
 import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
 import { ExportInsightsButton } from "@/components/dashboard/ExportInsightsButton";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding/OnboardingChecklist";
 import { OverviewPendingPage } from "@/components/dashboard/Skeletons";
 import { pendingOnSSR } from "@/lib/ssr-pending";
 import { supabase } from "@/integrations/supabase/client";
@@ -131,7 +132,7 @@ function OverviewPage() {
   return (
     <DashboardLayout title="Overview">
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* 1. Hero — greeting + briefing + primary CTAs */}
+        {/* 1. Hero: greeting, briefing, and primary CTAs */}
         <OverviewHero
           alerts={data.alerts}
           activeFilter={severityFilter}
@@ -139,6 +140,10 @@ function OverviewPage() {
           pricingCount={data.pricingCount}
           competitorChangeCount={data.competitorChangeCount}
         />
+
+        {/* 1b. First-run checklist. Hides itself once the user has saved a URL,
+            run a scrape, and generated an insight, or after they dismiss it. */}
+        <OnboardingChecklist />
 
         {/* 2. AI summary — the smartest read on the page */}
         <SectionLabel
