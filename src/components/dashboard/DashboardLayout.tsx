@@ -3,6 +3,7 @@ import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronRight, RefreshCw } from "lucide-react";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { PageHeader } from "./PageHeader";
 import type { Channel } from "./ChannelFilter";
 
 function formatRelative(ts: number, now: number) {
@@ -219,9 +220,17 @@ function Breadcrumbs({ title, pathname }: { title: string; pathname: string }) {
 
 export function DashboardLayout({
   title,
+  subtitle,
+  primaryAction,
+  helpItems,
+  statusChips,
   children,
 }: {
   title: string;
+  subtitle?: string;
+  primaryAction?: ReactNode;
+  helpItems?: string[];
+  statusChips?: ReactNode;
   children: ReactNode;
 }) {
   const [channel, setChannel] = useState<Channel>("All Channels");
@@ -255,6 +264,15 @@ export function DashboardLayout({
             style={{ maxWidth: 1080, margin: "0 auto" }}
           >
             <Breadcrumbs title={title} pathname={location.pathname} />
+            {subtitle && (
+              <PageHeader
+                title={title}
+                subtitle={subtitle}
+                primaryAction={primaryAction}
+                helpItems={helpItems}
+                statusChips={statusChips}
+              />
+            )}
             {children}
           </div>
         </main>
