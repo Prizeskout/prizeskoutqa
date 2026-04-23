@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { type OverviewAlert, formatRelativeTime } from "@/lib/overview-data";
+import { FreshnessPill } from "@/components/dashboard/FreshnessPill";
 
 // Map each alert type to the dashboard surface that owns the underlying data.
 // Clicking an alert deep-links the user to that page so they can act on it.
