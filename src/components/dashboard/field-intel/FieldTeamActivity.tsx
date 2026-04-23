@@ -1,3 +1,5 @@
+import { Users } from "lucide-react";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import type { FieldTeamActivityRow } from "@/lib/field-intel-data";
 
 export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow[] }) {
@@ -15,6 +17,14 @@ export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow
       <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
         Observation volume by team member this week
       </div>
+      {activity.length === 0 ? (
+        <EmptyState
+          compact
+          icon={<Users size={20} strokeWidth={1.75} />}
+          title="No field activity this week"
+          description="Once your team submits in-store observations, you'll see who's contributing here."
+        />
+      ) : (
       <div style={{ marginTop: 8 }}>
         {activity.map((a, i) => (
           <div
@@ -63,6 +73,7 @@ export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

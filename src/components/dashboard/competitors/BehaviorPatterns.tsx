@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Eye } from "lucide-react";
+import { Eye, Activity } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { exportPatternsPdf } from "./exportPatternsPdf";
 import { useBranding, accentRgba } from "@/hooks/useBranding";
 import type { BehaviorPattern } from "@/lib/competitors-data";
@@ -43,15 +44,15 @@ export function BehaviorPatterns({ patterns }: { patterns: BehaviorPattern[] }) 
       <div
         style={{
           backgroundColor: "#FFFFFF",
-          border: "1px dashed #E5E2DB",
-          borderRadius: 10,
-          padding: "20px 24px",
-          fontSize: 13,
-          color: "#6B6B6B",
+          border: "1px solid var(--color-light-border, #E5E2DB)",
+          borderRadius: "var(--radius-card, 12px)",
         }}
       >
-        No behavior patterns detected yet. Patterns appear once we have at least 8 months of
-        competitor tracking data.
+        <EmptyState
+          icon={<Activity size={20} strokeWidth={1.75} />}
+          title="No behavior patterns detected yet"
+          description="Patterns surface once we have at least 8 months of continuous competitor tracking. Keep your scrapes running — early signals will appear here as soon as the model is confident."
+        />
       </div>
     );
   }

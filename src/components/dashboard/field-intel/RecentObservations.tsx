@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { MapPin, Trash2 } from "lucide-react";
+import { MapPin, Trash2, ClipboardList } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,6 +112,18 @@ export function RecentObservations({
         })}
       </div>
       <div style={{ marginTop: 6 }}>
+        {filtered.length === 0 && (
+          <EmptyState
+            compact
+            icon={<ClipboardList size={20} strokeWidth={1.75} />}
+            title={filter === "All" ? "No observations yet" : "Nothing pending review"}
+            description={
+              filter === "All"
+                ? "Submit your first in-store check above to start building your field intel record."
+                : "All recent submissions have been reviewed. Switch to All to see the full list."
+            }
+          />
+        )}
         {filtered.map((o, i) => (
           <div
             key={o.id}
