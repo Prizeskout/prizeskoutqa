@@ -63,7 +63,15 @@ function FieldIntelPage() {
   const data = Route.useLoaderData() as FieldIntelData;
 
   return (
-    <DashboardLayout title="Field Intel">
+    <DashboardLayout
+      title="Field Intel"
+      subtitle="In-store observations and price gaps reported by your field team — synced with online prices."
+      helpItems={[
+        "Submit a new observation right here when an agent spots a price, promo, or stock change.",
+        "Price gaps highlight where in-store and online disagree — usually a quick win.",
+        "Recent observations are tagged with agent + store so you can validate fast.",
+      ]}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportPdfButton

@@ -74,7 +74,15 @@ function PromotionsPage() {
   const data = Route.useLoaderData() as PromotionsData;
 
   return (
-    <DashboardLayout title="Promotions">
+    <DashboardLayout
+      title="Promotions"
+      subtitle="Plan campaigns, simulate ROI, and learn from past discount cannibalization."
+      helpItems={[
+        "Use the ROI simulator to test depth × duration before launching a campaign.",
+        "Past campaigns show real cannibalization — copy what worked, avoid what didn't.",
+        "The calendar shows competitor promo windows so you can avoid head-to-head clashes.",
+      ]}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <ExportInsightsButton />
