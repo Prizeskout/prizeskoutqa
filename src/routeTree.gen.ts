@@ -27,6 +27,7 @@ import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
 import { Route as ProductsMarketRouteImport } from './routes/products.market'
 import { Route as ProductsFieldIntelRouteImport } from './routes/products.field-intel'
 import { Route as ProductsCompetitorsRouteImport } from './routes/products.competitors'
+import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DashboardWebhooksRouteImport } from './routes/dashboard.webhooks'
 import { Route as DashboardUsageRouteImport } from './routes/dashboard.usage'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
@@ -132,6 +133,11 @@ const ProductsCompetitorsRoute = ProductsCompetitorsRouteImport.update({
   path: '/products/competitors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsGuidesRoute = DocsGuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => DocsRoute,
+} as any)
 const DashboardWebhooksRoute = DashboardWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
@@ -209,7 +215,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
+  '/docs/guides': typeof DocsGuidesRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -242,7 +249,7 @@ export interface FileRoutesByTo {
   '/api-reference': typeof ApiReferenceRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
+  '/docs/guides': typeof DocsGuidesRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -277,7 +285,7 @@ export interface FileRoutesById {
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
+  '/docs/guides': typeof DocsGuidesRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
+    | '/docs/guides'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
+    | '/docs/guides'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
+    | '/docs/guides'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -415,7 +427,7 @@ export interface RootRouteChildren {
   ChangelogRoute: typeof ChangelogRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
-  DocsRoute: typeof DocsRoute
+  DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -559,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductsCompetitorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/guides': {
+      id: '/docs/guides'
+      path: '/guides'
+      fullPath: '/docs/guides'
+      preLoaderRoute: typeof DocsGuidesRouteImport
+      parentRoute: typeof DocsRoute
+    }
     '/dashboard/webhooks': {
       id: '/dashboard/webhooks'
       path: '/webhooks'
@@ -696,13 +715,23 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface DocsRouteChildren {
+  DocsGuidesRoute: typeof DocsGuidesRoute
+}
+
+const DocsRouteChildren: DocsRouteChildren = {
+  DocsGuidesRoute: DocsGuidesRoute,
+}
+
+const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiReferenceRoute: ApiReferenceRoute,
   ChangelogRoute: ChangelogRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
-  DocsRoute: DocsRoute,
+  DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
