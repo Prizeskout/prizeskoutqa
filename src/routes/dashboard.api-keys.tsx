@@ -34,7 +34,10 @@ function ApiKeysPage() {
   const [mode, setMode] = useState<"test" | "live">("test");
   const [creating, setCreating] = useState(false);
   const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [newKeyMeta, setNewKeyMeta] = useState<{ name: string; mode: "test" | "live" } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [ackStored, setAckStored] = useState(false);
 
   const createFn = useServerFn(createApiKey);
   const revokeFn = useServerFn(revokeApiKey);
