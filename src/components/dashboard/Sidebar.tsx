@@ -231,7 +231,8 @@ function SidebarContent({
           type="button"
           onClick={toggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-keyshortcuts="Control+B Meta+B"
+          title={`${collapsed ? "Expand sidebar" : "Collapse sidebar"} (⌘/Ctrl+B)`}
           className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
           style={{
             margin: collapsed ? "4px auto 8px" : "4px 16px 8px",
