@@ -16,8 +16,10 @@ import {
   Activity,
   FileCode2,
   Webhook,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import logoDark from "@/assets/logo-dark.svg";
