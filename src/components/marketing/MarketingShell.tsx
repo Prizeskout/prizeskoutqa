@@ -176,24 +176,15 @@ function Header() {
             />
           </a>
 
-          <nav className="hidden md:flex" style={{ gap: 32 }}>
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.hash}
-                href={`/#${l.hash}`}
-                onClick={(e) => handleNavClick(e, l.hash)}
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: "#8A8A8A",
-                  textDecoration: "none",
-                  transition: "color 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8A8A")}
-              >
-                {l.label}
-              </a>
+          <nav className="hidden md:flex" style={{ gap: 4, alignItems: "center" }}>
+            {NAV_MENUS.map((menu) => (
+              <NavDropdown
+                key={menu.label}
+                menu={menu}
+                onHashItem={(hash) =>
+                  handleNavClick({ preventDefault: () => {} } as React.MouseEvent, hash)
+                }
+              />
             ))}
           </nav>
 
