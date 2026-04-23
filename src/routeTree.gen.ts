@@ -39,7 +39,7 @@ import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.com
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
-import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
+import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
 const TermsRoute = TermsRouteImport.update({
@@ -192,9 +192,9 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
-const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
-  id: '/api/v1/$',
-  path: '/api/v1/$',
+const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
+  id: '/api/public/v1/$',
+  path: '/api/public/v1/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
@@ -234,8 +234,8 @@ export interface FileRoutesByFullPath {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -267,8 +267,8 @@ export interface FileRoutesByTo {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
-  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -302,8 +302,8 @@ export interface FileRoutesById {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
-  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -338,8 +338,8 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
-    | '/api/v1/$'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/v1/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -371,8 +371,8 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard'
-    | '/api/v1/$'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/v1/$'
   id:
     | '__root__'
     | '/'
@@ -405,8 +405,8 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
-    | '/api/v1/$'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/v1/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -427,8 +427,8 @@ export interface RootRouteChildren {
   ProductsMarketRoute: typeof ProductsMarketRoute
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
-  ApiV1SplatRoute: typeof ApiV1SplatRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
+  ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -643,11 +643,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/api/v1/$': {
-      id: '/api/v1/$'
-      path: '/api/v1/$'
-      fullPath: '/api/v1/$'
-      preLoaderRoute: typeof ApiV1SplatRouteImport
+    '/api/public/v1/$': {
+      id: '/api/public/v1/$'
+      path: '/api/public/v1/$'
+      fullPath: '/api/public/v1/$'
+      preLoaderRoute: typeof ApiPublicV1SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/scrape-all': {
@@ -714,8 +714,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsMarketRoute: ProductsMarketRoute,
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
-  ApiV1SplatRoute: ApiV1SplatRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
+  ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

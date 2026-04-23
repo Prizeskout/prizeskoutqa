@@ -163,7 +163,7 @@ async function handle(request: Request, splat: string) {
   });
 }
 
-export const Route = createFileRoute("/api/v1/$")({
+export const Route = createFileRoute("/api/public/v1/$")({
   server: {
     handlers: {
       GET: ({ request, params }) => handle(request, params._splat ?? ""),
