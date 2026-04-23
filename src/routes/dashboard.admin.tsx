@@ -73,6 +73,12 @@ function AdminPage() {
     });
   }, [rows, statusFilter, search]);
 
+  const counts = useMemo(() => {
+    const c = { all: rows.length, pending: 0, approved: 0, rejected: 0, none: 0 };
+    for (const r of rows) c[r.live_status]++;
+    return c;
+  }, [rows]);
+
   if (adminLoading) {
     return (
       <DashboardLayout title="Admin">
@@ -143,11 +149,6 @@ function AdminPage() {
     }
   };
 
-  const counts = useMemo(() => {
-    const c = { all: rows.length, pending: 0, approved: 0, rejected: 0, none: 0 };
-    for (const r of rows) c[r.live_status]++;
-    return c;
-  }, [rows]);
 
   return (
     <DashboardLayout
