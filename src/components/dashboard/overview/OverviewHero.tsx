@@ -4,6 +4,8 @@ import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import type { OverviewAlert } from "@/lib/overview-data";
 
+export type SeverityFilter = "action" | "opportunity" | "intel" | null;
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
@@ -17,7 +19,15 @@ function getFirstName(name: string | null | undefined, email: string | null | un
   return "there";
 }
 
-export function OverviewHero({ alerts }: { alerts: OverviewAlert[] }) {
+export function OverviewHero({
+  alerts,
+  activeFilter,
+  onFilterChange,
+}: {
+  alerts: OverviewAlert[];
+  activeFilter: SeverityFilter;
+  onFilterChange: (next: SeverityFilter) => void;
+}) {
   const { user } = useAuth();
   // Greeting depends on local time → render only on client to avoid hydration drift.
   const [mounted, setMounted] = useState(false);
