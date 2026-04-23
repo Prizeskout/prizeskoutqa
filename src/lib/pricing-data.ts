@@ -21,6 +21,7 @@ export type PricingRecommendation = {
   net_monthly: string;
   confidence: number;
   position: number;
+  source: "seed" | "computed";
 };
 
 export type PricingRule = {
