@@ -392,7 +392,7 @@ function MobileNavSection({
   );
 }
 
-
+function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
