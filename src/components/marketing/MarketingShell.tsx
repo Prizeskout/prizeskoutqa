@@ -460,9 +460,7 @@ function Footer() {
             <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
               {[
                 { label: "X", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>X</span> },
-                { label: "in", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>in</span> },
-                { label: "Instagram", node: <Camera size={14} color="#8A8A8A" /> },
-                { label: "YouTube", node: <Play size={14} color="#8A8A8A" /> },
+                { label: "LinkedIn", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>in</span> },
               ].map((s) => (
                 <a
                   key={s.label}
@@ -551,7 +549,6 @@ function Footer() {
               gap: 6,
             }}
           >
-            <Globe size={12} />
             Qatar
           </span>
         </div>
