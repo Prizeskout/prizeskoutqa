@@ -38,6 +38,7 @@ import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.fiel
 import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
+import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
 const TermsRoute = TermsRouteImport.update({
@@ -185,6 +186,11 @@ const DashboardApiKeysRoute = DashboardApiKeysRouteImport.update({
   path: '/api-keys',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   id: '/api/public/hooks/scrape-all',
   path: '/api/public/hooks/scrape-all',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/roi-calculator'
     | '/signup'
     | '/terms'
+    | '/dashboard/admin'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/roi-calculator'
     | '/signup'
     | '/terms'
+    | '/dashboard/admin'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/roi-calculator'
     | '/signup'
     | '/terms'
+    | '/dashboard/admin'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
@@ -611,6 +623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardApiKeysRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/admin': {
+      id: '/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/public/hooks/scrape-all': {
       id: '/api/public/hooks/scrape-all'
       path: '/api/public/hooks/scrape-all'
@@ -622,6 +641,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardRouteChildren {
+  DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
@@ -637,6 +657,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAdminRoute: DashboardAdminRoute,
   DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,

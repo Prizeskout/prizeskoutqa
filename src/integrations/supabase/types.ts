@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          billing_email: string | null
+          company_domain: string | null
+          company_name: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          expected_volume: string | null
+          live_status: string
+          requested_at: string | null
+          updated_at: string
+          use_case: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_email?: string | null
+          company_domain?: string | null
+          company_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          expected_volume?: string | null
+          live_status?: string
+          requested_at?: string | null
+          updated_at?: string
+          use_case?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_email?: string | null
+          company_domain?: string | null
+          company_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          expected_volume?: string | null
+          live_status?: string
+          requested_at?: string | null
+          updated_at?: string
+          use_case?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_insights: {
         Row: {
           actions: Json
@@ -1909,6 +1957,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_account_for_user: { Args: { uid: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

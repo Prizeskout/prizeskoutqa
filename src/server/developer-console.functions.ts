@@ -39,6 +39,22 @@ export const createApiKey = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // Phase B gate: live keys require an approved account.
+    if (data.mode === "live") {
+      const { data: account, error: aErr } = await supabase
+        .from("accounts")
+        .select("live_status")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (aErr) throw new Error(aErr.message);
+      if (!account || account.live_status !== "approved") {
+        throw new Error(
+          "Live API access has not been approved for this account. Submit a live access request from the API Keys page."
+        );
+      }
+    }
+
     const { raw, prefix, lastFour } = generateRawKey(data.mode);
     const { data: inserted, error } = await supabase
       .from("api_keys")
@@ -57,6 +73,140 @@ export const createApiKey = createServerFn({ method: "POST" })
     // IMPORTANT: raw is returned only here, once, never persisted.
     return { key: inserted, secret: raw };
   });
+
+// ---------- Phase B: live access approval ----------
+
+type LiveAccessInput = {
+  companyName: string;
+  companyDomain: string;
+  useCase: string;
+  expectedVolume: string;
+  billingEmail: string;
+};
+
+export const requestLiveAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: LiveAccessInput) => ({
+    companyName: String(input?.companyName ?? "").trim().slice(0, 160),
+    companyDomain: String(input?.companyDomain ?? "").trim().slice(0, 160),
+    useCase: String(input?.useCase ?? "").trim().slice(0, 2000),
+    expectedVolume: String(input?.expectedVolume ?? "").trim().slice(0, 80),
+    billingEmail: String(input?.billingEmail ?? "").trim().slice(0, 200),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!data.companyName || !data.useCase || !data.billingEmail) {
+      throw new Error("Company name, use case, and billing email are required");
+    }
+    const { error } = await supabase
+      .from("accounts")
+      .upsert(
+        {
+          user_id: userId,
+          live_status: "pending",
+          company_name: data.companyName,
+          company_domain: data.companyDomain || null,
+          use_case: data.useCase,
+          expected_volume: data.expectedVolume || null,
+          billing_email: data.billingEmail,
+          requested_at: new Date().toISOString(),
+          decided_at: null,
+          decided_by: null,
+          decision_note: null,
+        },
+        { onConflict: "user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+type DecisionInput = { userId: string; note?: string };
+
+async function requireAdmin(supabase: ReturnType<typeof Object>, callerId: string) {
+  const { data, error } = await (supabase as any).rpc("has_role", {
+    _user_id: callerId,
+    _role: "admin",
+  });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Admin role required");
+}
+
+export const approveLiveAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: DecisionInput) => ({
+    userId: String(input?.userId ?? ""),
+    note: String(input?.note ?? "").trim().slice(0, 1000) || null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    if (!data.userId) throw new Error("userId required");
+    await requireAdmin(supabase, callerId);
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        live_status: "approved",
+        decided_at: new Date().toISOString(),
+        decided_by: callerId,
+        decision_note: data.note,
+      })
+      .eq("user_id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const rejectLiveAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: DecisionInput) => ({
+    userId: String(input?.userId ?? ""),
+    note: String(input?.note ?? "").trim().slice(0, 1000) || null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    if (!data.userId) throw new Error("userId required");
+    await requireAdmin(supabase, callerId);
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        live_status: "rejected",
+        decided_at: new Date().toISOString(),
+        decided_by: callerId,
+        decision_note: data.note,
+      })
+      .eq("user_id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const revokeLiveAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: DecisionInput) => ({
+    userId: String(input?.userId ?? ""),
+    note: String(input?.note ?? "").trim().slice(0, 1000) || null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    if (!data.userId) throw new Error("userId required");
+    await requireAdmin(supabase, callerId);
+    const { error } = await supabase
+      .from("accounts")
+      .update({
+        live_status: "none",
+        decided_at: new Date().toISOString(),
+        decided_by: callerId,
+        decision_note: data.note,
+      })
+      .eq("user_id", data.userId);
+    if (error) throw new Error(error.message);
+    // Also revoke any existing live keys for that user
+    await supabase
+      .from("api_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("user_id", data.userId)
+      .eq("mode", "live")
+      .is("revoked_at", null);
+    return { ok: true };
+  });
+
 
 export const revokeApiKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
