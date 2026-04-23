@@ -73,6 +73,9 @@ async function loadCompetitors(): Promise<CompetitorsPageData> {
 
 export const Route = createFileRoute("/dashboard/competitors")({
   head: () => ({ meta: [{ title: "Competitors | PrizeSkout" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    from: typeof search.from === "string" ? search.from : undefined,
+  }),
   loader: () => loadCompetitors(),
   staleTime: 0,
   pendingMs: 0,
@@ -149,6 +152,12 @@ function CompetitorsPage() {
         "Behavior patterns highlight repeat tactics — use them to predict the next promo.",
       ]}
     >
+      <NewSinceBanner
+        pageKey="competitors"
+        count={data.prices.length}
+        label="competitor price"
+        fromParam="overview"
+      />
       <div
         style={{
           marginBottom: 12,
