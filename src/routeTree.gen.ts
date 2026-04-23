@@ -20,7 +20,6 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ProductsPromotionsRouteImport } from './routes/products.promotions'
@@ -90,11 +89,6 @@ const ChangelogRoute = ChangelogRouteImport.update({
 const ApiReferenceRoute = ApiReferenceRouteImport.update({
   id: '/api-reference',
   path: '/api-reference',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -175,7 +169,6 @@ const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/api-reference': typeof ApiReferenceRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
@@ -204,7 +197,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/api-reference': typeof ApiReferenceRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
@@ -233,7 +225,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/api-reference': typeof ApiReferenceRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
@@ -264,7 +255,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
     | '/api-reference'
     | '/changelog'
     | '/contact'
@@ -293,7 +283,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/about'
     | '/api-reference'
     | '/changelog'
     | '/contact'
@@ -321,7 +310,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/about'
     | '/api-reference'
     | '/changelog'
     | '/contact'
@@ -351,7 +339,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
   ApiReferenceRoute: typeof ApiReferenceRoute
   ChangelogRoute: typeof ChangelogRoute
   ContactRoute: typeof ContactRoute
@@ -448,13 +435,6 @@ declare module '@tanstack/react-router' {
       path: '/api-reference'
       fullPath: '/api-reference'
       preLoaderRoute: typeof ApiReferenceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -593,7 +573,6 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
   ApiReferenceRoute: ApiReferenceRoute,
   ChangelogRoute: ChangelogRoute,
   ContactRoute: ContactRoute,

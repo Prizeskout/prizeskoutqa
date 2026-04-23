@@ -15,7 +15,7 @@ import {
   BookOpen,
   Calculator,
   FileText,
-  Building2,
+  
   Mail,
   Newspaper,
   ShieldCheck,
@@ -28,7 +28,6 @@ import {
 import logoDark from "@/assets/logo-dark.svg";
 
 type InternalTo =
-  | "/about"
   | "/contact"
   | "/privacy"
   | "/terms"
@@ -85,7 +84,6 @@ const DEVELOPERS_MENU: DropdownMenu = {
 const COMPANY_MENU: DropdownMenu = {
   label: "Company",
   items: [
-    { label: "About", desc: "Mission, team, market thesis", icon: Building2, to: "/about" },
     { label: "Contact", desc: "Talk to a solutions engineer", icon: Mail, to: "/contact" },
     { label: "Changelog", desc: "What's new on the platform", icon: Newspaper, to: "/changelog" },
     { label: "Privacy", desc: "How we handle your data", icon: ShieldCheck, to: "/privacy" },
@@ -685,7 +683,6 @@ function FooterAnchor({ label }: { label: string }) {
 }
 
 type FooterTo =
-  | "/about"
   | "/contact"
   | "/privacy"
   | "/terms"
