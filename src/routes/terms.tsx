@@ -101,7 +101,7 @@ function TermsPage() {
 
           <h2>10. Contact</h2>
           <p>
-            Questions about these terms? Email <strong>legal@prizeskout.com</strong>.
+            Questions about these terms? Email <strong>legal@prizeskout.qa</strong>.
           </p>
         </MarketingProse>
       </MarketingBody>

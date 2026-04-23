@@ -170,7 +170,7 @@ function ApiReferencePage() {
               color: "#6B6B6B",
             }}
           >
-            Base URL · <span style={{ color: "#FB923C" }}>https://api.prizeskout.com</span>
+            Base URL · <span style={{ color: "#FB923C" }}>https://api.prizeskout.qa</span>
           </div>
         </div>
       </section>

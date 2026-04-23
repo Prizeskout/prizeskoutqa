@@ -143,7 +143,7 @@ function LastUpdated({ pathname }: { pathname: string }) {
 function Breadcrumbs({ title, pathname }: { title: string; pathname: string }) {
   const isOverview = title.toLowerCase() === "overview";
   const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://prizeskout.com";
+    typeof window !== "undefined" ? window.location.origin : "https://prizeskout.qa";
   const itemList = isOverview
     ? [{ name: "Dashboard", item: `${origin}/dashboard` }]
     : [

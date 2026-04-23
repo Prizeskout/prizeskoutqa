@@ -2,7 +2,7 @@
 // Today only tracks company name, so Branding can default its brand name
 // from it without users typing the same value twice.
 
-const STORAGE_KEY = "prizeskout.company.v1";
+const STORAGE_KEY = "prizeskout.qapany.v1";
 const EVENT = "prizeskout:company-updated";
 
 export type Company = {

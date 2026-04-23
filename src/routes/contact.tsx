@@ -30,13 +30,13 @@ const CHANNELS = [
   {
     icon: Mail,
     title: "Email",
-    body: "hello@prizeskout.com",
+    body: "hello@prizeskout.qa",
     note: "We reply within one business day.",
   },
   {
     icon: MessageSquare,
     title: "Sales",
-    body: "sales@prizeskout.com",
+    body: "sales@prizeskout.qa",
     note: "Demos, pricing, and procurement questions.",
   },
   {

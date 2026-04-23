@@ -38,7 +38,7 @@ export const Route = createFileRoute("/products/competitors")({
         "Webhooks on price drops, promo starts, and competitor stockouts",
         "Field-intel reconciliation so in-store and online prices can be queried together",
       ]}
-      sampleRequest={`curl "https://api.prizeskout.com/v1/competitors/prices?product_id=sku_galaxy_buds_2_pro" \\
+      sampleRequest={`curl "https://api.prizeskout.qa/v1/competitors/prices?product_id=sku_galaxy_buds_2_pro" \\
   -H "Authorization: Bearer sk_live_••••"`}
       sampleResponse={`{
   "product_id": "sku_galaxy_buds_2_pro",

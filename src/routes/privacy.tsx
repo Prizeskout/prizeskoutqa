@@ -93,7 +93,7 @@ function PrivacyPage() {
 
           <h2>7. Contact</h2>
           <p>
-            Questions about this policy? Email <strong>privacy@prizeskout.com</strong> and we
+            Questions about this policy? Email <strong>privacy@prizeskout.qa</strong> and we
             will get back to you within one business day.
           </p>
         </MarketingProse>

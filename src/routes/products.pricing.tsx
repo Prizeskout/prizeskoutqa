@@ -39,7 +39,7 @@ export const Route = createFileRoute("/products/pricing")({
         "Webhook events when a new recommendation fires or an existing one changes",
         "Full decision log for compliance and post-hoc analysis",
       ]}
-      sampleRequest={`curl https://api.prizeskout.com/v1/pricing/recommendations \\
+      sampleRequest={`curl https://api.prizeskout.qa/v1/pricing/recommendations \\
   -H "Authorization: Bearer sk_live_••••" \\
   -H "Content-Type: application/json" \\
   -d '{
