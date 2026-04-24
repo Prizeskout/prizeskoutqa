@@ -302,6 +302,8 @@ export function ApiReference() {
           filteredGroups={filteredGroups}
           openGroups={openGroups}
           setOpenGroups={setOpenGroups}
+          openPillars={openPillars}
+          setOpenPillars={setOpenPillars}
           selected={selected}
           setSelected={setSelected}
         />
@@ -312,6 +314,8 @@ export function ApiReference() {
             filteredGroups={filteredGroups}
             openGroups={openGroups}
             setOpenGroups={setOpenGroups}
+            openPillars={openPillars}
+            setOpenPillars={setOpenPillars}
             selected={selected}
             setSelected={(s) => {
               setSelected(s);
