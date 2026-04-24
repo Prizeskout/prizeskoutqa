@@ -115,6 +115,7 @@ const COMPETITORS_GROUP: GroupSpec = {
   slug: "competitors",
   name: "Competitor Prices",
   tagline: "Live and historical competitor prices across online and in-store channels.",
+  pillar: "pricing-intelligence",
   endpoints: [
     {
       slug: "list-prices",
@@ -292,6 +293,7 @@ const PRICING_GROUP: GroupSpec = {
   slug: "pricing",
   name: "Pricing Recommendations",
   tagline: "AI-generated price changes with expected margin and unit impact.",
+  pillar: "pricing-intelligence",
   endpoints: [
     {
       slug: "list-recommendations",
@@ -431,6 +433,7 @@ const PROMOTIONS_GROUP: GroupSpec = {
   slug: "promotions",
   name: "Promotions & ROI",
   tagline: "Simulate campaigns, list competitor promos, and inspect past performance.",
+  pillar: "pricing-intelligence",
   endpoints: [
     {
       slug: "calendar",
@@ -544,6 +547,7 @@ const FIELD_GROUP: GroupSpec = {
   slug: "field-intel",
   name: "Field Intel",
   tagline: "In-store observations from your field team and detected price gaps.",
+  pillar: "multi-tenant-ops",
   endpoints: [
     {
       slug: "list-observations",
@@ -653,6 +657,7 @@ const WEBHOOKS_GROUP: GroupSpec = {
   slug: "webhooks",
   name: "Webhooks",
   tagline: "Subscribe to price drops, recommendation changes, and delivery events.",
+  pillar: "commerce-events",
   endpoints: [
     {
       slug: "list-endpoints",
