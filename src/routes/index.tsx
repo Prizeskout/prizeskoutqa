@@ -524,7 +524,7 @@ function PillarsSection() {
                       color: "#8A8A8A",
                     }}
                   >
-                    Pillar 0{pillars.indexOf(pillars.find((p) => p.pillar.slug === pillar.slug)!) + 1}
+                    Pillar 0{idx + 1}
                   </span>
                 </div>
                 <div
