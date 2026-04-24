@@ -133,6 +133,12 @@ export function ApiReference() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
     Object.fromEntries(API_GROUPS.map((g) => [g.slug, true])),
   );
+  const [openPillars, setOpenPillars] = useState<Record<string, boolean>>({
+    "pricing-intelligence": true,
+    "commerce-events": true,
+    "multi-tenant-ops": true,
+    "network-moat": true,
+  });
   const [tab, setTab] = useState<"curl" | "js">("curl");
   const [apiKey, setApiKey] = useState("sk_test_YOUR_KEY");
   const [tryStatus, setTryStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
