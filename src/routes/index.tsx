@@ -25,20 +25,20 @@ import { MarketingShell } from "@/components/marketing/MarketingShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Pricing intelligence APIs" },
+      { title: "PrizeSkout | The shadow infrastructure for commerce" },
       {
         name: "description",
         content:
-          "Live competitor prices, pricing recommendations, and promo ROI. Built as APIs your team can ship in an afternoon.",
+          "Pricing intelligence, commerce events, multi-tenant ops, and a network moat that compounds. The invisible API layer your storefront sits on top of.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout | Pricing intelligence APIs",
+        content: "PrizeSkout | The shadow infrastructure for commerce",
       },
       {
         property: "og:description",
         content:
-          "Live competitor prices, pricing recommendations, and promo ROI. Built as APIs your team can ship in an afternoon.",
+          "Pricing intelligence, commerce events, multi-tenant ops, and a network moat that compounds. The invisible API layer your storefront sits on top of.",
       },
     ],
   }),
