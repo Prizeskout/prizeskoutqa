@@ -434,65 +434,22 @@ function TrustStrip() {
 }
 
 /* ============================================================================
-   API Catalog
+   Four Pillars (replaces flat API catalog — leads with strategic positioning)
    ========================================================================= */
 
-type ApiEntry = {
-  name: string;
-  endpoint: string;
-  desc: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  to: "/products/pricing" | "/products/competitors" | "/products/promotions" | "/products/market" | "/products/field-intel";
-  methods: string[];
+const PILLAR_ICONS: Record<PillarSlug, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  "pricing-intelligence": Tags,
+  "commerce-events": Webhook,
+  "multi-tenant-ops": ClipboardList,
+  "network-moat": Activity,
 };
 
-const API_CATALOG: ApiEntry[] = [
-  {
-    name: "Pricing Recommendations API",
-    endpoint: "/v1/pricing/recommendations",
-    desc: "Smart price decisions per SKU and channel, with expected P&L impact and a confidence score.",
-    icon: Tags,
-    to: "/products/pricing",
-    methods: ["GET", "POST"],
-  },
-  {
-    name: "Competitor Intelligence API",
-    endpoint: "/v1/competitors/prices",
-    desc: "Live prices and promo depth across marketplaces and delivery apps. Refreshed hourly.",
-    icon: LineChart,
-    to: "/products/competitors",
-    methods: ["GET"],
-  },
-  {
-    name: "Promotions & ROI API",
-    endpoint: "/v1/promotions/simulate",
-    desc: "Simulate campaign ROI before you launch. Read the live promo calendar for competitors.",
-    icon: Megaphone,
-    to: "/products/promotions",
-    methods: ["GET", "POST"],
-  },
-  {
-    name: "Market Signals API",
-    endpoint: "/v1/market/trends",
-    desc: "Category trends, assortment gaps, and cross-border price radar in one feed.",
-    icon: MapIcon,
-    to: "/products/market",
-    methods: ["GET"],
-  },
-  {
-    name: "Field Intel API",
-    endpoint: "/v1/field-intel/observations",
-    desc: "Send in-store observations from your reps. Compare online and shelf prices in code.",
-    icon: ClipboardList,
-    to: "/products/field-intel",
-    methods: ["GET", "POST"],
-  },
-];
+function PillarsSection() {
+  const pillars = getGroupsByPillar();
 
-function ApiCatalog() {
   return (
     <section
-      id="products"
+      id="pillars"
       style={{
         background: "#050505",
         padding: "88px 0",
@@ -501,12 +458,24 @@ function ApiCatalog() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <SectionEyebrow>The platform</SectionEyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9" }}
+            style={{ color: "#FAFAF9", marginTop: 14 }}
           >
-            Five APIs. One clean surface.
+            Four pillars. One platform.
           </h2>
+          <p
+            style={{
+              color: "#9A9A9A",
+              fontSize: 15,
+              lineHeight: 1.6,
+              maxWidth: 640,
+              margin: "14px auto 0",
+            }}
+          >
+            We don't sell a dashboard. We sell the rails underneath one — pricing decisions, the event firehose, multi-tenant ops, and a network moat that sharpens with every operator.
+          </p>
         </div>
 
         <div
@@ -514,14 +483,20 @@ function ApiCatalog() {
             display: "grid",
             gap: 14,
           }}
-          className="ps-api-grid"
+          className="ps-pillar-grid"
         >
-          {API_CATALOG.map((api) => {
-            const Icon = api.icon;
+          {pillars.map(({ pillar, groups }) => {
+            const Icon = PILLAR_ICONS[pillar.slug];
+            const firstGroup = groups[0];
+            const firstEndpoint = firstGroup?.endpoints[0];
+            const deepLink = firstGroup && firstEndpoint
+              ? (`/docs#${firstGroup.slug}/${firstEndpoint.slug}` as const)
+              : ("/docs" as const);
             return (
               <Link
-                key={api.name}
-                to={api.to}
+                key={pillar.slug}
+                to="/docs"
+                hash={firstGroup && firstEndpoint ? `${firstGroup.slug}/${firstEndpoint.slug}` : undefined}
                 className="ps-api-card"
                 style={{
                   display: "block",
@@ -529,11 +504,11 @@ function ApiCatalog() {
                   background: "#0A0A0A",
                   border: "1px solid #1A1A1A",
                   borderRadius: 12,
-                  padding: 22,
+                  padding: 24,
                   transition: "border-color 0.15s, transform 0.15s",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                   <div
                     style={{
                       width: 38,
@@ -548,63 +523,77 @@ function ApiCatalog() {
                   >
                     <Icon size={18} color="#FB923C" strokeWidth={2} />
                   </div>
-                  <div style={{ display: "flex", gap: 5 }}>
-                    {api.methods.map((m) => (
-                      <span
-                        key={m}
-                        style={{
-                          fontSize: 9.5,
-                          fontFamily: MONO_STACK,
-                          fontWeight: 600,
-                          letterSpacing: "0.06em",
-                          color: m === "GET" ? "#22C55E" : "#FB923C",
-                          background:
-                            m === "GET" ? "rgba(34,197,94,0.08)" : "rgba(234,88,12,0.10)",
-                          border:
-                            m === "GET"
-                              ? "1px solid rgba(34,197,94,0.25)"
-                              : "1px solid rgba(234,88,12,0.28)",
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                        }}
-                      >
-                        {m}
-                      </span>
-                    ))}
-                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontFamily: MONO_STACK,
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#8A8A8A",
+                    }}
+                  >
+                    Pillar 0{pillars.indexOf(pillars.find((p) => p.pillar.slug === pillar.slug)!) + 1}
+                  </span>
                 </div>
                 <div
                   style={{
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: 600,
                     color: "#FAFAF9",
                     marginBottom: 6,
+                    letterSpacing: "-0.01em",
                   }}
                 >
-                  {api.name}
+                  {pillar.name}
                 </div>
                 <div
                   style={{
-                    fontFamily: MONO_STACK,
-                    fontSize: 11.5,
+                    fontSize: 13,
                     color: "#FB923C",
                     marginBottom: 12,
+                    fontWeight: 500,
                   }}
                 >
-                  {api.endpoint}
+                  {pillar.tagline}
                 </div>
                 <div
                   style={{
                     fontSize: 13.5,
                     color: "#8A8A8A",
                     lineHeight: 1.55,
+                    marginBottom: 16,
                   }}
                 >
-                  {api.desc}
+                  {pillar.description}
                 </div>
                 <div
                   style={{
-                    marginTop: 16,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginBottom: 16,
+                  }}
+                >
+                  {groups.map((g) => (
+                    <span
+                      key={g.slug}
+                      style={{
+                        fontSize: 10.5,
+                        fontFamily: MONO_STACK,
+                        color: "#C4C4C4",
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        padding: "3px 8px",
+                        borderRadius: 4,
+                      }}
+                    >
+                      {g.name} · {g.endpoints.length}
+                    </span>
+                  ))}
+                </div>
+                <div
+                  style={{
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 5,
