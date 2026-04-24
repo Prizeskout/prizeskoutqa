@@ -43,10 +43,60 @@ export type EndpointSpec = {
   sampleResponse?: unknown;
 };
 
+export type PillarSlug =
+  | "pricing-intelligence"
+  | "commerce-events"
+  | "multi-tenant-ops"
+  | "network-moat";
+
+export type PillarSpec = {
+  slug: PillarSlug;
+  name: string;
+  tagline: string;
+  description: string;
+  positioning: string; // one-liner used in marketing + docs
+};
+
+export const PILLARS: Record<PillarSlug, PillarSpec> = {
+  "pricing-intelligence": {
+    slug: "pricing-intelligence",
+    name: "Pricing Intelligence",
+    tagline: "Decide what to charge, in real time.",
+    description:
+      "Live competitor signals, AI price recommendations, and promo ROI simulation. The decision layer that sits between your catalog and your storefront.",
+    positioning: "The price-decision API for modern commerce.",
+  },
+  "commerce-events": {
+    slug: "commerce-events",
+    name: "Commerce Events",
+    tagline: "React to every market move within seconds.",
+    description:
+      "Signed webhooks for price drops, promo launches, and recommendation changes. Subscribe once, replay forever, retry with exponential backoff.",
+    positioning: "The event bus for retail intelligence.",
+  },
+  "multi-tenant-ops": {
+    slug: "multi-tenant-ops",
+    name: "Multi-Tenant Ops",
+    tagline: "One key per tenant. Hard-isolated data. Audit-clean.",
+    description:
+      "Catalog sync, landed-cost margin compute, and field-team observation ingestion — designed to run inside multi-store, multi-region operators with strict tenancy boundaries.",
+    positioning: "Run pricing across every store, every region, every brand.",
+  },
+  "network-moat": {
+    slug: "network-moat",
+    name: "Network Moat",
+    tagline: "Patterns no single retailer can see alone.",
+    description:
+      "Cross-tenant detected behaviors, market benchmarks, and category-level signals. The data compounds with every operator on the network.",
+    positioning: "Intelligence that gets sharper with every tenant.",
+  },
+};
+
 export type GroupSpec = {
   slug: string;
   name: string;
   tagline: string;
+  pillar: PillarSlug;
   endpoints: EndpointSpec[];
 };
 
