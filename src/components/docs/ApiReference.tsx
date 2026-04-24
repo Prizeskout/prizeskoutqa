@@ -9,9 +9,12 @@ import { Search, ChevronDown, Copy, Check, Play, Loader2, Menu, X, ArrowRight } 
 import {
   API_GROUPS,
   API_BASE_URL,
+  PILLARS,
+  getGroupsByPillar,
   type EndpointSpec,
   type GroupSpec,
   type FieldSpec,
+  type PillarSlug,
 } from "@/lib/api-spec";
 
 const FONT_MONO =
