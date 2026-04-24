@@ -10,6 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { API_GROUPS, type EndpointSpec } from "@/lib/api-spec";
+import { dispatchV1Handler, V1_HANDLER_KEYS, type V1Context } from "@/server/v1-handlers";
 
 function hashKey(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
@@ -101,6 +102,70 @@ async function handle(request: Request, splat: string) {
       },
       403,
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Real-handler branch: if this path/method has a Week 2+ implementation,
+  // run it against actual account-scoped Postgres tables instead of returning
+  // the documented sample response.
+  // ---------------------------------------------------------------------------
+  if (V1_HANDLER_KEYS.has(`${request.method} ${fullPath}`)) {
+    // Resolve the account for this API key (uses find_account_for_api_key SQL helper).
+    const { data: acctRows, error: acctErr } = await supabaseAdmin
+      .rpc("find_account_for_api_key", { _api_key_id: keyRow.id });
+
+    if (acctErr || !acctRows || acctRows.length === 0) {
+      return json(
+        {
+          error: {
+            code: "account_not_provisioned",
+            message:
+              "Your API key is not yet linked to an account. This usually resolves itself on first dashboard login. Contact support if it persists.",
+          },
+        },
+        409,
+      );
+    }
+    const acct = acctRows[0];
+    const ctx: V1Context = {
+      apiKeyId: keyRow.id,
+      userId: keyRow.user_id,
+      accountId: acct.account_id,
+      licenseeId: acct.licensee_id,
+    };
+
+    const start = Date.now();
+    const result = await dispatchV1Handler(request.method, fullPath, request, ctx);
+    if (!result) {
+      // Should never happen — guard anyway.
+      return json({ error: { code: "internal_error", message: "Handler dispatch returned null." } }, 500);
+    }
+
+    const requestId = `req_live_${Math.random().toString(36).slice(2, 10)}`;
+    await supabaseAdmin.from("api_request_logs").insert({
+      user_id: keyRow.user_id,
+      api_key_id: keyRow.id,
+      method: request.method,
+      path: fullPath,
+      status_code: result.status,
+      duration_ms: Date.now() - start,
+      request_id: requestId,
+    });
+    await supabaseAdmin
+      .from("api_keys")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("id", keyRow.id);
+
+    return new Response(JSON.stringify(result.body, null, 2), {
+      status: result.status,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "X-PrizeSkout-Mode": "test",
+        "X-Request-Id": requestId,
+        ...(result.headers ?? {}),
+      },
+    });
   }
 
   // Find the spec

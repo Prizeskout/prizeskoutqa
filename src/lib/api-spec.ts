@@ -786,6 +786,181 @@ const WEBHOOKS_GROUP: GroupSpec = {
       ],
       errors: COMMON_ERRORS,
     },
+    {
+      slug: "emit-enrich",
+      method: "POST",
+      path: "/v1/webhooks/enrich",
+      title: "Emit an enrichment event",
+      summary:
+        "Fans out an enrichment event (price changed, promo detected, new competitor) to every active webhook endpoint subscribed to enrich.* events. Each delivery is HMAC-signed and recorded.",
+      auth: "bearer",
+      scopes: ["webhooks.write"],
+      body: [
+        {
+          name: "event_type",
+          type: "string",
+          required: true,
+          description: "One of: enrich.price_changed, enrich.promo_detected, enrich.new_competitor.",
+          example: "enrich.price_changed",
+        },
+        {
+          name: "payload",
+          type: "object",
+          description: "Event-specific payload. Forwarded verbatim under data on each delivery.",
+          example: '{"sku":"SKU-001","old_price":1199,"new_price":1149,"competitor":"carrefour"}',
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Event delivered",
+          example: {
+            event_id: "evt_a8c2d1f0e2",
+            event_type: "enrich.price_changed",
+            delivered_count: 1,
+            attempted_count: 1,
+            deliveries: [
+              { endpoint_id: "wh_e1c2", success: true, status_code: 200, error: null },
+            ],
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Delivery is synchronous in v1: the response returns once every subscriber has been called (or timed out at 8s).",
+        "Subscribers are matched by event_type, the wildcard *, or the family pattern enrich.*.",
+      ],
+    },
+  ],
+};
+
+// ---------- Multi-Tenant Ops ----------
+
+const OPERATIONS_GROUP: GroupSpec = {
+  slug: "operations",
+  name: "Multi-Tenant Operations",
+  tagline: "Catalog sync, landed-cost margin compute, and dynamic-price decisions per account.",
+  pillar: "multi-tenant-ops",
+  endpoints: [
+    {
+      slug: "sync-catalog",
+      method: "POST",
+      path: "/v1/sync",
+      title: "Sync catalog products and prices",
+      summary:
+        "Idempotent batch upsert for catalog products (and optional channel prices). Per-item results let you fix one bad SKU without resubmitting the whole batch.",
+      auth: "bearer",
+      scopes: ["catalog.write"],
+      body: [
+        {
+          name: "products",
+          type: "object[]",
+          required: true,
+          description:
+            "Array of products. Each item: { sku, name, brand?, category?, attributes?, price?: { list, sale?, channel?, currency? } }. Max 1000 per call.",
+          example:
+            '[{"sku":"SKU-001","name":"Sony WH-1000XM5","brand":"Sony","category":"Electronics","price":{"list":1199,"channel":"online","currency":"QAR"}}]',
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Batch processed",
+          example: {
+            batch_id: "bch_3a9c2f0e1d",
+            item_count: 1,
+            ok_count: 1,
+            error_count: 0,
+            results: [{ sku: "SKU-001", status: "created", product_id: "prod_3a9c2f" }],
+          },
+        },
+      ],
+      errors: [
+        ...COMMON_ERRORS,
+        {
+          status: 207,
+          code: "partial_success",
+          description: "Some items succeeded and some failed. Inspect the per-item results array.",
+        },
+      ],
+      notes: [
+        "Required header: Idempotency-Key. Replays of the same key return the cached response without re-processing.",
+        "Products are upserted on (account_id, sku). Prices are upserted on (product_id, channel).",
+      ],
+    },
+    {
+      slug: "compute-margin",
+      method: "POST",
+      path: "/v1/margin",
+      title: "Compute landed cost and margin",
+      summary:
+        "Computes landed cost (unit cost + freight + duty + fees) and gross margin from your stored margin_inputs and current catalog price.",
+      auth: "bearer",
+      scopes: ["pricing.read"],
+      body: [
+        { name: "sku", type: "string", required: true, description: "Catalog SKU.", example: "SKU-001" },
+        { name: "list_price", type: "number", description: "Override the catalog list price for the calculation.", example: "1149" },
+        { name: "channel", type: "string", description: "Channel for the catalog price lookup. Default: online.", example: "online" },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Margin computed",
+          example: {
+            sku: "SKU-001",
+            product_id: "prod_3a9c2f",
+            channel: "online",
+            currency: "QAR",
+            inputs: { unit_cost: 700, freight: 25, duty_pct: 0.05, fees_pct: 0.08, list_price: 1199 },
+            breakdown: { duty_amount: 35, fees_amount: 95.92, landed_cost: 855.92 },
+            margin: { gross_margin: 343.08, gross_margin_pct: 0.2861 },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+    },
+    {
+      slug: "dynprice-recommend",
+      method: "POST",
+      path: "/v1/dynprice",
+      title: "Get a dynamic price recommendation",
+      summary:
+        "Deterministic recommendation combining your margin floor (from margin_inputs) and the cheapest competitor price for this product. Every decision is appended to dynprice_decisions for audit.",
+      auth: "bearer",
+      scopes: ["pricing.write"],
+      body: [
+        { name: "sku", type: "string", required: true, description: "Catalog SKU.", example: "SKU-001" },
+        { name: "channel", type: "string", description: "Channel. Default: online.", example: "online" },
+        { name: "target_margin_pct", type: "number", description: "Desired gross-margin floor as a fraction (0–0.95). Default: 0.20.", example: "0.25" },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Recommendation returned",
+          example: {
+            sku: "SKU-001",
+            product_id: "prod_3a9c2f",
+            channel: "online",
+            current_price: 1199,
+            recommended_price: 1148,
+            reason:
+              "Undercut cheapest competitor (1149) by 1 unit while respecting the 20% margin floor.",
+            signals: {
+              margin_floor: 1069.9,
+              competitor_min: 1149,
+              competitor_count: 3,
+              target_margin_pct: 0.2,
+              active_rules: ["Never go below 18% gross margin on Electronics."],
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Algorithm: max(margin_floor, competitor_min - 1). If only one signal is available, the other is skipped and the reason explains why.",
+        "Active pricing_rules are returned as informational signals — the v1 engine does not enforce them automatically.",
+      ],
+    },
   ],
 };
 
@@ -875,6 +1050,7 @@ export const API_GROUPS: GroupSpec[] = [
   PRICING_GROUP,
   PROMOTIONS_GROUP,
   WEBHOOKS_GROUP,
+  OPERATIONS_GROUP,
   FIELD_GROUP,
   NETWORK_GROUP,
 ];
