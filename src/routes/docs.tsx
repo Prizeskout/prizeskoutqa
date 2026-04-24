@@ -10,12 +10,13 @@ export const Route = createFileRoute("/docs")({
       {
         name: "description",
         content:
-          "Live competitor prices, pricing recommendations, promo ROI, field intel, and webhooks. Full REST API reference with cURL and JavaScript examples.",
+          "Four pillars: Pricing Intelligence, Commerce Events, Multi-Tenant Ops, and Network Moat. Full REST reference with cURL and JavaScript examples.",
       },
       { property: "og:title", content: "API Reference | PrizeSkout" },
       {
         property: "og:description",
-        content: "REST API reference for PrizeSkout. Try every endpoint live against test mode.",
+        content:
+          "The shadow infrastructure for commerce — organised around four pillars. Try every endpoint live against test mode.",
       },
     ],
   }),
