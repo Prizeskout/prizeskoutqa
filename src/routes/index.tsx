@@ -21,6 +21,7 @@ import {
   FileCode,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { getGroupsByPillar, type PillarSlug } from "@/lib/api-spec";
 
 export const Route = createFileRoute("/")({
   head: () => ({
