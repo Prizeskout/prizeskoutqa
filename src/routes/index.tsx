@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Check,
-  Code2,
-  Terminal,
   Zap,
   Shield,
   GitBranch,
@@ -12,33 +10,30 @@ import {
   Webhook,
   KeyRound,
   Activity,
-  LineChart,
   Tags,
-  Megaphone,
-  Map as MapIcon,
   ClipboardList,
   ChevronRight,
-  FileCode,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
+import { getGroupsByPillar, type PillarSlug } from "@/lib/api-spec";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Pricing intelligence APIs" },
+      { title: "PrizeSkout | The shadow infrastructure for commerce" },
       {
         name: "description",
         content:
-          "Live competitor prices, pricing recommendations, and promo ROI. Built as APIs your team can ship in an afternoon.",
+          "Pricing intelligence, commerce events, multi-tenant ops, and a network moat that compounds. The invisible API layer your storefront sits on top of.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout | Pricing intelligence APIs",
+        content: "PrizeSkout | The shadow infrastructure for commerce",
       },
       {
         property: "og:description",
         content:
-          "Live competitor prices, pricing recommendations, and promo ROI. Built as APIs your team can ship in an afternoon.",
+          "Pricing intelligence, commerce events, multi-tenant ops, and a network moat that compounds. The invisible API layer your storefront sits on top of.",
       },
     ],
   }),
@@ -340,7 +335,7 @@ function Hero() {
               margin: 0,
             }}
           >
-            Pricing intelligence,{" "}
+            The shadow infrastructure{" "}
             <span
               style={{
                 background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -349,7 +344,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              one API call away.
+              for commerce.
             </span>
           </h1>
 
@@ -359,10 +354,10 @@ function Hero() {
               marginTop: 18,
               color: "#9A9A9A",
               lineHeight: 1.6,
-              maxWidth: 520,
+              maxWidth: 540,
             }}
           >
-            Live competitor prices, price recommendations, and promo ROI. As REST APIs.
+            Your storefront stays yours. The pricing decisions, market signals, and event firehose that power it run on PrizeSkout — invisible to your shoppers, indispensable to your team.
           </p>
         </div>
 
@@ -433,65 +428,22 @@ function TrustStrip() {
 }
 
 /* ============================================================================
-   API Catalog
+   Four Pillars (replaces flat API catalog — leads with strategic positioning)
    ========================================================================= */
 
-type ApiEntry = {
-  name: string;
-  endpoint: string;
-  desc: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-  to: "/products/pricing" | "/products/competitors" | "/products/promotions" | "/products/market" | "/products/field-intel";
-  methods: string[];
+const PILLAR_ICONS: Record<PillarSlug, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  "pricing-intelligence": Tags,
+  "commerce-events": Webhook,
+  "multi-tenant-ops": ClipboardList,
+  "network-moat": Activity,
 };
 
-const API_CATALOG: ApiEntry[] = [
-  {
-    name: "Pricing Recommendations API",
-    endpoint: "/v1/pricing/recommendations",
-    desc: "Smart price decisions per SKU and channel, with expected P&L impact and a confidence score.",
-    icon: Tags,
-    to: "/products/pricing",
-    methods: ["GET", "POST"],
-  },
-  {
-    name: "Competitor Intelligence API",
-    endpoint: "/v1/competitors/prices",
-    desc: "Live prices and promo depth across marketplaces and delivery apps. Refreshed hourly.",
-    icon: LineChart,
-    to: "/products/competitors",
-    methods: ["GET"],
-  },
-  {
-    name: "Promotions & ROI API",
-    endpoint: "/v1/promotions/simulate",
-    desc: "Simulate campaign ROI before you launch. Read the live promo calendar for competitors.",
-    icon: Megaphone,
-    to: "/products/promotions",
-    methods: ["GET", "POST"],
-  },
-  {
-    name: "Market Signals API",
-    endpoint: "/v1/market/trends",
-    desc: "Category trends, assortment gaps, and cross-border price radar in one feed.",
-    icon: MapIcon,
-    to: "/products/market",
-    methods: ["GET"],
-  },
-  {
-    name: "Field Intel API",
-    endpoint: "/v1/field-intel/observations",
-    desc: "Send in-store observations from your reps. Compare online and shelf prices in code.",
-    icon: ClipboardList,
-    to: "/products/field-intel",
-    methods: ["GET", "POST"],
-  },
-];
+function PillarsSection() {
+  const pillars = getGroupsByPillar();
 
-function ApiCatalog() {
   return (
     <section
-      id="products"
+      id="pillars"
       style={{
         background: "#050505",
         padding: "88px 0",
@@ -500,12 +452,24 @@ function ApiCatalog() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <SectionEyebrow>The platform</SectionEyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9" }}
+            style={{ color: "#FAFAF9", marginTop: 14 }}
           >
-            Five APIs. One clean surface.
+            Four pillars. One platform.
           </h2>
+          <p
+            style={{
+              color: "#9A9A9A",
+              fontSize: 15,
+              lineHeight: 1.6,
+              maxWidth: 640,
+              margin: "14px auto 0",
+            }}
+          >
+            We don't sell a dashboard. We sell the rails underneath one — pricing decisions, the event firehose, multi-tenant ops, and a network moat that sharpens with every operator.
+          </p>
         </div>
 
         <div
@@ -513,14 +477,17 @@ function ApiCatalog() {
             display: "grid",
             gap: 14,
           }}
-          className="ps-api-grid"
+          className="ps-pillar-grid"
         >
-          {API_CATALOG.map((api) => {
-            const Icon = api.icon;
+          {pillars.map(({ pillar, groups }, idx) => {
+            const Icon = PILLAR_ICONS[pillar.slug];
+            const firstGroup = groups[0];
+            const firstEndpoint = firstGroup?.endpoints[0];
             return (
               <Link
-                key={api.name}
-                to={api.to}
+                key={pillar.slug}
+                to="/docs"
+                hash={firstGroup && firstEndpoint ? `${firstGroup.slug}/${firstEndpoint.slug}` : undefined}
                 className="ps-api-card"
                 style={{
                   display: "block",
@@ -528,11 +495,11 @@ function ApiCatalog() {
                   background: "#0A0A0A",
                   border: "1px solid #1A1A1A",
                   borderRadius: 12,
-                  padding: 22,
+                  padding: 24,
                   transition: "border-color 0.15s, transform 0.15s",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
                   <div
                     style={{
                       width: 38,
@@ -547,63 +514,77 @@ function ApiCatalog() {
                   >
                     <Icon size={18} color="#FB923C" strokeWidth={2} />
                   </div>
-                  <div style={{ display: "flex", gap: 5 }}>
-                    {api.methods.map((m) => (
-                      <span
-                        key={m}
-                        style={{
-                          fontSize: 9.5,
-                          fontFamily: MONO_STACK,
-                          fontWeight: 600,
-                          letterSpacing: "0.06em",
-                          color: m === "GET" ? "#22C55E" : "#FB923C",
-                          background:
-                            m === "GET" ? "rgba(34,197,94,0.08)" : "rgba(234,88,12,0.10)",
-                          border:
-                            m === "GET"
-                              ? "1px solid rgba(34,197,94,0.25)"
-                              : "1px solid rgba(234,88,12,0.28)",
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                        }}
-                      >
-                        {m}
-                      </span>
-                    ))}
-                  </div>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontFamily: MONO_STACK,
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#8A8A8A",
+                    }}
+                  >
+                    Pillar 0{idx + 1}
+                  </span>
                 </div>
                 <div
                   style={{
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: 600,
                     color: "#FAFAF9",
                     marginBottom: 6,
+                    letterSpacing: "-0.01em",
                   }}
                 >
-                  {api.name}
+                  {pillar.name}
                 </div>
                 <div
                   style={{
-                    fontFamily: MONO_STACK,
-                    fontSize: 11.5,
+                    fontSize: 13,
                     color: "#FB923C",
                     marginBottom: 12,
+                    fontWeight: 500,
                   }}
                 >
-                  {api.endpoint}
+                  {pillar.tagline}
                 </div>
                 <div
                   style={{
                     fontSize: 13.5,
                     color: "#8A8A8A",
                     lineHeight: 1.55,
+                    marginBottom: 16,
                   }}
                 >
-                  {api.desc}
+                  {pillar.description}
                 </div>
                 <div
                   style={{
-                    marginTop: 16,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginBottom: 16,
+                  }}
+                >
+                  {groups.map((g) => (
+                    <span
+                      key={g.slug}
+                      style={{
+                        fontSize: 10.5,
+                        fontFamily: MONO_STACK,
+                        color: "#C4C4C4",
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        padding: "3px 8px",
+                        borderRadius: 4,
+                      }}
+                    >
+                      {g.name} · {g.endpoints.length}
+                    </span>
+                  ))}
+                </div>
+                <div
+                  style={{
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 5,
@@ -1132,7 +1113,7 @@ function LandingPage() {
       <style>{PAGE_STYLES}</style>
       <Hero />
       <TrustStrip />
-      <ApiCatalog />
+      <PillarsSection />
       <Quickstart />
       <BuiltForDevs />
       <PricingSection />
@@ -1151,6 +1132,7 @@ const PAGE_STYLES = `
   .ps-hero-copy { order: 1; }
   .ps-hero-mock { order: 2; }
   .ps-api-grid { grid-template-columns: 1fr; }
+  .ps-pillar-grid { grid-template-columns: 1fr; }
   .ps-quickstart-grid { grid-template-columns: 1fr; }
   .ps-devs-grid { grid-template-columns: 1fr; }
   .ps-api-card:hover {
@@ -1159,12 +1141,17 @@ const PAGE_STYLES = `
   }
   @media (min-width: 640px) {
     .ps-api-grid { grid-template-columns: repeat(2, 1fr); }
+    .ps-pillar-grid { grid-template-columns: repeat(2, 1fr); }
     .ps-devs-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 900px) {
     .ps-hero-grid { grid-template-columns: 1.05fr 1fr; gap: 56px; }
     .ps-api-grid { grid-template-columns: repeat(3, 1fr); }
+    .ps-pillar-grid { grid-template-columns: repeat(2, 1fr); }
     .ps-quickstart-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-devs-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1180px) {
+    .ps-pillar-grid { grid-template-columns: repeat(4, 1fr); }
   }
 `;

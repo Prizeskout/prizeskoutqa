@@ -43,10 +43,60 @@ export type EndpointSpec = {
   sampleResponse?: unknown;
 };
 
+export type PillarSlug =
+  | "pricing-intelligence"
+  | "commerce-events"
+  | "multi-tenant-ops"
+  | "network-moat";
+
+export type PillarSpec = {
+  slug: PillarSlug;
+  name: string;
+  tagline: string;
+  description: string;
+  positioning: string; // one-liner used in marketing + docs
+};
+
+export const PILLARS: Record<PillarSlug, PillarSpec> = {
+  "pricing-intelligence": {
+    slug: "pricing-intelligence",
+    name: "Pricing Intelligence",
+    tagline: "Decide what to charge, in real time.",
+    description:
+      "Live competitor signals, AI price recommendations, and promo ROI simulation. The decision layer that sits between your catalog and your storefront.",
+    positioning: "The price-decision API for modern commerce.",
+  },
+  "commerce-events": {
+    slug: "commerce-events",
+    name: "Commerce Events",
+    tagline: "React to every market move within seconds.",
+    description:
+      "Signed webhooks for price drops, promo launches, and recommendation changes. Subscribe once, replay forever, retry with exponential backoff.",
+    positioning: "The event bus for retail intelligence.",
+  },
+  "multi-tenant-ops": {
+    slug: "multi-tenant-ops",
+    name: "Multi-Tenant Ops",
+    tagline: "One key per tenant. Hard-isolated data. Audit-clean.",
+    description:
+      "Catalog sync, landed-cost margin compute, and field-team observation ingestion — designed to run inside multi-store, multi-region operators with strict tenancy boundaries.",
+    positioning: "Run pricing across every store, every region, every brand.",
+  },
+  "network-moat": {
+    slug: "network-moat",
+    name: "Network Moat",
+    tagline: "Patterns no single retailer can see alone.",
+    description:
+      "Cross-tenant detected behaviors, market benchmarks, and category-level signals. The data compounds with every operator on the network.",
+    positioning: "Intelligence that gets sharper with every tenant.",
+  },
+};
+
 export type GroupSpec = {
   slug: string;
   name: string;
   tagline: string;
+  pillar: PillarSlug;
   endpoints: EndpointSpec[];
 };
 
@@ -65,6 +115,7 @@ const COMPETITORS_GROUP: GroupSpec = {
   slug: "competitors",
   name: "Competitor Prices",
   tagline: "Live and historical competitor prices across online and in-store channels.",
+  pillar: "pricing-intelligence",
   endpoints: [
     {
       slug: "list-prices",
@@ -242,6 +293,7 @@ const PRICING_GROUP: GroupSpec = {
   slug: "pricing",
   name: "Pricing Recommendations",
   tagline: "AI-generated price changes with expected margin and unit impact.",
+  pillar: "pricing-intelligence",
   endpoints: [
     {
       slug: "list-recommendations",
@@ -381,6 +433,7 @@ const PROMOTIONS_GROUP: GroupSpec = {
   slug: "promotions",
   name: "Promotions & ROI",
   tagline: "Simulate campaigns, list competitor promos, and inspect past performance.",
+  pillar: "pricing-intelligence",
   endpoints: [
     {
       slug: "calendar",
@@ -494,6 +547,7 @@ const FIELD_GROUP: GroupSpec = {
   slug: "field-intel",
   name: "Field Intel",
   tagline: "In-store observations from your field team and detected price gaps.",
+  pillar: "multi-tenant-ops",
   endpoints: [
     {
       slug: "list-observations",
@@ -603,6 +657,7 @@ const WEBHOOKS_GROUP: GroupSpec = {
   slug: "webhooks",
   name: "Webhooks",
   tagline: "Subscribe to price drops, recommendation changes, and delivery events.",
+  pillar: "commerce-events",
   endpoints: [
     {
       slug: "list-endpoints",
@@ -734,12 +789,94 @@ const WEBHOOKS_GROUP: GroupSpec = {
   ],
 };
 
+// ---------- Network Moat ----------
+
+const NETWORK_GROUP: GroupSpec = {
+  slug: "network",
+  name: "Network Intelligence",
+  tagline: "Cross-tenant patterns and market benchmarks no single retailer can compute alone.",
+  pillar: "network-moat",
+  endpoints: [
+    {
+      slug: "list-benchmarks",
+      method: "GET",
+      path: "/v1/network/benchmarks",
+      title: "List market benchmarks",
+      summary:
+        "Returns category-level benchmarks (your value, market average, top quartile) computed across all tenants in your market.",
+      auth: "bearer",
+      scopes: ["network.read"],
+      queryParams: [
+        { name: "metric", type: "string", description: "Filter to a single metric key.", example: "avg_price_volatility" },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Benchmarks returned",
+          example: {
+            data: [
+              {
+                id: "bm_vol",
+                metric: "Avg price volatility (Electronics)",
+                you: 4.2,
+                market_avg: 6.8,
+                top: 3.1,
+                position: "top quartile",
+              },
+            ],
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Benchmarks are anonymised and aggregated. Individual tenant data is never exposed.",
+        "Updated daily at 02:00 UTC.",
+      ],
+    },
+    {
+      slug: "list-patterns",
+      method: "GET",
+      path: "/v1/network/patterns",
+      title: "List cross-tenant detected patterns",
+      summary:
+        "Returns competitor and category patterns detected across the entire network. Aliased from /v1/competitors/patterns for discoverability.",
+      auth: "bearer",
+      scopes: ["network.read", "competitors.read"],
+      queryParams: [
+        { name: "competitor", type: "string", description: "Filter to a single competitor.", example: "talabat" },
+        { name: "min_confidence", type: "integer", description: "0-100. Default 70.", example: "80" },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Patterns returned",
+          example: {
+            data: [
+              {
+                id: "pat_4b1d",
+                competitor: "Talabat",
+                category: "Electronics",
+                pattern: "Drops electronics 12-18% the Thursday before public holidays",
+                confidence: 92,
+                detection_period: "Last 11 months",
+                impact: "high",
+              },
+            ],
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+    },
+  ],
+};
+
 export const API_GROUPS: GroupSpec[] = [
   COMPETITORS_GROUP,
   PRICING_GROUP,
   PROMOTIONS_GROUP,
-  FIELD_GROUP,
   WEBHOOKS_GROUP,
+  FIELD_GROUP,
+  NETWORK_GROUP,
 ];
 
 export function findEndpoint(groupSlug: string, endpointSlug: string): { group: GroupSpec; endpoint: EndpointSpec } | null {
@@ -755,8 +892,24 @@ export function getDefaultEndpoint(): { group: GroupSpec; endpoint: EndpointSpec
   return { group, endpoint: group.endpoints[0] };
 }
 
+export type PillarGroup = { pillar: PillarSpec; groups: GroupSpec[] };
+
+export function getGroupsByPillar(): PillarGroup[] {
+  const order: PillarSlug[] = [
+    "pricing-intelligence",
+    "commerce-events",
+    "multi-tenant-ops",
+    "network-moat",
+  ];
+  return order.map((slug) => ({
+    pillar: PILLARS[slug],
+    groups: API_GROUPS.filter((g) => g.pillar === slug),
+  }));
+}
+
 export const API_BASE_URL = "https://api.prizeskout.com";
 
 export const ALL_SCOPES = Array.from(
   new Set(API_GROUPS.flatMap((g) => g.endpoints.flatMap((e) => e.scopes))),
 ).sort();
+

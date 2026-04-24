@@ -9,9 +9,12 @@ import { Search, ChevronDown, Copy, Check, Play, Loader2, Menu, X, ArrowRight } 
 import {
   API_GROUPS,
   API_BASE_URL,
+  PILLARS,
+  getGroupsByPillar,
   type EndpointSpec,
   type GroupSpec,
   type FieldSpec,
+  type PillarSlug,
 } from "@/lib/api-spec";
 
 const FONT_MONO =
@@ -130,6 +133,12 @@ export function ApiReference() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(
     Object.fromEntries(API_GROUPS.map((g) => [g.slug, true])),
   );
+  const [openPillars, setOpenPillars] = useState<Record<string, boolean>>({
+    "pricing-intelligence": true,
+    "commerce-events": true,
+    "multi-tenant-ops": true,
+    "network-moat": true,
+  });
   const [tab, setTab] = useState<"curl" | "js">("curl");
   const [apiKey, setApiKey] = useState("sk_test_YOUR_KEY");
   const [tryStatus, setTryStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -293,6 +302,8 @@ export function ApiReference() {
           filteredGroups={filteredGroups}
           openGroups={openGroups}
           setOpenGroups={setOpenGroups}
+          openPillars={openPillars}
+          setOpenPillars={setOpenPillars}
           selected={selected}
           setSelected={setSelected}
         />
@@ -303,6 +314,8 @@ export function ApiReference() {
             filteredGroups={filteredGroups}
             openGroups={openGroups}
             setOpenGroups={setOpenGroups}
+            openPillars={openPillars}
+            setOpenPillars={setOpenPillars}
             selected={selected}
             setSelected={(s) => {
               setSelected(s);
@@ -371,6 +384,8 @@ function SidebarPane({
   filteredGroups,
   openGroups,
   setOpenGroups,
+  openPillars,
+  setOpenPillars,
   selected,
   setSelected,
 }: {
@@ -380,9 +395,22 @@ function SidebarPane({
   filteredGroups: GroupSpec[];
   openGroups: Record<string, boolean>;
   setOpenGroups: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  openPillars: Record<string, boolean>;
+  setOpenPillars: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selected: { group: string; endpoint: string };
   setSelected: (s: { group: string; endpoint: string }) => void;
 }) {
+  // Group filtered groups by pillar, preserving the canonical pillar order.
+  const filteredBySlug = new Map(filteredGroups.map((g) => [g.slug, g]));
+  const pillarSections = getGroupsByPillar()
+    .map(({ pillar, groups }) => ({
+      pillar,
+      groups: groups
+        .map((g) => filteredBySlug.get(g.slug))
+        .filter((g): g is GroupSpec => Boolean(g)),
+    }))
+    .filter((s) => s.groups.length > 0);
+
   return (
     <aside
       className={desktop ? "docs-sidebar-desktop" : ""}
@@ -429,78 +457,144 @@ function SidebarPane({
           padding: "0 8px 8px",
         }}
       >
-        API Reference
+        Platform pillars
       </div>
 
-      {filteredGroups.map((group) => (
-        <div key={group.slug} style={{ marginBottom: 4 }}>
-          <button
-            onClick={() => setOpenGroups((s) => ({ ...s, [group.slug]: !s[group.slug] }))}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
-              padding: "8px 8px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#1A1A18",
-              fontFamily: "inherit",
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {group.name}
-              <span style={{ fontSize: 11, color: "#8A8A8A", fontWeight: 500 }}>{group.endpoints.length}</span>
-            </span>
-            <ChevronDown
-              size={14}
+      {pillarSections.map(({ pillar, groups }) => {
+        const pillarOpen = openPillars[pillar.slug] !== false;
+        return (
+          <div key={pillar.slug} style={{ marginBottom: 10 }}>
+            <button
+              onClick={() => setOpenPillars((s) => ({ ...s, [pillar.slug]: !pillarOpen }))}
               style={{
-                color: "#8A8A8A",
-                transform: openGroups[group.slug] ? "rotate(0deg)" : "rotate(-90deg)",
-                transition: "transform 0.15s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                padding: "10px 8px",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textAlign: "left",
               }}
-            />
-          </button>
-          {openGroups[group.slug] && (
-            <div style={{ paddingLeft: 4, marginBottom: 6 }}>
-              {group.endpoints.map((ep) => {
-                const active = selected.group === group.slug && selected.endpoint === ep.slug;
-                return (
+            >
+              <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    color: "#1A1A18",
+                    letterSpacing: "-0.005em",
+                  }}
+                >
+                  {pillar.name}
+                </span>
+                <span style={{ fontSize: 11, color: "#8A8A8A", fontWeight: 500 }}>
+                  {pillar.tagline}
+                </span>
+              </span>
+              <ChevronDown
+                size={14}
+                style={{
+                  color: "#8A8A8A",
+                  transform: pillarOpen ? "rotate(0deg)" : "rotate(-90deg)",
+                  transition: "transform 0.15s",
+                  flexShrink: 0,
+                }}
+              />
+            </button>
+
+            {pillarOpen &&
+              groups.map((group) => (
+                <div key={group.slug} style={{ marginBottom: 4, paddingLeft: 6 }}>
                   <button
-                    key={ep.slug}
-                    onClick={() => setSelected({ group: group.slug, endpoint: ep.slug })}
+                    onClick={() =>
+                      setOpenGroups((s) => ({ ...s, [group.slug]: !s[group.slug] }))
+                    }
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
+                      justifyContent: "space-between",
                       width: "100%",
-                      padding: "7px 8px",
-                      background: active ? "rgba(234, 88, 12, 0.08)" : "transparent",
+                      padding: "6px 8px",
+                      background: "transparent",
                       border: "none",
-                      borderLeft: active ? "2px solid #EA580C" : "2px solid transparent",
                       cursor: "pointer",
                       fontSize: 12.5,
-                      color: active ? "#1A1A18" : "#5A5A58",
-                      fontWeight: active ? 600 : 500,
-                      textAlign: "left",
+                      fontWeight: 600,
+                      color: "#3A3A38",
                       fontFamily: "inherit",
-                      borderRadius: 0,
                     }}
                   >
-                    <MethodBadge method={ep.method} />
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {ep.title}
+                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {group.name}
+                      <span style={{ fontSize: 10.5, color: "#8A8A8A", fontWeight: 500 }}>
+                        {group.endpoints.length}
+                      </span>
                     </span>
+                    <ChevronDown
+                      size={12}
+                      style={{
+                        color: "#8A8A8A",
+                        transform: openGroups[group.slug] ? "rotate(0deg)" : "rotate(-90deg)",
+                        transition: "transform 0.15s",
+                      }}
+                    />
                   </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      ))}
+                  {openGroups[group.slug] && (
+                    <div style={{ paddingLeft: 4, marginBottom: 6 }}>
+                      {group.endpoints.map((ep) => {
+                        const active =
+                          selected.group === group.slug && selected.endpoint === ep.slug;
+                        return (
+                          <button
+                            key={ep.slug}
+                            onClick={() =>
+                              setSelected({ group: group.slug, endpoint: ep.slug })
+                            }
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              width: "100%",
+                              padding: "7px 8px",
+                              background: active
+                                ? "rgba(234, 88, 12, 0.08)"
+                                : "transparent",
+                              border: "none",
+                              borderLeft: active
+                                ? "2px solid #EA580C"
+                                : "2px solid transparent",
+                              cursor: "pointer",
+                              fontSize: 12.5,
+                              color: active ? "#1A1A18" : "#5A5A58",
+                              fontWeight: active ? 600 : 500,
+                              textAlign: "left",
+                              fontFamily: "inherit",
+                              borderRadius: 0,
+                            }}
+                          >
+                            <MethodBadge method={ep.method} />
+                            <span
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {ep.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        );
+      })}
     </aside>
   );
 }
