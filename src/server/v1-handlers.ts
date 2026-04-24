@@ -1,0 +1,712 @@
+// ============================================================================
+// Week 2 vertical-slice handlers for the public /v1 API.
+//
+// Each handler runs against REAL Postgres tables scoped to the calling key's
+// account. They are invoked by the dispatcher in
+// src/routes/api/public/v1/$.ts when the path matches one of the registered
+// new endpoints.
+//
+// Tenancy: per-account (accounts_v2). The dispatcher resolves the account
+// from the API key's licensee_id via find_account_for_api_key().
+// ============================================================================
+
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createHmac } from "crypto";
+
+export type V1Context = {
+  apiKeyId: string;
+  userId: string;
+  accountId: string;
+  licenseeId: string;
+};
+
+export type V1Result = {
+  status: number;
+  body: unknown;
+  headers?: Record<string, string>;
+};
+
+// ----------------------------------------------------------------------------
+// Helpers
+// ----------------------------------------------------------------------------
+
+function err(code: string, message: string, status: number, extra?: Record<string, unknown>): V1Result {
+  return { status, body: { error: { code, message, ...extra } } };
+}
+
+function ok(body: unknown, status = 200, headers?: Record<string, string>): V1Result {
+  return { status, body, headers };
+}
+
+async function readJson(request: Request): Promise<{ json: Record<string, unknown> | null; raw: string }> {
+  const raw = await request.text();
+  if (!raw) return { json: {}, raw };
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return { json: null, raw };
+    }
+    return { json: parsed as Record<string, unknown>, raw };
+  } catch {
+    return { json: null, raw };
+  }
+}
+
+// ============================================================================
+// POST /v1/sync — Catalog ingestion with idempotency
+// ============================================================================
+//
+// Body: { products: Array<{ sku, name, brand?, category?, attributes?,
+//                            price?: { list, sale?, channel, currency? } }> }
+// Header: Idempotency-Key: <client-generated unique key>
+//
+// Per-item upsert. Returns per-row results so the client knows which SKUs
+// failed without re-sending the whole batch. Same idempotency key returns
+// the cached response.
+// ============================================================================
+
+type SyncProduct = {
+  sku: string;
+  name: string;
+  brand?: string;
+  category?: string;
+  attributes?: Record<string, unknown>;
+  price?: {
+    list: number;
+    sale?: number;
+    channel?: string;
+    currency?: string;
+  };
+};
+
+type SyncItemResult = {
+  sku: string;
+  status: "created" | "updated" | "error";
+  product_id?: string;
+  error?: string;
+};
+
+export async function handleSync(request: Request, ctx: V1Context): Promise<V1Result> {
+  const idemKey = request.headers.get("idempotency-key")?.trim();
+  if (!idemKey) {
+    return err(
+      "missing_idempotency_key",
+      "All POST /v1/sync calls must include an Idempotency-Key header. Generate a unique value per logical batch (e.g. a UUID).",
+      400,
+    );
+  }
+  if (idemKey.length > 200) {
+    return err("invalid_idempotency_key", "Idempotency-Key must be 200 characters or fewer.", 400);
+  }
+
+  // Replay: same key returns the original cached response.
+  const { data: cached } = await supabaseAdmin
+    .from("ingestion_batches")
+    .select("response_body, response_status")
+    .eq("account_id", ctx.accountId)
+    .eq("endpoint", "/v1/sync")
+    .eq("idempotency_key", idemKey)
+    .maybeSingle();
+
+  if (cached) {
+    return ok(cached.response_body, cached.response_status, {
+      "Idempotency-Replay": "true",
+    });
+  }
+
+  const { json } = await readJson(request);
+  if (!json) {
+    return err("validation_failed", "Request body must be a valid JSON object.", 422);
+  }
+
+  const products = json.products;
+  if (!Array.isArray(products) || products.length === 0) {
+    return err("validation_failed", "`products` must be a non-empty array.", 422, {
+      fields: [{ name: "products", error: "required" }],
+    });
+  }
+  if (products.length > 1000) {
+    return err("validation_failed", "Maximum 1000 products per /v1/sync call.", 422);
+  }
+
+  const results: SyncItemResult[] = [];
+  let okCount = 0;
+  let errCount = 0;
+
+  for (const raw of products) {
+    if (typeof raw !== "object" || raw === null) {
+      results.push({ sku: "(unknown)", status: "error", error: "item must be an object" });
+      errCount++;
+      continue;
+    }
+    const p = raw as SyncProduct;
+    if (typeof p.sku !== "string" || p.sku.length === 0 || typeof p.name !== "string" || p.name.length === 0) {
+      results.push({ sku: typeof p.sku === "string" ? p.sku : "(unknown)", status: "error", error: "sku and name are required" });
+      errCount++;
+      continue;
+    }
+
+    // Upsert product on (account_id, sku).
+    const { data: existing } = await supabaseAdmin
+      .from("catalog_products")
+      .select("id")
+      .eq("account_id", ctx.accountId)
+      .eq("sku", p.sku)
+      .maybeSingle();
+
+    let productId: string;
+    let didCreate = false;
+    if (existing) {
+      productId = existing.id;
+      const { error: upErr } = await supabaseAdmin
+        .from("catalog_products")
+        .update({
+          name: p.name,
+          brand: p.brand ?? null,
+          category: p.category ?? null,
+          attributes: p.attributes ?? {},
+        })
+        .eq("id", productId);
+      if (upErr) {
+        results.push({ sku: p.sku, status: "error", error: upErr.message });
+        errCount++;
+        continue;
+      }
+    } else {
+      const { data: created, error: insErr } = await supabaseAdmin
+        .from("catalog_products")
+        .insert({
+          account_id: ctx.accountId,
+          licensee_id: ctx.licenseeId,
+          sku: p.sku,
+          name: p.name,
+          brand: p.brand ?? null,
+          category: p.category ?? null,
+          attributes: p.attributes ?? {},
+        })
+        .select("id")
+        .single();
+      if (insErr || !created) {
+        results.push({ sku: p.sku, status: "error", error: insErr?.message ?? "insert failed" });
+        errCount++;
+        continue;
+      }
+      productId = created.id;
+      didCreate = true;
+    }
+
+    // Optional price upsert on (product_id, channel).
+    if (p.price && typeof p.price.list === "number") {
+      const channel = p.price.channel ?? "online";
+      const currency = p.price.currency ?? "QAR";
+      const { data: existingPrice } = await supabaseAdmin
+        .from("catalog_prices")
+        .select("id")
+        .eq("product_id", productId)
+        .eq("channel", channel)
+        .maybeSingle();
+
+      if (existingPrice) {
+        await supabaseAdmin
+          .from("catalog_prices")
+          .update({
+            list_price: p.price.list,
+            sale_price: p.price.sale ?? null,
+            currency,
+            effective_at: new Date().toISOString(),
+          })
+          .eq("id", existingPrice.id);
+      } else {
+        await supabaseAdmin.from("catalog_prices").insert({
+          account_id: ctx.accountId,
+          licensee_id: ctx.licenseeId,
+          product_id: productId,
+          channel,
+          list_price: p.price.list,
+          sale_price: p.price.sale ?? null,
+          currency,
+        });
+      }
+    }
+
+    results.push({
+      sku: p.sku,
+      status: didCreate ? "created" : "updated",
+      product_id: productId,
+    });
+    okCount++;
+  }
+
+  const responseBody = {
+    batch_id: `bch_${Math.random().toString(36).slice(2, 12)}`,
+    item_count: products.length,
+    ok_count: okCount,
+    error_count: errCount,
+    results,
+  };
+  const responseStatus = errCount === 0 ? 200 : 207; // 207 Multi-Status when partial
+
+  // Persist for replay.
+  await supabaseAdmin.from("ingestion_batches").insert({
+    account_id: ctx.accountId,
+    licensee_id: ctx.licenseeId,
+    api_key_id: ctx.apiKeyId,
+    idempotency_key: idemKey,
+    endpoint: "/v1/sync",
+    request_body: { product_count: products.length },
+    response_body: responseBody,
+    response_status: responseStatus,
+    item_count: products.length,
+    ok_count: okCount,
+    error_count: errCount,
+  });
+
+  return ok(responseBody, responseStatus);
+}
+
+// ============================================================================
+// POST /v1/margin — Compute landed cost + margin from inputs
+// ============================================================================
+//
+// Body: { sku: string, list_price?: number, channel?: string }
+//
+// Reads margin_inputs for the SKU and computes:
+//   landed_cost = unit_cost + freight + (unit_cost * duty_pct) + (list_price * fees_pct)
+//   gross_margin = list_price - landed_cost
+//   gross_margin_pct = gross_margin / list_price
+// ============================================================================
+
+export async function handleMargin(request: Request, ctx: V1Context): Promise<V1Result> {
+  const { json } = await readJson(request);
+  if (!json) return err("validation_failed", "Request body must be a valid JSON object.", 422);
+
+  const sku = typeof json.sku === "string" ? json.sku : "";
+  if (!sku) {
+    return err("validation_failed", "`sku` is required.", 422, {
+      fields: [{ name: "sku", error: "required" }],
+    });
+  }
+
+  const channel = typeof json.channel === "string" ? json.channel : "online";
+
+  // Resolve product.
+  const { data: product, error: prodErr } = await supabaseAdmin
+    .from("catalog_products")
+    .select("id, sku, name")
+    .eq("account_id", ctx.accountId)
+    .eq("sku", sku)
+    .maybeSingle();
+
+  if (prodErr) return err("internal_error", prodErr.message, 500);
+  if (!product) return err("not_found", `Product "${sku}" not found in your catalog. Sync it first via POST /v1/sync.`, 404);
+
+  // Load margin inputs.
+  const { data: inputs } = await supabaseAdmin
+    .from("margin_inputs")
+    .select("unit_cost, freight, duty_pct, fees_pct, currency")
+    .eq("product_id", product.id)
+    .maybeSingle();
+
+  if (!inputs) {
+    return err(
+      "margin_inputs_missing",
+      `No margin inputs configured for "${sku}". Provide unit_cost, freight, duty_pct, and fees_pct via your dashboard or a future POST /v1/margin/inputs endpoint.`,
+      404,
+    );
+  }
+
+  // Resolve list price (body override > catalog).
+  let listPrice = typeof json.list_price === "number" ? json.list_price : null;
+  if (listPrice === null) {
+    const { data: priceRow } = await supabaseAdmin
+      .from("catalog_prices")
+      .select("list_price, sale_price")
+      .eq("product_id", product.id)
+      .eq("channel", channel)
+      .maybeSingle();
+    if (priceRow) {
+      listPrice = Number(priceRow.sale_price ?? priceRow.list_price);
+    }
+  }
+
+  if (listPrice === null || !Number.isFinite(listPrice)) {
+    return err(
+      "validation_failed",
+      `Could not resolve a list_price for "${sku}" on channel "${channel}". Pass list_price in the body or sync a price first.`,
+      422,
+    );
+  }
+
+  const unitCost = Number(inputs.unit_cost);
+  const freight = Number(inputs.freight);
+  const dutyPct = Number(inputs.duty_pct);
+  const feesPct = Number(inputs.fees_pct);
+
+  const dutyAmt = unitCost * dutyPct;
+  const feesAmt = listPrice * feesPct;
+  const landedCost = unitCost + freight + dutyAmt + feesAmt;
+  const grossMargin = listPrice - landedCost;
+  const grossMarginPct = listPrice > 0 ? grossMargin / listPrice : 0;
+
+  return ok({
+    sku,
+    product_id: product.id,
+    channel,
+    currency: inputs.currency,
+    inputs: {
+      unit_cost: unitCost,
+      freight,
+      duty_pct: dutyPct,
+      fees_pct: feesPct,
+      list_price: listPrice,
+    },
+    breakdown: {
+      duty_amount: round2(dutyAmt),
+      fees_amount: round2(feesAmt),
+      landed_cost: round2(landedCost),
+    },
+    margin: {
+      gross_margin: round2(grossMargin),
+      gross_margin_pct: round4(grossMarginPct),
+    },
+  });
+}
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
+function round4(n: number) {
+  return Math.round(n * 10000) / 10000;
+}
+
+// ============================================================================
+// POST /v1/dynprice — Deterministic price recommendation
+// ============================================================================
+//
+// Body: { sku, channel?, target_margin_pct? }
+//
+// Algorithm (v1, deterministic):
+//   1. Load margin_inputs and catalog_prices for the SKU.
+//   2. margin_floor = landed_cost / (1 - target_margin_pct)
+//      (default target = 0.20 if not provided)
+//   3. competitor_min = MIN(price across competitor_prices for this product name)
+//   4. candidate = max(margin_floor, competitor_min - 1)
+//   5. Apply pricing_rules text (informational only — surfaced in `signals.rules`)
+//
+// Result is appended to dynprice_decisions.
+// ============================================================================
+
+export async function handleDynprice(request: Request, ctx: V1Context): Promise<V1Result> {
+  const { json } = await readJson(request);
+  if (!json) return err("validation_failed", "Request body must be a valid JSON object.", 422);
+
+  const sku = typeof json.sku === "string" ? json.sku : "";
+  if (!sku) {
+    return err("validation_failed", "`sku` is required.", 422, {
+      fields: [{ name: "sku", error: "required" }],
+    });
+  }
+
+  const channel = typeof json.channel === "string" ? json.channel : "online";
+  const targetMarginPct = typeof json.target_margin_pct === "number" ? Math.max(0, Math.min(0.95, json.target_margin_pct)) : 0.2;
+
+  const { data: product } = await supabaseAdmin
+    .from("catalog_products")
+    .select("id, name")
+    .eq("account_id", ctx.accountId)
+    .eq("sku", sku)
+    .maybeSingle();
+
+  if (!product) {
+    return err("not_found", `Product "${sku}" not found in your catalog.`, 404);
+  }
+
+  // Current price.
+  const { data: currentPriceRow } = await supabaseAdmin
+    .from("catalog_prices")
+    .select("list_price, sale_price")
+    .eq("product_id", product.id)
+    .eq("channel", channel)
+    .maybeSingle();
+  const currentPrice = currentPriceRow ? Number(currentPriceRow.sale_price ?? currentPriceRow.list_price) : null;
+
+  // Margin floor from landed cost.
+  const { data: inputs } = await supabaseAdmin
+    .from("margin_inputs")
+    .select("unit_cost, freight, duty_pct, fees_pct")
+    .eq("product_id", product.id)
+    .maybeSingle();
+
+  let marginFloor: number | null = null;
+  if (inputs) {
+    const unitCost = Number(inputs.unit_cost);
+    const freight = Number(inputs.freight);
+    const dutyAmt = unitCost * Number(inputs.duty_pct);
+    // Approximate fees on a price-of-1 — we'll iterate once with currentPrice.
+    const ref = currentPrice ?? unitCost * 2;
+    const feesAmt = ref * Number(inputs.fees_pct);
+    const landedCost = unitCost + freight + dutyAmt + feesAmt;
+    marginFloor = landedCost / (1 - targetMarginPct);
+  }
+
+  // Competitor minimum for this product name.
+  const { data: compRows } = await supabaseAdmin
+    .from("competitor_prices")
+    .select("amazon, carrefour, lulu, noon, talabat")
+    .eq("user_id", ctx.userId)
+    .eq("product", product.name)
+    .limit(1);
+
+  const competitorPrices: number[] = [];
+  if (compRows && compRows[0]) {
+    const row = compRows[0];
+    for (const key of ["amazon", "carrefour", "lulu", "noon", "talabat"] as const) {
+      const v = row[key] as { price?: number } | null | undefined;
+      if (v && typeof v.price === "number") competitorPrices.push(v.price);
+    }
+  }
+  const competitorMin = competitorPrices.length > 0 ? Math.min(...competitorPrices) : null;
+
+  // Active rules (informational signals).
+  const { data: ruleRows } = await supabaseAdmin
+    .from("pricing_rules")
+    .select("rule_text")
+    .eq("user_id", ctx.userId)
+    .eq("enabled", true)
+    .order("position");
+  const activeRules = (ruleRows ?? []).map((r) => r.rule_text);
+
+  // Combine: undercut competitor by 1 unit if doing so respects floor; else hold floor.
+  let recommended: number;
+  let reason: string;
+  if (marginFloor !== null && competitorMin !== null) {
+    const undercut = competitorMin - 1;
+    if (undercut >= marginFloor) {
+      recommended = undercut;
+      reason = `Undercut cheapest competitor (${round2(competitorMin)}) by 1 unit while respecting the ${Math.round(targetMarginPct * 100)}% margin floor.`;
+    } else {
+      recommended = marginFloor;
+      reason = `Held the ${Math.round(targetMarginPct * 100)}% margin floor (${round2(marginFloor)}); undercutting the cheapest competitor (${round2(competitorMin)}) would push margin below target.`;
+    }
+  } else if (marginFloor !== null) {
+    recommended = marginFloor;
+    reason = `No competitor price available — used margin floor (${round2(marginFloor)}) at ${Math.round(targetMarginPct * 100)}% target.`;
+  } else if (competitorMin !== null) {
+    recommended = competitorMin - 1;
+    reason = `No margin inputs configured — undercut cheapest competitor (${round2(competitorMin)}) by 1 unit. Add margin_inputs for safer recommendations.`;
+  } else {
+    return err(
+      "insufficient_signals",
+      `Cannot recommend a price for "${sku}": no margin inputs and no competitor data available.`,
+      422,
+    );
+  }
+
+  const finalPrice = round2(Math.max(0.01, recommended));
+
+  // Persist decision for audit.
+  await supabaseAdmin.from("dynprice_decisions").insert({
+    account_id: ctx.accountId,
+    licensee_id: ctx.licenseeId,
+    product_id: product.id,
+    api_key_id: ctx.apiKeyId,
+    channel,
+    input_current_price: currentPrice,
+    input_competitor_min: competitorMin,
+    input_margin_floor: marginFloor !== null ? round2(marginFloor) : null,
+    output_price: finalPrice,
+    reason,
+    signals: {
+      target_margin_pct: targetMarginPct,
+      competitor_count: competitorPrices.length,
+      active_rules: activeRules,
+    },
+  });
+
+  return ok({
+    sku,
+    product_id: product.id,
+    channel,
+    current_price: currentPrice,
+    recommended_price: finalPrice,
+    reason,
+    signals: {
+      margin_floor: marginFloor !== null ? round2(marginFloor) : null,
+      competitor_min: competitorMin,
+      competitor_count: competitorPrices.length,
+      target_margin_pct: targetMarginPct,
+      active_rules: activeRules,
+    },
+  });
+}
+
+// ============================================================================
+// POST /v1/webhooks/enrich — Emit an enrichment event to subscribers
+// ============================================================================
+//
+// Body: { event_type: "enrich.price_changed" | "enrich.promo_detected" |
+//                     "enrich.new_competitor", payload: object }
+//
+// Looks up subscribed webhook_endpoints for the calling user, signs the
+// payload with each endpoint's signing_secret, fires the request, and
+// records the result in webhook_deliveries.
+// ============================================================================
+
+const ENRICH_EVENTS = ["enrich.price_changed", "enrich.promo_detected", "enrich.new_competitor"] as const;
+type EnrichEvent = (typeof ENRICH_EVENTS)[number];
+
+function isEnrichEvent(s: unknown): s is EnrichEvent {
+  return typeof s === "string" && (ENRICH_EVENTS as readonly string[]).includes(s);
+}
+
+export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Promise<V1Result> {
+  const { json } = await readJson(request);
+  if (!json) return err("validation_failed", "Request body must be a valid JSON object.", 422);
+
+  if (!isEnrichEvent(json.event_type)) {
+    return err(
+      "validation_failed",
+      `\`event_type\` must be one of: ${ENRICH_EVENTS.join(", ")}.`,
+      422,
+      { fields: [{ name: "event_type", error: "invalid" }] },
+    );
+  }
+  const eventType: EnrichEvent = json.event_type;
+  const payload = (typeof json.payload === "object" && json.payload !== null) ? json.payload : {};
+
+  // Find enabled endpoints subscribed to this event.
+  const { data: endpoints } = await supabaseAdmin
+    .from("webhook_endpoints")
+    .select("id, url, signing_secret, events, max_attempts")
+    .eq("user_id", ctx.userId)
+    .eq("enabled", true);
+
+  const subscribers = (endpoints ?? []).filter((ep) => {
+    const events = Array.isArray(ep.events) ? (ep.events as unknown[]) : [];
+    return events.includes(eventType) || events.includes("*") || events.includes("enrich.*");
+  });
+
+  if (subscribers.length === 0) {
+    return ok({
+      event_type: eventType,
+      delivered_count: 0,
+      message: "No active subscribers for this event. Configure webhook endpoints in your dashboard.",
+    });
+  }
+
+  const eventId = `evt_${Math.random().toString(36).slice(2, 14)}`;
+  const sentAt = new Date().toISOString();
+  const eventBody = JSON.stringify({
+    id: eventId,
+    type: eventType,
+    sent_at: sentAt,
+    data: payload,
+  });
+
+  const deliveries: Array<{
+    endpoint_id: string;
+    success: boolean;
+    status_code: number | null;
+    error: string | null;
+  }> = [];
+
+  for (const ep of subscribers) {
+    const signature = createHmac("sha256", ep.signing_secret).update(eventBody).digest("hex");
+    const start = Date.now();
+    let status: number | null = null;
+    let success = false;
+    let errMsg: string | null = null;
+    let respBody: string | null = null;
+
+    try {
+      const res = await fetch(ep.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-PrizeSkout-Event": eventType,
+          "X-PrizeSkout-Event-Id": eventId,
+          "X-PrizeSkout-Signature": `sha256=${signature}`,
+        },
+        body: eventBody,
+        signal: AbortSignal.timeout(8000),
+      });
+      status = res.status;
+      success = res.ok;
+      respBody = (await res.text()).slice(0, 500);
+    } catch (e) {
+      errMsg = e instanceof Error ? e.message : "delivery failed";
+    }
+
+    await supabaseAdmin.from("webhook_deliveries").insert({
+      user_id: ctx.userId,
+      endpoint_id: ep.id,
+      event_type: eventType,
+      attempt: 1,
+      max_attempts: ep.max_attempts ?? 5,
+      success,
+      status_code: status,
+      duration_ms: Date.now() - start,
+      payload: { id: eventId, type: eventType, sent_at: sentAt, data: payload },
+      payload_preview: eventBody.slice(0, 500),
+      response_body: respBody,
+      error: errMsg,
+    });
+
+    // Update endpoint health.
+    await supabaseAdmin
+      .from("webhook_endpoints")
+      .update({
+        last_delivery_at: new Date().toISOString(),
+        last_delivery_success: success,
+      })
+      .eq("id", ep.id);
+
+    deliveries.push({ endpoint_id: ep.id, success, status_code: status, error: errMsg });
+  }
+
+  const allOk = deliveries.every((d) => d.success);
+  return ok(
+    {
+      event_id: eventId,
+      event_type: eventType,
+      delivered_count: deliveries.filter((d) => d.success).length,
+      attempted_count: deliveries.length,
+      deliveries,
+    },
+    allOk ? 200 : 207,
+  );
+}
+
+// ============================================================================
+// Path matcher — keys = "METHOD /v1/path"
+// ============================================================================
+
+export const V1_HANDLER_KEYS = new Set([
+  "POST /v1/sync",
+  "POST /v1/margin",
+  "POST /v1/dynprice",
+  "POST /v1/webhooks/enrich",
+]);
+
+export async function dispatchV1Handler(
+  method: string,
+  path: string,
+  request: Request,
+  ctx: V1Context,
+): Promise<V1Result | null> {
+  const key = `${method} ${path}`;
+  if (!V1_HANDLER_KEYS.has(key)) return null;
+
+  switch (key) {
+    case "POST /v1/sync":
+      return handleSync(request, ctx);
+    case "POST /v1/margin":
+      return handleMargin(request, ctx);
+    case "POST /v1/dynprice":
+      return handleDynprice(request, ctx);
+    case "POST /v1/webhooks/enrich":
+      return handleWebhooksEnrich(request, ctx);
+    default:
+      return null;
+  }
+}
