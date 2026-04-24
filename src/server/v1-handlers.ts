@@ -164,7 +164,7 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
           name: p.name,
           brand: p.brand ?? null,
           category: p.category ?? null,
-          attributes: p.attributes ?? {},
+          attributes: (p.attributes ?? {}) as never,
         })
         .eq("id", productId);
       if (upErr) {
