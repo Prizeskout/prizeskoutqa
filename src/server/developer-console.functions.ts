@@ -118,7 +118,7 @@ export const requestLiveAccess = createServerFn({ method: "POST" })
       throw new Error("Company name, use case, and billing email are required");
     }
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .upsert(
         {
           user_id: userId,
@@ -161,7 +161,7 @@ export const approveLiveAccess = createServerFn({ method: "POST" })
     if (!data.userId) throw new Error("userId required");
     await requireAdmin(supabase, callerId);
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .update({
         live_status: "approved",
         decided_at: new Date().toISOString(),
@@ -184,7 +184,7 @@ export const rejectLiveAccess = createServerFn({ method: "POST" })
     if (!data.userId) throw new Error("userId required");
     await requireAdmin(supabase, callerId);
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .update({
         live_status: "rejected",
         decided_at: new Date().toISOString(),
@@ -207,7 +207,7 @@ export const revokeLiveAccess = createServerFn({ method: "POST" })
     if (!data.userId) throw new Error("userId required");
     await requireAdmin(supabase, callerId);
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .update({
         live_status: "none",
         decided_at: new Date().toISOString(),
