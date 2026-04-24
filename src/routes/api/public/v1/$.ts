@@ -10,6 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { API_GROUPS, type EndpointSpec } from "@/lib/api-spec";
+import { dispatchV1Handler, V1_HANDLER_KEYS, type V1Context } from "@/server/v1-handlers";
 
 function hashKey(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
