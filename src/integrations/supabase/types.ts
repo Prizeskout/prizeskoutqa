@@ -14,53 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
-      accounts: {
+      accounts_v2: {
         Row: {
-          billing_email: string | null
-          company_domain: string | null
-          company_name: string | null
           created_at: string
-          decided_at: string | null
-          decided_by: string | null
-          decision_note: string | null
-          expected_volume: string | null
-          live_status: string
-          requested_at: string | null
+          currency: string
+          id: string
+          is_default: boolean
+          licensee_id: string
+          metadata: Json
+          name: string
+          region: string | null
+          slug: string
           updated_at: string
-          use_case: string | null
-          user_id: string
         }
         Insert: {
-          billing_email?: string | null
-          company_domain?: string | null
-          company_name?: string | null
           created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          decision_note?: string | null
-          expected_volume?: string | null
-          live_status?: string
-          requested_at?: string | null
+          currency?: string
+          id?: string
+          is_default?: boolean
+          licensee_id: string
+          metadata?: Json
+          name: string
+          region?: string | null
+          slug: string
           updated_at?: string
-          use_case?: string | null
-          user_id: string
         }
         Update: {
-          billing_email?: string | null
-          company_domain?: string | null
-          company_name?: string | null
           created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          decision_note?: string | null
-          expected_volume?: string | null
-          live_status?: string
-          requested_at?: string | null
+          currency?: string
+          id?: string
+          is_default?: boolean
+          licensee_id?: string
+          metadata?: Json
+          name?: string
+          region?: string | null
+          slug?: string
           updated_at?: string
-          use_case?: string | null
-          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounts_v2_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_insights: {
         Row: {
@@ -115,6 +114,7 @@ export type Database = {
           key_prefix: string
           last_four: string
           last_used_at: string | null
+          licensee_id: string
           mode: string
           name: string
           revoked_at: string | null
@@ -129,6 +129,7 @@ export type Database = {
           key_prefix: string
           last_four: string
           last_used_at?: string | null
+          licensee_id: string
           mode: string
           name: string
           revoked_at?: string | null
@@ -143,6 +144,7 @@ export type Database = {
           key_prefix?: string
           last_four?: string
           last_used_at?: string | null
+          licensee_id?: string
           mode?: string
           name?: string
           revoked_at?: string | null
@@ -150,7 +152,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       api_request_logs: {
         Row: {
@@ -763,6 +773,137 @@ export type Database = {
         }
         Relationships: []
       }
+      licensee_applications: {
+        Row: {
+          billing_email: string | null
+          company_domain: string | null
+          company_name: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          expected_volume: string | null
+          live_status: string
+          requested_at: string | null
+          updated_at: string
+          use_case: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_email?: string | null
+          company_domain?: string | null
+          company_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          expected_volume?: string | null
+          live_status?: string
+          requested_at?: string | null
+          updated_at?: string
+          use_case?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_email?: string | null
+          company_domain?: string | null
+          company_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          expected_volume?: string | null
+          live_status?: string
+          requested_at?: string | null
+          updated_at?: string
+          use_case?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      licensee_members: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          licensee_id: string
+          role: Database["public"]["Enums"]["licensee_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          licensee_id: string
+          role?: Database["public"]["Enums"]["licensee_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          licensee_id?: string
+          role?: Database["public"]["Enums"]["licensee_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licensee_members_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      licensees: {
+        Row: {
+          billing_email: string | null
+          contact_email: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          name: string
+          slug: string
+          status: string
+          updated_at: string
+          white_label: Json
+        }
+        Insert: {
+          billing_email?: string | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name: string
+          slug: string
+          status?: string
+          updated_at?: string
+          white_label?: Json
+        }
+        Update: {
+          billing_email?: string | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          name?: string
+          slug?: string
+          status?: string
+          updated_at?: string
+          white_label?: Json
+        }
+        Relationships: []
+      }
       market_benchmarks: {
         Row: {
           created_at: string
@@ -849,6 +990,66 @@ export type Database = {
           value_color?: string | null
         }
         Relationships: []
+      }
+      merchants: {
+        Row: {
+          account_id: string
+          category: string | null
+          channel: string | null
+          country: string | null
+          created_at: string
+          external_id: string | null
+          id: string
+          licensee_id: string
+          metadata: Json
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          category?: string | null
+          channel?: string | null
+          country?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          licensee_id: string
+          metadata?: Json
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          category?: string | null
+          channel?: string | null
+          country?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          licensee_id?: string
+          metadata?: Json
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchants_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchants_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       model_knowledge: {
         Row: {
@@ -1958,10 +2159,18 @@ export type Database = {
     }
     Functions: {
       ensure_account_for_user: { Args: { uid: string }; Returns: undefined }
+      ensure_licensee_for_user: { Args: { uid: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      is_licensee_member: {
+        Args: {
+          _licensee_id: string
+          _min_role?: Database["public"]["Enums"]["licensee_role"]
         }
         Returns: boolean
       }
@@ -1977,6 +2186,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      licensee_role: "owner" | "admin" | "developer" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2105,6 +2315,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      licensee_role: ["owner", "admin", "developer", "viewer"],
     },
   },
 } as const

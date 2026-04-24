@@ -40,15 +40,33 @@ export const createApiKey = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Phase B gate: live keys require an approved account.
+    // Resolve the user's primary licensee (owner membership). Personal
+    // licensees are auto-provisioned by ensure_licensee_for_user on signup
+    // and by the W1 backfill for existing users.
+    const { data: membership, error: mErr } = await supabase
+      .from("licensee_members")
+      .select("licensee_id")
+      .eq("user_id", userId)
+      .eq("role", "owner")
+      .limit(1)
+      .maybeSingle();
+    if (mErr) throw new Error(mErr.message);
+    if (!membership) {
+      throw new Error(
+        "No licensee found for this user. Please refresh the page or contact support.",
+      );
+    }
+    const licenseeId = membership.licensee_id;
+
+    // Phase B gate: live keys require an approved application.
     if (data.mode === "live") {
-      const { data: account, error: aErr } = await supabase
-        .from("accounts")
+      const { data: application, error: aErr } = await supabase
+        .from("licensee_applications")
         .select("live_status")
         .eq("user_id", userId)
         .maybeSingle();
       if (aErr) throw new Error(aErr.message);
-      if (!account || account.live_status !== "approved") {
+      if (!application || application.live_status !== "approved") {
         throw new Error(
           "Live API access has not been approved for this account. Submit a live access request from the API Keys page."
         );
@@ -60,6 +78,7 @@ export const createApiKey = createServerFn({ method: "POST" })
       .from("api_keys")
       .insert({
         user_id: userId,
+        licensee_id: licenseeId,
         name: data.name,
         mode: data.mode,
         key_prefix: prefix,
@@ -99,7 +118,7 @@ export const requestLiveAccess = createServerFn({ method: "POST" })
       throw new Error("Company name, use case, and billing email are required");
     }
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .upsert(
         {
           user_id: userId,
@@ -142,7 +161,7 @@ export const approveLiveAccess = createServerFn({ method: "POST" })
     if (!data.userId) throw new Error("userId required");
     await requireAdmin(supabase, callerId);
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .update({
         live_status: "approved",
         decided_at: new Date().toISOString(),
@@ -165,7 +184,7 @@ export const rejectLiveAccess = createServerFn({ method: "POST" })
     if (!data.userId) throw new Error("userId required");
     await requireAdmin(supabase, callerId);
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .update({
         live_status: "rejected",
         decided_at: new Date().toISOString(),
@@ -188,7 +207,7 @@ export const revokeLiveAccess = createServerFn({ method: "POST" })
     if (!data.userId) throw new Error("userId required");
     await requireAdmin(supabase, callerId);
     const { error } = await supabase
-      .from("accounts")
+      .from("licensee_applications")
       .update({
         live_status: "none",
         decided_at: new Date().toISOString(),

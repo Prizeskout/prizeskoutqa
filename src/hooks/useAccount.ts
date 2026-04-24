@@ -24,7 +24,7 @@ export function useAccount() {
       } = await supabase.auth.getUser();
       if (!user) return null;
       const { data, error } = await supabase
-        .from("accounts")
+        .from("licensee_applications")
         .select(
           "user_id, live_status, company_name, company_domain, use_case, expected_volume, billing_email, requested_at, decided_at, decision_note",
         )
