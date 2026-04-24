@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Check,
-  Code2,
-  Terminal,
   Zap,
   Shield,
   GitBranch,
@@ -12,13 +10,9 @@ import {
   Webhook,
   KeyRound,
   Activity,
-  LineChart,
   Tags,
-  Megaphone,
-  Map as MapIcon,
   ClipboardList,
   ChevronRight,
-  FileCode,
 } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import { getGroupsByPillar, type PillarSlug } from "@/lib/api-spec";
@@ -489,9 +483,6 @@ function PillarsSection() {
             const Icon = PILLAR_ICONS[pillar.slug];
             const firstGroup = groups[0];
             const firstEndpoint = firstGroup?.endpoints[0];
-            const deepLink = firstGroup && firstEndpoint
-              ? (`/docs#${firstGroup.slug}/${firstEndpoint.slug}` as const)
-              : ("/docs" as const);
             return (
               <Link
                 key={pillar.slug}
