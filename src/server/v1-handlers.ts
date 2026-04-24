@@ -182,7 +182,7 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
           name: p.name,
           brand: p.brand ?? null,
           category: p.category ?? null,
-          attributes: p.attributes ?? {},
+          attributes: (p.attributes ?? {}) as never,
         })
         .select("id")
         .single();
@@ -646,7 +646,7 @@ export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Pr
       success,
       status_code: status,
       duration_ms: Date.now() - start,
-      payload: { id: eventId, type: eventType, sent_at: sentAt, data: payload },
+      payload: { id: eventId, type: eventType, sent_at: sentAt, data: payload } as never,
       payload_preview: eventBody.slice(0, 500),
       response_body: respBody,
       error: errMsg,
