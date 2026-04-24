@@ -479,7 +479,7 @@ function PillarsSection() {
           }}
           className="ps-pillar-grid"
         >
-          {pillars.map(({ pillar, groups }) => {
+          {pillars.map(({ pillar, groups }, idx) => {
             const Icon = PILLAR_ICONS[pillar.slug];
             const firstGroup = groups[0];
             const firstEndpoint = firstGroup?.endpoints[0];
