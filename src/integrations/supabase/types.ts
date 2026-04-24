@@ -356,6 +356,124 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_prices: {
+        Row: {
+          account_id: string
+          channel: string
+          created_at: string
+          currency: string
+          effective_at: string
+          id: string
+          licensee_id: string
+          list_price: number
+          product_id: string
+          sale_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          channel: string
+          created_at?: string
+          currency?: string
+          effective_at?: string
+          id?: string
+          licensee_id: string
+          list_price: number
+          product_id: string
+          sale_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          channel?: string
+          created_at?: string
+          currency?: string
+          effective_at?: string
+          id?: string
+          licensee_id?: string
+          list_price?: number
+          product_id?: string
+          sale_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_prices_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_prices_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_products: {
+        Row: {
+          account_id: string
+          attributes: Json
+          brand: string | null
+          category: string | null
+          created_at: string
+          id: string
+          licensee_id: string
+          name: string
+          sku: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          attributes?: Json
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          licensee_id: string
+          name: string
+          sku: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          attributes?: Json
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          licensee_id?: string
+          name?: string
+          sku?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_products_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_products_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       category_performance: {
         Row: {
           avg_discount: number
@@ -698,6 +816,86 @@ export type Database = {
         }
         Relationships: []
       }
+      dynprice_decisions: {
+        Row: {
+          account_id: string
+          api_key_id: string | null
+          channel: string
+          created_at: string
+          decided_at: string
+          id: string
+          input_competitor_min: number | null
+          input_current_price: number | null
+          input_margin_floor: number | null
+          licensee_id: string
+          output_price: number
+          product_id: string | null
+          reason: string
+          signals: Json
+        }
+        Insert: {
+          account_id: string
+          api_key_id?: string | null
+          channel: string
+          created_at?: string
+          decided_at?: string
+          id?: string
+          input_competitor_min?: number | null
+          input_current_price?: number | null
+          input_margin_floor?: number | null
+          licensee_id: string
+          output_price: number
+          product_id?: string | null
+          reason: string
+          signals?: Json
+        }
+        Update: {
+          account_id?: string
+          api_key_id?: string | null
+          channel?: string
+          created_at?: string
+          decided_at?: string
+          id?: string
+          input_competitor_min?: number | null
+          input_current_price?: number | null
+          input_margin_floor?: number | null
+          licensee_id?: string
+          output_price?: number
+          product_id?: string | null
+          reason?: string
+          signals?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dynprice_decisions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynprice_decisions_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynprice_decisions_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dynprice_decisions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_intel_metrics: {
         Row: {
           created_at: string
@@ -772,6 +970,76 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ingestion_batches: {
+        Row: {
+          account_id: string
+          api_key_id: string | null
+          created_at: string
+          endpoint: string
+          error_count: number
+          id: string
+          idempotency_key: string
+          item_count: number
+          licensee_id: string
+          ok_count: number
+          request_body: Json
+          response_body: Json
+          response_status: number
+        }
+        Insert: {
+          account_id: string
+          api_key_id?: string | null
+          created_at?: string
+          endpoint: string
+          error_count?: number
+          id?: string
+          idempotency_key: string
+          item_count?: number
+          licensee_id: string
+          ok_count?: number
+          request_body?: Json
+          response_body?: Json
+          response_status: number
+        }
+        Update: {
+          account_id?: string
+          api_key_id?: string | null
+          created_at?: string
+          endpoint?: string
+          error_count?: number
+          id?: string
+          idempotency_key?: string
+          item_count?: number
+          licensee_id?: string
+          ok_count?: number
+          request_body?: Json
+          response_body?: Json
+          response_status?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_batches_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_batches_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_batches_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       licensee_applications: {
         Row: {
@@ -903,6 +1171,73 @@ export type Database = {
           white_label?: Json
         }
         Relationships: []
+      }
+      margin_inputs: {
+        Row: {
+          account_id: string
+          created_at: string
+          currency: string
+          duty_pct: number
+          effective_at: string
+          fees_pct: number
+          freight: number
+          id: string
+          licensee_id: string
+          product_id: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          currency?: string
+          duty_pct?: number
+          effective_at?: string
+          fees_pct?: number
+          freight?: number
+          id?: string
+          licensee_id: string
+          product_id: string
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          currency?: string
+          duty_pct?: number
+          effective_at?: string
+          fees_pct?: number
+          freight?: number
+          id?: string
+          licensee_id?: string
+          product_id?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "margin_inputs_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "margin_inputs_licensee_id_fkey"
+            columns: ["licensee_id"]
+            isOneToOne: false
+            referencedRelation: "licensees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "margin_inputs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       market_benchmarks: {
         Row: {
@@ -2158,8 +2493,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_account_for_user: {
+        Args: { _user_id: string }
+        Returns: {
+          account_id: string
+          licensee_id: string
+        }[]
+      }
       ensure_account_for_user: { Args: { uid: string }; Returns: undefined }
       ensure_licensee_for_user: { Args: { uid: string }; Returns: string }
+      find_account_for_api_key: {
+        Args: { _api_key_id: string }
+        Returns: {
+          account_id: string
+          licensee_id: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
