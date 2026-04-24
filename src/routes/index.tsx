@@ -1122,7 +1122,7 @@ function LandingPage() {
       <style>{PAGE_STYLES}</style>
       <Hero />
       <TrustStrip />
-      <ApiCatalog />
+      <PillarsSection />
       <Quickstart />
       <BuiltForDevs />
       <PricingSection />
