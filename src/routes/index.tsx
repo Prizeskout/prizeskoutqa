@@ -340,7 +340,7 @@ function Hero() {
               margin: 0,
             }}
           >
-            Pricing intelligence,{" "}
+            The shadow infrastructure{" "}
             <span
               style={{
                 background: "linear-gradient(90deg, #EA580C, #FB923C)",
@@ -349,7 +349,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              one API call away.
+              for commerce.
             </span>
           </h1>
 
@@ -359,10 +359,10 @@ function Hero() {
               marginTop: 18,
               color: "#9A9A9A",
               lineHeight: 1.6,
-              maxWidth: 520,
+              maxWidth: 540,
             }}
           >
-            Live competitor prices, price recommendations, and promo ROI. As REST APIs.
+            Your storefront stays yours. The pricing decisions, market signals, and event firehose that power it run on PrizeSkout — invisible to your shoppers, indispensable to your team.
           </p>
         </div>
 
