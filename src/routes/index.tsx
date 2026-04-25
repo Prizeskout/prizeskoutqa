@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "License the APIs that decide, sync, and defend prices across every channel — under your brand, inside your platform, without PrizeSkout ever appearing.",
+          "License the APIs that decide, sync, and defend prices across every channel, under your brand, inside your platform, without PrizeSkout ever appearing.",
       },
       {
         property: "og:title",
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "License the APIs that decide, sync, and defend prices across every channel — under your brand, inside your platform, without PrizeSkout ever appearing.",
+          "License the APIs that decide, sync, and defend prices across every channel, under your brand, inside your platform, without PrizeSkout ever appearing.",
       },
     ],
   }),
@@ -148,7 +148,7 @@ function Hero() {
               fontSize: 16,
             }}
           >
-            License the APIs that decide, sync, and defend prices across every channel — under your brand, inside your platform, without PrizeSkout ever appearing.
+            License the APIs that decide, sync, and defend prices across every channel, under your brand, inside your platform, without PrizeSkout ever appearing.
           </p>
 
           <div
@@ -175,7 +175,7 @@ function Hero() {
                 boxShadow: "0 10px 28px rgba(234,88,12,0.32)",
               }}
             >
-              Get API keys — free
+              Get API keys, free
               <ArrowRight size={14} />
             </Link>
             <Link
@@ -468,7 +468,7 @@ function HowItWorks() {
     {
       n: "02",
       title: "Embed under your brand",
-      desc: "White-label widgets, enriched webhooks, and scoped keys — all branded to your platform. Set powered_by_visible: false and disappear.",
+      desc: "White-label widgets, enriched webhooks, and scoped keys, all branded to your platform. Set powered_by_visible: false and disappear.",
     },
     {
       n: "03",
@@ -642,7 +642,7 @@ function ProductPillars() {
               marginTop: 16,
             }}
           >
-            Every API is designed to sit deep in your operational stack — not on the surface where it can be replaced.
+            Every API is designed to sit deep in your operational stack, not on the surface where it can be replaced.
           </p>
         </div>
 
