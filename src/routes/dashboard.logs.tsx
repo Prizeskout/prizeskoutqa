@@ -118,18 +118,23 @@ function LogsPage() {
     return logs.filter((l) => {
       if (endpointFilter !== "all" && !l.path.startsWith(endpointFilter)) return false;
       if (eventFilter !== "all" && !l.path.toLowerCase().includes(`event=${eventFilter.toLowerCase()}`)) return false;
+      if (keyFilter !== "all") {
+        if (keyFilter === "none" && l.api_key_id) return false;
+        if (keyFilter !== "none" && l.api_key_id !== keyFilter) return false;
+      }
       if (needle) {
         const hay = `${l.method} ${l.path} ${l.request_id ?? ""} ${l.error ?? ""}`.toLowerCase();
         if (!hay.includes(needle)) return false;
       }
       return true;
     });
-  }, [logs, query, endpointFilter, eventFilter]);
+  }, [logs, query, endpointFilter, eventFilter, keyFilter]);
 
   const resetFilters = () => {
     setQuery("");
     setEndpointFilter("all");
     setEventFilter("all");
+    setKeyFilter("all");
     setStatusBucket("all");
     setRange("7d");
     setCustomFrom("");
@@ -140,8 +145,27 @@ function LogsPage() {
     (query ? 1 : 0) +
     (endpointFilter !== "all" ? 1 : 0) +
     (eventFilter !== "all" ? 1 : 0) +
+    (keyFilter !== "all" ? 1 : 0) +
     (statusBucket !== "all" ? 1 : 0) +
     (range !== "7d" ? 1 : 0);
+
+  const keyLookup = useMemo(() => {
+    const m = new Map<string, ApiKeyRow>();
+    for (const k of keys) m.set(k.id, k);
+    return m;
+  }, [keys]);
+
+  const keyOptions = useMemo(
+    () => [
+      { value: "all", label: "All keys" },
+      { value: "none", label: "Unattributed" },
+      ...keys.map((k) => ({
+        value: k.id,
+        label: `${k.name} · ${k.mode} · …${k.last_four}`,
+      })),
+    ],
+    [keys],
+  );
 
   return (
     <DashboardLayout
