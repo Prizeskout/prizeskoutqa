@@ -62,11 +62,15 @@ type Delivery = {
 };
 
 const AVAILABLE_EVENTS = [
+  "catalog.synced",
+  "recommendation.ready",
   "price.changed",
   "competitor.scraped",
-  "recommendation.ready",
   "promotion.detected",
   "alert.triggered",
+  "enrich.price_changed",
+  "enrich.promo_detected",
+  "enrich.new_competitor",
 ];
 
 function WebhooksPage() {
