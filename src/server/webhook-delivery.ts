@@ -297,12 +297,14 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
         ? row.payload_preview
         : JSON.stringify(payloadObj ?? {});
 
-    const signature = createHmac("sha256", ep.signing_secret).update(body).digest("hex");
+    const sig = buildSignatureHeader(ep.signing_secret, body);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-PrizeSkout-Event": row.event_type,
       "X-PrizeSkout-Event-Id": payloadObj?.id ?? row.id,
-      "X-PrizeSkout-Signature": `sha256=${signature}`,
+      "X-PrizeSkout-Delivery-Id": payloadObj?.id ?? row.id,
+      "X-PrizeSkout-Timestamp": sig.timestamp,
+      "X-PrizeSkout-Signature": sig.header,
       "X-PrizeSkout-Delivery-Attempt": String(newAttempt),
     };
 
