@@ -221,6 +221,12 @@ function LogsPage() {
           options={eventOptions.map((o) => ({ value: o, label: o === "all" ? "All events" : o }))}
         />
         <Select
+          label="API key"
+          value={keyFilter}
+          onChange={setKeyFilter}
+          options={keyOptions}
+        />
+        <Select
           label="Status"
           value={statusBucket}
           onChange={(v) => setStatusBucket(v as StatusBucket)}
