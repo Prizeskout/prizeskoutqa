@@ -53,6 +53,7 @@ import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.con
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
+import { Route as ApiPublicV1WebhooksTestSignatureRouteImport } from './routes/api/public/v1/webhooks.test-signature'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -276,6 +277,12 @@ const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   path: '/api/public/hooks/scrape-all',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1WebhooksTestSignatureRoute =
+  ApiPublicV1WebhooksTestSignatureRouteImport.update({
+    id: '/api/public/v1/webhooks/test-signature',
+    path: '/api/public/v1/webhooks/test-signature',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -322,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -366,6 +374,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -413,6 +422,7 @@ export interface FileRoutesById {
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -461,6 +471,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
+    | '/api/public/v1/webhooks/test-signature'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -505,6 +516,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
+    | '/api/public/v1/webhooks/test-signature'
   id:
     | '__root__'
     | '/'
@@ -551,6 +563,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
+    | '/api/public/v1/webhooks/test-signature'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -574,6 +587,7 @@ export interface RootRouteChildren {
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
   ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
+  ApiPublicV1WebhooksTestSignatureRoute: typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -886,6 +900,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScrapeAllRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/webhooks/test-signature': {
+      id: '/api/public/v1/webhooks/test-signature'
+      path: '/api/public/v1/webhooks/test-signature'
+      fullPath: '/api/public/v1/webhooks/test-signature'
+      preLoaderRoute: typeof ApiPublicV1WebhooksTestSignatureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -995,6 +1016,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
   ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
+  ApiPublicV1WebhooksTestSignatureRoute: ApiPublicV1WebhooksTestSignatureRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
