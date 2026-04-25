@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Bell, Menu, RefreshCw } from "lucide-react";
+import { Menu, RefreshCw } from "lucide-react";
 import { ChannelFilter, type Channel } from "./ChannelFilter";
+import { NotificationsBell } from "./NotificationsBell";
 
 // Visual-only data freshness indicator. Wired to real refresh times when the
 // data pipeline lands; for now hardcoded to "4 min ago" (fresh).
@@ -125,26 +126,7 @@ export function TopBar({
       <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
         <ChannelFilter value={channel} onChange={onChannelChange} />
         <DataFreshnessIndicator />
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex items-center justify-center"
-          style={{ width: 32, height: 32, borderRadius: 8 }}
-        >
-          <Bell size={18} strokeWidth={1.75} color="#6B6B6B" />
-          <span
-            aria-hidden
-            className="absolute"
-            style={{
-              top: 6,
-              right: 6,
-              width: 6,
-              height: 6,
-              borderRadius: 9999,
-              backgroundColor: "#EA580C",
-            }}
-          />
-        </button>
+        <NotificationsBell />
       </div>
     </header>
   );
