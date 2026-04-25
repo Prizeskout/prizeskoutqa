@@ -8,6 +8,7 @@
 // persisted, so the UI doesn't flap between error/success rows.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createNotification } from "./notifications";
 
 const PriceSchema = {
   type: "object",
@@ -207,6 +208,17 @@ export async function runScrape(
     metadata: failure.partial?.metadata ?? {},
     status: "error",
     error: `${failure.error} (after ${MAX_ATTEMPTS} attempts)`,
+  });
+
+  void createNotification({
+    userId: job.userId,
+    category: "scrape_failure",
+    severity: "warning",
+    title: `Competitor scrape failed`,
+    body: `${job.competitor ?? "Competitor"} — ${job.product ?? job.url}: ${failure.error}`,
+    linkTo: "/dashboard/competitors",
+    dedupeKey: `scrape:${job.url}`,
+    metadata: { url: job.url, competitor: job.competitor, product: job.product },
   });
 
   return { ok: false, url: job.url, error: failure.error };
