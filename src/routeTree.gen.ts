@@ -34,6 +34,7 @@ import { Route as DashboardUsageRouteImport } from './routes/dashboard.usage'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
+import { Route as DashboardPlansRouteImport } from './routes/dashboard.plans'
 import { Route as DashboardMarketRouteImport } from './routes/dashboard.market'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.field-intel'
@@ -176,6 +177,11 @@ const DashboardPricingRoute = DashboardPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPlansRoute = DashboardPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardMarketRoute = DashboardMarketRouteImport.update({
   id: '/market',
   path: '/market',
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -322,6 +329,7 @@ export interface FileRoutesByTo {
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -366,6 +374,7 @@ export interface FileRoutesById {
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
+  '/dashboard/plans': typeof DashboardPlansRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -411,6 +420,7 @@ export interface FileRouteTypes {
     | '/dashboard/field-intel'
     | '/dashboard/logs'
     | '/dashboard/market'
+    | '/dashboard/plans'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
@@ -452,6 +462,7 @@ export interface FileRouteTypes {
     | '/dashboard/field-intel'
     | '/dashboard/logs'
     | '/dashboard/market'
+    | '/dashboard/plans'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
@@ -495,6 +506,7 @@ export interface FileRouteTypes {
     | '/dashboard/field-intel'
     | '/dashboard/logs'
     | '/dashboard/market'
+    | '/dashboard/plans'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
     | '/dashboard/settings'
@@ -717,6 +729,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPricingRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/plans': {
+      id: '/dashboard/plans'
+      path: '/plans'
+      fullPath: '/dashboard/plans'
+      preLoaderRoute: typeof DashboardPlansRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/market': {
       id: '/dashboard/market'
       path: '/market'
@@ -857,6 +876,7 @@ interface DashboardRouteChildren {
   DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMarketRoute: typeof DashboardMarketRoute
+  DashboardPlansRoute: typeof DashboardPlansRoute
   DashboardPricingRoute: typeof DashboardPricingRoute
   DashboardPromotionsRoute: typeof DashboardPromotionsRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
@@ -875,6 +895,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMarketRoute: DashboardMarketRoute,
+  DashboardPlansRoute: DashboardPlansRoute,
   DashboardPricingRoute: DashboardPricingRoute,
   DashboardPromotionsRoute: DashboardPromotionsRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
