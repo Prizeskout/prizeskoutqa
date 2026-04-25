@@ -24,6 +24,7 @@ import {
   retryWebhookDelivery,
   updateWebhookRetryConfig,
   testWebhookSignature,
+  rotateWebhookSecret,
 } from "@/server/developer-console.functions";
 
 export const Route = createFileRoute("/dashboard/webhooks")({
