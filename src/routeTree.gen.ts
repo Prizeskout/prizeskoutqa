@@ -43,6 +43,7 @@ import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benc
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
@@ -217,6 +218,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardConsoleIndexRoute = DashboardConsoleIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardConsoleRoute,
+} as any)
 const DocsGuidesAuthenticationRoute =
   DocsGuidesAuthenticationRouteImport.update({
     id: '/authentication',
@@ -252,7 +258,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
-  '/dashboard/console': typeof DashboardConsoleRoute
+  '/dashboard/console': typeof DashboardConsoleRouteWithChildren
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
@@ -290,7 +297,6 @@ export interface FileRoutesByTo {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
-  '/dashboard/console': typeof DashboardConsoleRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
@@ -308,6 +314,7 @@ export interface FileRoutesByTo {
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/dashboard/console': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
@@ -330,7 +337,7 @@ export interface FileRoutesById {
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
-  '/dashboard/console': typeof DashboardConsoleRoute
+  '/dashboard/console': typeof DashboardConsoleRouteWithChildren
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
@@ -348,6 +355,7 @@ export interface FileRoutesById {
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
@@ -389,6 +397,7 @@ export interface FileRouteTypes {
     | '/products/promotions'
     | '/dashboard/'
     | '/docs/guides/authentication'
+    | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
     | '/api/public/v1/$'
   fileRoutesByTo: FileRoutesByTo
@@ -409,7 +418,6 @@ export interface FileRouteTypes {
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
-    | '/dashboard/console'
     | '/dashboard/field-intel'
     | '/dashboard/logs'
     | '/dashboard/market'
@@ -427,6 +435,7 @@ export interface FileRouteTypes {
     | '/products/promotions'
     | '/dashboard'
     | '/docs/guides/authentication'
+    | '/dashboard/console'
     | '/api/public/hooks/scrape-all'
     | '/api/public/v1/$'
   id:
@@ -466,6 +475,7 @@ export interface FileRouteTypes {
     | '/products/promotions'
     | '/dashboard/'
     | '/docs/guides/authentication'
+    | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
     | '/api/public/v1/$'
   fileRoutesById: FileRoutesById
@@ -732,6 +742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/console/': {
+      id: '/dashboard/console/'
+      path: '/'
+      fullPath: '/dashboard/console/'
+      preLoaderRoute: typeof DashboardConsoleIndexRouteImport
+      parentRoute: typeof DashboardConsoleRoute
+    }
     '/docs/guides/authentication': {
       id: '/docs/guides/authentication'
       path: '/authentication'
@@ -756,13 +773,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardConsoleRouteChildren {
+  DashboardConsoleIndexRoute: typeof DashboardConsoleIndexRoute
+}
+
+const DashboardConsoleRouteChildren: DashboardConsoleRouteChildren = {
+  DashboardConsoleIndexRoute: DashboardConsoleIndexRoute,
+}
+
+const DashboardConsoleRouteWithChildren =
+  DashboardConsoleRoute._addFileChildren(DashboardConsoleRouteChildren)
+
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardApiExplorerRoute: typeof DashboardApiExplorerRoute
   DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
-  DashboardConsoleRoute: typeof DashboardConsoleRoute
+  DashboardConsoleRoute: typeof DashboardConsoleRouteWithChildren
   DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMarketRoute: typeof DashboardMarketRoute
@@ -780,7 +808,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,
-  DashboardConsoleRoute: DashboardConsoleRoute,
+  DashboardConsoleRoute: DashboardConsoleRouteWithChildren,
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMarketRoute: DashboardMarketRoute,
