@@ -45,6 +45,7 @@ import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
+import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
@@ -229,6 +230,11 @@ const DocsGuidesAuthenticationRoute =
     path: '/authentication',
     getParentRoute: () => DocsGuidesRoute,
   } as any)
+const DashboardConsoleTenantsRoute = DashboardConsoleTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
+  getParentRoute: () => DashboardConsoleRoute,
+} as any)
 const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   id: '/api/public/v1/$',
   path: '/api/public/v1/$',
@@ -275,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
     | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard'
+    | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
     | '/dashboard/console'
     | '/api/public/hooks/scrape-all'
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
     | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
@@ -756,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsGuidesAuthenticationRouteImport
       parentRoute: typeof DocsGuidesRoute
     }
+    '/dashboard/console/tenants': {
+      id: '/dashboard/console/tenants'
+      path: '/tenants'
+      fullPath: '/dashboard/console/tenants'
+      preLoaderRoute: typeof DashboardConsoleTenantsRouteImport
+      parentRoute: typeof DashboardConsoleRoute
+    }
     '/api/public/v1/$': {
       id: '/api/public/v1/$'
       path: '/api/public/v1/$'
@@ -774,10 +793,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardConsoleRouteChildren {
+  DashboardConsoleTenantsRoute: typeof DashboardConsoleTenantsRoute
   DashboardConsoleIndexRoute: typeof DashboardConsoleIndexRoute
 }
 
 const DashboardConsoleRouteChildren: DashboardConsoleRouteChildren = {
+  DashboardConsoleTenantsRoute: DashboardConsoleTenantsRoute,
   DashboardConsoleIndexRoute: DashboardConsoleIndexRoute,
 }
 
