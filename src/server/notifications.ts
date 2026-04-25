@@ -70,7 +70,7 @@ export async function createNotification(input: CreateNotificationInput): Promis
       title: input.title,
       body: input.body ?? null,
       link_to: input.linkTo ?? null,
-      metadata,
+      metadata: metadata as never,
     });
     if (error) console.error("createNotification failed", error);
   } catch (err) {
