@@ -327,7 +327,23 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
       .eq("id", ep.id);
 
     if (post.ok) succeeded++;
-    if (!willRetry && !post.ok) exhausted++;
+    if (!willRetry && !post.ok) {
+      exhausted++;
+      void createNotification({
+        userId: row.user_id,
+        category: "webhook_failure",
+        severity: "error",
+        title: "Webhook delivery exhausted retries",
+        body: `${row.event_type} → ${ep.url} failed after ${newAttempt} attempts (${post.status ?? "no response"}).`,
+        linkTo: "/dashboard/webhooks",
+        dedupeKey: `endpoint:${ep.id}:exhausted`,
+        metadata: {
+          endpoint_id: ep.id,
+          event_type: row.event_type,
+          attempts: newAttempt,
+        },
+      });
+    }
   }
 
   return {
