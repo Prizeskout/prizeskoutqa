@@ -189,6 +189,21 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
       })
       .eq("id", ep.id);
 
+    // Notify on first failure if no retry will happen (max_attempts === 1).
+    // Multi-attempt failures notify only when exhausted (see retry queue).
+    if (!post.ok && !willRetry) {
+      void createNotification({
+        userId: event.userId,
+        category: "webhook_failure",
+        severity: "error",
+        title: `Webhook delivery failed`,
+        body: `${event.eventType} → ${ep.url} (${post.status ?? "no response"})`,
+        linkTo: "/dashboard/webhooks",
+        dedupeKey: `endpoint:${ep.id}`,
+        metadata: { endpoint_id: ep.id, event_type: event.eventType },
+      });
+    }
+
     results.push({
       endpointId: ep.id,
       success: post.ok,
