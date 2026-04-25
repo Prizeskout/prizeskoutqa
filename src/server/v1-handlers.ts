@@ -11,7 +11,7 @@
 // ============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createHmac } from "crypto";
+import { enqueueWebhookEvent } from "@/server/webhook-delivery";
 
 export type V1Context = {
   apiKeyId: string;
