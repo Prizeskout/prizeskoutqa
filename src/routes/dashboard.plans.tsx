@@ -137,6 +137,12 @@ function PlansPage() {
   const selectedPlan = PLANS.find((p) => p.id === selected)!;
   const selectedCost = costFor(selectedPlan, projectedMonthly);
 
+  const overageCalls = selectedCost.overageCalls;
+  const recommendedUpgrade = useMemo(() => {
+    if (overageCalls <= 0) return null;
+    return PLANS.find((p) => p.id !== selected && p.includedCalls >= projectedMonthly) ?? null;
+  }, [overageCalls, projectedMonthly, selected]);
+
   return (
     <DashboardLayout
       title="Plans & Usage Costs"
@@ -147,6 +153,45 @@ function PlansPage() {
         "Selecting a plan here is informational — billing is handled separately by your CSM.",
       ]}
     >
+      {overageCalls > 0 && (
+        <div
+          role="alert"
+          style={{
+            backgroundColor: "#FEF3C7",
+            border: "1px solid #F59E0B",
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 16,
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+          }}
+        >
+          <AlertTriangle size={18} color="#B45309" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: "#78350F" }}>
+              Projected usage exceeds your {selectedPlan.name} plan by{" "}
+              {overageCalls.toLocaleString()} calls
+            </div>
+            <div style={{ fontSize: 12.5, color: "#92400E", marginTop: 4 }}>
+              At QAR {selectedPlan.overagePerCall} per overage call, that adds{" "}
+              <strong>QAR {selectedCost.overage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>
+              {" "}to your monthly bill.
+              {recommendedUpgrade && (
+                <>
+                  {" "}Switching to <strong>{recommendedUpgrade.name}</strong> would cover this volume in the included tier.
+                </>
+              )}{" "}
+              <Link
+                to="/dashboard/usage"
+                style={{ color: "#9A3412", fontWeight: 600, textDecoration: "underline", whiteSpace: "nowrap" }}
+              >
+                Review usage <ArrowUpRight size={11} style={{ display: "inline", verticalAlign: "-1px" }} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Usage callout */}
       <div
         style={{
