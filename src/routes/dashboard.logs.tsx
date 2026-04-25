@@ -397,6 +397,18 @@ function LogsPage() {
           <DetailRow label="Status" value={String(selected.status_code)} mono color={selected.status_code >= 400 ? "#DC2626" : "#166534"} />
           <DetailRow label="Latency" value={selected.duration_ms != null ? `${selected.duration_ms} ms` : "—"} />
           <DetailRow label="Request ID" value={selected.request_id ?? "—"} mono />
+          <DetailRow
+            label="API key"
+            value={
+              selected.api_key_id
+                ? (() => {
+                    const k = keyLookup.get(selected.api_key_id);
+                    return k ? `${k.name} · ${k.mode} · …${k.last_four}` : selected.api_key_id;
+                  })()
+                : "—"
+            }
+            mono={!keyLookup.get(selected.api_key_id ?? "")}
+          />
           {selected.error && (
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
