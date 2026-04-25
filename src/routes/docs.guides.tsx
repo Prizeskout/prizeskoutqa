@@ -39,7 +39,7 @@ const GUIDES: {
   title: string;
   desc: string;
   eta: string;
-  to?: "/docs/guides/authentication";
+  to?: "/docs/guides/authentication" | "/docs/guides/sdk-quickstart";
 }[] = [
   {
     icon: Zap,
@@ -62,9 +62,10 @@ const GUIDES: {
   },
   {
     icon: Terminal,
-    title: "SDKs",
-    desc: "Node, Python, and Go client libraries with typed responses.",
-    eta: "Coming soon",
+    title: "SDK Quickstart",
+    desc: "Drop-in TypeScript fetch client, zero dependencies. First call in 5 minutes.",
+    eta: "5 min read",
+    to: "/docs/guides/sdk-quickstart",
   },
   {
     icon: AlertTriangle,

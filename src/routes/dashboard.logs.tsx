@@ -18,6 +18,15 @@ type LogRow = {
   duration_ms: number | null;
   request_id: string | null;
   error: string | null;
+  api_key_id: string | null;
+};
+
+type ApiKeyRow = {
+  id: string;
+  name: string;
+  mode: string;
+  key_prefix: string;
+  last_four: string;
 };
 
 type StatusBucket = "all" | "2xx" | "3xx" | "4xx" | "5xx";
@@ -41,10 +50,12 @@ function rangeToFrom(range: Range, customFrom: string): string | null {
 
 function LogsPage() {
   const [logs, setLogs] = useState<LogRow[]>([]);
+  const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [endpointFilter, setEndpointFilter] = useState<string>("all");
   const [eventFilter, setEventFilter] = useState<string>("all");
+  const [keyFilter, setKeyFilter] = useState<string>("all");
   const [statusBucket, setStatusBucket] = useState<StatusBucket>("all");
   const [range, setRange] = useState<Range>("7d");
   const [customFrom, setCustomFrom] = useState<string>("");
@@ -56,7 +67,7 @@ function LogsPage() {
       setLoading(true);
       let q = supabase
         .from("api_request_logs")
-        .select("id,occurred_at,method,path,status_code,duration_ms,request_id,error")
+        .select("id,occurred_at,method,path,status_code,duration_ms,request_id,error,api_key_id")
         .order("occurred_at", { ascending: false })
         .limit(500);
 
@@ -69,8 +80,15 @@ function LogsPage() {
         q = q.gte("status_code", min).lt("status_code", min + 100);
       }
 
-      const { data } = await q;
-      setLogs((data ?? []) as LogRow[]);
+      const [logRes, keyRes] = await Promise.all([
+        q,
+        supabase
+          .from("api_keys")
+          .select("id,name,mode,key_prefix,last_four")
+          .order("created_at", { ascending: false }),
+      ]);
+      setLogs((logRes.data ?? []) as LogRow[]);
+      setKeys((keyRes.data ?? []) as ApiKeyRow[]);
       setLoading(false);
     })();
   }, [statusBucket, range, customFrom, customTo]);
@@ -100,18 +118,23 @@ function LogsPage() {
     return logs.filter((l) => {
       if (endpointFilter !== "all" && !l.path.startsWith(endpointFilter)) return false;
       if (eventFilter !== "all" && !l.path.toLowerCase().includes(`event=${eventFilter.toLowerCase()}`)) return false;
+      if (keyFilter !== "all") {
+        if (keyFilter === "none" && l.api_key_id) return false;
+        if (keyFilter !== "none" && l.api_key_id !== keyFilter) return false;
+      }
       if (needle) {
         const hay = `${l.method} ${l.path} ${l.request_id ?? ""} ${l.error ?? ""}`.toLowerCase();
         if (!hay.includes(needle)) return false;
       }
       return true;
     });
-  }, [logs, query, endpointFilter, eventFilter]);
+  }, [logs, query, endpointFilter, eventFilter, keyFilter]);
 
   const resetFilters = () => {
     setQuery("");
     setEndpointFilter("all");
     setEventFilter("all");
+    setKeyFilter("all");
     setStatusBucket("all");
     setRange("7d");
     setCustomFrom("");
@@ -122,8 +145,27 @@ function LogsPage() {
     (query ? 1 : 0) +
     (endpointFilter !== "all" ? 1 : 0) +
     (eventFilter !== "all" ? 1 : 0) +
+    (keyFilter !== "all" ? 1 : 0) +
     (statusBucket !== "all" ? 1 : 0) +
     (range !== "7d" ? 1 : 0);
+
+  const keyLookup = useMemo(() => {
+    const m = new Map<string, ApiKeyRow>();
+    for (const k of keys) m.set(k.id, k);
+    return m;
+  }, [keys]);
+
+  const keyOptions = useMemo(
+    () => [
+      { value: "all", label: "All keys" },
+      { value: "none", label: "Unattributed" },
+      ...keys.map((k) => ({
+        value: k.id,
+        label: `${k.name} · ${k.mode} · …${k.last_four}`,
+      })),
+    ],
+    [keys],
+  );
 
   return (
     <DashboardLayout
@@ -177,6 +219,12 @@ function LogsPage() {
           value={eventFilter}
           onChange={setEventFilter}
           options={eventOptions.map((o) => ({ value: o, label: o === "all" ? "All events" : o }))}
+        />
+        <Select
+          label="API key"
+          value={keyFilter}
+          onChange={setKeyFilter}
+          options={keyOptions}
         />
         <Select
           label="Status"
@@ -349,6 +397,18 @@ function LogsPage() {
           <DetailRow label="Status" value={String(selected.status_code)} mono color={selected.status_code >= 400 ? "#DC2626" : "#166534"} />
           <DetailRow label="Latency" value={selected.duration_ms != null ? `${selected.duration_ms} ms` : "—"} />
           <DetailRow label="Request ID" value={selected.request_id ?? "—"} mono />
+          <DetailRow
+            label="API key"
+            value={
+              selected.api_key_id
+                ? (() => {
+                    const k = keyLookup.get(selected.api_key_id);
+                    return k ? `${k.name} · ${k.mode} · …${k.last_four}` : selected.api_key_id;
+                  })()
+                : "—"
+            }
+            mono={!keyLookup.get(selected.api_key_id ?? "")}
+          />
           {selected.error && (
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>

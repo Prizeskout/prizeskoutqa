@@ -45,6 +45,7 @@ import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-key
 import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
+import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
@@ -232,6 +233,11 @@ const DashboardConsoleIndexRoute = DashboardConsoleIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardConsoleRoute,
 } as any)
+const DocsGuidesSdkQuickstartRoute = DocsGuidesSdkQuickstartRouteImport.update({
+  id: '/sdk-quickstart',
+  path: '/sdk-quickstart',
+  getParentRoute: () => DocsGuidesRoute,
+} as any)
 const DocsGuidesAuthenticationRoute =
   DocsGuidesAuthenticationRouteImport.update({
     id: '/authentication',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
@@ -346,6 +353,7 @@ export interface FileRoutesByTo {
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
@@ -391,6 +399,7 @@ export interface FileRoutesById {
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
@@ -437,6 +446,7 @@ export interface FileRouteTypes {
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
+    | '/docs/guides/sdk-quickstart'
     | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-retry'
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
+    | '/docs/guides/sdk-quickstart'
     | '/dashboard/console'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-retry'
@@ -523,6 +534,7 @@ export interface FileRouteTypes {
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
+    | '/docs/guides/sdk-quickstart'
     | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-retry'
@@ -806,6 +818,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConsoleIndexRouteImport
       parentRoute: typeof DashboardConsoleRoute
     }
+    '/docs/guides/sdk-quickstart': {
+      id: '/docs/guides/sdk-quickstart'
+      path: '/sdk-quickstart'
+      fullPath: '/docs/guides/sdk-quickstart'
+      preLoaderRoute: typeof DocsGuidesSdkQuickstartRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
     '/docs/guides/authentication': {
       id: '/docs/guides/authentication'
       path: '/authentication'
@@ -910,10 +929,12 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 interface DocsGuidesRouteChildren {
   DocsGuidesAuthenticationRoute: typeof DocsGuidesAuthenticationRoute
+  DocsGuidesSdkQuickstartRoute: typeof DocsGuidesSdkQuickstartRoute
 }
 
 const DocsGuidesRouteChildren: DocsGuidesRouteChildren = {
   DocsGuidesAuthenticationRoute: DocsGuidesAuthenticationRoute,
+  DocsGuidesSdkQuickstartRoute: DocsGuidesSdkQuickstartRoute,
 }
 
 const DocsGuidesRouteWithChildren = DocsGuidesRoute._addFileChildren(
