@@ -436,9 +436,12 @@ function WebhooksPage() {
                       <span>
                         Signing secret:{" "}
                         <code style={{ fontFamily: "ui-monospace, monospace" }}>
-                          {ep.signing_secret.slice(0, 12)}…{ep.signing_secret.slice(-4)}
+                          whsec_••••{ep.signing_secret.slice(-4)}
                         </code>
                       </span>
+                      {ep.secret_last_rotated_at && (
+                        <span>Rotated {new Date(ep.secret_last_rotated_at).toLocaleDateString()}</span>
+                      )}
                       <span>
                         Retry: up to {ep.max_attempts} attempts, {ep.backoff_seconds}s base backoff
                       </span>
