@@ -11,7 +11,7 @@
 // ============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createHmac } from "crypto";
+import { enqueueWebhookEvent } from "@/server/webhook-delivery";
 
 export type V1Context = {
   apiKeyId: string;
@@ -261,6 +261,20 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
     error_count: errCount,
   });
 
+  // Fire-and-forget: notify subscribers that a catalog batch was ingested.
+  // We don't await — webhook timeouts shouldn't slow down /v1/sync responses.
+  void enqueueWebhookEvent({
+    userId: ctx.userId,
+    eventType: "catalog.synced",
+    payload: {
+      batch_id: responseBody.batch_id,
+      account_id: ctx.accountId,
+      item_count: responseBody.item_count,
+      ok_count: okCount,
+      error_count: errCount,
+    },
+  });
+
   return ok(responseBody, responseStatus);
 }
 
@@ -467,7 +481,13 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
   }
   const competitorMin = competitorPrices.length > 0 ? Math.min(...competitorPrices) : null;
 
-  // Active rules (informational signals).
+  // Active rules with light parsing for structured guardrails.
+  // Recognized phrases (case-insensitive substring match):
+  //   "max change <pct>%"      → cap |Δprice| to that percentage of currentPrice
+  //   "min undercut <amount>"  → if undercutting, undercut by AT LEAST that amount
+  //   "never undercut"         → never go below competitor_min
+  //   "round to <n>"           → round final price to nearest n
+  // Unrecognized rules are surfaced informationally only.
   const { data: ruleRows } = await supabaseAdmin
     .from("pricing_rules")
     .select("rule_text")
@@ -476,14 +496,22 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     .order("position");
   const activeRules = (ruleRows ?? []).map((r) => r.rule_text);
 
-  // Combine: undercut competitor by 1 unit if doing so respects floor; else hold floor.
+  const ruleConfig = parsePricingRules(activeRules);
+
+  // Combine: undercut competitor by 1 unit (or rule-specified amount) if
+  // doing so respects floor; else hold floor.
   let recommended: number;
   let reason: string;
-  if (marginFloor !== null && competitorMin !== null) {
-    const undercut = competitorMin - 1;
+  const undercutBy = Math.max(1, ruleConfig.minUndercut ?? 1);
+
+  if (ruleConfig.neverUndercut && competitorMin !== null && marginFloor !== null) {
+    recommended = Math.max(competitorMin, marginFloor);
+    reason = `Held competitor parity (${round2(competitorMin)}) per "never undercut" rule, respecting the ${Math.round(targetMarginPct * 100)}% margin floor.`;
+  } else if (marginFloor !== null && competitorMin !== null) {
+    const undercut = competitorMin - undercutBy;
     if (undercut >= marginFloor) {
       recommended = undercut;
-      reason = `Undercut cheapest competitor (${round2(competitorMin)}) by 1 unit while respecting the ${Math.round(targetMarginPct * 100)}% margin floor.`;
+      reason = `Undercut cheapest competitor (${round2(competitorMin)}) by ${undercutBy} unit${undercutBy === 1 ? "" : "s"} while respecting the ${Math.round(targetMarginPct * 100)}% margin floor.`;
     } else {
       recommended = marginFloor;
       reason = `Held the ${Math.round(targetMarginPct * 100)}% margin floor (${round2(marginFloor)}); undercutting the cheapest competitor (${round2(competitorMin)}) would push margin below target.`;
@@ -492,8 +520,8 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     recommended = marginFloor;
     reason = `No competitor price available — used margin floor (${round2(marginFloor)}) at ${Math.round(targetMarginPct * 100)}% target.`;
   } else if (competitorMin !== null) {
-    recommended = competitorMin - 1;
-    reason = `No margin inputs configured — undercut cheapest competitor (${round2(competitorMin)}) by 1 unit. Add margin_inputs for safer recommendations.`;
+    recommended = competitorMin - undercutBy;
+    reason = `No margin inputs configured — undercut cheapest competitor (${round2(competitorMin)}) by ${undercutBy} unit${undercutBy === 1 ? "" : "s"}. Add margin_inputs for safer recommendations.`;
   } else {
     return err(
       "insufficient_signals",
@@ -502,7 +530,27 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     );
   }
 
+  // Apply max-change cap relative to current price.
+  if (ruleConfig.maxChangePct !== null && currentPrice !== null && currentPrice > 0) {
+    const maxDelta = currentPrice * ruleConfig.maxChangePct;
+    const lowerBound = currentPrice - maxDelta;
+    const upperBound = currentPrice + maxDelta;
+    if (recommended < lowerBound) {
+      recommended = lowerBound;
+      reason += ` Capped at -${Math.round(ruleConfig.maxChangePct * 100)}% per "max change" rule.`;
+    } else if (recommended > upperBound) {
+      recommended = upperBound;
+      reason += ` Capped at +${Math.round(ruleConfig.maxChangePct * 100)}% per "max change" rule.`;
+    }
+  }
+
+  // Optional rounding rule.
+  if (ruleConfig.roundTo && ruleConfig.roundTo > 0) {
+    recommended = Math.round(recommended / ruleConfig.roundTo) * ruleConfig.roundTo;
+  }
+
   const finalPrice = round2(Math.max(0.01, recommended));
+  const decisionId = `dec_${Math.random().toString(36).slice(2, 14)}`;
 
   // Persist decision for audit.
   await supabaseAdmin.from("dynprice_decisions").insert({
@@ -520,8 +568,44 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
       target_margin_pct: targetMarginPct,
       competitor_count: competitorPrices.length,
       active_rules: activeRules,
+      parsed_rules: ruleConfig,
+      decision_id: decisionId,
     },
   });
+
+  // Notify subscribers. Two semantic events: always "recommendation.ready",
+  // plus "price.changed" when the recommendation differs from current price.
+  const eventPayload = {
+    decision_id: decisionId,
+    sku,
+    product_id: product.id,
+    account_id: ctx.accountId,
+    channel,
+    current_price: currentPrice,
+    recommended_price: finalPrice,
+    reason,
+    signals: {
+      margin_floor: marginFloor !== null ? round2(marginFloor) : null,
+      competitor_min: competitorMin,
+      target_margin_pct: targetMarginPct,
+    },
+  };
+  void enqueueWebhookEvent({
+    userId: ctx.userId,
+    eventType: "recommendation.ready",
+    payload: eventPayload,
+  });
+  if (currentPrice !== null && Math.abs(finalPrice - currentPrice) > 0.005) {
+    void enqueueWebhookEvent({
+      userId: ctx.userId,
+      eventType: "price.changed",
+      payload: {
+        ...eventPayload,
+        delta: round2(finalPrice - currentPrice),
+        delta_pct: currentPrice > 0 ? round4((finalPrice - currentPrice) / currentPrice) : null,
+      },
+    });
+  }
 
   return ok({
     sku,
@@ -536,8 +620,50 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
       competitor_count: competitorPrices.length,
       target_margin_pct: targetMarginPct,
       active_rules: activeRules,
+      parsed_rules: ruleConfig,
     },
   });
+}
+
+// ----------------------------------------------------------------------------
+// Pricing-rule parser
+// ----------------------------------------------------------------------------
+type ParsedRules = {
+  maxChangePct: number | null;
+  minUndercut: number | null;
+  neverUndercut: boolean;
+  roundTo: number | null;
+};
+
+function parsePricingRules(rules: string[]): ParsedRules {
+  let maxChangePct: number | null = null;
+  let minUndercut: number | null = null;
+  let neverUndercut = false;
+  let roundTo: number | null = null;
+
+  for (const raw of rules) {
+    const t = raw.toLowerCase();
+    const maxMatch = t.match(/max\s+change\s+([0-9]+(?:\.[0-9]+)?)\s*%/);
+    if (maxMatch) {
+      const pct = Number(maxMatch[1]) / 100;
+      if (Number.isFinite(pct) && pct > 0 && pct < 1) maxChangePct = pct;
+    }
+    const undercutMatch = t.match(/min(?:imum)?\s+undercut\s+([0-9]+(?:\.[0-9]+)?)/);
+    if (undercutMatch) {
+      const amt = Number(undercutMatch[1]);
+      if (Number.isFinite(amt) && amt > 0) minUndercut = amt;
+    }
+    if (/never\s+undercut/.test(t) || /no\s+undercut/.test(t)) {
+      neverUndercut = true;
+    }
+    const roundMatch = t.match(/round\s+to\s+([0-9]+(?:\.[0-9]+)?)/);
+    if (roundMatch) {
+      const r = Number(roundMatch[1]);
+      if (Number.isFinite(r) && r > 0) roundTo = r;
+    }
+  }
+
+  return { maxChangePct, minUndercut, neverUndercut, roundTo };
 }
 
 // ============================================================================
@@ -572,106 +698,40 @@ export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Pr
     );
   }
   const eventType: EnrichEvent = json.event_type;
-  const payload = (typeof json.payload === "object" && json.payload !== null) ? json.payload : {};
+  const payload = (typeof json.payload === "object" && json.payload !== null)
+    ? (json.payload as Record<string, unknown>)
+    : {};
 
-  // Find enabled endpoints subscribed to this event.
-  const { data: endpoints } = await supabaseAdmin
-    .from("webhook_endpoints")
-    .select("id, url, signing_secret, events, max_attempts")
-    .eq("user_id", ctx.userId)
-    .eq("enabled", true);
-
-  const subscribers = (endpoints ?? []).filter((ep) => {
-    const events = Array.isArray(ep.events) ? (ep.events as unknown[]) : [];
-    return events.includes(eventType) || events.includes("*") || events.includes("enrich.*");
+  const result = await enqueueWebhookEvent({
+    userId: ctx.userId,
+    eventType,
+    payload,
   });
 
-  if (subscribers.length === 0) {
+  if (result.attempted === 0) {
     return ok({
+      event_id: result.eventId,
       event_type: eventType,
       delivered_count: 0,
+      attempted_count: 0,
       message: "No active subscribers for this event. Configure webhook endpoints in your dashboard.",
     });
   }
 
-  const eventId = `evt_${Math.random().toString(36).slice(2, 14)}`;
-  const sentAt = new Date().toISOString();
-  const eventBody = JSON.stringify({
-    id: eventId,
-    type: eventType,
-    sent_at: sentAt,
-    data: payload,
-  });
-
-  const deliveries: Array<{
-    endpoint_id: string;
-    success: boolean;
-    status_code: number | null;
-    error: string | null;
-  }> = [];
-
-  for (const ep of subscribers) {
-    const signature = createHmac("sha256", ep.signing_secret).update(eventBody).digest("hex");
-    const start = Date.now();
-    let status: number | null = null;
-    let success = false;
-    let errMsg: string | null = null;
-    let respBody: string | null = null;
-
-    try {
-      const res = await fetch(ep.url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-PrizeSkout-Event": eventType,
-          "X-PrizeSkout-Event-Id": eventId,
-          "X-PrizeSkout-Signature": `sha256=${signature}`,
-        },
-        body: eventBody,
-        signal: AbortSignal.timeout(8000),
-      });
-      status = res.status;
-      success = res.ok;
-      respBody = (await res.text()).slice(0, 500);
-    } catch (e) {
-      errMsg = e instanceof Error ? e.message : "delivery failed";
-    }
-
-    await supabaseAdmin.from("webhook_deliveries").insert({
-      user_id: ctx.userId,
-      endpoint_id: ep.id,
-      event_type: eventType,
-      attempt: 1,
-      max_attempts: ep.max_attempts ?? 5,
-      success,
-      status_code: status,
-      duration_ms: Date.now() - start,
-      payload: { id: eventId, type: eventType, sent_at: sentAt, data: payload } as never,
-      payload_preview: eventBody.slice(0, 500),
-      response_body: respBody,
-      error: errMsg,
-    });
-
-    // Update endpoint health.
-    await supabaseAdmin
-      .from("webhook_endpoints")
-      .update({
-        last_delivery_at: new Date().toISOString(),
-        last_delivery_success: success,
-      })
-      .eq("id", ep.id);
-
-    deliveries.push({ endpoint_id: ep.id, success, status_code: status, error: errMsg });
-  }
-
-  const allOk = deliveries.every((d) => d.success);
+  const allOk = result.results.every((r) => r.success);
   return ok(
     {
-      event_id: eventId,
+      event_id: result.eventId,
       event_type: eventType,
-      delivered_count: deliveries.filter((d) => d.success).length,
-      attempted_count: deliveries.length,
-      deliveries,
+      delivered_count: result.delivered,
+      attempted_count: result.attempted,
+      deliveries: result.results.map((r) => ({
+        endpoint_id: r.endpointId,
+        success: r.success,
+        status_code: r.status,
+        error: r.error,
+        will_retry: r.willRetry,
+      })),
     },
     allOk ? 200 : 207,
   );

@@ -48,6 +48,7 @@ import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guid
 import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
+import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
 const TermsRoute = TermsRouteImport.update({
@@ -246,6 +247,12 @@ const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   path: '/api/public/v1/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksWebhookRetryRoute =
+  ApiPublicHooksWebhookRetryRouteImport.update({
+    id: '/api/public/hooks/webhook-retry',
+    path: '/api/public/hooks/webhook-retry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   id: '/api/public/hooks/scrape-all',
   path: '/api/public/hooks/scrape-all',
@@ -292,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
 export interface FileRoutesByTo {
@@ -332,6 +340,7 @@ export interface FileRoutesByTo {
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
 export interface FileRoutesById {
@@ -375,6 +384,7 @@ export interface FileRoutesById {
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
 }
 export interface FileRouteTypes {
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/docs/guides/authentication'
     | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -459,6 +470,7 @@ export interface FileRouteTypes {
     | '/docs/guides/authentication'
     | '/dashboard/console'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
   id:
     | '__root__'
@@ -501,6 +513,7 @@ export interface FileRouteTypes {
     | '/docs/guides/authentication'
     | '/dashboard/console/'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
   fileRoutesById: FileRoutesById
 }
@@ -523,6 +536,7 @@ export interface RootRouteChildren {
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
+  ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
 }
 
@@ -801,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/webhook-retry': {
+      id: '/api/public/hooks/webhook-retry'
+      path: '/api/public/hooks/webhook-retry'
+      fullPath: '/api/public/hooks/webhook-retry'
+      preLoaderRoute: typeof ApiPublicHooksWebhookRetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/scrape-all': {
       id: '/api/public/hooks/scrape-all'
       path: '/api/public/hooks/scrape-all'
@@ -909,6 +930,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
+  ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
 }
 export const routeTree = rootRouteImport
