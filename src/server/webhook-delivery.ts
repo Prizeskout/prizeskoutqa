@@ -18,10 +18,12 @@
 //      is due and replays them, incrementing `attempt`. Once `attempt`
 //      reaches `max_attempts` we stop scheduling and surface the final error.
 //
-// Signing: HMAC-SHA-256 over the raw JSON body with the endpoint's
-// `signing_secret`. We send the signature as `X-PrizeSkout-Signature:
-// sha256=<hex>` so receivers can verify the payload exactly as they would
-// for Stripe / GitHub.
+// Signing (v1): HMAC-SHA-256 over `${timestamp}.${rawBody}` with the
+// endpoint's `signing_secret`. We send the signature as Stripe-style
+// `X-PrizeSkout-Signature: t=<unix_ts>,v1=<hex>` so receivers can verify
+// the payload AND reject replays older than ~5 minutes. The legacy
+// `sha256=<hex>` (body-only) signature is also included as a second
+// comma-separated value for backward compatibility with Week 5 receivers.
 //
 // All writes use the admin client because deliveries are server-internal
 // and need to bypass RLS (the originating user_id may not be the caller).
