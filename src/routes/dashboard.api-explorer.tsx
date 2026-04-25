@@ -5,11 +5,8 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import {
   API_GROUPS,
-  PILLARS,
   getGroupsByPillar,
   type EndpointSpec,
-  type GroupSpec,
-  type PillarSlug,
 } from "@/lib/api-spec";
 
 export const Route = createFileRoute("/dashboard/api-explorer")({
@@ -320,12 +317,10 @@ function ApiExplorerPage() {
           >
             Endpoints
           </div>
-          {(Object.keys(PILLARS) as PillarSlug[]).map((pillarSlug) => {
-            const groups: GroupSpec[] = groupsByPillar[pillarSlug] ?? [];
+          {groupsByPillar.map(({ pillar, groups }) => {
             if (groups.length === 0) return null;
-            const pillar = PILLARS[pillarSlug];
             return (
-              <div key={pillarSlug} style={{ marginBottom: 10 }}>
+              <div key={pillar.slug} style={{ marginBottom: 10 }}>
                 <div
                   style={{
                     fontSize: 11,
