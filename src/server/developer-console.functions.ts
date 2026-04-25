@@ -282,12 +282,41 @@ export const createWebhookEndpoint = createServerFn({ method: "POST" })
         description: data.description,
         events: data.events,
         signing_secret: signingSecret,
+        signing_version: "v1",
+        secret_revealed_at: new Date().toISOString(),
         enabled: true,
       })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return { endpoint: inserted };
+    return { endpoint: inserted, plaintextSecret: signingSecret };
+  });
+
+// Rotate the signing secret. Returns the new plaintext secret once — caller
+// must show it via the copy-once dialog because subsequent reads will only
+// expose a masked value in the UI. Old secret is invalidated immediately, so
+// receivers must update their verification before the next webhook fires.
+export const rotateWebhookSecret = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "") }))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    if (!data.id) throw new Error("id required");
+    const newSecret = `whsec_${randomBytes(24).toString("hex")}`;
+    const now = new Date().toISOString();
+    const { data: updated, error } = await supabase
+      .from("webhook_endpoints")
+      .update({
+        signing_secret: newSecret,
+        signing_version: "v1",
+        secret_revealed_at: now,
+        secret_last_rotated_at: now,
+      })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return { endpoint: updated, plaintextSecret: newSecret };
   });
 
 export const toggleWebhookEndpoint = createServerFn({ method: "POST" })
