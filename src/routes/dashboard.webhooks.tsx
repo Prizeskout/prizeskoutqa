@@ -466,6 +466,14 @@ function WebhooksPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => handleRotate(ep)}
+                      title="Rotate signing secret"
+                      style={iconBtn("#7C3AED")}
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleToggle(ep.id, ep.enabled)}
                       title={ep.enabled ? "Disable" : "Enable"}
                       style={iconBtn(ep.enabled ? "#22C55E" : "#9A9A9A")}
