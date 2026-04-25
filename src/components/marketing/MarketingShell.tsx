@@ -187,7 +187,7 @@ function Header() {
             <div className="ps-tip-wrap" style={{ position: "relative" }}>
               <Link
                 to="/signup"
-                aria-label="Get API keys — create a free account, no credit card"
+                aria-label="Get API keys, create a free account, no credit card"
                 title="Free account · no credit card · test keys instantly"
                 style={{
                   background: "#EA580C",
