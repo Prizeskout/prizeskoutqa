@@ -698,106 +698,40 @@ export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Pr
     );
   }
   const eventType: EnrichEvent = json.event_type;
-  const payload = (typeof json.payload === "object" && json.payload !== null) ? json.payload : {};
+  const payload = (typeof json.payload === "object" && json.payload !== null)
+    ? (json.payload as Record<string, unknown>)
+    : {};
 
-  // Find enabled endpoints subscribed to this event.
-  const { data: endpoints } = await supabaseAdmin
-    .from("webhook_endpoints")
-    .select("id, url, signing_secret, events, max_attempts")
-    .eq("user_id", ctx.userId)
-    .eq("enabled", true);
-
-  const subscribers = (endpoints ?? []).filter((ep) => {
-    const events = Array.isArray(ep.events) ? (ep.events as unknown[]) : [];
-    return events.includes(eventType) || events.includes("*") || events.includes("enrich.*");
+  const result = await enqueueWebhookEvent({
+    userId: ctx.userId,
+    eventType,
+    payload,
   });
 
-  if (subscribers.length === 0) {
+  if (result.attempted === 0) {
     return ok({
+      event_id: result.eventId,
       event_type: eventType,
       delivered_count: 0,
+      attempted_count: 0,
       message: "No active subscribers for this event. Configure webhook endpoints in your dashboard.",
     });
   }
 
-  const eventId = `evt_${Math.random().toString(36).slice(2, 14)}`;
-  const sentAt = new Date().toISOString();
-  const eventBody = JSON.stringify({
-    id: eventId,
-    type: eventType,
-    sent_at: sentAt,
-    data: payload,
-  });
-
-  const deliveries: Array<{
-    endpoint_id: string;
-    success: boolean;
-    status_code: number | null;
-    error: string | null;
-  }> = [];
-
-  for (const ep of subscribers) {
-    const signature = createHmac("sha256", ep.signing_secret).update(eventBody).digest("hex");
-    const start = Date.now();
-    let status: number | null = null;
-    let success = false;
-    let errMsg: string | null = null;
-    let respBody: string | null = null;
-
-    try {
-      const res = await fetch(ep.url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-PrizeSkout-Event": eventType,
-          "X-PrizeSkout-Event-Id": eventId,
-          "X-PrizeSkout-Signature": `sha256=${signature}`,
-        },
-        body: eventBody,
-        signal: AbortSignal.timeout(8000),
-      });
-      status = res.status;
-      success = res.ok;
-      respBody = (await res.text()).slice(0, 500);
-    } catch (e) {
-      errMsg = e instanceof Error ? e.message : "delivery failed";
-    }
-
-    await supabaseAdmin.from("webhook_deliveries").insert({
-      user_id: ctx.userId,
-      endpoint_id: ep.id,
-      event_type: eventType,
-      attempt: 1,
-      max_attempts: ep.max_attempts ?? 5,
-      success,
-      status_code: status,
-      duration_ms: Date.now() - start,
-      payload: { id: eventId, type: eventType, sent_at: sentAt, data: payload } as never,
-      payload_preview: eventBody.slice(0, 500),
-      response_body: respBody,
-      error: errMsg,
-    });
-
-    // Update endpoint health.
-    await supabaseAdmin
-      .from("webhook_endpoints")
-      .update({
-        last_delivery_at: new Date().toISOString(),
-        last_delivery_success: success,
-      })
-      .eq("id", ep.id);
-
-    deliveries.push({ endpoint_id: ep.id, success, status_code: status, error: errMsg });
-  }
-
-  const allOk = deliveries.every((d) => d.success);
+  const allOk = result.results.every((r) => r.success);
   return ok(
     {
-      event_id: eventId,
+      event_id: result.eventId,
       event_type: eventType,
-      delivered_count: deliveries.filter((d) => d.success).length,
-      attempted_count: deliveries.length,
-      deliveries,
+      delivered_count: result.delivered,
+      attempted_count: result.attempted,
+      deliveries: result.results.map((r) => ({
+        endpoint_id: r.endpointId,
+        success: r.success,
+        status_code: r.status,
+        error: r.error,
+        will_retry: r.willRetry,
+      })),
     },
     allOk ? 200 : 207,
   );
