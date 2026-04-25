@@ -46,6 +46,7 @@ import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
+import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 
@@ -235,6 +236,11 @@ const DashboardConsoleTenantsRoute = DashboardConsoleTenantsRouteImport.update({
   path: '/tenants',
   getParentRoute: () => DashboardConsoleRoute,
 } as any)
+const DashboardConsoleTeamRoute = DashboardConsoleTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => DashboardConsoleRoute,
+} as any)
 const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   id: '/api/public/v1/$',
   path: '/api/public/v1/$',
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByTo {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
@@ -362,6 +370,7 @@ export interface FileRoutesById {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
@@ -405,6 +414,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
     | '/dashboard/console/'
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard'
+    | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
     | '/dashboard/console'
@@ -485,6 +496,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
     | '/dashboard/console/'
@@ -775,6 +787,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConsoleTenantsRouteImport
       parentRoute: typeof DashboardConsoleRoute
     }
+    '/dashboard/console/team': {
+      id: '/dashboard/console/team'
+      path: '/team'
+      fullPath: '/dashboard/console/team'
+      preLoaderRoute: typeof DashboardConsoleTeamRouteImport
+      parentRoute: typeof DashboardConsoleRoute
+    }
     '/api/public/v1/$': {
       id: '/api/public/v1/$'
       path: '/api/public/v1/$'
@@ -793,11 +812,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface DashboardConsoleRouteChildren {
+  DashboardConsoleTeamRoute: typeof DashboardConsoleTeamRoute
   DashboardConsoleTenantsRoute: typeof DashboardConsoleTenantsRoute
   DashboardConsoleIndexRoute: typeof DashboardConsoleIndexRoute
 }
 
 const DashboardConsoleRouteChildren: DashboardConsoleRouteChildren = {
+  DashboardConsoleTeamRoute: DashboardConsoleTeamRoute,
   DashboardConsoleTenantsRoute: DashboardConsoleTenantsRoute,
   DashboardConsoleIndexRoute: DashboardConsoleIndexRoute,
 }
