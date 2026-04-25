@@ -512,6 +512,30 @@ function WebhooksGuide() {
             your verifier received.
           </P>
 
+          <H3>Debugging endpoint: recompute a signature on demand</H3>
+          <P>
+            When a verifier rejects a delivery, the fastest way to find the cause is to ask our
+            server to recompute the same signature for you. <Code>POST</Code> the secret, the
+            timestamp from <Code>X-PrizeSkout-Timestamp</Code>, and the exact raw body — we return
+            what we would have signed and (optionally) compare against what you received.
+          </P>
+          <CodeBlock lang="bash">{`curl -X POST https://api.prizeskout.qa/api/public/v1/webhooks/test-signature \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "secret": "whsec_abcdef...",
+    "timestamp": "1714060800",
+    "rawBody": "{\\"id\\":\\"evt_01HX...\\",\\"type\\":\\"competitor.price_changed\\",\\"data\\":{}}",
+    "receivedSignature": "t=1714060800,v1=...,sha256=..."
+  }'`}</CodeBlock>
+          <P>
+            The response includes the expected <Code>v1</Code>, the full{" "}
+            <Code>X-PrizeSkout-Signature</Code> header we would have sent, a replay-window check
+            against the current server time, and — if you provided{" "}
+            <Code>receivedSignature</Code> — a constant-time comparison plus diagnostic notes
+            explaining the most likely cause of any mismatch. Nothing from the request is logged or
+            stored.
+          </P>
+
           <div
             style={{
               marginTop: 48,
