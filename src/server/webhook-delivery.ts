@@ -18,10 +18,12 @@
 //      is due and replays them, incrementing `attempt`. Once `attempt`
 //      reaches `max_attempts` we stop scheduling and surface the final error.
 //
-// Signing: HMAC-SHA-256 over the raw JSON body with the endpoint's
-// `signing_secret`. We send the signature as `X-PrizeSkout-Signature:
-// sha256=<hex>` so receivers can verify the payload exactly as they would
-// for Stripe / GitHub.
+// Signing (v1): HMAC-SHA-256 over `${timestamp}.${rawBody}` with the
+// endpoint's `signing_secret`. We send the signature as Stripe-style
+// `X-PrizeSkout-Signature: t=<unix_ts>,v1=<hex>` so receivers can verify
+// the payload AND reject replays older than ~5 minutes. The legacy
+// `sha256=<hex>` (body-only) signature is also included as a second
+// comma-separated value for backward compatibility with Week 5 receivers.
 //
 // All writes use the admin client because deliveries are server-internal
 // and need to bypass RLS (the originating user_id may not be the caller).
@@ -91,6 +93,19 @@ function nextRetryAt(backoffSeconds: number, attempt: number): string {
   return new Date(Date.now() + seconds * 1000).toISOString();
 }
 
+/**
+ * Build a Stripe-style `t=<ts>,v1=<hex>,sha256=<hex>` signature header.
+ * - `t` is the unix timestamp the signature was generated at.
+ * - `v1` is HMAC-SHA-256 over `${t}.${body}` (replay-safe).
+ * - `sha256` is HMAC-SHA-256 over `${body}` only (Week-5 compatibility).
+ */
+function buildSignatureHeader(secret: string, body: string): { header: string; timestamp: string } {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const v1 = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+  const legacy = createHmac("sha256", secret).update(body).digest("hex");
+  return { header: `t=${timestamp},v1=${v1},sha256=${legacy}`, timestamp };
+}
+
 async function postOnce(
   url: string,
   body: string,
@@ -148,12 +163,14 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
   const results: DeliveryAttemptResult[] = [];
 
   for (const ep of subscribers) {
-    const signature = createHmac("sha256", ep.signing_secret).update(body).digest("hex");
+    const sig = buildSignatureHeader(ep.signing_secret, body);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-PrizeSkout-Event": event.eventType,
       "X-PrizeSkout-Event-Id": eventId,
-      "X-PrizeSkout-Signature": `sha256=${signature}`,
+      "X-PrizeSkout-Delivery-Id": eventId,
+      "X-PrizeSkout-Timestamp": sig.timestamp,
+      "X-PrizeSkout-Signature": sig.header,
       "X-PrizeSkout-Delivery-Attempt": "1",
     };
 
@@ -280,12 +297,14 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
         ? row.payload_preview
         : JSON.stringify(payloadObj ?? {});
 
-    const signature = createHmac("sha256", ep.signing_secret).update(body).digest("hex");
+    const sig = buildSignatureHeader(ep.signing_secret, body);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-PrizeSkout-Event": row.event_type,
       "X-PrizeSkout-Event-Id": payloadObj?.id ?? row.id,
-      "X-PrizeSkout-Signature": `sha256=${signature}`,
+      "X-PrizeSkout-Delivery-Id": payloadObj?.id ?? row.id,
+      "X-PrizeSkout-Timestamp": sig.timestamp,
+      "X-PrizeSkout-Signature": sig.header,
       "X-PrizeSkout-Delivery-Attempt": String(newAttempt),
     };
 
