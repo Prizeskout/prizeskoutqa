@@ -261,6 +261,20 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
     error_count: errCount,
   });
 
+  // Fire-and-forget: notify subscribers that a catalog batch was ingested.
+  // We don't await — webhook timeouts shouldn't slow down /v1/sync responses.
+  void enqueueWebhookEvent({
+    userId: ctx.userId,
+    eventType: "catalog.synced",
+    payload: {
+      batch_id: responseBody.batch_id,
+      account_id: ctx.accountId,
+      item_count: responseBody.item_count,
+      ok_count: okCount,
+      error_count: errCount,
+    },
+  });
+
   return ok(responseBody, responseStatus);
 }
 
