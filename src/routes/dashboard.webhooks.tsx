@@ -92,11 +92,19 @@ function WebhooksPage() {
   const [configEndpoint, setConfigEndpoint] = useState<Endpoint | null>(null);
   const [testerEndpoint, setTesterEndpoint] = useState<Endpoint | null>(null);
 
+  // Copy-once secret reveal: shown after create/rotate, never again.
+  const [revealedSecret, setRevealedSecret] = useState<{
+    secret: string;
+    url: string;
+    rotated: boolean;
+  } | null>(null);
+
   const createFn = useServerFn(createWebhookEndpoint);
   const toggleFn = useServerFn(toggleWebhookEndpoint);
   const deleteFn = useServerFn(deleteWebhookEndpoint);
   const retryFn = useServerFn(retryWebhookDelivery);
   const updateRetryFn = useServerFn(updateWebhookRetryConfig);
+  const rotateFn = useServerFn(rotateWebhookSecret);
 
   const load = async () => {
     setLoading(true);
