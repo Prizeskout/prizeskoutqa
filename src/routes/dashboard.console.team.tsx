@@ -51,9 +51,9 @@ function TeamPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await (fetchMembers as any)();
-      setMembers(res.members as Member[]);
-      setCallerRole(res.callerRole as Role);
+      const res = (await (fetchMembers as any)()) as { members: Member[]; callerRole: Role; callerId: string };
+      setMembers(res.members);
+      setCallerRole(res.callerRole);
       setCallerId(res.callerId);
     } catch (e) {
       setError((e as Error).message);

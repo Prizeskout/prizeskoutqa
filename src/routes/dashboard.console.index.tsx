@@ -29,7 +29,7 @@ function ConsoleOverviewPage() {
     (async () => {
       setLoading(true);
       try {
-        const res = await (fetchOverview as any)();
+        const res = (await (fetchOverview as any)()) as Overview;
         if (!cancelled) setData(res);
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
