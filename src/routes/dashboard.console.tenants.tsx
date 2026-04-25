@@ -58,8 +58,8 @@ function TenantsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await (fetchOverview as any)();
-      setAccounts(res.accounts as Account[]);
+      const res = (await (fetchOverview as any)()) as { accounts: Account[]; callerRole: string };
+      setAccounts(res.accounts);
       setCallerRole(res.callerRole);
     } catch (e) {
       setError((e as Error).message);
