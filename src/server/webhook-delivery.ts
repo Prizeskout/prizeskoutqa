@@ -93,6 +93,19 @@ function nextRetryAt(backoffSeconds: number, attempt: number): string {
   return new Date(Date.now() + seconds * 1000).toISOString();
 }
 
+/**
+ * Build a Stripe-style `t=<ts>,v1=<hex>,sha256=<hex>` signature header.
+ * - `t` is the unix timestamp the signature was generated at.
+ * - `v1` is HMAC-SHA-256 over `${t}.${body}` (replay-safe).
+ * - `sha256` is HMAC-SHA-256 over `${body}` only (Week-5 compatibility).
+ */
+function buildSignatureHeader(secret: string, body: string): { header: string; timestamp: string } {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const v1 = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+  const legacy = createHmac("sha256", secret).update(body).digest("hex");
+  return { header: `t=${timestamp},v1=${v1},sha256=${legacy}`, timestamp };
+}
+
 async function postOnce(
   url: string,
   body: string,
