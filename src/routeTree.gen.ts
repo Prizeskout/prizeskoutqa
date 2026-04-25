@@ -40,6 +40,7 @@ import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.fiel
 import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
+import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
@@ -200,6 +201,11 @@ const DashboardApiKeysRoute = DashboardApiKeysRouteImport.update({
   path: '/api-keys',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardApiExplorerRoute = DashboardApiExplorerRouteImport.update({
+  id: '/api-explorer',
+  path: '/api-explorer',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
@@ -272,6 +279,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/dashboard/admin'
+    | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/dashboard/admin'
+    | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/dashboard/admin'
+    | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
     | '/dashboard/competitors'
@@ -687,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardApiKeysRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/api-explorer': {
+      id: '/dashboard/api-explorer'
+      path: '/api-explorer'
+      fullPath: '/dashboard/api-explorer'
+      preLoaderRoute: typeof DashboardApiExplorerRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/admin': {
       id: '/dashboard/admin'
       path: '/admin'
@@ -720,6 +739,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
+  DashboardApiExplorerRoute: typeof DashboardApiExplorerRoute
   DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
@@ -736,6 +756,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAdminRoute: DashboardAdminRoute,
+  DashboardApiExplorerRoute: DashboardApiExplorerRoute,
   DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,

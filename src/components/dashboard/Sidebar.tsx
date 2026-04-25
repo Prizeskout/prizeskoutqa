@@ -17,6 +17,7 @@ import {
   FileCode2,
   Webhook,
   ShieldCheck,
+  Terminal,
   type LucideIcon,
 } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -42,6 +43,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
       { to: "/dashboard/api-keys", label: "API Keys", icon: KeyRound },
+      { to: "/dashboard/api-explorer", label: "API Explorer", icon: Terminal },
       { to: "/dashboard/usage", label: "Usage", icon: Activity },
       { to: "/dashboard/logs", label: "Logs", icon: FileCode2 },
       { to: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },

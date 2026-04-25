@@ -1,11 +1,69 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { ChevronRight, RefreshCw } from "lucide-react";
+import { ChevronRight, RefreshCw, FlaskConical, ArrowRight } from "lucide-react";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { PageHeader } from "./PageHeader";
 import type { Channel } from "./ChannelFilter";
 import { SidebarCollapseProvider, useSidebarCollapse } from "./SidebarCollapseContext";
+
+/**
+ * Sandbox banner. The entire /dashboard surface runs in test mode: every
+ * dataset shown here is seeded sample data scoped to the signed-in user, and
+ * every API key minted from the dashboard is an `sk_test_` key whose calls
+ * are routed through the sandbox dispatcher. No live storefront, billing, or
+ * production pricing engine is touched.
+ */
+function SandboxBanner() {
+  return (
+    <div
+      role="status"
+      aria-label="Sandbox mode active"
+      style={{
+        backgroundColor: "#FFFBEB",
+        borderBottom: "1px solid #FDE68A",
+        color: "#92400E",
+        fontSize: 12.5,
+        lineHeight: 1.45,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1080,
+          margin: "0 auto",
+          padding: "8px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <FlaskConical size={14} strokeWidth={2} aria-hidden />
+          <span style={{ fontWeight: 700, color: "#78350F" }}>Sandbox</span>
+          <span style={{ color: "#92400E" }}>
+            You are exploring with test data. Every <code style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 12 }}>sk_test_</code> key writes here. No live orders or revenue are affected.
+          </span>
+        </div>
+        <Link
+          to="/dashboard/api-explorer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            color: "#78350F",
+            fontWeight: 600,
+            textDecoration: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Open API Explorer <ArrowRight size={12} aria-hidden />
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function formatRelative(ts: number, now: number) {
   const seconds = Math.max(0, Math.floor((now - ts) / 1000));
@@ -277,6 +335,7 @@ function DashboardLayoutInner({
           onMenuClick={() => setMobileOpen(true)}
           showMenuButton={!collapsed}
         />
+        <SandboxBanner />
         <main
           id="main-content"
           tabIndex={-1}
