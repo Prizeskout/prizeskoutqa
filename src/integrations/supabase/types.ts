@@ -2490,7 +2490,10 @@ export type Database = {
           last_delivery_at: string | null
           last_delivery_success: boolean | null
           max_attempts: number
+          secret_last_rotated_at: string | null
+          secret_revealed_at: string | null
           signing_secret: string
+          signing_version: string
           updated_at: string
           url: string
           user_id: string
@@ -2505,7 +2508,10 @@ export type Database = {
           last_delivery_at?: string | null
           last_delivery_success?: boolean | null
           max_attempts?: number
+          secret_last_rotated_at?: string | null
+          secret_revealed_at?: string | null
           signing_secret: string
+          signing_version?: string
           updated_at?: string
           url: string
           user_id: string
@@ -2520,7 +2526,10 @@ export type Database = {
           last_delivery_at?: string | null
           last_delivery_success?: boolean | null
           max_attempts?: number
+          secret_last_rotated_at?: string | null
+          secret_revealed_at?: string | null
           signing_secret?: string
+          signing_version?: string
           updated_at?: string
           url?: string
           user_id?: string
