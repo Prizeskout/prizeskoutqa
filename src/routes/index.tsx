@@ -713,7 +713,7 @@ function ProductPillars() {
                       {a.method}
                     </span>
                     <span style={{ color: TEXT, fontSize: 11.5 }}>{a.path}</span>
-                    <span style={{ color: TEXT_DIM, fontSize: 11 }}>— {a.label}</span>
+                    <span style={{ color: TEXT_DIM, fontSize: 11 }}>{a.label}</span>
                   </div>
                 ))}
               </div>
