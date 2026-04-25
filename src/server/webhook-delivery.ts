@@ -29,6 +29,7 @@
 
 import { createHmac } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createNotification } from "./notifications";
 
 export type WebhookEvent = {
   /** Owner of the endpoint set we should deliver to. */
@@ -188,6 +189,21 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
       })
       .eq("id", ep.id);
 
+    // Notify on first failure if no retry will happen (max_attempts === 1).
+    // Multi-attempt failures notify only when exhausted (see retry queue).
+    if (!post.ok && !willRetry) {
+      void createNotification({
+        userId: event.userId,
+        category: "webhook_failure",
+        severity: "error",
+        title: `Webhook delivery failed`,
+        body: `${event.eventType} → ${ep.url} (${post.status ?? "no response"})`,
+        linkTo: "/dashboard/webhooks",
+        dedupeKey: `endpoint:${ep.id}`,
+        metadata: { endpoint_id: ep.id, event_type: event.eventType },
+      });
+    }
+
     results.push({
       endpointId: ep.id,
       success: post.ok,
@@ -311,7 +327,23 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
       .eq("id", ep.id);
 
     if (post.ok) succeeded++;
-    if (!willRetry && !post.ok) exhausted++;
+    if (!willRetry && !post.ok) {
+      exhausted++;
+      void createNotification({
+        userId: row.user_id,
+        category: "webhook_failure",
+        severity: "error",
+        title: "Webhook delivery exhausted retries",
+        body: `${row.event_type} → ${ep.url} failed after ${newAttempt} attempts (${post.status ?? "no response"}).`,
+        linkTo: "/dashboard/webhooks",
+        dedupeKey: `endpoint:${ep.id}:exhausted`,
+        metadata: {
+          endpoint_id: ep.id,
+          event_type: row.event_type,
+          attempts: newAttempt,
+        },
+      });
+    }
   }
 
   return {
