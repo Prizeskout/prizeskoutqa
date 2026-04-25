@@ -58,7 +58,7 @@ function TenantsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchOverview({ data: undefined as unknown as void });
+      const res = await (fetchOverview as any)();
       setAccounts(res.accounts as Account[]);
       setCallerRole(res.callerRole);
     } catch (e) {

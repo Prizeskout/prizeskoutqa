@@ -51,7 +51,7 @@ function TeamPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchMembers({ data: undefined as unknown as void });
+      const res = await (fetchMembers as any)();
       setMembers(res.members as Member[]);
       setCallerRole(res.callerRole as Role);
       setCallerId(res.callerId);
