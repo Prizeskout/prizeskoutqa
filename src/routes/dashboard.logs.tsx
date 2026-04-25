@@ -18,6 +18,15 @@ type LogRow = {
   duration_ms: number | null;
   request_id: string | null;
   error: string | null;
+  api_key_id: string | null;
+};
+
+type ApiKeyRow = {
+  id: string;
+  name: string;
+  mode: string;
+  key_prefix: string;
+  last_four: string;
 };
 
 type StatusBucket = "all" | "2xx" | "3xx" | "4xx" | "5xx";
