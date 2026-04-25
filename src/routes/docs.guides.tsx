@@ -39,7 +39,10 @@ const GUIDES: {
   title: string;
   desc: string;
   eta: string;
-  to?: "/docs/guides/authentication" | "/docs/guides/sdk-quickstart";
+  to?:
+    | "/docs/guides/authentication"
+    | "/docs/guides/sdk-quickstart"
+    | "/docs/guides/webhooks";
 }[] = [
   {
     icon: Zap,
@@ -59,6 +62,7 @@ const GUIDES: {
     title: "Webhooks",
     desc: "Subscribe to events, verify signatures, handle retries.",
     eta: "8 min read",
+    to: "/docs/guides/webhooks",
   },
   {
     icon: Terminal,
