@@ -657,8 +657,172 @@ function WebhooksPage() {
         <SignatureTesterDrawer endpoint={testerEndpoint} onClose={() => setTesterEndpoint(null)} />
       )}
 
+      {/* Copy-once secret reveal */}
+      {revealedSecret && (
+        <SecretRevealDialog
+          secret={revealedSecret.secret}
+          url={revealedSecret.url}
+          rotated={revealedSecret.rotated}
+          onClose={() => setRevealedSecret(null)}
+        />
+      )}
+
       <style>{`.spin { animation: spin 0.9s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </DashboardLayout>
+  );
+}
+
+// ---------- Copy-once secret reveal ----------
+
+function SecretRevealDialog({
+  secret,
+  url,
+  rotated,
+  onClose,
+}: {
+  secret: string;
+  url: string;
+  rotated: boolean;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [show, setShow] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(15,18,25,0.55)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 100,
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 520,
+          backgroundColor: "#fff",
+          border: "1px solid #E5E2DB",
+          borderRadius: 14,
+          padding: 22,
+          boxShadow: "0 24px 60px rgba(15,18,25,0.25)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <ShieldCheck size={18} color="#EA580C" />
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#1A1A18" }}>
+            {rotated ? "New signing secret" : "Save your signing secret"}
+          </div>
+        </div>
+        <div style={{ fontSize: 12.5, color: "#6B6B6B", lineHeight: 1.55, marginBottom: 14 }}>
+          {rotated ? (
+            <>
+              The previous secret stops working immediately. Update your verification code with this
+              new value before the next webhook fires.
+            </>
+          ) : (
+            <>
+              This is the only time we will show this secret in full. Copy it now and store it
+              somewhere safe — you will only see a masked version afterwards.
+            </>
+          )}
+          {url && (
+            <>
+              {" "}
+              Endpoint:{" "}
+              <code style={{ fontFamily: "ui-monospace, monospace", color: "#1A1A18" }}>{url}</code>
+            </>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 12px",
+            backgroundColor: "#FFF7ED",
+            border: "1px solid #FED7AA",
+            borderRadius: 8,
+            marginBottom: 14,
+          }}
+        >
+          <code
+            style={{
+              flex: 1,
+              fontFamily: "ui-monospace, monospace",
+              fontSize: 12.5,
+              color: "#1A1A18",
+              wordBreak: "break-all",
+            }}
+          >
+            {show ? secret : `whsec_${"•".repeat(Math.max(8, secret.length - 10))}${secret.slice(-4)}`}
+          </code>
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            title={show ? "Hide" : "Reveal"}
+            style={iconBtn("#6B6B6B")}
+          >
+            {show ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+          <button
+            type="button"
+            onClick={copy}
+            title="Copy to clipboard"
+            style={iconBtn(copied ? "#22C55E" : "#EA580C")}
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+          </button>
+        </div>
+
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "#1A1A18", marginBottom: 14, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(e) => setConfirmed(e.target.checked)}
+          />
+          I have copied the secret and stored it securely.
+        </label>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={!confirmed}
+            style={{
+              padding: "9px 16px",
+              backgroundColor: confirmed ? "#EA580C" : "#E5E2DB",
+              color: confirmed ? "#fff" : "#9A9A9A",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: confirmed ? "pointer" : "not-allowed",
+            }}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
