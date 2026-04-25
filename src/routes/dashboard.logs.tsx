@@ -50,10 +50,12 @@ function rangeToFrom(range: Range, customFrom: string): string | null {
 
 function LogsPage() {
   const [logs, setLogs] = useState<LogRow[]>([]);
+  const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [endpointFilter, setEndpointFilter] = useState<string>("all");
   const [eventFilter, setEventFilter] = useState<string>("all");
+  const [keyFilter, setKeyFilter] = useState<string>("all");
   const [statusBucket, setStatusBucket] = useState<StatusBucket>("all");
   const [range, setRange] = useState<Range>("7d");
   const [customFrom, setCustomFrom] = useState<string>("");
@@ -65,7 +67,7 @@ function LogsPage() {
       setLoading(true);
       let q = supabase
         .from("api_request_logs")
-        .select("id,occurred_at,method,path,status_code,duration_ms,request_id,error")
+        .select("id,occurred_at,method,path,status_code,duration_ms,request_id,error,api_key_id")
         .order("occurred_at", { ascending: false })
         .limit(500);
 
@@ -78,8 +80,15 @@ function LogsPage() {
         q = q.gte("status_code", min).lt("status_code", min + 100);
       }
 
-      const { data } = await q;
-      setLogs((data ?? []) as LogRow[]);
+      const [logRes, keyRes] = await Promise.all([
+        q,
+        supabase
+          .from("api_keys")
+          .select("id,name,mode,key_prefix,last_four")
+          .order("created_at", { ascending: false }),
+      ]);
+      setLogs((logRes.data ?? []) as LogRow[]);
+      setKeys((keyRes.data ?? []) as ApiKeyRow[]);
       setLoading(false);
     })();
   }, [statusBucket, range, customFrom, customTo]);
