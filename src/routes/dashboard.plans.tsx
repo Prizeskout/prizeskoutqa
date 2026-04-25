@@ -9,9 +9,9 @@
 // This is purely presentation + a small client-side calculator. No DB writes,
 // no billing wired up — selecting a plan persists locally only.
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, Sparkles, Zap, Building2 } from "lucide-react";
+import { Check, Sparkles, Zap, Building2, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 
