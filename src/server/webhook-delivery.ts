@@ -163,12 +163,14 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
   const results: DeliveryAttemptResult[] = [];
 
   for (const ep of subscribers) {
-    const signature = createHmac("sha256", ep.signing_secret).update(body).digest("hex");
+    const sig = buildSignatureHeader(ep.signing_secret, body);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "X-PrizeSkout-Event": event.eventType,
       "X-PrizeSkout-Event-Id": eventId,
-      "X-PrizeSkout-Signature": `sha256=${signature}`,
+      "X-PrizeSkout-Delivery-Id": eventId,
+      "X-PrizeSkout-Timestamp": sig.timestamp,
+      "X-PrizeSkout-Signature": sig.header,
       "X-PrizeSkout-Delivery-Attempt": "1",
     };
 
