@@ -39,6 +39,7 @@ type Endpoint = {
   events: string[];
   enabled: boolean;
   signing_secret: string;
+  secret_last_rotated_at: string | null;
   last_delivery_at: string | null;
   last_delivery_success: boolean | null;
   max_attempts: number;
