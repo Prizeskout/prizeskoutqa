@@ -29,6 +29,7 @@
 // RLS (per-user) or via explicit .eq('user_id', uid) filters (admin path).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createNotification } from "./notifications";
 
 const SELF_COMPETITOR_LABEL = "self";
 const FRESH_WINDOW_DAYS = 14;
@@ -372,6 +373,20 @@ export async function runPricingEngineForUser(
     } else {
       seedsWiped = count ?? 0;
     }
+  }
+
+  if (written > 0) {
+    void createNotification({
+      userId,
+      category: "pricing",
+      severity: "info",
+      title: `${written} new pricing recommendation${written === 1 ? "" : "s"}`,
+      body: `Refreshed from latest competitor scrapes. Review and approve.`,
+      linkTo: "/dashboard/pricing",
+      dedupeKey: `pricing:${new Date().toISOString().slice(0, 10)}`,
+      dedupeWindowMinutes: 360,
+      metadata: { written, seedsWiped },
+    });
   }
 
   return {
