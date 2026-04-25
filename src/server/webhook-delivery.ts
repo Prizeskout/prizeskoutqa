@@ -29,6 +29,7 @@
 
 import { createHmac } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createNotification } from "./notifications";
 
 export type WebhookEvent = {
   /** Owner of the endpoint set we should deliver to. */
