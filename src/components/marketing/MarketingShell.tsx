@@ -501,11 +501,11 @@ function Footer() {
               Products
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterRouteLink label="Pricing Recommendations" to="/products/pricing" />
+              <FooterRouteLink label="Price Rules Engine" to="/products/pricing" />
               <FooterRouteLink label="Competitor Intelligence" to="/products/competitors" />
               <FooterRouteLink label="Promotions & ROI" to="/products/promotions" />
               <FooterRouteLink label="Market Signals" to="/products/market" />
-              <FooterRouteLink label="Field Intel" to="/products/field-intel" />
+              <FooterRouteLink label="White-Label Embed" to="/products/field-intel" />
             </div>
           </div>
 
@@ -517,19 +517,21 @@ function Footer() {
               <FooterRouteLink label="Documentation" to="/docs" />
               <FooterRouteLink label="API Reference" to="/api-reference" />
               <FooterRouteLink label="Changelog" to="/docs/changelog" />
-              <FooterHashLink label="Pricing" hash="pricing" />
-              <FooterRouteLink label="ROI calculator" to="/roi-calculator" />
+              <FooterAnchor label="Status" />
+              <FooterRouteLink label="ROI Calculator" to="/roi-calculator" />
             </div>
           </div>
 
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Legal
+              Company
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <FooterAnchor label="About" />
+              <FooterAnchor label="Enterprise" />
+              <FooterRouteLink label="Contact sales" to="/contact" />
               <FooterRouteLink label="Privacy policy" to="/privacy" />
               <FooterRouteLink label="Terms of service" to="/terms" />
-              <FooterAnchor label="Cookie policy" />
             </div>
           </div>
         </div>
@@ -543,23 +545,30 @@ function Footer() {
             justifyContent: "space-between",
             alignItems: "center",
             flexWrap: "wrap",
-            gap: 12,
+            gap: 16,
           }}
         >
           <span style={{ fontSize: 12, color: "#6B6B6B" }}>
-            © {new Date().getFullYear()} PrizeSkout. All rights reserved.
+            © {new Date().getFullYear()} PrizeSkout. All rights reserved. Qatar
           </span>
-          <span
-            style={{
-              fontSize: 12,
-              color: "#6B6B6B",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            Qatar
-          </span>
+          <div style={{ display: "inline-flex", flexWrap: "wrap", gap: 8 }}>
+            {["SOC 2 Type II", "99.95% uptime", "GCC residency"].map((badge) => (
+              <span
+                key={badge}
+                style={{
+                  fontSize: 11,
+                  color: "#A8A8A8",
+                  background: "#0A0A0A",
+                  border: "1px solid #1A1A1A",
+                  borderRadius: 6,
+                  padding: "5px 10px",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </footer>
