@@ -127,7 +127,7 @@ function Hero() {
             The pricing brain behind retail.{" "}
             <span
               style={{
-                fontStyle: "italic",
+                fontStyle: "normal",
                 background: `linear-gradient(90deg, ${ORANGE}, ${ORANGE_LIGHT})`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
