@@ -140,12 +140,19 @@ function WebhooksPage() {
     if (!url.trim() || creating) return;
     setCreating(true);
     try {
-      await createFn({ data: { url: url.trim(), description: description.trim(), events } });
+      const res = await createFn({
+        data: { url: url.trim(), description: description.trim(), events },
+      });
+      const created = res?.endpoint as { url?: string } | undefined;
+      const plaintext = (res as { plaintextSecret?: string })?.plaintextSecret;
       setUrl("");
       setDescription("");
       setEvents([]);
       setShowCreate(false);
       await load();
+      if (plaintext) {
+        setRevealedSecret({ secret: plaintext, url: created?.url ?? "", rotated: false });
+      }
     } catch (e) {
       alert((e as Error).message);
     } finally {
@@ -162,6 +169,23 @@ function WebhooksPage() {
     if (!confirm("Delete this endpoint? Deliveries will also be removed.")) return;
     await deleteFn({ data: { id } });
     await load();
+  };
+
+  const handleRotate = async (ep: Endpoint) => {
+    const ok = confirm(
+      `Rotate signing secret for ${ep.url}?\n\nThe old secret stops working immediately. Update your verification code with the new secret before the next webhook fires.`,
+    );
+    if (!ok) return;
+    try {
+      const res = await rotateFn({ data: { id: ep.id } });
+      const plaintext = (res as { plaintextSecret?: string })?.plaintextSecret;
+      await load();
+      if (plaintext) {
+        setRevealedSecret({ secret: plaintext, url: ep.url, rotated: true });
+      }
+    } catch (e) {
+      alert((e as Error).message);
+    }
   };
 
   const handleRetry = async (delivery: Delivery) => {
