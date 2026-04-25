@@ -1,68 +1,58 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import {
-  ArrowRight,
-  Check,
-  Zap,
-  Shield,
-  GitBranch,
-  Package,
-  Webhook,
-  KeyRound,
-  Activity,
-  Tags,
-  ClipboardList,
-  ChevronRight,
-} from "lucide-react";
+import { useEffect } from "react";
+import { ArrowRight } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { getGroupsByPillar, type PillarSlug } from "@/lib/api-spec";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | The shadow infrastructure for commerce" },
+      { title: "PrizeSkout | The pricing brain behind retail" },
       {
         name: "description",
         content:
-          "Pricing intelligence, commerce events, multi-tenant ops, and a network moat that compounds. The invisible API layer your storefront sits on top of.",
+          "License the APIs that decide, sync, and defend prices across every channel — under your brand, inside your platform, without PrizeSkout ever appearing.",
       },
       {
         property: "og:title",
-        content: "PrizeSkout | The shadow infrastructure for commerce",
+        content: "PrizeSkout | The pricing brain behind retail",
       },
       {
         property: "og:description",
         content:
-          "Pricing intelligence, commerce events, multi-tenant ops, and a network moat that compounds. The invisible API layer your storefront sits on top of.",
+          "License the APIs that decide, sync, and defend prices across every channel — under your brand, inside your platform, without PrizeSkout ever appearing.",
       },
     ],
   }),
   component: LandingPage,
 });
 
-/* ============================================================================
-   Shared primitives
-   ========================================================================= */
-
 const MONO_STACK =
   "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
 
-function SectionEyebrow({ children }: { children: React.ReactNode }) {
+const ORANGE = "#EA580C";
+const ORANGE_LIGHT = "#FB923C";
+const BG = "#050505";
+const BG_RAISED = "#0A0A0A";
+const BG_PANEL = "#0F0E14";
+const BORDER = "#1A1A1A";
+const TEXT = "#FAFAF9";
+const TEXT_MUTED = "#9A9A9A";
+const TEXT_DIM = "#6B6B6B";
+
+/* ============================================================================
+   Eyebrow label
+   ========================================================================= */
+
+function Eyebrow({ children, color = ORANGE_LIGHT }: { children: React.ReactNode; color?: string }) {
   return (
     <span
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "5px 10px",
+        display: "inline-block",
         fontSize: 11,
         fontWeight: 600,
-        letterSpacing: "0.08em",
+        letterSpacing: "0.12em",
         textTransform: "uppercase",
-        color: "#FB923C",
-        background: "rgba(234,88,12,0.08)",
-        border: "1px solid rgba(234,88,12,0.22)",
-        borderRadius: 999,
+        color,
       }}
     >
       {children}
@@ -71,230 +61,28 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 }
 
 /* ============================================================================
-   HERO with code tabs
+   HERO
    ========================================================================= */
 
-type Lang = "curl" | "node" | "python";
+const HERO_CODE = `// A competitor just dropped their price.
+// Your platform responds in under 2 seconds.
 
-const CODE_SAMPLES: Record<Lang, string> = {
-  curl: `curl https://api.prizeskout.qa/v1/pricing/recommendations \\
-  -H "Authorization: Bearer sk_live_••••" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "product_id": "sku_galaxy_buds_2_pro",
-    "channels": ["talabat", "carrefour", "amazon"],
-    "objective": "protect_margin"
-  }'`,
-  node: `import { PrizeSkout } from "@prizeskout/node";
-
-const ps = new PrizeSkout(process.env.PRIZESKOUT_API_KEY);
-
-const rec = await ps.pricing.recommendations.create({
-  product_id: "sku_galaxy_buds_2_pro",
-  channels: ["talabat", "carrefour", "amazon"],
-  objective: "protect_margin",
-});
-
-console.log(rec.recommended_price, rec.confidence);`,
-  python: `from prizeskout import PrizeSkout
-
-ps = PrizeSkout(api_key=os.environ["PRIZESKOUT_API_KEY"])
-
-rec = ps.pricing.recommendations.create(
-    product_id="sku_galaxy_buds_2_pro",
-    channels=["talabat", "carrefour", "amazon"],
-    objective="protect_margin",
-)
-
-print(rec.recommended_price, rec.confidence)`,
-};
-
-const SAMPLE_RESPONSE = `{
-  "id": "rec_01HX9P2K3M7QZ8Y4N6W5B1E2F0",
-  "product_id": "sku_galaxy_buds_2_pro",
-  "current_price": 469.00,
-  "recommended_price": 449.00,
-  "currency": "QAR",
-  "confidence": 0.91,
-  "reason": "carrefour_price_drop · protect_share",
-  "expected_impact": {
-    "margin_delta_pct": -0.8,
-    "units_delta_pct": 6.4,
-    "net_monthly": 3820
-  },
-  "signals": [
-    { "source": "carrefour.qa", "event": "price_drop", "delta": -20.00 },
-    { "source": "talabat.qa", "event": "promo_live", "depth_pct": 15 }
-  ],
-  "generated_at": "2025-01-14T09:42:11Z"
+{
+  "event": "rule.price_change_fired",
+  "sku": "sku_galaxy_buds_2_pro",
+  "new_price": 455.00,
+  "trigger": "carrefour_price_drop",
+  "channels": ["talabat", "website", "app"]
 }`;
-
-function CodeTabs() {
-  const [lang, setLang] = useState<Lang>("curl");
-  const tabs: { key: Lang; label: string }[] = [
-    { key: "curl", label: "cURL" },
-    { key: "node", label: "Node.js" },
-    { key: "python", label: "Python" },
-  ];
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        maxWidth: 600,
-        margin: "0 auto",
-      }}
-    >
-      {/* ambient glow */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: "-30% -15%",
-          background:
-            "radial-gradient(ellipse at center, rgba(234,88,12,0.40) 0%, rgba(234,88,12,0.12) 35%, rgba(5,5,5,0) 70%)",
-          filter: "blur(30px)",
-          zIndex: 0,
-        }}
-      />
-
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          background: "rgba(10,10,10,0.92)",
-          border: "1px solid #1F1F1F",
-          borderRadius: 14,
-          overflow: "hidden",
-          boxShadow: "0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(234,88,12,0.06) inset",
-        }}
-      >
-        {/* tab bar */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid #1A1A1A",
-            padding: "0 4px",
-          }}
-        >
-          <div style={{ display: "flex" }}>
-            {tabs.map((t) => {
-              const active = lang === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setLang(t.key)}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    padding: "12px 16px",
-                    fontSize: 12,
-                    fontFamily: MONO_STACK,
-                    fontWeight: active ? 600 : 500,
-                    color: active ? "#FB923C" : "#8A8A8A",
-                    borderBottom: active ? "2px solid #EA580C" : "2px solid transparent",
-                    cursor: "pointer",
-                    transition: "color 0.15s, border-color 0.15s",
-                  }}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-          <span
-            style={{
-              fontSize: 11,
-              color: "#6B6B6B",
-              fontFamily: MONO_STACK,
-              paddingRight: 14,
-            }}
-          >
-            POST /v1/pricing/recommendations
-          </span>
-        </div>
-
-        {/* code body */}
-        <pre
-          style={{
-            margin: 0,
-            padding: "18px 20px",
-            fontSize: 12.5,
-            lineHeight: 1.65,
-            fontFamily: MONO_STACK,
-            color: "#D4D4D4",
-            background: "transparent",
-            overflow: "auto",
-            maxHeight: 260,
-          }}
-        >
-          <code>{CODE_SAMPLES[lang]}</code>
-        </pre>
-
-        {/* response preview */}
-        <div
-          style={{
-            borderTop: "1px solid #1A1A1A",
-            background: "rgba(0,0,0,0.35)",
-          }}
-        >
-          <div
-            style={{
-              padding: "8px 16px",
-              fontSize: 10.5,
-              fontFamily: MONO_STACK,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#6B6B6B",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "#22C55E",
-                boxShadow: "0 0 0 3px rgba(34,197,94,0.15)",
-              }}
-            />
-            200 OK · 142ms · application/json
-          </div>
-          <pre
-            style={{
-              margin: 0,
-              padding: "0 20px 18px",
-              fontSize: 11.5,
-              lineHeight: 1.6,
-              fontFamily: MONO_STACK,
-              color: "#9CA3AF",
-              background: "transparent",
-              overflow: "auto",
-              maxHeight: 200,
-            }}
-          >
-            <code>{SAMPLE_RESPONSE}</code>
-          </pre>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function Hero() {
   return (
     <section
       style={{
         position: "relative",
-        background: "#050505",
+        background: BG,
         paddingTop: 96,
-        paddingBottom: 80,
+        paddingBottom: 72,
         overflow: "hidden",
       }}
       className="px-5 md:px-10"
@@ -325,280 +113,341 @@ function Hero() {
         className="ps-hero-grid"
       >
         <div className="ps-hero-copy">
+          <Eyebrow>Pricing infrastructure · GCC-native · Global-ready</Eyebrow>
           <h1
             className="ps-hero-title"
             style={{
               fontWeight: 700,
-              color: "#FAFAF9",
+              color: TEXT,
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
-              margin: 0,
+              margin: "18px 0 0",
             }}
           >
-            The shadow infrastructure{" "}
+            The pricing brain behind retail.{" "}
             <span
               style={{
-                background: "linear-gradient(90deg, #EA580C, #FB923C)",
+                fontStyle: "italic",
+                background: `linear-gradient(90deg, ${ORANGE}, ${ORANGE_LIGHT})`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}
             >
-              for commerce.
+              Invisible by design.
             </span>
           </h1>
 
           <p
             className="ps-hero-sub"
             style={{
-              marginTop: 18,
-              color: "#9A9A9A",
+              marginTop: 22,
+              color: TEXT_MUTED,
               lineHeight: 1.6,
               maxWidth: 540,
+              fontSize: 16,
             }}
           >
-            Your storefront stays yours. The pricing decisions, market signals, and event firehose that power it run on PrizeSkout — invisible to your shoppers, indispensable to your team.
+            License the APIs that decide, sync, and defend prices across every channel — under your brand, inside your platform, without PrizeSkout ever appearing.
           </p>
-        </div>
 
-        <div className="ps-hero-mock">
-          <CodeTabs />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================================
-   Trust strip
-   ========================================================================= */
-
-function TrustStrip() {
-  const badges = [
-    { icon: Shield, label: "SOC 2 Type II" },
-    { icon: KeyRound, label: "Scoped API keys" },
-    { icon: Activity, label: "99.95% uptime" },
-    { icon: Webhook, label: "Signed webhooks" },
-    { icon: GitBranch, label: "Versioned API" },
-  ];
-  return (
-    <section
-      style={{
-        background: "#050505",
-        borderTop: "1px solid #141414",
-        borderBottom: "1px solid #141414",
-        padding: "24px 0",
-      }}
-      className="px-5 md:px-10"
-    >
-      <div
-        style={{
-          maxWidth: 1180,
-          margin: "0 auto",
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: 32,
-          rowGap: 14,
-        }}
-      >
-        {badges.map((b) => {
-          const Icon = b.icon;
-          return (
-            <div
-              key={b.label}
+          <div
+            style={{
+              marginTop: 32,
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <Link
+              to="/signup"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                fontSize: 12,
-                color: "#8A8A8A",
-                fontFamily: MONO_STACK,
-                letterSpacing: "0.02em",
+                background: `linear-gradient(135deg, ${ORANGE}, #C2410C)`,
+                color: "#FFFFFF",
+                fontSize: 14,
+                fontWeight: 600,
+                padding: "12px 22px",
+                borderRadius: 8,
+                textDecoration: "none",
+                boxShadow: "0 10px 28px rgba(234,88,12,0.32)",
               }}
             >
-              <Icon size={13} color="#6B6B6B" strokeWidth={1.8} />
-              {b.label}
+              Get API keys — free
+              <ArrowRight size={14} />
+            </Link>
+            <Link
+              to="/contact"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                color: TEXT,
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "12px 22px",
+                borderRadius: 8,
+                textDecoration: "none",
+              }}
+            >
+              Talk to partnerships
+            </Link>
+          </div>
+        </div>
+
+        <div className="ps-hero-mock">
+          <div
+            style={{
+              position: "relative",
+              maxWidth: 600,
+              margin: "0 auto",
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: "-30% -15%",
+                background:
+                  "radial-gradient(ellipse at center, rgba(234,88,12,0.40) 0%, rgba(234,88,12,0.12) 35%, rgba(5,5,5,0) 70%)",
+                filter: "blur(30px)",
+                zIndex: 0,
+              }}
+            />
+            <div
+              style={{
+                position: "relative",
+                zIndex: 1,
+                background: "rgba(10,10,10,0.92)",
+                border: `1px solid ${BORDER}`,
+                borderRadius: 14,
+                overflow: "hidden",
+                boxShadow:
+                  "0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(234,88,12,0.06) inset",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: `1px solid ${BORDER}`,
+                  padding: "12px 16px",
+                  fontFamily: MONO_STACK,
+                  fontSize: 11.5,
+                  color: TEXT_DIM,
+                }}
+              >
+                <span>api.prizeskout.qa / v1 / rules</span>
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#22C55E",
+                    boxShadow: "0 0 0 3px rgba(34,197,94,0.15)",
+                  }}
+                />
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: "20px 22px",
+                  fontSize: 12.5,
+                  lineHeight: 1.7,
+                  fontFamily: MONO_STACK,
+                  color: "#D4D4D4",
+                  background: "transparent",
+                  overflow: "auto",
+                }}
+              >
+                <code>{HERO_CODE}</code>
+              </pre>
             </div>
-          );
-        })}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
 /* ============================================================================
-   Four Pillars (replaces flat API catalog — leads with strategic positioning)
+   Trust strip — category pills
    ========================================================================= */
 
-const PILLAR_ICONS: Record<PillarSlug, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
-  "pricing-intelligence": Tags,
-  "commerce-events": Webhook,
-  "multi-tenant-ops": ClipboardList,
-  "network-moat": Activity,
-};
+function TrustStrip() {
+  const pills = [
+    "Ecommerce platforms",
+    "Mall operators",
+    "Omnichannel retailers",
+    "Consumer brands",
+    "Delivery apps",
+  ];
+  return (
+    <section
+      style={{
+        background: "#0A0913",
+        borderTop: `1px solid ${BORDER}`,
+        borderBottom: `1px solid ${BORDER}`,
+        padding: "32px 0",
+      }}
+      className="px-5 md:px-10"
+    >
+      <div style={{ maxWidth: 1180, margin: "0 auto", textAlign: "center" }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "rgba(250,250,249,0.45)",
+            marginBottom: 18,
+          }}
+        >
+          Trusted by platforms, malls, and retailers across GCC
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          {pills.map((p) => (
+            <span
+              key={p}
+              style={{
+                fontSize: 11.5,
+                color: "rgba(250,250,249,0.7)",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                padding: "6px 12px",
+                borderRadius: 999,
+              }}
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-function PillarsSection() {
-  const pillars = getGroupsByPillar();
+/* ============================================================================
+   PROBLEM
+   ========================================================================= */
+
+function ProblemSection() {
+  const pains = [
+    {
+      n: "Pain 01",
+      title: "Your merchants lose sales to competitors who repriced six hours ago",
+      desc: "Without real-time intelligence, every merchant on your platform is flying blind while their rivals react to market moves in minutes.",
+    },
+    {
+      n: "Pain 02",
+      title: "Prices are wrong on Talabat but right on the website. Again.",
+      desc: "Omnichannel price inconsistency destroys trust and margin simultaneously. No platform has solved this natively. PrizeSkout does it in one API call.",
+    },
+    {
+      n: "Pain 03",
+      title: "Enterprise deals stall because you cannot show pricing governance",
+      desc: "Large retailers and brands need audit trails, compliance reports, and MAP monitoring. Your platform has none of it. PrizeSkout builds it in.",
+    },
+  ];
 
   return (
     <section
-      id="pillars"
       style={{
-        background: "#050505",
+        background: "#FAFAF9",
         padding: "88px 0",
       }}
       className="px-5 md:px-10"
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <SectionEyebrow>The platform</SectionEyebrow>
+        <div style={{ marginBottom: 48, maxWidth: 760 }}>
+          <Eyebrow color={ORANGE}>The problem</Eyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9", marginTop: 14 }}
+            style={{
+              color: "#1A1A18",
+              marginTop: 14,
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+            }}
           >
-            Four pillars. One platform.
+            Your platform is powerful. Pricing is still a spreadsheet.
           </h2>
           <p
             style={{
-              color: "#9A9A9A",
-              fontSize: 15,
-              lineHeight: 1.6,
-              maxWidth: 640,
-              margin: "14px auto 0",
+              color: "#4A4A48",
+              fontSize: 16,
+              lineHeight: 1.65,
+              marginTop: 18,
             }}
           >
-            We don't sell a dashboard. We sell the rails underneath one — pricing decisions, the event firehose, multi-tenant ops, and a network moat that sharpens with every operator.
+            Your merchants are competing against platforms that reprice automatically, respond to competitors in real time, and run intelligent promotions without a team. You can give them that. Without building it yourself.
           </p>
         </div>
 
         <div
           style={{
             display: "grid",
-            gap: 14,
+            gap: 20,
           }}
-          className="ps-pillar-grid"
+          className="ps-problem-grid"
         >
-          {pillars.map(({ pillar, groups }, idx) => {
-            const Icon = PILLAR_ICONS[pillar.slug];
-            const firstGroup = groups[0];
-            const firstEndpoint = firstGroup?.endpoints[0];
-            return (
-              <Link
-                key={pillar.slug}
-                to="/docs"
-                hash={firstGroup && firstEndpoint ? `${firstGroup.slug}/${firstEndpoint.slug}` : undefined}
-                className="ps-api-card"
+          {pains.map((p) => (
+            <div
+              key={p.n}
+              style={{
+                background: "#FFFFFF",
+                borderTop: `3px solid ${ORANGE}`,
+                border: "1px solid #E5E7EB",
+                borderTopColor: ORANGE,
+                borderTopWidth: 3,
+                borderRadius: 8,
+                padding: 28,
+              }}
+            >
+              <div
                 style={{
-                  display: "block",
-                  textDecoration: "none",
-                  background: "#0A0A0A",
-                  border: "1px solid #1A1A1A",
-                  borderRadius: 12,
-                  padding: 24,
-                  transition: "border-color 0.15s, transform 0.15s",
+                  fontSize: 11,
+                  fontFamily: MONO_STACK,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: ORANGE,
+                  marginBottom: 14,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                  <div
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 9,
-                      background: "rgba(234,88,12,0.12)",
-                      border: "1px solid rgba(234,88,12,0.28)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Icon size={18} color="#FB923C" strokeWidth={2} />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontFamily: MONO_STACK,
-                      fontWeight: 600,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: "#8A8A8A",
-                    }}
-                  >
-                    Pillar 0{idx + 1}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontSize: 17,
-                    fontWeight: 600,
-                    color: "#FAFAF9",
-                    marginBottom: 6,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {pillar.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#FB923C",
-                    marginBottom: 12,
-                    fontWeight: 500,
-                  }}
-                >
-                  {pillar.tagline}
-                </div>
-                <div
-                  style={{
-                    fontSize: 13.5,
-                    color: "#8A8A8A",
-                    lineHeight: 1.55,
-                    marginBottom: 16,
-                  }}
-                >
-                  {pillar.description}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 6,
-                    marginBottom: 16,
-                  }}
-                >
-                  {groups.map((g) => (
-                    <span
-                      key={g.slug}
-                      style={{
-                        fontSize: 10.5,
-                        fontFamily: MONO_STACK,
-                        color: "#C4C4C4",
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        padding: "3px 8px",
-                        borderRadius: 4,
-                      }}
-                    >
-                      {g.name} · {g.endpoints.length}
-                    </span>
-                  ))}
-                </div>
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#FB923C",
-                  }}
-                >
-                  Reference
-                  <ChevronRight size={12} />
-                </div>
-              </Link>
-            );
-          })}
+                {p.n}
+              </div>
+              <div
+                style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  color: "#1A1A18",
+                  lineHeight: 1.35,
+                  marginBottom: 12,
+                }}
+              >
+                {p.title}
+              </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  color: "#4A4A48",
+                  lineHeight: 1.6,
+                }}
+              >
+                {p.desc}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -606,49 +455,57 @@ function PillarsSection() {
 }
 
 /* ============================================================================
-   Quickstart
+   HOW IT WORKS
    ========================================================================= */
 
-function Quickstart() {
+function HowItWorks() {
   const steps = [
     {
       n: "01",
-      title: "Create an API key",
-      desc: "Sign up and mint a scoped key from the dashboard. Test keys hit a sandbox with no rate limits.",
-      code: `# Your test key\nsk_test_4eC39HqLyjWDarjtT1zdp7dc`,
+      title: "License the infrastructure",
+      desc: "One platform API key, scoped to your project. Access all 19 APIs in sandbox with no rate limits. Go live in an afternoon.",
     },
     {
       n: "02",
-      title: "Install the SDK",
-      desc: "Official SDKs for Node, Python, and Go. Or hit the REST API from any language.",
-      code: `npm install @prizeskout/node\n# or\npip install prizeskout`,
+      title: "Embed under your brand",
+      desc: "White-label widgets, enriched webhooks, and scoped keys — all branded to your platform. Set powered_by_visible: false and disappear.",
     },
     {
       n: "03",
-      title: "Make your first call",
-      desc: "Fetch a price recommendation for a SKU. Responses are typed and audit-logged.",
-      code: `const rec = await ps.pricing\n  .recommendations\n  .retrieve("sku_123");`,
+      title: "Launch as your feature",
+      desc: 'Your merchants see "Smart Pricing by [Your Platform]." They get the intelligence. You get the credit. We get the licence fee.',
     },
   ];
 
   return (
     <section
-      id="quickstart"
       style={{
-        background: "#050505",
+        background: BG,
         padding: "88px 0",
-        borderTop: "1px solid #141414",
+        borderTop: `1px solid ${BORDER}`,
       }}
       className="px-5 md:px-10"
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <Eyebrow>How it works</Eyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9" }}
+            style={{ color: TEXT, marginTop: 14 }}
           >
-            Zero to first call in 3 minutes.
+            One licence. Three steps. Zero exposure.
           </h2>
+          <p
+            style={{
+              color: TEXT_MUTED,
+              fontSize: 15,
+              lineHeight: 1.65,
+              maxWidth: 640,
+              margin: "16px auto 0",
+            }}
+          >
+            PrizeSkout is infrastructure. Your merchants see your product. We stay in the background and keep it running.
+          </p>
         </div>
 
         <div
@@ -662,63 +519,50 @@ function Quickstart() {
             <div
               key={s.n}
               style={{
-                background: "#0A0A0A",
-                border: "1px solid #1A1A1A",
+                background: BG_RAISED,
+                border: `1px solid ${BORDER}`,
                 borderRadius: 12,
-                padding: 22,
-                display: "flex",
-                flexDirection: "column",
+                padding: 28,
               }}
             >
               <div
                 style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(234,88,12,0.12)",
+                  border: "1px solid rgba(234,88,12,0.30)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontFamily: MONO_STACK,
-                  fontSize: 11,
+                  fontSize: 14,
                   fontWeight: 700,
-                  color: "#FB923C",
-                  letterSpacing: "0.1em",
-                  marginBottom: 12,
+                  color: ORANGE_LIGHT,
+                  marginBottom: 18,
                 }}
               >
-                STEP {s.n}
+                {s.n}
               </div>
               <div
                 style={{
                   fontSize: 17,
                   fontWeight: 600,
-                  color: "#FAFAF9",
-                  marginBottom: 8,
+                  color: TEXT,
+                  marginBottom: 10,
                 }}
               >
                 {s.title}
               </div>
               <div
                 style={{
-                  fontSize: 13.5,
-                  color: "#8A8A8A",
-                  lineHeight: 1.55,
-                  marginBottom: 16,
-                  flex: 1,
+                  fontSize: 14,
+                  color: TEXT_MUTED,
+                  lineHeight: 1.6,
                 }}
               >
                 {s.desc}
               </div>
-              <pre
-                style={{
-                  margin: 0,
-                  padding: 14,
-                  background: "#000",
-                  border: "1px solid #1A1A1A",
-                  borderRadius: 8,
-                  fontSize: 11.5,
-                  lineHeight: 1.55,
-                  fontFamily: MONO_STACK,
-                  color: "#D4D4D4",
-                  overflow: "auto",
-                }}
-              >
-                <code>{s.code}</code>
-              </pre>
             </div>
           ))}
         </div>
@@ -728,60 +572,78 @@ function Quickstart() {
 }
 
 /* ============================================================================
-   Built for developers
+   PRODUCT PILLARS — 19 APIs / Four pillars
    ========================================================================= */
 
-function BuiltForDevs() {
-  const items = [
+function ProductPillars() {
+  const pillars = [
     {
-      icon: Package,
-      title: "Typed SDKs",
-      desc: "First-class TypeScript, Python, and Go. Every request and response is typed.",
+      name: "Price operations",
+      apis: [
+        { method: "POST", path: "/v1/sync", label: "Omnichannel Price Sync" },
+        { method: "POST", path: "/v1/rules", label: "Price Rules Engine" },
+        { method: "GET", path: "/v1/margin", label: "Margin Intelligence" },
+        { method: "POST", path: "/v1/flash", label: "Flash Sale Orchestration" },
+      ],
     },
     {
-      icon: Webhook,
-      title: "Reliable webhooks",
-      desc: "Signed payloads, retries with backoff, and a replay log. Subscribe to price drops and promo events.",
+      name: "Commerce intelligence",
+      apis: [
+        { method: "POST", path: "/v1/dynprice", label: "Dynamic Pricing Engine" },
+        { method: "GET", path: "/v1/audit", label: "Governance & Audit" },
+        { method: "POST", path: "/v1/intent", label: "Shopper Intent" },
+        { method: "POST", path: "/v1/embed", label: "White-Label Embed" },
+      ],
     },
     {
-      icon: Zap,
-      title: "Fast reads",
-      desc: "p95 under 150ms on recommendation reads. Regional caches keep hot paths quick.",
+      name: "Commerce events",
+      apis: [
+        { method: "POST", path: "/v1/events", label: "Event Firehose" },
+        { method: "POST", path: "/v1/webhooks", label: "Signed Webhooks" },
+        { method: "GET", path: "/v1/replay", label: "Event Replay Log" },
+        { method: "POST", path: "/v1/enrich", label: "Enrichment Pipeline" },
+      ],
     },
     {
-      icon: Shield,
-      title: "Scoped keys",
-      desc: "Keys per environment, per API, per IP. Every call is logged with a request ID.",
-    },
-    {
-      icon: GitBranch,
-      title: "Versioned forever",
-      desc: "Breaking changes ship under new versions. Pin one at key creation. Upgrade when ready.",
-    },
-    {
-      icon: Activity,
-      title: "Observable",
-      desc: "Latency, error rates, and usage broken down by API key. Stream events to your tools.",
+      name: "Platform infrastructure",
+      apis: [
+        { method: "POST", path: "/v1/keys", label: "Scoped API Keys" },
+        { method: "GET", path: "/v1/usage", label: "Usage Metering" },
+        { method: "POST", path: "/v1/tenants", label: "Multi-Tenant Ops" },
+        { method: "GET", path: "/v1/health", label: "Status & Health" },
+      ],
     },
   ];
 
   return (
     <section
+      id="pillars"
       style={{
-        background: "#050505",
+        background: BG,
         padding: "88px 0",
-        borderTop: "1px solid #141414",
+        borderTop: `1px solid ${BORDER}`,
       }}
       className="px-5 md:px-10"
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
+        <div style={{ marginBottom: 48, maxWidth: 760 }}>
+          <Eyebrow>The product</Eyebrow>
           <h2
             className="ps-section-title"
-            style={{ color: "#FAFAF9" }}
+            style={{ color: TEXT, marginTop: 14 }}
           >
-            A platform your team will want to ship against.
+            19 APIs. Four pillars. One clean surface.
           </h2>
+          <p
+            style={{
+              color: TEXT_MUTED,
+              fontSize: 15,
+              lineHeight: 1.65,
+              marginTop: 16,
+            }}
+          >
+            Every API is designed to sit deep in your operational stack — not on the surface where it can be replaced.
+          </p>
         </div>
 
         <div
@@ -789,57 +651,74 @@ function BuiltForDevs() {
             display: "grid",
             gap: 14,
           }}
-          className="ps-devs-grid"
+          className="ps-pillar-grid"
         >
-          {items.map((i) => {
-            const Icon = i.icon;
-            return (
+          {pillars.map((p) => (
+            <div
+              key={p.name}
+              style={{
+                background: BG_RAISED,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 12,
+                padding: 22,
+              }}
+            >
               <div
-                key={i.title}
                 style={{
-                  background: "#0A0A0A",
-                  border: "1px solid #1A1A1A",
-                  borderRadius: 12,
-                  padding: 22,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: TEXT,
+                  marginBottom: 4,
                 }}
               >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 9,
-                    background: "rgba(234,88,12,0.10)",
-                    border: "1px solid rgba(234,88,12,0.22)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 14,
-                  }}
-                >
-                  <Icon size={17} color="#FB923C" strokeWidth={2} />
-                </div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: "#FAFAF9",
-                    marginBottom: 6,
-                  }}
-                >
-                  {i.title}
-                </div>
-                <div
-                  style={{
-                    fontSize: 13.5,
-                    color: "#8A8A8A",
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {i.desc}
-                </div>
+                {p.name}
               </div>
-            );
-          })}
+              <div
+                style={{
+                  fontSize: 12,
+                  color: ORANGE_LIGHT,
+                  fontFamily: MONO_STACK,
+                  marginBottom: 18,
+                }}
+              >
+                {p.apis.length} APIs
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {p.apis.map((a) => (
+                  <div
+                    key={a.path}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 12,
+                      fontFamily: MONO_STACK,
+                      color: "#C4C4C4",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 9.5,
+                        fontWeight: 700,
+                        color: a.method === "GET" ? "#60A5FA" : ORANGE_LIGHT,
+                        background:
+                          a.method === "GET"
+                            ? "rgba(96,165,250,0.10)"
+                            : "rgba(234,88,12,0.10)",
+                        padding: "2px 6px",
+                        borderRadius: 3,
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      {a.method}
+                    </span>
+                    <span style={{ color: TEXT, fontSize: 11.5 }}>{a.path}</span>
+                    <span style={{ color: TEXT_DIM, fontSize: 11 }}>— {a.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -847,7 +726,262 @@ function BuiltForDevs() {
 }
 
 /* ============================================================================
-   Pricing (usage-based)
+   WHITE-LABEL split panel
+   ========================================================================= */
+
+function WhiteLabelSection() {
+  return (
+    <section
+      style={{
+        background: BG,
+        padding: "88px 0",
+        borderTop: `1px solid ${BORDER}`,
+      }}
+      className="px-5 md:px-10"
+    >
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 56, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
+          <Eyebrow>White-label by default</Eyebrow>
+          <h2
+            className="ps-section-title"
+            style={{ color: TEXT, marginTop: 14 }}
+          >
+            Your name on the intelligence. Our engine underneath.
+          </h2>
+          <p
+            style={{
+              color: TEXT_MUTED,
+              fontSize: 15,
+              lineHeight: 1.65,
+              marginTop: 16,
+            }}
+          >
+            Every surface PrizeSkout powers can carry your brand. Your merchants never see us. Your enterprise buyers never ask about us. We work best when we are invisible.
+          </p>
+        </div>
+
+        <div className="ps-wl-grid" style={{ display: "grid", gap: 14 }}>
+          {/* What the merchant sees */}
+          <div
+            style={{
+              background: "#F9FAFB",
+              borderRadius: 14,
+              padding: 28,
+              border: "1px solid #E5E7EB",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "#6B7280",
+                marginBottom: 20,
+              }}
+            >
+              What your merchant sees
+            </div>
+            <div
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E5E7EB",
+                borderRadius: 10,
+                padding: 22,
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 6 }}>
+                Smart Pricing
+              </div>
+              <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 18 }}>
+                Powered by Your Platform
+              </div>
+              <div style={{ fontSize: 13, color: "#1A1A18", marginBottom: 4 }}>
+                Price recommendation:
+              </div>
+              <div
+                style={{
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: "#1A1A18",
+                  letterSpacing: "-0.02em",
+                  marginBottom: 6,
+                }}
+              >
+                QAR 455
+              </div>
+              <div style={{ fontSize: 12, color: "#6B7280" }}>
+                Competitor moved · confidence 91%
+              </div>
+            </div>
+            <div
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E5E7EB",
+                borderRadius: 10,
+                padding: 22,
+              }}
+            >
+              <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 6 }}>
+                Price competitiveness
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#1A1A18" }}>
+                Top 18%
+              </div>
+              <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
+                Electronics · Qatar market
+              </div>
+            </div>
+            <div
+              style={{
+                marginTop: 18,
+                fontSize: 11,
+                fontStyle: "italic",
+                color: "#9CA3AF",
+                textAlign: "center",
+              }}
+            >
+              No mention of PrizeSkout anywhere
+            </div>
+          </div>
+
+          {/* What is powering it */}
+          <div
+            style={{
+              background: BG_PANEL,
+              borderRadius: 14,
+              padding: 28,
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: TEXT_DIM,
+                marginBottom: 20,
+              }}
+            >
+              What is powering it
+            </div>
+            <pre
+              style={{
+                margin: 0,
+                padding: 18,
+                background: "#000",
+                border: `1px solid ${BORDER}`,
+                borderRadius: 10,
+                fontSize: 11.5,
+                lineHeight: 1.7,
+                fontFamily: MONO_STACK,
+                color: "#D4D4D4",
+                overflow: "auto",
+              }}
+            >
+              <code>{`POST /v1/dynprice
+{
+  "sku": "sku_galaxy_buds_2_pro",
+  "channel": "talabat",
+  "objective": "protect_share",
+  "powered_by_visible": false
+}
+
+→ 200 OK · 142ms
+{
+  "recommended_price": 455.00,
+  "currency": "QAR",
+  "confidence": 0.91,
+  "reason": "carrefour_price_drop",
+  "branding": "your_platform"
+}`}</code>
+            </pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
+   ENTERPRISE GRADE stats
+   ========================================================================= */
+
+function EnterpriseStats() {
+  const stats = [
+    { value: "99.95%", label: "Uptime SLA" },
+    { value: "<150ms", label: "p95 response time" },
+    { value: "SOC 2", label: "Type II certified" },
+    { value: "19", label: "Production APIs" },
+    { value: "AR + EN", label: "Arabic-first" },
+    { value: "GCC", label: "Data residency" },
+  ];
+
+  return (
+    <section
+      style={{
+        background: BG,
+        padding: "88px 0",
+        borderTop: `1px solid ${BORDER}`,
+      }}
+      className="px-5 md:px-10"
+    >
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <Eyebrow>Enterprise grade</Eyebrow>
+          <h2
+            className="ps-section-title"
+            style={{ color: TEXT, marginTop: 14 }}
+          >
+            Infrastructure you can stake an enterprise deal on
+          </h2>
+        </div>
+
+        <div className="ps-stats-grid" style={{ display: "grid", gap: 14 }}>
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: BG_RAISED,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 12,
+                padding: "26px 22px",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: ORANGE_LIGHT,
+                  letterSpacing: "-0.02em",
+                  fontFamily: MONO_STACK,
+                  marginBottom: 8,
+                }}
+              >
+                {s.value}
+              </div>
+              <div
+                style={{
+                  fontSize: 12.5,
+                  color: TEXT_MUTED,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
+   PRICING
    ========================================================================= */
 
 function PricingSection() {
@@ -855,45 +989,46 @@ function PricingSection() {
     {
       name: "Developer",
       price: "Free",
-      priceSub: "Test mode",
-      desc: "Everything you need to prototype an integration end to end.",
+      priceSub: "Sandbox · unlimited test calls",
+      desc: "Everything you need to prototype a complete integration end to end.",
       features: [
+        "All 19 APIs in sandbox",
         "Unlimited test requests",
-        "All APIs in sandbox",
-        "1 project, 2 keys",
+        "1 project · 2 scoped keys",
         "Community support",
       ],
       cta: "Start building",
+      ctaTo: "/signup",
       highlight: false,
     },
     {
       name: "Growth",
       price: "$0.004",
-      priceSub: "per call",
-      desc: "Pay only for what you call. Volume discounts kick in automatically.",
+      priceSub: "per API call · volume discounts automatic",
+      desc: "Pay only for what you call. Volume tiers kick in automatically as you scale.",
       features: [
         "All production APIs",
-        "Signed webhooks, unlimited",
+        "Signed webhooks · unlimited",
         "Up to 100 req/s sustained",
-        "Email support",
-        "99.9% uptime SLA",
+        "Email support · 99.9% SLA",
       ],
       cta: "Activate live mode",
+      ctaTo: "/signup",
       highlight: true,
     },
     {
       name: "Enterprise",
       price: "Custom",
-      priceSub: "Volume",
-      desc: "For teams with compliance, residency, or dedicated capacity needs.",
+      priceSub: "Committed volume · white-label licence",
+      desc: "For platforms, malls, and retailers with compliance, residency, or capacity needs.",
       features: [
+        "White-label licence included",
         "Committed-use discounts",
-        "Data residency options",
-        "99.95% uptime SLA",
-        "Dedicated support",
-        "Security review, DPA, MSA",
+        "GCC data residency",
+        "99.95% SLA · DPA · MSA",
       ],
-      cta: "Contact sales",
+      cta: "Contact partnerships",
+      ctaTo: "/contact",
       highlight: false,
     },
   ];
@@ -902,50 +1037,63 @@ function PricingSection() {
     <section
       id="pricing"
       style={{
-        background: "#050505",
+        background: BG,
         padding: "88px 0",
-        borderTop: "1px solid #141414",
+        borderTop: `1px solid ${BORDER}`,
       }}
       className="px-5 md:px-10"
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <h2 className="ps-section-title" style={{ color: "#FAFAF9" }}>
-            Pay per call. No seats.
+        <div style={{ textAlign: "center", marginBottom: 56, maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
+          <Eyebrow>Pricing</Eyebrow>
+          <h2
+            className="ps-section-title"
+            style={{ color: TEXT, marginTop: 14 }}
+          >
+            Pay per call. No seats. No surprises.
           </h2>
+          <p
+            style={{
+              color: TEXT_MUTED,
+              fontSize: 15,
+              lineHeight: 1.65,
+              marginTop: 16,
+            }}
+          >
+            Developer mode is free and unlimited in sandbox. Move to production with a single environment switch.
+          </p>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gap: 16,
-          }}
-          className="ps-pricing-grid"
-        >
+        <div style={{ display: "grid", gap: 16 }} className="ps-pricing-grid">
           {tiers.map((t) => (
             <div
               key={t.name}
               style={{
-                background: t.highlight ? "#0B0907" : "#0A0A0A",
-                border: t.highlight ? "1px solid rgba(234,88,12,0.45)" : "1px solid #1A1A1A",
+                background: t.highlight ? "#0B0907" : BG_RAISED,
+                border: t.highlight
+                  ? `2px solid ${ORANGE}`
+                  : `1px solid ${BORDER}`,
                 borderRadius: 14,
                 padding: 28,
                 position: "relative",
-                boxShadow: t.highlight ? "0 20px 50px rgba(234,88,12,0.15)" : "none",
+                boxShadow: t.highlight
+                  ? "0 20px 50px rgba(234,88,12,0.18)"
+                  : "none",
               }}
             >
               {t.highlight && (
                 <span
                   style={{
                     position: "absolute",
-                    top: -10,
+                    top: -12,
                     left: 24,
                     fontSize: 10,
                     fontWeight: 700,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
-                    color: "#FFF",
-                    background: "linear-gradient(135deg, #EA580C, #C2410C)",
+                    color: ORANGE,
+                    background: "rgba(234,88,12,0.15)",
+                    border: `1px solid ${ORANGE}`,
                     padding: "4px 10px",
                     borderRadius: 4,
                   }}
@@ -953,42 +1101,106 @@ function PricingSection() {
                   Most popular
                 </span>
               )}
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#FAFAF9", marginBottom: 8 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: TEXT_DIM,
+                  marginBottom: 14,
+                }}
+              >
                 {t.name}
               </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 34, fontWeight: 700, color: "#FAFAF9", letterSpacing: "-0.02em" }}>
-                  {t.price}
-                </span>
-                <span style={{ fontSize: 12, color: "#8A8A8A", fontFamily: MONO_STACK }}>
-                  {t.priceSub}
-                </span>
+              <div
+                style={{
+                  fontSize: 38,
+                  fontWeight: 700,
+                  color: TEXT,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1,
+                }}
+              >
+                {t.price}
               </div>
-              <div style={{ fontSize: 13, color: "#8A8A8A", lineHeight: 1.55, marginBottom: 20, minHeight: 40 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: TEXT_MUTED,
+                  fontFamily: MONO_STACK,
+                  marginTop: 8,
+                  marginBottom: 18,
+                }}
+              >
+                {t.priceSub}
+              </div>
+              <div
+                style={{
+                  fontSize: 13.5,
+                  color: TEXT_MUTED,
+                  lineHeight: 1.6,
+                  marginBottom: 22,
+                  minHeight: 60,
+                }}
+              >
                 {t.desc}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  marginBottom: 28,
+                }}
+              >
                 {t.features.map((f) => (
-                  <div key={f} style={{ display: "flex", gap: 8, fontSize: 13, color: "#C4C4C4" }}>
-                    <Check size={13} color="#22C55E" style={{ marginTop: 3, flexShrink: 0 }} />
+                  <div
+                    key={f}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 10,
+                      fontSize: 13.5,
+                      color: "#C4C4C4",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: "50%",
+                        background: "rgba(234,88,12,0.18)",
+                        border: `1px solid ${ORANGE}`,
+                        flexShrink: 0,
+                        marginTop: 3,
+                      }}
+                    />
                     <span>{f}</span>
                   </div>
                 ))}
               </div>
               <Link
-                to={t.name === "Enterprise" ? "/contact" : "/signup"}
+                to={t.ctaTo}
                 style={{
                   display: "block",
                   textAlign: "center",
-                  padding: "11px 18px",
+                  padding: "12px 18px",
                   borderRadius: 8,
-                  fontSize: 13.5,
+                  fontSize: 14,
                   fontWeight: 600,
                   textDecoration: "none",
-                  background: t.highlight ? "linear-gradient(135deg, #EA580C, #C2410C)" : "rgba(255,255,255,0.04)",
-                  color: t.highlight ? "#FFF" : "#FAFAF9",
-                  border: t.highlight ? "none" : "1px solid rgba(255,255,255,0.10)",
-                  boxShadow: t.highlight ? "0 8px 22px rgba(234,88,12,0.30)" : "none",
+                  background: t.highlight
+                    ? `linear-gradient(135deg, ${ORANGE}, #C2410C)`
+                    : "transparent",
+                  color: t.highlight ? "#FFF" : TEXT,
+                  border: t.highlight
+                    ? "none"
+                    : "1px solid rgba(255,255,255,0.14)",
+                  boxShadow: t.highlight
+                    ? "0 8px 22px rgba(234,88,12,0.30)"
+                    : "none",
                 }}
               >
                 {t.cta}
@@ -1002,16 +1214,16 @@ function PricingSection() {
 }
 
 /* ============================================================================
-   Final CTA
+   FINAL CTA
    ========================================================================= */
 
 function FinalCTA() {
   return (
     <section
       style={{
-        background: "#050505",
-        padding: "88px 0 100px",
-        borderTop: "1px solid #141414",
+        background: BG,
+        padding: "96px 0 110px",
+        borderTop: `1px solid ${BORDER}`,
         position: "relative",
         overflow: "hidden",
       }}
@@ -1041,12 +1253,19 @@ function FinalCTA() {
           textAlign: "center",
         }}
       >
-        <h2
-          className="ps-section-title"
-          style={{ color: "#FAFAF9" }}
-        >
-          Start with a key. Ship today.
+        <h2 className="ps-section-title" style={{ color: TEXT }}>
+          Get the API keys. Disappear inside your platform.
         </h2>
+        <p
+          style={{
+            color: TEXT_MUTED,
+            fontSize: 16,
+            lineHeight: 1.65,
+            marginTop: 18,
+          }}
+        >
+          Free in sandbox. No credit card. No sales call.
+        </p>
         <div
           style={{
             marginTop: 32,
@@ -1062,7 +1281,7 @@ function FinalCTA() {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              background: "linear-gradient(135deg, #EA580C, #C2410C)",
+              background: `linear-gradient(135deg, ${ORANGE}, #C2410C)`,
               color: "#FFFFFF",
               fontSize: 14,
               fontWeight: 600,
@@ -1080,7 +1299,7 @@ function FinalCTA() {
             style={{
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.10)",
-              color: "#FAFAF9",
+              color: TEXT,
               fontSize: 14,
               fontWeight: 500,
               padding: "12px 24px",
@@ -1088,7 +1307,7 @@ function FinalCTA() {
               textDecoration: "none",
             }}
           >
-            Talk to us
+            Talk to partnerships
           </Link>
         </div>
       </div>
@@ -1102,7 +1321,6 @@ function FinalCTA() {
 
 function LandingPage() {
   useEffect(() => {
-    // reset scroll on mount
     if (typeof window !== "undefined" && !window.location.hash) {
       window.scrollTo(0, 0);
     }
@@ -1113,9 +1331,11 @@ function LandingPage() {
       <style>{PAGE_STYLES}</style>
       <Hero />
       <TrustStrip />
-      <PillarsSection />
-      <Quickstart />
-      <BuiltForDevs />
+      <ProblemSection />
+      <HowItWorks />
+      <ProductPillars />
+      <WhiteLabelSection />
+      <EnterpriseStats />
       <PricingSection />
       <FinalCTA />
     </MarketingShell>
@@ -1131,25 +1351,23 @@ const PAGE_STYLES = `
   }
   .ps-hero-copy { order: 1; }
   .ps-hero-mock { order: 2; }
-  .ps-api-grid { grid-template-columns: 1fr; }
+  .ps-problem-grid { grid-template-columns: 1fr; }
   .ps-pillar-grid { grid-template-columns: 1fr; }
   .ps-quickstart-grid { grid-template-columns: 1fr; }
-  .ps-devs-grid { grid-template-columns: 1fr; }
-  .ps-api-card:hover {
-    border-color: rgba(234,88,12,0.40) !important;
-    transform: translateY(-2px);
-  }
+  .ps-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .ps-pricing-grid { grid-template-columns: 1fr; }
+  .ps-wl-grid { grid-template-columns: 1fr; }
   @media (min-width: 640px) {
-    .ps-api-grid { grid-template-columns: repeat(2, 1fr); }
     .ps-pillar-grid { grid-template-columns: repeat(2, 1fr); }
-    .ps-devs-grid { grid-template-columns: repeat(2, 1fr); }
+    .ps-stats-grid { grid-template-columns: repeat(3, 1fr); }
   }
   @media (min-width: 900px) {
     .ps-hero-grid { grid-template-columns: 1.05fr 1fr; gap: 56px; }
-    .ps-api-grid { grid-template-columns: repeat(3, 1fr); }
-    .ps-pillar-grid { grid-template-columns: repeat(2, 1fr); }
+    .ps-problem-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-quickstart-grid { grid-template-columns: repeat(3, 1fr); }
-    .ps-devs-grid { grid-template-columns: repeat(3, 1fr); }
+    .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
+    .ps-wl-grid { grid-template-columns: 1fr 1fr; }
+    .ps-stats-grid { grid-template-columns: repeat(6, 1fr); }
   }
   @media (min-width: 1180px) {
     .ps-pillar-grid { grid-template-columns: repeat(4, 1fr); }
