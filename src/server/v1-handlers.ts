@@ -24,6 +24,19 @@ import {
   handleGetRecommendation,
   handleListRules,
 } from "@/server/pricing-handlers";
+import {
+  handleListCalendar,
+  handleListCampaigns,
+} from "@/server/promotions-handlers";
+import {
+  handleListObservations,
+  handleListPriceGaps,
+} from "@/server/field-intel-handlers";
+import {
+  handleListEndpoints,
+  handleListDeliveries,
+} from "@/server/webhooks-handlers";
+import { handleListBenchmarks } from "@/server/network-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -805,6 +818,19 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/pricing/recommendations", (req, ctx) => handleListRecommendations(req, ctx)),
   compileRoute("GET /v1/pricing/recommendations/{id}", (req, ctx, p) => handleGetRecommendation(req, ctx, p.id)),
   compileRoute("GET /v1/pricing/rules", (req, ctx) => handleListRules(req, ctx)),
+  // Promotions reads (Week 10 — pillar 3)
+  compileRoute("GET /v1/promotions/calendar", (req, ctx) => handleListCalendar(req, ctx)),
+  compileRoute("GET /v1/promotions/campaigns", (req, ctx) => handleListCampaigns(req, ctx)),
+  // Field Intel reads (Week 10 — pillar 4)
+  compileRoute("GET /v1/field-intel/observations", (req, ctx) => handleListObservations(req, ctx)),
+  compileRoute("GET /v1/field-intel/price-gaps", (req, ctx) => handleListPriceGaps(req, ctx)),
+  // Webhooks reads (Week 10 — pillar 5)
+  compileRoute("GET /v1/webhooks/endpoints", (req, ctx) => handleListEndpoints(req, ctx)),
+  compileRoute("GET /v1/webhooks/deliveries", (req, ctx) => handleListDeliveries(req, ctx)),
+  // Network reads (Week 10 — pillar 6)
+  compileRoute("GET /v1/network/benchmarks", (req, ctx) => handleListBenchmarks(req, ctx)),
+  // /v1/network/patterns is an alias of /v1/competitors/patterns
+  compileRoute("GET /v1/network/patterns", (req, ctx) => handleListPatterns(req, ctx)),
 ];
 
 // Returns true if a real (non-mock) handler exists for the given method+path.
