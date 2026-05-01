@@ -1364,12 +1364,10 @@ const PAGE_STYLES = `
   .ps-hero-sub { font-size: clamp(15px, 3.6vw, 16px) !important; }
   .ps-section-title { font-size: clamp(26px, 5.5vw, 40px); line-height: 1.15; letter-spacing: -0.02em; }
 
-  /* Mobile padding overrides for sections that hard-code generous desktop spacing */
+  /* Mobile padding overrides — section inline styles use generous desktop spacing */
   @media (max-width: 640px) {
-    section { padding-left: 20px; padding-right: 20px; }
-    section[style*="padding: \\"88px 0\\""],
-    section[style*="paddingTop: 96"] { padding-top: 56px !important; padding-bottom: 48px !important; }
-    .ps-hero-mock pre { padding: 16px !important; }
+    .ps-hero-mock pre { padding: 14px !important; font-size: 11px !important; }
+    .ps-hero-mock { width: 100%; }
   }
 
   @media (min-width: 640px) {
