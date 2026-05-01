@@ -1364,10 +1364,16 @@ const PAGE_STYLES = `
   .ps-hero-sub { font-size: clamp(15px, 3.6vw, 16px) !important; }
   .ps-section-title { font-size: clamp(26px, 5.5vw, 40px); line-height: 1.15; letter-spacing: -0.02em; }
 
-  /* Mobile padding overrides — section inline styles use generous desktop spacing */
+  /* Inline shorthand "padding: 88px 0" zeros out horizontal padding and beats
+     Tailwind's px-5/md:px-10 classes — restore horizontal breathing room and
+     compress vertical rhythm on small screens. */
+  section.px-5 { padding-left: 20px !important; padding-right: 20px !important; }
+  @media (min-width: 768px) {
+    section.md\\:px-10 { padding-left: 40px !important; padding-right: 40px !important; }
+  }
   @media (max-width: 640px) {
+    section.px-5 { padding-top: 56px !important; padding-bottom: 48px !important; }
     .ps-hero-mock pre { padding: 14px !important; font-size: 11px !important; }
-    .ps-hero-mock { width: 100%; }
   }
 
   @media (min-width: 640px) {
