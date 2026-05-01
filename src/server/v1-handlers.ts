@@ -19,6 +19,11 @@ import {
   handleTriggerScrape,
   handleListPatterns,
 } from "@/server/competitors-handlers";
+import {
+  handleListRecommendations,
+  handleGetRecommendation,
+  handleListRules,
+} from "@/server/pricing-handlers";
 
 export type V1Context = {
   apiKeyId: string;
