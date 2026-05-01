@@ -37,6 +37,13 @@ import {
   handleListDeliveries,
 } from "@/server/webhooks-handlers";
 import { handleListBenchmarks } from "@/server/network-handlers";
+import {
+  handleCreateDecision,
+  handleSimulatePromotion,
+  handleSubmitObservation,
+  handleCreateEndpoint,
+  handleRetryDelivery,
+} from "@/server/v1-writes-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -831,6 +838,12 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/network/benchmarks", (req, ctx) => handleListBenchmarks(req, ctx)),
   // /v1/network/patterns is an alias of /v1/competitors/patterns
   compileRoute("GET /v1/network/patterns", (req, ctx) => handleListPatterns(req, ctx)),
+  // Writes (Week 10 — final batch)
+  compileRoute("POST /v1/pricing/decisions", (req, ctx) => handleCreateDecision(req, ctx)),
+  compileRoute("POST /v1/promotions/simulate", (req, ctx) => handleSimulatePromotion(req, ctx)),
+  compileRoute("POST /v1/field-intel/observations", (req, ctx) => handleSubmitObservation(req, ctx)),
+  compileRoute("POST /v1/webhooks/endpoints", (req, ctx) => handleCreateEndpoint(req, ctx)),
+  compileRoute("POST /v1/webhooks/deliveries/{id}/retry", (req, ctx, p) => handleRetryDelivery(req, ctx, p.id)),
 ];
 
 // Returns true if a real (non-mock) handler exists for the given method+path.
