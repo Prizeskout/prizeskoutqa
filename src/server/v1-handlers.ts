@@ -37,6 +37,13 @@ import {
   handleListDeliveries,
 } from "@/server/webhooks-handlers";
 import { handleListBenchmarks } from "@/server/network-handlers";
+import {
+  handleCreateDecision,
+  handleSimulatePromotion,
+  handleSubmitObservation,
+  handleCreateEndpoint,
+  handleRetryDelivery,
+} from "@/server/v1-writes-handlers";
 
 export type V1Context = {
   apiKeyId: string;
