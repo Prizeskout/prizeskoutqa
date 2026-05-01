@@ -1349,14 +1349,31 @@ const PAGE_STYLES = `
     gap: 48px;
     align-items: center;
   }
-  .ps-hero-copy { order: 1; }
-  .ps-hero-mock { order: 2; }
+  .ps-hero-copy { order: 1; min-width: 0; }
+  .ps-hero-mock { order: 2; min-width: 0; }
+  .ps-hero-mock pre { font-size: clamp(10.5px, 2.6vw, 12.5px) !important; }
   .ps-problem-grid { grid-template-columns: 1fr; }
   .ps-pillar-grid { grid-template-columns: 1fr; }
   .ps-quickstart-grid { grid-template-columns: 1fr; }
   .ps-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .ps-pricing-grid { grid-template-columns: 1fr; }
   .ps-wl-grid { grid-template-columns: 1fr; }
+
+  /* Fluid type — caps at the original desktop sizes */
+  .ps-hero-title { font-size: clamp(34px, 8vw, 60px); }
+  .ps-hero-sub { font-size: clamp(15px, 3.6vw, 16px) !important; }
+  .ps-section-title { font-size: clamp(26px, 5.5vw, 40px); line-height: 1.15; letter-spacing: -0.02em; }
+
+  /* Inline shorthand "padding: 88px 0" zeros out horizontal padding and beats
+     Tailwind's px-5/md:px-10 classes — restore horizontal breathing room. */
+  section.px-5 { padding-left: 20px !important; padding-right: 20px !important; }
+  @media (min-width: 768px) {
+    section.md\\:px-10 { padding-left: 40px !important; padding-right: 40px !important; }
+  }
+  @media (max-width: 640px) {
+    .ps-hero-mock pre { padding: 14px !important; font-size: 11px !important; }
+  }
+
   @media (min-width: 640px) {
     .ps-pillar-grid { grid-template-columns: repeat(2, 1fr); }
     .ps-stats-grid { grid-template-columns: repeat(3, 1fr); }
