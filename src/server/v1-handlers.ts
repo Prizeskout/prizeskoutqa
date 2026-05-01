@@ -12,6 +12,13 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enqueueWebhookEvent } from "@/server/webhook-delivery";
+import {
+  handleListPrices,
+  handleGetPrice,
+  handlePriceHistory,
+  handleTriggerScrape,
+  handleListPatterns,
+} from "@/server/competitors-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -738,15 +745,67 @@ export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Pr
 }
 
 // ============================================================================
-// Path matcher — keys = "METHOD /v1/path"
+// Path matcher — supports both literal paths ("POST /v1/sync") and dynamic
+// segments via {param} placeholders ("GET /v1/competitors/prices/{id}").
+//
+// IMPORTANT: order matters. More specific (literal) paths must come before
+// the {id}-style patterns that would otherwise swallow them — e.g.
+// "/v1/competitors/prices/history" must match before "/v1/competitors/prices/{id}".
 // ============================================================================
 
-export const V1_HANDLER_KEYS = new Set([
-  "POST /v1/sync",
-  "POST /v1/margin",
-  "POST /v1/dynprice",
-  "POST /v1/webhooks/enrich",
-]);
+type V1Route = {
+  key: string; // "METHOD /v1/path-template"
+  pattern: RegExp;
+  handler: (request: Request, ctx: V1Context, params: Record<string, string>) => Promise<V1Result>;
+};
+
+function compileRoute(
+  key: string,
+  handler: (request: Request, ctx: V1Context, params: Record<string, string>) => Promise<V1Result>,
+): V1Route {
+  const [, template] = key.split(" ");
+  const paramNames: string[] = [];
+  const escaped = template.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\{([^}]+)\\\}/g, (_m, name) => {
+    paramNames.push(name);
+    return "([^/]+)";
+  });
+  const pattern = new RegExp(`^${escaped}$`);
+  return {
+    key,
+    pattern,
+    handler: async (request, ctx) => {
+      const url = new URL(request.url);
+      const fullPath = url.pathname.replace(/^\/api\/public/, "");
+      const m = pattern.exec(fullPath);
+      const params: Record<string, string> = {};
+      if (m) paramNames.forEach((n, i) => (params[n] = m[i + 1]));
+      return handler(request, ctx, params);
+    },
+  };
+}
+
+const V1_ROUTES: V1Route[] = [
+  // Existing real handlers
+  compileRoute("POST /v1/sync", (req, ctx) => handleSync(req, ctx)),
+  compileRoute("POST /v1/margin", (req, ctx) => handleMargin(req, ctx)),
+  compileRoute("POST /v1/dynprice", (req, ctx) => handleDynprice(req, ctx)),
+  compileRoute("POST /v1/webhooks/enrich", (req, ctx) => handleWebhooksEnrich(req, ctx)),
+  // Competitors (Week 10 — pillar 1)
+  compileRoute("GET /v1/competitors/prices", (req, ctx) => handleListPrices(req, ctx)),
+  compileRoute("GET /v1/competitors/prices/history", (req, ctx) => handlePriceHistory(req, ctx)),
+  compileRoute("GET /v1/competitors/prices/{id}", (req, ctx, p) => handleGetPrice(req, ctx, p.id)),
+  compileRoute("POST /v1/competitors/scrape", (req, ctx) => handleTriggerScrape(req, ctx)),
+  compileRoute("GET /v1/competitors/patterns", (req, ctx) => handleListPatterns(req, ctx)),
+];
+
+// Returns true if a real (non-mock) handler exists for the given method+path.
+// Replaces the previous Set-based lookup so dynamic routes (with {id}) work.
+export const V1_HANDLER_KEYS = {
+  has(key: string): boolean {
+    const [method, path] = key.split(" ");
+    return V1_ROUTES.some((r) => r.key.startsWith(`${method} `) && r.pattern.test(path));
+  },
+};
 
 export async function dispatchV1Handler(
   method: string,
@@ -754,19 +813,10 @@ export async function dispatchV1Handler(
   request: Request,
   ctx: V1Context,
 ): Promise<V1Result | null> {
-  const key = `${method} ${path}`;
-  if (!V1_HANDLER_KEYS.has(key)) return null;
-
-  switch (key) {
-    case "POST /v1/sync":
-      return handleSync(request, ctx);
-    case "POST /v1/margin":
-      return handleMargin(request, ctx);
-    case "POST /v1/dynprice":
-      return handleDynprice(request, ctx);
-    case "POST /v1/webhooks/enrich":
-      return handleWebhooksEnrich(request, ctx);
-    default:
-      return null;
+  for (const route of V1_ROUTES) {
+    if (!route.key.startsWith(`${method} `)) continue;
+    if (!route.pattern.test(path)) continue;
+    return route.handler(request, ctx, {});
   }
+  return null;
 }
