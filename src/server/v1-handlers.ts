@@ -12,6 +12,13 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enqueueWebhookEvent } from "@/server/webhook-delivery";
+import {
+  handleListPrices,
+  handleGetPrice,
+  handlePriceHistory,
+  handleTriggerScrape,
+  handleListPatterns,
+} from "@/server/competitors-handlers";
 
 export type V1Context = {
   apiKeyId: string;
