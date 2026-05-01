@@ -24,6 +24,19 @@ import {
   handleGetRecommendation,
   handleListRules,
 } from "@/server/pricing-handlers";
+import {
+  handleListCalendar,
+  handleListCampaigns,
+} from "@/server/promotions-handlers";
+import {
+  handleListObservations,
+  handleListPriceGaps,
+} from "@/server/field-intel-handlers";
+import {
+  handleListEndpoints,
+  handleListDeliveries,
+} from "@/server/webhooks-handlers";
+import { handleListBenchmarks } from "@/server/network-handlers";
 
 export type V1Context = {
   apiKeyId: string;
