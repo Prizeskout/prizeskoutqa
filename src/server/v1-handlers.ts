@@ -19,6 +19,11 @@ import {
   handleTriggerScrape,
   handleListPatterns,
 } from "@/server/competitors-handlers";
+import {
+  handleListRecommendations,
+  handleGetRecommendation,
+  handleListRules,
+} from "@/server/pricing-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -796,6 +801,10 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/competitors/prices/{id}", (req, ctx, p) => handleGetPrice(req, ctx, p.id)),
   compileRoute("POST /v1/competitors/scrape", (req, ctx) => handleTriggerScrape(req, ctx)),
   compileRoute("GET /v1/competitors/patterns", (req, ctx) => handleListPatterns(req, ctx)),
+  // Pricing reads (Week 10 — pillar 2)
+  compileRoute("GET /v1/pricing/recommendations", (req, ctx) => handleListRecommendations(req, ctx)),
+  compileRoute("GET /v1/pricing/recommendations/{id}", (req, ctx, p) => handleGetRecommendation(req, ctx, p.id)),
+  compileRoute("GET /v1/pricing/rules", (req, ctx) => handleListRules(req, ctx)),
 ];
 
 // Returns true if a real (non-mock) handler exists for the given method+path.
