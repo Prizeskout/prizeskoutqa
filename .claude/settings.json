@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m 'Switch deployment target from Vercel to Cloudflare Pages *)"
+    ]
+  }
+}
