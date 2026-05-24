@@ -2,10 +2,13 @@
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
   "name": "prizeskoutqa",
 
-  // Cloudflare Pages deployment target.
-  // After `npm run build`, Wrangler deploys everything in dist/client/
-  // (static assets + _worker.js produced by @cloudflare/vite-plugin).
-  "pages_build_output_dir": "dist/client",
+  // pages_build_output_dir is intentionally absent.
+  // Cloudflare Pages' auto-deploy (triggered by that field) does not support
+  // --bundle, so it would fail with:
+  //   "_worker.js is not being bundled by Wrangler but it is importing
+  //    from another file."
+  // Instead, the build script calls `wrangler pages deploy --bundle` directly
+  // (see the "build" script in package.json).
 
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
