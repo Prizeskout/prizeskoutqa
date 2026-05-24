@@ -2,14 +2,17 @@
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
   "name": "prizeskoutqa",
 
-  // pages_build_output_dir is intentionally absent.
-  // Cloudflare Pages' auto-deploy (triggered by that field) does not support
-  // --bundle, so it would fail with:
-  //   "_worker.js is not being bundled by Wrangler but it is importing
-  //    from another file."
-  // Instead, the build script calls `wrangler pages deploy --bundle` directly
-  // (see the "build" script in package.json).
+  // Entry point: @cloudflare/vite-plugin builds the SSR environment to
+  // dist/server/index.js (MAIN_ENTRY_NAME = "index" in the plugin source).
+  "main": "dist/server/index.js",
+
+  // Static assets: Wrangler serves files from dist/client/ directly from
+  // the CDN. Requests that don't match a static asset are forwarded to the
+  // Worker above.
+  "assets": {
+    "directory": "dist/client"
+  },
 
   "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat"]
 }
