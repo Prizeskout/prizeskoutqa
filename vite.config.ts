@@ -1,10 +1,9 @@
-// Vite + TanStack Start config preset.
-// The shared preset already includes tanstackStart, viteReact, tailwindcss,
-// tsConfigPaths, the Cloudflare build adapter, dev-only component tagging,
-// VITE_* env injection, the @ path alias, React/TanStack dedupe, and sandbox
-// detection (port/host/strictPort). Do not add those plugins manually or the
-// app will break with duplicates.
-// Pass additional options via defineConfig({ vite: { ... } }) when needed.
+// Vite + TanStack Start config preset for Vercel deployment.
+// The Cloudflare adapter is explicitly disabled so that TanStack Start
+// produces a standard Node.js server bundle (dist/server/) alongside
+// the client bundle (dist/client/).  The Vercel function in api/server.ts
+// wraps that Node.js bundle.  Do not re-enable the Cloudflare adapter
+// unless deploying to Cloudflare Workers/Pages.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default defineConfig();
+export default defineConfig({ cloudflare: false });
