@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  "name": "prizeskoutqa",
 
   // Cloudflare Pages deployment target.
   // After `npm run build`, Wrangler deploys everything in dist/client/
