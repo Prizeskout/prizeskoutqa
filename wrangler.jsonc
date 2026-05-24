@@ -2,17 +2,11 @@
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
   "name": "tanstack-start-app",
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-  // @cloudflare/vite-plugin reads this field during `vite build` to locate
-  // the Worker entry point and produce a Cloudflare-compatible server bundle.
-  "main": "@tanstack/react-start/server-entry",
-
-  // ── Cloudflare Pages deployment ───────────────────────────────────────────
-  // Tells `wrangler pages deploy` (and the Pages CI pipeline) where the
-  // built static assets + _worker.js live after `npm run build`.
+  // Cloudflare Pages deployment target.
+  // After `npm run build`, Wrangler deploys everything in dist/client/
+  // (static assets + _worker.js produced by @cloudflare/vite-plugin).
   "pages_build_output_dir": "dist/client",
 
-  // ── Runtime ───────────────────────────────────────────────────────────────
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
 }
