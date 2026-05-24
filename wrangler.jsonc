@@ -1,7 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tanstack-start-app",
+  // Cloudflare Pages: tells Wrangler where the built static assets live.
+  // Build command : npm run build   (runs `vite build`)
+  // Output directory: dist/client  (Pages CDN serves this; _worker.js inside handles SSR)
+  "pages_build_output_dir": "dist/client",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
 }
