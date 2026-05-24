@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -m 'Switch deployment target from Vercel to Cloudflare Pages *)"
+      "Bash(git commit -m 'Switch deployment target from Vercel to Cloudflare Pages *)",
+      "PowerShell(bun --version)",
+      "Bash(bun --version)",
+      "Bash(git rm *)",
+      "Bash(git commit -m 'Remove bun.lockb and bunfig.toml; use npm for Cloudflare Pages *)",
+      "Bash(git commit -m 'Fix wrangler.jsonc: restore main entry for @cloudflare/vite-plugin *)",
+      "Bash(git commit -m 'Move Worker entry point from wrangler.jsonc into vite.config.ts *)"
     ]
   }
 }
