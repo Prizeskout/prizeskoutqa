@@ -110,15 +110,35 @@ function SignupPage() {
         },
       },
     });
-    setSubmitting(false);
     if (signUpError) {
+      setSubmitting(false);
       setError(signUpError.message);
       return;
     }
+
     if (data.session) {
+      // Supabase returned a session immediately (email confirmation disabled).
+      setSubmitting(false);
+      await router.invalidate();
+      navigate({ to: "/dashboard" });
+      return;
+    }
+
+    // signUp() succeeded but returned no session — this happens when Supabase
+    // still sends a confirmation email despite the setting, or when the account
+    // already exists in an unconfirmed state.  Attempt an immediate sign-in: if
+    // email confirmation is truly disabled the credentials will work right away.
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setSubmitting(false);
+
+    if (signInData.session) {
       await router.invalidate();
       navigate({ to: "/dashboard" });
     } else {
+      // Sign-in also returned no session — confirmation is required after all.
       setInfo("Check your inbox to confirm your email, then sign in.");
     }
   };
