@@ -1,20 +1,19 @@
 /**
  * Vercel Serverless Function (Node.js 20) — wraps TanStack Start's
- * Fetch-API-based request handler for deployment on Vercel.
+ * Fetch-API-based request handler.
  *
- * `dist/server/index.js` is produced by `vite build` *before* Vercel
- * compiles this function, so the import below resolves correctly.
+ * Written as plain JavaScript (.mjs) so Vercel's dependency tracer
+ * (@vercel/nft / acorn) does not encounter TypeScript syntax.
+ * TypeScript source files use colon tokens for type annotations which
+ * acorn (JavaScript-mode parser) cannot handle → "Unhandled type: ColonToken".
  *
- * Routing:  static assets in dist/client/ are served by Vercel's CDN
- * (see vercel.json → "outputDirectory"); every other request falls
- * through to this function for SSR and server-function handling.
+ * dist/server/server.js is produced by `vite build` before Vercel compiles
+ * this function. It exports { default: server } where server.fetch is the
+ * Fetch-API handler.
  */
 
-// @ts-ignore — dist/server/server.js is generated at build time by `vite build`
-// The filename comes from the TanStack Start plugin; the default export is
-// { fetch: (request: Request) => Promise<Response> }.
+// dist/server/server.js is generated at build time by `vite build`.
 import server from "../dist/server/server.js";
-import type { IncomingMessage, ServerResponse } from "node:http";
 
 export const config = {
   api: {
@@ -25,10 +24,7 @@ export const config = {
   },
 };
 
-export default async function handler(
-  req: IncomingMessage,
-  res: ServerResponse
-): Promise<void> {
+export default async function handler(req, res) {
   // ── Reconstruct full URL ──────────────────────────────────────────────────
   const proto =
     (Array.isArray(req.headers["x-forwarded-proto"])
@@ -44,8 +40,7 @@ export default async function handler(
       : req.headers.host) ??
     "localhost";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const url = `${proto}://${host}${(req as any).url ?? "/"}`;
+  const url = `${proto}://${host}${req.url ?? "/"}`;
 
   // ── Build Fetch-compatible Headers ────────────────────────────────────────
   const headers = new Headers();
@@ -59,10 +54,10 @@ export default async function handler(
     }
   }
 
-  // ── Collect request body (skip for GET / HEAD) ───────────────────────────
-  const chunks: Buffer[] = [];
+  // ── Collect request body (skip for GET / HEAD) ────────────────────────────
+  const chunks = [];
   if (req.method !== "GET" && req.method !== "HEAD") {
-    for await (const chunk of req as AsyncIterable<Buffer>) {
+    for await (const chunk of req) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
   }
@@ -74,12 +69,11 @@ export default async function handler(
     headers,
     body: body && body.length > 0 ? body : undefined,
     // Required for request bodies in Node.js 18+
-    // @ts-ignore
     duplex: "half",
   });
 
   // ── Delegate to TanStack Start ────────────────────────────────────────────
-  const response: Response = await server.fetch(request);
+  const response = await server.fetch(request);
 
   // ── Write response status + headers ──────────────────────────────────────
   res.statusCode = response.status;
