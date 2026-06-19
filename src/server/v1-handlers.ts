@@ -49,6 +49,10 @@ import {
   handleMarginCosts, handleMarginChannels, handleMarginSku,
   handleMarginBreakeven, handleMarginImpact,
 } from "@/server/margin-handlers";
+import {
+  handleListDecisions, handleGetDecision,
+  handleAuditSummary, handleAuditReport,
+} from "@/server/audit-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -808,6 +812,11 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("POST /v1/field-intel/observations", (req, ctx) => handleSubmitObservation(req, ctx)),
   compileRoute("POST /v1/webhooks/endpoints", (req, ctx) => handleCreateEndpoint(req, ctx)),
   compileRoute("POST /v1/webhooks/deliveries/{id}/retry", (req, ctx, p) => handleRetryDelivery(req, ctx, p.id)),
+  // Audit / governance (API 04)
+  compileRoute("GET /v1/audit/decisions", (req, ctx) => handleListDecisions(req, ctx)),
+  compileRoute("GET /v1/audit/decisions/{id}", (req, ctx, p) => handleGetDecision(req, ctx, p.id)),
+  compileRoute("GET /v1/audit/summary", (req, ctx) => handleAuditSummary(req, ctx)),
+  compileRoute("GET /v1/audit/report", (req, ctx) => handleAuditReport(req, ctx)),
 ];
 
 // Returns true if a real (non-mock) handler exists for the given method+path.

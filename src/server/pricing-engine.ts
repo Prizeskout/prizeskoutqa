@@ -21,6 +21,7 @@
 // (admin client for cron, RLS client for user-triggered paths).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createNotification } from "./notifications";
 import {
   evaluateRules,
@@ -406,6 +407,7 @@ export function computeRecommendations(input: ComputeInput): {
 export async function runPricingEngineForUser(
   supabase: SupabaseClient,
   userId: string,
+  triggerType: string = "cron",
 ): Promise<EngineResult> {
   // 1. Resolve the user's default account for catalog_prices lookup.
   const { data: accountRows } = await (supabase as any).rpc(
@@ -533,6 +535,93 @@ export async function runPricingEngineForUser(
       console.error("pricing-engine seed wipe failed", delErr);
     } else {
       seedsWiped = count ?? 0;
+    }
+
+    // Write immutable audit records to pricing_decisions for every recommendation.
+    const diagByProduct = new Map<string, ProductDiagnostic>();
+    for (const d of diagnostics) diagByProduct.set(d.product.toLowerCase(), d);
+
+    const auditRows = recs.map((rec) => {
+      const diag = diagByProduct.get(rec.product.toLowerCase());
+      const clampedEffects = (diag?.ruleEffects ?? []).filter((e) => e.clamped);
+      const firstClamped = clampedEffects[0] ?? null;
+
+      const competitorPrices = diag?.competitorPricesByName ?? {};
+      const rawMedian = diag?.rawRecommendation ?? null;
+
+      const alternatives: { label: string; price: number; description: string }[] = [];
+      if (rawMedian != null) {
+        const n = Object.keys(competitorPrices).length;
+        const compList = Object.entries(competitorPrices)
+          .map(([k, v]) => `${k} QAR ${v}`)
+          .join(", ");
+        alternatives.push({
+          label: "competitor_median",
+          price: rawMedian,
+          description: `Median of ${n} competitor price${n === 1 ? "" : "s"}: ${compList}`,
+        });
+      }
+      for (const effect of diag?.ruleEffects ?? []) {
+        if (effect.clamped) {
+          alternatives.push({
+            label: effect.ruleType,
+            price: effect.priceOut,
+            description: effect.reason,
+          });
+        }
+      }
+
+      const pk = rec.product.toLowerCase();
+      const costSnap: Record<string, unknown> = {};
+      const uc = unitCostByProduct.get(pk);
+      const lc = landedCostByProduct.get(pk);
+      const ch = channelCostByChannel.get("online");
+      if (uc != null) costSnap.unit_cost = uc;
+      if (lc != null) costSnap.landed_cost = lc;
+      if (ch) {
+        costSnap.channel = "Online";
+        costSnap.commission_pct = ch.commission_pct;
+        costSnap.delivery_cost = ch.delivery_cost;
+        costSnap.payment_pct = ch.payment_pct;
+        costSnap.returns_provision = ch.returns_provision;
+      }
+
+      return {
+        user_id: rec.user_id,
+        recommendation_id: null,
+        product: rec.product,
+        category: rec.category,
+        channel: rec.channel,
+        current_price: rec.current_price,
+        recommended_price: rec.recommended_price,
+        expected_net_monthly: rec.net_monthly,
+        decision: "engine_rec" as const,
+        source: "pricing_engine",
+        trigger_type: triggerType,
+        inputs_snapshot: {
+          self_price: diag?.selfPrice ?? null,
+          self_price_source: diag?.selfPriceSource ?? null,
+          competitor_prices: competitorPrices,
+          median_competitor: rawMedian,
+          min_competitor: diag?.competitorMin ?? null,
+          gap_pct:
+            diag?.selfPrice && rawMedian
+              ? +((diag.selfPrice - rawMedian) / diag.selfPrice).toFixed(4)
+              : null,
+        },
+        alternatives,
+        rule_fired: firstClamped?.ruleType ?? null,
+        rule_reason: firstClamped?.reason ?? null,
+        cost_snapshot: costSnap,
+      };
+    });
+
+    const { error: auditErr } = await (supabaseAdmin as any)
+      .from("pricing_decisions")
+      .insert(auditRows);
+    if (auditErr) {
+      // Non-fatal: audit failure must not block the engine
+      console.error("pricing-engine audit write failed:", auditErr.message);
     }
   }
 
