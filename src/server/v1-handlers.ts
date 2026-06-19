@@ -53,6 +53,11 @@ import {
   handleListDecisions, handleGetDecision,
   handleAuditSummary, handleAuditReport,
 } from "@/server/audit-handlers";
+import {
+  handleCreateRule, handleListRulesTenant,
+  handleTenantPrice, handleCreateEvent,
+  handleListViolations, handleTenantStatus,
+} from "@/server/tenant-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -817,6 +822,13 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/audit/decisions/{id}", (req, ctx, p) => handleGetDecision(req, ctx, p.id)),
   compileRoute("GET /v1/audit/summary", (req, ctx) => handleAuditSummary(req, ctx)),
   compileRoute("GET /v1/audit/report", (req, ctx) => handleAuditReport(req, ctx)),
+  // Tenant Pricing API (API 14)
+  compileRoute("POST /v1/tenant/rules",            (req, ctx)    => handleCreateRule(req, ctx)),
+  compileRoute("GET /v1/tenant/rules",             (req, ctx)    => handleListRulesTenant(req, ctx)),
+  compileRoute("POST /v1/tenant/prices",           (req, ctx)    => handleTenantPrice(req, ctx)),
+  compileRoute("POST /v1/tenant/events",           (req, ctx)    => handleCreateEvent(req, ctx)),
+  compileRoute("GET /v1/tenant/violations",        (req, ctx)    => handleListViolations(req, ctx)),
+  compileRoute("GET /v1/tenant/status/{tenant_id}", (req, ctx, p) => handleTenantStatus(req, ctx, p.tenant_id)),
 ];
 
 // Returns true if a real (non-mock) handler exists for the given method+path.
