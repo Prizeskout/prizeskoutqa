@@ -2,39 +2,39 @@
 // recommendations.
 //
 // Inputs (per user):
-//   - competitor_product_urls   - the canonical product list, with competitor + URL
-//   - competitor_scrapes        - all scrape attempts; we use the latest success per URL
-//   - roi_model_categories      - elasticity, AOV, daily orders, margin per category
-//   - pricing_rules             - free-text rules (best-effort filtering)
+//   - competitor_product_urls   — canonical product list with competitor + URL
+//   - competitor_scrapes        — scrape history; uses latest success per URL
+//   - catalog_prices            — merchant's own prices (fallback self-price)
+//   - roi_model_categories      — elasticity, AOV, daily orders, margin
+//   - pricing_rules             — structured JSON rules (see pricing-rules.ts)
 //
 // Output:
 //   - pricing_recommendations rows with source='computed'
-//   - any source='seed' rows are wiped for that user once we write at least one computed row
+//   - source='seed' rows are wiped once at least one computed row is written
 //
-// Design notes:
-//   - The user's own price is provided via a `competitor_product_urls` row where
-//     `competitor='self'`. We scrape it on the same cron and treat that scrape
-//     as YOUR price for that product.
-//   - Confidence reflects evidence quality: # distinct competitors with fresh
-//     prices, recency of those scrapes, and how big the gap is (bigger gap +
-//     more sources = higher confidence). Capped 50-95.
-//   - We only generate a recommendation if the median competitor price is
-//     meaningfully BELOW your current price (>=2% gap). Matching/beating
-//     median means no action needed.
-//   - This module takes a SupabaseClient so callers control auth (admin
-//     client for cron, RLS client for the user-triggered server function).
+// Self-price resolution order (per product):
+//   1. competitor_product_urls row where competitor='self' → latest scrape
+//   2. catalog_prices for the user's default account (joined via product name)
+//   3. Skip with logged reason if neither source is available
 //
-// IMPORTANT: This module does NOT import auth - it's a pure compute layer.
-// Callers must pass a client already scoped to the right user_id either via
-// RLS (per-user) or via explicit .eq('user_id', uid) filters (admin path).
+// This module does NOT import auth — callers control scope via the client
+// (admin client for cron, RLS client for user-triggered paths).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createNotification } from "./notifications";
+import {
+  evaluateRules,
+  parseRuleRow,
+  type RuleContext,
+  type RuleEffect,
+  type StructuredRule,
+} from "./pricing-rules";
+import { landedCost as computeLandedCost, type ChannelCosts } from "./margin";
 
 const SELF_COMPETITOR_LABEL = "self";
 const FRESH_WINDOW_DAYS = 14;
-const MIN_GAP_PCT = 0.02; // 2% - smaller gaps aren't worth flagging
-const MIN_COMPETITORS_FOR_REC = 1; // need at least 1 fresh competitor scrape
+const MIN_GAP_PCT = 0.02;
+const MIN_COMPETITORS_FOR_REC = 1;
 
 type ScrapeRow = {
   url: string;
@@ -59,7 +59,14 @@ type RoiCategoryRow = {
   base_margin: number;
 };
 
-type RuleRow = { rule_text: string; enabled: boolean };
+type RuleRow = {
+  id: string;
+  rule_text: string;
+  rule_type: string | null;
+  params: unknown;
+  enabled: boolean;
+  position: number;
+};
 
 export type ComputedRecommendation = {
   user_id: string;
@@ -77,11 +84,25 @@ export type ComputedRecommendation = {
   source: "computed";
 };
 
+export type ProductDiagnostic = {
+  product: string;
+  selfPriceSource: "self_url_scrape" | "catalog_prices" | null;
+  selfPrice: number | null;
+  competitorMin: number | null;
+  competitorPricesByName: Record<string, number>;
+  rawRecommendation: number | null;
+  ruleEffects: RuleEffect[];
+  finalRecommendation: number | null;
+  skipped: boolean;
+  skipReason: string | null;
+};
+
 export type EngineResult = {
   userId: string;
   written: number;
   skipped: number;
-  reasons: string[]; // per-product diagnostic notes (debug aid)
+  reasons: string[];
+  diagnostics: ProductDiagnostic[];
   seedsWiped: number;
 };
 
@@ -96,7 +117,6 @@ function daysAgo(iso: string): number {
 }
 
 function formatPrice(n: number): number {
-  // Round to nearest 1 unit if >=100, else 2 decimals.
   if (n >= 100) return Math.round(n);
   return Math.round(n * 100) / 100;
 }
@@ -118,7 +138,6 @@ function pickRoi(
     );
     if (exact) return exact;
   }
-  // Sensible defaults if no category match - use Electronics-ish numbers.
   return (
     categories.find((c) => c.category.toLowerCase() === "electronics") ?? {
       category: "Default",
@@ -130,37 +149,6 @@ function pickRoi(
   );
 }
 
-/**
- * Hard rule filter. We only enforce a margin floor: never recommend a price
- * below (current_price * (1 - base_margin)). Free-text rules are not parsed -
- * the floor is the only programmatic guardrail. Future: structured rules.
- */
-function passesRules(
-  recommendedPrice: number,
-  currentPrice: number,
-  baseMargin: number,
-  rules: RuleRow[],
-): { ok: boolean; reason?: string } {
-  const floor = currentPrice * (1 - baseMargin);
-  if (recommendedPrice < floor) {
-    return {
-      ok: false,
-      reason: `Recommended price ${recommendedPrice.toFixed(2)} below margin floor ${floor.toFixed(2)}`,
-    };
-  }
-
-  // Best-effort: if any enabled rule contains "never below cost" / "floor",
-  // we already enforce that above. Other rules pass through unchecked.
-  void rules;
-  return { ok: true };
-}
-
-/**
- * Compute confidence (50-95) from evidence quality.
- *   - +10 per distinct competitor up to 4 (so 4 competitors = +40)
- *   - +0 if scrapes are >7d old, +15 if all <=24h
- *   - +0..15 based on gap size (capped at 10% gap = +15)
- */
 function computeConfidence(
   competitorCount: number,
   freshestDaysAgo: number,
@@ -168,24 +156,40 @@ function computeConfidence(
 ): number {
   const sourceScore = Math.min(competitorCount, 4) * 10;
   const recencyScore = freshestDaysAgo <= 1 ? 15 : freshestDaysAgo <= 7 ? 8 : 0;
-  const gapScore = Math.min(Math.max(gapPct, 0), 0.1) * 150; // 0.1 -> 15
+  const gapScore = Math.min(Math.max(gapPct, 0), 0.1) * 150;
   const raw = 30 + sourceScore + recencyScore + gapScore;
   return Math.max(50, Math.min(95, Math.round(raw)));
 }
 
-/**
- * Core compute step - pure function over fetched rows. Exported for tests.
- */
-export function computeRecommendations(
-  userId: string,
-  urls: UrlRow[],
-  scrapes: ScrapeRow[],
-  roiCategories: RoiCategoryRow[],
-  rules: RuleRow[],
-): { recs: ComputedRecommendation[]; reasons: string[] } {
-  const reasons: string[] = [];
+type ComputeInput = {
+  userId: string;
+  urls: UrlRow[];
+  scrapes: ScrapeRow[];
+  roiCategories: RoiCategoryRow[];
+  rules: StructuredRule[];
+  /** product_name.toLowerCase() → merchant self-price (catalog_prices fallback) */
+  catalogPrices: Map<string, number>;
+  /** product_name.toLowerCase() → unit_cost (for nominal_floor_qar rules) */
+  unitCostByProduct: Map<string, number>;
+  /** product_name.toLowerCase() → landed cost (unit_cost + freight + duty) */
+  landedCostByProduct: Map<string, number>;
+  /** channel name (lowercase) → channel selling cost structure */
+  channelCostByChannel: Map<string, ChannelCosts>;
+};
 
-  // Index latest successful scrape per URL.
+/**
+ * Core compute step — pure function over pre-fetched rows. Exported for tests.
+ */
+export function computeRecommendations(input: ComputeInput): {
+  recs: ComputedRecommendation[];
+  reasons: string[];
+  diagnostics: ProductDiagnostic[];
+} {
+  const { userId, urls, scrapes, roiCategories, rules, catalogPrices, unitCostByProduct, landedCostByProduct, channelCostByChannel } = input;
+  const reasons: string[] = [];
+  const diagnostics: ProductDiagnostic[] = [];
+
+  // Latest successful scrape per URL (most recent first in query, so first seen wins).
   const latestByUrl = new Map<string, ScrapeRow>();
   for (const s of scrapes) {
     if (s.price === null || s.price <= 0) continue;
@@ -205,63 +209,139 @@ export function computeRecommendations(
   let position = 0;
 
   for (const [product, productUrls] of urlsByProduct) {
-    // Find YOUR price (competitor='self').
+    const diag: ProductDiagnostic = {
+      product,
+      selfPriceSource: null,
+      selfPrice: null,
+      competitorMin: null,
+      competitorPricesByName: {},
+      rawRecommendation: null,
+      ruleEffects: [],
+      finalRecommendation: null,
+      skipped: false,
+      skipReason: null,
+    };
+
+    // ── Self-price resolution ────────────────────────────────────────────────
+    // Order: (a) competitor='self' scrape → (b) catalog_prices fallback
+    let currentPrice: number | null = null;
+
     const selfUrl = productUrls.find(
       (u) => u.competitor.toLowerCase() === SELF_COMPETITOR_LABEL,
     );
-    if (!selfUrl) {
-      reasons.push(`${product}: no 'self' URL configured - skipped`);
-      continue;
+    if (selfUrl) {
+      const selfScrape = latestByUrl.get(selfUrl.url);
+      if (selfScrape && selfScrape.price !== null) {
+        currentPrice = selfScrape.price;
+        diag.selfPriceSource = "self_url_scrape";
+      }
     }
-    const selfScrape = latestByUrl.get(selfUrl.url);
-    if (!selfScrape || selfScrape.price === null) {
-      reasons.push(`${product}: no fresh self scrape - skipped`);
-      continue;
-    }
-    const currentPrice = selfScrape.price;
 
-    // Competitor prices.
-    const competitorScrapes: { competitor: string; price: number; scraped_at: string }[] = [];
+    if (currentPrice === null) {
+      const catalogPrice = catalogPrices.get(product.toLowerCase());
+      if (catalogPrice !== undefined) {
+        currentPrice = catalogPrice;
+        diag.selfPriceSource = "catalog_prices";
+      }
+    }
+
+    if (currentPrice === null) {
+      const msg = selfUrl
+        ? `${product}: self URL configured but no fresh scrape and no catalog_prices entry — skipped`
+        : `${product}: no competitor='self' URL and no catalog_prices entry — skipped`;
+      reasons.push(msg);
+      diag.skipped = true;
+      diag.skipReason = msg;
+      diagnostics.push(diag);
+      continue;
+    }
+    diag.selfPrice = currentPrice;
+
+    // ── Competitor prices ────────────────────────────────────────────────────
+    const competitorScrapes: {
+      competitor: string;
+      price: number;
+      scraped_at: string;
+    }[] = [];
     for (const u of productUrls) {
       if (u.competitor.toLowerCase() === SELF_COMPETITOR_LABEL) continue;
       const s = latestByUrl.get(u.url);
       if (!s || s.price === null) continue;
-      competitorScrapes.push({ competitor: u.competitor, price: s.price, scraped_at: s.scraped_at });
+      competitorScrapes.push({
+        competitor: u.competitor,
+        price: s.price,
+        scraped_at: s.scraped_at,
+      });
     }
 
     if (competitorScrapes.length < MIN_COMPETITORS_FOR_REC) {
-      reasons.push(`${product}: no fresh competitor scrapes - skipped`);
+      const msg = `${product}: no fresh competitor scrapes — skipped`;
+      reasons.push(msg);
+      diag.skipped = true;
+      diag.skipReason = msg;
+      diagnostics.push(diag);
       continue;
     }
 
-    const competitorPrices = competitorScrapes.map((c) => c.price);
-    const medianCompetitor = median(competitorPrices);
-    const minCompetitor = Math.min(...competitorPrices);
+    const competitorPriceValues = competitorScrapes.map((c) => c.price);
+    const medianCompetitor = median(competitorPriceValues);
+    const minCompetitor = Math.min(...competitorPriceValues);
     const gapPct = (currentPrice - medianCompetitor) / currentPrice;
 
+    diag.competitorMin = minCompetitor;
+    for (const cs of competitorScrapes) {
+      diag.competitorPricesByName[cs.competitor] = cs.price;
+    }
+
     if (gapPct < MIN_GAP_PCT) {
-      reasons.push(
-        `${product}: already at or below median (gap ${(gapPct * 100).toFixed(1)}%) - no rec`,
-      );
+      const msg = `${product}: already at or below median (gap ${(gapPct * 100).toFixed(1)}%) — no rec`;
+      reasons.push(msg);
+      diag.skipped = true;
+      diag.skipReason = msg;
+      diagnostics.push(diag);
       continue;
     }
 
-    // Recommended = match median (a defensible, conservative move).
-    let recommendedPrice = formatPrice(medianCompetitor);
-    const category = selfUrl.category ?? competitorScrapes[0] ? selfUrl.category ?? "" : "";
+    // ── Initial candidate ────────────────────────────────────────────────────
+    const category = selfUrl?.category ?? "";
     const roi = pickRoi(roiCategories, category || null);
+    let recommendedPrice = formatPrice(medianCompetitor);
+    diag.rawRecommendation = recommendedPrice;
 
-    const ruleCheck = passesRules(recommendedPrice, currentPrice, roi.base_margin, rules);
-    if (!ruleCheck.ok) {
-      // Clamp to the floor instead of skipping outright.
-      const floor = currentPrice * (1 - roi.base_margin);
-      recommendedPrice = formatPrice(floor);
-      reasons.push(`${product}: clamped to margin floor (${ruleCheck.reason})`);
+    // ── Rule evaluation (shared evaluator) ──────────────────────────────────
+    const competitorPricesMap = new Map<string, number>();
+    for (const cs of competitorScrapes) {
+      competitorPricesMap.set(cs.competitor.toLowerCase(), cs.price);
+    }
+    const unitCost = unitCostByProduct.get(product.toLowerCase()) ?? null;
+    const landedCost = landedCostByProduct.get(product.toLowerCase()) ?? null;
+    const channelCosts = channelCostByChannel.get("online") ?? null;
+
+    const ctx: RuleContext = {
+      currentPrice,
+      competitorMin: minCompetitor,
+      competitorPrices: competitorPricesMap,
+      unitCost,
+      landedCost,
+      channelCosts,
+      category,
+    };
+
+    const { finalPrice, effects } = evaluateRules(recommendedPrice, ctx, rules);
+    recommendedPrice = formatPrice(finalPrice);
+    diag.ruleEffects = effects;
+
+    const clampedByRule = effects.some((e) => e.clamped);
+    if (clampedByRule) {
+      const clampedEffects = effects.filter((e) => e.clamped);
+      reasons.push(
+        `${product}: price adjusted by rule(s): ${clampedEffects.map((e) => e.ruleText).join("; ")}`,
+      );
     }
 
-    // Project impact using elasticity.
-    const priceDeltaPct = (recommendedPrice - currentPrice) / currentPrice; // negative = price drop
-    const unitDeltaPct = -roi.elasticity * priceDeltaPct; // price down -> units up
+    // ── ROI projection ───────────────────────────────────────────────────────
+    const priceDeltaPct = (recommendedPrice - currentPrice) / currentPrice;
+    const unitDeltaPct = -roi.elasticity * priceDeltaPct;
     const newUnits = roi.baseline_daily_orders * (1 + unitDeltaPct);
     const oldRevenue = roi.baseline_daily_orders * currentPrice;
     const newRevenue = newUnits * recommendedPrice;
@@ -270,18 +350,31 @@ export function computeRecommendations(
     const netMonthly = (newMargin - oldMargin) * 30;
 
     const freshest = Math.min(...competitorScrapes.map((c) => daysAgo(c.scraped_at)));
-    const confidence = computeConfidence(competitorScrapes.length, freshest, Math.abs(gapPct));
+    const confidence = computeConfidence(
+      competitorScrapes.length,
+      freshest,
+      Math.abs(gapPct),
+    );
 
     const competitorList = competitorScrapes
       .map((c) => c.competitor)
       .slice(0, 3)
       .join(", ");
+
+    const selfSourceNote =
+      diag.selfPriceSource === "catalog_prices"
+        ? " (self-price from catalog_prices)"
+        : "";
+
     const reason =
       `${competitorScrapes.length} competitor${competitorScrapes.length === 1 ? "" : "s"} ` +
       `(${competitorList}) median QAR ${medianCompetitor.toFixed(2)}, ` +
       `lowest QAR ${minCompetitor.toFixed(2)}. ` +
-      `You're ${(gapPct * 100).toFixed(1)}% above median. ` +
+      `You're ${(gapPct * 100).toFixed(1)}% above median${selfSourceNote}. ` +
       `Matching the median should lift units ~${(unitDeltaPct * 100).toFixed(1)}% based on category elasticity.`;
+
+    diag.finalRecommendation = recommendedPrice;
+    diagnostics.push(diag);
 
     recs.push({
       user_id: userId,
@@ -303,19 +396,25 @@ export function computeRecommendations(
     });
   }
 
-  return { recs, reasons };
+  return { recs, reasons, diagnostics };
 }
 
 /**
  * Run the engine for a single user. Reads from Supabase via the supplied
- * client (admin or per-user). Writes computed recs and wipes seed rows on
- * first successful computed write.
+ * client. Writes computed recs and wipes seed rows on first successful write.
  */
 export async function runPricingEngineForUser(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<EngineResult> {
-  // 1. Load inputs in parallel.
+  // 1. Resolve the user's default account for catalog_prices lookup.
+  const { data: accountRows } = await (supabase as any).rpc(
+    "current_account_for_user",
+    { _user_id: userId },
+  );
+  const accountId: string | null = (accountRows as any)?.[0]?.account_id ?? null;
+
+  // 2. Load all inputs in parallel.
   const [urlsRes, scrapesRes, roiRes, rulesRes] = await Promise.all([
     (supabase.from("competitor_product_urls") as any)
       .select("product, competitor, category, url")
@@ -330,9 +429,10 @@ export async function runPricingEngineForUser(
       .select("category, elasticity, baseline_daily_orders, avg_order_value, base_margin")
       .eq("user_id", userId),
     (supabase.from("pricing_rules") as any)
-      .select("rule_text, enabled")
+      .select("id, rule_text, rule_type, params, enabled, position")
       .eq("user_id", userId)
-      .eq("enabled", true),
+      .eq("enabled", true)
+      .order("position"),
   ]);
 
   if (urlsRes.error) throw urlsRes.error;
@@ -340,19 +440,81 @@ export async function runPricingEngineForUser(
   if (roiRes.error) throw roiRes.error;
   if (rulesRes.error) throw rulesRes.error;
 
+  // 3. Fetch catalog_prices for self-price fallback (scoped to account).
+  const catalogPrices = new Map<string, number>();
+  if (accountId) {
+    const { data: catalogRows } = await (supabase as any)
+      .from("catalog_prices")
+      .select("list_price, sale_price, catalog_products(name)")
+      .eq("account_id", accountId);
+
+    for (const row of (catalogRows ?? []) as any[]) {
+      const name: string | undefined = row.catalog_products?.name;
+      if (!name) continue;
+      const price = Number(row.sale_price ?? row.list_price);
+      if (price > 0) catalogPrices.set(name.toLowerCase(), price);
+    }
+  }
+
+  // 4. Fetch unit costs + landed costs.
+  const unitCostByProduct = new Map<string, number>();
+  const landedCostByProduct = new Map<string, number>();
+  if (accountId) {
+    const { data: marginRows } = await (supabase as any)
+      .from("margin_inputs")
+      .select("unit_cost, freight, duty_pct, catalog_products(name)")
+      .eq("account_id", accountId);
+    for (const row of (marginRows ?? []) as any[]) {
+      const name: string | undefined = row.catalog_products?.name;
+      if (!name) continue;
+      const uc = Number(row.unit_cost);
+      const fr = Number(row.freight ?? 0);
+      const dp = Number(row.duty_pct ?? 0);
+      if (uc > 0) {
+        unitCostByProduct.set(name.toLowerCase(), uc);
+        landedCostByProduct.set(name.toLowerCase(), computeLandedCost({ unit_cost: uc, freight: fr, duty_pct: dp }));
+      }
+    }
+  }
+
+  // 5. Fetch channel cost structures.
+  const channelCostByChannel = new Map<string, ChannelCosts>();
+  if (accountId) {
+    const { data: chanRows } = await (supabase as any)
+      .from("channel_cost_structures")
+      .select("channel, commission_pct, delivery_cost, payment_pct, returns_provision")
+      .eq("account_id", accountId);
+    for (const row of (chanRows ?? []) as any[]) {
+      channelCostByChannel.set(row.channel.toLowerCase(), {
+        commission_pct: Number(row.commission_pct),
+        delivery_cost: Number(row.delivery_cost),
+        payment_pct: Number(row.payment_pct),
+        returns_provision: Number(row.returns_provision),
+      });
+    }
+  }
+
   const urls = (urlsRes.data ?? []) as UrlRow[];
   const scrapes = (scrapesRes.data ?? []) as ScrapeRow[];
   const roiCategories = (roiRes.data ?? []) as RoiCategoryRow[];
-  const rules = (rulesRes.data ?? []) as RuleRow[];
+  const rules = ((rulesRes.data ?? []) as RuleRow[]).map(parseRuleRow);
 
-  const { recs, reasons } = computeRecommendations(userId, urls, scrapes, roiCategories, rules);
+  const { recs, reasons, diagnostics } = computeRecommendations({
+    userId,
+    urls,
+    scrapes,
+    roiCategories,
+    rules,
+    catalogPrices,
+    unitCostByProduct,
+    landedCostByProduct,
+    channelCostByChannel,
+  });
 
   let written = 0;
   let seedsWiped = 0;
 
   if (recs.length > 0) {
-    // Upsert each computed rec on (user_id, product, channel, source) so
-    // re-running the engine refreshes prices in place rather than duplicating.
     const { error: upsertErr } = await (supabase.from("pricing_recommendations") as any)
       .upsert(recs, { onConflict: "user_id,product,channel,source" });
 
@@ -362,9 +524,8 @@ export async function runPricingEngineForUser(
     }
     written = recs.length;
 
-    // First-real-rec policy: once we have computed rows, wipe seed rows for
-    // this user so the UI never mixes demo + real data.
-    const { error: delErr, count } = await (supabase.from("pricing_recommendations") as any)
+    const { error: delErr, count } = await (supabase
+      .from("pricing_recommendations") as any)
       .delete({ count: "exact" })
       .eq("user_id", userId)
       .eq("source", "seed");
@@ -394,6 +555,7 @@ export async function runPricingEngineForUser(
     written,
     skipped: reasons.length,
     reasons,
+    diagnostics,
     seedsWiped,
   };
 }

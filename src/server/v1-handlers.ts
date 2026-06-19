@@ -12,6 +12,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enqueueWebhookEvent } from "@/server/webhook-delivery";
+import { evaluateRules, parseRuleRow, type RuleContext } from "@/server/pricing-rules";
 import {
   handleListPrices,
   handleGetPrice,
@@ -44,12 +45,17 @@ import {
   handleCreateEndpoint,
   handleRetryDelivery,
 } from "@/server/v1-writes-handlers";
+import {
+  handleMarginCosts, handleMarginChannels, handleMarginSku,
+  handleMarginBreakeven, handleMarginImpact,
+} from "@/server/margin-handlers";
 
 export type V1Context = {
   apiKeyId: string;
   userId: string;
   accountId: string;
   licenseeId: string;
+  scopes: string[];
 };
 
 export type V1Result = {
@@ -458,7 +464,7 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
 
   const { data: product } = await supabaseAdmin
     .from("catalog_products")
-    .select("id, name")
+    .select("id, name, category")
     .eq("account_id", ctx.accountId)
     .eq("sku", sku)
     .maybeSingle();
@@ -513,33 +519,22 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
   }
   const competitorMin = competitorPrices.length > 0 ? Math.min(...competitorPrices) : null;
 
-  // Active rules with light parsing for structured guardrails.
-  // Recognized phrases (case-insensitive substring match):
-  //   "max change <pct>%"      → cap |Δprice| to that percentage of currentPrice
-  //   "min undercut <amount>"  → if undercutting, undercut by AT LEAST that amount
-  //   "never undercut"         → never go below competitor_min
-  //   "round to <n>"           → round final price to nearest n
-  // Unrecognized rules are surfaced informationally only.
+  // Load structured rules and build competitor price map for evaluator.
   const { data: ruleRows } = await supabaseAdmin
     .from("pricing_rules")
-    .select("rule_text")
+    .select("id, rule_text, rule_type, params, enabled, position")
     .eq("user_id", ctx.userId)
     .eq("enabled", true)
     .order("position");
-  const activeRules = (ruleRows ?? []).map((r) => r.rule_text);
+  const activeRules = (ruleRows ?? []).map((r: any) => r.rule_text as string);
+  const structuredRules = (ruleRows ?? []).map((r: any) => parseRuleRow(r));
 
-  const ruleConfig = parsePricingRules(activeRules);
-
-  // Combine: undercut competitor by 1 unit (or rule-specified amount) if
-  // doing so respects floor; else hold floor.
+  // Combine: undercut competitor by 1 unit if it respects floor; else hold floor.
   let recommended: number;
   let reason: string;
-  const undercutBy = Math.max(1, ruleConfig.minUndercut ?? 1);
+  const undercutBy = 1;
 
-  if (ruleConfig.neverUndercut && competitorMin !== null && marginFloor !== null) {
-    recommended = Math.max(competitorMin, marginFloor);
-    reason = `Held competitor parity (${round2(competitorMin)}) per "never undercut" rule, respecting the ${Math.round(targetMarginPct * 100)}% margin floor.`;
-  } else if (marginFloor !== null && competitorMin !== null) {
+  if (marginFloor !== null && competitorMin !== null) {
     const undercut = competitorMin - undercutBy;
     if (undercut >= marginFloor) {
       recommended = undercut;
@@ -562,26 +557,31 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     );
   }
 
-  // Apply max-change cap relative to current price.
-  if (ruleConfig.maxChangePct !== null && currentPrice !== null && currentPrice > 0) {
-    const maxDelta = currentPrice * ruleConfig.maxChangePct;
-    const lowerBound = currentPrice - maxDelta;
-    const upperBound = currentPrice + maxDelta;
-    if (recommended < lowerBound) {
-      recommended = lowerBound;
-      reason += ` Capped at -${Math.round(ruleConfig.maxChangePct * 100)}% per "max change" rule.`;
-    } else if (recommended > upperBound) {
-      recommended = upperBound;
-      reason += ` Capped at +${Math.round(ruleConfig.maxChangePct * 100)}% per "max change" rule.`;
-    }
+  // Apply structured rules via shared evaluator.
+  const ruleCtx: RuleContext = {
+    currentPrice: currentPrice ?? 0,
+    competitorMin,
+    competitorPrices: (() => {
+      const m = new Map<string, number>();
+      if (compRows && compRows[0]) {
+        const row = compRows[0] as Record<string, { price?: number } | null>;
+        for (const key of ["amazon", "carrefour", "lulu", "noon", "talabat"] as const) {
+          const v = row[key];
+          if (v && typeof v.price === "number") m.set(key, v.price);
+        }
+      }
+      return m;
+    })(),
+    unitCost: inputs ? Number(inputs.unit_cost) : null,
+    category: (product as any).category ?? "",
+  };
+  const { finalPrice: ruleAdjusted, effects } = evaluateRules(recommended, ruleCtx, structuredRules);
+  const clampedRules = effects.filter((e) => e.clamped);
+  if (clampedRules.length > 0) {
+    reason += ` Rules applied: ${clampedRules.map((e) => e.reason).join("; ")}`;
   }
 
-  // Optional rounding rule.
-  if (ruleConfig.roundTo && ruleConfig.roundTo > 0) {
-    recommended = Math.round(recommended / ruleConfig.roundTo) * ruleConfig.roundTo;
-  }
-
-  const finalPrice = round2(Math.max(0.01, recommended));
+  const finalPrice = round2(Math.max(0.01, ruleAdjusted));
   const decisionId = `dec_${Math.random().toString(36).slice(2, 14)}`;
 
   // Persist decision for audit.
@@ -600,7 +600,7 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
       target_margin_pct: targetMarginPct,
       competitor_count: competitorPrices.length,
       active_rules: activeRules,
-      parsed_rules: ruleConfig,
+      rule_effects: effects,
       decision_id: decisionId,
     },
   });
@@ -652,50 +652,9 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
       competitor_count: competitorPrices.length,
       target_margin_pct: targetMarginPct,
       active_rules: activeRules,
-      parsed_rules: ruleConfig,
+      rule_effects: effects,
     },
   });
-}
-
-// ----------------------------------------------------------------------------
-// Pricing-rule parser
-// ----------------------------------------------------------------------------
-type ParsedRules = {
-  maxChangePct: number | null;
-  minUndercut: number | null;
-  neverUndercut: boolean;
-  roundTo: number | null;
-};
-
-function parsePricingRules(rules: string[]): ParsedRules {
-  let maxChangePct: number | null = null;
-  let minUndercut: number | null = null;
-  let neverUndercut = false;
-  let roundTo: number | null = null;
-
-  for (const raw of rules) {
-    const t = raw.toLowerCase();
-    const maxMatch = t.match(/max\s+change\s+([0-9]+(?:\.[0-9]+)?)\s*%/);
-    if (maxMatch) {
-      const pct = Number(maxMatch[1]) / 100;
-      if (Number.isFinite(pct) && pct > 0 && pct < 1) maxChangePct = pct;
-    }
-    const undercutMatch = t.match(/min(?:imum)?\s+undercut\s+([0-9]+(?:\.[0-9]+)?)/);
-    if (undercutMatch) {
-      const amt = Number(undercutMatch[1]);
-      if (Number.isFinite(amt) && amt > 0) minUndercut = amt;
-    }
-    if (/never\s+undercut/.test(t) || /no\s+undercut/.test(t)) {
-      neverUndercut = true;
-    }
-    const roundMatch = t.match(/round\s+to\s+([0-9]+(?:\.[0-9]+)?)/);
-    if (roundMatch) {
-      const r = Number(roundMatch[1]);
-      if (Number.isFinite(r) && r > 0) roundTo = r;
-    }
-  }
-
-  return { maxChangePct, minUndercut, neverUndercut, roundTo };
 }
 
 // ============================================================================
@@ -812,6 +771,11 @@ function compileRoute(
 const V1_ROUTES: V1Route[] = [
   // Existing real handlers
   compileRoute("POST /v1/sync", (req, ctx) => handleSync(req, ctx)),
+  compileRoute("POST /v1/margin/costs", (req, ctx) => handleMarginCosts(req, ctx)),
+  compileRoute("POST /v1/margin/channels", (req, ctx) => handleMarginChannels(req, ctx)),
+  compileRoute("GET /v1/margin/sku", (req, ctx) => handleMarginSku(req, ctx)),
+  compileRoute("GET /v1/margin/breakeven", (req, ctx) => handleMarginBreakeven(req, ctx)),
+  compileRoute("GET /v1/margin/impact", (req, ctx) => handleMarginImpact(req, ctx)),
   compileRoute("POST /v1/margin", (req, ctx) => handleMargin(req, ctx)),
   compileRoute("POST /v1/dynprice", (req, ctx) => handleDynprice(req, ctx)),
   compileRoute("POST /v1/webhooks/enrich", (req, ctx) => handleWebhooksEnrich(req, ctx)),

@@ -132,6 +132,7 @@ async function handle(request: Request, splat: string) {
       userId: keyRow.user_id,
       accountId: acct.account_id,
       licenseeId: acct.licensee_id,
+      scopes: Array.isArray(keyRow.scopes) ? (keyRow.scopes as string[]) : [],
     };
 
     const start = Date.now();
