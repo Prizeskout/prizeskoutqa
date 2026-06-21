@@ -302,6 +302,91 @@ export async function handleTriggerScrape(request: Request, ctx: V1Context): Pro
 }
 
 // ============================================================================
+// GET /v1/competitors/coverage
+// ============================================================================
+// Per-(product × competitor) scrape status matrix. Shows fresh prices,
+// OOS/unscrapeable (null_price), failures, and never-scraped pairs.
+// ============================================================================
+export async function handleScrapeCoverage(_request: Request, ctx: V1Context): Promise<V1Result> {
+  const { data: urlRows, error: urlErr } = await supabaseAdmin
+    .from("competitor_product_urls")
+    .select("product, competitor, url, category")
+    .eq("user_id", ctx.userId)
+    .neq("competitor", "self")
+    .order("product");
+
+  if (urlErr) return err("internal_error", urlErr.message, 500);
+
+  const urls = (urlRows ?? []) as Array<{
+    product: string; competitor: string; url: string; category: string | null;
+  }>;
+
+  if (urls.length === 0) {
+    return ok({
+      coverage: [],
+      summary: { total: 0, success: 0, null_price: 0, failed: 0, never_scraped: 0, stale: 0 },
+      ceiling_note: "No competitor URLs tracked. POST a URL via /v1/competitors/scrape or seed via admin script.",
+    });
+  }
+
+  const urlSet = urls.map((u) => u.url);
+  const { data: scrapeRows, error: scrErr } = await supabaseAdmin
+    .from("competitor_scrapes")
+    .select("url, status, price, error, scraped_at")
+    .eq("user_id", ctx.userId)
+    .in("url", urlSet)
+    .order("scraped_at", { ascending: false })
+    .limit(urlSet.length * 10);
+
+  if (scrErr) return err("internal_error", scrErr.message, 500);
+
+  const latestByUrl = new Map<string, { status: string; price: number | null; error: string | null; scraped_at: string }>();
+  for (const s of (scrapeRows ?? []) as any[]) {
+    if (!latestByUrl.has(s.url)) latestByUrl.set(s.url, s);
+  }
+
+  const STALE_HOURS = 48;
+  const now = Date.now();
+
+  const coverage = urls.map((u) => {
+    const sc = latestByUrl.get(u.url);
+    if (!sc) {
+      return { product: u.product, competitor: u.competitor, status: "never_scraped", price: null, last_scraped_at: null, age_hours: null, stale: false, skip_reason: null };
+    }
+    const ageHours = Math.round(((now - new Date(sc.scraped_at).getTime()) / 3_600_000) * 10) / 10;
+    const stale = sc.status === "success" && ageHours > STALE_HOURS;
+    return {
+      product: u.product,
+      competitor: u.competitor,
+      status: stale ? "stale" : sc.status,
+      price: sc.price,
+      last_scraped_at: sc.scraped_at,
+      age_hours: ageHours,
+      stale,
+      skip_reason: sc.status !== "success" ? (sc.error ?? null) : null,
+    };
+  });
+
+  const summary = {
+    total:         coverage.length,
+    success:       coverage.filter((c) => c.status === "success").length,
+    stale:         coverage.filter((c) => c.stale).length,
+    null_price:    coverage.filter((c) => c.status === "null_price").length,
+    failed:        coverage.filter((c) => c.status === "failed" || c.status === "error").length,
+    never_scraped: coverage.filter((c) => c.status === "never_scraped").length,
+  };
+
+  return ok({
+    coverage,
+    summary,
+    ceiling_note:
+      "Coverage limited to products with known competitor URLs. " +
+      "Scaling to an arbitrary catalog requires automated SKU→URL entity-resolution " +
+      "(separate roadmap). Local-chain brands (e.g. Al Meera) have no cross-retailer URLs.",
+  });
+}
+
+// ============================================================================
 // GET /v1/competitors/patterns
 // ============================================================================
 export async function handleListPatterns(request: Request, ctx: V1Context): Promise<V1Result> {

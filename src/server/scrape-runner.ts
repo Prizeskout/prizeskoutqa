@@ -2,10 +2,20 @@
 // `scrapeCompetitorUrl` server function (per-user, RLS client) and the
 // `/hooks/scrape-all` cron route (admin client, iterates every saved URL).
 //
-// Retries: each scrape attempts the Firecrawl call up to MAX_ATTEMPTS times
-// (initial + retries) with exponential backoff. Only the final outcome is
-// written to competitor_scrapes - intermediate failures are logged but not
-// persisted, so the UI doesn't flap between error/success rows.
+// Retry policy (per URL):
+//   Network errors / 5xx / 429 / 408   → retry up to MAX_ATTEMPTS, exponential backoff
+//   No extractable price (OOS / non-PDP) → status="null_price", NOT retried, NOT written to competitor_prices
+//   Permanent 4xx (bad URL, auth)        → status="failed",     NOT retried
+//
+// Persisted status values:
+//   "success"    — price extracted, bridge trigger writes to competitor_prices
+//   "null_price" — page live but price absent (OOS / listing page / parse miss)
+//                  NEVER writes a null/zero price to competitor_prices
+//   "failed"     — network error, anti-bot block, API error, or unknown
+//                  after all retry attempts
+//
+// The bridge trigger `trg_sync_scrape_to_competitor_prices` fires only on
+// status="success" rows, so null_price and failed rows are safely ignored.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createNotification } from "./notifications";
@@ -19,7 +29,9 @@ const PriceSchema = {
   required: ["price"],
 } as const;
 
-const MAX_ATTEMPTS = 3; // 1 initial + 2 retries
+// 1 initial attempt + 2 retries = 3 total.
+// Retry only for transient errors; null_price / permanent 4xx abort after attempt 1.
+const MAX_ATTEMPTS = 3;
 const RETRY_BASE_MS = 1500;
 
 type FirecrawlScrapeResponse = {
@@ -39,9 +51,10 @@ export type ScrapeJob = {
   competitor?: string | null;
 };
 
+// Callers receive a typed outcome to power per-job coverage reporting.
 export type ScrapeOutcome =
-  | { ok: true; url: string; price: number | null; currency: string | null }
-  | { ok: false; url: string; error: string };
+  | { ok: true;  url: string; price: number;      currency: string | null; status: "success" }
+  | { ok: false; url: string; error: string;       status: "null_price" | "failed" };
 
 type AttemptSuccess = {
   ok: true;
@@ -51,12 +64,13 @@ type AttemptSuccess = {
   metadata: Record<string, unknown>;
 };
 
+type FailureCategory = "null_price" | "failed";
+
 type AttemptFailure = {
   ok: false;
   error: string;
-  // Whether retrying is likely to help. 4xx (except 408/429) is permanent.
   retryable: boolean;
-  // Optional partial payload to persist if this is the final attempt.
+  category: FailureCategory;
   partial?: {
     markdown: string | null;
     metadata: Record<string, unknown>;
@@ -80,7 +94,7 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
           {
             type: "json",
             schema: PriceSchema,
-            prompt: "Extract the product price and currency from this page.",
+            prompt: "Extract the current sale/buy price and currency from this product detail page. Return null if no price is visible.",
           },
         ],
         onlyMainContent: true,
@@ -88,18 +102,18 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown network error";
-    return { ok: false, error: message, retryable: true };
+    return { ok: false, error: message, retryable: true, category: "failed" };
   }
 
   if (!fcRes.ok) {
     const text = await fcRes.text().catch(() => "");
-    console.error("Firecrawl HTTP error", fcRes.status, text);
-    // 5xx, 408, 429 are worth retrying. Other 4xx (auth, bad URL) are not.
+    console.error(`[scrape] Firecrawl HTTP ${fcRes.status} for ${url}`);
     const retryable = fcRes.status >= 500 || fcRes.status === 408 || fcRes.status === 429;
     return {
       ok: false,
-      error: `Firecrawl ${fcRes.status}: ${text.slice(0, 500)}`,
+      error: `Firecrawl HTTP ${fcRes.status}: ${text.slice(0, 300)}`,
       retryable,
+      category: "failed",
     };
   }
 
@@ -108,7 +122,7 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
     payload = (await fcRes.json()) as FirecrawlScrapeResponse;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid JSON from Firecrawl";
-    return { ok: false, error: message, retryable: true };
+    return { ok: false, error: message, retryable: true, category: "failed" };
   }
 
   const markdown = payload.data?.markdown ?? null;
@@ -117,19 +131,22 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
   const rawPrice = typeof extracted.price === "number" ? extracted.price : null;
   const currency = extracted.currency ?? null;
 
-  // Guard: Firecrawl sometimes returns price=0 when it can't actually find a
-  // product price on the page (e.g. category/listing pages instead of a PDP).
-  // Treat that as a failed extraction. Retrying usually doesn't help here
-  // because the page itself doesn't expose a price - mark as non-retryable.
+  // null / zero price = page is live but no price is extractable.
+  // Reasons: OOS product, category listing page, bot-detection soft-block,
+  // or Firecrawl's LLM couldn't locate a price number on the page.
+  // Do NOT retry — the page itself doesn't have a usable price right now.
+  // Persisted as status="null_price" so coverage reports can distinguish
+  // this from a network/API failure.
   if (rawPrice === null || rawPrice <= 0) {
     const reason =
       rawPrice === null
-        ? "Firecrawl did not return a numeric price"
-        : "Firecrawl returned price=0 (likely not a product detail page)";
+        ? "No numeric price found on page (OOS, non-PDP, or bot-blocked)"
+        : "Price extracted as 0 — likely a category/listing page, not a product detail page";
     return {
       ok: false,
       error: reason,
       retryable: false,
+      category: "null_price",
       partial: { markdown, metadata, currency },
     };
   }
@@ -137,8 +154,8 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
   return { ok: true, price: rawPrice, currency, markdown, metadata };
 }
 
-function sleep(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function runScrape(
@@ -147,7 +164,7 @@ export async function runScrape(
 ): Promise<ScrapeOutcome> {
   const apiKey = process.env.FIRECRAWL_API_KEY_1;
   if (!apiKey) {
-    return { ok: false, url: job.url, error: "FIRECRAWL_API_KEY_1 is not configured" };
+    return { ok: false, url: job.url, error: "FIRECRAWL_API_KEY_1 is not configured", status: "failed" };
   }
 
   let lastFailure: AttemptFailure | null = null;
@@ -167,59 +184,61 @@ export async function runScrape(
         metadata: result.metadata,
         status: "success",
       });
-
       if (error) {
-        console.error("Failed to persist scrape", error);
-        return { ok: false, url: job.url, error: "Failed to save scrape result" };
+        console.error("[scrape] Failed to persist success row", error);
+        return { ok: false, url: job.url, error: "Failed to save scrape result", status: "failed" };
       }
-
       if (attempt > 1) {
-        console.log(`scrape succeeded for ${job.url} on attempt ${attempt}/${MAX_ATTEMPTS}`);
+        console.log(`[scrape] Succeeded for ${job.competitor}/${job.product} on attempt ${attempt}`);
       }
-      return { ok: true, url: job.url, price: result.price, currency: result.currency };
+      return { ok: true, url: job.url, price: result.price, currency: result.currency, status: "success" };
     }
 
     lastFailure = result;
     console.warn(
-      `scrape attempt ${attempt}/${MAX_ATTEMPTS} failed for ${job.url}: ${result.error} (retryable=${result.retryable})`,
+      `[scrape] Attempt ${attempt}/${MAX_ATTEMPTS} for ${job.competitor}/${job.product}: ${result.error} (retryable=${result.retryable}, category=${result.category})`,
     );
 
-    // Stop early if the failure isn't worth retrying, or we're out of attempts.
     if (!result.retryable || attempt === MAX_ATTEMPTS) break;
-
-    // Exponential backoff: 1.5s, 3s, ...
     await sleep(RETRY_BASE_MS * attempt);
   }
 
-  const failure = lastFailure ?? {
-    ok: false as const,
-    error: "Unknown scrape failure",
-    retryable: false,
-  };
+  const failure = lastFailure ?? { ok: false as const, error: "Unknown scrape failure", retryable: false, category: "failed" as FailureCategory };
+  const persistStatus = failure.category; // "null_price" or "failed"
 
-  await (supabase.from("competitor_scrapes") as any).insert({
+  const { error: insertErr } = await (supabase.from("competitor_scrapes") as any).insert({
     user_id: job.userId,
     url: job.url,
     competitor: job.competitor ?? null,
     product: job.product ?? null,
-    price: null,
+    price: null,                          // NEVER write null/zero price
     currency: failure.partial?.currency ?? null,
     markdown: failure.partial?.markdown ?? null,
     metadata: failure.partial?.metadata ?? {},
-    status: "error",
-    error: `${failure.error} (after ${MAX_ATTEMPTS} attempts)`,
+    status: persistStatus,
+    error: failure.error,
   });
+  if (insertErr) {
+    console.error(`[scrape] Failed to persist ${persistStatus} row for ${job.url}:`, insertErr.message);
+  }
 
-  void createNotification({
-    userId: job.userId,
-    category: "scrape_failure",
-    severity: "warning",
-    title: `Competitor scrape failed`,
-    body: `${job.competitor ?? "Competitor"} — ${job.product ?? job.url}: ${failure.error}`,
-    linkTo: "/dashboard/competitors",
-    dedupeKey: `scrape:${job.url}`,
-    metadata: { url: job.url, competitor: job.competitor, product: job.product },
-  });
+  if (failure.category === "failed") {
+    void createNotification({
+      userId: job.userId,
+      category: "scrape_failure",
+      severity: "warning",
+      title: "Competitor scrape failed",
+      body: `${job.competitor ?? "Competitor"} — ${job.product ?? job.url}: ${failure.error}`,
+      linkTo: "/dashboard/competitors",
+      dedupeKey: `scrape:${job.url}`,
+      metadata: { url: job.url, competitor: job.competitor, product: job.product },
+    });
+  } else {
+    // null_price is informational — don't spam notifications for OOS items
+    console.info(
+      `[scrape] null_price for ${job.competitor}/${job.product}: ${failure.error}`,
+    );
+  }
 
-  return { ok: false, url: job.url, error: failure.error };
+  return { ok: false, url: job.url, error: failure.error, status: persistStatus };
 }

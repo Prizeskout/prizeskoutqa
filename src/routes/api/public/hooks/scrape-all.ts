@@ -46,7 +46,8 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
 
         const { data: urls, error } = await supabaseAdmin
           .from("competitor_product_urls")
-          .select("user_id, url, product, competitor");
+          .select("user_id, url, product, competitor")
+          .neq("competitor", "self"); // self rows are category metadata; bridge trigger already skips them
 
         if (error) {
           console.error("scrape-all: failed to load saved URLs", error);
@@ -57,7 +58,7 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
         }
 
         const jobs = urls ?? [];
-        console.log(`scrape-all: processing ${jobs.length} saved URLs`);
+        console.log(`scrape-all: processing ${jobs.length} competitor URLs`);
 
         const results = await runJobs(
           jobs,
@@ -71,8 +72,9 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
           CONCURRENCY,
         );
 
-        const ok = results.filter((r) => r.ok).length;
-        const failed = results.length - ok;
+        const ok         = results.filter((r) => r.ok).length;
+        const nullPrice  = results.filter((r) => !r.ok && (r as any).status === "null_price").length;
+        const failed     = results.filter((r) => !r.ok && (r as any).status === "failed").length;
 
         // After scrapes land, regenerate pricing recommendations for every
         // user that had at least one URL processed. Engine failures are
@@ -104,6 +106,7 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
             success: true,
             processed: results.length,
             ok,
+            null_price: nullPrice,
             failed,
             engine: {
               users: affectedUserIds.length,
