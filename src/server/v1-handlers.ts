@@ -104,6 +104,12 @@ import {
   handleCancelFlashEvent,
   handleFlashEventReport,
 } from "@/server/flash-handlers";
+import {
+  handleGetEmbedConfig,
+  handleSetEmbedConfig,
+  handleIssueEmbedToken,
+  handleListEmbedScopes,
+} from "@/server/embed-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -909,6 +915,11 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/flash/events/{id}/report",           (req, ctx, p) => handleFlashEventReport(req, ctx, p.id)),
   compileRoute("POST /v1/flash/events/{id}/cancel",          (req, ctx, p) => handleCancelFlashEvent(req, ctx, p.id)),
   compileRoute("GET /v1/flash/events/{id}",                  (req, ctx, p) => handleGetFlashEvent(req, ctx, p.id)),
+  // White-Label Embed API (API 13)
+  compileRoute("GET /v1/embed/config",   (req, ctx) => handleGetEmbedConfig(req, ctx)),
+  compileRoute("POST /v1/embed/config",  (req, ctx) => handleSetEmbedConfig(req, ctx)),
+  compileRoute("POST /v1/embed/token",   (req, ctx) => handleIssueEmbedToken(req, ctx)),
+  compileRoute("GET /v1/embed/scopes",   (req, ctx) => handleListEmbedScopes(req, ctx)),
   // Tenant Pricing API (API 14)
   compileRoute("POST /v1/tenant/rules",            (req, ctx)    => handleCreateRule(req, ctx)),
   compileRoute("GET /v1/tenant/rules",             (req, ctx)    => handleListRulesTenant(req, ctx)),

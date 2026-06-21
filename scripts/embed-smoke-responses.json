@@ -1,0 +1,146 @@
+{
+  "01_get_config_404": {
+    "error": {
+      "code": "not_found",
+      "message": "No embed config found for this license. POST /v1/embed/config to create one."
+    }
+  },
+  "02_scopes": {
+    "scopes": [
+      {
+        "scope": "pricing_widget",
+        "description": "Recommended price card with margin floor and competitor benchmark"
+      },
+      {
+        "scope": "roi_summary",
+        "description": "Estimated revenue uplift if recommended price is adopted"
+      },
+      {
+        "scope": "competitor_chart",
+        "description": "Bar chart comparing retailer prices across Amazon, Carrefour, Lulu, Noon, Talabat"
+      },
+      {
+        "scope": "action_items",
+        "description": "Prioritised list of pricing actions (raise / lower / hold) with Arabic support"
+      }
+    ]
+  },
+  "03_set_config_201": {
+    "config": {
+      "id": "835a1a9f-99e9-4744-80e3-218266fb4e66",
+      "brand_name": "GulfStyle Commerce",
+      "primary_color": "#E8420A",
+      "logo_url": null,
+      "powered_by_visible": false,
+      "created_at": "2026-06-21T11:12:21.459+00:00",
+      "updated_at": "2026-06-21T11:12:21.459+00:00"
+    }
+  },
+  "04_get_config_200": {
+    "config": {
+      "id": "835a1a9f-99e9-4744-80e3-218266fb4e66",
+      "brand_name": "GulfStyle Commerce",
+      "primary_color": "#E8420A",
+      "logo_url": null,
+      "powered_by_visible": false,
+      "created_at": "2026-06-21T11:12:21.459+00:00",
+      "updated_at": "2026-06-21T11:12:21.459+00:00"
+    }
+  },
+  "05_update_config_200": {
+    "config": {
+      "id": "835a1a9f-99e9-4744-80e3-218266fb4e66",
+      "brand_name": "GulfStyle Commerce",
+      "primary_color": "#FF6600",
+      "logo_url": null,
+      "powered_by_visible": false,
+      "created_at": "2026-06-21T11:12:21.459+00:00",
+      "updated_at": "2026-06-21T11:12:24.075+00:00"
+    }
+  },
+  "06_issue_token": {
+    "embed_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcml6ZXNrb3V0LWVtYmVkIiwic3ViIjoiNGEyOTJjN2ItZmE4OC00NjhhLThlMzMtZmRjNzk1ZTJmMDMwIiwiYWNjb3VudF9pZCI6IjRhMjkyYzdiLWZhODgtNDY4YS04ZTMzLWZkYzc5NWUyZjAzMCIsImxpY2Vuc2VlX2lkIjoiMWExZDBhMTctMzY2Yi00MjQyLWI1MDQtYWU3OGVlNjhiMzJjIiwic2NvcGVzIjpbInByaWNpbmdfd2lkZ2V0Iiwicm9pX3N1bW1hcnkiLCJjb21wZXRpdG9yX2NoYXJ0IiwiYWN0aW9uX2l0ZW1zIl0sImV4cCI6MTc4MjA0Mzk0NSwiaWF0IjoxNzgyMDQwMzQ1LCJqdGkiOiIxMTk1OTA2OWI0NWE0ODE4N2ZlYTM0MDgifQ.eHrMtS1Mb11C5K7lH4HPL8ZPKKFOIzIUHlKmrythWBQ",
+    "embed_url": "https://prizeskoutqa.prizeskoutqatar.workers.dev/embed/widget?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcml6ZXNrb3V0LWVtYmVkIiwic3ViIjoiNGEyOTJjN2ItZmE4OC00NjhhLThlMzMtZmRjNzk1ZTJmMDMwIiwiYWNjb3VudF9pZCI6IjRhMjkyYzdiLWZhODgtNDY4YS04ZTMzLWZkYzc5NWUyZjAzMCIsImxpY2Vuc2VlX2lkIjoiMWExZDBhMTctMzY2Yi00MjQyLWI1MDQtYWU3OGVlNjhiMzJjIiwic2NvcGVzIjpbInByaWNpbmdfd2lkZ2V0Iiwicm9pX3N1bW1hcnkiLCJjb21wZXRpdG9yX2NoYXJ0IiwiYWN0aW9uX2l0ZW1zIl0sImV4cCI6MTc4MjA0Mzk0NSwiaWF0IjoxNzgyMDQwMzQ1LCJqdGkiOiIxMTk1OTA2OWI0NWE0ODE4N2ZlYTM0MDgifQ.eHrMtS1Mb11C5K7lH4HPL8ZPKKFOIzIUHlKmrythWBQ",
+    "expires_at": "2026-06-21T12:12:25.000Z",
+    "token_type": "HS256",
+    "decoded_claims": {
+      "iss": "prizeskout-embed",
+      "sub": "4a292c7b-fa88-468a-8e33-fdc795e2f030",
+      "licensee_id": "1a1d0a17-366b-4242-b504-ae78ee68b32c",
+      "scopes": [
+        "pricing_widget",
+        "roi_summary",
+        "competitor_chart",
+        "action_items"
+      ],
+      "exp": 1782043945,
+      "iat": 1782040345,
+      "jti": "11959069b45a48187fea3408"
+    },
+    "branding": {
+      "brand_name": "GulfStyle Commerce",
+      "primary_color": "#E8420A",
+      "logo_url": null,
+      "powered_by_visible": false
+    }
+  },
+  "07_widget_html": {
+    "status": 200,
+    "length": 6571,
+    "snippet": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>GulfStyle Commerce — Price Intelligence</title>\n<style>\n  :root { --brand: #E8420A; }\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;\n    font-size: 13px; background: #f9fafb; color: #111827;\n    padding: 12px; min-width: 280px;\n  }\n  body.rtl { direction: rtl; text-align: right; }\n  .card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; p"
+  },
+  "08_no_prizeskout": {
+    "prizeskout_count": 0
+  },
+  "09_expired_token": {
+    "status": 401,
+    "body": {
+      "error": {
+        "code": "token_expired",
+        "message": "Embed token has expired. Request a new one via POST /v1/embed/token."
+      }
+    }
+  },
+  "10_wrong_api_scope_403": {
+    "error": {
+      "code": "forbidden",
+      "message": "Requires embed:write scope."
+    }
+  },
+  "10_wrong_scope_widget_401": {
+    "status": 401,
+    "body": {
+      "error": {
+        "code": "insufficient_scope",
+        "message": "Token grants no valid widget scopes. Include at least one of: pricing_widget, roi_summary, competitor_chart, action_items."
+      }
+    }
+  },
+  "11_tampered_sig": {
+    "status": 401,
+    "body": {
+      "error": {
+        "code": "invalid_token",
+        "message": "Token signature is invalid."
+      }
+    }
+  },
+  "12_token_read_key_403": {
+    "error": {
+      "code": "forbidden",
+      "message": "Requires embed:write scope."
+    }
+  },
+  "13_missing_brand_name": {
+    "error": {
+      "code": "validation_failed",
+      "message": "`brand_name` is required (non-empty string).",
+      "fields": [
+        {
+          "name": "brand_name",
+          "error": "required"
+        }
+      ]
+    }
+  }
+}

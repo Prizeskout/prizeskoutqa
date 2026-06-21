@@ -27,6 +27,7 @@ import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
 import { Route as ProductsMarketRouteImport } from './routes/products.market'
 import { Route as ProductsFieldIntelRouteImport } from './routes/products.field-intel'
 import { Route as ProductsCompetitorsRouteImport } from './routes/products.competitors'
+import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DashboardWebhooksRouteImport } from './routes/dashboard.webhooks'
@@ -52,7 +53,12 @@ import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
+import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
+import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/public/hooks/map-monitor'
+import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/public/hooks/group-expire'
+import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/public/hooks/flash-start'
+import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
 import { Route as ApiPublicV1WebhooksTestSignatureRouteImport } from './routes/api/public/v1/webhooks.test-signature'
 
 const TermsRoute = TermsRouteImport.update({
@@ -143,6 +149,11 @@ const ProductsFieldIntelRoute = ProductsFieldIntelRouteImport.update({
 const ProductsCompetitorsRoute = ProductsCompetitorsRouteImport.update({
   id: '/products/competitors',
   path: '/products/competitors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmbedWidgetRoute = EmbedWidgetRouteImport.update({
+  id: '/embed/widget',
+  path: '/embed/widget',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsGuidesRoute = DocsGuidesRouteImport.update({
@@ -272,9 +283,38 @@ const ApiPublicHooksWebhookRetryRoute =
     path: '/api/public/hooks/webhook-retry',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWebhookIntelligenceRetryRoute =
+  ApiPublicHooksWebhookIntelligenceRetryRouteImport.update({
+    id: '/api/public/hooks/webhook-intelligence-retry',
+    path: '/api/public/hooks/webhook-intelligence-retry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   id: '/api/public/hooks/scrape-all',
   path: '/api/public/hooks/scrape-all',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksMapMonitorRoute =
+  ApiPublicHooksMapMonitorRouteImport.update({
+    id: '/api/public/hooks/map-monitor',
+    path: '/api/public/hooks/map-monitor',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksGroupExpireRoute =
+  ApiPublicHooksGroupExpireRouteImport.update({
+    id: '/api/public/hooks/group-expire',
+    path: '/api/public/hooks/group-expire',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksFlashStartRoute =
+  ApiPublicHooksFlashStartRouteImport.update({
+    id: '/api/public/hooks/flash-start',
+    path: '/api/public/hooks/flash-start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksFlashEndRoute = ApiPublicHooksFlashEndRouteImport.update({
+  id: '/api/public/hooks/flash-end',
+  path: '/api/public/hooks/flash-end',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicV1WebhooksTestSignatureRoute =
@@ -314,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
+  '/embed/widget': typeof EmbedWidgetRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -326,7 +367,12 @@ export interface FileRoutesByFullPath {
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
+  '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
+  '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
+  '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
+  '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -359,6 +405,7 @@ export interface FileRoutesByTo {
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
+  '/embed/widget': typeof EmbedWidgetRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -371,7 +418,12 @@ export interface FileRoutesByTo {
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
+  '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
+  '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
+  '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
+  '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -407,6 +459,7 @@ export interface FileRoutesById {
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
+  '/embed/widget': typeof EmbedWidgetRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
@@ -419,7 +472,12 @@ export interface FileRoutesById {
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
+  '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
+  '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
+  '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
+  '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -456,6 +514,7 @@ export interface FileRouteTypes {
     | '/dashboard/webhooks'
     | '/docs/changelog'
     | '/docs/guides'
+    | '/embed/widget'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -468,7 +527,12 @@ export interface FileRouteTypes {
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
+    | '/api/public/hooks/flash-end'
+    | '/api/public/hooks/flash-start'
+    | '/api/public/hooks/group-expire'
+    | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
     | '/api/public/v1/webhooks/test-signature'
@@ -501,6 +565,7 @@ export interface FileRouteTypes {
     | '/dashboard/webhooks'
     | '/docs/changelog'
     | '/docs/guides'
+    | '/embed/widget'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -513,7 +578,12 @@ export interface FileRouteTypes {
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console'
+    | '/api/public/hooks/flash-end'
+    | '/api/public/hooks/flash-start'
+    | '/api/public/hooks/group-expire'
+    | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
     | '/api/public/v1/webhooks/test-signature'
@@ -548,6 +618,7 @@ export interface FileRouteTypes {
     | '/dashboard/webhooks'
     | '/docs/changelog'
     | '/docs/guides'
+    | '/embed/widget'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
@@ -560,7 +631,12 @@ export interface FileRouteTypes {
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
+    | '/api/public/hooks/flash-end'
+    | '/api/public/hooks/flash-start'
+    | '/api/public/hooks/group-expire'
+    | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
     | '/api/public/v1/webhooks/test-signature'
@@ -579,12 +655,18 @@ export interface RootRouteChildren {
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  EmbedWidgetRoute: typeof EmbedWidgetRoute
   ProductsCompetitorsRoute: typeof ProductsCompetitorsRoute
   ProductsFieldIntelRoute: typeof ProductsFieldIntelRoute
   ProductsMarketRoute: typeof ProductsMarketRoute
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
+  ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
+  ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
+  ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
+  ApiPublicHooksMapMonitorRoute: typeof ApiPublicHooksMapMonitorRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
+  ApiPublicHooksWebhookIntelligenceRetryRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
   ApiPublicV1WebhooksTestSignatureRoute: typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -716,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/products/competitors'
       fullPath: '/products/competitors'
       preLoaderRoute: typeof ProductsCompetitorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/widget': {
+      id: '/embed/widget'
+      path: '/embed/widget'
+      fullPath: '/embed/widget'
+      preLoaderRoute: typeof EmbedWidgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/guides': {
@@ -893,11 +982,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWebhookRetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/webhook-intelligence-retry': {
+      id: '/api/public/hooks/webhook-intelligence-retry'
+      path: '/api/public/hooks/webhook-intelligence-retry'
+      fullPath: '/api/public/hooks/webhook-intelligence-retry'
+      preLoaderRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/scrape-all': {
       id: '/api/public/hooks/scrape-all'
       path: '/api/public/hooks/scrape-all'
       fullPath: '/api/public/hooks/scrape-all'
       preLoaderRoute: typeof ApiPublicHooksScrapeAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/map-monitor': {
+      id: '/api/public/hooks/map-monitor'
+      path: '/api/public/hooks/map-monitor'
+      fullPath: '/api/public/hooks/map-monitor'
+      preLoaderRoute: typeof ApiPublicHooksMapMonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/group-expire': {
+      id: '/api/public/hooks/group-expire'
+      path: '/api/public/hooks/group-expire'
+      fullPath: '/api/public/hooks/group-expire'
+      preLoaderRoute: typeof ApiPublicHooksGroupExpireRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/flash-start': {
+      id: '/api/public/hooks/flash-start'
+      path: '/api/public/hooks/flash-start'
+      fullPath: '/api/public/hooks/flash-start'
+      preLoaderRoute: typeof ApiPublicHooksFlashStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/flash-end': {
+      id: '/api/public/hooks/flash-end'
+      path: '/api/public/hooks/flash-end'
+      fullPath: '/api/public/hooks/flash-end'
+      preLoaderRoute: typeof ApiPublicHooksFlashEndRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/webhooks/test-signature': {
@@ -1008,12 +1132,19 @@ const rootRouteChildren: RootRouteChildren = {
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  EmbedWidgetRoute: EmbedWidgetRoute,
   ProductsCompetitorsRoute: ProductsCompetitorsRoute,
   ProductsFieldIntelRoute: ProductsFieldIntelRoute,
   ProductsMarketRoute: ProductsMarketRoute,
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
+  ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
+  ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
+  ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,
+  ApiPublicHooksMapMonitorRoute: ApiPublicHooksMapMonitorRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
+  ApiPublicHooksWebhookIntelligenceRetryRoute:
+    ApiPublicHooksWebhookIntelligenceRetryRoute,
   ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
   ApiPublicV1WebhooksTestSignatureRoute: ApiPublicV1WebhooksTestSignatureRoute,
