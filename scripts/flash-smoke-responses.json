@@ -1,0 +1,250 @@
+{
+  "01_create_scheduled": {
+    "status": 201,
+    "body": {
+      "event_id": "f4fc3d96-68f5-47e1-9c49-3471a7d70c54",
+      "status": "scheduled",
+      "sku_count": 1,
+      "skus": [
+        {
+          "sku": "SONY-WH1000XM5",
+          "list_price": 1299,
+          "flash_price": 974.25,
+          "floor_price": 923.3,
+          "safe": true
+        }
+      ]
+    }
+  },
+  "02_list_events": {
+    "status": 200,
+    "body": {
+      "events": [
+        {
+          "id": "f4fc3d96-68f5-47e1-9c49-3471a7d70c54",
+          "name": "White Friday Preview — SONY WH-1000XM5",
+          "skus": [
+            "SONY-WH1000XM5"
+          ],
+          "discount_config": {
+            "type": "pct",
+            "value": 25
+          },
+          "channel_scope": "Online",
+          "start_at": "2026-06-21T11:05:16.791+00:00",
+          "end_at": "2026-06-21T13:05:16.794+00:00",
+          "status": "scheduled",
+          "inventory_reserve": null,
+          "auto_restore": true,
+          "created_at": "2026-06-21T10:05:17.579454+00:00"
+        }
+      ],
+      "total": 1,
+      "limit": 50,
+      "offset": 0
+    }
+  },
+  "03_get_event": {
+    "status": 200,
+    "body": {
+      "id": "f4fc3d96-68f5-47e1-9c49-3471a7d70c54",
+      "account_id": "4a292c7b-fa88-468a-8e33-fdc795e2f030",
+      "licensee_id": "1a1d0a17-366b-4242-b504-ae78ee68b32c",
+      "created_by_user_id": "bed12406-2798-47f7-a30c-5de559e90d6d",
+      "name": "White Friday Preview — SONY WH-1000XM5",
+      "skus": [
+        "SONY-WH1000XM5"
+      ],
+      "discount_config": {
+        "type": "pct",
+        "value": 25
+      },
+      "channel_scope": "Online",
+      "start_at": "2026-06-21T11:05:16.791+00:00",
+      "end_at": "2026-06-21T13:05:16.794+00:00",
+      "status": "scheduled",
+      "inventory_reserve": null,
+      "auto_restore": true,
+      "note": null,
+      "created_at": "2026-06-21T10:05:17.579454+00:00",
+      "updated_at": "2026-06-21T10:05:17.579454+00:00",
+      "sku_details": [
+        {
+          "sku": "SONY-WH1000XM5",
+          "product_id": "238aebde-23de-466f-bc0f-a9fc9f06c65c",
+          "original_price": 1299,
+          "flash_price": 974.25,
+          "floor_price": 923.3,
+          "channel": "Online",
+          "channel_push_status": "pending",
+          "units_sold": null
+        }
+      ]
+    }
+  },
+  "04_conflict_409": {
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "conflict",
+        "message": "Event conflicts with 1 existing event(s) on overlapping SKUs.",
+        "conflicts": [
+          {
+            "event_id": "f4fc3d96-68f5-47e1-9c49-3471a7d70c54",
+            "name": "White Friday Preview — SONY WH-1000XM5",
+            "status": "scheduled",
+            "start_at": "2026-06-21T11:05:16.791+00:00",
+            "end_at": "2026-06-21T13:05:16.794+00:00",
+            "conflicting_skus": [
+              "SONY-WH1000XM5"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "05_floor_breach_422": {
+    "status": 422,
+    "body": {
+      "error": {
+        "code": "below_floor",
+        "message": "Flash price is below margin floor for 1 SKU(s). Reduce the discount or adjust margin floor.",
+        "floor_breaches": [
+          {
+            "sku": "SONY-WH1000XM5",
+            "flash_price": 909.3,
+            "floor_price": 923.3
+          }
+        ]
+      }
+    }
+  },
+  "06_create_immediate": {
+    "status": 201,
+    "body": {
+      "event_id": "c987146d-9b6f-4c04-ac0f-97f85516ef7f",
+      "status": "scheduled",
+      "sku_count": 1,
+      "skus": [
+        {
+          "sku": "SONY-WH1000XM5",
+          "list_price": 1299,
+          "flash_price": 974.25,
+          "floor_price": 923.3,
+          "safe": true
+        }
+      ]
+    }
+  },
+  "07_hook_flash_start": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "activated": 1,
+      "errors": 0,
+      "timestamp": "2026-06-21T10:05:20.732Z"
+    }
+  },
+  "08_get_active_event": {
+    "status": 200,
+    "body": {
+      "id": "c987146d-9b6f-4c04-ac0f-97f85516ef7f",
+      "account_id": "4a292c7b-fa88-468a-8e33-fdc795e2f030",
+      "licensee_id": "1a1d0a17-366b-4242-b504-ae78ee68b32c",
+      "created_by_user_id": "bed12406-2798-47f7-a30c-5de559e90d6d",
+      "name": "Smoke Test Immediate Flash",
+      "skus": [
+        "SONY-WH1000XM5"
+      ],
+      "discount_config": {
+        "type": "pct",
+        "value": 25
+      },
+      "channel_scope": "Online",
+      "start_at": "2026-06-21T10:00:20.272+00:00",
+      "end_at": "2026-06-21T10:35:20.272+00:00",
+      "status": "active",
+      "inventory_reserve": null,
+      "auto_restore": true,
+      "note": null,
+      "created_at": "2026-06-21T10:05:20.279972+00:00",
+      "updated_at": "2026-06-21T10:05:20.54+00:00",
+      "sku_details": [
+        {
+          "sku": "SONY-WH1000XM5",
+          "product_id": "238aebde-23de-466f-bc0f-a9fc9f06c65c",
+          "original_price": 1299,
+          "flash_price": 974.25,
+          "floor_price": 923.3,
+          "channel": "Online",
+          "channel_push_status": "applied",
+          "units_sold": null
+        }
+      ]
+    }
+  },
+  "08b_catalog_price_after_flash": {
+    "list_price": 1299,
+    "sale_price": 974.25
+  },
+  "09_cancel_event": {
+    "status": 200,
+    "body": {
+      "event_id": "c987146d-9b6f-4c04-ac0f-97f85516ef7f",
+      "status": "cancelled"
+    }
+  },
+  "09b_catalog_price_after_cancel": {
+    "list_price": 1299,
+    "sale_price": null
+  },
+  "10_report": {
+    "status": 200,
+    "body": {
+      "event": {
+        "id": "c987146d-9b6f-4c04-ac0f-97f85516ef7f",
+        "name": "Smoke Test Immediate Flash",
+        "status": "cancelled",
+        "channel_scope": "Online",
+        "start_at": "2026-06-21T10:00:20.272+00:00",
+        "end_at": "2026-06-21T10:35:20.272+00:00",
+        "discount_config": {
+          "type": "pct",
+          "value": 25
+        }
+      },
+      "summary": {
+        "sku_count": 1,
+        "applied_count": 1,
+        "total_discount_per_unit_qar": 324.75,
+        "units_sold_stub": 0,
+        "estimated_revenue_uplift": null
+      },
+      "skus": [
+        {
+          "sku": "SONY-WH1000XM5",
+          "original_price": 1299,
+          "flash_price": 974.25,
+          "floor_price": 923.3,
+          "channel_push_status": "applied",
+          "units_sold": null
+        }
+      ]
+    }
+  },
+  "11_wrong_scope_403": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "forbidden",
+        "message": "flash:write scope required."
+      }
+    }
+  },
+  "12_hook_bad_auth": {
+    "status": 401,
+    "body": {
+      "error": "Unauthorized"
+    }
+  }
+}

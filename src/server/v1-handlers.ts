@@ -97,6 +97,13 @@ import {
   handleWiDeliveries,
   handleDeleteWiSubscription,
 } from "@/server/webhook-intelligence-handlers";
+import {
+  handleCreateFlashEvent,
+  handleListFlashEvents,
+  handleGetFlashEvent,
+  handleCancelFlashEvent,
+  handleFlashEventReport,
+} from "@/server/flash-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -895,6 +902,12 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/compliance/map/violations",  (req, ctx) => handleMapViolations(req, ctx)),
   compileRoute("GET /v1/compliance/map/retailers",   (req, ctx) => handleRetailerCompliance(req, ctx)),
   compileRoute("GET /v1/compliance/map/report",      (req, ctx) => handleComplianceReport(req, ctx)),
+  // Flash Sale Orchestration (API 09)
+  compileRoute("POST /v1/flash/events",                      (req, ctx)    => handleCreateFlashEvent(req, ctx)),
+  compileRoute("GET /v1/flash/events",                       (req, ctx)    => handleListFlashEvents(req, ctx)),
+  compileRoute("GET /v1/flash/events/{id}/report",           (req, ctx, p) => handleFlashEventReport(req, ctx, p.id)),
+  compileRoute("POST /v1/flash/events/{id}/cancel",          (req, ctx, p) => handleCancelFlashEvent(req, ctx, p.id)),
+  compileRoute("GET /v1/flash/events/{id}",                  (req, ctx, p) => handleGetFlashEvent(req, ctx, p.id)),
   // Tenant Pricing API (API 14)
   compileRoute("POST /v1/tenant/rules",            (req, ctx)    => handleCreateRule(req, ctx)),
   compileRoute("GET /v1/tenant/rules",             (req, ctx)    => handleListRulesTenant(req, ctx)),
