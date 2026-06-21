@@ -58,6 +58,45 @@ import {
   handleTenantPrice, handleCreateEvent,
   handleListViolations, handleTenantStatus,
 } from "@/server/tenant-handlers";
+import {
+  handleDynpriceConfig,
+  handleDynpriceCurrent,
+  handleDynpriceEvents,
+  handleDynpriceCustomEvent,
+  handleDynpriceAudit,
+} from "@/server/dynprice-handlers";
+import {
+  handleCreateSegment,
+  handleListSegments,
+  handleLoyaltyPrice,
+  handleLoyaltyOutcome,
+} from "@/server/loyalty-handlers";
+import {
+  handleCreateCampaign,
+  handleJoinCampaign,
+  handleGetCampaign,
+  handleListBuyers,
+  handleCloseCampaign,
+} from "@/server/group-handlers";
+import {
+  handleParityAnalysis,
+  handleCreateParityRule,
+  handleListParityViolations,
+  handleParityReport,
+} from "@/server/parity-handlers";
+import {
+  handleCreateAgreement,
+  handleListViolations as handleMapViolations,
+  handleRetailerCompliance,
+  handleComplianceReport,
+} from "@/server/compliance-handlers";
+import {
+  handleWiSubscribe,
+  handleListWiSubscriptions,
+  handleWiTest,
+  handleWiDeliveries,
+  handleDeleteWiSubscription,
+} from "@/server/webhook-intelligence-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -805,8 +844,14 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/field-intel/observations", (req, ctx) => handleListObservations(req, ctx)),
   compileRoute("GET /v1/field-intel/price-gaps", (req, ctx) => handleListPriceGaps(req, ctx)),
   // Webhooks reads (Week 10 — pillar 5)
+  // Enriched Webhook Intelligence API (API 17)
+  compileRoute("POST /v1/webhooks/subscribe",              (req, ctx)    => handleWiSubscribe(req, ctx)),
+  compileRoute("GET /v1/webhooks/subscriptions",           (req, ctx)    => handleListWiSubscriptions(req, ctx)),
+  compileRoute("POST /v1/webhooks/test",                   (req, ctx)    => handleWiTest(req, ctx)),
+  compileRoute("DELETE /v1/webhooks/subscriptions/{id}",   (req, ctx, p) => handleDeleteWiSubscription(req, ctx, p.id)),
+  compileRoute("GET /v1/webhooks/deliveries",              (req, ctx)    => handleWiDeliveries(req, ctx)),
+  // Legacy webhook endpoints (pre-API-17)
   compileRoute("GET /v1/webhooks/endpoints", (req, ctx) => handleListEndpoints(req, ctx)),
-  compileRoute("GET /v1/webhooks/deliveries", (req, ctx) => handleListDeliveries(req, ctx)),
   // Network reads (Week 10 — pillar 6)
   compileRoute("GET /v1/network/benchmarks", (req, ctx) => handleListBenchmarks(req, ctx)),
   // /v1/network/patterns is an alias of /v1/competitors/patterns
@@ -822,6 +867,34 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/audit/decisions/{id}", (req, ctx, p) => handleGetDecision(req, ctx, p.id)),
   compileRoute("GET /v1/audit/summary", (req, ctx) => handleAuditSummary(req, ctx)),
   compileRoute("GET /v1/audit/report", (req, ctx) => handleAuditReport(req, ctx)),
+  // Dynamic Pricing Engine (API 03 — /v1/dynprice/*)
+  // Literals before dynamics; POST /v1/dynprice (old handler) remains untouched.
+  compileRoute("POST /v1/dynprice/config",                 (req, ctx)       => handleDynpriceConfig(req, ctx)),
+  compileRoute("GET /v1/dynprice/events",                  (req, ctx)       => handleDynpriceEvents(req, ctx)),
+  compileRoute("POST /v1/dynprice/events/custom",          (req, ctx)       => handleDynpriceCustomEvent(req, ctx)),
+  compileRoute("GET /v1/dynprice/current/{sku}",           (req, ctx, p)    => handleDynpriceCurrent(req, ctx, p.sku)),
+  compileRoute("GET /v1/dynprice/audit/{sku}",             (req, ctx, p)    => handleDynpriceAudit(req, ctx, p.sku)),
+  // Group Buying Engine (API 12)
+  compileRoute("POST /v1/group/campaigns",              (req, ctx)    => handleCreateCampaign(req, ctx)),
+  compileRoute("POST /v1/group/join",                   (req, ctx)    => handleJoinCampaign(req, ctx)),
+  compileRoute("GET /v1/group/campaigns/{id}",          (req, ctx, p) => handleGetCampaign(req, ctx, p.id)),
+  compileRoute("GET /v1/group/campaigns/{id}/buyers",   (req, ctx, p) => handleListBuyers(req, ctx, p.id)),
+  compileRoute("POST /v1/group/campaigns/{id}/close",   (req, ctx, p) => handleCloseCampaign(req, ctx, p.id)),
+  // Loyalty & Segment Pricing (API 11)
+  compileRoute("POST /v1/loyalty/segments", (req, ctx) => handleCreateSegment(req, ctx)),
+  compileRoute("GET /v1/loyalty/segments",  (req, ctx) => handleListSegments(req, ctx)),
+  compileRoute("POST /v1/loyalty/price",    (req, ctx) => handleLoyaltyPrice(req, ctx)),
+  compileRoute("POST /v1/loyalty/outcome",  (req, ctx) => handleLoyaltyOutcome(req, ctx)),
+  // Cross-Border Price Parity API (API 15)
+  compileRoute("GET /v1/parity/analysis",   (req, ctx) => handleParityAnalysis(req, ctx)),
+  compileRoute("POST /v1/parity/rules",     (req, ctx) => handleCreateParityRule(req, ctx)),
+  compileRoute("GET /v1/parity/violations", (req, ctx) => handleListParityViolations(req, ctx)),
+  compileRoute("GET /v1/parity/report",     (req, ctx) => handleParityReport(req, ctx)),
+  // MAP Compliance API (API 16)
+  compileRoute("POST /v1/compliance/map/agreements", (req, ctx) => handleCreateAgreement(req, ctx)),
+  compileRoute("GET /v1/compliance/map/violations",  (req, ctx) => handleMapViolations(req, ctx)),
+  compileRoute("GET /v1/compliance/map/retailers",   (req, ctx) => handleRetailerCompliance(req, ctx)),
+  compileRoute("GET /v1/compliance/map/report",      (req, ctx) => handleComplianceReport(req, ctx)),
   // Tenant Pricing API (API 14)
   compileRoute("POST /v1/tenant/rules",            (req, ctx)    => handleCreateRule(req, ctx)),
   compileRoute("GET /v1/tenant/rules",             (req, ctx)    => handleListRulesTenant(req, ctx)),

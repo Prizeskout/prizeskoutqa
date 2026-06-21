@@ -136,14 +136,22 @@ async function handle(request: Request, splat: string) {
     };
 
     const start = Date.now();
-    const result = await dispatchV1Handler(request.method, fullPath, request, ctx);
+
+    let result: Awaited<ReturnType<typeof dispatchV1Handler>>;
+    try {
+      result = await dispatchV1Handler(request.method, fullPath, request, ctx);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[v1] handler threw for ${request.method} ${fullPath}:`, e);
+      return json({ error: { code: "internal_error", message: msg } }, 500);
+    }
+
     if (!result) {
-      // Should never happen — guard anyway.
       return json({ error: { code: "internal_error", message: "Handler dispatch returned null." } }, 500);
     }
 
     const requestId = `req_live_${Math.random().toString(36).slice(2, 10)}`;
-    await supabaseAdmin.from("api_request_logs").insert({
+    void supabaseAdmin.from("api_request_logs").insert({
       user_id: keyRow.user_id,
       api_key_id: keyRow.id,
       method: request.method,
@@ -152,12 +160,14 @@ async function handle(request: Request, splat: string) {
       duration_ms: Date.now() - start,
       request_id: requestId,
     });
-    await supabaseAdmin
+    void supabaseAdmin
       .from("api_keys")
       .update({ last_used_at: new Date().toISOString() })
       .eq("id", keyRow.id);
 
-    return new Response(JSON.stringify(result.body, null, 2), {
+    // Fetch spec: 204/205/304 responses must have no body.
+    const hasNoBody = result.status === 204 || result.status === 205 || result.status === 304;
+    return new Response(hasNoBody ? null : JSON.stringify(result.body, null, 2), {
       status: result.status,
       headers: {
         "Content-Type": "application/json",
