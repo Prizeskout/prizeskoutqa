@@ -30,12 +30,21 @@ import {
   type RuleEffect,
   type StructuredRule,
 } from "./pricing-rules";
-import { landedCost as computeLandedCost, type ChannelCosts } from "./margin";
+import { landedCost as computeLandedCost, minViablePrice, type ChannelCosts } from "./margin";
 
 const SELF_COMPETITOR_LABEL = "self";
 const FRESH_WINDOW_DAYS = 14;
 const MIN_GAP_PCT = 0.02;
 const MIN_COMPETITORS_FOR_REC = 1;
+// A competitor price more than this % below the peer median is flagged as a
+// potential outlier (mismatched SKU, data error, etc.) and excluded from the
+// recommendation. This is a safety net; the proper fix is entity-resolution
+// (accurate SKU↔competitor-URL matching), which is a separate roadmap item.
+const OUTLIER_THRESHOLD = 0.30;
+// Minimum viable margin applied as an unconditional safety floor after all
+// rule evaluation. Matches the floor formula used by API 07 (GET /v1/dynprice)
+// so every recommendation path enforces the same protection.
+const SAFETY_MARGIN_PCT = 0.05;
 
 type ScrapeRow = {
   url: string;
@@ -85,12 +94,20 @@ export type ComputedRecommendation = {
   source: "computed";
 };
 
+export type OutlierFlag = {
+  competitor: string;
+  price: number;
+  peerMedian: number;
+  pctBelow: number;
+};
+
 export type ProductDiagnostic = {
   product: string;
   selfPriceSource: "self_url_scrape" | "catalog_prices" | null;
   selfPrice: number | null;
   competitorMin: number | null;
   competitorPricesByName: Record<string, number>;
+  outlierFlags: OutlierFlag[];
   rawRecommendation: number | null;
   ruleEffects: RuleEffect[];
   finalRecommendation: number | null;
@@ -216,6 +233,7 @@ export function computeRecommendations(input: ComputeInput): {
       selfPrice: null,
       competitorMin: null,
       competitorPricesByName: {},
+      outlierFlags: [],
       rawRecommendation: null,
       ruleEffects: [],
       finalRecommendation: null,
@@ -284,15 +302,58 @@ export function computeRecommendations(input: ComputeInput): {
       continue;
     }
 
-    const competitorPriceValues = competitorScrapes.map((c) => c.price);
+    // Record all raw competitor prices in the diagnostic (including any outliers).
+    for (const cs of competitorScrapes) {
+      diag.competitorPricesByName[cs.competitor] = cs.price;
+    }
+
+    // ── Outlier detection ────────────────────────────────────────────────────
+    // Flag any competitor whose price is >OUTLIER_THRESHOLD below the median
+    // of all other competitors (the "peer median"). This catches mismatched
+    // SKUs, listing-page prices, and data errors before they anchor the rec.
+    //
+    // Requires ≥3 competitors total (need ≥2 peers to compute a peer median).
+    // With only 2 competitors we can't reliably separate "cheap" from "outlier".
+    //
+    // NOTE: this is a safety net, not a substitute for entity-resolution.
+    // The permanent fix — matching competitor URLs to the exact same SKU — is
+    // a separate roadmap item. Flag and exclude here; fix the URL upstream.
+    let usableScrapes = competitorScrapes;
+    if (competitorScrapes.length >= 3) {
+      usableScrapes = competitorScrapes.filter((cs) => {
+        const peerPrices = competitorScrapes
+          .filter((o) => o.competitor !== cs.competitor)
+          .map((o) => o.price);
+        const peerMed = median(peerPrices);
+        const pctBelow = (peerMed - cs.price) / peerMed;
+        if (pctBelow > OUTLIER_THRESHOLD) {
+          diag.outlierFlags.push({
+            competitor: cs.competitor,
+            price: cs.price,
+            peerMedian: Math.round(peerMed * 100) / 100,
+            pctBelow,
+          });
+          return false;
+        }
+        return true;
+      });
+    }
+
+    if (usableScrapes.length < MIN_COMPETITORS_FOR_REC) {
+      const msg = `${product}: all competitor prices flagged as outliers — skipped (check URLs for SKU mismatch)`;
+      reasons.push(msg);
+      diag.skipped = true;
+      diag.skipReason = msg;
+      diagnostics.push(diag);
+      continue;
+    }
+
+    const competitorPriceValues = usableScrapes.map((c) => c.price);
     const medianCompetitor = median(competitorPriceValues);
     const minCompetitor = Math.min(...competitorPriceValues);
     const gapPct = (currentPrice - medianCompetitor) / currentPrice;
 
     diag.competitorMin = minCompetitor;
-    for (const cs of competitorScrapes) {
-      diag.competitorPricesByName[cs.competitor] = cs.price;
-    }
 
     if (gapPct < MIN_GAP_PCT) {
       const msg = `${product}: already at or below median (gap ${(gapPct * 100).toFixed(1)}%) — no rec`;
@@ -310,8 +371,10 @@ export function computeRecommendations(input: ComputeInput): {
     diag.rawRecommendation = recommendedPrice;
 
     // ── Rule evaluation (shared evaluator) ──────────────────────────────────
+    // Only non-outlier competitors go into the rules context — ceiling rules
+    // must not be able to anchor to a flagged outlier price.
     const competitorPricesMap = new Map<string, number>();
-    for (const cs of competitorScrapes) {
+    for (const cs of usableScrapes) {
       competitorPricesMap.set(cs.competitor.toLowerCase(), cs.price);
     }
     const unitCost = unitCostByProduct.get(product.toLowerCase()) ?? null;
@@ -340,6 +403,37 @@ export function computeRecommendations(input: ComputeInput): {
       );
     }
 
+    // ── Unconditional cost floor (API 07 consistency) ────────────────────────
+    // Enforced regardless of pricing_rules configuration so the scrape→engine
+    // path can never recommend below viable margin. Uses the same minViablePrice
+    // formula as GET /v1/dynprice/current (API 07). Rules already express the
+    // floor when cost data is available; this is a belt-and-suspenders guard for
+    // the case where no nominal_floor_qar rule is configured or noData=true.
+    if (landedCost !== null) {
+      const zeroCh: ChannelCosts = { commission_pct: 0, delivery_cost: 0, payment_pct: 0, returns_provision: 0 };
+      const ch = channelCosts ?? zeroCh;
+      const costFloor = formatPrice(minViablePrice(landedCost, ch, SAFETY_MARGIN_PCT));
+      if (recommendedPrice < costFloor) {
+        const clampedFrom = recommendedPrice;
+        recommendedPrice = costFloor;
+        const floorDesc = channelCosts
+          ? `landed QAR ${landedCost.toFixed(2)} + channel costs, ${SAFETY_MARGIN_PCT * 100}% margin`
+          : `landed QAR ${landedCost.toFixed(2)}, ${SAFETY_MARGIN_PCT * 100}% margin (no channel cost data)`;
+        diag.ruleEffects.push({
+          ruleId: "engine:cost_floor",
+          ruleType: "nominal_floor_qar" as const,
+          ruleText: `Engine cost floor: min ${SAFETY_MARGIN_PCT * 100}% viable margin after all costs`,
+          applicable: true,
+          clamped: true,
+          noData: false,
+          reason: `Cost floor: ${clampedFrom.toFixed(2)} → ${costFloor.toFixed(2)} (${floorDesc})`,
+          priceIn: clampedFrom,
+          priceOut: costFloor,
+        });
+        reasons.push(`${product}: price clamped to cost floor ${costFloor.toFixed(2)} QAR`);
+      }
+    }
+
     // ── ROI projection ───────────────────────────────────────────────────────
     const priceDeltaPct = (recommendedPrice - currentPrice) / currentPrice;
     const unitDeltaPct = -roi.elasticity * priceDeltaPct;
@@ -350,14 +444,14 @@ export function computeRecommendations(input: ComputeInput): {
     const newMargin = newRevenue * roi.base_margin;
     const netMonthly = (newMargin - oldMargin) * 30;
 
-    const freshest = Math.min(...competitorScrapes.map((c) => daysAgo(c.scraped_at)));
+    const freshest = Math.min(...usableScrapes.map((c) => daysAgo(c.scraped_at)));
     const confidence = computeConfidence(
-      competitorScrapes.length,
+      usableScrapes.length,
       freshest,
       Math.abs(gapPct),
     );
 
-    const competitorList = competitorScrapes
+    const competitorList = usableScrapes
       .map((c) => c.competitor)
       .slice(0, 3)
       .join(", ");
@@ -367,12 +461,32 @@ export function computeRecommendations(input: ComputeInput): {
         ? " (self-price from catalog_prices)"
         : "";
 
+    const outlierNote =
+      diag.outlierFlags.length > 0
+        ? ` ⚠ Outlier(s) excluded: ${
+            diag.outlierFlags
+              .map(
+                (f) =>
+                  `${f.competitor} QAR ${f.price.toFixed(2)} ` +
+                  `(${(f.pctBelow * 100).toFixed(0)}% below peer median QAR ${f.peerMedian.toFixed(0)}` +
+                  ` — likely SKU mismatch; entity-resolution is the proper fix, see roadmap)`,
+              )
+              .join("; ")
+          }.`
+        : "";
+
+    const floorNote = diag.ruleEffects.some((e) => e.ruleId === "engine:cost_floor" && e.clamped)
+      ? ` Price floor applied (${SAFETY_MARGIN_PCT * 100}% viable margin).`
+      : "";
+
     const reason =
-      `${competitorScrapes.length} competitor${competitorScrapes.length === 1 ? "" : "s"} ` +
+      `${usableScrapes.length} competitor${usableScrapes.length === 1 ? "" : "s"} ` +
       `(${competitorList}) median QAR ${medianCompetitor.toFixed(2)}, ` +
       `lowest QAR ${minCompetitor.toFixed(2)}. ` +
       `You're ${(gapPct * 100).toFixed(1)}% above median${selfSourceNote}. ` +
-      `Matching the median should lift units ~${(unitDeltaPct * 100).toFixed(1)}% based on category elasticity.`;
+      `Matching the median should lift units ~${(unitDeltaPct * 100).toFixed(1)}% based on category elasticity.` +
+      outlierNote +
+      floorNote;
 
     diag.finalRecommendation = recommendedPrice;
     diagnostics.push(diag);
