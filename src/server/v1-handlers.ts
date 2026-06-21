@@ -354,9 +354,10 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
     error_count: errCount,
   });
 
-  // Fire-and-forget: notify subscribers that a catalog batch was ingested.
-  // We don't await — webhook timeouts shouldn't slow down /v1/sync responses.
-  void enqueueWebhookEvent({
+  // Notify subscribers that a catalog batch was ingested.
+  // Awaited: CF Workers kill void promises after the response is sent.
+  // enqueueWebhookEvent short-circuits in ~20ms when no endpoints are registered.
+  await enqueueWebhookEvent({
     userId: ctx.userId,
     eventType: "catalog.synced",
     payload: {
@@ -677,13 +678,13 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
       target_margin_pct: targetMarginPct,
     },
   };
-  void enqueueWebhookEvent({
+  await enqueueWebhookEvent({
     userId: ctx.userId,
     eventType: "recommendation.ready",
     payload: eventPayload,
   });
   if (currentPrice !== null && Math.abs(finalPrice - currentPrice) > 0.005) {
-    void enqueueWebhookEvent({
+    await enqueueWebhookEvent({
       userId: ctx.userId,
       eventType: "price.changed",
       payload: {

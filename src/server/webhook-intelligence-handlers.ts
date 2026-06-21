@@ -563,7 +563,7 @@ export async function fireToSubscription(
   }
 
   // Update subscription last_delivery stats
-  void supabaseAdmin
+  await supabaseAdmin
     .from("webhook_subscriptions")
     .update({
       last_delivery_at:      new Date().toISOString(),
@@ -646,7 +646,7 @@ export async function processIntelligenceRetryQueue(limit = 50): Promise<{
 
     await logDelivery(sub.id, ev, newAttempt, result, retry, isDead);
 
-    void supabaseAdmin
+    await supabaseAdmin
       .from("webhook_subscriptions")
       .update({
         last_delivery_at: new Date().toISOString(),

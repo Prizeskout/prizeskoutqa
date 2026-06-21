@@ -151,7 +151,7 @@ async function handle(request: Request, splat: string) {
     }
 
     const requestId = `req_live_${Math.random().toString(36).slice(2, 10)}`;
-    void supabaseAdmin.from("api_request_logs").insert({
+    await supabaseAdmin.from("api_request_logs").insert({
       user_id: keyRow.user_id,
       api_key_id: keyRow.id,
       method: request.method,
@@ -160,7 +160,7 @@ async function handle(request: Request, splat: string) {
       duration_ms: Date.now() - start,
       request_id: requestId,
     });
-    void supabaseAdmin
+    await supabaseAdmin
       .from("api_keys")
       .update({ last_used_at: new Date().toISOString() })
       .eq("id", keyRow.id);
