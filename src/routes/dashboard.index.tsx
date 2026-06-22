@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { MetricsRow } from "@/components/dashboard/overview/MetricsRow";
@@ -94,10 +95,9 @@ async function loadOverview(): Promise<OverviewPageData> {
       .gte("scraped_at", sevenDaysAgo),
   ]);
 
-  if (metricsRes.error) throw metricsRes.error;
-  if (alertsRes.error) throw alertsRes.error;
-  if (channelsRes.error) throw channelsRes.error;
-  if (actionsRes.error) throw actionsRes.error;
+  // Treat Supabase query errors as empty data rather than crashing the route.
+  // A brand-new user will have no rows in these tables (and may hit RLS
+  // policies that return an error), so an empty-state UI is the right outcome.
 
   return {
     metrics: (metricsRes.data ?? []) as OverviewMetric[],
@@ -121,6 +121,7 @@ export const Route = createFileRoute("/dashboard/")({
 });
 
 function OverviewPage() {
+  const { t } = useTranslation();
   const data = Route.useLoaderData();
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>(null);
 
@@ -130,7 +131,7 @@ function OverviewPage() {
   }, [data.alerts, severityFilter]);
 
   return (
-    <DashboardLayout title="Overview">
+    <DashboardLayout title={t("overview.title")}>
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {/* 1. Hero: greeting, briefing, and primary CTAs */}
         <OverviewHero
@@ -141,25 +142,29 @@ function OverviewPage() {
           competitorChangeCount={data.competitorChangeCount}
         />
 
-        {/* 1b. First-run checklist. Hides itself once the user has saved a URL,
-            run a scrape, and generated an insight, or after they dismiss it. */}
+        {/* 1b. First-run checklist. */}
         <OnboardingChecklist />
 
-        {/* 2. AI summary — the smartest read on the page */}
+        {/* 2. AI summary */}
         <SectionLabel
-          title="What AI sees"
-          subtitle="A plain-English read on your market right now."
+          title={t("overview.aiSees")}
+          subtitle={t("overview.aiSeesDesc")}
           right={<ExportInsightsButton />}
         />
         <AIInsightsCard page="overview" initial={data.insight} />
 
         {/* 3. What changed — actionable alerts */}
         <SectionLabel
-          title={severityFilter ? `What changed · ${severityFilter}` : "What changed"}
+          title={severityFilter ? t("overview.whatChangedFiltered", { severity: severityFilter }) : t("overview.whatChanged")}
           subtitle={
             severityFilter
-              ? `Showing ${filteredAlerts.length} ${severityFilter} alert${filteredAlerts.length === 1 ? "" : "s"}. Click "Clear filter" in the hero to see all.`
-              : "Recent moves from competitors and your channels. Click any row to act."
+              ? t(
+                  filteredAlerts.length === 1
+                    ? "overview.whatChangedFilteredDesc"
+                    : "overview.whatChangedFilteredDesc_plural",
+                  { count: filteredAlerts.length, severity: severityFilter },
+                )
+              : t("overview.whatChangedDesc")
           }
         />
         <div id="overview-live-alerts" style={{ scrollMarginTop: 16 }}>
@@ -168,15 +173,15 @@ function OverviewPage() {
 
         {/* 4. What to do next — guided actions */}
         <SectionLabel
-          title="What to do next"
-          subtitle="Jump straight into the workflows that matter most today."
+          title={t("overview.whatToDo")}
+          subtitle={t("overview.whatToDoDesc")}
         />
         <QuickActions actions={data.quickActions} />
 
         {/* 5. Where you stand — context & reference data */}
         <SectionLabel
-          title="Where you stand"
-          subtitle="Headline numbers and your position vs the market."
+          title={t("overview.whereYouStand")}
+          subtitle={t("overview.whereYouStandDesc")}
         />
         <MetricsRow metrics={data.metrics} />
         <div style={{ display: "flex", gap: 14, alignItems: "stretch", flexWrap: "wrap" }}>

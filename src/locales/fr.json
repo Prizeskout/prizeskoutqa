@@ -1,0 +1,81 @@
+{
+  "nav": {
+    "groups": {
+      "developers": "Développeurs",
+      "intelligence": "Intelligence"
+    },
+    "overview": "Vue d'ensemble",
+    "apiKeys": "Clés API",
+    "apiExplorer": "Explorateur API",
+    "usage": "Utilisation",
+    "plans": "Forfaits",
+    "logs": "Journaux",
+    "webhooks": "Webhooks",
+    "competitors": "Concurrents",
+    "fieldIntel": "Intel terrain",
+    "pricing": "Tarification",
+    "promotions": "Promotions",
+    "market": "Marché",
+    "benchmarks": "Références",
+    "settings": "Paramètres",
+    "admin": "Administration"
+  },
+  "sidebar": {
+    "home": "Accueil",
+    "collapse": "Réduire",
+    "expandSidebar": "Développer le panneau",
+    "collapseSidebar": "Réduire le panneau",
+    "expandTitle": "Développer le panneau (⌘/Ctrl+B)",
+    "collapseTitle": "Réduire le panneau (⌘/Ctrl+B)",
+    "closeMenu": "Fermer le menu",
+    "signOut": "Se déconnecter",
+    "commerceIntelligence": "Intelligence commerciale"
+  },
+  "topbar": {
+    "openMenu": "Ouvrir le menu",
+    "userMenu": "Menu utilisateur",
+    "signOut": "Se déconnecter",
+    "dataFreshness": "État d'actualisation des données concurrentielles",
+    "dataMinAgo": "Données : il y a {{count}} min",
+    "competitiveData": "Données concurrentielles",
+    "refreshSchedule": "Actualisé toutes les 4 heures. Dernière actualisation complète : Aujourd'hui à 14h45. Prochaine : Aujourd'hui à 18h45."
+  },
+  "layout": {
+    "sandbox": "Bac à sable",
+    "sandboxDesc": "Vous explorez avec des données de test. Chaque clé {{key}} écrit ici. Aucune commande ni recette réelle n'est affectée.",
+    "openApiExplorer": "Ouvrir l'explorateur API",
+    "lastUpdated": "Dernière mise à jour",
+    "justNow": "à l'instant",
+    "secondsAgo": "il y a {{count}}s",
+    "minuteAgo": "il y a 1 min",
+    "minutesAgo": "il y a {{count}} min",
+    "hourAgo": "il y a 1 heure",
+    "hoursAgo": "il y a {{count}} heures",
+    "dayAgo": "il y a 1 jour",
+    "daysAgo": "il y a {{count}} jours",
+    "refreshData": "Actualiser le tableau de bord",
+    "dashboard": "Tableau de bord",
+    "lastRefreshedAt": "Dernière actualisation à {{time}}"
+  },
+  "overview": {
+    "title": "Vue d'ensemble",
+    "aiSees": "Ce que voit l'IA",
+    "aiSeesDesc": "Une lecture claire de votre marché en ce moment.",
+    "whatChanged": "Ce qui a changé",
+    "whatChangedFiltered": "Ce qui a changé · {{severity}}",
+    "whatChangedDesc": "Derniers mouvements des concurrents et de vos canaux. Cliquez sur une ligne pour agir.",
+    "whatChangedFilteredDesc": "Affichage de {{count}} alerte {{severity}}. Cliquez sur « Effacer le filtre » pour tout voir.",
+    "whatChangedFilteredDesc_plural": "Affichage de {{count}} alertes {{severity}}. Cliquez sur « Effacer le filtre » pour tout voir.",
+    "whatToDo": "Ce qu'il faut faire",
+    "whatToDoDesc": "Accédez directement aux flux de travail les plus importants du jour.",
+    "whereYouStand": "Votre position",
+    "whereYouStandDesc": "Chiffres clés et votre position par rapport au marché."
+  },
+  "pricing": {
+    "title": "Tarification",
+    "subtitle": "Recommandations de prix alimentées par l'IA avec raisonnement explicable et impact sur la marge projeté.",
+    "help1": "Chaque carte explique pourquoi le modèle recommande un nouveau prix, avec l'impact attendu sur les unités et le mensuel.",
+    "help2": "La confiance reflète la solidité des signaux sous-jacents. Révisez manuellement ceux à faible confiance.",
+    "help3": "Les règles de tarification en bas contraignent le modèle. Activez-les pour imposer des planchers, la parité et d'autres garde-fous."
+  }
+}

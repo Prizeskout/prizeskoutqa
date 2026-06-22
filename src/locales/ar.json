@@ -1,0 +1,81 @@
+{
+  "nav": {
+    "groups": {
+      "developers": "المطوّرون",
+      "intelligence": "الذكاء التجاري"
+    },
+    "overview": "نظرة عامة",
+    "apiKeys": "مفاتيح API",
+    "apiExplorer": "مستكشف API",
+    "usage": "الاستخدام",
+    "plans": "الخطط",
+    "logs": "السجلات",
+    "webhooks": "Webhooks",
+    "competitors": "المنافسون",
+    "fieldIntel": "استخبارات الميدان",
+    "pricing": "التسعير",
+    "promotions": "العروض",
+    "market": "السوق",
+    "benchmarks": "المعايير",
+    "settings": "الإعدادات",
+    "admin": "الإدارة"
+  },
+  "sidebar": {
+    "home": "الرئيسية",
+    "collapse": "طيّ القائمة",
+    "expandSidebar": "توسيع القائمة الجانبية",
+    "collapseSidebar": "طيّ القائمة الجانبية",
+    "expandTitle": "توسيع القائمة الجانبية (⌘/Ctrl+B)",
+    "collapseTitle": "طيّ القائمة الجانبية (⌘/Ctrl+B)",
+    "closeMenu": "إغلاق القائمة",
+    "signOut": "تسجيل الخروج",
+    "commerceIntelligence": "ذكاء تجاري"
+  },
+  "topbar": {
+    "openMenu": "فتح القائمة",
+    "userMenu": "قائمة المستخدم",
+    "signOut": "تسجيل الخروج",
+    "dataFreshness": "حالة تحديث البيانات التنافسية",
+    "dataMinAgo": "البيانات: منذ {{count}} دقيقة",
+    "competitiveData": "البيانات التنافسية",
+    "refreshSchedule": "يُحدَّث كل 4 ساعات. آخر تحديث كامل: اليوم الساعة 2:45 مساءً. التحديث القادم: اليوم الساعة 6:45 مساءً."
+  },
+  "layout": {
+    "sandbox": "وضع الاختبار",
+    "sandboxDesc": "أنت تستعرض بيانات تجريبية. كل مفتاح {{key}} يُكتب هنا. لا تتأثر الطلبات أو الإيرادات الحقيقية.",
+    "openApiExplorer": "فتح مستكشف API",
+    "lastUpdated": "آخر تحديث",
+    "justNow": "الآن",
+    "secondsAgo": "منذ {{count}} ثانية",
+    "minuteAgo": "منذ دقيقة",
+    "minutesAgo": "منذ {{count}} دقائق",
+    "hourAgo": "منذ ساعة",
+    "hoursAgo": "منذ {{count}} ساعات",
+    "dayAgo": "منذ يوم",
+    "daysAgo": "منذ {{count}} أيام",
+    "refreshData": "تحديث بيانات لوحة التحكم",
+    "dashboard": "لوحة التحكم",
+    "lastRefreshedAt": "آخر تحديث في {{time}}"
+  },
+  "overview": {
+    "title": "نظرة عامة",
+    "aiSees": "ما يراه الذكاء الاصطناعي",
+    "aiSeesDesc": "قراءة واضحة لسوقك الآن.",
+    "whatChanged": "ما الذي تغيّر",
+    "whatChangedFiltered": "ما تغيّر · {{severity}}",
+    "whatChangedDesc": "آخر تحركات المنافسين وقنواتك. اضغط على أي صف للتفاعل.",
+    "whatChangedFilteredDesc": "عرض {{count}} تنبيه {{severity}}. اضغط «مسح الفلتر» في الأعلى لعرض الكل.",
+    "whatChangedFilteredDesc_plural": "عرض {{count}} تنبيه {{severity}}. اضغط «مسح الفلتر» في الأعلى لعرض الكل.",
+    "whatToDo": "ما يجب فعله الآن",
+    "whatToDoDesc": "انتقل مباشرةً إلى أهم سير العمل اليوم.",
+    "whereYouStand": "أين تقف",
+    "whereYouStandDesc": "الأرقام الرئيسية وموقعك مقارنةً بالسوق."
+  },
+  "pricing": {
+    "title": "التسعير",
+    "subtitle": "توصيات أسعار مدعومة بالذكاء الاصطناعي مع تفسير واضح وتأثير متوقع على الهامش.",
+    "help1": "تشرح كل بطاقة سبب توصية النموذج بسعر جديد، مع الأثر المتوقع على الوحدات والإيرادات الشهرية.",
+    "help2": "تعكس درجة الثقة قوة الإشارات الأساسية. راجع التوصيات ذات الثقة المنخفضة يدويًا.",
+    "help3": "قواعد التسعير في الأسفل تقيّد النموذج. شغّلها لتطبيق الحدود الدنيا والتعادل وضوابط أخرى."
+  }
+}

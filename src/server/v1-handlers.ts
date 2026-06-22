@@ -633,22 +633,46 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
   // Combine: undercut competitor by 1 unit if it respects floor; else hold floor.
   let recommended: number;
   let reason: string;
+  let reason_code: string;
+  let reason_params: Record<string, string | number | null>;
   const undercutBy = 1;
 
   if (marginFloor !== null && competitorMin !== null) {
     const undercut = competitorMin - undercutBy;
     if (undercut >= marginFloor) {
       recommended = undercut;
+      reason_code = "undercut_competitor";
+      reason_params = {
+        competitor_min: round2(competitorMin),
+        undercut_by: undercutBy,
+        margin_pct: Math.round(targetMarginPct * 100),
+      };
       reason = `Undercut cheapest competitor (${round2(competitorMin)}) by ${undercutBy} unit${undercutBy === 1 ? "" : "s"} while respecting the ${Math.round(targetMarginPct * 100)}% margin floor.`;
     } else {
       recommended = marginFloor;
+      reason_code = "hold_margin_floor";
+      reason_params = {
+        margin_pct: Math.round(targetMarginPct * 100),
+        margin_floor: round2(marginFloor),
+        competitor_min: round2(competitorMin),
+      };
       reason = `Held the ${Math.round(targetMarginPct * 100)}% margin floor (${round2(marginFloor)}); undercutting the cheapest competitor (${round2(competitorMin)}) would push margin below target.`;
     }
   } else if (marginFloor !== null) {
     recommended = marginFloor;
+    reason_code = "no_competitor_data";
+    reason_params = {
+      margin_floor: round2(marginFloor),
+      margin_pct: Math.round(targetMarginPct * 100),
+    };
     reason = `No competitor price available — used margin floor (${round2(marginFloor)}) at ${Math.round(targetMarginPct * 100)}% target.`;
   } else if (competitorMin !== null) {
     recommended = competitorMin - undercutBy;
+    reason_code = "no_margin_inputs";
+    reason_params = {
+      competitor_min: round2(competitorMin),
+      undercut_by: undercutBy,
+    };
     reason = `No margin inputs configured — undercut cheapest competitor (${round2(competitorMin)}) by ${undercutBy} unit${undercutBy === 1 ? "" : "s"}. Add margin_inputs for safer recommendations.`;
   } else {
     return err(
@@ -679,7 +703,10 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
   const { finalPrice: ruleAdjusted, effects } = evaluateRules(recommended, ruleCtx, structuredRules);
   const clampedRules = effects.filter((e) => e.clamped);
   if (clampedRules.length > 0) {
-    reason += ` Rules applied: ${clampedRules.map((e) => e.reason).join("; ")}`;
+    const rulesText = clampedRules.map((e) => e.reason).join("; ");
+    reason += ` Rules applied: ${rulesText}`;
+    // Append rule adjustment to params so the frontend can render it per locale.
+    reason_params.rules = rulesText;
   }
 
   const finalPrice = round2(Math.max(0.01, ruleAdjusted));
@@ -767,6 +794,8 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
       ? { note: "Advisory mode: price recommendation returned but not applied. Upgrade to Standard to enable automated price application." }
       : {}),
     reason,
+    reason_code,
+    reason_params: { ...reason_params, fallback: reason },
     signals: {
       margin_floor: marginFloor !== null ? round2(marginFloor) : null,
       competitor_min: competitorMin,

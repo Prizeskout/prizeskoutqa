@@ -1,20 +1,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronRight, RefreshCw, FlaskConical, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { PageHeader } from "./PageHeader";
 import type { Channel } from "./ChannelFilter";
 import { SidebarCollapseProvider, useSidebarCollapse } from "./SidebarCollapseContext";
+import { i18n, getStoredLocale, applyLocale } from "@/lib/i18n";
 
-/**
- * Sandbox banner. The entire /dashboard surface runs in test mode: every
- * dataset shown here is seeded sample data scoped to the signed-in user, and
- * every API key minted from the dashboard is an `sk_test_` key whose calls
- * are routed through the sandbox dispatcher. No live storefront, billing, or
- * production pricing engine is touched.
- */
+// Ensure i18n module is initialized by importing it.
+void i18n;
+
 function SandboxBanner() {
+  const { t } = useTranslation();
   return (
     <div
       role="status"
@@ -41,9 +40,11 @@ function SandboxBanner() {
       >
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           <FlaskConical size={14} strokeWidth={2} aria-hidden />
-          <span style={{ fontWeight: 700, color: "#78350F" }}>Sandbox</span>
+          <span style={{ fontWeight: 700, color: "#78350F" }}>{t("layout.sandbox")}</span>
           <span style={{ color: "#92400E" }}>
-            You are exploring with test data. Every <code style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 12 }}>sk_test_</code> key writes here. No live orders or revenue are affected.
+            {t("layout.sandboxDesc", {
+              key: <code style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 12 }}>sk_test_</code>,
+            })}
           </span>
         </div>
         <Link
@@ -58,61 +59,53 @@ function SandboxBanner() {
             whiteSpace: "nowrap",
           }}
         >
-          Open API Explorer <ArrowRight size={12} aria-hidden />
+          {t("layout.openApiExplorer")} <ArrowRight size={12} aria-hidden />
         </Link>
       </div>
     </div>
   );
 }
 
-function formatRelative(ts: number, now: number) {
+function formatRelative(ts: number, now: number, t: (key: string, opts?: object) => string): string {
   const seconds = Math.max(0, Math.floor((now - ts) / 1000));
-  if (seconds < 10) return "just now";
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 10) return t("layout.justNow");
+  if (seconds < 60) return t("layout.secondsAgo", { count: seconds });
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min${minutes === 1 ? "" : "s"} ago`;
+  if (minutes < 60) return minutes === 1 ? t("layout.minuteAgo") : t("layout.minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return hours === 1 ? t("layout.hourAgo") : t("layout.hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return days === 1 ? t("layout.dayAgo") : t("layout.daysAgo", { count: days });
 }
 
 function LastUpdated({ pathname }: { pathname: string }) {
-  // Defer to client-only to avoid SSR/CSR mismatch on Date.now()
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number>(() => Date.now());
   const [now, setNow] = useState<number>(() => Date.now());
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
-  // Reset the "last updated" stamp on route change
   useEffect(() => {
     setUpdatedAt(Date.now());
     setNow(Date.now());
   }, [pathname]);
 
-  // Tick every 30s so the relative label stays fresh
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(id);
   }, []);
 
   const absolute = mounted
-    ? new Date(updatedAt).toLocaleTimeString(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-      })
+    ? new Date(updatedAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
     : "";
 
   const handleRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      // Re-runs every active route loader (sync: true awaits completion)
       await router.invalidate({ sync: true });
       setUpdatedAt(Date.now());
       setNow(Date.now());
@@ -122,13 +115,9 @@ function LastUpdated({ pathname }: { pathname: string }) {
   };
 
   if (!mounted) {
-    // Render a stable placeholder during SSR/initial hydration
     return (
-      <span
-        aria-hidden="true"
-        style={{ fontSize: 11, color: "transparent", userSelect: "none" }}
-      >
-        Last updated
+      <span aria-hidden="true" style={{ fontSize: 11, color: "transparent", userSelect: "none" }}>
+        {t("layout.lastUpdated")}
       </span>
     );
   }
@@ -143,15 +132,16 @@ function LastUpdated({ pathname }: { pathname: string }) {
         color: "#9A9A9A",
         fontWeight: 500,
       }}
-      title={`Last refreshed at ${absolute}`}
+      title={t("layout.lastRefreshedAt", { time: absolute })}
     >
       <span>
-        Last updated <span style={{ color: "#6B6B6B" }}>{formatRelative(updatedAt, now)}</span>
+        {t("layout.lastUpdated")}{" "}
+        <span style={{ color: "#6B6B6B" }}>{formatRelative(updatedAt, now, t)}</span>
       </span>
       <button
         type="button"
         onClick={handleRefresh}
-        aria-label="Refresh dashboard data"
+        aria-label={t("layout.refreshData")}
         aria-busy={refreshing}
         disabled={refreshing}
         style={{
@@ -183,13 +173,11 @@ function LastUpdated({ pathname }: { pathname: string }) {
         <RefreshCw
           size={12}
           aria-hidden="true"
-          style={{
-            animation: refreshing ? "prizeskout-spin 0.8s linear infinite" : "none",
-          }}
+          style={{ animation: refreshing ? "ps-spin 0.8s linear infinite" : "none" }}
         />
       </button>
       <style>{`
-        @keyframes prizeskout-spin {
+        @keyframes ps-spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
@@ -199,13 +187,15 @@ function LastUpdated({ pathname }: { pathname: string }) {
 }
 
 function Breadcrumbs({ title, pathname }: { title: string; pathname: string }) {
-  const isOverview = title.toLowerCase() === "overview";
+  const { t } = useTranslation();
+  const isOverview = title.toLowerCase() === "overview" || title === t("overview.title");
   const origin =
     typeof window !== "undefined" ? window.location.origin : "https://prizeskout.qa";
+  const dashboardLabel = t("layout.dashboard");
   const itemList = isOverview
-    ? [{ name: "Dashboard", item: `${origin}/dashboard` }]
+    ? [{ name: dashboardLabel, item: `${origin}/dashboard` }]
     : [
-        { name: "Dashboard", item: `${origin}/dashboard` },
+        { name: dashboardLabel, item: `${origin}/dashboard` },
         { name: title, item: typeof window !== "undefined" ? window.location.href : "" },
       ];
   const jsonLd = {
@@ -255,7 +245,7 @@ function Breadcrumbs({ title, pathname }: { title: string; pathname: string }) {
               if (!isOverview) e.currentTarget.style.color = "#6B6B6B";
             }}
           >
-            Dashboard
+            {dashboardLabel}
           </Link>
           {!isOverview && (
             <>
@@ -307,11 +297,14 @@ function DashboardLayoutInner({
   const location = useLocation();
   const { collapsed } = useSidebarCollapse();
   const sidebarWidth = collapsed ? 64 : 240;
-
-  // On mobile, when collapsed, the icon rail is always visible (56px) and the
-  // main content shifts right to make room. When expanded, the rail is hidden
-  // and the off-canvas drawer takes over.
   const mobileShift = collapsed ? 56 : 0;
+
+  // On client mount: read the stored locale and apply it to i18n + html dir/lang.
+  useEffect(() => {
+    const lng = getStoredLocale();
+    i18n.changeLanguage(lng);
+    applyLocale(lng);
+  }, []);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FAFAF9" }}>
@@ -323,7 +316,6 @@ function DashboardLayoutInner({
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          // CSS vars consumed by the @media rules below.
           ["--ps-sidebar-w" as string]: `${sidebarWidth}px`,
           ["--ps-sidebar-mobile-w" as string]: `${mobileShift}px`,
         }}
@@ -340,11 +332,7 @@ function DashboardLayoutInner({
           id="main-content"
           tabIndex={-1}
           className="dashboard-main-content"
-          style={{
-            flex: 1,
-            backgroundColor: "#FAFAF9",
-            overflowY: "auto",
-          }}
+          style={{ flex: 1, backgroundColor: "#FAFAF9", overflowY: "auto" }}
         >
           <div
             key={location.pathname}
@@ -366,13 +354,14 @@ function DashboardLayoutInner({
         </main>
       </div>
       <style>{`
+        /* Use logical properties so the same CSS works for LTR and RTL. */
         .dashboard-main-shift {
-          margin-left: var(--ps-sidebar-mobile-w, 0px);
-          transition: margin-left 0.2s ease;
+          margin-inline-start: var(--ps-sidebar-mobile-w, 0px);
+          transition: margin-inline-start 0.2s ease;
         }
         .dashboard-main-content { padding: 16px; }
         @media (min-width: 768px) {
-          .dashboard-main-shift { margin-left: var(--ps-sidebar-w, 240px); }
+          .dashboard-main-shift { margin-inline-start: var(--ps-sidebar-w, 240px); }
           .dashboard-main-content { padding: 24px; }
         }
         @keyframes dashboardPageFade {

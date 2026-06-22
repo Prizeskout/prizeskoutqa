@@ -1,0 +1,81 @@
+{
+  "nav": {
+    "groups": {
+      "developers": "Developers",
+      "intelligence": "Intelligence"
+    },
+    "overview": "Overview",
+    "apiKeys": "API Keys",
+    "apiExplorer": "API Explorer",
+    "usage": "Usage",
+    "plans": "Plans",
+    "logs": "Logs",
+    "webhooks": "Webhooks",
+    "competitors": "Competitors",
+    "fieldIntel": "Field Intel",
+    "pricing": "Pricing",
+    "promotions": "Promotions",
+    "market": "Market",
+    "benchmarks": "Benchmarks",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+  "sidebar": {
+    "home": "Home",
+    "collapse": "Collapse",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "expandTitle": "Expand sidebar (⌘/Ctrl+B)",
+    "collapseTitle": "Collapse sidebar (⌘/Ctrl+B)",
+    "closeMenu": "Close menu",
+    "signOut": "Sign out",
+    "commerceIntelligence": "Commerce Intelligence"
+  },
+  "topbar": {
+    "openMenu": "Open menu",
+    "userMenu": "User menu",
+    "signOut": "Sign out",
+    "dataFreshness": "Competitive data refresh status",
+    "dataMinAgo": "Data: {{count}} min ago",
+    "competitiveData": "Competitive data",
+    "refreshSchedule": "Refreshed every 4 hours. Last full refresh: Today at 2:45 PM. Next refresh: Today at 6:45 PM."
+  },
+  "layout": {
+    "sandbox": "Sandbox",
+    "sandboxDesc": "You are exploring with test data. Every {{key}} key writes here. No live orders or revenue are affected.",
+    "openApiExplorer": "Open API Explorer",
+    "lastUpdated": "Last updated",
+    "justNow": "just now",
+    "secondsAgo": "{{count}}s ago",
+    "minuteAgo": "1 min ago",
+    "minutesAgo": "{{count}} mins ago",
+    "hourAgo": "1 hour ago",
+    "hoursAgo": "{{count}} hours ago",
+    "dayAgo": "1 day ago",
+    "daysAgo": "{{count}} days ago",
+    "refreshData": "Refresh dashboard data",
+    "dashboard": "Dashboard",
+    "lastRefreshedAt": "Last refreshed at {{time}}"
+  },
+  "overview": {
+    "title": "Overview",
+    "aiSees": "What AI sees",
+    "aiSeesDesc": "A plain-English read on your market right now.",
+    "whatChanged": "What changed",
+    "whatChangedFiltered": "What changed · {{severity}}",
+    "whatChangedDesc": "Recent moves from competitors and your channels. Click any row to act.",
+    "whatChangedFilteredDesc": "Showing {{count}} {{severity}} alert. Click \"Clear filter\" in the hero to see all.",
+    "whatChangedFilteredDesc_plural": "Showing {{count}} {{severity}} alerts. Click \"Clear filter\" in the hero to see all.",
+    "whatToDo": "What to do next",
+    "whatToDoDesc": "Jump straight into the workflows that matter most today.",
+    "whereYouStand": "Where you stand",
+    "whereYouStandDesc": "Headline numbers and your position vs the market."
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "AI-driven price recommendations with explainable reasoning and projected margin impact.",
+    "help1": "Each card explains why the model recommends a new price, plus the expected unit and monthly impact.",
+    "help2": "Confidence reflects how strong the underlying signals are. Review the low-confidence ones manually.",
+    "help3": "Pricing rules at the bottom constrain the model. Toggle them to enforce floors, parity, and other guardrails."
+  }
+}

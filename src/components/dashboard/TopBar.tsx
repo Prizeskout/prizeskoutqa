@@ -1,10 +1,13 @@
-import { useState } from "react";
-import { Menu, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, RefreshCw, LogOut } from "lucide-react";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { ChannelFilter, type Channel } from "./ChannelFilter";
 import { NotificationsBell } from "./NotificationsBell";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
-// Visual-only data freshness indicator. Wired to real refresh times when the
-// data pipeline lands; for now hardcoded to "4 min ago" (fresh).
 const DATA_FRESHNESS_MIN = 4;
 
 function freshnessColor(min: number) {
@@ -14,6 +17,7 @@ function freshnessColor(min: number) {
 }
 
 function DataFreshnessIndicator() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const color = freshnessColor(DATA_FRESHNESS_MIN);
 
@@ -37,10 +41,12 @@ function DataFreshnessIndicator() {
           color,
           whiteSpace: "nowrap",
         }}
-        aria-label="Competitive data refresh status"
+        aria-label={t("topbar.dataFreshness")}
       >
         <RefreshCw size={12} strokeWidth={2} color={color} />
-        <span className="hidden sm:inline">Data: {DATA_FRESHNESS_MIN} min ago</span>
+        <span className="hidden sm:inline">
+          {t("topbar.dataMinAgo", { count: DATA_FRESHNESS_MIN })}
+        </span>
       </button>
       {open && (
         <div
@@ -48,7 +54,7 @@ function DataFreshnessIndicator() {
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
-            right: 0,
+            insetInlineEnd: 0,
             width: 260,
             backgroundColor: "#FFFFFF",
             border: "1px solid #E5E2DB",
@@ -62,10 +68,176 @@ function DataFreshnessIndicator() {
           }}
         >
           <div style={{ fontWeight: 600, color: "#1A1A18", marginBottom: 4 }}>
-            Competitive data
+            {t("topbar.competitiveData")}
           </div>
-          Refreshed every 4 hours. Last full refresh: Today at 2:45 PM. Next refresh: Today
-          at 6:45 PM.
+          {t("topbar.refreshSchedule")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getInitials(name: string | null | undefined, email: string | null | undefined): string {
+  const source = (name || email || "").trim();
+  if (!source) return "U";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
+function UserMenu() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const displayName =
+    (user?.user_metadata?.display_name as string | undefined) ||
+    user?.email?.split("@")[0] ||
+    "Account";
+  const initials = getInitials(displayName, user?.email);
+
+  const handleSignOut = async () => {
+    setOpen(false);
+    await supabase.auth.signOut();
+    await router.invalidate();
+    navigate({ to: "/login" });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    function onMouseDown(e: MouseEvent) {
+      const target = e.target as Node;
+      if (
+        popoverRef.current?.contains(target) ||
+        buttonRef.current?.contains(target)
+      )
+        return;
+      setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={t("topbar.userMenu")}
+        aria-expanded={open}
+        aria-haspopup="true"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: 9999,
+          backgroundColor: "#EA580C",
+          color: "#FFFFFF",
+          fontSize: 12,
+          fontWeight: 700,
+          border: "none",
+          cursor: "pointer",
+          flexShrink: 0,
+          transition: "opacity 0.15s",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+      >
+        {initials}
+      </button>
+
+      {open && (
+        <div
+          ref={popoverRef}
+          role="menu"
+          aria-label={t("topbar.userMenu")}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            insetInlineEnd: 0,
+            minWidth: 220,
+            backgroundColor: "#FFFFFF",
+            border: "1px solid #E5E2DB",
+            borderRadius: 10,
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
+            zIndex: 60,
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid #F1EFE8" }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#1A1A18",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {displayName}
+            </div>
+            {user?.email && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#9A9A9A",
+                  marginTop: 2,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {user.email}
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: "4px 0" }}>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleSignOut}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                width: "100%",
+                padding: "9px 14px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#DC2626",
+                textAlign: "start",
+                transition: "background-color 0.12s",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "rgba(220, 38, 38, 0.06)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              <LogOut size={15} strokeWidth={1.75} />
+              {t("topbar.signOut")}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -83,9 +255,9 @@ export function TopBar({
   channel: Channel;
   onChannelChange: (c: Channel) => void;
   onMenuClick?: () => void;
-  // Hide the hamburger when the mobile icon rail is already visible.
   showMenuButton?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <header
       className="flex items-center justify-between"
@@ -100,7 +272,7 @@ export function TopBar({
         {showMenuButton && (
           <button
             type="button"
-            aria-label="Open menu"
+            aria-label={t("topbar.openMenu")}
             onClick={onMenuClick}
             className="flex items-center justify-center md:hidden"
             style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }}
@@ -124,9 +296,11 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
+        <LanguageSwitcher />
         <ChannelFilter value={channel} onChange={onChannelChange} />
         <DataFreshnessIndicator />
         <NotificationsBell />
+        <UserMenu />
       </div>
     </header>
   );

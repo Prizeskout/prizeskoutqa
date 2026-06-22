@@ -169,19 +169,35 @@ const AR_TEMPLATE: Record<ActionKey, (v?: Record<string, string | number>) => st
     `بيانات غير كافية لإصدار توصية`,
 };
 
-const DEEPL_STUB =
-  "[Arabic pending — set DEEPL_API_KEY Worker secret to enable dynamic translation]";
+// ─── Static French action phrases (business French) ──────────────────────────
+
+const FR_TEMPLATE: Record<ActionKey, (v?: Record<string, string | number>) => string> = {
+  raise_above_floor: (v) =>
+    `Relever le prix au-dessus du plancher — prix actuel ${v?.price ?? ""} QAR inférieur au plancher de marge ${v?.floor ?? ""} QAR`,
+  lower_to_match: (v) =>
+    `Baisser le prix pour s'aligner sur ${v?.competitor ?? "le concurrent"} : ${v?.price ?? ""} QAR`,
+  hold_competitive: () =>
+    `Maintenir le prix — marge et position concurrentielle acceptables`,
+  enforce_map: () =>
+    `Appliquer l'accord de prix minimum — examiner la violation`,
+  group_pricing_tier: () =>
+    `Activer la tarification de groupe pour le palier actuel`,
+  priced_aggressively_low: () =>
+    `Prix agressivement bas par rapport aux concurrents — envisager une hausse pour récupérer la marge`,
+  no_data: () =>
+    `Données insuffisantes pour émettre une recommandation`,
+};
 
 function buildAction(
   key: ActionKey,
   en: string,
   vars?: Record<string, string | number>,
-): { action_suggestion: string; action_ar: string; _ar_stub?: boolean } {
-  const fn = AR_TEMPLATE[key];
-  if (fn) {
-    return { action_suggestion: en, action_ar: fn(vars) };
-  }
-  return { action_suggestion: en, action_ar: DEEPL_STUB, _ar_stub: true };
+): { action_suggestion: string; action_ar: string; action_fr: string } {
+  return {
+    action_suggestion: en,
+    action_ar: AR_TEMPLATE[key]?.(vars) ?? en,
+    action_fr: FR_TEMPLATE[key]?.(vars) ?? en,
+  };
 }
 
 // ─── Margin enrichment ───────────────────────────────────────────────────────

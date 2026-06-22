@@ -21,6 +21,7 @@ import {
   CreditCard,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,37 +30,42 @@ import { useSidebarCollapse } from "./SidebarCollapseContext";
 
 type NavItem = {
   to: string;
+  // label is the English fallback used as translation key lookup
   label: string;
+  tKey: string;
   icon: LucideIcon;
 };
 
 type NavGroup = {
   label: string;
+  tKey: string;
   items: NavItem[];
 };
 
 const navGroups: NavGroup[] = [
   {
     label: "Developers",
+    tKey: "nav.groups.developers",
     items: [
-      { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-      { to: "/dashboard/api-keys", label: "API Keys", icon: KeyRound },
-      { to: "/dashboard/api-explorer", label: "API Explorer", icon: Terminal },
-      { to: "/dashboard/usage", label: "Usage", icon: Activity },
-      { to: "/dashboard/plans", label: "Plans", icon: CreditCard },
-      { to: "/dashboard/logs", label: "Logs", icon: FileCode2 },
-      { to: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
+      { to: "/dashboard", label: "Overview", tKey: "nav.overview", icon: LayoutDashboard },
+      { to: "/dashboard/api-keys", label: "API Keys", tKey: "nav.apiKeys", icon: KeyRound },
+      { to: "/dashboard/api-explorer", label: "API Explorer", tKey: "nav.apiExplorer", icon: Terminal },
+      { to: "/dashboard/usage", label: "Usage", tKey: "nav.usage", icon: Activity },
+      { to: "/dashboard/plans", label: "Plans", tKey: "nav.plans", icon: CreditCard },
+      { to: "/dashboard/logs", label: "Logs", tKey: "nav.logs", icon: FileCode2 },
+      { to: "/dashboard/webhooks", label: "Webhooks", tKey: "nav.webhooks", icon: Webhook },
     ],
   },
   {
     label: "Intelligence",
+    tKey: "nav.groups.intelligence",
     items: [
-      { to: "/dashboard/competitors", label: "Competitors", icon: Crosshair },
-      { to: "/dashboard/field-intel", label: "Field Intel", icon: MapPin },
-      { to: "/dashboard/pricing", label: "Pricing", icon: TrendingUp },
-      { to: "/dashboard/promotions", label: "Promotions", icon: Megaphone },
-      { to: "/dashboard/market", label: "Market", icon: BarChart3 },
-      { to: "/dashboard/benchmarks", label: "Benchmarks", icon: Target },
+      { to: "/dashboard/competitors", label: "Competitors", tKey: "nav.competitors", icon: Crosshair },
+      { to: "/dashboard/field-intel", label: "Field Intel", tKey: "nav.fieldIntel", icon: MapPin },
+      { to: "/dashboard/pricing", label: "Pricing", tKey: "nav.pricing", icon: TrendingUp },
+      { to: "/dashboard/promotions", label: "Promotions", tKey: "nav.promotions", icon: Megaphone },
+      { to: "/dashboard/market", label: "Market", tKey: "nav.market", icon: BarChart3 },
+      { to: "/dashboard/benchmarks", label: "Benchmarks", tKey: "nav.benchmarks", icon: Target },
     ],
   },
 ];
@@ -67,6 +73,7 @@ const navGroups: NavGroup[] = [
 const settingsNav: NavItem = {
   to: "/dashboard/settings",
   label: "Settings",
+  tKey: "nav.settings",
   icon: Settings,
 };
 
@@ -81,13 +88,15 @@ function NavLinkItem({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  const { t } = useTranslation();
   const Icon = item.icon;
+  const label = t(item.tKey);
   return (
     <Link
       to={item.to}
       onClick={onNavigate}
-      title={collapsed ? item.label : undefined}
-      aria-label={collapsed ? item.label : undefined}
+      title={collapsed ? label : undefined}
+      aria-label={collapsed ? label : undefined}
       className="relative flex items-center gap-3 text-[14px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40 focus-visible:ring-inset"
       style={{
         padding: collapsed ? "10px 0" : "10px 20px",
@@ -105,12 +114,12 @@ function NavLinkItem({
       {active && (
         <span
           aria-hidden
-          className="absolute left-0 top-0 h-full"
-          style={{ width: 3, backgroundColor: "#EA580C" }}
+          className="absolute top-0 h-full"
+          style={{ insetInlineStart: 0, width: 3, backgroundColor: "#EA580C" }}
         />
       )}
       <Icon size={18} strokeWidth={1.75} />
-      {!collapsed && <span>{item.label}</span>}
+      {!collapsed && <span>{label}</span>}
     </Link>
   );
 }
@@ -124,6 +133,7 @@ function SidebarContent({
   collapsed?: boolean;
   showCollapseToggle?: boolean;
 }) {
+  const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { toggle } = useSidebarCollapse();
   const { data: isAdmin } = useIsAdmin();
@@ -131,7 +141,13 @@ function SidebarContent({
   const groups: NavGroup[] = isAdmin
     ? navGroups.map((g) =>
         g.label === "Developers"
-          ? { ...g, items: [...g.items, { to: "/dashboard/admin", label: "Admin", icon: ShieldCheck }] }
+          ? {
+              ...g,
+              items: [
+                ...g.items,
+                { to: "/dashboard/admin", label: "Admin", tKey: "nav.admin", icon: ShieldCheck },
+              ],
+            }
           : g,
       )
     : navGroups;
@@ -150,7 +166,7 @@ function SidebarContent({
           <Link
             to="/dashboard"
             onClick={onNavigate}
-            aria-label="PrizeSkout home"
+            aria-label={t("sidebar.home")}
             className="mx-auto flex items-center justify-center"
             style={{
               width: 32,
@@ -165,21 +181,21 @@ function SidebarContent({
             P
           </Link>
         ) : (
-          <Link to="/dashboard" onClick={onNavigate} aria-label="PrizeSkout home" className="flex flex-col gap-1">
+          <Link to="/dashboard" onClick={onNavigate} aria-label={t("sidebar.home")} className="flex flex-col gap-1">
             <img
               src={logoDark}
-              alt="PrizeSkout"
+              alt="Logo"
               style={{ height: 28, width: "auto", display: "block" }}
             />
-            <span style={{ fontSize: 11, fontWeight: 400, color: "#8A8A8A", paddingLeft: 2 }}>
-              Commerce Intelligence
+            <span style={{ fontSize: 11, fontWeight: 400, color: "#8A8A8A", paddingInlineStart: 2 }}>
+              {t("sidebar.commerceIntelligence")}
             </span>
           </Link>
         )}
         {onNavigate && !collapsed && (
           <button
             type="button"
-            aria-label="Close menu"
+            aria-label={t("sidebar.closeMenu")}
             onClick={onNavigate}
             className="flex items-center justify-center md:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
             style={{ width: 32, height: 32, borderRadius: 8, color: "#8A8A8A" }}
@@ -189,9 +205,9 @@ function SidebarContent({
         )}
       </div>
 
-      {/* Primary nav grouped by intent */}
+      {/* Primary nav */}
       <nav aria-label="Primary navigation" className="mt-6 flex flex-col gap-1">
-        {navGroups.map((group) => (
+        {groups.map((group) => (
           <div key={group.label} className="flex flex-col">
             {!collapsed ? (
               <div
@@ -204,16 +220,12 @@ function SidebarContent({
                   color: "#5A5A5A",
                 }}
               >
-                {group.label}
+                {t(group.tKey)}
               </div>
             ) : (
               <div
                 aria-hidden
-                style={{
-                  margin: "8px 12px 4px",
-                  height: 1,
-                  backgroundColor: "#1A1A1A",
-                }}
+                style={{ margin: "8px 12px 4px", height: 1, backgroundColor: "#1A1A1A" }}
               />
             )}
             {group.items.map((item) => (
@@ -229,10 +241,8 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Divider + Settings */}
       <div style={{ margin: "0 16px", height: 1, backgroundColor: "#1A1A1A" }} />
       <nav aria-label="Settings navigation" className="py-2">
         <NavLinkItem
@@ -248,9 +258,9 @@ function SidebarContent({
         <button
           type="button"
           onClick={toggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("sidebar.expandSidebar") : t("sidebar.collapseSidebar")}
           aria-keyshortcuts="Control+B Meta+B"
-          title={`${collapsed ? "Expand sidebar" : "Collapse sidebar"} (⌘/Ctrl+B)`}
+          title={collapsed ? t("sidebar.expandTitle") : t("sidebar.collapseTitle")}
           className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
           style={{
             margin: collapsed ? "4px auto 8px" : "4px 16px 8px",
@@ -277,11 +287,10 @@ function SidebarContent({
           }}
         >
           {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
-          {!collapsed && <span>Collapse</span>}
+          {!collapsed && <span>{t("sidebar.collapse")}</span>}
         </button>
       )}
 
-      {/* User */}
       <UserPanel collapsed={collapsed} />
     </>
   );
@@ -296,6 +305,7 @@ function getInitials(name: string | null | undefined, email: string | null | und
 }
 
 function UserPanel({ collapsed = false }: { collapsed?: boolean }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
   const navigate = useNavigate();
@@ -313,10 +323,7 @@ function UserPanel({ collapsed = false }: { collapsed?: boolean }) {
 
   if (collapsed) {
     return (
-      <div
-        className="flex flex-col items-center"
-        style={{ padding: "8px 0 16px", gap: 8 }}
-      >
+      <div className="flex flex-col items-center" style={{ padding: "8px 0 16px", gap: 8 }}>
         <div
           className="flex items-center justify-center"
           title={displayName}
@@ -335,8 +342,8 @@ function UserPanel({ collapsed = false }: { collapsed?: boolean }) {
         <button
           type="button"
           onClick={handleSignOut}
-          aria-label="Sign out"
-          title="Sign out"
+          aria-label={t("sidebar.signOut")}
+          title={t("sidebar.signOut")}
           className="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
           style={{
             width: 28,
@@ -406,8 +413,8 @@ function UserPanel({ collapsed = false }: { collapsed?: boolean }) {
       <button
         type="button"
         onClick={handleSignOut}
-        aria-label="Sign out"
-        title="Sign out"
+        aria-label={t("sidebar.signOut")}
+        title={t("sidebar.signOut")}
         className="flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EA580C]/40"
         style={{
           width: 28,
@@ -439,11 +446,12 @@ export function Sidebar() {
   const { collapsed } = useSidebarCollapse();
   return (
     <aside
-      className="dark-scroll fixed left-0 top-0 hidden h-screen flex-col md:flex"
+      className="dark-scroll fixed top-0 hidden h-screen flex-col md:flex"
       style={{
+        insetInlineStart: 0,
         width: collapsed ? 64 : 240,
         backgroundColor: "#050505",
-        borderRight: "1px solid #1A1A1A",
+        borderInlineEnd: "1px solid #1A1A1A",
         zIndex: 30,
         transition: "width 0.2s ease",
       }}
@@ -453,37 +461,23 @@ export function Sidebar() {
   );
 }
 
-/**
- * Mobile sidebar.
- *
- * Two modes, both controlled by the same `collapsed` setting that drives
- * desktop:
- *   - collapsed=true  → a thin always-visible icon rail (56px) on the left
- *   - collapsed=false → an off-canvas drawer that opens when the user taps
- *     the hamburger in TopBar. Tapping a nav item or the overlay closes it.
- *
- * The rail itself exposes the collapse toggle so users can switch between
- * the two modes on small screens too. The setting is persisted in
- * localStorage by SidebarCollapseProvider.
- */
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { collapsed } = useSidebarCollapse();
 
   return (
     <>
-      {/* Always-on icon rail when collapsed (mobile only) */}
       {collapsed && (
         <aside
           className="dark-scroll md:hidden"
           aria-label="Primary navigation"
           style={{
             position: "fixed",
-            left: 0,
+            insetInlineStart: 0,
             top: 0,
             bottom: 0,
             width: 56,
             backgroundColor: "#050505",
-            borderRight: "1px solid #1A1A1A",
+            borderInlineEnd: "1px solid #1A1A1A",
             display: "flex",
             flexDirection: "column",
             zIndex: 30,
@@ -493,7 +487,6 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
         </aside>
       )}
 
-      {/* Off-canvas overlay drawer (only meaningful when expanded) */}
       <div
         onClick={onClose}
         aria-hidden
@@ -513,12 +506,12 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
         aria-hidden={!open || collapsed}
         style={{
           position: "fixed",
-          left: 0,
+          insetInlineStart: 0,
           top: 0,
           bottom: 0,
           width: 260,
           backgroundColor: "#050505",
-          borderRight: "1px solid #1A1A1A",
+          borderInlineEnd: "1px solid #1A1A1A",
           display: "flex",
           flexDirection: "column",
           transform: open && !collapsed ? "translateX(0)" : "translateX(-100%)",
@@ -531,4 +524,3 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
     </>
   );
 }
-
