@@ -15,7 +15,7 @@
 //   4. action_ar          — static Arabic lookup; DeepL stub for novel strings
 //
 // Delivery:
-//   HMAC-SHA-256 over `${timestamp}.${body}` → X-PrizeSkout-Signature: t=,v1=
+//   HMAC-SHA-256 over `${timestamp}.${body}` → X-Webhook-Signature: t=,v1=
 //   Retry backoff: 5s → 30s → 5min → 30min → dead-letter (4 retries max)
 //   Retry queue: /api/public/hooks/webhook-intelligence-retry (pg_cron pattern)
 //
@@ -475,12 +475,12 @@ async function deliverOne(
   const { header, timestamp } = buildSignature(sub.secret, body);
   const headers: Record<string, string> = {
     "Content-Type":                      "application/json",
-    "X-PrizeSkout-Event":               ev.eventType,
-    "X-PrizeSkout-Event-Id":            ev.eventId,
-    "X-PrizeSkout-Timestamp":           timestamp,
-    "X-PrizeSkout-Signature":           header,
-    "X-PrizeSkout-Delivery-Attempt":    String(attempt),
-    "X-PrizeSkout-Intelligence-Version": "1",
+    "X-Webhook-Event":               ev.eventType,
+    "X-Webhook-Event-Id":            ev.eventId,
+    "X-Webhook-Timestamp":           timestamp,
+    "X-Webhook-Signature":           header,
+    "X-Webhook-Delivery-Attempt":    String(attempt),
+    "X-Webhook-Intelligence-Version": "1",
   };
 
   const t0 = Date.now();

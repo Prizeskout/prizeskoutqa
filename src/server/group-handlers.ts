@@ -107,7 +107,7 @@ async function buildInvite(
 ): Promise<{ wa_link: string; qr_data_url: string }> {
   const savingsPct = Math.round((1 - currentPrice / basePrice) * 100);
   const expiryDate = new Date(expiryAt).toLocaleDateString("en-QA", { dateStyle: "medium" });
-  const joinUrl = `https://prizeskoutqa.prizeskoutqatar.workers.dev/group/${campaignId}`;
+  const joinUrl = `${process.env.WORKER_ORIGIN ?? "https://prizeskoutqa.prizeskoutqatar.workers.dev"}/group/${campaignId}`;
 
   const message = [
     `🛒 Group Buy: ${sku}`,
@@ -234,7 +234,7 @@ export async function processExpiredCampaigns(): Promise<{
               phone:     b.phone,
               joined_at: b.joined_at,
             })),
-            note: "SIGNAL ONLY — Prizeskout does not process payment. Route this event to your payment system.",
+            note: "SIGNAL ONLY — This platform does not process payment. Route this event to your payment system.",
           },
         });
       }
@@ -709,7 +709,7 @@ export async function handleCloseCampaign(
           buyers:       (buyers ?? []).map((b) => ({
             buyer_id: b.buyer_id, buyer_name: b.buyer_name, phone: b.phone, joined_at: b.joined_at,
           })),
-          note: "SIGNAL ONLY — Prizeskout does not process payment.",
+          note: "SIGNAL ONLY — This platform does not process payment.",
         },
       });
     }
@@ -729,7 +729,7 @@ export async function handleCloseCampaign(
     buyer_count:  campaign.current_buyers,
     webhook_emitted: tierMet ? "group.payment_trigger" : null,
     note: tierMet
-      ? "SIGNAL ONLY: group.payment_trigger emitted to your registered webhook endpoint. Prizeskout does not process payment."
+      ? "SIGNAL ONLY: group.payment_trigger emitted to your registered webhook endpoint. This platform does not process payment."
       : "Campaign closed without meeting a tier threshold. No payment trigger emitted.",
   });
 }

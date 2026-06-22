@@ -327,7 +327,7 @@ export async function handleIssueEmbedToken(
   const jti = randomBytes(12).toString("hex");
 
   const claims = {
-    iss: "prizeskout-embed",
+    iss: "embed-v1",
     sub: merchant_id.trim(),
     account_id: merchant_id.trim(),
     licensee_id: ctx.licenseeId,
@@ -605,8 +605,8 @@ export function renderWidget(
 
   const poweredByHtml = cfg.powered_by_visible
     ? `<div class="footer">
-        <span class="en">Powered by <strong>Prizeskout</strong></span>
-        <span class="ar">مدعوم بواسطة <strong>Prizeskout</strong></span>
+        <span class="en">Powered by <strong>${brand}</strong></span>
+        <span class="ar">مدعوم بواسطة <strong>${brand}</strong></span>
       </div>`
     : "";
 

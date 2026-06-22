@@ -17,7 +17,7 @@ const Schema = z.object({
   // Don't restrict the format too much — users may paste any test secret. We
   // do enforce a sane length window to prevent obvious abuse / DoS.
   secret: z.string().min(8).max(512),
-  // Unix epoch seconds, sent as a string to match the X-PrizeSkout-Timestamp
+  // Unix epoch seconds, sent as a string to match the X-Webhook-Timestamp
   // header verbatim. Accept either a numeric string or an actual number.
   timestamp: z.union([z.string().min(1).max(20), z.number().int()]),
   // Raw request body exactly as the receiver saw it. Cap at 256 KB so we

@@ -118,6 +118,9 @@ export type V1Context = {
   accountId: string;
   licenseeId: string;
   scopes: string[];
+  plan: import("./plans").Plan;
+  isPlatform: boolean;
+  planMode: import("./plans").PlanMode;
 };
 
 export type V1Result = {
@@ -227,6 +230,41 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
   }
   if (products.length > 1000) {
     return err("validation_failed", "Maximum 1000 products per /v1/sync call.", 422);
+  }
+
+  // Plan product-cap enforcement (skip for enterprise — unlimited)
+  const { PLAN_LIMITS } = await import("./plans");
+  const planLimit = PLAN_LIMITS[ctx.plan].maxProducts;
+  if (planLimit !== -1) {
+    const { count: currentCount } = await supabaseAdmin
+      .from("catalog_products")
+      .select("id", { count: "exact", head: true })
+      .eq("account_id", ctx.accountId);
+
+    const submittedSkus = (products as SyncProduct[]).map((p) => p.sku).filter(Boolean);
+    const { data: existingRows } = await supabaseAdmin
+      .from("catalog_products")
+      .select("sku")
+      .eq("account_id", ctx.accountId)
+      .in("sku", submittedSkus);
+    const existingSkus = new Set((existingRows ?? []).map((r: { sku: string }) => r.sku));
+    const newCount = submittedSkus.filter((s) => !existingSkus.has(s)).length;
+
+    if ((currentCount ?? 0) + newCount > planLimit) {
+      const upgradePlan = ctx.plan === "starter" ? "standard" : "enterprise";
+      return err(
+        "plan_limit_exceeded",
+        `Your ${ctx.plan} plan allows up to ${planLimit} products. You have ${currentCount ?? 0} and this batch would add ${newCount} new product(s). Upgrade to ${upgradePlan} to increase your product limit.`,
+        402,
+        {
+          limit_name: "products",
+          plan_limit: planLimit,
+          current: currentCount ?? 0,
+          would_add: newCount,
+          upgrade_to: upgradePlan,
+        },
+      );
+    }
   }
 
   const results: SyncItemResult[] = [];
@@ -702,12 +740,32 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     });
   }
 
+  // Automated plans (standard, enterprise) auto-apply the recommendation.
+  if (ctx.planMode === "automated") {
+    await supabaseAdmin.from("catalog_prices").upsert(
+      {
+        product_id: product.id,
+        account_id: ctx.accountId,
+        licensee_id: ctx.licenseeId,
+        channel,
+        list_price: finalPrice,
+        currency: "USD",
+      },
+      { onConflict: "product_id,channel" },
+    );
+  }
+
   return ok({
     sku,
     product_id: product.id,
     channel,
     current_price: currentPrice,
     recommended_price: finalPrice,
+    mode: ctx.planMode,
+    applied: ctx.planMode === "automated",
+    ...(ctx.planMode === "advisory"
+      ? { note: "Advisory mode: price recommendation returned but not applied. Upgrade to Standard to enable automated price application." }
+      : {}),
     reason,
     signals: {
       margin_floor: marginFloor !== null ? round2(marginFloor) : null,

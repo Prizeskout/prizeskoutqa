@@ -154,7 +154,7 @@ function Callout({
 
 const HEADERS: { h: string; v: React.ReactNode }[] = [
   {
-    h: "X-PrizeSkout-Signature",
+    h: "X-Webhook-Signature",
     v: (
       <>
         Comma-separated values: <Code>t=&lt;unix_ts&gt;,v1=&lt;hex&gt;,sha256=&lt;hex&gt;</Code>.{" "}
@@ -165,7 +165,7 @@ const HEADERS: { h: string; v: React.ReactNode }[] = [
     ),
   },
   {
-    h: "X-PrizeSkout-Timestamp",
+    h: "X-Webhook-Timestamp",
     v: (
       <>
         Unix epoch seconds when the signature was generated. Compare against your server clock to reject
@@ -174,7 +174,7 @@ const HEADERS: { h: string; v: React.ReactNode }[] = [
     ),
   },
   {
-    h: "X-PrizeSkout-Event",
+    h: "X-Webhook-Event",
     v: (
       <>
         Event type, e.g. <Code>competitor.price_changed</Code>,{" "}
@@ -184,7 +184,7 @@ const HEADERS: { h: string; v: React.ReactNode }[] = [
     ),
   },
   {
-    h: "X-PrizeSkout-Delivery-Id",
+    h: "X-Webhook-Delivery-Id",
     v: (
       <>
         Unique ID for this event. Retries reuse the same ID — store it and dedupe to make your handler
@@ -193,7 +193,7 @@ const HEADERS: { h: string; v: React.ReactNode }[] = [
     ),
   },
   {
-    h: "X-PrizeSkout-Delivery-Attempt",
+    h: "X-Webhook-Delivery-Attempt",
     v: (
       <>
         <Code>1</Code> for the first delivery, <Code>2+</Code> for retries (exponential backoff up to
@@ -209,7 +209,7 @@ const TOLERANCE_SECONDS = 300; // reject anything older than 5 minutes
 const SECRET = process.env.PRIZESKOUT_WEBHOOK_SECRET!;
 
 export async function handleWebhook(req: Request): Promise<Response> {
-  const sigHeader = req.headers.get("X-PrizeSkout-Signature");
+  const sigHeader = req.headers.get("X-Webhook-Signature");
   const rawBody = await req.text(); // MUST read before JSON.parse
 
   if (!sigHeader) {
@@ -246,7 +246,7 @@ export async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // 3. Idempotency — dedupe by delivery id
-  const deliveryId = req.headers.get("X-PrizeSkout-Delivery-Id");
+  const deliveryId = req.headers.get("X-Webhook-Delivery-Id");
   if (deliveryId && (await alreadyProcessed(deliveryId))) {
     return new Response("ok", { status: 200 }); // 2xx so we don't retry
   }
@@ -267,7 +267,7 @@ app = Flask(__name__)
 
 @app.post("/webhooks/prizeskout")
 def webhook():
-    sig_header = request.headers.get("X-PrizeSkout-Signature", "")
+    sig_header = request.headers.get("X-Webhook-Signature", "")
     raw_body = request.get_data()  # bytes, BEFORE any JSON parsing
 
     parts = dict(p.split("=", 1) for p in sig_header.split(",") if "=" in p)
@@ -287,7 +287,7 @@ def webhook():
         abort(401, "invalid signature")
 
     # 3. Idempotency
-    delivery_id = request.headers.get("X-PrizeSkout-Delivery-Id")
+    delivery_id = request.headers.get("X-Webhook-Delivery-Id")
     if delivery_id and already_processed(delivery_id):
         return "ok", 200
 
@@ -304,7 +304,7 @@ TIMESTAMP="1714060800"
 RAW_BODY='{"id":"evt_01HX...","type":"competitor.price_changed","data":{}}'
 SECRET="whsec_abcdef..."
 
-# Recompute the v1 signature locally and compare against X-PrizeSkout-Signature.
+# Recompute the v1 signature locally and compare against X-Webhook-Signature.
 EXPECTED=$(printf '%s.%s' "$TIMESTAMP" "$RAW_BODY" \\
   | openssl dgst -sha256 -hmac "$SECRET" -hex \\
   | awk '{print $2}')
@@ -443,7 +443,7 @@ function WebhooksGuide() {
           <H3>curl / openssl (debugging only)</H3>
           <P>
             Use this to recompute the expected signature locally when investigating a failed delivery
-            — paste the <Code>X-PrizeSkout-Timestamp</Code>, raw body, and your signing secret:
+            — paste the <Code>X-Webhook-Timestamp</Code>, raw body, and your signing secret:
           </P>
           <CodeBlock lang="bash">{CURL_EXAMPLE}</CodeBlock>
 
@@ -463,7 +463,7 @@ function WebhooksGuide() {
             }}
           >
             <li style={{ marginBottom: 6 }}>
-              Dedupe on <Code>X-PrizeSkout-Delivery-Id</Code> — it is identical across retries of the
+              Dedupe on <Code>X-Webhook-Delivery-Id</Code> — it is identical across retries of the
               same event.
             </li>
             <li style={{ marginBottom: 6 }}>
@@ -516,7 +516,7 @@ function WebhooksGuide() {
           <P>
             When a verifier rejects a delivery, the fastest way to find the cause is to ask our
             server to recompute the same signature for you. <Code>POST</Code> the secret, the
-            timestamp from <Code>X-PrizeSkout-Timestamp</Code>, and the exact raw body — we return
+            timestamp from <Code>X-Webhook-Timestamp</Code>, and the exact raw body — we return
             what we would have signed and (optionally) compare against what you received.
           </P>
           <CodeBlock lang="bash">{`curl -X POST https://api.prizeskout.qa/api/public/v1/webhooks/test-signature \\
@@ -529,7 +529,7 @@ function WebhooksGuide() {
   }'`}</CodeBlock>
           <P>
             The response includes the expected <Code>v1</Code>, the full{" "}
-            <Code>X-PrizeSkout-Signature</Code> header we would have sent, a replay-window check
+            <Code>X-Webhook-Signature</Code> header we would have sent, a replay-window check
             against the current server time, and — if you provided{" "}
             <Code>receivedSignature</Code> — a constant-time comparison plus diagnostic notes
             explaining the most likely cause of any mismatch. Nothing from the request is logged or

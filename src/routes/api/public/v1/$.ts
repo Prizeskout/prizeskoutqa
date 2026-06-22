@@ -12,6 +12,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { API_GROUPS, type EndpointSpec } from "@/lib/api-spec";
 import { dispatchV1Handler, V1_HANDLER_KEYS, type V1Context } from "@/server/v1-handlers";
 import { backgroundTask } from "@/server/cf-ctx";
+import {
+  type Plan,
+  PLAN_LEVELS,
+  PLAN_LIMITS,
+  deniedScopes,
+  minPlanForScope,
+  requiredPlanForRoute,
+} from "@/server/plans";
 
 function hashKey(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
@@ -23,7 +31,7 @@ function json(body: unknown, status: number, extraHeaders: Record<string, string
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "X-PrizeSkout-Mode": "test",
+      "X-Api-Mode": "test",
       ...extraHeaders,
     },
   });
@@ -127,13 +135,61 @@ async function handle(request: Request, splat: string) {
         409,
       );
     }
-    const acct = acctRows[0];
+    const acct = acctRows[0] as {
+      account_id: string;
+      licensee_id: string;
+      user_id: string;
+      plan?: string;
+      is_platform?: boolean;
+    };
+    const plan: Plan = (acct.plan as Plan) ?? "starter";
+    const isPlatform: boolean = acct.is_platform ?? false;
+    const keyScopes: string[] = Array.isArray(keyRow.scopes) ? (keyRow.scopes as string[]) : [];
+
+    // Reject keys whose scopes exceed what the plan allows.
+    const badScopes = deniedScopes(keyScopes, plan);
+    if (badScopes.length > 0) {
+      const upgradeTo = badScopes.map(minPlanForScope).filter(Boolean)[0];
+      return json(
+        {
+          error: {
+            code: "scope_denied",
+            message: `Your ${plan} plan does not permit scope(s): ${badScopes.join(", ")}.${upgradeTo ? ` Upgrade to ${upgradeTo} to enable these scopes.` : ""}`,
+            denied_scopes: badScopes,
+            current_plan: plan,
+            ...(upgradeTo ? { upgrade_to: upgradeTo } : {}),
+          },
+        },
+        403,
+      );
+    }
+
+    // Route-level plan enforcement.
+    const routeRequired = requiredPlanForRoute(request.method, fullPath);
+    const isEmbedRoute = fullPath.startsWith("/v1/embed/");
+    if (PLAN_LEVELS[plan] < PLAN_LEVELS[routeRequired] && !(isPlatform && isEmbedRoute)) {
+      return json(
+        {
+          error: {
+            code: "plan_upgrade_required",
+            message: `This endpoint requires the ${routeRequired} plan or higher. You are on ${plan}.`,
+            current_plan: plan,
+            required_plan: routeRequired,
+          },
+        },
+        402,
+      );
+    }
+
     const ctx: V1Context = {
       apiKeyId: keyRow.id,
       userId: keyRow.user_id,
       accountId: acct.account_id,
       licenseeId: acct.licensee_id,
-      scopes: Array.isArray(keyRow.scopes) ? (keyRow.scopes as string[]) : [],
+      scopes: keyScopes,
+      plan,
+      isPlatform,
+      planMode: PLAN_LIMITS[plan].mode,
     };
 
     const start = Date.now();
@@ -186,7 +242,7 @@ async function handle(request: Request, splat: string) {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "X-PrizeSkout-Mode": "test",
+        "X-Api-Mode": "test",
         "X-Request-Id": requestId,
         ...(result.headers ?? {}),
       },

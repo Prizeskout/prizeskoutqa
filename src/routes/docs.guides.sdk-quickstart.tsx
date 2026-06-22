@@ -93,7 +93,7 @@ const app = express();
 app.use(express.raw({ type: "application/json" }));
 
 app.post("/webhooks/prizeskout", (req, res) => {
-  const signature = req.header("X-PrizeSkout-Signature")!;
+  const signature = req.header("X-Webhook-Signature")!;
   const expected = crypto
     .createHmac("sha256", process.env.PRIZESKOUT_WEBHOOK_SECRET!)
     .update(req.body)

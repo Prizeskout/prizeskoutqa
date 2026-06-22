@@ -316,11 +316,11 @@ function AuthenticationGuide() {
           </P>
           <div style={{ border: "1px solid #E8E8E5", borderRadius: 8, overflow: "hidden", background: "#FFF", marginBottom: 20 }}>
             {[
-              { h: "PrizeSkout-Signature", v: "Hex-encoded HMAC-SHA256 of `{timestamp}.{raw_body}` using your endpoint's signing secret." },
-              { h: "PrizeSkout-Timestamp", v: "Unix epoch seconds when we generated the signature. Compare against your server clock to reject replays." },
-              { h: "PrizeSkout-Event", v: "Event type, e.g. `competitor.price_changed`, `pricing.recommendation_created`, `field_intel.observation_submitted`." },
-              { h: "PrizeSkout-Delivery", v: "Unique ID for this delivery attempt. Use it to dedupe — retries reuse the same ID." },
-              { h: "PrizeSkout-Attempt", v: "1 for the first delivery, 2+ for retries (exponential backoff up to your endpoint's max_attempts)." },
+              { h: "X-Webhook-Signature", v: "Hex-encoded HMAC-SHA256 of `{timestamp}.{raw_body}` using your endpoint's signing secret." },
+              { h: "X-Webhook-Timestamp", v: "Unix epoch seconds when we generated the signature. Compare against your server clock to reject replays." },
+              { h: "X-Webhook-Event", v: "Event type, e.g. `competitor.price_changed`, `pricing.recommendation_created`, `field_intel.observation_submitted`." },
+              { h: "X-Webhook-Delivery-Id", v: "Unique ID for this delivery attempt. Use it to dedupe — retries reuse the same ID." },
+              { h: "X-Webhook-Delivery-Attempt", v: "1 for the first delivery, 2+ for retries (exponential backoff up to your endpoint's max_attempts)." },
             ].map((row, i, arr) => (
               <div
                 key={row.h}
@@ -353,7 +353,7 @@ function AuthenticationGuide() {
             <li style={{ marginBottom: 6 }}>
               <strong>Check the timestamp.</strong> Reject if{" "}
               <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>
-                |now − PrizeSkout-Timestamp| &gt; 300 seconds
+                |now − X-Webhook-Timestamp| &gt; 300 seconds
               </code>
               . This is the replay-protection window.
             </li>
@@ -362,7 +362,7 @@ function AuthenticationGuide() {
               <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>
                 HMAC_SHA256(secret, "{`{timestamp}.{raw_body}`}")
               </code>{" "}
-              and compare to <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>PrizeSkout-Signature</code> using a{" "}
+              and compare to <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>X-Webhook-Signature</code> using a{" "}
               <strong>constant-time</strong> comparison (e.g. <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>crypto.timingSafeEqual</code>). Never use{" "}
               <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>===</code> — it leaks information via timing side-channels.
             </li>
@@ -377,8 +377,8 @@ const TOLERANCE_SECONDS = 300;
 const SECRET = process.env.PRIZESKOUT_WEBHOOK_SECRET!;
 
 export async function handleWebhook(req: Request): Promise<Response> {
-  const signature = req.headers.get("PrizeSkout-Signature");
-  const timestamp = req.headers.get("PrizeSkout-Timestamp");
+  const signature = req.headers.get("X-Webhook-Signature");
+  const timestamp = req.headers.get("X-Webhook-Timestamp");
   const rawBody = await req.text(); // read BEFORE JSON.parse
 
   if (!signature || !timestamp) {
@@ -412,8 +412,8 @@ export async function handleWebhook(req: Request): Promise<Response> {
           </h3>
           <P>
             The 5-minute timestamp window blocks an attacker from re-sending an old, captured payload.
-            But legitimate <em>retries</em> from PrizeSkout will reuse the same{" "}
-            <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>PrizeSkout-Delivery</code> ID — store seen IDs for at least 24 hours and
+            But legitimate <em>retries</em> will reuse the same{" "}
+            <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>X-Webhook-Delivery-Id</code> — store seen IDs for at least 24 hours and
             short-circuit duplicates with a 200. Returning a non-2xx triggers our retry logic
             (exponential backoff, up to your endpoint's <code style={{ fontFamily: FONT_MONO, background: "#F4F4F2", padding: "1px 5px", borderRadius: 3 }}>max_attempts</code>).
           </P>

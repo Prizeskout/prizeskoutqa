@@ -716,7 +716,7 @@ const WEBHOOKS_GROUP: GroupSpec = {
       errors: COMMON_ERRORS,
       notes: [
         "Save the signing_secret immediately. It is only returned once at creation.",
-        "Verify deliveries by recomputing HMAC-SHA256(body, signing_secret) and comparing against the X-PrizeSkout-Signature header.",
+        "Verify deliveries by recomputing HMAC-SHA256(body, signing_secret) and comparing against the X-Webhook-Signature header.",
       ],
     },
     {

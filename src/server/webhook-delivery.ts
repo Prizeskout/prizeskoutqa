@@ -20,7 +20,7 @@
 //
 // Signing (v1): HMAC-SHA-256 over `${timestamp}.${rawBody}` with the
 // endpoint's `signing_secret`. We send the signature as Stripe-style
-// `X-PrizeSkout-Signature: t=<unix_ts>,v1=<hex>` so receivers can verify
+// `X-Webhook-Signature: t=<unix_ts>,v1=<hex>` so receivers can verify
 // the payload AND reject replays older than ~5 minutes. The legacy
 // `sha256=<hex>` (body-only) signature is also included as a second
 // comma-separated value for backward compatibility with Week 5 receivers.
@@ -167,12 +167,12 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
     const sig = buildSignatureHeader(ep.signing_secret, body);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-PrizeSkout-Event": event.eventType,
-      "X-PrizeSkout-Event-Id": eventId,
-      "X-PrizeSkout-Delivery-Id": eventId,
-      "X-PrizeSkout-Timestamp": sig.timestamp,
-      "X-PrizeSkout-Signature": sig.header,
-      "X-PrizeSkout-Delivery-Attempt": "1",
+      "X-Webhook-Event": event.eventType,
+      "X-Webhook-Event-Id": eventId,
+      "X-Webhook-Delivery-Id": eventId,
+      "X-Webhook-Timestamp": sig.timestamp,
+      "X-Webhook-Signature": sig.header,
+      "X-Webhook-Delivery-Attempt": "1",
     };
 
     const start = Date.now();
@@ -307,12 +307,12 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
     const sig = buildSignatureHeader(ep.signing_secret, body);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-PrizeSkout-Event": row.event_type,
-      "X-PrizeSkout-Event-Id": payloadObj?.id ?? row.id,
-      "X-PrizeSkout-Delivery-Id": payloadObj?.id ?? row.id,
-      "X-PrizeSkout-Timestamp": sig.timestamp,
-      "X-PrizeSkout-Signature": sig.header,
-      "X-PrizeSkout-Delivery-Attempt": String(newAttempt),
+      "X-Webhook-Event": row.event_type,
+      "X-Webhook-Event-Id": payloadObj?.id ?? row.id,
+      "X-Webhook-Delivery-Id": payloadObj?.id ?? row.id,
+      "X-Webhook-Timestamp": sig.timestamp,
+      "X-Webhook-Signature": sig.header,
+      "X-Webhook-Delivery-Attempt": String(newAttempt),
     };
 
     const start = Date.now();
