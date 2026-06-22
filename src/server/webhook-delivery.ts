@@ -32,6 +32,7 @@
 import { createHmac } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createNotification } from "./notifications";
+import { backgroundTask } from "./cf-ctx";
 
 export type WebhookEvent = {
   /** Owner of the endpoint set we should deliver to. */
@@ -198,13 +199,19 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
       next_retry_at: retryAt,
     });
 
-    await supabaseAdmin
-      .from("webhook_endpoints")
-      .update({
-        last_delivery_at: new Date().toISOString(),
-        last_delivery_success: post.ok,
-      })
-      .eq("id", ep.id);
+    const epId1 = ep.id;
+    const delivOk1 = post.ok;
+    backgroundTask(
+      (async () => {
+        await supabaseAdmin
+          .from("webhook_endpoints")
+          .update({
+            last_delivery_at: new Date().toISOString(),
+            last_delivery_success: delivOk1,
+          })
+          .eq("id", epId1);
+      })(),
+    );
 
     // Notify on first failure if no retry will happen (max_attempts === 1).
     // Multi-attempt failures notify only when exhausted (see retry queue).
@@ -337,13 +344,19 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
       .update({ next_retry_at: null })
       .eq("id", row.id);
 
-    await supabaseAdmin
-      .from("webhook_endpoints")
-      .update({
-        last_delivery_at: new Date().toISOString(),
-        last_delivery_success: post.ok,
-      })
-      .eq("id", ep.id);
+    const epId2 = ep.id;
+    const delivOk2 = post.ok;
+    backgroundTask(
+      (async () => {
+        await supabaseAdmin
+          .from("webhook_endpoints")
+          .update({
+            last_delivery_at: new Date().toISOString(),
+            last_delivery_success: delivOk2,
+          })
+          .eq("id", epId2);
+      })(),
+    );
 
     if (post.ok) succeeded++;
     if (!willRetry && !post.ok) {

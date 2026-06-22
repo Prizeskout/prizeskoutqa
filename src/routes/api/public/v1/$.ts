@@ -11,6 +11,7 @@ import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { API_GROUPS, type EndpointSpec } from "@/lib/api-spec";
 import { dispatchV1Handler, V1_HANDLER_KEYS, type V1Context } from "@/server/v1-handlers";
+import { backgroundTask } from "@/server/cf-ctx";
 
 function hashKey(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
@@ -151,19 +152,32 @@ async function handle(request: Request, splat: string) {
     }
 
     const requestId = `req_live_${Math.random().toString(36).slice(2, 10)}`;
-    await supabaseAdmin.from("api_request_logs").insert({
-      user_id: keyRow.user_id,
-      api_key_id: keyRow.id,
-      method: request.method,
-      path: fullPath,
-      status_code: result.status,
-      duration_ms: Date.now() - start,
-      request_id: requestId,
-    });
-    await supabaseAdmin
-      .from("api_keys")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", keyRow.id);
+    const userId = keyRow.user_id;
+    const apiKeyId = keyRow.id;
+    const method = request.method;
+    const statusCode = result.status;
+    const durationMs = Date.now() - start;
+    backgroundTask(
+      (async () => {
+        await supabaseAdmin.from("api_request_logs").insert({
+          user_id: userId,
+          api_key_id: apiKeyId,
+          method,
+          path: fullPath,
+          status_code: statusCode,
+          duration_ms: durationMs,
+          request_id: requestId,
+        });
+      })(),
+    );
+    backgroundTask(
+      (async () => {
+        await supabaseAdmin
+          .from("api_keys")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", apiKeyId);
+      })(),
+    );
 
     // Fetch spec: 204/205/304 responses must have no body.
     const hasNoBody = result.status === 204 || result.status === 205 || result.status === 304;
@@ -218,18 +232,31 @@ async function handle(request: Request, splat: string) {
   }
 
   // Log the test-mode call so it shows up in the user's request logs.
-  await supabaseAdmin.from("api_request_logs").insert({
-    user_id: keyRow.user_id,
-    api_key_id: keyRow.id,
-    method: spec.method,
-    path: fullPath,
-    status_code: spec.responses[0]?.status ?? 200,
-    duration_ms: Math.floor(Math.random() * 80) + 40,
-    request_id: `req_test_${Math.random().toString(36).slice(2, 10)}`,
-  });
-
-  // Touch last_used_at
-  await supabaseAdmin.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", keyRow.id);
+  const testUserId = keyRow.user_id;
+  const testKeyId = keyRow.id;
+  const testStatusCode = spec.responses[0]?.status ?? 200;
+  const testRequestId = `req_test_${Math.random().toString(36).slice(2, 10)}`;
+  backgroundTask(
+    (async () => {
+      await supabaseAdmin.from("api_request_logs").insert({
+        user_id: testUserId,
+        api_key_id: testKeyId,
+        method: spec.method,
+        path: fullPath,
+        status_code: testStatusCode,
+        duration_ms: Math.floor(Math.random() * 80) + 40,
+        request_id: testRequestId,
+      });
+    })(),
+  );
+  backgroundTask(
+    (async () => {
+      await supabaseAdmin
+        .from("api_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", testKeyId);
+    })(),
+  );
 
   const sample = spec.sampleResponse ?? spec.responses[0]?.example ?? { ok: true };
   const status = spec.responses[0]?.status ?? 200;

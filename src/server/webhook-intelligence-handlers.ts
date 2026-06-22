@@ -30,6 +30,7 @@ import {
   landedCost as computeLandedCost, r2, r4, type ChannelCosts,
 } from "@/server/margin";
 import type { V1Context, V1Result } from "./v1-handlers";
+import { backgroundTask } from "./cf-ctx";
 
 // ─── Scope helpers ────────────────────────────────────────────────────────────
 
@@ -562,15 +563,22 @@ export async function fireToSubscription(
     console.error("logDelivery threw:", e);
   }
 
-  // Update subscription last_delivery stats
-  await supabaseAdmin
-    .from("webhook_subscriptions")
-    .update({
-      last_delivery_at:      new Date().toISOString(),
-      last_delivery_success: result.ok,
-      ...(deadLettered ? { status: "dead" } : {}),
-    })
-    .eq("id", sub.id);
+  // Update subscription last_delivery stats (non-blocking telemetry)
+  const subId1 = sub.id;
+  const deliveryOk1 = result.ok;
+  const deadLettered1 = deadLettered;
+  backgroundTask(
+    (async () => {
+      await supabaseAdmin
+        .from("webhook_subscriptions")
+        .update({
+          last_delivery_at:      new Date().toISOString(),
+          last_delivery_success: deliveryOk1,
+          ...(deadLettered1 ? { status: "dead" } : {}),
+        })
+        .eq("id", subId1);
+    })(),
+  );
 
   return { eventId: id, deliveryId, ok: result.ok, statusCode: result.statusCode, ms: result.ms, body: result.responseBody, enriched };
 }
@@ -646,14 +654,21 @@ export async function processIntelligenceRetryQueue(limit = 50): Promise<{
 
     await logDelivery(sub.id, ev, newAttempt, result, retry, isDead);
 
-    await supabaseAdmin
-      .from("webhook_subscriptions")
-      .update({
-        last_delivery_at: new Date().toISOString(),
-        last_delivery_success: result.ok,
-        ...(isDead ? { status: "dead" } : {}),
-      })
-      .eq("id", sub.id);
+    const subId2 = sub.id;
+    const deliveryOk2 = result.ok;
+    const isDead2 = isDead;
+    backgroundTask(
+      (async () => {
+        await supabaseAdmin
+          .from("webhook_subscriptions")
+          .update({
+            last_delivery_at: new Date().toISOString(),
+            last_delivery_success: deliveryOk2,
+            ...(isDead2 ? { status: "dead" } : {}),
+          })
+          .eq("id", subId2);
+      })(),
+    );
 
     if (result.ok) succeeded++;
     if (isDead) deadLettered++;

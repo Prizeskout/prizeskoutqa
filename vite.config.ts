@@ -10,7 +10,7 @@ export default defineConfig({
   cloudflare: {
     viteEnvironment: { name: "ssr" },
     config: {
-      main: "@tanstack/react-start/server-entry",
+      main: "./src/worker-entry.ts",
     },
   },
 });
