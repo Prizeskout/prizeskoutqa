@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Brain, RefreshCw, ArrowRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   generateInsight,
   getInsight,
@@ -60,17 +62,23 @@ const KIND_COLOR: Record<Citation["kind"], string> = {
   trending: "#22C55E",
 };
 
-function formatGeneratedAt(iso: string | null): string {
-  if (!iso) return "Not generated yet";
+function formatGeneratedAt(iso: string | null, t: TFunction): string {
+  if (!iso) return t("ai.notGenerated");
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return t("ai.justNow");
+  if (mins < 60) return mins === 1 ? t("ai.minAgo") : t("ai.minsAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hr${hrs === 1 ? "" : "s"} ago`;
+  if (hrs < 24) return hrs === 1 ? t("ai.hrAgo") : t("ai.hrsAgo", { count: hrs });
   const days = Math.floor(hrs / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return days === 1 ? t("ai.dayAgo") : t("ai.daysAgo", { count: days });
+}
+
+function getWindowLabel(w: InsightWindow, t: TFunction): string {
+  if (w === "24h") return t("ai.last24h");
+  if (w === "7d") return t("ai.last7d");
+  return t("ai.last30d");
 }
 
 function CiteChips({ cites }: { cites: number[] }) {
@@ -125,9 +133,9 @@ export function AIInsightsCard({
   page: Page;
   initial: AIInsight | null;
 }) {
+  const { t } = useTranslation();
   const { session, loading: authLoading } = useAuth();
   const [window, setWindow] = useState<InsightWindow>("24h");
-  // Cache per window so switching is instant after first generation/load.
   const cacheRef = useRef<Record<InsightWindow, AIInsight | null>>({
     "24h": initial && initial.window === "24h" ? initial : null,
     "7d": initial && initial.window === "7d" ? initial : null,
@@ -139,8 +147,6 @@ export function AIInsightsCard({
   const generate = useServerFn(generateInsight);
   const fetchOne = useServerFn(getInsight);
 
-  // When window changes, hydrate from cache, else fetch from server.
-  // Wait for auth to resolve and a session to exist before calling protected server fns.
   useEffect(() => {
     const cached = cacheRef.current[window];
     setInsight(cached);
@@ -155,7 +161,6 @@ export function AIInsightsCard({
         setInsight(row);
       })
       .catch((err) => {
-        // Swallow — UI shows empty state. Log for debugging.
         console.warn("[AIInsights] fetch failed", err);
       })
       .finally(() => {
@@ -168,7 +173,7 @@ export function AIInsightsCard({
 
   const refresh = useCallback(async () => {
     if (!session) {
-      toast.error("Please sign in to generate insights");
+      toast.error(t("ai.signInRequired"));
       return;
     }
     setLoading(true);
@@ -176,18 +181,25 @@ export function AIInsightsCard({
       const { insight: fresh } = await generate({ data: { page, window } });
       cacheRef.current[window] = fresh;
       setInsight(fresh);
-      toast.success("Insights refreshed");
+      toast.success(t("ai.refreshSuccess"));
     } catch (err) {
-      const msg = await safeMessage(err, "Failed to generate insights");
+      const msg = await safeMessage(err, t("ai.generating"));
       toast.error(msg);
     } finally {
       setLoading(false);
     }
-  }, [generate, page, window, session]);
+  }, [generate, page, window, session, t]);
 
   const isEmpty = !insight;
   const citations = useMemo(() => insight?.citations ?? [], [insight]);
   const showSkeleton = fetching && !insight;
+
+  const subtitle = isEmpty
+    ? t("ai.subtitle")
+    : t(citations.length === 1 ? "ai.updatedAt" : "ai.updatedAt_plural", {
+        time: formatGeneratedAt(insight!.generated_at, t),
+        count: citations.length,
+      });
 
   return (
     <div
@@ -238,12 +250,10 @@ export function AIInsightsCard({
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1A18", lineHeight: 1.2 }}>
-              AI Insights
+              {t("ai.title")}
             </div>
             <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>
-              {isEmpty
-                ? "Automated summaries from your latest data"
-                : `Updated ${formatGeneratedAt(insight!.generated_at)} · ${citations.length} source${citations.length === 1 ? "" : "s"}`}
+              {subtitle}
             </div>
           </div>
         </div>
@@ -276,7 +286,7 @@ export function AIInsightsCard({
                 animation: loading ? "ai-spin 1s linear infinite" : undefined,
               }}
             />
-            {loading ? "Generating…" : isEmpty ? "Generate insights" : "Refresh"}
+            {loading ? t("ai.generating") : isEmpty ? t("ai.generate") : t("ai.refresh")}
           </button>
         </div>
       </div>
@@ -295,7 +305,7 @@ export function AIInsightsCard({
             color: "#9A9A9A",
           }}
         >
-          Loading {window} insights…
+          {t("ai.loading", { window })}
         </div>
       ) : isEmpty ? (
         <div
@@ -308,9 +318,7 @@ export function AIInsightsCard({
           }}
         >
           <p style={{ fontSize: 13, color: "#6B6B6B", margin: 0, lineHeight: 1.5 }}>
-            No {window} insights yet. Press &ldquo;Generate insights&rdquo; to summarize this
-            page&rsquo;s data for the {windowLabel(window)} - headline read, top observations,
-            recommended actions, plus the specific records each insight is based on.
+            {t("ai.empty", { window, windowLabel: getWindowLabel(window, t) })}
           </p>
         </div>
       ) : (
@@ -422,7 +430,7 @@ export function AIInsightsCard({
                   marginBottom: 8,
                 }}
               >
-                Sources
+                {t("ai.sources")}
               </div>
               <ol
                 style={{
@@ -482,7 +490,7 @@ export function AIInsightsCard({
                           letterSpacing: "0.02em",
                         }}
                       >
-                        {KIND_LABEL[c.kind] ?? c.kind}
+                        {t(`ai.citationKind.${c.kind}` as string, KIND_LABEL[c.kind] ?? c.kind)}
                       </span>
                       <span style={{ fontWeight: 500, color: "#1A1A18" }}>{c.label}</span>
                       {c.ref && (
@@ -498,12 +506,6 @@ export function AIInsightsCard({
       )}
     </div>
   );
-}
-
-function windowLabel(w: InsightWindow): string {
-  if (w === "24h") return "last 24 hours";
-  if (w === "7d") return "last 7 days";
-  return "last 30 days";
 }
 
 function WindowSelector({

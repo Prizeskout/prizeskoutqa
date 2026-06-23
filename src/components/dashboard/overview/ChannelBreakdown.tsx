@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import type { OverviewChannel } from "@/lib/overview-data";
 
 export function ChannelBreakdown({ channels }: { channels: OverviewChannel[] }) {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -12,11 +14,11 @@ export function ChannelBreakdown({ channels }: { channels: OverviewChannel[] }) 
       }}
     >
       <h2 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: 0 }}>
-        Revenue by channel
+        {t("channel.title")}
       </h2>
 
       {channels.length === 0 ? (
-        <p style={{ fontSize: 13, color: "#6B6B6B", margin: "12px 0 0" }}>No channel data yet.</p>
+        <p style={{ fontSize: 13, color: "#6B6B6B", margin: "12px 0 0" }}>{t("channel.empty")}</p>
       ) : (
         <div style={{ marginTop: 4 }}>
           {channels.map((row, i) => {

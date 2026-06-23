@@ -1,18 +1,8 @@
-// First-run checklist that walks new users through the three actions that
-// turn an empty dashboard into a useful one:
-//   1. Save the URL of one competitor product to track.
-//   2. Run a live scrape on that product so the system has real data.
-//   3. Generate an AI read of the overview page.
-//
-// Completion is detected from real signals (rows in Cloud), so the checklist
-// stays accurate even if the user does these from the Competitors tab or the
-// AI Insights card. A localStorage flag lets the user dismiss the card once
-// they're past it; it never reappears unless they reset onboarding.
-
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Check, Circle, Loader2, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 
 const DISMISS_KEY = "ps:onboarding:dismissed";
@@ -23,34 +13,14 @@ type StepKey = "url" | "scrape" | "insight";
 
 type StepDef = {
   key: StepKey;
-  title: string;
-  body: string;
-  cta: string;
+  tKey: string;
   href: string;
 };
 
 const STEPS: StepDef[] = [
-  {
-    key: "url",
-    title: "Add your first competitor product",
-    body: "Save a product URL from one competitor. Carrefour, Lulu, Talabat, anything you sell against.",
-    cta: "Open Competitors",
-    href: "/dashboard/competitors",
-  },
-  {
-    key: "scrape",
-    title: "Run your first live scrape",
-    body: "Pull a real price from the URL you saved. Takes about ten seconds.",
-    cta: "Trigger a scrape",
-    href: "/dashboard/competitors",
-  },
-  {
-    key: "insight",
-    title: "Generate your first AI read",
-    body: "Let the model summarise what just landed and recommend a move.",
-    cta: "Go to insights",
-    href: "/dashboard",
-  },
+  { key: "url", tKey: "onboarding.step1", href: "/dashboard/competitors" },
+  { key: "scrape", tKey: "onboarding.step2", href: "/dashboard/competitors" },
+  { key: "insight", tKey: "onboarding.step3", href: "/dashboard" },
 ];
 
 function useOnboardingStatus() {
@@ -81,11 +51,11 @@ function useOnboardingStatus() {
 }
 
 export function OnboardingChecklist() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [dismissed, setDismissed] = useState<boolean | null>(null);
   const { data, isLoading } = useOnboardingStatus();
 
-  // Read the dismiss flag on mount (SSR-safe).
   useEffect(() => {
     try {
       setDismissed(window.localStorage.getItem(DISMISS_KEY) === "1");
@@ -94,8 +64,6 @@ export function OnboardingChecklist() {
     }
   }, []);
 
-  // Refresh signals whenever the tab regains focus, so completing a step in
-  // another tab updates the checklist as soon as the user comes back.
   useEffect(() => {
     const onFocus = () => {
       queryClient.invalidateQueries({ queryKey: ["onboarding-status"] });
@@ -104,7 +72,7 @@ export function OnboardingChecklist() {
     return () => window.removeEventListener("focus", onFocus);
   }, [queryClient]);
 
-  if (dismissed === null) return null; // wait for hydration
+  if (dismissed === null) return null;
   if (dismissed) return null;
   if (isLoading || !data) return null;
 
@@ -143,8 +111,8 @@ export function OnboardingChecklist() {
       <button
         type="button"
         onClick={handleDismiss}
-        aria-label="Dismiss onboarding checklist"
-        title="Hide this card"
+        aria-label={t("onboarding.dismiss")}
+        title={t("onboarding.hideCard")}
         style={{
           position: "absolute",
           top: 12,
@@ -181,10 +149,10 @@ export function OnboardingChecklist() {
             margin: 0,
           }}
         >
-          Get your first signal in three steps
+          {t("onboarding.title")}
         </h3>
         <span style={{ fontSize: 12, color: "#6B6B6B", fontVariantNumeric: "tabular-nums" }}>
-          {completed} of {STEPS.length} done
+          {t("onboarding.progress", { completed, total: STEPS.length })}
         </span>
       </div>
       <p
@@ -196,8 +164,7 @@ export function OnboardingChecklist() {
           maxWidth: 560,
         }}
       >
-        The dashboard fills in once we have something to track. Take five minutes now and you'll
-        have live competitor data, a price recommendation, and an AI brief by the time you're done.
+        {t("onboarding.description")}
       </p>
 
       {/* Progress bar */}
@@ -282,7 +249,7 @@ export function OnboardingChecklist() {
                     marginBottom: 2,
                   }}
                 >
-                  {step.title}
+                  {t(`${step.tKey}.title` as string)}
                 </div>
                 <div
                   style={{
@@ -291,7 +258,7 @@ export function OnboardingChecklist() {
                     lineHeight: 1.45,
                   }}
                 >
-                  {step.body}
+                  {t(`${step.tKey}.body` as string)}
                 </div>
               </div>
 
@@ -323,7 +290,7 @@ export function OnboardingChecklist() {
                     e.currentTarget.style.background = isDoing ? "#EA580C" : "#FFFFFF";
                   }}
                 >
-                  {step.cta}
+                  {t(`${step.tKey}.cta` as string)}
                 </Link>
               )}
             </li>
@@ -342,7 +309,7 @@ export function OnboardingChecklist() {
         }}
       >
         <Loader2 size={11} aria-hidden="true" />
-        This card updates on its own as you complete each step.
+        {t("onboarding.autoUpdate")}
       </p>
     </div>
   );

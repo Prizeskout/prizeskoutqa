@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -461,8 +462,22 @@ export function Sidebar() {
   );
 }
 
+function useIsRTL() {
+  const [rtl, setRtl] = useState(false);
+  useEffect(() => {
+    setRtl(document.documentElement.dir === "rtl");
+    const obs = new MutationObserver(() =>
+      setRtl(document.documentElement.dir === "rtl")
+    );
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["dir"] });
+    return () => obs.disconnect();
+  }, []);
+  return rtl;
+}
+
 export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { collapsed } = useSidebarCollapse();
+  const isRTL = useIsRTL();
 
   return (
     <>
@@ -514,7 +529,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
           borderInlineEnd: "1px solid #1A1A1A",
           display: "flex",
           flexDirection: "column",
-          transform: open && !collapsed ? "translateX(0)" : "translateX(-100%)",
+          transform: open && !collapsed ? "translateX(0)" : isRTL ? "translateX(100%)" : "translateX(-100%)",
           transition: "transform 0.25s ease-out",
           zIndex: 50,
         }}

@@ -42,7 +42,7 @@
   },
   "layout": {
     "sandbox": "وضع الاختبار",
-    "sandboxDesc": "أنت تستعرض بيانات تجريبية. كل مفتاح {{key}} يُكتب هنا. لا تتأثر الطلبات أو الإيرادات الحقيقية.",
+    "sandboxDesc": "أنت تستعرض بيانات تجريبية. كل مفتاح <code>sk_test_</code> يُكتب هنا. لا تتأثر الطلبات أو الإيرادات الحقيقية.",
     "openApiExplorer": "فتح مستكشف API",
     "lastUpdated": "آخر تحديث",
     "justNow": "الآن",
@@ -70,6 +70,121 @@
     "whatToDoDesc": "انتقل مباشرةً إلى أهم سير العمل اليوم.",
     "whereYouStand": "أين تقف",
     "whereYouStandDesc": "الأرقام الرئيسية وموقعك مقارنةً بالسوق."
+  },
+  "hero": {
+    "briefingLabel": "إحاطة اليوم",
+    "greeting_morning": "صباح الخير، {{name}}.",
+    "greeting_afternoon": "مساء الخير، {{name}}.",
+    "greeting_evening": "مساء النور، {{name}}.",
+    "welcomeBack": "أهلاً بعودتك، {{name}}.",
+    "headlineClear": "كل شيء على ما يرام. سوقك مستقر. ألقِ نظرة على ما يتحرك.",
+    "headlineAction": "يوجد ⁦{{count}}⁩ إجراء يحتاج انتباهك اليوم.",
+    "headlineAction_plural": "يوجد ⁦{{count}}⁩ إجراء يحتاج انتباهك اليوم.",
+    "headlineOpportunity": "يوجد ⁦{{count}}⁩ فرصة تستحق المتابعة اليوم.",
+    "headlineOpportunity_plural": "يوجد ⁦{{count}}⁩ فرصة تستحق المتابعة اليوم.",
+    "headlineIntel": "يوم هادئ. ⁦{{count}}⁩ إشارة سوق جديدة للمراجعة.",
+    "headlineIntel_plural": "يوم هادئ. ⁦{{count}}⁩ إشارة سوق جديدة للمراجعة.",
+    "action": "⁦{{count}}⁩ إجراء",
+    "action_plural": "⁦{{count}}⁩ إجراء",
+    "opportunity": "⁦{{count}}⁩ فرصة",
+    "opportunity_plural": "⁦{{count}}⁩ فرصة",
+    "signal": "⁦{{count}}⁩ إشارة سوق",
+    "signal_plural": "⁦{{count}}⁩ إشارة سوق",
+    "clearFilter": "مسح الفلتر",
+    "reviewPricing": "مراجعة توصيات التسعير",
+    "seeCompetitors": "اطّلع على تغييرات المنافسين"
+  },
+  "onboarding": {
+    "title": "احصل على أول إشارة في ثلاث خطوات",
+    "progress": "⁦{{completed}}⁩ من ⁦{{total}}⁩ مكتمل",
+    "description": "تتكامل لوحة التحكم بمجرد وجود شيء للتتبع. خصّص خمس دقائق الآن وستحصل على بيانات المنافسين الحية وتوصية سعرية وملخص ذكاء اصطناعي قبل الانتهاء.",
+    "dismiss": "رفض قائمة التأهيل",
+    "hideCard": "إخفاء هذه البطاقة",
+    "autoUpdate": "تتحدث هذه البطاقة تلقائياً عند إتمام كل خطوة.",
+    "step1": {
+      "title": "أضف أول منتج منافس",
+      "body": "احفظ رابط منتج من أي منافس — كارفور، لولو، طلبات، أيٌّ مما تنافسه.",
+      "cta": "فتح المنافسين"
+    },
+    "step2": {
+      "title": "نفّذ أول عملية مسح",
+      "body": "اسحب سعراً حقيقياً من الرابط الذي حفظته. تستغرق نحو عشر ثوانٍ.",
+      "cta": "تشغيل المسح"
+    },
+    "step3": {
+      "title": "أنشئ أول قراءة ذكاء اصطناعي",
+      "body": "دع النموذج يلخّص ما وصل ويقترح الخطوة التالية.",
+      "cta": "الانتقال إلى الرؤى"
+    }
+  },
+  "alerts": {
+    "title": "تنبيهات مباشرة",
+    "empty": "لا تنبيهات بعد — ستمتلئ لوحة التحكم مع تغير أسعار المنافسين.",
+    "latest": "الأحدث"
+  },
+  "ai": {
+    "title": "رؤى الذكاء الاصطناعي",
+    "subtitle": "ملخصات آلية من أحدث بياناتك",
+    "generate": "توليد الرؤى",
+    "refresh": "تحديث",
+    "generating": "جارٍ التوليد…",
+    "loading": "تحميل رؤى ⁦{{window}}⁩…",
+    "signInRequired": "يرجى تسجيل الدخول لتوليد الرؤى",
+    "refreshSuccess": "تم تحديث الرؤى",
+    "notGenerated": "لم يُولَّد بعد",
+    "justNow": "الآن",
+    "minAgo": "منذ دقيقة",
+    "minsAgo": "منذ ⁦{{count}}⁩ دقائق",
+    "hrAgo": "منذ ساعة",
+    "hrsAgo": "منذ ⁦{{count}}⁩ ساعات",
+    "dayAgo": "منذ يوم",
+    "daysAgo": "منذ ⁦{{count}}⁩ أيام",
+    "updatedAt": "حُدِّث {{time}} · ⁦{{count}}⁩ مصدر",
+    "updatedAt_plural": "حُدِّث {{time}} · ⁦{{count}}⁩ مصادر",
+    "last24h": "الـ 24 ساعة الماضية",
+    "last7d": "الأيام السبعة الماضية",
+    "last30d": "الثلاثين يومًا الماضية",
+    "empty": "لا رؤى لـ ⁦{{window}}⁩ بعد. اضغط «توليد الرؤى» للحصول على قراءة شاملة وأبرز الملاحظات والإجراءات الموصى بها عن {{windowLabel}}.",
+    "sources": "المصادر",
+    "citationKind": {
+      "recommendation": "توصية تسعير",
+      "rule": "قاعدة تسعير",
+      "metric": "مؤشر",
+      "competitor_price": "سعر منافس",
+      "behavior_pattern": "نمط سلوكي",
+      "alert": "تنبيه",
+      "channel": "قناة",
+      "category": "فئة",
+      "assortment_gap": "فجوة التشكيلة",
+      "cross_border": "عبر الحدود",
+      "trending": "منتج رائج"
+    }
+  },
+  "metrics": {
+    "empty": "لا مؤشرات بعد."
+  },
+  "market": {
+    "positionTitle": "الموقع السوقي حسب الفئة",
+    "positionSubtitle": "الحصة المُقدَّرة عبر الفئات المُراقَبة",
+    "estShare": "⁦{{value}}⁩% حصة مقدرة",
+    "youSuffix": "(أنت)",
+    "others": "أخرى"
+  },
+  "channel": {
+    "title": "الإيرادات حسب القناة",
+    "empty": "لا توجد بيانات قنوات بعد."
+  },
+  "freshness": {
+    "updated": "حُدِّث",
+    "latest": "الأحدث",
+    "justNow": "الآن",
+    "secsAgo": "⁦{{count}}⁩ث",
+    "minAgo": "دقيقة",
+    "minsAgo": "⁦{{count}}⁩ د",
+    "hrAgo": "ساعة",
+    "hrsAgo": "⁦{{count}}⁩ س",
+    "dayAgo": "يوم",
+    "daysAgo": "⁦{{count}}⁩ ي"
   },
   "pricing": {
     "title": "التسعير",

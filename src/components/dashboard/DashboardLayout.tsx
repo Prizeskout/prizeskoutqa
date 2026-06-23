@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ChevronRight, RefreshCw, FlaskConical, ArrowRight } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { PageHeader } from "./PageHeader";
@@ -42,9 +43,10 @@ function SandboxBanner() {
           <FlaskConical size={14} strokeWidth={2} aria-hidden />
           <span style={{ fontWeight: 700, color: "#78350F" }}>{t("layout.sandbox")}</span>
           <span style={{ color: "#92400E" }}>
-            {t("layout.sandboxDesc", {
-              key: <code style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 12 }}>sk_test_</code>,
-            })}
+            <Trans
+              i18nKey="layout.sandboxDesc"
+              components={{ code: <code style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 12 }} /> }}
+            />
           </span>
         </div>
         <Link
@@ -66,7 +68,7 @@ function SandboxBanner() {
   );
 }
 
-function formatRelative(ts: number, now: number, t: (key: string, opts?: object) => string): string {
+function formatRelative(ts: number, now: number, t: TFunction): string {
   const seconds = Math.max(0, Math.floor((now - ts) / 1000));
   if (seconds < 10) return t("layout.justNow");
   if (seconds < 60) return t("layout.secondsAgo", { count: seconds });

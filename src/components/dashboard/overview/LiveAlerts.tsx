@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { type OverviewAlert, formatRelativeTime } from "@/lib/overview-data";
 import { FreshnessPill } from "@/components/dashboard/FreshnessPill";
 
@@ -79,6 +80,7 @@ function RelativeTime({ iso }: { iso: string }) {
 }
 
 export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
+  const { t } = useTranslation();
   const newest = useMemo(() => {
     if (!alerts.length) return null;
     return alerts.reduce((acc, a) => {
@@ -162,15 +164,15 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
             }}
           />
           <h2 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: 0 }}>
-            Live alerts
+            {t("alerts.title")}
           </h2>
         </div>
-        {newest && <FreshnessPill timestamp={newest} prefix="Latest" />}
+        {newest && <FreshnessPill timestamp={newest} prefix={t("alerts.latest")} />}
       </div>
 
       {alerts.length === 0 ? (
         <p style={{ fontSize: 13, color: "#6B6B6B", margin: "12px 0 0" }}>
-          No alerts yet - your dashboard will populate as competitors and prices change.
+          {t("alerts.empty")}
         </p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>

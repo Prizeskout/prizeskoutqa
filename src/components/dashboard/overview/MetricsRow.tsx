@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { OverviewMetric } from "@/lib/overview-data";
 
 export function MetricCard({
@@ -42,6 +43,7 @@ export function MetricCard({
 }
 
 export function MetricsRow({ metrics }: { metrics: OverviewMetric[] }) {
+  const { t } = useTranslation();
   if (!metrics.length) {
     return (
       <div
@@ -54,7 +56,7 @@ export function MetricsRow({ metrics }: { metrics: OverviewMetric[] }) {
           color: "#6B6B6B",
         }}
       >
-        No metrics yet.
+        {t("metrics.empty")}
       </div>
     );
   }

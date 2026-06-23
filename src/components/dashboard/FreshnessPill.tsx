@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
-function formatRelative(seconds: number): string {
-  if (seconds < 10) return "just now";
-  if (seconds < 60) return `${seconds}s ago`;
+function formatRelative(seconds: number, t: TFunction): string {
+  if (seconds < 10) return t("freshness.justNow");
+  if (seconds < 60) return t("freshness.secsAgo", { count: seconds });
   const m = Math.floor(seconds / 60);
-  if (m < 60) return `${m} min${m === 1 ? "" : "s"} ago`;
+  if (m < 60) return m === 1 ? t("freshness.minAgo") : t("freshness.minsAgo", { count: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} hr${h === 1 ? "" : "s"} ago`;
+  if (h < 24) return h === 1 ? t("freshness.hrAgo") : t("freshness.hrsAgo", { count: h });
   const d = Math.floor(h / 24);
-  return `${d} day${d === 1 ? "" : "s"} ago`;
+  return d === 1 ? t("freshness.dayAgo") : t("freshness.daysAgo", { count: d });
 }
 
 /**
@@ -18,12 +20,12 @@ function formatRelative(seconds: number): string {
  */
 export function FreshnessPill({
   timestamp,
-  prefix = "Updated",
+  prefix,
 }: {
-  // Either a Date, ISO string, or epoch ms. If null, the pill renders nothing.
   timestamp?: string | number | Date | null;
   prefix?: string;
 }) {
+  const { t } = useTranslation();
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function FreshnessPill({
   if (Number.isNaN(ts)) return null;
 
   const seconds = Math.max(0, Math.floor((now - ts) / 1000));
+  const resolvedPrefix = prefix ?? t("freshness.updated");
 
   return (
     <span
@@ -63,7 +66,7 @@ export function FreshnessPill({
       }}
     >
       <Clock size={10} strokeWidth={2} aria-hidden />
-      {prefix} {formatRelative(seconds)}
+      {resolvedPrefix} {formatRelative(seconds, t)}
     </span>
   );
 }

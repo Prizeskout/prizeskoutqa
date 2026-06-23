@@ -42,7 +42,7 @@
   },
   "layout": {
     "sandbox": "Bac à sable",
-    "sandboxDesc": "Vous explorez avec des données de test. Chaque clé {{key}} écrit ici. Aucune commande ni recette réelle n'est affectée.",
+    "sandboxDesc": "Vous explorez avec des données de test. Chaque clé <code>sk_test_</code> écrit ici. Aucune commande ni recette réelle n'est affectée.",
     "openApiExplorer": "Ouvrir l'explorateur API",
     "lastUpdated": "Dernière mise à jour",
     "justNow": "à l'instant",
@@ -70,6 +70,121 @@
     "whatToDoDesc": "Accédez directement aux flux de travail les plus importants du jour.",
     "whereYouStand": "Votre position",
     "whereYouStandDesc": "Chiffres clés et votre position par rapport au marché."
+  },
+  "hero": {
+    "briefingLabel": "Bulletin du jour",
+    "greeting_morning": "Bonjour, {{name}}.",
+    "greeting_afternoon": "Bonjour, {{name}}.",
+    "greeting_evening": "Bonsoir, {{name}}.",
+    "welcomeBack": "Bon retour, {{name}}.",
+    "headlineClear": "Tout va bien. Votre marché est stable. Voyez ce qui bouge.",
+    "headlineAction": "{{count}} action requiert votre attention aujourd'hui.",
+    "headlineAction_plural": "{{count}} actions requièrent votre attention aujourd'hui.",
+    "headlineOpportunity": "{{count}} opportunité vaut le coup d'œil aujourd'hui.",
+    "headlineOpportunity_plural": "{{count}} opportunités valent le coup d'œil aujourd'hui.",
+    "headlineIntel": "Journée calme. {{count}} nouveau signal marché à examiner.",
+    "headlineIntel_plural": "Journée calme. {{count}} nouveaux signaux marché à examiner.",
+    "action": "{{count}} action",
+    "action_plural": "{{count}} actions",
+    "opportunity": "{{count}} opportunité",
+    "opportunity_plural": "{{count}} opportunités",
+    "signal": "{{count}} signal marché",
+    "signal_plural": "{{count}} signaux marché",
+    "clearFilter": "Effacer le filtre",
+    "reviewPricing": "Examiner les recommandations de prix",
+    "seeCompetitors": "Voir ce que les concurrents ont changé"
+  },
+  "onboarding": {
+    "title": "Obtenez votre premier signal en trois étapes",
+    "progress": "{{completed}} sur {{total}} complété",
+    "description": "Le tableau de bord se remplit dès qu'il y a quelque chose à suivre. Prenez cinq minutes maintenant et vous aurez des données concurrentes en direct, une recommandation de prix et un résumé IA avant la fin.",
+    "dismiss": "Fermer la liste de démarrage",
+    "hideCard": "Masquer cette carte",
+    "autoUpdate": "Cette carte se met à jour automatiquement à chaque étape.",
+    "step1": {
+      "title": "Ajoutez votre premier produit concurrent",
+      "body": "Enregistrez l'URL d'un produit d'un concurrent — Carrefour, Lulu, Talabat, n'importe lequel.",
+      "cta": "Ouvrir les Concurrents"
+    },
+    "step2": {
+      "title": "Effectuez votre premier scraping",
+      "body": "Récupérez un prix réel depuis l'URL enregistrée. Environ dix secondes.",
+      "cta": "Lancer un scraping"
+    },
+    "step3": {
+      "title": "Générez votre première lecture IA",
+      "body": "Laissez le modèle résumer ce qui vient d'arriver et recommander une action.",
+      "cta": "Aller aux insights"
+    }
+  },
+  "alerts": {
+    "title": "Alertes en direct",
+    "empty": "Aucune alerte pour l'instant — le tableau de bord se remplira à mesure que les concurrents et les prix évolueront.",
+    "latest": "Dernier"
+  },
+  "ai": {
+    "title": "Insights IA",
+    "subtitle": "Résumés automatiques de vos dernières données",
+    "generate": "Générer des insights",
+    "refresh": "Actualiser",
+    "generating": "Génération…",
+    "loading": "Chargement des insights {{window}}…",
+    "signInRequired": "Veuillez vous connecter pour générer des insights",
+    "refreshSuccess": "Insights actualisés",
+    "notGenerated": "Pas encore généré",
+    "justNow": "à l'instant",
+    "minAgo": "il y a 1 min",
+    "minsAgo": "il y a {{count}} min",
+    "hrAgo": "il y a 1 h",
+    "hrsAgo": "il y a {{count}} h",
+    "dayAgo": "il y a 1 jour",
+    "daysAgo": "il y a {{count}} jours",
+    "updatedAt": "Mis à jour {{time}} · {{count}} source",
+    "updatedAt_plural": "Mis à jour {{time}} · {{count}} sources",
+    "last24h": "dernières 24 heures",
+    "last7d": "7 derniers jours",
+    "last30d": "30 derniers jours",
+    "empty": "Aucun insight {{window}} pour l'instant. Cliquez sur « Générer des insights » pour obtenir un résumé du marché sur les {{windowLabel}}.",
+    "sources": "Sources",
+    "citationKind": {
+      "recommendation": "Recommandation prix",
+      "rule": "Règle de prix",
+      "metric": "Métrique",
+      "competitor_price": "Prix concurrent",
+      "behavior_pattern": "Tendance comportementale",
+      "alert": "Alerte",
+      "channel": "Canal",
+      "category": "Catégorie",
+      "assortment_gap": "Lacune d'assortiment",
+      "cross_border": "Transfrontalier",
+      "trending": "Produit tendance"
+    }
+  },
+  "metrics": {
+    "empty": "Aucune métrique pour l'instant."
+  },
+  "market": {
+    "positionTitle": "Position sur le marché par catégorie",
+    "positionSubtitle": "Part estimée sur les catégories surveillées",
+    "estShare": "{{value}}% part est.",
+    "youSuffix": "(Vous)",
+    "others": "Autres"
+  },
+  "channel": {
+    "title": "Revenus par canal",
+    "empty": "Aucune donnée de canal pour l'instant."
+  },
+  "freshness": {
+    "updated": "Mis à jour",
+    "latest": "Dernier",
+    "justNow": "à l'instant",
+    "secsAgo": "{{count}}s",
+    "minAgo": "1 min",
+    "minsAgo": "{{count}} min",
+    "hrAgo": "1 h",
+    "hrsAgo": "{{count}} h",
+    "dayAgo": "1 j",
+    "daysAgo": "{{count}} j"
   },
   "pricing": {
     "title": "Tarification",

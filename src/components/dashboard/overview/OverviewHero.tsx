@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth-context";
 import type { OverviewAlert } from "@/lib/overview-data";
 
 export type SeverityFilter = "action" | "opportunity" | "intel" | null;
 
-function getGreeting(): string {
+function getGreetingKey(mounted: boolean): string {
+  if (!mounted) return "hero.welcomeBack";
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "hero.greeting_morning";
+  if (h < 18) return "hero.greeting_afternoon";
+  return "hero.greeting_evening";
 }
 
 function getFirstName(name: string | null | undefined, email: string | null | undefined): string {
@@ -32,8 +34,8 @@ export function OverviewHero({
   pricingCount: number;
   competitorChangeCount: number;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  // Greeting depends on local time → render only on client to avoid hydration drift.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -48,17 +50,11 @@ export function OverviewHero({
   }, [alerts]);
 
   const headline = useMemo(() => {
-    if (counts.action > 0) {
-      return `${counts.action} ${counts.action === 1 ? "thing needs" : "things need"} your attention today.`;
-    }
-    if (counts.opportunity > 0) {
-      return `${counts.opportunity} ${counts.opportunity === 1 ? "opportunity" : "opportunities"} worth a look today.`;
-    }
-    if (counts.intel > 0) {
-      return `Quiet day. ${counts.intel} new market signal${counts.intel === 1 ? "" : "s"} to review.`;
-    }
-    return "All clear. Your market is steady. Take a look at what's moving.";
-  }, [counts]);
+    if (counts.action > 0) return t(counts.action === 1 ? "hero.headlineAction" : "hero.headlineAction_plural", { count: counts.action });
+    if (counts.opportunity > 0) return t(counts.opportunity === 1 ? "hero.headlineOpportunity" : "hero.headlineOpportunity_plural", { count: counts.opportunity });
+    if (counts.intel > 0) return t(counts.intel === 1 ? "hero.headlineIntel" : "hero.headlineIntel_plural", { count: counts.intel });
+    return t("hero.headlineClear");
+  }, [counts, t]);
 
   return (
     <section
@@ -98,7 +94,7 @@ export function OverviewHero({
           }}
         >
           <Sparkles size={12} strokeWidth={2.25} />
-          Today's briefing
+          {t("hero.briefingLabel")}
         </div>
 
         <h1
@@ -111,7 +107,7 @@ export function OverviewHero({
             lineHeight: 1.2,
           }}
         >
-          {mounted ? `${getGreeting()}, ${firstName}.` : `Welcome back, ${firstName}.`}
+          {t(getGreetingKey(mounted), { name: firstName })}
         </h1>
         <p
           style={{
@@ -137,21 +133,21 @@ export function OverviewHero({
         >
           <StatusChip
             dotColor="#DC2626"
-            label={`${counts.action} ${counts.action === 1 ? "action" : "actions"}`}
+            label={t(counts.action === 1 ? "hero.action" : "hero.action_plural", { count: counts.action })}
             active={activeFilter === "action"}
             disabled={counts.action === 0}
             onClick={() => onFilterChange(activeFilter === "action" ? null : "action")}
           />
           <StatusChip
             dotColor="#16A34A"
-            label={`${counts.opportunity} ${counts.opportunity === 1 ? "opportunity" : "opportunities"}`}
+            label={t(counts.opportunity === 1 ? "hero.opportunity" : "hero.opportunity_plural", { count: counts.opportunity })}
             active={activeFilter === "opportunity"}
             disabled={counts.opportunity === 0}
             onClick={() => onFilterChange(activeFilter === "opportunity" ? null : "opportunity")}
           />
           <StatusChip
             dotColor="#2563EB"
-            label={`${counts.intel} market signal${counts.intel === 1 ? "" : "s"}`}
+            label={t(counts.intel === 1 ? "hero.signal" : "hero.signal_plural", { count: counts.intel })}
             active={activeFilter === "intel"}
             disabled={counts.intel === 0}
             onClick={() => onFilterChange(activeFilter === "intel" ? null : "intel")}
@@ -170,7 +166,7 @@ export function OverviewHero({
                 padding: "5px 6px",
               }}
             >
-              Clear filter
+              {t("hero.clearFilter")}
             </button>
           )}
         </div>
@@ -201,7 +197,7 @@ export function OverviewHero({
             }}
           >
             <Zap size={14} strokeWidth={2.25} />
-            Review pricing recommendations
+            {t("hero.reviewPricing")}
             <CountBadge value={pricingCount} variant="onDark" />
             <ArrowRight size={14} strokeWidth={2} />
           </Link>
@@ -222,7 +218,7 @@ export function OverviewHero({
               fontWeight: 600,
             }}
           >
-            See what competitors changed
+            {t("hero.seeCompetitors")}
             <CountBadge value={competitorChangeCount} variant="onLight" />
             <ArrowRight size={14} strokeWidth={2} />
           </Link>

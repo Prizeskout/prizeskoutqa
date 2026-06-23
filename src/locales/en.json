@@ -42,7 +42,7 @@
   },
   "layout": {
     "sandbox": "Sandbox",
-    "sandboxDesc": "You are exploring with test data. Every {{key}} key writes here. No live orders or revenue are affected.",
+    "sandboxDesc": "You are exploring with test data. Every <code>sk_test_</code> key writes here. No live orders or revenue are affected.",
     "openApiExplorer": "Open API Explorer",
     "lastUpdated": "Last updated",
     "justNow": "just now",
@@ -70,6 +70,121 @@
     "whatToDoDesc": "Jump straight into the workflows that matter most today.",
     "whereYouStand": "Where you stand",
     "whereYouStandDesc": "Headline numbers and your position vs the market."
+  },
+  "hero": {
+    "briefingLabel": "Today's briefing",
+    "greeting_morning": "Good morning, {{name}}.",
+    "greeting_afternoon": "Good afternoon, {{name}}.",
+    "greeting_evening": "Good evening, {{name}}.",
+    "welcomeBack": "Welcome back, {{name}}.",
+    "headlineClear": "All clear. Your market is steady. Take a look at what's moving.",
+    "headlineAction": "{{count}} thing needs your attention today.",
+    "headlineAction_plural": "{{count}} things need your attention today.",
+    "headlineOpportunity": "{{count}} opportunity worth a look today.",
+    "headlineOpportunity_plural": "{{count}} opportunities worth a look today.",
+    "headlineIntel": "Quiet day. {{count}} new market signal to review.",
+    "headlineIntel_plural": "Quiet day. {{count}} new market signals to review.",
+    "action": "{{count}} action",
+    "action_plural": "{{count}} actions",
+    "opportunity": "{{count}} opportunity",
+    "opportunity_plural": "{{count}} opportunities",
+    "signal": "{{count}} market signal",
+    "signal_plural": "{{count}} market signals",
+    "clearFilter": "Clear filter",
+    "reviewPricing": "Review pricing recommendations",
+    "seeCompetitors": "See what competitors changed"
+  },
+  "onboarding": {
+    "title": "Get your first signal in three steps",
+    "progress": "{{completed}} of {{total}} done",
+    "description": "The dashboard fills in once we have something to track. Take five minutes now and you'll have live competitor data, a price recommendation, and an AI brief by the time you're done.",
+    "dismiss": "Dismiss onboarding checklist",
+    "hideCard": "Hide this card",
+    "autoUpdate": "This card updates on its own as you complete each step.",
+    "step1": {
+      "title": "Add your first competitor product",
+      "body": "Save a product URL from one competitor. Carrefour, Lulu, Talabat, anything you sell against.",
+      "cta": "Open Competitors"
+    },
+    "step2": {
+      "title": "Run your first live scrape",
+      "body": "Pull a real price from the URL you saved. Takes about ten seconds.",
+      "cta": "Trigger a scrape"
+    },
+    "step3": {
+      "title": "Generate your first AI read",
+      "body": "Let the model summarise what just landed and recommend a move.",
+      "cta": "Go to insights"
+    }
+  },
+  "alerts": {
+    "title": "Live alerts",
+    "empty": "No alerts yet — your dashboard will populate as competitors and prices change.",
+    "latest": "Latest"
+  },
+  "ai": {
+    "title": "AI Insights",
+    "subtitle": "Automated summaries from your latest data",
+    "generate": "Generate insights",
+    "refresh": "Refresh",
+    "generating": "Generating…",
+    "loading": "Loading {{window}} insights…",
+    "signInRequired": "Please sign in to generate insights",
+    "refreshSuccess": "Insights refreshed",
+    "notGenerated": "Not generated yet",
+    "justNow": "just now",
+    "minAgo": "1 min ago",
+    "minsAgo": "{{count}} min ago",
+    "hrAgo": "1 hr ago",
+    "hrsAgo": "{{count}} hrs ago",
+    "dayAgo": "1 day ago",
+    "daysAgo": "{{count}} days ago",
+    "updatedAt": "Updated {{time}} · {{count}} source",
+    "updatedAt_plural": "Updated {{time}} · {{count}} sources",
+    "last24h": "last 24 hours",
+    "last7d": "last 7 days",
+    "last30d": "last 30 days",
+    "empty": "No {{window}} insights yet. Click \"Generate insights\" to see a headline read, top observations, and recommended actions for the {{windowLabel}}.",
+    "sources": "Sources",
+    "citationKind": {
+      "recommendation": "Pricing rec",
+      "rule": "Pricing rule",
+      "metric": "Metric",
+      "competitor_price": "Competitor price",
+      "behavior_pattern": "Behavior pattern",
+      "alert": "Alert",
+      "channel": "Channel",
+      "category": "Category",
+      "assortment_gap": "Assortment gap",
+      "cross_border": "Cross-border",
+      "trending": "Trending product"
+    }
+  },
+  "metrics": {
+    "empty": "No metrics yet."
+  },
+  "market": {
+    "positionTitle": "Market position by category",
+    "positionSubtitle": "Estimated share across monitored categories",
+    "estShare": "{{value}}% est. share",
+    "youSuffix": "(You)",
+    "others": "Others"
+  },
+  "channel": {
+    "title": "Revenue by channel",
+    "empty": "No channel data yet."
+  },
+  "freshness": {
+    "updated": "Updated",
+    "latest": "Latest",
+    "justNow": "just now",
+    "secsAgo": "{{count}}s ago",
+    "minAgo": "1 min ago",
+    "minsAgo": "{{count}} min ago",
+    "hrAgo": "1 hr ago",
+    "hrsAgo": "{{count}} hrs ago",
+    "dayAgo": "1 day ago",
+    "daysAgo": "{{count}} days ago"
   },
   "pricing": {
     "title": "Pricing",
