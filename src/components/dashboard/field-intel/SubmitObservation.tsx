@@ -62,7 +62,7 @@ function StyledSelect({
         style={{
           ...inputStyle,
           appearance: "none",
-          paddingRight: 36,
+          paddingInlineEnd: 36,
           color: value === "" ? "#9A9A9A" : "#1A1A18",
           cursor: "pointer",
         }}
@@ -79,7 +79,7 @@ function StyledSelect({
         color="#9A9A9A"
         style={{
           position: "absolute",
-          right: 12,
+          insetInlineEnd: 12,
           top: "50%",
           transform: "translateY(-50%)",
           pointerEvents: "none",

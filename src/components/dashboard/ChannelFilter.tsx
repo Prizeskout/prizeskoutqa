@@ -46,7 +46,7 @@ export function ChannelFilter({
 
       {open && (
         <div
-          className="absolute right-0 z-50 mt-2 overflow-hidden"
+          className="absolute end-0 z-50 mt-2 overflow-hidden"
           style={{
             minWidth: 160,
             backgroundColor: "#FFFFFF",

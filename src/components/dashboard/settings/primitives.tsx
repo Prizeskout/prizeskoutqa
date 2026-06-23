@@ -122,7 +122,7 @@ export function SelectField({
           appearance: "none",
           WebkitAppearance: "none",
           MozAppearance: "none",
-          paddingRight: 38,
+          paddingInlineEnd: 38,
           cursor: "pointer",
           borderColor: focused ? "#EA580C" : "#E5E2DB",
         }}

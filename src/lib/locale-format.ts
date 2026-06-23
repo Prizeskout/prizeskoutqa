@@ -4,7 +4,7 @@ import type { Locale } from "./i18n";
 // per locale convention.
 const LOCALE_MAP: Record<Locale, string> = {
   en: "en-QA",
-  ar: "ar-QA",
+  ar: "ar-QA-u-nu-latn",
   fr: "fr-FR",
 };
 

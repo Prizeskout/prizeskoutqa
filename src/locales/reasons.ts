@@ -73,32 +73,32 @@ const REASONS: Record<Locale, Partial<Record<ReasonCode, ReasonFn>>> = {
 
   ar: {
     undercut_competitor: (p) =>
-      `تسعير أقل من أرخص منافس (${p.competitor_min}) بمقدار ${p.undercut_by} وحدة مع الحفاظ على هامش ${p.margin_pct}٪.`,
+      `تسعير أقل من أرخص منافس ⁦(${p.competitor_min})⁩ بمقدار ⁦${p.undercut_by}⁩ وحدة مع الحفاظ على هامش ⁦${p.margin_pct}⁩٪.`,
     hold_margin_floor: (p) =>
-      `تم تثبيت هامش ${p.margin_pct}٪ (${p.margin_floor})؛ التسعير أقل من أرخص منافس (${p.competitor_min}) سيُخفّض الهامش عن الهدف.`,
+      `تم تثبيت هامش ⁦${p.margin_pct}⁩٪ ⁦(${p.margin_floor})⁩؛ التسعير أقل من أرخص منافس ⁦(${p.competitor_min})⁩ سيُخفّض الهامش عن الهدف.`,
     no_competitor_data: (p) =>
-      `لا توجد أسعار منافسين — استُخدم حدّ الهامش (${p.margin_floor}) عند ${p.margin_pct}٪.`,
+      `لا توجد أسعار منافسين — استُخدم حدّ الهامش ⁦(${p.margin_floor})⁩ عند ⁦${p.margin_pct}⁩٪.`,
     no_margin_inputs: (p) =>
-      `لم تُضبط بيانات هامش التكلفة — تسعير أقل من أرخص منافس (${p.competitor_min}) بمقدار ${p.undercut_by} وحدة. أضف margin_inputs للحصول على توصيات أكثر دقةً.`,
+      `لم تُضبط بيانات هامش التكلفة — تسعير أقل من أرخص منافس ⁦(${p.competitor_min})⁩ بمقدار ⁦${p.undercut_by}⁩ وحدة. أضف ⁦margin_inputs⁩ للحصول على توصيات أكثر دقةً.`,
     competitor_gap: (p) => {
       const n = Number(p.competitor_count);
-      const suffix = n === 1 ? "منافس واحد" : `${n} منافسين`;
+      const suffix = n === 1 ? "منافس واحد" : `⁦${n}⁩ منافسين`;
       return (
-        `${suffix} (${p.competitor_list}) — الوسيط ${p.median} ريال، الأدنى ${p.min} ريال. ` +
-        `سعرك أعلى من الوسيط بـ ${p.gap_pct}٪. ` +
-        `مطابقة الوسيط قد ترفع المبيعات ~${p.unit_delta_pct}٪ بناءً على مرونة الفئة.`
+        `${suffix} ⁦(${p.competitor_list})⁩ — الوسيط ⁦${p.median}⁩ ريال، الأدنى ⁦${p.min}⁩ ريال. ` +
+        `سعرك أعلى من الوسيط بـ ⁦${p.gap_pct}⁩٪. ` +
+        `مطابقة الوسيط قد ترفع المبيعات ~⁦${p.unit_delta_pct}⁩٪ بناءً على مرونة الفئة.`
       );
     },
     already_at_median: (p) =>
-      `السعر مساوٍ للوسيط أو أقل منه (الفجوة ${p.gap_pct}٪) — لا توصية مطلوبة.`,
+      `السعر مساوٍ للوسيط أو أقل منه (الفجوة ⁦${p.gap_pct}⁩٪) — لا توصية مطلوبة.`,
     cost_floor_applied: (p) =>
-      `تم تقييد السعر عند حدّ التكلفة (هامش ${p.floor_pct}٪ قابل للتطبيق).`,
+      `تم تقييد السعر عند حدّ التكلفة (هامش ⁦${p.floor_pct}⁩٪ قابل للتطبيق).`,
     all_outliers: () =>
-      `رُصدت جميع أسعار المنافسين كقيم شاذة — تم التخطي. تحقق من روابط SKU.`,
+      `رُصدت جميع أسعار المنافسين كقيم شاذة — تم التخطي. تحقق من روابط ⁦SKU⁩.`,
     no_scrapes: () =>
       `لا تتوفر بيانات مسح حديثة للمنافسين.`,
     rule_adjusted: (p) =>
-      `تم تعديل السعر وفق القاعدة/القواعد: ${p.rules}.`,
+      `تم تعديل السعر وفق القاعدة/القواعد: ⁦${p.rules}⁩.`,
   },
 
   fr: {

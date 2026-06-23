@@ -69,8 +69,8 @@ function CampaignCard({ c }: { c: PastCampaignRow }) {
       <div
         style={{
           marginTop: 14,
-          borderLeft: `3px solid ${colors.accent}`,
-          paddingLeft: 14,
+          borderInlineStart: `3px solid ${colors.accent}`,
+          paddingInlineStart: 14,
           fontSize: 13,
           color: "#6B6B6B",
           lineHeight: 1.65,

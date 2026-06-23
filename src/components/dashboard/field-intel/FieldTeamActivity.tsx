@@ -65,7 +65,7 @@ export function FieldTeamActivity({ activity }: { activity: FieldTeamActivityRow
                 fontWeight: 600,
                 color: "#1A1A18",
                 minWidth: 30,
-                textAlign: "right",
+                textAlign: "end",
               }}
             >
               {a.observation_count}

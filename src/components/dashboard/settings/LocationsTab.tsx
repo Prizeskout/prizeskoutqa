@@ -176,7 +176,7 @@ export function LocationsTab() {
                         backgroundColor: "#F5F4F1",
                         borderRadius: 3,
                         marginTop: 6,
-                        marginLeft: "auto",
+                        marginInlineStart: "auto",
                         overflow: "hidden",
                       }}
                     >

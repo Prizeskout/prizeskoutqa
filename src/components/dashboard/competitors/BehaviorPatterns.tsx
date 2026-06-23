@@ -346,7 +346,7 @@ function PatternCard({ pattern }: { pattern: Pattern }) {
           backgroundColor: accentRgba(accentColor, 0.04),
           borderRadius: 8,
           padding: "16px 20px",
-          borderLeft: `3px solid ${accentColor}`,
+          borderInlineStart: `3px solid ${accentColor}`,
         }}
       >
         <SectionLabel color={accentColor}>
@@ -390,12 +390,12 @@ function Timeline({
 }) {
   const { accentColor } = useBranding();
   return (
-    <div style={{ position: "relative", marginTop: 8, paddingLeft: 14 }}>
+    <div style={{ position: "relative", marginTop: 8, paddingInlineStart: 14 }}>
       <div
         aria-hidden
         style={{
           position: "absolute",
-          left: 3,
+          insetInlineStart: 3,
           top: 12,
           bottom: 12,
           width: 1,
@@ -416,7 +416,7 @@ function Timeline({
           <span
             style={{
               position: "absolute",
-              left: -14,
+              insetInlineStart: -14,
               top: 12,
               width: 7,
               height: 7,

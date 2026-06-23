@@ -179,7 +179,7 @@ export function NotificationsBell() {
             className="absolute"
             style={{
               top: 2,
-              right: 2,
+              insetInlineEnd: 2,
               minWidth: 14,
               height: 14,
               padding: "0 4px",
@@ -207,7 +207,7 @@ export function NotificationsBell() {
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
-            right: 0,
+            insetInlineEnd: 0,
             width: 360,
             maxWidth: "calc(100vw - 24px)",
             maxHeight: 460,

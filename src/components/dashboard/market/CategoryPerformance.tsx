@@ -59,11 +59,11 @@ export function CategoryPerformance({ rows }: { rows: CategoryPerformanceRow[] }
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
           <thead>
             <tr style={{ borderBottom: "2px solid #E5E2DB" }}>
-              <th style={{ ...th, textAlign: "left" }}>Category</th>
-              <th style={{ ...th, textAlign: "right" }}>Growth</th>
-              <th style={{ ...th, textAlign: "right" }}>Avg discount depth</th>
+              <th style={{ ...th, textAlign: "start" }}>Category</th>
+              <th style={{ ...th, textAlign: "end" }}>Growth</th>
+              <th style={{ ...th, textAlign: "end" }}>Avg discount depth</th>
               <th style={{ ...th, textAlign: "center" }}>Price volatility</th>
-              <th style={{ ...th, textAlign: "left" }}>Top mover</th>
+              <th style={{ ...th, textAlign: "start" }}>Top mover</th>
               <th style={{ ...th, textAlign: "center" }}>Your position</th>
               <th style={{ ...th, textAlign: "center" }}>Direction</th>
             </tr>
@@ -94,14 +94,14 @@ export function CategoryPerformance({ rows }: { rows: CategoryPerformanceRow[] }
                       padding: "14px 10px",
                       fontSize: 13,
                       fontWeight: 600,
-                      textAlign: "right",
+                      textAlign: "end",
                       color: growthNum >= 0 ? "#22C55E" : "#EF4444",
                     }}
                   >
                     {growthNum >= 0 ? "+" : ""}
                     {growthNum}%
                   </td>
-                  <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 400, color: "#1A1A18", textAlign: "right" }}>
+                  <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 400, color: "#1A1A18", textAlign: "end" }}>
                     {Number(row.avg_discount)}%
                   </td>
                   <td style={{ padding: "14px 10px", textAlign: "center" }}>
@@ -127,7 +127,7 @@ export function CategoryPerformance({ rows }: { rows: CategoryPerformanceRow[] }
                       <span style={{ fontSize: 10, color: c, fontWeight: 500 }}>{row.volatility}</span>
                     </div>
                   </td>
-                  <td style={{ padding: "14px 10px", fontSize: 12, color: "#6B6B6B", textAlign: "left" }}>
+                  <td style={{ padding: "14px 10px", fontSize: 12, color: "#6B6B6B", textAlign: "start" }}>
                     {row.top_mover}
                   </td>
                   <td style={{ padding: "14px 10px", textAlign: "center" }}>

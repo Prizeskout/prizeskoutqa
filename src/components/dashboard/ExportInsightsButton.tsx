@@ -94,7 +94,7 @@ export function ExportInsightsButton() {
             style={{
               position: "absolute",
               top: "calc(100% + 4px)",
-              right: 0,
+              insetInlineEnd: 0,
               zIndex: 41,
               minWidth: 180,
               backgroundColor: "#FFFFFF",
@@ -134,7 +134,7 @@ export function ExportInsightsButton() {
                   fontSize: 12,
                   fontWeight: 500,
                   cursor: "pointer",
-                  textAlign: "left",
+                  textAlign: "start",
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#FAF8F3";

@@ -51,12 +51,12 @@ export function CrossBorderRadar({ rows }: { rows: CrossBorderRadarRow[] }) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "2px solid #E5E2DB" }}>
-              <th style={{ ...th, textAlign: "left" }}>Product</th>
-              <th style={{ ...th, textAlign: "right" }}>Your price</th>
-              <th style={{ ...th, textAlign: "right" }}>International price</th>
-              <th style={{ ...th, textAlign: "left" }}>Platform</th>
-              <th style={{ ...th, textAlign: "left" }}>Delivery time</th>
-              <th style={{ ...th, textAlign: "right" }}>Price gap</th>
+              <th style={{ ...th, textAlign: "start" }}>Product</th>
+              <th style={{ ...th, textAlign: "end" }}>Your price</th>
+              <th style={{ ...th, textAlign: "end" }}>International price</th>
+              <th style={{ ...th, textAlign: "start" }}>Platform</th>
+              <th style={{ ...th, textAlign: "start" }}>Delivery time</th>
+              <th style={{ ...th, textAlign: "end" }}>Price gap</th>
               <th style={{ ...th, textAlign: "center" }}>Risk level</th>
             </tr>
           </thead>
@@ -78,10 +78,10 @@ export function CrossBorderRadar({ rows }: { rows: CrossBorderRadarRow[] }) {
                 <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 500, color: "#1A1A18" }}>
                   {row.product}
                 </td>
-                <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EA580C", textAlign: "right" }}>
+                <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EA580C", textAlign: "end" }}>
                   QAR {Number(row.your_price).toLocaleString()}
                 </td>
-                <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EF4444", textAlign: "right" }}>
+                <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EF4444", textAlign: "end" }}>
                   QAR {Number(row.intl_price).toLocaleString()}
                 </td>
                 <td style={{ padding: "14px 10px", fontSize: 12, color: "#6B6B6B" }}>
@@ -91,7 +91,7 @@ export function CrossBorderRadar({ rows }: { rows: CrossBorderRadarRow[] }) {
                   </span>
                 </td>
                 <td style={{ padding: "14px 10px", fontSize: 12, color: "#6B6B6B" }}>{row.delivery}</td>
-                <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EF4444", textAlign: "right" }}>
+                <td style={{ padding: "14px 10px", fontSize: 13, fontWeight: 600, color: "#EF4444", textAlign: "end" }}>
                   {row.gap}
                 </td>
                 <td style={{ padding: "14px 10px", textAlign: "center" }}>

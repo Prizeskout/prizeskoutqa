@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Arabic BiDi Isolation Test</title>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; font-size: 15px; line-height: 1.8; padding: 40px; background: #FAFAF9; color: #1A1A18; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #9A9A9A; margin-top: 32px; margin-bottom: 8px; }
+    .reason { background: #fff; border: 1px solid #E5E2DB; border-radius: 10px; padding: 16px; margin-bottom: 10px; }
+    .label { font-size: 11px; color: #9A9A9A; margin-bottom: 4px; }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div style="max-width: 680px; margin: 0 auto">
+    <div style="direction: ltr; font-size: 12px; background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 8px; padding: 12px; margin-bottom: 32px;">
+      ✓ This page is rendered with <code>dir="rtl"</code> on &lt;html&gt; — the same as the dashboard in Arabic mode.<br>
+      ✓ LRI (U+2066) / PDI (U+2069) isolation markers are embedded in the strings; they are invisible.<br>
+      ✓ Numbers and Latin names should appear in their correct positions within the RTL sentences.
+    </div>
+
+    <h2>Reason: undercut_competitor</h2>
+    <div class="reason">
+      <div class="label">Arabic</div>
+      <!-- U+2066 = LRI, U+2069 = PDI — invisible, wrap interpolated LTR content -->
+      تسعير أقل من أرخص منافس ⁦(44.99)⁩ بمقدار ⁦1⁩ وحدة مع الحفاظ على هامش ⁦20⁩٪.
+    </div>
+    <div class="reason" style="direction: ltr">
+      <div class="label">English (for comparison)</div>
+      Undercut cheapest competitor (44.99) by 1 unit while respecting the 20% margin floor.
+    </div>
+
+    <h2>Reason: competitor_gap (with Latin proper nouns)</h2>
+    <div class="reason">
+      <div class="label">Arabic</div>
+      ⁦3⁩ منافسين ⁦(Amazon, Noon, Carrefour)⁩ — الوسيط ⁦89.5⁩ ريال، الأدنى ⁦82⁩ ريال. سعرك أعلى من الوسيط بـ ⁦12.3⁩٪. مطابقة الوسيط قد ترفع المبيعات ~⁦8.1⁩٪ بناءً على مرونة الفئة.
+    </div>
+    <div class="reason" style="direction: ltr">
+      <div class="label">English (for comparison)</div>
+      3 competitors (Amazon, Noon, Carrefour) median QAR 89.5, lowest QAR 82. You're 12.3% above median. Matching the median should lift units ~8.1% based on category elasticity.
+    </div>
+
+    <h2>Reason: hold_margin_floor</h2>
+    <div class="reason">
+      <div class="label">Arabic</div>
+      تم تثبيت هامش ⁦20⁩٪ ⁦(42.5)⁩؛ التسعير أقل من أرخص منافس ⁦(38)⁩ سيُخفّض الهامش عن الهدف.
+    </div>
+
+    <h2>Reason: no_competitor_data</h2>
+    <div class="reason">
+      <div class="label">Arabic</div>
+      لا توجد أسعار منافسين — استُخدم حدّ الهامش ⁦(42.5)⁩ عند ⁦20⁩٪.
+    </div>
+
+    <h2>Reason: already_at_median</h2>
+    <div class="reason">
+      <div class="label">Arabic</div>
+      السعر مساوٍ للوسيط أو أقل منه (الفجوة ⁦5.2⁩٪) — لا توصية مطلوبة.
+    </div>
+
+    <h2>Reason: all_outliers (with Latin acronym)</h2>
+    <div class="reason">
+      <div class="label">Arabic</div>
+      رُصدت جميع أسعار المنافسين كقيم شاذة — تم التخطي. تحقق من روابط ⁦SKU⁩.
+    </div>
+
+    <h2>Western digit formatting (ar-QA-u-nu-latn)</h2>
+    <div class="reason" id="intl-test">
+      <script>
+        const fmt = new Intl.NumberFormat("ar-QA-u-nu-latn", { style: "currency", currency: "QAR", minimumFractionDigits: 2 });
+        const pct  = new Intl.NumberFormat("ar-QA-u-nu-latn", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        document.write(`
+          <div><b>Currency:</b> ${fmt.format(1234.50)}</div>
+          <div><b>Percent:</b> ${pct.format(0.123)}</div>
+          <div style="font-size:11px;color:#9A9A9A;margin-top:6px">Digits must be Western (0–9), not Eastern Arabic (٠–٩)</div>
+        `);
+      </script>
+    </div>
+  </div>
+</body>
+</html>

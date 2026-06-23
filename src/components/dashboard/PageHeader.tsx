@@ -137,7 +137,7 @@ function HelpPopover({ title, items }: { title: string; items: string[] }) {
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
-            left: 0,
+            insetInlineStart: 0,
             zIndex: 40,
             width: 320,
             backgroundColor: "var(--color-light-surface)",
@@ -176,7 +176,7 @@ function HelpPopover({ title, items }: { title: string; items: string[] }) {
           <ol
             style={{
               listStyle: "decimal",
-              paddingLeft: 18,
+              paddingInlineStart: 18,
               margin: 0,
               fontSize: 12.5,
               color: "var(--color-text-primary)",

@@ -148,7 +148,7 @@ export function OnboardingChecklist() {
         style={{
           position: "absolute",
           top: 12,
-          right: 12,
+          insetInlineEnd: 12,
           width: 26,
           height: 26,
           borderRadius: 6,

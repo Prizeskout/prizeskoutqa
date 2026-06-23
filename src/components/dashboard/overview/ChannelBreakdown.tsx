@@ -51,7 +51,7 @@ export function ChannelBreakdown({ channels }: { channels: OverviewChannel[] }) 
                       {row.label}
                     </span>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div style={{ textAlign: "end" }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>
                       {row.amount}
                     </div>

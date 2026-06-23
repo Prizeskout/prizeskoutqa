@@ -76,7 +76,7 @@ function formatGeneratedAt(iso: string | null): string {
 function CiteChips({ cites }: { cites: number[] }) {
   if (!cites.length) return null;
   return (
-    <span style={{ display: "inline-flex", gap: 4, marginLeft: 6 }}>
+    <span style={{ display: "inline-flex", gap: 4, marginInlineStart: 6 }}>
       {cites.map((n) => (
         <a
           key={n}
@@ -204,8 +204,8 @@ export function AIInsightsCard({
         style={{
           position: "absolute",
           top: 0,
-          left: 0,
-          right: 0,
+          insetInlineStart: 0,
+          insetInlineEnd: 0,
           height: 3,
           background: "linear-gradient(90deg, #EA580C 0%, #7C3AED 60%, #3B82F6 100%)",
         }}

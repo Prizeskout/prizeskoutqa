@@ -31,13 +31,13 @@ export function PriceGaps({ gaps }: { gaps: PriceGapRow[] }) {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, textAlign: "left" }}>Product</th>
-              <th style={{ ...thStyle, textAlign: "left" }}>Competitor</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Online price</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>In-store price</th>
-              <th style={{ ...thStyle, textAlign: "right" }}>Gap</th>
+              <th style={{ ...thStyle, textAlign: "start" }}>Product</th>
+              <th style={{ ...thStyle, textAlign: "start" }}>Competitor</th>
+              <th style={{ ...thStyle, textAlign: "end" }}>Online price</th>
+              <th style={{ ...thStyle, textAlign: "end" }}>In-store price</th>
+              <th style={{ ...thStyle, textAlign: "end" }}>Gap</th>
               <th style={{ ...thStyle, textAlign: "center" }}>Direction</th>
-              <th style={{ ...thStyle, textAlign: "left" }}>Last observed</th>
+              <th style={{ ...thStyle, textAlign: "start" }}>Last observed</th>
             </tr>
           </thead>
           <tbody>
@@ -61,13 +61,13 @@ export function PriceGaps({ gaps }: { gaps: PriceGapRow[] }) {
                   <td style={{ padding: "12px", fontSize: 12, color: "#6B6B6B", borderBottom: "1px solid #F5F4F1" }}>
                     {r.competitor}
                   </td>
-                  <td style={{ padding: "12px", fontSize: 13, fontWeight: 400, color: "#1A1A18", textAlign: "right", borderBottom: "1px solid #F5F4F1" }}>
+                  <td style={{ padding: "12px", fontSize: 13, fontWeight: 400, color: "#1A1A18", textAlign: "end", borderBottom: "1px solid #F5F4F1" }}>
                     QAR {Number(r.online_price).toFixed(2)}
                   </td>
-                  <td style={{ padding: "12px", fontSize: 13, fontWeight: 600, color: "#1A1A18", textAlign: "right", borderBottom: "1px solid #F5F4F1" }}>
+                  <td style={{ padding: "12px", fontSize: 13, fontWeight: 600, color: "#1A1A18", textAlign: "end", borderBottom: "1px solid #F5F4F1" }}>
                     QAR {Number(r.in_store_price).toFixed(2)}
                   </td>
-                  <td style={{ padding: "12px", fontSize: 13, fontWeight: 600, color: gapColor, textAlign: "right", borderBottom: "1px solid #F5F4F1" }}>
+                  <td style={{ padding: "12px", fontSize: 13, fontWeight: 600, color: gapColor, textAlign: "end", borderBottom: "1px solid #F5F4F1" }}>
                     {r.gap}
                   </td>
                   <td style={{ padding: "12px", textAlign: "center", borderBottom: "1px solid #F5F4F1" }}>

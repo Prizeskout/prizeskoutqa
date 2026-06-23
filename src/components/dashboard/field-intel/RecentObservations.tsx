@@ -150,7 +150,7 @@ export function RecentObservations({
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                <div style={{ textAlign: "right" }}>
+                <div style={{ textAlign: "end" }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#EA580C" }}>
                     QAR {Number(o.price).toFixed(2)}
                   </div>

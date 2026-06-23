@@ -330,7 +330,7 @@ export function RecommendationCard({
             {rec.netMonthly}
           </div>
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ marginInlineStart: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           {applied && (
             <>
               <div

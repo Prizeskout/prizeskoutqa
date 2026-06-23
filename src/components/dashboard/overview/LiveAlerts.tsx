@@ -122,7 +122,7 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
         .live-alert-time {
           font-size: 11px;
           color: #9A9A9A;
-          margin-left: auto;
+          margin-inline-start: auto;
         }
         @media (min-width: 768px) {
           .live-alert-row {
@@ -135,8 +135,8 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
           }
           .live-alert-time {
             min-width: 80px;
-            text-align: right;
-            margin-left: 0;
+            text-align: end;
+            margin-inline-start: 0;
           }
         }
       `}</style>
