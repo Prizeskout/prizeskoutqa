@@ -1,7 +1,68 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import logoDark from "@/assets/logo-dark.svg";
+
+const LANGS = [
+  { code: "en", label: "EN" },
+  { code: "ar", label: "AR" },
+  { code: "fr", label: "FR" },
+] as const;
+
+function LangSwitcher({ compact }: { compact?: boolean }) {
+  const { i18n } = useTranslation();
+  const active = i18n.language.slice(0, 2);
+
+  function switchLang(code: string) {
+    i18n.changeLanguage(code);
+    document.documentElement.dir = code === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = code;
+  }
+
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        gap: 2,
+        background: "#0A0A0A",
+        border: "1px solid #1A1A1A",
+        borderRadius: 8,
+        padding: 2,
+        ...(compact ? {} : {}),
+      }}
+    >
+      {LANGS.map(({ code, label }) => (
+        <button
+          key={code}
+          onClick={() => switchLang(code)}
+          style={{
+            background: active === code ? "#1A1A1A" : "transparent",
+            border: "none",
+            borderRadius: 6,
+            color: active === code ? "#FAFAF9" : "#6B6B6B",
+            cursor: "pointer",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            padding: compact ? "4px 7px" : "5px 9px",
+            transition: "background 0.15s, color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            if (active !== code) e.currentTarget.style.color = "#A8A8A8";
+          }}
+          onMouseLeave={(e) => {
+            if (active !== code) e.currentTarget.style.color = "#6B6B6B";
+          }}
+          aria-label={`Switch to ${code.toUpperCase()}`}
+          aria-pressed={active === code}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 type SimpleNavItem = {
   label: string;
@@ -170,6 +231,7 @@ function Header() {
           </nav>
 
           <div className="hidden md:flex" style={{ alignItems: "center", gap: 18 }}>
+            <LangSwitcher />
             <Link
               to="/login"
               style={{
@@ -323,6 +385,9 @@ function Header() {
               );
             })}
             <div style={{ height: 1, background: "#1A1A1A", margin: "16px 0" }} />
+            <div style={{ padding: "8px 4px" }}>
+              <LangSwitcher compact />
+            </div>
             <Link
               to="/login"
               onClick={() => setMobileOpen(false)}

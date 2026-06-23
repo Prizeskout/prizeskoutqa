@@ -20,6 +20,7 @@ import {
   handleTriggerScrape,
   handleListPatterns,
   handleScrapeCoverage,
+  handleCacheStats,
 } from "@/server/competitors-handlers";
 import {
   handleListRecommendations,
@@ -936,6 +937,7 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("POST /v1/competitors/scrape", (req, ctx) => handleTriggerScrape(req, ctx)),
   compileRoute("GET /v1/competitors/coverage", (req, ctx) => handleScrapeCoverage(req, ctx)),
   compileRoute("GET /v1/competitors/patterns", (req, ctx) => handleListPatterns(req, ctx)),
+  compileRoute("GET /v1/competitors/cache-stats", (req, ctx) => handleCacheStats(req, ctx)),
   // Pricing reads (Week 10 — pillar 2)
   compileRoute("GET /v1/pricing/recommendations", (req, ctx) => handleListRecommendations(req, ctx)),
   compileRoute("GET /v1/pricing/recommendations/{id}", (req, ctx, p) => handleGetRecommendation(req, ctx, p.id)),

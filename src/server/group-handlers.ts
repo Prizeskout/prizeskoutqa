@@ -195,7 +195,7 @@ export async function processExpiredCampaigns(): Promise<{
       }).eq("campaign_id", campaign.id).eq("status", "committed");
 
       // Audit
-      await supabaseAdmin.from("pricing_decisions").insert({
+      await (supabaseAdmin.from("pricing_decisions") as any).insert({
         user_id:           campaign.created_by ?? campaign.account_id,
         product:           campaign.sku,
         category:          null,
@@ -356,8 +356,7 @@ export async function handleCreateCampaign(
 
   // ── Insert campaign ───────────────────────────────────────────────────────
 
-  const { data: campaign, error: camErr } = await supabaseAdmin
-    .from("group_campaigns")
+  const { data: campaign, error: camErr } = await (supabaseAdmin.from("group_campaigns") as any)
     .insert({
       account_id:      ctx.accountId,
       licensee_id:     ctx.licenseeId,
@@ -670,7 +669,7 @@ export async function handleCloseCampaign(
       .eq("status", "committed");
 
     // Audit
-    await supabaseAdmin.from("pricing_decisions").insert({
+    await (supabaseAdmin.from("pricing_decisions") as any).insert({
       user_id:           ctx.userId,
       product:           campaign.sku,
       category:          null,

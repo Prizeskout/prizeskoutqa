@@ -443,7 +443,7 @@ async function computeEnrichment(
     competitor_context:  comp,
     action_suggestion:   action.action_suggestion,
     action_ar:           action.action_ar,
-    ...(action._ar_stub ? { _ar_stub: true } : {}),
+    ...((action as Record<string, unknown>)._ar_stub ? { _ar_stub: true } : {}),
   };
 }
 
@@ -735,8 +735,7 @@ export async function handleWiSubscribe(req: Request, ctx: V1Context): Promise<V
   crypto.getRandomValues(secretBytes);
   const secret = Array.from(secretBytes).map(b => b.toString(16).padStart(2, "0")).join("");
 
-  const { data: sub, error } = await supabaseAdmin
-    .from("webhook_subscriptions")
+  const { data: sub, error } = await (supabaseAdmin.from("webhook_subscriptions") as any)
     .insert({
       account_id:          ctx.accountId,
       licensee_id:         ctx.licenseeId,

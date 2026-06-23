@@ -448,3 +448,63 @@ export async function handleListPatterns(request: Request, ctx: V1Context): Prom
     })),
   });
 }
+
+// ============================================================================
+// GET /v1/competitors/cache-stats
+// ============================================================================
+// Returns scrape cost savings from the shared URL cache: how many Firecrawl
+// calls were avoided by deduplicating URLs across tenants.
+// Platform-readable; also available to any authenticated tenant (shows only
+// aggregate numbers — no per-tenant data is exposed).
+export async function handleCacheStats(_request: Request, _ctx: V1Context): Promise<V1Result> {
+  // Recent runs (last 30)
+  const { data: runs, error: runsErr } = await supabaseAdmin
+    .from("scrape_cost_log")
+    .select("run_id,run_at,due_urls,cache_hit_urls,scrapes_performed,scrapes_saved,savings_pct,ok,null_price,failed,watchers_notified")
+    .order("run_at", { ascending: false })
+    .limit(30) as unknown as { data: any[] | null; error: unknown };
+
+  if (runsErr) return err("internal_error", "Failed to load cache stats.", 500);
+
+  // Totals across all recorded runs
+  const { data: totals, error: totErr } = await supabaseAdmin
+    .from("scrape_cost_log")
+    .select("scrapes_performed,scrapes_saved") as unknown as { data: any[] | null; error: unknown };
+
+  if (totErr) return err("internal_error", "Failed to load totals.", 500);
+
+  const totalPerformed = (totals ?? []).reduce((s, r) => s + (r.scrapes_performed ?? 0), 0);
+  const totalSaved     = (totals ?? []).reduce((s, r) => s + (r.scrapes_saved     ?? 0), 0);
+  const totalOld       = totalPerformed + totalSaved;
+  const overallPct     = totalOld > 0 ? Math.round((totalSaved / totalOld) * 100) : 0;
+
+  // Current cache size
+  const { count: cacheSize } = await supabaseAdmin
+    .from("competitor_url_cache")
+    .select("*", { count: "exact", head: true });
+
+  return ok({
+    cache_size:       cacheSize ?? 0,
+    all_time: {
+      scrapes_performed: totalPerformed,
+      scrapes_saved:     totalSaved,
+      savings_pct:       overallPct,
+    },
+    recent_runs: (runs ?? []).map((r) => ({
+      run_id:            r.run_id,
+      run_at:            r.run_at,
+      due_urls:          r.due_urls,
+      cache_hit_urls:    r.cache_hit_urls,
+      scrapes_performed: r.scrapes_performed,
+      scrapes_saved:     r.scrapes_saved,
+      savings_pct:       r.scrapes_performed + r.scrapes_saved > 0
+        ? Math.round(r.scrapes_saved / (r.scrapes_performed + r.scrapes_saved) * 100)
+        : 0,
+      ok:                r.ok,
+      null_price:        r.null_price,
+      failed:            r.failed,
+      watchers_notified: r.watchers_notified,
+    })),
+  });
+}
+

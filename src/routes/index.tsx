@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 export const Route = createFileRoute("/")({
@@ -984,58 +985,21 @@ function EnterpriseStats() {
    PRICING
    ========================================================================= */
 
+type LandingTierKey = "starter" | "standard" | "enterprise";
+const LANDING_TIERS: { key: LandingTierKey; ctaTo: string; highlight: boolean }[] = [
+  { key: "starter",    ctaTo: "/signup",  highlight: false },
+  { key: "standard",   ctaTo: "/signup",  highlight: true  },
+  { key: "enterprise", ctaTo: "/contact", highlight: false },
+];
+
 function PricingSection() {
-  const tiers = [
-    {
-      name: "Developer",
-      price: "Free",
-      priceSub: "Sandbox · unlimited test calls",
-      desc: "Everything you need to prototype a complete integration end to end.",
-      features: [
-        "All 19 APIs in sandbox",
-        "Unlimited test requests",
-        "1 project · 2 scoped keys",
-        "Community support",
-      ],
-      cta: "Start building",
-      ctaTo: "/signup",
-      highlight: false,
-    },
-    {
-      name: "Growth",
-      price: "$0.004",
-      priceSub: "per API call · volume discounts automatic",
-      desc: "Pay only for what you call. Volume tiers kick in automatically as you scale.",
-      features: [
-        "All production APIs",
-        "Signed webhooks · unlimited",
-        "Up to 100 req/s sustained",
-        "Email support · 99.9% SLA",
-      ],
-      cta: "Activate live mode",
-      ctaTo: "/signup",
-      highlight: true,
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      priceSub: "Committed volume · white-label licence",
-      desc: "For platforms, malls, and retailers with compliance, residency, or capacity needs.",
-      features: [
-        "White-label licence included",
-        "Committed-use discounts",
-        "GCC data residency",
-        "99.95% SLA · DPA · MSA",
-      ],
-      cta: "Contact partnerships",
-      ctaTo: "/contact",
-      highlight: false,
-    },
-  ];
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.language === "ar";
 
   return (
     <section
       id="pricing"
+      dir={isRtl ? "rtl" : "ltr"}
       style={{
         background: BG,
         padding: "88px 0",
@@ -1045,12 +1009,12 @@ function PricingSection() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56, maxWidth: 720, marginLeft: "auto", marginRight: "auto" }}>
-          <Eyebrow>Pricing</Eyebrow>
+          <Eyebrow>{t("landing.pricing.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{ color: TEXT, marginTop: 14 }}
           >
-            Pay per call. No seats. No surprises.
+            {t("landing.pricing.title")}
           </h2>
           <p
             style={{
@@ -1060,33 +1024,33 @@ function PricingSection() {
               marginTop: 16,
             }}
           >
-            Developer mode is free and unlimited in sandbox. Move to production with a single environment switch.
+            {t("landing.pricing.subtitle")}
           </p>
         </div>
 
         <div style={{ display: "grid", gap: 16 }} className="ps-pricing-grid">
-          {tiers.map((t) => (
+          {LANDING_TIERS.map(({ key, ctaTo, highlight }) => (
             <div
-              key={t.name}
+              key={key}
               style={{
-                background: t.highlight ? "#0B0907" : BG_RAISED,
-                border: t.highlight
+                background: highlight ? "#0B0907" : BG_RAISED,
+                border: highlight
                   ? `2px solid ${ORANGE}`
                   : `1px solid ${BORDER}`,
                 borderRadius: 14,
                 padding: 28,
                 position: "relative",
-                boxShadow: t.highlight
+                boxShadow: highlight
                   ? "0 20px 50px rgba(234,88,12,0.18)"
                   : "none",
               }}
             >
-              {t.highlight && (
+              {highlight && (
                 <span
                   style={{
                     position: "absolute",
                     top: -12,
-                    left: 24,
+                    insetInlineStart: 24,
                     fontSize: 10,
                     fontWeight: 700,
                     letterSpacing: "0.1em",
@@ -1098,7 +1062,7 @@ function PricingSection() {
                     borderRadius: 4,
                   }}
                 >
-                  Most popular
+                  {t("landing.pricing.mostPopular")}
                 </span>
               )}
               <div
@@ -1111,7 +1075,7 @@ function PricingSection() {
                   marginBottom: 14,
                 }}
               >
-                {t.name}
+                {t(`landing.pricing.${key}Name`)}
               </div>
               <div
                 style={{
@@ -1122,7 +1086,7 @@ function PricingSection() {
                   lineHeight: 1,
                 }}
               >
-                {t.price}
+                {t(`landing.pricing.${key}Price`)}
               </div>
               <div
                 style={{
@@ -1133,7 +1097,7 @@ function PricingSection() {
                   marginBottom: 18,
                 }}
               >
-                {t.priceSub}
+                {t(`landing.pricing.${key}PriceSub`)}
               </div>
               <div
                 style={{
@@ -1144,7 +1108,7 @@ function PricingSection() {
                   minHeight: 60,
                 }}
               >
-                {t.desc}
+                {t(`landing.pricing.${key}Desc`)}
               </div>
               <div
                 style={{
@@ -1154,9 +1118,9 @@ function PricingSection() {
                   marginBottom: 28,
                 }}
               >
-                {t.features.map((f) => (
+                {(["F1", "F2", "F3", "F4", "F5"] as const).map((n) => (
                   <div
-                    key={f}
+                    key={n}
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
@@ -1177,12 +1141,12 @@ function PricingSection() {
                         marginTop: 3,
                       }}
                     />
-                    <span>{f}</span>
+                    <span>{t(`landing.pricing.${key}${n}`)}</span>
                   </div>
                 ))}
               </div>
               <Link
-                to={t.ctaTo}
+                to={ctaTo as "/"}
                 style={{
                   display: "block",
                   textAlign: "center",
@@ -1191,19 +1155,19 @@ function PricingSection() {
                   fontSize: 14,
                   fontWeight: 600,
                   textDecoration: "none",
-                  background: t.highlight
+                  background: highlight
                     ? `linear-gradient(135deg, ${ORANGE}, #C2410C)`
                     : "transparent",
-                  color: t.highlight ? "#FFF" : TEXT,
-                  border: t.highlight
+                  color: highlight ? "#FFF" : TEXT,
+                  border: highlight
                     ? "none"
                     : "1px solid rgba(255,255,255,0.14)",
-                  boxShadow: t.highlight
+                  boxShadow: highlight
                     ? "0 8px 22px rgba(234,88,12,0.30)"
                     : "none",
                 }}
               >
-                {t.cta}
+                {t(`landing.pricing.${key}Cta`)}
               </Link>
             </div>
           ))}

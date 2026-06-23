@@ -19,6 +19,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createNotification } from "./notifications";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { normalizeUrl } from "./url-normalize";
 
 const PriceSchema = {
   type: "object",
@@ -56,7 +58,7 @@ export type ScrapeOutcome =
   | { ok: true;  url: string; price: number;      currency: string | null; status: "success" }
   | { ok: false; url: string; error: string;       status: "null_price" | "failed" };
 
-type AttemptSuccess = {
+export type AttemptSuccess = {
   ok: true;
   price: number;
   currency: string | null;
@@ -64,9 +66,9 @@ type AttemptSuccess = {
   metadata: Record<string, unknown>;
 };
 
-type FailureCategory = "null_price" | "failed";
+export type FailureCategory = "null_price" | "failed";
 
-type AttemptFailure = {
+export type AttemptFailure = {
   ok: false;
   error: string;
   retryable: boolean;
@@ -158,6 +160,24 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Firecrawl fetch with full retry logic — no DB writes.
+// Used by the URL-centric scrape-all hook to decouple fetching from persistence.
+export async function fetchCompetitorPrice(url: string): Promise<AttemptSuccess | AttemptFailure> {
+  const apiKey = process.env.FIRECRAWL_API_KEY_1;
+  if (!apiKey) {
+    return { ok: false, error: "FIRECRAWL_API_KEY_1 not configured", retryable: false, category: "failed" };
+  }
+  let lastFailure: AttemptFailure | null = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const result = await attemptScrape(apiKey, url);
+    if (result.ok) return result;
+    lastFailure = result;
+    if (!result.retryable || attempt === MAX_ATTEMPTS) break;
+    await sleep(RETRY_BASE_MS * attempt);
+  }
+  return lastFailure ?? { ok: false, error: "Unknown scrape failure", retryable: false, category: "failed" };
+}
+
 export async function runScrape(
   supabase: SupabaseClient,
   job: ScrapeJob,
@@ -191,6 +211,29 @@ export async function runScrape(
       if (attempt > 1) {
         console.log(`[scrape] Succeeded for ${job.competitor}/${job.product} on attempt ${attempt}`);
       }
+      // Cache-miss path: keep the shared URL cache fresh even on manual scrapes.
+      void (async () => {
+        try {
+          const normUrl = normalizeUrl(job.url);
+          const { data: existing } = await (supabaseAdmin.from("competitor_url_cache") as any)
+            .select("last_price, consecutive_unchanged")
+            .eq("normalized_url", normUrl)
+            .maybeSingle();
+          const priceChanged = !existing || existing.last_price !== result.price;
+          await (supabaseAdmin.from("competitor_url_cache") as any).upsert({
+            normalized_url:        normUrl,
+            raw_url_sample:        job.url,
+            last_price:            result.price,
+            currency:              result.currency,
+            last_scraped_at:       new Date().toISOString(),
+            last_status:           "ok",
+            consecutive_unchanged: priceChanged ? 0 : (existing?.consecutive_unchanged ?? 0) + 1,
+            updated_at:            new Date().toISOString(),
+          }, { onConflict: "normalized_url" });
+        } catch (cacheErr) {
+          console.warn("[scrape] Cache update failed (non-fatal):", cacheErr);
+        }
+      })();
       return { ok: true, url: job.url, price: result.price, currency: result.currency, status: "success" };
     }
 

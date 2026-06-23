@@ -221,8 +221,8 @@ export async function handleSetEmbedConfig(
     if (logo_url !== undefined) update.logo_url = logo_url;
     if (powered_by_visible !== undefined) update.powered_by_visible = powered_by_visible;
 
-    const { error } = await supabaseAdmin
-      .from("embed_configs")
+    // update is built dynamically; cast suppresses excess-property check
+    const { error } = await (supabaseAdmin.from("embed_configs") as any)
       .update(update)
       .eq("id", existing.id);
     if (error) return err("internal_error", error.message, 500);
@@ -240,7 +240,7 @@ export async function handleSetEmbedConfig(
     if (logo_url !== undefined) insert.logo_url = logo_url;
     if (powered_by_visible !== undefined) insert.powered_by_visible = powered_by_visible;
 
-    const { error } = await supabaseAdmin.from("embed_configs").insert(insert);
+    const { error } = await (supabaseAdmin.from("embed_configs") as any).insert(insert);
     if (error) return err("internal_error", error.message, 500);
   }
 

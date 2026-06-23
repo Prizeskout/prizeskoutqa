@@ -112,8 +112,7 @@ export async function handleMarginCosts(request: Request, ctx: V1Context): Promi
     effective_at: typeof json.effective_at === "string" ? json.effective_at : new Date().toISOString(),
   };
 
-  const { data: row, error: upsErr } = await supabaseAdmin
-    .from("margin_inputs")
+  const { data: row, error: upsErr } = await (supabaseAdmin.from("margin_inputs") as any)
     .upsert(payload, { onConflict: "product_id" })
     .select("id, unit_cost, freight, duty_pct, fees_pct, currency, supplier, effective_at")
     .single();

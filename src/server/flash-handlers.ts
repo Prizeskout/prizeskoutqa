@@ -419,7 +419,7 @@ async function applyFlashPrices(eventId: string, userId: string): Promise<void> 
       .eq("id", s.id);
 
     if (!priceErr) {
-      await supabaseAdmin.from("pricing_decisions").insert({
+      await (supabaseAdmin.from("pricing_decisions") as any).insert({
         user_id:           userId,
         product:           s.sku,
         category:          "",
@@ -459,7 +459,7 @@ async function restorePrices(eventId: string, userId: string, trigger: "flash_en
       .eq("product_id", s.product_id)
       .ilike("channel", s.channel);
 
-    await supabaseAdmin.from("pricing_decisions").insert({
+    await (supabaseAdmin.from("pricing_decisions") as any).insert({
       user_id:           userId,
       product:           s.sku,
       category:          null,

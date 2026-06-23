@@ -26,6 +26,7 @@ export type Database = {
           region: string | null
           slug: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -38,6 +39,7 @@ export type Database = {
           region?: string | null
           slug: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -50,6 +52,7 @@ export type Database = {
           region?: string | null
           slug?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -693,6 +696,51 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_url_cache: {
+        Row: {
+          normalized_url: string
+          raw_url_sample: string
+          last_price: number | null
+          currency: string | null
+          last_scraped_at: string | null
+          last_status: string | null
+          consecutive_unchanged: number
+          needs_stealth: boolean
+          watcher_count: number
+          required_freshness_sec: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          normalized_url: string
+          raw_url_sample: string
+          last_price?: number | null
+          currency?: string | null
+          last_scraped_at?: string | null
+          last_status?: string | null
+          consecutive_unchanged?: number
+          needs_stealth?: boolean
+          watcher_count?: number
+          required_freshness_sec?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          normalized_url?: string
+          raw_url_sample?: string
+          last_price?: number | null
+          currency?: string | null
+          last_scraped_at?: string | null
+          last_status?: string | null
+          consecutive_unchanged?: number
+          needs_stealth?: boolean
+          watcher_count?: number
+          required_freshness_sec?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       competitor_scrapes: {
         Row: {
           competitor: string | null
@@ -895,6 +943,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      embed_configs: {
+        Row: {
+          id: string
+          licensee_id: string
+          account_id: string
+          brand_name: string
+          primary_color: string
+          logo_url: string | null
+          powered_by_visible: boolean
+          signing_key_hex: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          licensee_id: string
+          account_id: string
+          brand_name: string
+          primary_color?: string
+          logo_url?: string | null
+          powered_by_visible?: boolean
+          signing_key_hex?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          licensee_id?: string
+          account_id?: string
+          brand_name?: string
+          primary_color?: string
+          logo_url?: string | null
+          powered_by_visible?: boolean
+          signing_key_hex?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       field_intel_metrics: {
         Row: {
@@ -1184,6 +1271,7 @@ export type Database = {
           id: string
           licensee_id: string
           product_id: string
+          supplier: string | null
           unit_cost: number
           updated_at: string
         }
@@ -1198,6 +1286,7 @@ export type Database = {
           id?: string
           licensee_id: string
           product_id: string
+          supplier?: string | null
           unit_cost: number
           updated_at?: string
         }
@@ -1212,6 +1301,7 @@ export type Database = {
           id?: string
           licensee_id?: string
           product_id?: string
+          supplier?: string | null
           unit_cost?: number
           updated_at?: string
         }
@@ -1323,6 +1413,108 @@ export type Database = {
           user_id?: string
           value?: string
           value_color?: string | null
+        }
+        Relationships: []
+      }
+      map_agreements: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          created_by_user_id: string
+          sku: string
+          map_price: number
+          currency: string
+          effective_from: string
+          effective_to: string | null
+          retailer_list: Json
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          created_by_user_id: string
+          sku: string
+          map_price: number
+          currency?: string
+          effective_from?: string
+          effective_to?: string | null
+          retailer_list?: Json
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          created_by_user_id?: string
+          sku?: string
+          map_price?: number
+          currency?: string
+          effective_from?: string
+          effective_to?: string | null
+          retailer_list?: Json
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      map_violations: {
+        Row: {
+          id: string
+          account_id: string
+          agreement_id: string | null
+          sku: string
+          retailer: string
+          retailer_url: string | null
+          map_price: number
+          detected_price: number
+          currency: string
+          violation_pct: number
+          evidence_path: string | null
+          evidence_url: string | null
+          scrape_source: string
+          scrape_markdown: string | null
+          first_detected_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          agreement_id?: string | null
+          sku: string
+          retailer: string
+          retailer_url?: string | null
+          map_price: number
+          detected_price: number
+          currency?: string
+          violation_pct: number
+          evidence_path?: string | null
+          evidence_url?: string | null
+          scrape_source?: string
+          scrape_markdown?: string | null
+          first_detected_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          agreement_id?: string | null
+          sku?: string
+          retailer?: string
+          retailer_url?: string | null
+          map_price?: number
+          detected_price?: number
+          currency?: string
+          violation_pct?: number
+          evidence_path?: string | null
+          evidence_url?: string | null
+          scrape_source?: string
+          scrape_markdown?: string | null
+          first_detected_at?: string
         }
         Relationships: []
       }
@@ -2202,6 +2394,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scrape_cost_log: {
+        Row: {
+          id: string
+          run_id: string
+          run_at: string
+          due_urls: number
+          cache_hit_urls: number
+          scrapes_performed: number
+          scrapes_saved: number
+          ok: number
+          null_price: number
+          failed: number
+          watchers_notified: number
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          run_at?: string
+          due_urls?: number
+          cache_hit_urls?: number
+          scrapes_performed?: number
+          scrapes_saved?: number
+          ok?: number
+          null_price?: number
+          failed?: number
+          watchers_notified?: number
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          run_at?: string
+          due_urls?: number
+          cache_hit_urls?: number
+          scrapes_performed?: number
+          scrapes_saved?: number
+          ok?: number
+          null_price?: number
+          failed?: number
+          watchers_notified?: number
+        }
+        Relationships: []
+      }
       switching_cost: {
         Row: {
           body: string
@@ -2414,6 +2648,834 @@ export type Database = {
         }
         Relationships: []
       }
+      channel_cost_structures: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          channel: string
+          commission_pct: number
+          delivery_cost: number
+          payment_pct: number
+          returns_provision: number
+          currency: string
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          channel: string
+          commission_pct?: number
+          delivery_cost?: number
+          payment_pct?: number
+          returns_provision?: number
+          currency?: string
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          channel?: string
+          commission_pct?: number
+          delivery_cost?: number
+          payment_pct?: number
+          returns_provision?: number
+          currency?: string
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dynprice_configs: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel: string
+          base_price: number
+          min_margin_pct: number
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel?: string
+          base_price: number
+          min_margin_pct?: number
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          sku?: string
+          channel?: string
+          base_price?: number
+          min_margin_pct?: number
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dynprice_floor_overrides: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel: string
+          rule_id: string | null
+          rule_name: string | null
+          min_margin_pct: number
+          proposed_price: number
+          floor_price: number
+          final_price: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel: string
+          rule_id?: string | null
+          rule_name?: string | null
+          min_margin_pct: number
+          proposed_price: number
+          floor_price: number
+          final_price: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          sku?: string
+          channel?: string
+          rule_id?: string | null
+          rule_name?: string | null
+          min_margin_pct?: number
+          proposed_price?: number
+          floor_price?: number
+          final_price?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      dynprice_rules: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel: string
+          rule_type: string
+          name: string
+          priority: number
+          adjustment_pct: number
+          config: Json
+          enabled: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel?: string
+          rule_type: string
+          name: string
+          priority?: number
+          adjustment_pct: number
+          config?: Json
+          enabled?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          sku?: string
+          channel?: string
+          rule_type?: string
+          name?: string
+          priority?: number
+          adjustment_pct?: number
+          config?: Json
+          enabled?: boolean
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flash_events: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          created_by_user_id: string
+          name: string
+          skus: string[]
+          discount_config: Json
+          channel_scope: string
+          start_at: string
+          end_at: string
+          status: string
+          inventory_reserve: number | null
+          auto_restore: boolean
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          created_by_user_id: string
+          name: string
+          skus: string[]
+          discount_config: Json
+          channel_scope?: string
+          start_at: string
+          end_at: string
+          status?: string
+          inventory_reserve?: number | null
+          auto_restore?: boolean
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          created_by_user_id?: string
+          name?: string
+          skus?: string[]
+          discount_config?: Json
+          channel_scope?: string
+          start_at?: string
+          end_at?: string
+          status?: string
+          inventory_reserve?: number | null
+          auto_restore?: boolean
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flash_event_skus: {
+        Row: {
+          id: string
+          flash_event_id: string
+          sku: string
+          product_id: string | null
+          original_price: number | null
+          flash_price: number | null
+          floor_price: number | null
+          channel: string
+          channel_push_status: string
+          units_sold: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          flash_event_id: string
+          sku: string
+          product_id?: string | null
+          original_price?: number | null
+          flash_price?: number | null
+          floor_price?: number | null
+          channel?: string
+          channel_push_status?: string
+          units_sold?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          flash_event_id?: string
+          sku?: string
+          product_id?: string | null
+          original_price?: number | null
+          flash_price?: number | null
+          floor_price?: number | null
+          channel?: string
+          channel_push_status?: string
+          units_sold?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fx_rates_cache: {
+        Row: {
+          id: string
+          base: string
+          rates: Json
+          source_url: string | null
+          fetched_at: string
+        }
+        Insert: {
+          id?: string
+          base?: string
+          rates: Json
+          source_url?: string | null
+          fetched_at?: string
+        }
+        Update: {
+          id?: string
+          base?: string
+          rates?: Json
+          source_url?: string | null
+          fetched_at?: string
+        }
+        Relationships: []
+      }
+      gcc_country_configs: {
+        Row: {
+          id: string
+          country_code: string
+          country_name: string
+          currency_code: string
+          vat_pct: number
+          default_import_duty_pct: number
+          logistics_cost_qar: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          country_code: string
+          country_name: string
+          currency_code: string
+          vat_pct?: number
+          default_import_duty_pct?: number
+          logistics_cost_qar?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          country_code?: string
+          country_name?: string
+          currency_code?: string
+          vat_pct?: number
+          default_import_duty_pct?: number
+          logistics_cost_qar?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gcc_event_calendar: {
+        Row: {
+          id: string
+          event_type: string
+          name: string
+          region: string
+          starts_at: string
+          ends_at: string
+          year: number
+          is_approximate: boolean
+          created_by_licensee_id: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_type: string
+          name: string
+          region?: string
+          starts_at: string
+          ends_at: string
+          year: number
+          is_approximate?: boolean
+          created_by_licensee_id?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_type?: string
+          name?: string
+          region?: string
+          starts_at?: string
+          ends_at?: string
+          year?: number
+          is_approximate?: boolean
+          created_by_licensee_id?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      group_campaigns: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel: string
+          base_price: number
+          tiers: Json
+          min_margin_pct: number
+          expiry_at: string
+          status: string
+          invite_mechanic: string
+          family_config: Json | null
+          current_buyers: number
+          current_tier_idx: number
+          locked_price: number | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          sku: string
+          channel?: string
+          base_price: number
+          tiers: Json
+          min_margin_pct?: number
+          expiry_at: string
+          status?: string
+          invite_mechanic?: string
+          family_config?: Json | null
+          current_buyers?: number
+          current_tier_idx?: number
+          locked_price?: number | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          sku?: string
+          channel?: string
+          base_price?: number
+          tiers?: Json
+          min_margin_pct?: number
+          expiry_at?: string
+          status?: string
+          invite_mechanic?: string
+          family_config?: Json | null
+          current_buyers?: number
+          current_tier_idx?: number
+          locked_price?: number | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      group_buyers: {
+        Row: {
+          id: string
+          campaign_id: string
+          account_id: string
+          buyer_id: string
+          buyer_name: string | null
+          phone: string | null
+          status: string
+          locked_price: number | null
+          joined_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          account_id: string
+          buyer_id: string
+          buyer_name?: string | null
+          phone?: string | null
+          status?: string
+          locked_price?: number | null
+          joined_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          account_id?: string
+          buyer_id?: string
+          buyer_name?: string | null
+          phone?: string | null
+          status?: string
+          locked_price?: number | null
+          joined_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_ab_assignments: {
+        Row: {
+          id: string
+          account_id: string
+          customer_id: string
+          sku: string
+          channel: string
+          segment_id: string | null
+          variant: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          customer_id: string
+          sku: string
+          channel?: string
+          segment_id?: string | null
+          variant: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          customer_id?: string
+          sku?: string
+          channel?: string
+          segment_id?: string | null
+          variant?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_outcomes: {
+        Row: {
+          id: string
+          account_id: string
+          assignment_id: string | null
+          customer_id: string
+          sku: string
+          channel: string
+          variant: string
+          segment_id: string | null
+          purchased: boolean
+          price_paid: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          assignment_id?: string | null
+          customer_id: string
+          sku: string
+          channel?: string
+          variant: string
+          segment_id?: string | null
+          purchased?: boolean
+          price_paid?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          assignment_id?: string | null
+          customer_id?: string
+          sku?: string
+          channel?: string
+          variant?: string
+          segment_id?: string | null
+          purchased?: boolean
+          price_paid?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_segments: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          name: string
+          display_label: string
+          pricing_rule_type: string
+          rule_value: number
+          gcc_program: string | null
+          valid_from: string | null
+          valid_to: string | null
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          name: string
+          display_label: string
+          pricing_rule_type: string
+          rule_value: number
+          gcc_program?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          name?: string
+          display_label?: string
+          pricing_rule_type?: string
+          rule_value?: number
+          gcc_program?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parity_rules: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          name: string
+          source_country: string
+          target_country: string
+          sku: string | null
+          min_ratio: number
+          max_ratio: number
+          grey_market_threshold_pct: number
+          enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          name: string
+          source_country: string
+          target_country: string
+          sku?: string | null
+          min_ratio?: number
+          max_ratio?: number
+          grey_market_threshold_pct?: number
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          name?: string
+          source_country?: string
+          target_country?: string
+          sku?: string | null
+          min_ratio?: number
+          max_ratio?: number
+          grey_market_threshold_pct?: number
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      parity_violations: {
+        Row: {
+          id: string
+          account_id: string
+          sku: string
+          rule_id: string | null
+          rule_name: string | null
+          source_country: string
+          target_country: string
+          source_price_qar: number | null
+          target_price_qar: number | null
+          actual_ratio: number | null
+          min_ratio: number | null
+          max_ratio: number | null
+          violation_type: string
+          evidence: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          sku: string
+          rule_id?: string | null
+          rule_name?: string | null
+          source_country: string
+          target_country: string
+          source_price_qar?: number | null
+          target_price_qar?: number | null
+          actual_ratio?: number | null
+          min_ratio?: number | null
+          max_ratio?: number | null
+          violation_type: string
+          evidence?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          sku?: string
+          rule_id?: string | null
+          rule_name?: string | null
+          source_country?: string
+          target_country?: string
+          source_price_qar?: number | null
+          target_price_qar?: number | null
+          actual_ratio?: number | null
+          min_ratio?: number | null
+          max_ratio?: number | null
+          violation_type?: string
+          evidence?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      webhook_intelligence_deliveries: {
+        Row: {
+          id: string
+          subscription_id: string
+          event_id: string
+          event_type: string
+          attempt: number
+          status_code: number | null
+          response_time_ms: number | null
+          delivered_at: string | null
+          next_retry_at: string | null
+          success: boolean
+          dead_lettered: boolean
+          error_message: string | null
+          payload: Json | null
+          response_body: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          subscription_id: string
+          event_id: string
+          event_type: string
+          attempt?: number
+          status_code?: number | null
+          response_time_ms?: number | null
+          delivered_at?: string | null
+          next_retry_at?: string | null
+          success?: boolean
+          dead_lettered?: boolean
+          error_message?: string | null
+          payload?: Json | null
+          response_body?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          subscription_id?: string
+          event_id?: string
+          event_type?: string
+          attempt?: number
+          status_code?: number | null
+          response_time_ms?: number | null
+          delivered_at?: string | null
+          next_retry_at?: string | null
+          success?: boolean
+          dead_lettered?: boolean
+          error_message?: string | null
+          payload?: Json | null
+          response_body?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      webhook_subscriptions: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          created_by_user_id: string
+          endpoint_url: string
+          events: string[]
+          enrichment_config: Json
+          secret: string
+          status: string
+          max_attempts: number
+          channel_filter: string | null
+          category_filter: string | null
+          sku_prefix_filter: string | null
+          min_price_change_pct: number | null
+          description: string | null
+          last_delivery_at: string | null
+          last_delivery_success: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          created_by_user_id: string
+          endpoint_url: string
+          events?: string[]
+          enrichment_config?: Json
+          secret: string
+          status?: string
+          max_attempts?: number
+          channel_filter?: string | null
+          category_filter?: string | null
+          sku_prefix_filter?: string | null
+          min_price_change_pct?: number | null
+          description?: string | null
+          last_delivery_at?: string | null
+          last_delivery_success?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          created_by_user_id?: string
+          endpoint_url?: string
+          events?: string[]
+          enrichment_config?: Json
+          secret?: string
+          status?: string
+          max_attempts?: number
+          channel_filter?: string | null
+          category_filter?: string | null
+          sku_prefix_filter?: string | null
+          min_price_change_pct?: number | null
+          description?: string | null
+          last_delivery_at?: string | null
+          last_delivery_success?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       webhook_deliveries: {
         Row: {
           attempt: number
@@ -2538,7 +3600,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_url_due_status: {
+        Row: {
+          normalized_url: string
+          raw_url_sample: string
+          last_price: number | null
+          currency: string | null
+          last_scraped_at: string | null
+          last_status: string | null
+          consecutive_unchanged: number
+          watcher_count: number
+          required_freshness_sec: number
+          max_freshness_sec: number
+          is_due: boolean
+        }
+        Relationships: []
+      }
     }
     Functions: {
       current_account_for_user: {
