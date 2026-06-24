@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ArrowRight, Zap, ShieldCheck, TrendingUp, Globe } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, TrendingUp, Globe, Award } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
@@ -194,6 +194,26 @@ function Hero() {
             >
               Talk to partnerships
             </Link>
+          </div>
+
+          {/* QSTP trust badge */}
+          <div
+            style={{
+              marginTop: 28,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: 999,
+              padding: "7px 14px",
+            }}
+          >
+            <Award size={13} color={ORANGE_LIGHT} strokeWidth={2} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(250,250,249,0.75)", letterSpacing: "0.02em" }}>
+              Backed by{" "}
+              <span style={{ color: TEXT }}>Qatar Science &amp; Technology Park (QSTP)</span>
+            </span>
           </div>
         </div>
 
@@ -1034,6 +1054,7 @@ function EnterpriseStats() {
     { value: "<2s", label: "Repricing response" },
     { value: "AR + EN", label: "Arabic-first" },
     { value: "GCC", label: "Built for the region" },
+    { value: "QSTP", label: "Qatar Science & Technology Park" },
   ];
 
   return (
@@ -1057,40 +1078,51 @@ function EnterpriseStats() {
         </div>
 
         <div className="ps-stats-grid" style={{ display: "grid", gap: 14 }}>
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              style={{
-                background: BG_RAISED,
-                border: `1px solid ${BORDER}`,
-                borderRadius: 12,
-                padding: "26px 22px",
-                textAlign: "center",
-              }}
-            >
+          {stats.map((s) => {
+            const isQstp = s.value === "QSTP";
+            return (
               <div
+                key={s.label}
                 style={{
-                  fontSize: 32,
-                  fontWeight: 700,
-                  color: ORANGE_LIGHT,
-                  letterSpacing: "-0.02em",
-                  fontFamily: MONO_STACK,
-                  marginBottom: 8,
+                  background: isQstp ? "rgba(234,88,12,0.06)" : BG_RAISED,
+                  border: isQstp ? `1px solid rgba(234,88,12,0.28)` : `1px solid ${BORDER}`,
+                  borderRadius: 12,
+                  padding: "26px 22px",
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                 }}
               >
-                {s.value}
+                {isQstp && (
+                  <Award size={20} color={ORANGE_LIGHT} strokeWidth={1.75} />
+                )}
+                <div
+                  style={{
+                    fontSize: isQstp ? 22 : 32,
+                    fontWeight: 700,
+                    color: ORANGE_LIGHT,
+                    letterSpacing: "-0.02em",
+                    fontFamily: MONO_STACK,
+                  }}
+                >
+                  {s.value}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: isQstp ? "rgba(250,250,249,0.65)" : TEXT_MUTED,
+                    letterSpacing: "0.02em",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {s.label}
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: 12.5,
-                  color: TEXT_MUTED,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {s.label}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1437,6 +1469,8 @@ const PAGE_STYLES = `
   .ps-pillar-grid { grid-template-columns: 1fr; }
   .ps-quickstart-grid { grid-template-columns: 1fr; }
   .ps-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  /* 5th card: span 2 cols on mobile/tablet so it doesn't sit alone */
+  .ps-stats-grid > *:last-child:nth-child(odd) { grid-column: span 2; }
   .ps-benefits-grid { grid-template-columns: 1fr; }
   .ps-pricing-grid { grid-template-columns: 1fr; }
   .ps-wl-grid { grid-template-columns: 1fr; }
@@ -1466,7 +1500,8 @@ const PAGE_STYLES = `
     .ps-quickstart-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-wl-grid { grid-template-columns: 1fr 1fr; }
-    .ps-stats-grid { grid-template-columns: repeat(4, 1fr); }
+    .ps-stats-grid { grid-template-columns: repeat(5, 1fr); }
+    .ps-stats-grid > *:last-child:nth-child(odd) { grid-column: span 1; }
     .ps-benefits-grid { grid-template-columns: repeat(4, 1fr); }
   }
   @media (min-width: 1180px) {
