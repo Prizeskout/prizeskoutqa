@@ -105,11 +105,11 @@ function PricingPage() {
   return (
     <DashboardLayout
       title="Pricing"
-      subtitle="AI-driven price recommendations with explainable reasoning and projected margin impact."
+      subtitle="Live competitor prices, your margin floor, one clear action per product."
       helpItems={[
-        "Each card explains why the model recommends a new price, plus the expected unit and monthly impact.",
-        "Confidence reflects how strong the underlying signals are. Review the low-confidence ones manually.",
-        "Pricing rules at the bottom constrain the model. Toggle them to enforce floors, parity, and other guardrails.",
+        "Each card leads with the action — lower, hold, or raise — and the exact price. Tap 'Why?' for the full evidence.",
+        "Confidence shows how many competitors were checked and how fresh the data is. Review lower scores before acting.",
+        "Pricing rules at the bottom set hard limits. Toggle them to enforce your margin floors, parity rules, and price caps.",
       ]}
     >
       <NewSinceBanner

@@ -88,7 +88,7 @@ function MarketPage() {
       subtitle="Category trends, assortment gaps, and cross-border arbitrage signals shaping demand."
       helpItems={[
         "Trending products show what's gaining share. Prioritise listings and stock there first.",
-        "Assortment gaps surface SKUs competitors carry that you don't.",
+        "Assortment gaps show products competitors carry that you don't.",
         "Cross-border radar flags where international platforms undercut your prices.",
       ]}
     >

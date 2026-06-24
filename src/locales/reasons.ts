@@ -141,7 +141,7 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
     detail: (p) =>
       p.margin_floor
         ? `The market price would have pushed you below your cost floor. Floor: QAR ${p.margin_floor}.`
-        : `The market price would have pushed you below your minimum viable margin.`,
+        : `The market price would have pushed you below your target margin.`,
   },
 
   no_competitor_data: {
@@ -450,4 +450,57 @@ export function parseReasonField(raw: string): ReasonV2 | null {
     // Not JSON — old-format plain string
   }
   return null;
+}
+
+// Transform a legacy (pre-v2) engine reason string into plain language.
+// Old format: "2 competitors (Lulu, Noon) median QAR 1219.34, lowest QAR 1039.67.
+//   You're 6.1% above median (self-price from catalog_prices). Matching the median
+//   should lift units ~23.9% based on category elasticity. ⚠ Outlier(s)..."
+export function transformLegacyReason(
+  raw: string,
+  current: number,
+  recommended: number,
+): LocalizedReason {
+  const m = raw.match(
+    /^(\d+)\s+competitors?\s+\(([^)]+)\)\s+median QAR ([\d,.]+),\s*lowest QAR ([\d,.]+)/i,
+  );
+  if (!m) return { headline: raw, detail: "" };
+
+  const count = Number(m[1]);
+  const list = m[2].trim();
+  const marketStr = m[3];
+  const lowestStr = m[4];
+  const gapQar = Math.round(current - parseFloat(marketStr.replace(/,/g, "")));
+  const verb = count === 1 ? "is" : "are";
+
+  // Extract excluded competitor name from the outlier note.
+  const outlierMatch = raw.match(/⚠\s+Outlier[^:]+excluded:\s+([^Q]+?)\s+QAR/i);
+  const excludedName = outlierMatch ? outlierMatch[1].trim() : null;
+
+  const headline = `Lower to QAR ${recommended.toLocaleString("en-US")} to match the market. ${list} ${verb} cheaper by QAR ${gapQar}.`;
+
+  const parts = [
+    `${count} competitor${count === 1 ? "" : "s"} checked: ${list}.`,
+    `Typical competitor price: QAR ${marketStr}.`,
+    `Your current price is QAR ${gapQar} above the market.`,
+    `Lowest price seen: QAR ${lowestStr}.`,
+  ];
+  if (excludedName) {
+    parts.push(`${excludedName} excluded — their price appeared to be for a different product. Check the URL.`);
+  }
+
+  return { headline, detail: parts.join(" ") };
+}
+
+// Unified resolver: handles v2 JSON blob, legacy plain string, or bare unknown string.
+// Use this everywhere a reason field needs to be displayed.
+export function resolveReason(
+  raw: string,
+  current: number,
+  recommended: number,
+  lang: Locale = "en",
+): LocalizedReason {
+  const structured = parseReasonField(raw);
+  if (structured) return localizeReason(structured.code, structured.params, lang);
+  return transformLegacyReason(raw, current, recommended);
 }

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useBranding } from "@/hooks/useBranding";
 import { supabase } from "@/integrations/supabase/client";
-import { localizeReason, parseReasonField } from "@/locales/reasons";
+import { resolveReason } from "@/locales/reasons";
 import type { PricingDecision } from "@/routes/dashboard.pricing";
 import type { Locale } from "@/lib/i18n";
 
@@ -123,14 +123,16 @@ export function RecommendationCard({
   const { i18n } = useTranslation();
   const lang = (i18n.language?.slice(0, 2) ?? "en") as Locale;
 
-  // Parse structured reason v2, or fall back to plain string.
-  const structured = parseReasonField(rec.reason);
-  const { headline, detail } = structured
-    ? localizeReason(structured.code, structured.params, lang)
-    : { headline: rec.reason, detail: "" };
+  // Resolve reason: v2 JSON blob → localised templates; legacy string → transformer.
+  const { headline, detail } = resolveReason(rec.reason, rec.current, rec.recommended, lang);
 
-  // Margin floor reassurance from params — shown in the price panel.
-  const aboveFloorQar = structured?.params?.above_floor_qar;
+  // Margin floor reassurance from params — shown in the price panel if available.
+  const aboveFloorQar = (() => {
+    try {
+      const j = JSON.parse(rec.reason) as Record<string, unknown>;
+      return j?.v === 2 ? (j.params as Record<string, unknown>)?.above_floor_qar as string | undefined : undefined;
+    } catch { return undefined; }
+  })();
 
   const cColor = confidenceColor(rec.confidence);
 
