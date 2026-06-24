@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth-context";
 import type { OverviewAlert } from "@/lib/overview-data";
@@ -59,147 +59,56 @@ export function OverviewHero({
   return (
     <section
       style={{
-        position: "relative",
         backgroundColor: "#FFFFFF",
         border: "1px solid #E5E2DB",
-        borderRadius: 14,
-        padding: "22px 24px",
-        overflow: "hidden",
+        borderRadius: 12,
+        padding: "24px 28px",
       }}
     >
+      {/* Top row: section label + primary CTAs */}
       <div
-        aria-hidden
         style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(120% 80% at 0% 0%, rgba(234,88,12,0.08) 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, rgba(124,58,237,0.08) 0%, transparent 55%)",
-          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+          marginBottom: 18,
         }}
-      />
-      <div style={{ position: "relative" }}>
-        <div
+      >
+        <span
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
             fontSize: 11,
             fontWeight: 600,
-            color: "#7C3AED",
-            backgroundColor: "rgba(124,58,237,0.08)",
-            padding: "4px 10px",
-            borderRadius: 999,
-            letterSpacing: "0.04em",
+            color: "#9A9A9A",
             textTransform: "uppercase",
+            letterSpacing: "0.07em",
           }}
         >
-          <Sparkles size={12} strokeWidth={2.25} />
           {t("hero.briefingLabel")}
-        </div>
+        </span>
 
-        <h1
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: "#1A1A18",
-            margin: "12px 0 4px",
-            letterSpacing: "-0.015em",
-            lineHeight: 1.2,
-          }}
-        >
-          {t(getGreetingKey(mounted), { name: firstName })}
-        </h1>
-        <p
-          style={{
-            fontSize: 15,
-            color: "#3A3A38",
-            margin: 0,
-            lineHeight: 1.5,
-            maxWidth: 720,
-          }}
-        >
-          {headline}
-        </p>
-
-        {/* Status strip — click to filter the alerts list below */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-            marginTop: 16,
-            alignItems: "center",
-          }}
-        >
-          <StatusChip
-            dotColor="#DC2626"
-            label={t(counts.action === 1 ? "hero.action" : "hero.action_plural", { count: counts.action })}
-            active={activeFilter === "action"}
-            disabled={counts.action === 0}
-            onClick={() => onFilterChange(activeFilter === "action" ? null : "action")}
-          />
-          <StatusChip
-            dotColor="#16A34A"
-            label={t(counts.opportunity === 1 ? "hero.opportunity" : "hero.opportunity_plural", { count: counts.opportunity })}
-            active={activeFilter === "opportunity"}
-            disabled={counts.opportunity === 0}
-            onClick={() => onFilterChange(activeFilter === "opportunity" ? null : "opportunity")}
-          />
-          <StatusChip
-            dotColor="#2563EB"
-            label={t(counts.intel === 1 ? "hero.signal" : "hero.signal_plural", { count: counts.intel })}
-            active={activeFilter === "intel"}
-            disabled={counts.intel === 0}
-            onClick={() => onFilterChange(activeFilter === "intel" ? null : "intel")}
-          />
-          {activeFilter && (
-            <button
-              type="button"
-              onClick={() => onFilterChange(null)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#7C3AED",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                padding: "5px 6px",
-              }}
-            >
-              {t("hero.clearFilter")}
-            </button>
-          )}
-        </div>
-
-        {/* Primary CTAs */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 10,
-            marginTop: 18,
-          }}
-        >
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           <Link
             to="/dashboard/pricing"
             search={{ from: "overview" }}
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: 7,
               backgroundColor: "#1A1A18",
               color: "#FFFFFF",
               textDecoration: "none",
-              padding: "10px 16px",
-              borderRadius: 10,
+              padding: "8px 14px",
+              borderRadius: 8,
               fontSize: 13,
               fontWeight: 600,
             }}
           >
-            <Zap size={14} strokeWidth={2.25} />
+            <Zap size={13} strokeWidth={2.25} />
             {t("hero.reviewPricing")}
             <CountBadge value={pricingCount} variant="onDark" />
-            <ArrowRight size={14} strokeWidth={2} />
+            <ArrowRight size={13} strokeWidth={2} />
           </Link>
           <Link
             to="/dashboard/competitors"
@@ -207,22 +116,89 @@ export function OverviewHero({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: 7,
               backgroundColor: "#FFFFFF",
               border: "1px solid #E5E2DB",
               color: "#1A1A18",
               textDecoration: "none",
-              padding: "10px 16px",
-              borderRadius: 10,
+              padding: "8px 14px",
+              borderRadius: 8,
               fontSize: 13,
               fontWeight: 600,
             }}
           >
             {t("hero.seeCompetitors")}
             <CountBadge value={competitorChangeCount} variant="onLight" />
-            <ArrowRight size={14} strokeWidth={2} />
+            <ArrowRight size={13} strokeWidth={2} />
           </Link>
         </div>
+      </div>
+
+      {/* Greeting */}
+      <h1
+        style={{
+          fontSize: 30,
+          fontWeight: 700,
+          color: "#1A1A18",
+          margin: "0 0 6px",
+          letterSpacing: "-0.02em",
+          lineHeight: 1.15,
+        }}
+      >
+        {t(getGreetingKey(mounted), { name: firstName })}
+      </h1>
+
+      <p
+        style={{
+          fontSize: 14,
+          color: "#6B6B6B",
+          margin: "0 0 20px",
+          lineHeight: 1.5,
+        }}
+      >
+        {headline}
+      </p>
+
+      {/* Status filter chips */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <StatusChip
+          dotColor="#DC2626"
+          label={t(counts.action === 1 ? "hero.action" : "hero.action_plural", { count: counts.action })}
+          active={activeFilter === "action"}
+          disabled={counts.action === 0}
+          onClick={() => onFilterChange(activeFilter === "action" ? null : "action")}
+        />
+        <StatusChip
+          dotColor="#16A34A"
+          label={t(counts.opportunity === 1 ? "hero.opportunity" : "hero.opportunity_plural", { count: counts.opportunity })}
+          active={activeFilter === "opportunity"}
+          disabled={counts.opportunity === 0}
+          onClick={() => onFilterChange(activeFilter === "opportunity" ? null : "opportunity")}
+        />
+        <StatusChip
+          dotColor="#2563EB"
+          label={t(counts.intel === 1 ? "hero.signal" : "hero.signal_plural", { count: counts.intel })}
+          active={activeFilter === "intel"}
+          disabled={counts.intel === 0}
+          onClick={() => onFilterChange(activeFilter === "intel" ? null : "intel")}
+        />
+        {activeFilter && (
+          <button
+            type="button"
+            onClick={() => onFilterChange(null)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#EA580C",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              padding: "4px 6px",
+            }}
+          >
+            {t("hero.clearFilter")}
+          </button>
+        )}
       </div>
     </section>
   );
@@ -285,26 +261,27 @@ function StatusChip({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
-        backgroundColor: active ? "#1A1A18" : "#FAF8F3",
-        border: `1px solid ${active ? "#1A1A18" : "#EFEAE0"}`,
+        gap: 7,
+        backgroundColor: active ? "#1A1A18" : "transparent",
+        border: `1px solid ${active ? "#1A1A18" : "#E5E2DB"}`,
         borderRadius: 999,
         padding: "5px 12px",
         fontSize: 12,
         fontWeight: 500,
-        color: active ? "#FFFFFF" : "#3A3A38",
+        color: active ? "#FFFFFF" : "#6B6B6B",
         cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.55 : 1,
+        opacity: disabled ? 0.5 : 1,
         transition: "background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease",
       }}
     >
       <span
         aria-hidden
         style={{
-          width: 7,
-          height: 7,
+          width: 6,
+          height: 6,
           borderRadius: 9999,
           backgroundColor: dotColor,
+          flexShrink: 0,
         }}
       />
       {label}

@@ -18,26 +18,38 @@ export function MetricCard({
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E5E2DB",
-        borderRadius: 10,
-        padding: "18px 22px",
+        borderRadius: 12,
+        padding: "20px 24px",
         flex: 1,
         minWidth: 0,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 500, color: "#9A9A9A" }}>{label}</div>
       <div
         style={{
-          fontSize: 28,
+          fontSize: 11,
+          fontWeight: 600,
+          color: "#9A9A9A",
+          textTransform: "uppercase",
+          letterSpacing: "0.07em",
+          marginBottom: 10,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 30,
           fontWeight: 700,
           color: valueColor,
-          marginTop: 8,
           lineHeight: 1.1,
-          letterSpacing: "-0.01em",
+          letterSpacing: "-0.02em",
         }}
       >
         {value}
       </div>
-      <div style={{ marginTop: 8 }}>{footer}</div>
+      {footer && (
+        <div style={{ marginTop: 10 }}>{footer}</div>
+      )}
     </div>
   );
 }
@@ -50,10 +62,10 @@ export function MetricsRow({ metrics }: { metrics: OverviewMetric[] }) {
         style={{
           backgroundColor: "#FFFFFF",
           border: "1px dashed #E5E2DB",
-          borderRadius: 10,
+          borderRadius: 12,
           padding: "20px 24px",
           fontSize: 13,
-          color: "#6B6B6B",
+          color: "#9A9A9A",
         }}
       >
         {t("metrics.empty")}

@@ -132,8 +132,8 @@ function OverviewPage() {
 
   return (
     <DashboardLayout title={t("overview.title")}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* 1. Hero: greeting, briefing, and primary CTAs */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {/* Hero: greeting + status + CTAs */}
         <OverviewHero
           alerts={data.alerts}
           activeFilter={severityFilter}
@@ -142,47 +142,27 @@ function OverviewPage() {
           competitorChangeCount={data.competitorChangeCount}
         />
 
-        {/* 1b. First-run checklist. */}
+        {/* First-run checklist */}
         <OnboardingChecklist />
 
-        {/* 2. AI summary */}
-        <SectionLabel
-          title={t("overview.aiSees")}
-          subtitle={t("overview.aiSeesDesc")}
-          right={<ExportInsightsButton />}
-        />
+        {/* AI summary */}
+        <SectionLabel title={t("overview.aiSees")} right={<ExportInsightsButton />} />
         <AIInsightsCard page="overview" initial={data.insight} />
 
-        {/* 3. What changed — actionable alerts */}
+        {/* What changed */}
         <SectionLabel
           title={severityFilter ? t("overview.whatChangedFiltered", { severity: severityFilter }) : t("overview.whatChanged")}
-          subtitle={
-            severityFilter
-              ? t(
-                  filteredAlerts.length === 1
-                    ? "overview.whatChangedFilteredDesc"
-                    : "overview.whatChangedFilteredDesc_plural",
-                  { count: filteredAlerts.length, severity: severityFilter },
-                )
-              : t("overview.whatChangedDesc")
-          }
         />
         <div id="overview-live-alerts" style={{ scrollMarginTop: 16 }}>
           <LiveAlerts alerts={filteredAlerts} />
         </div>
 
-        {/* 4. What to do next — guided actions */}
-        <SectionLabel
-          title={t("overview.whatToDo")}
-          subtitle={t("overview.whatToDoDesc")}
-        />
+        {/* What to do next */}
+        <SectionLabel title={t("overview.whatToDo")} />
         <QuickActions actions={data.quickActions} />
 
-        {/* 5. Where you stand — context & reference data */}
-        <SectionLabel
-          title={t("overview.whereYouStand")}
-          subtitle={t("overview.whereYouStandDesc")}
-        />
+        {/* Where you stand */}
+        <SectionLabel title={t("overview.whereYouStand")} />
         <MetricsRow metrics={data.metrics} />
         <div style={{ display: "flex", gap: 14, alignItems: "stretch", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 480px", minWidth: 0 }}>
@@ -199,43 +179,33 @@ function OverviewPage() {
 
 function SectionLabel({
   title,
-  subtitle,
   right,
 }: {
   title: string;
-  subtitle?: string;
   right?: ReactNode;
 }) {
   return (
     <div
       style={{
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "space-between",
         gap: 12,
-        marginTop: 4,
-        flexWrap: "wrap",
+        marginTop: 2,
       }}
     >
-      <div>
-        <h2
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "#1A1A18",
-            margin: 0,
-            letterSpacing: "0.02em",
-            textTransform: "uppercase",
-          }}
-        >
-          {title}
-        </h2>
-        {subtitle && (
-          <p style={{ fontSize: 13, color: "#6B6B6B", margin: "4px 0 0", lineHeight: 1.4 }}>
-            {subtitle}
-          </p>
-        )}
-      </div>
+      <h2
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: "#9A9A9A",
+          margin: 0,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+        }}
+      >
+        {title}
+      </h2>
       {right}
     </div>
   );
