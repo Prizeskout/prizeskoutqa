@@ -60,7 +60,7 @@
   },
   "capabilities": {
     "title": "Capacités en direct",
-    "subtitle": "Chaque tuile envoie une vraie requête HTTP au Worker déployé — aucune simulation.",
+    "subtitle": "Collez votre clé de test, cliquez sur Exécuter, et voyez de vrais résultats du serveur en direct — aucune simulation.",
     "keyRequired": "Clé API requise",
     "keyHint": "Stockée en sessionStorage uniquement — effacée à la fermeture de l'onglet.",
     "runAll": "Tout exécuter",

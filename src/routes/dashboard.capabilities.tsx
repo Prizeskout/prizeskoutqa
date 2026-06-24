@@ -338,7 +338,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "margin",
       title: "Margin Computation",
-      description: "Landed cost + gross margin from unit cost, freight, duty, and fees.",
+      description: "See your true profit on any product — unit cost, shipping, customs, and channel fees all factored in.",
       methodBadge: "POST /v1/margin",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -353,7 +353,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "competitors",
       title: "Competitor Intel",
-      description: "Reads the most recent cached competitor prices — no live scrape triggered.",
+      description: "See what Carrefour, Noon, and Lulu are charging right now — automatically updated, no manual checking.",
       methodBadge: "GET /v1/competitors/prices",
       badgeVariant: "cached",
       run: async (secret) => {
@@ -365,7 +365,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "loyalty",
       title: "Loyalty Pricing",
-      description: "Segment-based discount with floor protection — never sells below cost.",
+      description: "Reward your Gold, Silver, and Platinum members with their discount — the system ensures you never sell at a loss.",
       methodBadge: "POST /v1/loyalty/price",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -382,7 +382,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "dynprice",
       title: "Dynamic Pricing Engine",
-      description: "AI recommendation combining margin floor + competitor signals. Decision logged.",
+      description: "Get one clear recommended price per product — benchmarked against competitors and protected by your margin floor.",
       methodBadge: "POST /v1/dynprice",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -398,7 +398,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "flash",
       title: "Flash Sale Orchestration",
-      description: "Scheduled flash events with floor validation, conflict detection, and auto-restore.",
+      description: "Run time-limited sales that start on schedule, enforce your price floor, and restore original prices automatically when the window closes.",
       methodBadge: "GET /v1/flash/events",
       badgeVariant: "read",
       run: async (secret) => {
@@ -410,7 +410,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "group",
       title: "Group Buying Engine",
-      description: "Tiered price tiers unlock as buyer count grows. Demo creates then self-cleans.",
+      description: "Prices drop automatically as more buyers join — each tier unlocks at the buyer count you set.",
       methodBadge: "POST /v1/group/campaigns",
       badgeVariant: "write+clean",
       run: async (secret) => {
@@ -438,7 +438,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "tenant",
       title: "Tenant Governance",
-      description: "Licensee-level pricing rules block out-of-band tenant pricing.",
+      description: "Catch resellers pricing outside your approved range — violations are flagged the moment they happen.",
       methodBadge: "GET /v1/tenant/violations",
       badgeVariant: "read",
       run: async (secret) => {
@@ -450,7 +450,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "parity",
       title: "Cross-Border Parity",
-      description: "Per-country price floors using live FX (ECB) + duty, VAT, and logistics costs.",
+      description: "Price the same product consistently across Qatar, Saudi Arabia, and UAE — currency conversion, VAT, and duties handled automatically.",
       methodBadge: "GET /v1/parity/analysis",
       badgeVariant: "read",
       run: async (secret) => {
@@ -462,7 +462,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "map",
       title: "MAP Compliance",
-      description: "Retailer pricing monitored against MAP agreements — violations flagged with evidence.",
+      description: "Check that retail partners are respecting your minimum advertised prices — violations come with evidence attached.",
       methodBadge: "GET /v1/compliance/map/violations",
       badgeVariant: "read",
       run: async (secret) => {
@@ -474,7 +474,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "audit",
       title: "Audit Trail",
-      description: "Every pricing decision logged immutably. DB-enforced tamper-proof chain.",
+      description: "Every price change and recommendation is permanently recorded — see who decided what, and when, with no gaps.",
       methodBadge: "GET /v1/audit/summary",
       badgeVariant: "read",
       run: async (secret) => {
@@ -486,7 +486,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "webhooks",
       title: "Enriched Webhooks",
-      description: "Events fan out to subscribers HMAC-signed, with margin + competitor context.",
+      description: "Notify your own systems the moment a price decision is made — each event includes margin and competitor context, signed for security.",
       methodBadge: "POST /v1/webhooks/enrich",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -508,7 +508,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "embed",
       title: "White-Label Embed",
-      description: "Widget renders under partner brand — zero PrizeSkout reference visible.",
+      description: "Embed the pricing widget inside your product under your own brand — your customers never see PrizeSkout.",
       methodBadge: "GET /v1/embed/config",
       badgeVariant: "read",
       run: async (secret) => {
@@ -527,20 +527,20 @@ const COMING_SOON = [
   {
     id: "elasticity",
     title: "Real-Time Elasticity Engine",
-    description: "Demand-curve estimation per SKU. Requires 90-day transaction history for calibration.",
-    gate: "90-day transaction history + elasticity model training",
+    description: "Learn how price-sensitive your buyers are per product — then find the sweet spot between margin and volume automatically.",
+    gate: "Needs 90 days of your sales history to calibrate",
   },
   {
     id: "channel-push",
     title: "Channel Push (Storefront Sync)",
-    description: "Publish price decisions directly to Noon, Amazon, Talabat seller accounts.",
-    gate: "Partner seller API credentials (Noon, Amazon SP-API, Talabat)",
+    description: "Push approved prices to Noon, Amazon, and Talabat in one click — no re-entering them in each seller portal.",
+    gate: "Requires your seller credentials for each platform",
   },
   {
     id: "loyalty-integrations",
     title: "GCC Loyalty Integrations",
-    description: "Real-time Shukran, Nojoom, and Tawasol membership lookup and points issuance.",
-    gate: "Partner OAuth2 credentials (Majid Al Futtaim, Ooredoo, Ministry of Commerce)",
+    description: "Look up Shukran, Nojoom, and Tawasol membership tiers in real time and adjust prices and points accordingly.",
+    gate: "Requires partner setup with Majid Al Futtaim, Ooredoo, and Ministry of Commerce",
   },
 ];
 
@@ -992,10 +992,10 @@ function CapabilitiesPage() {
       title={t("capabilities.title")}
       subtitle={t("capabilities.subtitle")}
       helpItems={[
-        "Every tile fires a real HTTP request against the live deployed Worker — no mocks, no interceptors. The technical badge on each card shows the real METHOD · PATH · status code · latency.",
-        "Competitor Intel reads from the cached competitor_prices table — no Firecrawl scrape is triggered on click.",
-        "Write operations that would leave demo records (group buying) create the record and immediately close/cancel it within the same tile run.",
-        "Tiles that return empty data (no catalog products, no violations) show a 'Ready — awaiting data' state rather than an error.",
+        "Every tile calls a live endpoint on the deployed server — you see real status codes and real response times, not simulated results.",
+        "Competitor Intel reads from cached prices. Clicking it does not trigger a live scrape or use any credits.",
+        "Group Buying creates a demo campaign and closes it immediately in the same run — it leaves no test data behind.",
+        "If a tile shows 'Ready — awaiting data,' the endpoint is working fine but your product catalog hasn't been synced yet.",
       ]}
       primaryAction={
         <button
@@ -1060,7 +1060,7 @@ function CapabilitiesPage() {
       {/* Live tile grid */}
       <div style={{ marginBottom: 8 }}>
         <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B6B6B", margin: "0 0 12px" }}>
-          Live — wired to deployed Worker
+          Live — every tile calls the deployed Worker
         </h2>
       </div>
       <div
