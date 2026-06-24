@@ -41,6 +41,7 @@ const GUIDES: {
   eta: string;
   to?:
     | "/docs/guides/authentication"
+    | "/docs/guides/quickstart"
     | "/docs/guides/sdk-quickstart"
     | "/docs/guides/webhooks";
 }[] = [
@@ -49,6 +50,7 @@ const GUIDES: {
     title: "Quickstart",
     desc: "Mint a test key and make your first request in under 5 minutes.",
     eta: "5 min read",
+    to: "/docs/guides/quickstart",
   },
   {
     icon: KeyRound,

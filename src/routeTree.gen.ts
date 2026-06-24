@@ -49,6 +49,7 @@ import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
 import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
+import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.quickstart'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
@@ -262,6 +263,11 @@ const DocsGuidesSdkQuickstartRoute = DocsGuidesSdkQuickstartRouteImport.update({
   path: '/sdk-quickstart',
   getParentRoute: () => DocsGuidesRoute,
 } as any)
+const DocsGuidesQuickstartRoute = DocsGuidesQuickstartRouteImport.update({
+  id: '/quickstart',
+  path: '/quickstart',
+  getParentRoute: () => DocsGuidesRoute,
+} as any)
 const DocsGuidesAuthenticationRoute =
   DocsGuidesAuthenticationRouteImport.update({
     id: '/authentication',
@@ -371,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
@@ -423,6 +430,7 @@ export interface FileRoutesByTo {
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
+    | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
@@ -586,6 +596,7 @@ export interface FileRouteTypes {
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
+    | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console'
@@ -640,6 +651,7 @@ export interface FileRouteTypes {
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
+    | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
@@ -966,6 +978,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsGuidesSdkQuickstartRouteImport
       parentRoute: typeof DocsGuidesRoute
     }
+    '/docs/guides/quickstart': {
+      id: '/docs/guides/quickstart'
+      path: '/quickstart'
+      fullPath: '/docs/guides/quickstart'
+      preLoaderRoute: typeof DocsGuidesQuickstartRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
     '/docs/guides/authentication': {
       id: '/docs/guides/authentication'
       path: '/authentication'
@@ -1114,12 +1133,14 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 interface DocsGuidesRouteChildren {
   DocsGuidesAuthenticationRoute: typeof DocsGuidesAuthenticationRoute
+  DocsGuidesQuickstartRoute: typeof DocsGuidesQuickstartRoute
   DocsGuidesSdkQuickstartRoute: typeof DocsGuidesSdkQuickstartRoute
   DocsGuidesWebhooksRoute: typeof DocsGuidesWebhooksRoute
 }
 
 const DocsGuidesRouteChildren: DocsGuidesRouteChildren = {
   DocsGuidesAuthenticationRoute: DocsGuidesAuthenticationRoute,
+  DocsGuidesQuickstartRoute: DocsGuidesQuickstartRoute,
   DocsGuidesSdkQuickstartRoute: DocsGuidesSdkQuickstartRoute,
   DocsGuidesWebhooksRoute: DocsGuidesWebhooksRoute,
 }

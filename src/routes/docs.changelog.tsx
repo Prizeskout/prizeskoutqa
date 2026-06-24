@@ -38,6 +38,68 @@ const RELEASES: {
   highlights: { tag: Tag; title: string; body: string }[];
 }[] = [
   {
+    version: "v1.6",
+    date: "June 24, 2026",
+    highlights: [
+      {
+        tag: "New",
+        title: "Settings fully wired — live data across all tabs",
+        body: "Account, Integrations, Team, Locations, and Competitors tabs now read and write to the database in real time. Changes persist across sessions immediately.",
+      },
+      {
+        tag: "New",
+        title: "Edit modals for webhooks, competitors, team roles, and locations",
+        body: "Every pencil icon in Settings now opens a full edit modal. Update webhook URLs and event subscriptions, manage competitor product URLs per-competitor, change team member roles, and edit location details — all without leaving the dashboard.",
+      },
+      {
+        tag: "New",
+        title: "Team invites by email",
+        body: "Invite colleagues by email address directly from Settings → Team. Invited members receive Owner, Admin, Developer, or Viewer access. Role changes take effect immediately.",
+      },
+      {
+        tag: "Improved",
+        title: "Dashboard reliability — error boundaries per tab",
+        body: "A failure in one dashboard tab no longer crashes the entire dashboard. Each tab is independently isolated so the rest of your workspace stays usable.",
+      },
+      {
+        tag: "Fixed",
+        title: "Sidebar scroll on smaller screens",
+        body: "The sidebar navigation was cut off below the Field Intelligence section on displays shorter than 900px. All sections are now reachable by scrolling.",
+      },
+    ],
+  },
+  {
+    version: "v1.5",
+    date: "June 10, 2026",
+    highlights: [
+      {
+        tag: "New",
+        title: "Structured pricing rules engine",
+        body: "Pricing rules are now structured types — margin_floor_pct, nominal_floor_qar, moci_ceiling, competitor_ceiling_pct, max_discount_pct, price_rounding — with non-overridable floor and ceiling enforcement. No competitive ceiling can push a price below your margin floor.",
+      },
+      {
+        tag: "New",
+        title: "Per-rule effect diagnostics",
+        body: "Every pricing recommendation now includes a rule_effects array showing exactly which rules fired, which passed, and which were overridden. If a rule was skipped due to missing COGS data, the reason says so explicitly.",
+      },
+      {
+        tag: "New",
+        title: "Trilingual interface — English, Arabic, French",
+        body: "The dashboard and landing page are now fully translated into Arabic (with RTL layout) and French, in addition to English. Language auto-detects from browser settings and can be changed from the top bar.",
+      },
+      {
+        tag: "New",
+        title: "Billing plans page",
+        body: "A clear plan comparison page is now live at Dashboard → Plans, showing Starter, Growth, and Enterprise tiers with Qatar-local pricing in QAR.",
+      },
+      {
+        tag: "Improved",
+        title: "Competitor URL cache with deduplication",
+        body: "When multiple users track the same competitor URL, scrapes are now shared from a central cache rather than running once per user. This reduces Firecrawl API usage and speeds up fresh-data availability.",
+      },
+    ],
+  },
+  {
     version: "v1.4",
     date: "April 18, 2026",
     highlights: [
