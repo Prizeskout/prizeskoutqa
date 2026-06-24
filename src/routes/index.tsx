@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, TrendingUp, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
@@ -338,6 +338,109 @@ function TrustStrip() {
 }
 
 /* ============================================================================
+   PARTNER BENEFITS — what brands and platforms unlock
+   ========================================================================= */
+
+const PARTNER_BENEFITS = [
+  {
+    Icon: Zap,
+    title: "Launch pricing as a feature in days",
+    desc: "19 production APIs, a sandbox, and full documentation on day one. No research sprint, no build-from-scratch. Your engineers integrate; we run the infrastructure.",
+  },
+  {
+    Icon: ShieldCheck,
+    title: "Your brand on every surface",
+    desc: "Recommendations, widgets, and data carry your logo — not ours. Set powered_by_visible: false and PrizeSkout disappears completely. Merchants trust you more.",
+  },
+  {
+    Icon: TrendingUp,
+    title: "Win enterprise deals you couldn't close before",
+    desc: "Procurement teams ask for audit trails, MAP monitoring, and compliance dashboards. We build that layer. You walk in with proof. You get the contract.",
+  },
+  {
+    Icon: Globe,
+    title: "GCC-native from the ground up",
+    desc: "Arabic-first UI, QAR/SAR/AED pricing norms, and live data coverage across Qatar, UAE, and KSA. Not a Western product adapted for the region — built here.",
+  },
+];
+
+function PartnerBenefits() {
+  return (
+    <section
+      style={{
+        background: "#0A0913",
+        padding: "88px 0",
+        borderTop: `1px solid ${BORDER}`,
+        borderBottom: `1px solid ${BORDER}`,
+      }}
+      className="px-5 md:px-10"
+    >
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 52 }}>
+          <Eyebrow>For brands and platforms</Eyebrow>
+          <h2
+            className="ps-section-title"
+            style={{ color: TEXT, marginTop: 14 }}
+          >
+            One licence. Four things you unlock immediately.
+          </h2>
+        </div>
+
+        <div className="ps-benefits-grid" style={{ display: "grid", gap: 16 }}>
+          {PARTNER_BENEFITS.map(({ Icon, title, desc }) => (
+            <div
+              key={title}
+              style={{
+                background: BG_RAISED,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 12,
+                padding: "28px 24px",
+              }}
+            >
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: "rgba(234,88,12,0.10)",
+                  border: "1px solid rgba(234,88,12,0.22)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 18,
+                }}
+              >
+                <Icon size={18} color={ORANGE_LIGHT} strokeWidth={1.75} />
+              </div>
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: TEXT,
+                  lineHeight: 1.35,
+                  marginBottom: 10,
+                }}
+              >
+                {title}
+              </div>
+              <div
+                style={{
+                  fontSize: 13.5,
+                  color: TEXT_MUTED,
+                  lineHeight: 1.65,
+                }}
+              >
+                {desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
    PROBLEM
    ========================================================================= */
 
@@ -580,6 +683,7 @@ function ProductPillars() {
   const pillars = [
     {
       name: "Price operations",
+      outcome: "Every price, every channel, always in sync.",
       apis: [
         { method: "POST", path: "/v1/sync", label: "Omnichannel Price Sync" },
         { method: "POST", path: "/v1/rules", label: "Price Rules Engine" },
@@ -589,6 +693,7 @@ function ProductPillars() {
     },
     {
       name: "Commerce intelligence",
+      outcome: "AI recommendations that protect margin and react to competitors.",
       apis: [
         { method: "POST", path: "/v1/dynprice", label: "Dynamic Pricing Engine" },
         { method: "GET", path: "/v1/audit", label: "Governance & Audit" },
@@ -598,6 +703,7 @@ function ProductPillars() {
     },
     {
       name: "Commerce events",
+      outcome: "Real-time event stream your engineers can build anything on top of.",
       apis: [
         { method: "POST", path: "/v1/events", label: "Event Firehose" },
         { method: "POST", path: "/v1/webhooks", label: "Signed Webhooks" },
@@ -607,6 +713,7 @@ function ProductPillars() {
     },
     {
       name: "Platform infrastructure",
+      outcome: "Multi-tenant, metered, and governed — built for platforms at scale.",
       apis: [
         { method: "POST", path: "/v1/keys", label: "Scoped API Keys" },
         { method: "GET", path: "/v1/usage", label: "Usage Metering" },
@@ -669,17 +776,28 @@ function ProductPillars() {
                   fontSize: 15,
                   fontWeight: 600,
                   color: TEXT,
-                  marginBottom: 4,
+                  marginBottom: 6,
                 }}
               >
                 {p.name}
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 12.5,
+                  color: TEXT_MUTED,
+                  lineHeight: 1.5,
+                  marginBottom: 12,
+                }}
+              >
+                {p.outcome}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
                   color: ORANGE_LIGHT,
                   fontFamily: MONO_STACK,
-                  marginBottom: 18,
+                  marginBottom: 14,
+                  letterSpacing: "0.04em",
                 }}
               >
                 {p.apis.length} APIs
@@ -1293,10 +1411,11 @@ function LandingPage() {
       <style>{PAGE_STYLES}</style>
       <Hero />
       <TrustStrip />
+      <PartnerBenefits />
       <ProblemSection />
       <HowItWorks />
-      <ProductPillars />
       <WhiteLabelSection />
+      <ProductPillars />
       <EnterpriseStats />
       <PricingSection />
       <FinalCTA />
@@ -1318,6 +1437,7 @@ const PAGE_STYLES = `
   .ps-pillar-grid { grid-template-columns: 1fr; }
   .ps-quickstart-grid { grid-template-columns: 1fr; }
   .ps-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .ps-benefits-grid { grid-template-columns: 1fr; }
   .ps-pricing-grid { grid-template-columns: 1fr; }
   .ps-wl-grid { grid-template-columns: 1fr; }
 
@@ -1338,7 +1458,7 @@ const PAGE_STYLES = `
 
   @media (min-width: 640px) {
     .ps-pillar-grid { grid-template-columns: repeat(2, 1fr); }
-    .ps-stats-grid { grid-template-columns: repeat(3, 1fr); }
+    .ps-benefits-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 900px) {
     .ps-hero-grid { grid-template-columns: 1.05fr 1fr; gap: 56px; }
@@ -1346,7 +1466,8 @@ const PAGE_STYLES = `
     .ps-quickstart-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-wl-grid { grid-template-columns: 1fr 1fr; }
-    .ps-stats-grid { grid-template-columns: repeat(6, 1fr); }
+    .ps-stats-grid { grid-template-columns: repeat(4, 1fr); }
+    .ps-benefits-grid { grid-template-columns: repeat(4, 1fr); }
   }
   @media (min-width: 1180px) {
     .ps-pillar-grid { grid-template-columns: repeat(4, 1fr); }
