@@ -360,7 +360,7 @@ function WebhooksPage() {
       )}
 
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
           Endpoints
         </div>
         {loading ? (
@@ -497,7 +497,7 @@ function WebhooksPage() {
       </div>
 
       <div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
           Recent deliveries
         </div>
         <div
@@ -886,7 +886,7 @@ function RetryConfigDrawer({
       </label>
 
       <div style={{ marginTop: 8, padding: 12, backgroundColor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
           Retry schedule preview
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, color: "#334155", fontSize: 12.5 }}>
@@ -1165,7 +1165,7 @@ function DetailRow({ label, value, mono, color }: { label: string; value: string
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 700, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, marginTop: 4 }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6, marginTop: 4 }}>
       {children}
     </div>
   );

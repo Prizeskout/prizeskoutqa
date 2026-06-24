@@ -308,10 +308,10 @@ function ApiExplorerPage() {
           <div
             style={{
               fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.06em",
+              fontWeight: 600,
+              letterSpacing: "0.07em",
               textTransform: "uppercase",
-              color: "#6B6B6B",
+              color: "#9A9A9A",
               padding: "4px 6px 8px",
             }}
           >
@@ -759,7 +759,7 @@ function ApiExplorerPage() {
               color: "#E5E2DB",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#9A9A9A", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#9A9A9A", marginBottom: 6, letterSpacing: "0.07em", textTransform: "uppercase" }}>
               cURL
             </div>
             <pre

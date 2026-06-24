@@ -219,7 +219,8 @@ export function AIInsightsCard({
           insetInlineStart: 0,
           insetInlineEnd: 0,
           height: 3,
-          background: "linear-gradient(90deg, #EA580C 0%, #7C3AED 60%, #3B82F6 100%)",
+          backgroundColor: "#EA580C",
+          borderRadius: "12px 12px 0 0",
         }}
       />
 
@@ -239,7 +240,7 @@ export function AIInsightsCard({
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: "linear-gradient(135deg, #EA580C 0%, #7C3AED 100%)",
+              backgroundColor: "#EA580C",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -425,7 +426,7 @@ export function AIInsightsCard({
                   fontSize: 11,
                   fontWeight: 600,
                   color: "#9A9A9A",
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.07em",
                   textTransform: "uppercase",
                   marginBottom: 8,
                 }}

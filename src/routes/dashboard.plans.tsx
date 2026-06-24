@@ -160,7 +160,7 @@ function CurrentPlanBanner({ plan }: { plan: Plan }) {
       }}
     >
       <div>
-        <div style={{ fontSize: 11, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>
+        <div style={{ fontSize: 11, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>
           {t("plans.currentPlan")}
         </div>
         <div style={{ fontSize: 20, fontWeight: 700, color: accent, marginTop: 2 }}>
@@ -198,7 +198,7 @@ function CurrentPlanBanner({ plan }: { plan: Plan }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 10.5, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+      <div style={{ fontSize: 11, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>
         {label}
       </div>
       <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", marginTop: 2 }}>
@@ -385,7 +385,7 @@ function PlanCard({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
             fontSize: 13,
             fontWeight: 600,
             textDecoration: "none",
-            background: `linear-gradient(135deg, ${accent}, ${accent}CC)`,
+            backgroundColor: accent,
             color: "#fff",
           }}
         >
@@ -417,7 +417,7 @@ function PlanCard({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
 function LimitPill({ label, value, accent }: { label: string; value: string | number; accent?: string }) {
   return (
     <div>
-      <div style={{ fontSize: 10, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
+      <div style={{ fontSize: 11, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>
         {label}
       </div>
       <div style={{ fontSize: 13, fontWeight: 600, color: accent ?? "#1A1A18", marginTop: 1 }}>
@@ -473,7 +473,7 @@ function ComparisonTable() {
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr style={{ borderBottom: "2px solid #E5E2DB" }}>
-            <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "#8A8A8A", fontWeight: 600 }}>
+            <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "#9A9A9A", fontWeight: 600 }}>
               Feature
             </th>
             {PLANS.map((p) => (
@@ -596,7 +596,7 @@ function PartnerCard() {
           fontSize: 13,
           fontWeight: 600,
           textDecoration: "none",
-          background: `linear-gradient(135deg, ${ORANGE}, #C2410C)`,
+          backgroundColor: ORANGE,
           color: "#fff",
         }}
       >

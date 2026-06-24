@@ -278,7 +278,7 @@ function ApiKeysPage() {
             </div>
 
             <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
                 Secret key
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -520,9 +520,9 @@ function ApiKeysPage() {
             padding: "10px 16px",
             fontSize: 11,
             fontWeight: 600,
-            color: "#8A8A8A",
+            color: "#9A9A9A",
             textTransform: "uppercase",
-            letterSpacing: "0.05em",
+            letterSpacing: "0.07em",
             borderBottom: "1px solid #E5E2DB",
             backgroundColor: "#FAFAF9",
           }}

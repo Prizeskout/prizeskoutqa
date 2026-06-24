@@ -31,7 +31,7 @@ function ActionCard({ action }: { action: OverviewQuickAction }) {
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E5E2DB",
-        borderRadius: 10,
+        borderRadius: 12,
         padding: "16px 20px",
         flex: 1,
         minWidth: 0,

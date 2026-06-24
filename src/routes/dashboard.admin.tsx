@@ -391,11 +391,11 @@ function KV({ label, value }: { label: string; value: string }) {
     <div>
       <div
         style={{
-          fontSize: 10,
-          fontWeight: 700,
+          fontSize: 11,
+          fontWeight: 600,
           color: "#9A9A9A",
           textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          letterSpacing: "0.07em",
         }}
       >
         {label}

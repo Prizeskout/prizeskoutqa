@@ -301,7 +301,7 @@ function MetricCard({ label, value, accent }: { label: string; value: string; ac
         padding: 14,
       }}
     >
-      <div style={{ fontSize: 11, color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+      <div style={{ fontSize: 11, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>
         {label}
       </div>
       <div style={{ fontSize: 22, fontWeight: 700, color: accent ?? "#1A1A18", marginTop: 4 }}>

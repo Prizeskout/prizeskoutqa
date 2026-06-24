@@ -94,7 +94,7 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E5E2DB",
-        borderRadius: 10,
+        borderRadius: 12,
         padding: "20px 24px",
       }}
     >
@@ -163,7 +163,7 @@ export function LiveAlerts({ alerts }: { alerts: OverviewAlert[] }) {
               animation: "prizeskout-pulse-dot 2s ease-in-out infinite",
             }}
           />
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: 0 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: "#1A1A18", margin: 0 }}>
             {t("alerts.title")}
           </h2>
         </div>
