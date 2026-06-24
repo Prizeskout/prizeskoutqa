@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   Card,
@@ -11,45 +11,10 @@ import {
   PrimaryButton,
   TextField,
 } from "./primitives";
+import { useAuth } from "@/lib/auth-context";
+import { getLocations, saveLocations, type StoredLocation } from "@/lib/locationsStore";
 
-type Location = {
-  id: string;
-  name: string;
-  address: string;
-  nearbyCompetitors: string;
-  observations: number;
-};
-
-const INITIAL_LOCATIONS: Location[] = [
-  {
-    id: "1",
-    name: "Snoonu HQ",
-    address: "Lusail, Marina District, Qatar",
-    nearbyCompetitors: "Lulu Lusail, Carrefour Lusail",
-    observations: 23,
-  },
-  {
-    id: "2",
-    name: "Doha Festival City Partner Zone",
-    address: "Doha Festival City, Umm Salal, Qatar",
-    nearbyCompetitors: "Carrefour DFC, Lulu DFC",
-    observations: 18,
-  },
-  {
-    id: "3",
-    name: "Mall of Qatar Pickup Point",
-    address: "Mall of Qatar, Al Rayyan, Qatar",
-    nearbyCompetitors: "Carrefour MOQ",
-    observations: 12,
-  },
-  {
-    id: "4",
-    name: "Al Wakrah Service Center",
-    address: "Al Wakrah, Qatar",
-    nearbyCompetitors: "Lulu Al Wakrah",
-    observations: 7,
-  },
-];
+type Location = StoredLocation;
 
 type EditorState =
   | { mode: "closed" }
@@ -57,9 +22,21 @@ type EditorState =
   | { mode: "edit"; id: string };
 
 export function LocationsTab() {
-  const [locations, setLocations] = useState<Location[]>(INITIAL_LOCATIONS);
+  const { user } = useAuth();
+  const [locations, setLocations] = useState<Location[]>([]);
   const [editor, setEditor] = useState<EditorState>({ mode: "closed" });
   const [confirmDelete, setConfirmDelete] = useState<Location | null>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      setLocations(getLocations(user.id));
+    }
+  }, [user?.id]);
+
+  const persist = (next: Location[]) => {
+    setLocations(next);
+    if (user?.id) saveLocations(user.id, next);
+  };
 
   const max = locations.length
     ? Math.max(...locations.map((l) => l.observations), 1)
@@ -67,14 +44,9 @@ export function LocationsTab() {
 
   const handleSave = (data: Omit<Location, "id" | "observations"> & { observations: number }) => {
     if (editor.mode === "add") {
-      setLocations((prev) => [
-        ...prev,
-        { ...data, id: crypto.randomUUID() },
-      ]);
+      persist([...locations, { ...data, id: crypto.randomUUID() }]);
     } else if (editor.mode === "edit") {
-      setLocations((prev) =>
-        prev.map((l) => (l.id === editor.id ? { ...l, ...data } : l))
-      );
+      persist(locations.map((l) => (l.id === editor.id ? { ...l, ...data } : l)));
     }
     setEditor({ mode: "closed" });
   };
@@ -223,7 +195,7 @@ export function LocationsTab() {
           location={confirmDelete}
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => {
-            setLocations((prev) => prev.filter((l) => l.id !== confirmDelete.id));
+            persist(locations.filter((l) => l.id !== confirmDelete.id));
             setConfirmDelete(null);
           }}
         />
@@ -323,7 +295,7 @@ function LocationEditor({
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <FieldRow>
           <Field label="Name">
-            <TextField value={name} onChange={setName} placeholder="e.g. Snoonu HQ" />
+            <TextField value={name} onChange={setName} placeholder="e.g. Main Store" />
           </Field>
         </FieldRow>
         <FieldRow>
