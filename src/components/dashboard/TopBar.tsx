@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ChannelFilter, type Channel } from "./ChannelFilter";
 import { NotificationsBell } from "./NotificationsBell";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ModeSwitcher } from "./ModeSwitcher";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -296,6 +297,7 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
+        <ModeSwitcher />
         <LanguageSwitcher />
         <ChannelFilter value={channel} onChange={onChannelChange} />
         <DataFreshnessIndicator />

@@ -5,6 +5,7 @@ import { KeyRound, Copy, Check, Trash2, Ban, Plus, Eye, EyeOff, AlertTriangle, S
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccount } from "@/hooks/useAccount";
+import { useModeContext } from "@/lib/mode-context";
 import {
   createApiKey,
   revokeApiKey,
@@ -32,13 +33,14 @@ function ApiKeysPage() {
   const { data: account, refetch: refetchAccount } = useAccount();
   const liveStatus = account?.live_status ?? "none";
   const liveApproved = liveStatus === "approved";
+  const { mode: dashboardMode } = useModeContext();
 
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
-  const [mode, setMode] = useState<"test" | "live">("test");
+  const [createMode, setCreateMode] = useState<"test" | "live">("test");
   const [creating, setCreating] = useState(false);
   const [newSecret, setNewSecret] = useState<string | null>(null);
   const [newKeyMeta, setNewKeyMeta] = useState<{ name: string; mode: "test" | "live" } | null>(null);
@@ -84,7 +86,7 @@ function ApiKeysPage() {
     setCreating(true);
     try {
       const currentName = name.trim();
-      const currentMode = mode;
+      const currentMode = createMode;
       const res = await createFn({ data: { name: currentName, mode: currentMode } });
       setShowCreate(false);
       setName("");
@@ -430,7 +432,7 @@ function ApiKeysPage() {
                   <button
                     key={m}
                     type="button"
-                    onClick={() => !disabled && setMode(m)}
+                    onClick={() => !disabled && setCreateMode(m)}
                     disabled={disabled}
                     title={
                       disabled
@@ -442,13 +444,13 @@ function ApiKeysPage() {
                       borderRadius: 6,
                       fontSize: 12,
                       fontWeight: 600,
-                      border: `1px solid ${mode === m && !disabled ? "#EA580C" : "#E5E2DB"}`,
+                      border: `1px solid ${createMode === m && !disabled ? "#EA580C" : "#E5E2DB"}`,
                       backgroundColor: disabled
                         ? "#F5F5F4"
-                        : mode === m
+                        : createMode === m
                           ? "#FFF7ED"
                           : "#fff",
-                      color: disabled ? "#A8A29E" : mode === m ? "#EA580C" : "#6B6B6B",
+                      color: disabled ? "#A8A29E" : createMode === m ? "#EA580C" : "#6B6B6B",
                       cursor: disabled ? "not-allowed" : "pointer",
                       display: "inline-flex",
                       alignItems: "center",
@@ -461,7 +463,7 @@ function ApiKeysPage() {
                 );
               })}
             </div>
-            {mode === "live" && !liveApproved && (
+            {createMode === "live" && !liveApproved && (
               <div style={{ fontSize: 12, color: "#B45309" }}>
                 Live keys require account approval. Submit a request from the banner above to unlock.
               </div>
@@ -547,31 +549,35 @@ function ApiKeysPage() {
               Retry
             </button>
           </div>
-        ) : keys.length === 0 ? (
-          <div style={{ padding: 32, textAlign: "center" }}>
-            <KeyRound size={24} color="#9A9A9A" style={{ margin: "0 auto 10px" }} />
-            <div style={{ fontSize: 13, color: "#6B6B6B", marginBottom: 12 }}>
-              No API keys yet. Create one to start calling the PrizeSkout API.
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowCreate(true)}
-              style={{
-                padding: "8px 14px",
-                backgroundColor: "#EA580C",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Create your first key
-            </button>
-          </div>
         ) : (
-          keys.map((k) => (
+          (() => {
+            const modeFilter = dashboardMode === "live" ? "live" : "test";
+            const filtered = keys.filter((k) => k.mode === modeFilter);
+            if (filtered.length === 0) return (
+              <div style={{ padding: 32, textAlign: "center" }}>
+                <KeyRound size={24} color="#9A9A9A" style={{ margin: "0 auto 10px" }} />
+                <div style={{ fontSize: 13, color: "#6B6B6B", marginBottom: 12 }}>
+                  No {modeFilter} keys yet. Create one to get started.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(true)}
+                  style={{
+                    padding: "8px 14px",
+                    backgroundColor: "#EA580C",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Create your first {modeFilter} key
+                </button>
+              </div>
+            );
+            return filtered.map((k) => (
             <div
               key={k.id}
               style={{
@@ -648,7 +654,8 @@ function ApiKeysPage() {
                 </button>
               </span>
             </div>
-          ))
+          ));
+          })()
         )}
       </div>
     </DashboardLayout>

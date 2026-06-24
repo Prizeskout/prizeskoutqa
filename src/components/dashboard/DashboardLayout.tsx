@@ -6,8 +6,10 @@ import type { TFunction } from "i18next";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { PageHeader } from "./PageHeader";
+import { PlanGateModal } from "./PlanGateModal";
 import type { Channel } from "./ChannelFilter";
 import { SidebarCollapseProvider, useSidebarCollapse } from "./SidebarCollapseContext";
+import { ModeProvider, useModeContext } from "@/lib/mode-context";
 import { i18n, getStoredLocale, applyLocale } from "@/lib/i18n";
 
 // Ensure i18n module is initialized by importing it.
@@ -280,9 +282,11 @@ type DashboardLayoutProps = {
 
 export function DashboardLayout(props: DashboardLayoutProps) {
   return (
-    <SidebarCollapseProvider>
-      <DashboardLayoutInner {...props} />
-    </SidebarCollapseProvider>
+    <ModeProvider>
+      <SidebarCollapseProvider>
+        <DashboardLayoutInner {...props} />
+      </SidebarCollapseProvider>
+    </ModeProvider>
   );
 }
 
@@ -298,6 +302,7 @@ function DashboardLayoutInner({
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { collapsed } = useSidebarCollapse();
+  const { mode } = useModeContext();
   const sidebarWidth = collapsed ? 64 : 240;
   const mobileShift = collapsed ? 56 : 0;
 
@@ -329,7 +334,8 @@ function DashboardLayoutInner({
           onMenuClick={() => setMobileOpen(true)}
           showMenuButton={!collapsed}
         />
-        <SandboxBanner />
+        {mode === "sandbox" && <SandboxBanner />}
+        <PlanGateModal />
         <main
           id="main-content"
           tabIndex={-1}
