@@ -1,6 +1,9 @@
 import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth-context";
+import { GeoSuggestionContext } from "@/lib/lang-suggestion";
+import { LangSuggestionPill } from "@/components/LangSuggestionPill";
+import { getGeoSuggestion } from "@/server/geo-suggest.functions";
 
 import appCss from "../styles.css?url";
 
@@ -174,6 +177,18 @@ const WEBSITE_JSON_LD = {
 };
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Runs once on SSR; data is dehydrated into HTML and hydrated client-side.
+  // staleTime: Infinity prevents re-fetching on client-side navigations
+  // (CF-IPCountry is only meaningful on the initial request anyway).
+  loader: async () => {
+    try {
+      const geo = await getGeoSuggestion();
+      return { geo };
+    } catch {
+      return { geo: { suggestedLocale: null, country: null } as const };
+    }
+  },
+  staleTime: Infinity,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -236,40 +251,46 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const loaderData = Route.useLoaderData();
+  const geo = loaderData?.geo ?? { suggestedLocale: null, country: null };
+
   return (
     <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <a href="#main-content" className="skip-to-content">
-        Skip to main content
-      </a>
-      <style>{`
-        .skip-to-content {
-          position: fixed;
-          top: 8px;
-          left: 8px;
-          z-index: 1000;
-          background: #EA580C;
-          color: #FFFFFF;
-          font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-          font-size: 13px;
-          font-weight: 600;
-          padding: 10px 16px;
-          border-radius: 8px;
-          text-decoration: none;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          transform: translateY(-150%);
-          transition: transform 0.15s ease;
-        }
-        .skip-to-content:focus,
-        .skip-to-content:focus-visible {
-          transform: translateY(0);
-          outline: 2px solid #FFFFFF;
-          outline-offset: 2px;
-        }
-        [id="main-content"]:focus { outline: none; }
-      `}</style>
-      <Outlet />
-    </AuthProvider>
+      <GeoSuggestionContext.Provider value={geo}>
+        <AuthProvider>
+          <a href="#main-content" className="skip-to-content">
+            Skip to main content
+          </a>
+          <style>{`
+            .skip-to-content {
+              position: fixed;
+              top: 8px;
+              left: 8px;
+              z-index: 1000;
+              background: #EA580C;
+              color: #FFFFFF;
+              font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+              font-size: 13px;
+              font-weight: 600;
+              padding: 10px 16px;
+              border-radius: 8px;
+              text-decoration: none;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              transform: translateY(-150%);
+              transition: transform 0.15s ease;
+            }
+            .skip-to-content:focus,
+            .skip-to-content:focus-visible {
+              transform: translateY(0);
+              outline: 2px solid #FFFFFF;
+              outline-offset: 2px;
+            }
+            [id="main-content"]:focus { outline: none; }
+          `}</style>
+          <Outlet />
+          <LangSuggestionPill />
+        </AuthProvider>
+      </GeoSuggestionContext.Provider>
     </QueryClientProvider>
   );
 }

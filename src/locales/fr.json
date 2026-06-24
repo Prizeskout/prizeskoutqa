@@ -18,7 +18,8 @@
     "market": "Marché",
     "benchmarks": "Références",
     "settings": "Paramètres",
-    "admin": "Administration"
+    "admin": "Administration",
+    "capabilities": "Démo en direct"
   },
   "sidebar": {
     "home": "Accueil",
@@ -56,6 +57,18 @@
     "refreshData": "Actualiser le tableau de bord",
     "dashboard": "Tableau de bord",
     "lastRefreshedAt": "Dernière actualisation à {{time}}"
+  },
+  "capabilities": {
+    "title": "Capacités en direct",
+    "subtitle": "Chaque tuile envoie une vraie requête HTTP au Worker déployé — aucune simulation.",
+    "keyRequired": "Clé API requise",
+    "keyHint": "Stockée en sessionStorage uniquement — effacée à la fermeture de l'onglet.",
+    "runAll": "Tout exécuter",
+    "running": "En cours…",
+    "summaryOk": "Les {{count}} capacités sur {{total}} sont au vert",
+    "summaryFail": "{{passed}} réussies · {{failed}} échouées",
+    "comingSoon": "Bientôt disponible",
+    "comingSoonDesc": "Ces capacités ne sont pas encore connectées à un endpoint actif. Listées ici par souci de transparence."
   },
   "overview": {
     "title": "Vue d'ensemble",

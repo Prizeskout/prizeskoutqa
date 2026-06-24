@@ -17,12 +17,14 @@ export const RTL_LOCALES = new Set<Locale>(["ar"]);
 
 const STORAGE_KEY = "ps-locale";
 
+// Returns only an EXPLICITLY stored locale choice (never auto-derives from browser).
+// The site always defaults to English; language switching is user-initiated.
 export function getStoredLocale(): Locale {
   if (typeof window === "undefined") return "en";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored && LOCALES.includes(stored as Locale)) return stored as Locale;
-  const browser = navigator.language.slice(0, 2) as Locale;
-  if (LOCALES.includes(browser)) return browser;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored && LOCALES.includes(stored as Locale)) return stored as Locale;
+  } catch {}
   return "en";
 }
 

@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Terminal,
   CreditCard,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -55,6 +56,7 @@ const navGroups: NavGroup[] = [
       { to: "/dashboard/plans", label: "Plans", tKey: "nav.plans", icon: CreditCard },
       { to: "/dashboard/logs", label: "Logs", tKey: "nav.logs", icon: FileCode2 },
       { to: "/dashboard/webhooks", label: "Webhooks", tKey: "nav.webhooks", icon: Webhook },
+      { to: "/dashboard/capabilities", label: "Live Demo", tKey: "nav.capabilities", icon: Zap },
     ],
   },
   {

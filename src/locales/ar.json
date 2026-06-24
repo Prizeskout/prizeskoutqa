@@ -18,7 +18,8 @@
     "market": "السوق",
     "benchmarks": "المعايير",
     "settings": "الإعدادات",
-    "admin": "الإدارة"
+    "admin": "الإدارة",
+    "capabilities": "عرض مباشر"
   },
   "sidebar": {
     "home": "الرئيسية",
@@ -56,6 +57,18 @@
     "refreshData": "تحديث بيانات لوحة التحكم",
     "dashboard": "لوحة التحكم",
     "lastRefreshedAt": "آخر تحديث في {{time}}"
+  },
+  "capabilities": {
+    "title": "القدرات المباشرة",
+    "subtitle": "كل بطاقة تُرسل طلب HTTP حقيقي إلى الخادم المنشور — بدون محاكاة.",
+    "keyRequired": "مفتاح API مطلوب",
+    "keyHint": "يُحفظ في sessionStorage فقط — يُحذف عند إغلاق التبويب.",
+    "runAll": "تشغيل الكل",
+    "running": "جارٍ التشغيل…",
+    "summaryOk": "جميع {{count}} من {{total}} قدرات نجحت",
+    "summaryFail": "{{passed}} نجح · {{failed}} فشل",
+    "comingSoon": "قريبًا",
+    "comingSoonDesc": "هذه القدرات غير متصلة بنقطة نهاية حية بعد. مُدرجة هنا للشفافية فقط."
   },
   "overview": {
     "title": "نظرة عامة",

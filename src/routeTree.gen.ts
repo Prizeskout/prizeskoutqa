@@ -41,6 +41,7 @@ import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.field-intel'
 import { Route as DashboardConsoleRouteImport } from './routes/dashboard.console'
 import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
+import { Route as DashboardCapabilitiesRouteImport } from './routes/dashboard.capabilities'
 import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
@@ -221,6 +222,11 @@ const DashboardCompetitorsRoute = DashboardCompetitorsRouteImport.update({
   path: '/competitors',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCapabilitiesRoute = DashboardCapabilitiesRouteImport.update({
+  id: '/capabilities',
+  path: '/capabilities',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardBenchmarksRoute = DashboardBenchmarksRouteImport.update({
   id: '/benchmarks',
   path: '/benchmarks',
@@ -341,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
+  '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/console': typeof DashboardConsoleRouteWithChildren
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByTo {
   '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
+  '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
   '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
+  '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/console': typeof DashboardConsoleRouteWithChildren
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
+    | '/dashboard/capabilities'
     | '/dashboard/competitors'
     | '/dashboard/console'
     | '/dashboard/field-intel'
@@ -553,6 +563,7 @@ export interface FileRouteTypes {
     | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
+    | '/dashboard/capabilities'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
     | '/dashboard/logs'
@@ -605,6 +616,7 @@ export interface FileRouteTypes {
     | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
     | '/dashboard/benchmarks'
+    | '/dashboard/capabilities'
     | '/dashboard/competitors'
     | '/dashboard/console'
     | '/dashboard/field-intel'
@@ -898,6 +910,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCompetitorsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/capabilities': {
+      id: '/dashboard/capabilities'
+      path: '/capabilities'
+      fullPath: '/dashboard/capabilities'
+      preLoaderRoute: typeof DashboardCapabilitiesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/benchmarks': {
       id: '/dashboard/benchmarks'
       path: '/benchmarks'
@@ -1054,6 +1073,7 @@ interface DashboardRouteChildren {
   DashboardApiExplorerRoute: typeof DashboardApiExplorerRoute
   DashboardApiKeysRoute: typeof DashboardApiKeysRoute
   DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
+  DashboardCapabilitiesRoute: typeof DashboardCapabilitiesRoute
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
   DashboardConsoleRoute: typeof DashboardConsoleRouteWithChildren
   DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
@@ -1073,6 +1093,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardApiExplorerRoute: DashboardApiExplorerRoute,
   DashboardApiKeysRoute: DashboardApiKeysRoute,
   DashboardBenchmarksRoute: DashboardBenchmarksRoute,
+  DashboardCapabilitiesRoute: DashboardCapabilitiesRoute,
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,
   DashboardConsoleRoute: DashboardConsoleRouteWithChildren,
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,

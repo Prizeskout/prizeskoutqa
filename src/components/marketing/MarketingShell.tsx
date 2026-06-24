@@ -2,22 +2,22 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { applyLocale, type Locale } from "@/lib/i18n";
 import logoDark from "@/assets/logo-dark.svg";
 
-const LANGS = [
+const LANGS: { code: Locale; label: string }[] = [
   { code: "en", label: "EN" },
   { code: "ar", label: "AR" },
   { code: "fr", label: "FR" },
-] as const;
+];
 
 function LangSwitcher({ compact }: { compact?: boolean }) {
   const { i18n } = useTranslation();
   const active = i18n.language.slice(0, 2);
 
-  function switchLang(code: string) {
+  function switchLang(code: Locale) {
     i18n.changeLanguage(code);
-    document.documentElement.dir = code === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = code;
+    applyLocale(code); // persists choice to localStorage + updates dir/lang attrs
   }
 
   return (
@@ -54,7 +54,7 @@ function LangSwitcher({ compact }: { compact?: boolean }) {
           onMouseLeave={(e) => {
             if (active !== code) e.currentTarget.style.color = "#6B6B6B";
           }}
-          aria-label={`Switch to ${code.toUpperCase()}`}
+          aria-label={`Switch language to ${code.toUpperCase()}`}
           aria-pressed={active === code}
         >
           {label}

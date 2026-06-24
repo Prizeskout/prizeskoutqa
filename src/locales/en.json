@@ -18,7 +18,8 @@
     "market": "Market",
     "benchmarks": "Benchmarks",
     "settings": "Settings",
-    "admin": "Admin"
+    "admin": "Admin",
+    "capabilities": "Live Demo"
   },
   "sidebar": {
     "home": "Home",
@@ -56,6 +57,18 @@
     "refreshData": "Refresh dashboard data",
     "dashboard": "Dashboard",
     "lastRefreshedAt": "Last refreshed at {{time}}"
+  },
+  "capabilities": {
+    "title": "Live Capabilities",
+    "subtitle": "Every tile fires a real HTTP request against the deployed Worker — no mocks, no stubs.",
+    "keyRequired": "API key required",
+    "keyHint": "Stored in sessionStorage only — cleared on tab close.",
+    "runAll": "Run all live",
+    "running": "Running…",
+    "summaryOk": "All {{count}} of {{total}} capabilities returned green",
+    "summaryFail": "{{passed}} passed · {{failed}} failed",
+    "comingSoon": "Coming soon",
+    "comingSoonDesc": "These capabilities are not yet wired to a live endpoint. They are listed here for transparency — not presented as working."
   },
   "overview": {
     "title": "Overview",
