@@ -277,6 +277,159 @@ function AddWebhookModal({
   );
 }
 
+// ── Edit webhook modal ─────────────────────────────────────────────────────────
+
+function EditWebhookModal({
+  hook,
+  onClose,
+  onSaved,
+}: {
+  hook: WebhookRow;
+  onClose: () => void;
+  onSaved: (updated: WebhookRow) => void;
+}) {
+  const initialEvents = Array.isArray(hook.events) ? (hook.events as string[]) : [];
+  const [url, setUrl] = useState(hook.url);
+  const [desc, setDesc] = useState(hook.description ?? "");
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(initialEvents);
+  const [saving, setSaving] = useState(false);
+
+  const toggleEvent = (id: string) => {
+    setSelectedEvents((prev) =>
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
+    );
+  };
+
+  const canSave = url.trim().length > 0 && selectedEvents.length > 0;
+
+  const handleSave = async () => {
+    if (!canSave) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("webhook_endpoints")
+        .update({
+          url: url.trim(),
+          description: desc.trim() || null,
+          events: selectedEvents,
+        })
+        .eq("id", hook.id);
+      if (error) throw error;
+      toast.success("Webhook updated");
+      onSaved({ ...hook, url: url.trim(), description: desc.trim() || null, events: selectedEvents });
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update webhook");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(15, 15, 14, 0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 480,
+          backgroundColor: "#FFFFFF",
+          borderRadius: 12,
+          border: "1px solid #E5E2DB",
+          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.18)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 20px",
+            borderBottom: "1px solid #E5E2DB",
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Edit webhook endpoint</div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}
+          >
+            <X size={16} color="#6B6B6B" />
+          </button>
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+          <FieldRow>
+            <Field label="Endpoint URL">
+              <TextField value={url} onChange={setUrl} placeholder="https://..." />
+            </Field>
+          </FieldRow>
+          <FieldRow>
+            <Field label="Description (optional)">
+              <TextField value={desc} onChange={setDesc} placeholder="What this endpoint receives" />
+            </Field>
+          </FieldRow>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B", marginBottom: 8 }}>Events</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {AVAILABLE_EVENTS.map((ev) => (
+                <label
+                  key={ev.id}
+                  style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, color: "#1A1A18" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedEvents.includes(ev.id)}
+                    onChange={() => toggleEvent(ev.id)}
+                    style={{ accentColor: "#EA580C", width: 14, height: 14 }}
+                  />
+                  {ev.label}
+                  <span style={{ fontSize: 11, color: "#9A9A9A", fontFamily: "ui-monospace, monospace" }}>{ev.id}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                backgroundColor: "#FFFFFF",
+                border: "1px solid #E5E2DB",
+                color: "#1A1A18",
+                fontSize: 13,
+                fontWeight: 500,
+                padding: "10px 18px",
+                borderRadius: 8,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <div style={{ opacity: canSave ? 1 : 0.5, pointerEvents: canSave ? "auto" : "none" }}>
+              <PrimaryButton onClick={handleSave}>
+                {saving ? "Saving…" : "Save changes"}
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Data connection tiles (static, for context) ────────────────────────────────
 
 type DataConnectionCard = {
@@ -377,6 +530,7 @@ export function IntegrationsTab() {
   const [loadingHooks, setLoadingHooks] = useState(true);
   const [copied, setCopied] = useState(false);
   const [addHookOpen, setAddHookOpen] = useState(false);
+  const [editHook, setEditHook] = useState<WebhookRow | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -618,7 +772,7 @@ export function IntegrationsTab() {
                       <IconAction
                         ariaLabel="Edit webhook"
                         icon={<Pencil size={14} color="#6B6B6B" />}
-                        onClick={() => toast.info("Edit individual webhooks from the Webhooks page")}
+                        onClick={() => setEditHook(hook)}
                       />
                       <IconAction
                         ariaLabel="Remove webhook"
@@ -701,6 +855,17 @@ export function IntegrationsTab() {
           userId={user.id}
           onClose={() => setAddHookOpen(false)}
           onAdded={loadWebhooks}
+        />
+      )}
+
+      {editHook && (
+        <EditWebhookModal
+          hook={editHook}
+          onClose={() => setEditHook(null)}
+          onSaved={(updated) => {
+            setWebhooks((prev) => prev.map((w) => w.id === updated.id ? updated : w));
+            setEditHook(null);
+          }}
         />
       )}
     </div>

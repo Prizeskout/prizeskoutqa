@@ -250,6 +250,131 @@ function InviteModal({
   );
 }
 
+// ── Edit role modal ────────────────────────────────────────────────────────────
+
+const EDITABLE_ROLES = ["admin", "developer", "viewer"] as const;
+
+function EditRoleModal({
+  member,
+  onClose,
+  onSaved,
+}: {
+  member: Member;
+  onClose: () => void;
+  onSaved: (updated: Member) => void;
+}) {
+  const [role, setRole] = useState<string>(member.role);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (role === member.role) { onClose(); return; }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("licensee_members")
+        .update({ role })
+        .eq("id", member.id);
+      if (error) throw error;
+      toast.success(`${member.displayName}'s role updated to ${ROLE_LABEL[role as LicenseeRole]}`);
+      onSaved({ ...member, role: role as LicenseeRole });
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update role");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(15, 15, 14, 0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 400,
+          backgroundColor: "#FFFFFF",
+          borderRadius: 12,
+          border: "1px solid #E5E2DB",
+          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.18)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 20px",
+            borderBottom: "1px solid #E5E2DB",
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Edit role</div>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}
+          >
+            <X size={16} color="#6B6B6B" />
+          </button>
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ fontSize: 13, color: "#6B6B6B" }}>
+            Changing role for <strong>{member.displayName}</strong>
+          </div>
+          <FieldRow>
+            <Field label="Role">
+              <SelectField
+                value={role}
+                onChange={setRole}
+                options={EDITABLE_ROLES}
+              />
+            </Field>
+          </FieldRow>
+          <div style={{ fontSize: 11, color: "#9A9A9A", lineHeight: 1.5 }}>
+            <strong>Developer</strong> — API access and dashboard read. &nbsp;
+            <strong>Admin</strong> — full management except billing. &nbsp;
+            <strong>Viewer</strong> — read-only dashboard.
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                backgroundColor: "#FFFFFF",
+                border: "1px solid #E5E2DB",
+                color: "#1A1A18",
+                fontSize: 13,
+                fontWeight: 500,
+                padding: "10px 18px",
+                borderRadius: 8,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+            <PrimaryButton onClick={handleSave}>
+              {saving ? "Saving…" : "Save"}
+            </PrimaryButton>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function TeamTab() {
@@ -258,6 +383,7 @@ export function TeamTab() {
   const [licenseeId, setLicenseeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [editMember, setEditMember] = useState<Member | null>(null);
 
   const load = async () => {
     if (!user) return;
@@ -438,7 +564,7 @@ export function TeamTab() {
                     <IconAction
                       ariaLabel={`Edit ${m.displayName}`}
                       icon={<Pencil size={14} color="#6B6B6B" />}
-                      onClick={() => toast.info("Role changes coming soon")}
+                      onClick={() => setEditMember(m)}
                     />
                   )}
                 </div>
@@ -454,6 +580,17 @@ export function TeamTab() {
           currentUserId={user.id}
           onClose={() => setInviteOpen(false)}
           onInvited={load}
+        />
+      )}
+
+      {editMember && (
+        <EditRoleModal
+          member={editMember}
+          onClose={() => setEditMember(null)}
+          onSaved={(updated) => {
+            setMembers((prev) => prev.map((m) => m.id === updated.id ? updated : m));
+            setEditMember(null);
+          }}
         />
       )}
     </>
