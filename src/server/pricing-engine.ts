@@ -409,8 +409,8 @@ export function computeRecommendations(input: ComputeInput): {
     // formula as GET /v1/dynprice/current (API 07). Rules already express the
     // floor when cost data is available; this is a belt-and-suspenders guard for
     // the case where no nominal_floor_qar rule is configured or noData=true.
+    const zeroCh: ChannelCosts = { commission_pct: 0, delivery_cost: 0, payment_pct: 0, returns_provision: 0 };
     if (landedCost !== null) {
-      const zeroCh: ChannelCosts = { commission_pct: 0, delivery_cost: 0, payment_pct: 0, returns_provision: 0 };
       const ch = channelCosts ?? zeroCh;
       const costFloor = formatPrice(minViablePrice(landedCost, ch, SAFETY_MARGIN_PCT));
       if (recommendedPrice < costFloor) {
@@ -456,37 +456,52 @@ export function computeRecommendations(input: ComputeInput): {
       .slice(0, 3)
       .join(", ");
 
-    const selfSourceNote =
-      diag.selfPriceSource === "catalog_prices"
-        ? " (self-price from catalog_prices)"
-        : "";
+    // Absolute gap in QAR (rounded — merchants think in whole riyals).
+    const gapQar = Math.round(currentPrice - medianCompetitor);
 
-    const outlierNote =
+    // How far the recommended price sits above the cost floor (margin safety).
+    // Only available when we have landed cost data.
+    const aboveFloorQar: number | null = landedCost !== null
+      ? Math.round(recommendedPrice - minViablePrice(landedCost, channelCosts ?? zeroCh, SAFETY_MARGIN_PCT))
+      : null;
+
+    // Absolute cost floor in QAR for the detail expander.
+    const marginFloorQar: number | null = landedCost !== null
+      ? Math.round(minViablePrice(landedCost, channelCosts ?? zeroCh, SAFETY_MARGIN_PCT))
+      : null;
+
+    // Outlier note for the detail expander — plain language, no internal jargon.
+    const outlierWarning =
       diag.outlierFlags.length > 0
-        ? ` ⚠ Outlier(s) excluded: ${
-            diag.outlierFlags
-              .map(
-                (f) =>
-                  `${f.competitor} QAR ${f.price.toFixed(2)} ` +
-                  `(${(f.pctBelow * 100).toFixed(0)}% below peer median QAR ${f.peerMedian.toFixed(0)}` +
-                  ` — likely SKU mismatch; entity-resolution is the proper fix, see roadmap)`,
-              )
-              .join("; ")
-          }.`
+        ? ` ${diag.outlierFlags.length} competitor price${diag.outlierFlags.length === 1 ? "" : "s"} excluded (likely different product — verify URLs).`
         : "";
 
-    const floorNote = diag.ruleEffects.some((e) => e.ruleId === "engine:cost_floor" && e.clamped)
-      ? ` Price floor applied (${SAFETY_MARGIN_PCT * 100}% viable margin).`
-      : "";
+    const fmtQar = (n: number) =>
+      n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-    const reason =
-      `${usableScrapes.length} competitor${usableScrapes.length === 1 ? "" : "s"} ` +
-      `(${competitorList}) median QAR ${medianCompetitor.toFixed(2)}, ` +
-      `lowest QAR ${minCompetitor.toFixed(2)}. ` +
-      `You're ${(gapPct * 100).toFixed(1)}% above median${selfSourceNote}. ` +
-      `Matching the median should lift units ~${(unitDeltaPct * 100).toFixed(1)}% based on category elasticity.` +
-      outlierNote +
-      floorNote;
+    // Structured v2 reason blob — localizeReason() renders headline + detail
+    // per locale on the client. The fallback field is a pre-rendered EN headline
+    // stored for audit logs, PDF export, and any code that reads reason as plain text.
+    const fallbackEn = aboveFloorQar !== null && aboveFloorQar > 0
+      ? `Lower to QAR ${fmtQar(recommendedPrice)} to match the market — still QAR ${aboveFloorQar} above your cost floor.`
+      : `Lower to QAR ${fmtQar(recommendedPrice)} to match the market. ${competitorList} ${usableScrapes.length === 1 ? "is" : "are"} cheaper by QAR ${gapQar}.`;
+
+    const reasonParams = {
+      competitor_count: usableScrapes.length,
+      competitor_list: competitorList,
+      market_price: fmtQar(medianCompetitor),
+      min: fmtQar(minCompetitor),
+      gap_qar: String(gapQar),
+      recommended_price: fmtQar(recommendedPrice),
+      // median kept for backward compat with any display code reading it directly
+      median: fmtQar(medianCompetitor),
+      gap_pct: (gapPct * 100).toFixed(1),
+      ...(aboveFloorQar !== null ? { above_floor_qar: String(aboveFloorQar) } : {}),
+      ...(marginFloorQar !== null ? { margin_floor: fmtQar(marginFloorQar) } : {}),
+      fallback: fallbackEn + outlierWarning,
+    };
+
+    const reason = JSON.stringify({ v: 2, code: "competitor_gap", params: reasonParams, fallback: fallbackEn + outlierWarning });
 
     diag.finalRecommendation = recommendedPrice;
     diagnostics.push(diag);

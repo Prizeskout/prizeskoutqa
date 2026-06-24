@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { ArrowRight, Check, Clock, Undo2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Clock, Undo2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useBranding } from "@/hooks/useBranding";
 import { supabase } from "@/integrations/supabase/client";
+import { localizeReason, parseReasonField } from "@/locales/reasons";
 import type { PricingDecision } from "@/routes/dashboard.pricing";
+import type { Locale } from "@/lib/i18n";
 
 export type Recommendation = {
   id: string;
@@ -12,7 +15,7 @@ export type Recommendation = {
   channel: "Online" | "In-Store";
   current: number;
   recommended: number;
-  reason: string;
+  reason: string;   // v2 JSON blob OR legacy plain string
   unitImpact: string;
   marginImpact: string;
   netMonthly: string;
@@ -27,14 +30,13 @@ function confidenceColor(score: number) {
   return "#EF4444";
 }
 
-function impactColor(value: string) {
-  if (value.startsWith("+")) return "#22C55E";
-  if (value.startsWith("-")) return "#EF4444";
-  return "#6B6B6B";
-}
-
 function formatPrice(n: number) {
   return `QAR ${n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+}
+
+function priceDeltaLabel(current: number, recommended: number): string {
+  const pct = ((recommended - current) / current) * 100;
+  return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
 }
 
 function ChannelPill({ channel }: { channel: "Online" | "In-Store" }) {
@@ -55,6 +57,54 @@ function ChannelPill({ channel }: { channel: "Online" | "In-Store" }) {
   );
 }
 
+function WhyExpander({ detail }: { detail: string }) {
+  const [open, setOpen] = useState(false);
+  if (!detail) return null;
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+          fontSize: 12,
+          fontWeight: 500,
+          color: "#6B6B6B",
+          background: "none",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+        }}
+      >
+        <ChevronDown
+          size={14}
+          style={{
+            transition: "transform 150ms ease",
+            transform: open ? "rotate(180deg)" : "none",
+          }}
+        />
+        Why?
+      </button>
+      {open && (
+        <div
+          style={{
+            marginTop: 6,
+            fontSize: 12,
+            color: "#6B6B6B",
+            lineHeight: 1.6,
+            paddingInlineStart: 18,
+            borderInlineStart: "2px solid #E5E2DB",
+          }}
+        >
+          {detail}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RecommendationCard({
   rec,
   initialDecision,
@@ -70,6 +120,17 @@ export function RecommendationCard({
   );
   const [busy, setBusy] = useState(false);
   const { accentColor } = useBranding();
+  const { i18n } = useTranslation();
+  const lang = (i18n.language?.slice(0, 2) ?? "en") as Locale;
+
+  // Parse structured reason v2, or fall back to plain string.
+  const structured = parseReasonField(rec.reason);
+  const { headline, detail } = structured
+    ? localizeReason(structured.code, structured.params, lang)
+    : { headline: rec.reason, detail: "" };
+
+  // Margin floor reassurance from params — shown in the price panel.
+  const aboveFloorQar = structured?.params?.above_floor_qar;
 
   const cColor = confidenceColor(rec.confidence);
 
@@ -118,8 +179,9 @@ export function RecommendationCard({
       setSnoozeUntil(data?.snooze_until ?? null);
 
       if (decision === "applied") toast.success("Marked as applied");
-      else if (decision === "dismissed") toast("Dismissed");
-      else if (decision === "snoozed") toast(`Snoozed for ${snoozeDays} day${snoozeDays === 1 ? "" : "s"}`);
+      else if (decision === "dismissed") toast("Kept your price");
+      else if (decision === "snoozed")
+        toast(`Snoozed for ${snoozeDays} day${snoozeDays === 1 ? "" : "s"}`);
     } catch (err) {
       console.error("Failed to record decision", err);
       toast.error("Could not save your decision. Try again.");
@@ -150,17 +212,12 @@ export function RecommendationCard({
   }
 
   if (status === "dismissed") {
-    // Hidden by parent; render nothing as a safety net.
     return null;
   }
 
   const applied = status === "applied";
   const snoozed = status === "snoozed";
-  const borderColor = applied
-    ? "#22C55E"
-    : snoozed
-      ? "#F59E0B"
-      : "#E5E2DB";
+  const borderColor = applied ? "#22C55E" : snoozed ? "#F59E0B" : "#E5E2DB";
 
   return (
     <div
@@ -172,7 +229,7 @@ export function RecommendationCard({
         transition: "border-color 200ms ease",
       }}
     >
-      {/* TOP ROW */}
+      {/* ── Header row: product + pills | confidence ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 600, color: "#1A1A18" }}>{rec.product}</div>
@@ -190,34 +247,9 @@ export function RecommendationCard({
               {rec.category}
             </span>
             <ChannelPill channel={rec.channel} />
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                padding: "2px 10px",
-                borderRadius: 20,
-                backgroundColor: "rgba(59, 130, 246, 0.08)",
-                color: "#3B82F6",
-              }}
-            >
-              11 months trained
-            </span>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: 20,
-              backgroundColor: "#F5F4F1",
-              color: "#9A9A9A",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Cached intelligence
-          </span>
           <div style={{ textAlign: "center" }}>
             <div
               style={{
@@ -240,20 +272,23 @@ export function RecommendationCard({
         </div>
       </div>
 
-      {/* MIDDLE ROW */}
+      {/* ── Headline: decision-first ── */}
       <div
         style={{
           marginTop: 14,
-          fontSize: 13,
-          fontWeight: 400,
-          color: "#6B6B6B",
-          lineHeight: 1.65,
+          fontSize: 14,
+          fontWeight: 600,
+          color: "#1A1A18",
+          lineHeight: 1.5,
         }}
       >
-        {rec.reason}
+        {headline}
       </div>
 
-      {/* BOTTOM ROW */}
+      {/* ── Why? expander ── */}
+      <WhyExpander detail={detail} />
+
+      {/* ── Price panel ── */}
       <div
         style={{
           marginTop: 16,
@@ -294,42 +329,34 @@ export function RecommendationCard({
         <div style={{ width: 1, height: 40, backgroundColor: "#E5E2DB" }} />
         <div>
           <div style={{ fontSize: 10, fontWeight: 500, color: "#9A9A9A", textTransform: "uppercase" }}>
-            Unit impact
+            Price change
           </div>
           <div
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: impactColor(rec.unitImpact),
+              color: rec.recommended < rec.current ? "#EF4444" : "#22C55E",
               marginTop: 2,
             }}
           >
-            {rec.unitImpact} units
+            {priceDeltaLabel(rec.current, rec.recommended)}
           </div>
         </div>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 500, color: "#9A9A9A", textTransform: "uppercase" }}>
-            Margin impact
-          </div>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: impactColor(rec.marginImpact),
-              marginTop: 2,
-            }}
-          >
-            {rec.marginImpact}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 500, color: "#22C55E", textTransform: "uppercase" }}>
-            Net monthly
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#22C55E", marginTop: 2 }}>
-            {rec.netMonthly}
-          </div>
-        </div>
+        {aboveFloorQar && (
+          <>
+            <div style={{ width: 1, height: 40, backgroundColor: "#E5E2DB" }} />
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 500, color: "#9A9A9A", textTransform: "uppercase" }}>
+                Above cost floor
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#22C55E", marginTop: 2 }}>
+                QAR {aboveFloorQar}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── Action buttons ── */}
         <div style={{ marginInlineStart: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           {applied && (
             <>
@@ -447,7 +474,7 @@ export function RecommendationCard({
                   cursor: busy ? "not-allowed" : "pointer",
                 }}
               >
-                Dismiss
+                Keep my price
               </button>
               <button
                 onClick={() => recordDecision("applied")}
