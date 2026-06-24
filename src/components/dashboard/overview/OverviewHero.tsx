@@ -1,25 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/lib/auth-context";
 import type { OverviewAlert } from "@/lib/overview-data";
 
 export type SeverityFilter = "action" | "opportunity" | "intel" | null;
 
-function getGreetingKey(mounted: boolean): string {
-  if (!mounted) return "hero.welcomeBack";
-  const h = new Date().getHours();
-  if (h < 12) return "hero.greeting_morning";
-  if (h < 18) return "hero.greeting_afternoon";
-  return "hero.greeting_evening";
-}
-
-function getFirstName(name: string | null | undefined, email: string | null | undefined): string {
-  if (name && name.trim().length > 0) return name.trim().split(/\s+/)[0];
-  if (email) return email.split("@")[0];
-  return "there";
-}
 
 export function OverviewHero({
   alerts,
@@ -35,13 +21,6 @@ export function OverviewHero({
   competitorChangeCount: number;
 }) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const displayName = (user?.user_metadata?.display_name as string | undefined) ?? null;
-  const firstName = getFirstName(displayName, user?.email);
-
   const counts = useMemo(() => {
     const action = alerts.filter((a) => a.severity === "action").length;
     const opportunity = alerts.filter((a) => a.severity === "opportunity").length;
@@ -134,26 +113,15 @@ export function OverviewHero({
         </div>
       </div>
 
-      {/* Greeting */}
-      <h1
-        style={{
-          fontSize: 30,
-          fontWeight: 700,
-          color: "#1A1A18",
-          margin: "0 0 6px",
-          letterSpacing: "-0.02em",
-          lineHeight: 1.15,
-        }}
-      >
-        {t(getGreetingKey(mounted), { name: firstName })}
-      </h1>
-
+      {/* Market status headline */}
       <p
         style={{
-          fontSize: 14,
-          color: "#6B6B6B",
+          fontSize: 22,
+          fontWeight: 700,
+          color: "#1A1A18",
           margin: "0 0 20px",
-          lineHeight: 1.5,
+          letterSpacing: "-0.01em",
+          lineHeight: 1.3,
         }}
       >
         {headline}
