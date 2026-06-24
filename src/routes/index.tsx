@@ -1054,7 +1054,6 @@ function EnterpriseStats() {
     { value: "<2s", label: "Repricing response" },
     { value: "AR + EN", label: "Arabic-first" },
     { value: "GCC", label: "Built for the region" },
-    { value: "QSTP", label: "Qatar Science & Technology Park" },
   ];
 
   return (
@@ -1078,52 +1077,149 @@ function EnterpriseStats() {
         </div>
 
         <div className="ps-stats-grid" style={{ display: "grid", gap: 14 }}>
-          {stats.map((s) => {
-            const isQstp = s.value === "QSTP";
-            return (
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: BG_RAISED,
+                border: `1px solid ${BORDER}`,
+                borderRadius: 12,
+                padding: "26px 22px",
+                textAlign: "center",
+              }}
+            >
               <div
-                key={s.label}
                 style={{
-                  background: isQstp ? "rgba(234,88,12,0.06)" : BG_RAISED,
-                  border: isQstp ? `1px solid rgba(234,88,12,0.28)` : `1px solid ${BORDER}`,
-                  borderRadius: 12,
-                  padding: "26px 22px",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: ORANGE_LIGHT,
+                  letterSpacing: "-0.02em",
+                  fontFamily: MONO_STACK,
+                  marginBottom: 8,
                 }}
               >
-                {isQstp && (
-                  <Award size={20} color={ORANGE_LIGHT} strokeWidth={1.75} />
-                )}
-                <div
-                  style={{
-                    fontSize: isQstp ? 22 : 32,
-                    fontWeight: 700,
-                    color: ORANGE_LIGHT,
-                    letterSpacing: "-0.02em",
-                    fontFamily: MONO_STACK,
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: isQstp ? "rgba(250,250,249,0.65)" : TEXT_MUTED,
-                    letterSpacing: "0.02em",
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {s.label}
-                </div>
+                {s.value}
               </div>
-            );
-          })}
+              <div
+                style={{
+                  fontSize: 12.5,
+                  color: TEXT_MUTED,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {s.label}
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================================
+   QSTP — standalone credential band
+   ========================================================================= */
+
+function QSTPSection() {
+  return (
+    <section
+      style={{
+        background: "#07060D",
+        borderTop: "1px solid rgba(234,88,12,0.20)",
+        borderBottom: "1px solid rgba(234,88,12,0.20)",
+        padding: "56px 0",
+        position: "relative",
+        overflow: "hidden",
+      }}
+      className="px-5 md:px-10"
+    >
+      {/* Subtle radial glow */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 800,
+          height: 300,
+          background:
+            "radial-gradient(ellipse at center, rgba(234,88,12,0.12) 0%, rgba(7,6,13,0) 70%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          position: "relative",
+          maxWidth: 760,
+          margin: "0 auto",
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 0,
+        }}
+      >
+        {/* Icon */}
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 14,
+            background: "rgba(234,88,12,0.10)",
+            border: "1px solid rgba(234,88,12,0.30)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 20,
+          }}
+        >
+          <Award size={24} color={ORANGE_LIGHT} strokeWidth={1.75} />
+        </div>
+
+        {/* Eyebrow */}
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: ORANGE_LIGHT,
+            marginBottom: 14,
+          }}
+        >
+          Backed by
+        </div>
+
+        {/* Name */}
+        <h2
+          style={{
+            fontSize: "clamp(22px, 4vw, 34px)",
+            fontWeight: 700,
+            color: TEXT,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.2,
+            margin: "0 0 16px",
+          }}
+        >
+          Qatar Science &amp; Technology Park
+        </h2>
+
+        {/* Description */}
+        <p
+          style={{
+            fontSize: 15,
+            color: TEXT_MUTED,
+            lineHeight: 1.65,
+            maxWidth: 560,
+            margin: 0,
+          }}
+        >
+          PrizeSkout is a QSTP-backed company — Qatar's national hub for
+          technology and innovation. Built in Qatar, for the region.
+        </p>
       </div>
     </section>
   );
@@ -1449,6 +1545,7 @@ function LandingPage() {
       <WhiteLabelSection />
       <ProductPillars />
       <EnterpriseStats />
+      <QSTPSection />
       <PricingSection />
       <FinalCTA />
     </MarketingShell>
@@ -1469,8 +1566,6 @@ const PAGE_STYLES = `
   .ps-pillar-grid { grid-template-columns: 1fr; }
   .ps-quickstart-grid { grid-template-columns: 1fr; }
   .ps-stats-grid { grid-template-columns: repeat(2, 1fr); }
-  /* 5th card: span 2 cols on mobile/tablet so it doesn't sit alone */
-  .ps-stats-grid > *:last-child:nth-child(odd) { grid-column: span 2; }
   .ps-benefits-grid { grid-template-columns: 1fr; }
   .ps-pricing-grid { grid-template-columns: 1fr; }
   .ps-wl-grid { grid-template-columns: 1fr; }
@@ -1500,8 +1595,7 @@ const PAGE_STYLES = `
     .ps-quickstart-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
     .ps-wl-grid { grid-template-columns: 1fr 1fr; }
-    .ps-stats-grid { grid-template-columns: repeat(5, 1fr); }
-    .ps-stats-grid > *:last-child:nth-child(odd) { grid-column: span 1; }
+    .ps-stats-grid { grid-template-columns: repeat(4, 1fr); }
     .ps-benefits-grid { grid-template-columns: repeat(4, 1fr); }
   }
   @media (min-width: 1180px) {
