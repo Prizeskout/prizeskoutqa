@@ -19,6 +19,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Patch window.fetch once so that all /_server/* requests (TanStack Start
+  // server functions) carry the Supabase session Bearer token. Without this,
+  // the requireSupabaseAuth middleware rejects every call with 401.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const orig = window.fetch.bind(window);
+    window.fetch = async function patchedFetch(input, init) {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : (input as Request).url;
+      if (url.includes("/_server")) {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        if (s?.access_token) {
+          const headers = new Headers((init?.headers as HeadersInit | undefined) ?? {});
+          if (!headers.has("authorization")) {
+            headers.set("Authorization", `Bearer ${s.access_token}`);
+          }
+          init = { ...init, headers };
+        }
+      }
+      return orig(input, init);
+    };
+    // Keep the interceptor for the app's lifetime — no cleanup needed here
+    // since AuthProvider is mounted once at the root and never unmounts.
+  }, []);
+
   useEffect(() => {
     // CRITICAL: subscribe BEFORE getSession to avoid race conditions
     const {

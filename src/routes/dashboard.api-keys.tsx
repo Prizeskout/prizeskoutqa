@@ -35,6 +35,7 @@ function ApiKeysPage() {
 
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [mode, setMode] = useState<"test" | "live">("test");
@@ -61,11 +62,16 @@ function ApiKeysPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+    setLoadError(null);
+    const { data, error } = await supabase
       .from("api_keys")
       .select("id,name,mode,key_prefix,last_four,created_at,last_used_at,revoked_at")
       .order("created_at", { ascending: false });
-    setKeys((data ?? []) as ApiKeyRow[]);
+    if (error) {
+      setLoadError(error.message);
+    } else {
+      setKeys((data ?? []) as ApiKeyRow[]);
+    }
     setLoading(false);
   };
 
@@ -130,6 +136,7 @@ function ApiKeysPage() {
     setAckStored(false);
     setCopied(false);
     setShowCreate(false);
+    void load();
   };
 
   const handleSubmitLiveRequest = async () => {
@@ -529,6 +536,17 @@ function ApiKeysPage() {
         </div>
         {loading ? (
           <div style={{ padding: 24, fontSize: 13, color: "#8A8A8A" }}>Loading…</div>
+        ) : loadError ? (
+          <div style={{ padding: 24, fontSize: 13, color: "#DC2626" }}>
+            Could not load keys: {loadError}{" "}
+            <button
+              type="button"
+              onClick={load}
+              style={{ marginLeft: 8, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", color: "#DC2626", fontSize: 13 }}
+            >
+              Retry
+            </button>
+          </div>
         ) : keys.length === 0 ? (
           <div style={{ padding: 32, textAlign: "center" }}>
             <KeyRound size={24} color="#9A9A9A" style={{ margin: "0 auto 10px" }} />
