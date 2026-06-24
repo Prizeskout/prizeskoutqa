@@ -329,6 +329,362 @@ function parseEmbed(result: RunResult): { friendly: string; note?: string } {
 }
 
 // ---------------------------------------------------------------------------
+// Merchant-view previews
+// Static mock data showing exactly what each API renders inside a partner's
+// store — visible before any key is entered or Run is clicked.
+// ---------------------------------------------------------------------------
+
+const DEMO_PRODUCT = "Sony WH-1000XM5";
+
+function PreviewShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ backgroundColor: "#F8F7F5", border: "1px solid #E5E2DB", borderRadius: 8, overflow: "hidden" }}>
+      <div
+        style={{
+          padding: "5px 10px",
+          borderBottom: "1px solid #E5E2DB",
+          backgroundColor: "#EFEDE9",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <span style={{ fontSize: 9.5, fontWeight: 700, color: "#6B6B6B", letterSpacing: "0.10em", textTransform: "uppercase" as const }}>
+          What your merchant sees
+        </span>
+        <span style={{ fontSize: 9.5, color: "#B0A99F" }}>· Inside their store</span>
+      </div>
+      <div style={{ padding: "12px 14px", fontSize: 12 }}>{children}</div>
+    </div>
+  );
+}
+
+function PRow({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderBottom: "1px solid #F0EDE8" }}>
+      <span style={{ color: "#6B6B6B", fontSize: 11.5 }}>{label}</span>
+      <span style={{ fontWeight: 600, fontSize: 12, color: color ?? "#1A1A18", fontVariantNumeric: "tabular-nums" as const }}>{value}</span>
+    </div>
+  );
+}
+
+function SPill({ ok, text }: { ok: boolean; text: string }) {
+  return (
+    <span style={{ display: "inline-block", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 999, backgroundColor: ok ? "#DCFCE7" : "#FEE2E2", color: ok ? "#14532D" : "#7F1D1D" }}>
+      {text}
+    </span>
+  );
+}
+
+function MarginPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        {DEMO_PRODUCT} <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· Online</span>
+      </div>
+      <PRow label="Selling price" value="QAR 1,199.00" />
+      <PRow label="Unit cost" value="−QAR 680.00" />
+      <PRow label="Shipping + customs" value="−QAR 45.00" />
+      <PRow label="Channel fee (5%)" value="−QAR 60.00" />
+      <div style={{ borderTop: "2px solid #1A1A18", marginTop: 4, paddingTop: 6 }}>
+        <PRow label="Net margin" value="QAR 414.00" color="#16A34A" />
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+          <div style={{ flex: 1, height: 5, backgroundColor: "#E5E2DB", borderRadius: 999 }}>
+            <div style={{ width: "34.5%", height: "100%", backgroundColor: "#16A34A", borderRadius: 999 }} />
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#16A34A" }}>34.5%</span>
+        </div>
+      </div>
+    </PreviewShell>
+  );
+}
+
+function CompetitorPreview() {
+  const rows = [
+    { name: "Carrefour", price: "1,149", diff: "−4.2%", below: true },
+    { name: "Noon", price: "1,199", diff: "same", below: false },
+    { name: "Amazon.sa", price: "1,179", diff: "−1.7%", below: true },
+    { name: "Lulu", price: "1,249", diff: "+4.2%", below: false },
+  ];
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        {DEMO_PRODUCT} <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· Your price: QAR 1,199</span>
+      </div>
+      {rows.map((r) => (
+        <div key={r.name} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 8, alignItems: "center", padding: "4px 0", borderBottom: "1px solid #F0EDE8" }}>
+          <span style={{ fontSize: 11.5, color: "#3A3A38" }}>{r.name}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#1A1A18", fontVariantNumeric: "tabular-nums" as const }}>QAR {r.price}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: r.diff === "same" ? "#6B6B6B" : r.below ? "#DC2626" : "#16A34A", minWidth: 36, textAlign: "right" as const }}>{r.diff}</span>
+        </div>
+      ))}
+      <div style={{ marginTop: 6, fontSize: 10.5, color: "#6B6B6B" }}>
+        You are <strong style={{ color: "#2563EB" }}>#2 cheapest</strong> · refreshed 4 min ago
+      </div>
+    </PreviewShell>
+  );
+}
+
+function LoyaltyPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18" }}>{DEMO_PRODUCT}</div>
+        <SPill ok text="Gold member ✓" />
+      </div>
+      <PRow label="Standard price" value="QAR 1,299.00" />
+      <PRow label="Gold discount (10%)" value="−QAR 130.00" color="#16A34A" />
+      <PRow label="Loyalty price" value="QAR 1,169.00" />
+      <PRow label="Margin floor" value="QAR 1,100.00" />
+      <div style={{ marginTop: 8, backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 6, padding: "6px 10px", fontSize: 11, color: "#14532D", fontWeight: 600 }}>
+        ✓ QAR 69 above floor — discount safe to apply
+      </div>
+    </PreviewShell>
+  );
+}
+
+function DynpricePreview() {
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        {DEMO_PRODUCT} <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· Online</span>
+      </div>
+      <div style={{ display: "flex", gap: 16, alignItems: "flex-end", marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 9.5, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>Current</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#9A9A9A", textDecoration: "line-through" }}>QAR 1,199</div>
+        </div>
+        <div style={{ fontSize: 16, color: "#9A9A9A", paddingBottom: 2 }}>→</div>
+        <div>
+          <div style={{ fontSize: 9.5, fontWeight: 600, color: "#16A34A", textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>Recommended</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#1A1A18" }}>QAR 1,149</div>
+        </div>
+      </div>
+      <PRow label="Reason" value="Carrefour price drop" />
+      <PRow label="Margin floor" value="QAR 920.00 ✓" color="#16A34A" />
+      <div style={{ margin: "8px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "#6B6B6B", marginBottom: 3 }}>
+          <span>Confidence</span><span style={{ fontWeight: 700, color: "#1A1A18" }}>91%</span>
+        </div>
+        <div style={{ height: 5, backgroundColor: "#E5E2DB", borderRadius: 999 }}>
+          <div style={{ width: "91%", height: "100%", backgroundColor: "#EA580C", borderRadius: 999 }} />
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ flex: 1, padding: "6px 10px", borderRadius: 6, backgroundColor: "#1A1A18", color: "#fff", fontSize: 11, fontWeight: 700, textAlign: "center" as const }}>Accept recommendation</div>
+        <div style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #E5E2DB", color: "#6B6B6B", fontSize: 11, textAlign: "center" as const }}>Ignore</div>
+      </div>
+    </PreviewShell>
+  );
+}
+
+function FlashPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18" }}>Weekend Electronics Sale</div>
+        <SPill ok text="LIVE" />
+      </div>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginBottom: 10 }}>
+        <div>
+          <div style={{ fontSize: 9.5, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>Flash price</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#EA580C" }}>QAR 999</div>
+        </div>
+        <div style={{ paddingBottom: 4, color: "#9A9A9A", textDecoration: "line-through", fontSize: 13 }}>QAR 1,199</div>
+      </div>
+      <PRow label="You save" value="QAR 200 (−16.7%)" color="#16A34A" />
+      <PRow label="Time remaining" value="02 : 14 : 38" />
+      <div style={{ marginTop: 8, backgroundColor: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 6, padding: "5px 10px", fontSize: 11, color: "#78350F" }}>
+        ⏱ Restores to QAR 1,199 automatically at midnight
+      </div>
+    </PreviewShell>
+  );
+}
+
+function GroupPreview() {
+  const tiers = [
+    { label: "1 – 2 buyers", price: "QAR 1,199", current: false, locked: false },
+    { label: "3 – 9 buyers", price: "QAR 1,100", current: true, locked: false },
+    { label: "10+ buyers", price: "QAR 1,050", current: false, locked: true },
+  ];
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        {DEMO_PRODUCT} <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· Group deal</span>
+      </div>
+      {tiers.map((t) => (
+        <div
+          key={t.label}
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", borderRadius: 6, marginBottom: 4, backgroundColor: t.current ? "#FFF7ED" : "transparent", border: `1px solid ${t.current ? "#EA580C" : "#F0EDE8"}` }}
+        >
+          <span style={{ fontSize: 11.5, color: t.locked ? "#9A9A9A" : "#1A1A18", fontWeight: t.current ? 700 : 400 }}>
+            {t.label}{t.current && <span style={{ fontSize: 10, color: "#EA580C", marginLeft: 5 }}>← 1 more to unlock</span>}
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: t.current ? "#EA580C" : t.locked ? "#9A9A9A" : "#1A1A18" }}>{t.price}</span>
+        </div>
+      ))}
+      <div style={{ marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "#6B6B6B", marginBottom: 3 }}>
+          <span>2 buyers joined</span><span style={{ fontWeight: 700 }}>2 / 3</span>
+        </div>
+        <div style={{ height: 5, backgroundColor: "#E5E2DB", borderRadius: 999 }}>
+          <div style={{ width: "66%", height: "100%", backgroundColor: "#EA580C", borderRadius: 999 }} />
+        </div>
+      </div>
+    </PreviewShell>
+  );
+}
+
+function TenantPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        Reseller compliance <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· Last scan: 4 min ago</span>
+      </div>
+      {[
+        { tenant: "ShopGalaxy QA", sku: "SKU-001", type: "Below MAP", red: true },
+        { tenant: "TechZone KW", sku: "SKU-007", type: "Above RRP", red: false },
+      ].map((v) => (
+        <div key={v.tenant} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 8, alignItems: "center", padding: "5px 0", borderBottom: "1px solid #F0EDE8" }}>
+          <span style={{ fontSize: 11.5, color: "#1A1A18" }}>{v.tenant}</span>
+          <code style={{ fontSize: 10, color: "#6B6B6B", fontFamily: "ui-monospace,monospace" }}>{v.sku}</code>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 999, backgroundColor: v.red ? "#FEE2E2" : "#FEF3C7", color: v.red ? "#7F1D1D" : "#78350F" }}>{v.type}</span>
+        </div>
+      ))}
+      <div style={{ marginTop: 6, fontSize: 10.5, color: "#9A9A9A" }}>2 violations · flagged in real time · evidence attached</div>
+    </PreviewShell>
+  );
+}
+
+function ParityPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        {DEMO_PRODUCT} <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· Cross-border prices</span>
+      </div>
+      {[
+        { flag: "🇶🇦", country: "Qatar", currency: "QAR", price: "1,199.00", ok: true },
+        { flag: "🇸🇦", country: "Saudi Arabia", currency: "SAR", price: "1,594.00", ok: true },
+        { flag: "🇦🇪", country: "UAE", currency: "AED", price: "1,680.00", ok: false, note: "+2.3% gap" },
+      ].map((c) => (
+        <div key={c.country} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #F0EDE8" }}>
+          <div>
+            <div style={{ fontSize: 11.5, color: "#1A1A18" }}>{c.flag} {c.country}</div>
+            {!c.ok && <div style={{ fontSize: 10, color: "#DC2626", fontWeight: 600 }}>{c.note}</div>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#1A1A18", fontVariantNumeric: "tabular-nums" as const }}>{c.currency} {c.price}</span>
+            <SPill ok={c.ok} text={c.ok ? "OK" : "Gap"} />
+          </div>
+        </div>
+      ))}
+    </PreviewShell>
+  );
+}
+
+function MapPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>
+        MAP Monitor <span style={{ fontWeight: 400, color: "#9A9A9A" }}>· SKU-001 · MAP: QAR 1,199</span>
+      </div>
+      {[
+        { name: "Noon", price: "QAR 1,199", ok: true, stat: "✓" },
+        { name: "Carrefour", price: "QAR 1,049", ok: false, stat: "−12.5%" },
+        { name: "Lulu", price: "QAR 1,099", ok: false, stat: "−8.3%" },
+        { name: "Amazon.sa", price: "QAR 1,179", ok: true, stat: "✓" },
+      ].map((r) => (
+        <div key={r.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderBottom: "1px solid #F0EDE8" }}>
+          <span style={{ fontSize: 11.5, color: "#1A1A18" }}>{r.name}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 11.5, fontVariantNumeric: "tabular-nums" as const, color: r.ok ? "#1A1A18" : "#DC2626", fontWeight: r.ok ? 400 : 700 }}>{r.price}</span>
+            <SPill ok={r.ok} text={r.stat} />
+          </div>
+        </div>
+      ))}
+      <div style={{ marginTop: 6, fontSize: 10.5, color: "#9A9A9A" }}>2 violations · screenshot evidence attached</div>
+    </PreviewShell>
+  );
+}
+
+function AuditPreview() {
+  const entries = [
+    { time: "14:23", tag: "DynPrice", detail: "QAR 1,149 recommended", tagColor: "#2563EB" },
+    { time: "13:55", tag: "Loyalty", detail: "Gold → QAR 1,169 applied", tagColor: "#16A34A" },
+    { time: "12:41", tag: "Sync", detail: "SKU-001 price updated", tagColor: "#6B6B6B" },
+    { time: "11:30", tag: "MAP", detail: "Carrefour violation flagged", tagColor: "#DC2626" },
+    { time: "09:15", tag: "Flash", detail: "Sale fired, restored midnight", tagColor: "#EA580C" },
+  ];
+  return (
+    <PreviewShell>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18", marginBottom: 10 }}>Pricing decisions · Today</div>
+      {entries.map((e) => (
+        <div key={e.time + e.tag} style={{ display: "grid", gridTemplateColumns: "36px 54px 1fr", gap: 6, alignItems: "center", padding: "4px 0", borderBottom: "1px solid #F0EDE8" }}>
+          <span style={{ fontSize: 10, color: "#9A9A9A", fontVariantNumeric: "tabular-nums" as const }}>{e.time}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: e.tagColor, padding: "1px 5px", borderRadius: 3, backgroundColor: `${e.tagColor}18` }}>{e.tag}</span>
+          <span style={{ fontSize: 11, color: "#3A3A38" }}>{e.detail}</span>
+        </div>
+      ))}
+    </PreviewShell>
+  );
+}
+
+function WebhooksPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#1A1A18" }}>Event delivered to your server</div>
+        <SPill ok text="HMAC ✓" />
+      </div>
+      <div style={{ backgroundColor: "#1A1A18", borderRadius: 6, padding: "8px 10px", fontFamily: "ui-monospace, monospace", fontSize: 10.5, color: "#D4D4D4", lineHeight: 1.65, marginBottom: 8, whiteSpace: "pre" as const }}>
+        <span style={{ color: "#9CDCFE" }}>event</span>: <span style={{ color: "#CE9178" }}>"enrich.price_changed"</span>{"\n"}<span style={{ color: "#9CDCFE" }}>sku</span>: <span style={{ color: "#CE9178" }}>"SKU-001"</span>{"\n"}<span style={{ color: "#9CDCFE" }}>old_price</span>: <span style={{ color: "#B5CEA8" }}>1199.00</span>{"\n"}<span style={{ color: "#9CDCFE" }}>new_price</span>: <span style={{ color: "#B5CEA8" }}>1149.00</span>{"\n"}<span style={{ color: "#9CDCFE" }}>margin_pct</span>: <span style={{ color: "#B5CEA8" }}>0.345</span>{"\n"}<span style={{ color: "#9CDCFE" }}>trigger</span>: <span style={{ color: "#CE9178" }}>"carrefour_drop"</span>
+      </div>
+      <div style={{ fontSize: 10.5, color: "#9A9A9A" }}>Delivered to 1 endpoint · bilingual EN/AR · 142ms</div>
+    </PreviewShell>
+  );
+}
+
+function EmbedPreview() {
+  return (
+    <PreviewShell>
+      <div style={{ backgroundColor: "#fff", border: "1px solid #E5E2DB", borderRadius: 8, padding: "12px 14px" }}>
+        <div style={{ fontSize: 10, color: "#9A9A9A", marginBottom: 2 }}>Smart Pricing</div>
+        <div style={{ fontSize: 10, color: "#B0A99F", marginBottom: 14 }}>Powered by Your Platform</div>
+        <div style={{ fontSize: 11.5, fontWeight: 600, color: "#1A1A18", marginBottom: 10 }}>{DEMO_PRODUCT}</div>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 9.5, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>Price recommendation</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "#1A1A18", letterSpacing: "-0.01em", margin: "2px 0" }}>QAR 1,149</div>
+          <div style={{ fontSize: 11, color: "#6B6B6B" }}>Carrefour dropped · 91% confidence</div>
+        </div>
+        <div style={{ borderTop: "1px solid #F0EDE8", paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 9.5, color: "#9A9A9A", textTransform: "uppercase" as const, letterSpacing: "0.07em" }}>Price competitiveness</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#1A1A18" }}>Top 18%</div>
+            <div style={{ fontSize: 11, color: "#6B6B6B" }}>Electronics · Qatar</div>
+          </div>
+          <span style={{ fontSize: 9.5, fontWeight: 700, color: "#6B6B6B", fontStyle: "italic" }}>PrizeSkout hidden ✓</span>
+        </div>
+      </div>
+    </PreviewShell>
+  );
+}
+
+const MERCHANT_PREVIEWS: Record<string, () => React.ReactElement> = {
+  margin:      () => <MarginPreview />,
+  competitors: () => <CompetitorPreview />,
+  loyalty:     () => <LoyaltyPreview />,
+  dynprice:    () => <DynpricePreview />,
+  flash:       () => <FlashPreview />,
+  group:       () => <GroupPreview />,
+  tenant:      () => <TenantPreview />,
+  parity:      () => <ParityPreview />,
+  map:         () => <MapPreview />,
+  audit:       () => <AuditPreview />,
+  webhooks:    () => <WebhooksPreview />,
+  embed:       () => <EmbedPreview />,
+};
+
+// ---------------------------------------------------------------------------
 // Tile definitions
 // ---------------------------------------------------------------------------
 
@@ -681,6 +1037,11 @@ function CapabilityTile({
         </code>
         {config.badgeVariant && <BadgeChip variant={config.badgeVariant} />}
       </div>
+
+      {/* Merchant preview — always visible */}
+      {MERCHANT_PREVIEWS[config.id] && (
+        <div>{MERCHANT_PREVIEWS[config.id]()}</div>
+      )}
 
       {/* Result area */}
       {isDone && result && (
