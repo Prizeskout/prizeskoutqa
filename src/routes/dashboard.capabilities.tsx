@@ -350,9 +350,8 @@ function PreviewShell({ children }: { children: React.ReactNode }) {
         }}
       >
         <span style={{ fontSize: 9.5, fontWeight: 700, color: "#6B6B6B", letterSpacing: "0.10em", textTransform: "uppercase" as const }}>
-          What your merchant sees
+          What you see inside your store
         </span>
-        <span style={{ fontSize: 9.5, color: "#B0A99F" }}>· Inside their store</span>
       </div>
       <div style={{ padding: "12px 14px", fontSize: 12 }}>{children}</div>
     </div>
