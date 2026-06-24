@@ -60,15 +60,15 @@
   },
   "capabilities": {
     "title": "Live Capabilities",
-    "subtitle": "Paste your test key, click Run, and see real results from the live server — no mocks, no stubs.",
+    "subtitle": "Paste your test key, click Run, and see real results from the live server. No mocks, no stubs.",
     "keyRequired": "API key required",
-    "keyHint": "Stored in sessionStorage only — cleared on tab close.",
+    "keyHint": "Stored in sessionStorage only. Cleared when you close this tab.",
     "runAll": "Run all live",
     "running": "Running…",
     "summaryOk": "All {{count}} of {{total}} capabilities returned green",
     "summaryFail": "{{passed}} passed · {{failed}} failed",
     "comingSoon": "Coming soon",
-    "comingSoonDesc": "These capabilities are not yet wired to a live endpoint. They are listed here for transparency — not presented as working."
+    "comingSoonDesc": "These capabilities are not yet wired to a live endpoint. They are listed here for transparency and are not presented as working."
   },
   "overview": {
     "title": "Overview",
@@ -132,7 +132,7 @@
   },
   "alerts": {
     "title": "Live alerts",
-    "empty": "No alerts yet — your dashboard will populate as competitors and prices change.",
+    "empty": "No alerts yet. Your dashboard will populate as competitor prices change.",
     "latest": "Latest"
   },
   "ai": {
@@ -210,7 +210,7 @@
     "title": "Plans & Pricing",
     "subtitle": "Simple, transparent pricing. Grow from pilot to scale.",
     "priceUSD": "Prices in USD. Billed monthly.",
-    "whiteLabelNote": "White-label / unbranded operation is included on every plan — not an Enterprise add-on.",
+    "whiteLabelNote": "White-label and unbranded operation is included on every plan, not just Enterprise.",
     "mostPopular": "Most popular",
     "getStarted": "Get started",
     "contactUs": "Contact us",
@@ -231,7 +231,7 @@
     "partnerTagline": "For platforms distributing pricing intelligence to their merchants",
     "mode_advisory": "Advisory",
     "mode_automated": "Automated",
-    "modeDesc_advisory": "Recommendations shown in dashboard — you apply them",
+    "modeDesc_advisory": "Recommendations shown in dashboard. You apply them.",
     "modeDesc_automated": "Prices updated automatically across all channels",
     "freshness_daily": "Daily",
     "freshness_twice_daily": "Twice daily",
@@ -270,10 +270,10 @@
     "partner": {
       "eyebrow": "Partner Program",
       "title": "Embed at scale. Keep your brand.",
-      "desc": "A separate commercial track for platforms distributing pricing intelligence to their merchants. Revenue-share model — not seat-based.",
+      "desc": "A separate commercial track for platforms distributing pricing intelligence to their merchants. Revenue-share model, not seat-based.",
       "item1": "Multi-tenant API with per-merchant scoping",
       "item2": "White-label embed widgets, zero PrizeSkout branding",
-      "item3": "Revenue-share pricing — grow together",
+      "item3": "Revenue-share pricing. Grow together.",
       "item4": "Dedicated integration and onboarding support",
       "cta": "Talk to partnerships"
     },
@@ -292,14 +292,14 @@
       "subtitle": "White-label operation is included on every plan. Start with advisory mode, upgrade to automated repricing when you're ready.",
       "mostPopular": "Most popular",
       "priceUSD": "Prices in USD · billed monthly",
-      "whiteLabelNote": "White-label / unbranded operation is included on every plan — not an Enterprise add-on.",
+      "whiteLabelNote": "White-label and unbranded operation is included on every plan, not just Enterprise.",
       "starterName": "Starter",
       "starterPrice": "$25",
       "starterPriceSub": "/ mo · billed monthly",
       "starterDesc": "Competitor price intelligence and AI recommendations to kick-start your pricing journey.",
       "starterF1": "50 products · 2 competitors / product",
       "starterF2": "Daily price refresh",
-      "starterF3": "Advisory mode — recommendations you apply",
+      "starterF3": "Advisory mode: recommendations you apply",
       "starterF4": "White-label / unbranded operation",
       "starterF5": "1 seat · full API access",
       "starterCta": "Get started",

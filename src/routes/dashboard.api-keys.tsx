@@ -175,7 +175,7 @@ function ApiKeysPage() {
       subtitle="Create and manage keys for calling PrizeSkout APIs. Test keys work in sandbox; live keys require approval."
       helpItems={[
         "Use test keys (sk_test_…) while you integrate. They return simulated data and never hit live pricing engines.",
-        "Keys are shown once at creation — store them in your secret manager before leaving this page.",
+        "Keys are shown once at creation. Store them in your secret manager before leaving this page.",
         "Revoke a key the moment it leaks. Revoked keys stop working instantly.",
       ]}
       primaryAction={
@@ -263,7 +263,7 @@ function ApiKeysPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <AlertTriangle size={16} color="#B45309" />
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#92400E" }}>
-                  Save this secret now — it will never be shown again
+                  Save this secret now. It will never be shown again.
                 </div>
               </div>
               <div style={{ fontSize: 12.5, color: "#78350F" }}>

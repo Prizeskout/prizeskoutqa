@@ -75,7 +75,7 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
       const n = Number(p.competitor_count ?? 1);
       const base = `Lower to QAR ${p.recommended_price} to match the market`;
       if (p.above_floor_qar) {
-        return `${base} — still QAR ${p.above_floor_qar} above your cost floor.`;
+        return `${base}, still QAR ${p.above_floor_qar} above your cost floor.`;
       }
       const verb = n === 1 ? "is" : "are";
       return `${base}. ${p.competitor_list} ${verb} cheaper by QAR ${p.gap_qar}.`;
@@ -94,7 +94,7 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
 
   hold_margin_floor: {
     headline: (_p) =>
-      `Hold your price — lowering further would cut into your margin.`,
+      `Hold your price. Lowering further would cut into your margin.`,
     detail: (p) => {
       const parts: string[] = [];
       if (p.market_price ?? p.median)
@@ -109,7 +109,7 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
 
   already_at_median: {
     headline: (_p) =>
-      `Hold your price — you're already competitive with the market.`,
+      `Hold your price. You're already competitive with the market.`,
     detail: (p) => {
       const parts: string[] = [];
       if (p.market_price ?? p.median)
@@ -122,7 +122,7 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
 
   undercut_competitor: {
     headline: (p) => {
-      const base = `Lower to QAR ${p.recommended_price} — beat the cheapest competitor by one step`;
+      const base = `Lower to QAR ${p.recommended_price}. Beat the cheapest competitor by one step`;
       return p.above_floor_qar
         ? `${base}, still QAR ${p.above_floor_qar} above your cost floor.`
         : `${base}.`;
@@ -137,7 +137,7 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
 
   cost_floor_applied: {
     headline: (p) =>
-      `Price held at QAR ${p.recommended_price} — your cost floor is protecting your margin.`,
+      `Price held at QAR ${p.recommended_price}. Your cost floor is protecting your margin.`,
     detail: (p) =>
       p.margin_floor
         ? `The market price would have pushed you below your cost floor. Floor: QAR ${p.margin_floor}.`
@@ -146,28 +146,28 @@ const EN: Partial<Record<ReasonCode, TemplatePair>> = {
 
   no_competitor_data: {
     headline: (_p) =>
-      `No competitor prices found — holding your current price.`,
+      `No competitor prices found. Holding your current price.`,
     detail: (_p) =>
       `Add competitor product URLs on the Competitors page to get market-based recommendations.`,
   },
 
   no_margin_inputs: {
     headline: (p) =>
-      `Lower to QAR ${p.recommended_price} — no product costs configured yet.`,
+      `Lower to QAR ${p.recommended_price}. No product costs configured yet.`,
     detail: (_p) =>
       `No cost data is set up. Add your product costs in Settings for safer recommendations with margin protection.`,
   },
 
   all_outliers: {
     headline: (_p) =>
-      `Competitor prices look mismatched — no recommendation made.`,
+      `Competitor prices look mismatched. No recommendation made.`,
     detail: (_p) =>
       `All detected competitor prices appear to be for different products. Check that competitor URLs point to the exact same item.`,
   },
 
   no_scrapes: {
     headline: (_p) =>
-      `No recent competitor data — holding your current price.`,
+      `No recent competitor data. Holding your current price.`,
     detail: (_p) =>
       `Competitor prices haven't been fetched recently. Trigger a scrape on the Competitors page.`,
   },
@@ -189,7 +189,7 @@ const AR: Partial<Record<ReasonCode, TemplatePair>> = {
     headline: (p) => {
       const base = `اخفض إلى ⁦${p.recommended_price}⁩ ريالاً لتنافس السوق`;
       if (p.above_floor_qar) {
-        return `${base} — هامشك آمن، أعلى من حدّ التكلفة بـ ⁦${p.above_floor_qar}⁩ ريالاً.`;
+        return `${base}, هامشك آمن، أعلى من حدّ التكلفة بـ ⁦${p.above_floor_qar}⁩ ريالاً.`;
       }
       return `${base}. المنافسون يبيعون بأقل بفارق ⁦${p.gap_qar}⁩ ريالاً.`;
     },
@@ -208,7 +208,7 @@ const AR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   hold_margin_floor: {
     headline: (_p) =>
-      `حافظ على سعرك — الخفض الإضافي سيُقلّص هامش ربحك.`,
+      `حافظ على سعرك. الخفض الإضافي سيُقلّص هامش ربحك.`,
     detail: (p) => {
       const parts: string[] = [];
       if (p.market_price ?? p.median)
@@ -221,7 +221,7 @@ const AR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   already_at_median: {
     headline: (_p) =>
-      `حافظ على سعرك — أنت تنافسي في السوق.`,
+      `حافظ على سعرك. أنت تنافسي في السوق.`,
     detail: (p) => {
       const parts: string[] = [];
       if (p.market_price ?? p.median)
@@ -236,7 +236,7 @@ const AR: Partial<Record<ReasonCode, TemplatePair>> = {
     headline: (p) => {
       const base = `اخفض إلى ⁦${p.recommended_price}⁩ ريالاً لتجاوز أرخص منافس`;
       return p.above_floor_qar
-        ? `${base} — هامشك لا يزال آمناً بفارق ⁦${p.above_floor_qar}⁩ ريالاً عن حدّ التكلفة.`
+        ? `${base}, هامشك لا يزال آمناً بفارق ⁦${p.above_floor_qar}⁩ ريالاً عن حدّ التكلفة.`
         : `${base}.`;
     },
     detail: (p) => {
@@ -249,7 +249,7 @@ const AR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   cost_floor_applied: {
     headline: (p) =>
-      `يُحتفظ بالسعر عند ⁦${p.recommended_price}⁩ ريالاً — حدّ التكلفة يحمي هامشك.`,
+      `يُحتفظ بالسعر عند ⁦${p.recommended_price}⁩ ريالاً. حدّ التكلفة يحمي هامشك.`,
     detail: (p) =>
       p.margin_floor
         ? `السعر السوقي المقترح كان سيتجاوز حدّ التكلفة. الحدّ: ⁦${p.margin_floor}⁩ ريالاً.`
@@ -258,28 +258,28 @@ const AR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   no_competitor_data: {
     headline: (_p) =>
-      `لا توجد أسعار منافسين — سيُحتفظ بسعرك الحالي.`,
+      `لا توجد أسعار منافسين. سيُحتفظ بسعرك الحالي.`,
     detail: (_p) =>
       `أضف روابط منتجات المنافسين في صفحة المنافسين للحصول على توصيات مبنية على السوق.`,
   },
 
   no_margin_inputs: {
     headline: (p) =>
-      `اخفض إلى ⁦${p.recommended_price}⁩ ريالاً — لم تُضبط بيانات تكلفة بعد.`,
+      `اخفض إلى ⁦${p.recommended_price}⁩ ريالاً. لم تُضبط بيانات تكلفة بعد.`,
     detail: (_p) =>
       `لا توجد بيانات تكلفة للمنتج. أضف بيانات التكلفة في الإعدادات للحصول على توصيات مع حماية الهامش.`,
   },
 
   all_outliers: {
     headline: (_p) =>
-      `أسعار المنافسين تبدو غير مطابقة — لم تُصدر توصية.`,
+      `أسعار المنافسين تبدو غير مطابقة. لم تُصدر توصية.`,
     detail: (_p) =>
       `تبدو جميع أسعار المنافسين المرصودة كأنها لمنتجات مختلفة. تأكد من أن روابط المنافسين تشير إلى نفس المنتج تحديداً.`,
   },
 
   no_scrapes: {
     headline: (_p) =>
-      `لا توجد بيانات منافسين حديثة — سيُحتفظ بسعرك الحالي.`,
+      `لا توجد بيانات منافسين حديثة. سيُحتفظ بسعرك الحالي.`,
     detail: (_p) =>
       `لم تُجلب أسعار المنافسين مؤخراً. شغّل عملية الفحص من صفحة المنافسين.`,
   },
@@ -299,7 +299,7 @@ const FR: Partial<Record<ReasonCode, TemplatePair>> = {
       const n = Number(p.competitor_count ?? 1);
       const base = `Baissez à ${p.recommended_price} QAR pour coller au marché`;
       if (p.above_floor_qar) {
-        return `${base} — marge assurée, ${p.above_floor_qar} QAR au-dessus de votre plancher.`;
+        return `${base}, marge assurée, ${p.above_floor_qar} QAR au-dessus de votre plancher.`;
       }
       const verb = n === 1 ? "est" : "sont";
       const adj = n === 1 ? "" : "s";
@@ -319,7 +319,7 @@ const FR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   hold_margin_floor: {
     headline: (_p) =>
-      `Maintenez votre prix — baisser davantage entamerait votre marge.`,
+      `Maintenez votre prix. Baisser davantage entamerait votre marge.`,
     detail: (p) => {
       const parts: string[] = [];
       if (p.market_price ?? p.median)
@@ -334,7 +334,7 @@ const FR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   already_at_median: {
     headline: (_p) =>
-      `Maintenez votre prix — vous êtes déjà compétitif sur le marché.`,
+      `Maintenez votre prix. Vous êtes déjà compétitif sur le marché.`,
     detail: (p) => {
       const parts: string[] = [];
       if (p.market_price ?? p.median)
@@ -349,7 +349,7 @@ const FR: Partial<Record<ReasonCode, TemplatePair>> = {
     headline: (p) => {
       const base = `Baissez à ${p.recommended_price} QAR pour passer sous le concurrent le moins cher`;
       return p.above_floor_qar
-        ? `${base} — ${p.above_floor_qar} QAR au-dessus de votre plancher.`
+        ? `${base}, ${p.above_floor_qar} QAR au-dessus de votre plancher.`
         : `${base}.`;
     },
     detail: (p) => {
@@ -362,7 +362,7 @@ const FR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   cost_floor_applied: {
     headline: (p) =>
-      `Prix maintenu à ${p.recommended_price} QAR — votre plancher protège votre marge.`,
+      `Prix maintenu à ${p.recommended_price} QAR. Votre plancher protège votre marge.`,
     detail: (p) =>
       p.margin_floor
         ? `Le prix marché recommandé aurait fait passer votre marge sous le plancher. Plancher : ${p.margin_floor} QAR.`
@@ -371,28 +371,28 @@ const FR: Partial<Record<ReasonCode, TemplatePair>> = {
 
   no_competitor_data: {
     headline: (_p) =>
-      `Aucun prix concurrent trouvé — votre prix actuel est conservé.`,
+      `Aucun prix concurrent trouvé. Votre prix actuel est conservé.`,
     detail: (_p) =>
       `Ajoutez des URLs de produits concurrents sur la page Concurrents pour obtenir des recommandations basées sur le marché.`,
   },
 
   no_margin_inputs: {
     headline: (p) =>
-      `Baissez à ${p.recommended_price} QAR — aucun coût produit configuré.`,
+      `Baissez à ${p.recommended_price} QAR. Aucun coût produit configuré.`,
     detail: (_p) =>
       `Aucune donnée de coût n'est configurée. Ajoutez vos coûts dans les Paramètres pour des recommandations avec protection de la marge.`,
   },
 
   all_outliers: {
     headline: (_p) =>
-      `Les prix concurrents semblent incohérents — aucune recommandation émise.`,
+      `Les prix concurrents semblent incohérents. Aucune recommandation émise.`,
     detail: (_p) =>
       `Tous les prix concurrents détectés semblent correspondre à des produits différents. Vérifiez que les URLs pointent bien vers le même article.`,
   },
 
   no_scrapes: {
     headline: (_p) =>
-      `Aucune donnée concurrentielle récente — votre prix actuel est conservé.`,
+      `Aucune donnée concurrentielle récente. Votre prix actuel est conservé.`,
     detail: (_p) =>
       `Les prix concurrents n'ont pas été récupérés récemment. Lancez une collecte depuis la page Concurrents.`,
   },
@@ -486,7 +486,7 @@ export function transformLegacyReason(
     `Lowest price seen: QAR ${lowestStr}.`,
   ];
   if (excludedName) {
-    parts.push(`${excludedName} excluded — their price appeared to be for a different product. Check the URL.`);
+    parts.push(`${excludedName} excluded. Their price appeared to be for a different product. Check the URL.`);
   }
 
   return { headline, detail: parts.join(" ") };

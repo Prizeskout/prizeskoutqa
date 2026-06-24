@@ -60,9 +60,9 @@
   },
   "capabilities": {
     "title": "Capacités en direct",
-    "subtitle": "Collez votre clé de test, cliquez sur Exécuter, et voyez de vrais résultats du serveur en direct — aucune simulation.",
+    "subtitle": "Collez votre clé de test, cliquez sur Exécuter, et voyez de vrais résultats du serveur en direct, sans simulation.",
     "keyRequired": "Clé API requise",
-    "keyHint": "Stockée en sessionStorage uniquement — effacée à la fermeture de l'onglet.",
+    "keyHint": "Stockée en sessionStorage uniquement. Effacée à la fermeture de l'onglet.",
     "runAll": "Tout exécuter",
     "running": "En cours…",
     "summaryOk": "Les {{count}} capacités sur {{total}} sont au vert",
@@ -116,7 +116,7 @@
     "autoUpdate": "Cette carte se met à jour automatiquement à chaque étape.",
     "step1": {
       "title": "Ajoutez votre premier produit concurrent",
-      "body": "Enregistrez l'URL d'un produit d'un concurrent — Carrefour, Lulu, Talabat, n'importe lequel.",
+      "body": "Enregistrez l'URL d'un produit d'un concurrent: Carrefour, Lulu, Talabat, n'importe lequel.",
       "cta": "Ouvrir les Concurrents"
     },
     "step2": {
@@ -132,7 +132,7 @@
   },
   "alerts": {
     "title": "Alertes en direct",
-    "empty": "Aucune alerte pour l'instant — le tableau de bord se remplira à mesure que les concurrents et les prix évolueront.",
+    "empty": "Aucune alerte pour l'instant. Le tableau de bord se remplira à mesure que les concurrents et les prix évolueront.",
     "latest": "Dernier"
   },
   "ai": {
@@ -210,7 +210,7 @@
     "title": "Forfaits & Tarifs",
     "subtitle": "Tarification simple et transparente. Évoluez du pilote à l'échelle.",
     "priceUSD": "Prix en USD. Facturation mensuelle.",
-    "whiteLabelNote": "L'opération en marque blanche est incluse dans tous les forfaits — pas uniquement Enterprise.",
+    "whiteLabelNote": "L'opération en marque blanche est incluse dans tous les forfaits, pas uniquement Enterprise.",
     "mostPopular": "Le plus populaire",
     "getStarted": "Commencer",
     "contactUs": "Nous contacter",
@@ -231,7 +231,7 @@
     "partnerTagline": "Pour les plateformes distribuant la veille tarifaire à leurs marchands",
     "mode_advisory": "Consultatif",
     "mode_automated": "Automatisé",
-    "modeDesc_advisory": "Recommandations affichées dans le tableau de bord — vous les appliquez",
+    "modeDesc_advisory": "Recommandations affichées dans le tableau de bord. Vous les appliquez.",
     "modeDesc_automated": "Prix appliqués automatiquement sur tous les canaux",
     "freshness_daily": "Quotidien",
     "freshness_twice_daily": "Deux fois par jour",
@@ -270,10 +270,10 @@
     "partner": {
       "eyebrow": "Programme Partenaire",
       "title": "Intégrez à grande échelle. Gardez votre marque.",
-      "desc": "Une piste commerciale distincte pour les plateformes distribuant la veille tarifaire à leurs marchands. Modèle de partage des revenus — pas de siège.",
+      "desc": "Une piste commerciale distincte pour les plateformes distribuant la veille tarifaire à leurs marchands. Modèle de partage des revenus, pas de siège.",
       "item1": "API multi-locataire avec portée par marchand",
       "item2": "Widgets intégrés en marque blanche, zéro mention PrizeSkout",
-      "item3": "Tarification par partage des revenus — on grandit ensemble",
+      "item3": "Tarification par partage des revenus. On grandit ensemble.",
       "item4": "Support d'intégration et d'onboarding dédié",
       "cta": "Parler aux partenariats"
     },
@@ -292,14 +292,14 @@
       "subtitle": "L'opération en marque blanche est incluse dans tous les forfaits. Démarrez en mode consultatif, évoluez vers la retarification automatisée quand vous êtes prêt.",
       "mostPopular": "Le plus populaire",
       "priceUSD": "Prix en USD · facturation mensuelle",
-      "whiteLabelNote": "L'opération en marque blanche est incluse dans tous les forfaits — pas uniquement Enterprise.",
+      "whiteLabelNote": "L'opération en marque blanche est incluse dans tous les forfaits, pas uniquement Enterprise.",
       "starterName": "Starter",
       "starterPrice": "$25",
       "starterPriceSub": "/ mois · facturation mensuelle",
       "starterDesc": "Veille concurrentielle et recommandations IA pour démarrer votre parcours de tarification intelligente.",
       "starterF1": "50 produits · 2 concurrents / produit",
       "starterF2": "Actualisation quotidienne des prix",
-      "starterF3": "Mode consultatif — recommandations que vous appliquez",
+      "starterF3": "Mode consultatif: recommandations que vous appliquez",
       "starterF4": "Opération en marque blanche",
       "starterF5": "1 siège · accès API complet",
       "starterCta": "Commencer",

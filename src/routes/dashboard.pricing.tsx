@@ -107,7 +107,7 @@ function PricingPage() {
       title="Pricing"
       subtitle="Live competitor prices, your margin floor, one clear action per product."
       helpItems={[
-        "Each card leads with the action — lower, hold, or raise — and the exact price. Tap 'Why?' for the full evidence.",
+        "Each card leads with the action (lower, hold, or raise) and the exact price. Tap 'Why?' for the full evidence.",
         "Confidence shows how many competitors were checked and how fresh the data is. Review lower scores before acting.",
         "Pricing rules at the bottom set hard limits. Toggle them to enforce your margin floors, parity rules, and price caps.",
       ]}

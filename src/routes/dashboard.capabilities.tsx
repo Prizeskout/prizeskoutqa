@@ -338,7 +338,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "margin",
       title: "Margin Computation",
-      description: "See your true profit on any product — unit cost, shipping, customs, and channel fees all factored in.",
+      description: "See your true profit on any product, with unit cost, shipping, customs, and channel fees all included.",
       methodBadge: "POST /v1/margin",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -353,7 +353,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "competitors",
       title: "Competitor Intel",
-      description: "See what your competitors are charging right now — automatically updated, no manual checking.",
+      description: "See what your competitors are charging right now, updated automatically with no manual effort.",
       methodBadge: "GET /v1/competitors/prices",
       badgeVariant: "cached",
       run: async (secret) => {
@@ -365,7 +365,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "loyalty",
       title: "Loyalty Pricing",
-      description: "Reward your Gold, Silver, and Platinum members with their discount — the system ensures you never sell at a loss.",
+      description: "Give your loyalty members their discount while the system keeps you above your minimum margin.",
       methodBadge: "POST /v1/loyalty/price",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -382,7 +382,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "dynprice",
       title: "Dynamic Pricing Engine",
-      description: "Get one clear recommended price per product — benchmarked against competitors and protected by your margin floor.",
+      description: "Get one clear recommended price per product, benchmarked against competitors and protected by your margin floor.",
       methodBadge: "POST /v1/dynprice",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -410,7 +410,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "group",
       title: "Group Buying Engine",
-      description: "Prices drop automatically as more buyers join — each tier unlocks at the buyer count you set.",
+      description: "Prices drop automatically as more buyers join, with each tier unlocking at the buyer count you set.",
       methodBadge: "POST /v1/group/campaigns",
       badgeVariant: "write+clean",
       run: async (secret) => {
@@ -438,7 +438,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "tenant",
       title: "Tenant Governance",
-      description: "Catch resellers pricing outside your approved range — violations are flagged the moment they happen.",
+      description: "Catch resellers pricing outside your approved range. Violations are flagged the moment they happen.",
       methodBadge: "GET /v1/tenant/violations",
       badgeVariant: "read",
       run: async (secret) => {
@@ -450,7 +450,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "parity",
       title: "Cross-Border Parity",
-      description: "Price the same product consistently across Qatar, Saudi Arabia, and UAE — currency conversion, VAT, and duties handled automatically.",
+      description: "Price the same product consistently across Qatar, Saudi Arabia, and UAE, with currency conversion, VAT, and duties handled automatically.",
       methodBadge: "GET /v1/parity/analysis",
       badgeVariant: "read",
       run: async (secret) => {
@@ -462,7 +462,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "map",
       title: "MAP Compliance",
-      description: "Check that retail partners are respecting your minimum advertised prices — violations come with evidence attached.",
+      description: "Check that retail partners are respecting your minimum advertised prices, with violations flagged and evidence attached.",
       methodBadge: "GET /v1/compliance/map/violations",
       badgeVariant: "read",
       run: async (secret) => {
@@ -474,7 +474,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "audit",
       title: "Audit Trail",
-      description: "Every price change and recommendation is permanently recorded — see who decided what, and when, with no gaps.",
+      description: "Every price change and recommendation is permanently recorded so you can see who decided what, and when.",
       methodBadge: "GET /v1/audit/summary",
       badgeVariant: "read",
       run: async (secret) => {
@@ -486,7 +486,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "webhooks",
       title: "Enriched Webhooks",
-      description: "Notify your own systems the moment a price decision is made — each event includes margin and competitor context, signed for security.",
+      description: "Notify your own systems the moment a price decision is made. Each event includes margin and competitor context, signed for security.",
       methodBadge: "POST /v1/webhooks/enrich",
       badgeVariant: "safe",
       run: async (secret) => {
@@ -508,7 +508,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "embed",
       title: "White-Label Embed",
-      description: "Embed the pricing widget inside your product under your own brand — your customers never see PrizeSkout.",
+      description: "Embed the pricing widget inside your product under your own brand. Your customers never see PrizeSkout.",
       methodBadge: "GET /v1/embed/config",
       badgeVariant: "read",
       run: async (secret) => {
@@ -527,13 +527,13 @@ const COMING_SOON = [
   {
     id: "elasticity",
     title: "Real-Time Elasticity Engine",
-    description: "Learn how price-sensitive your buyers are per product — then find the sweet spot between margin and volume automatically.",
+    description: "Learn how price-sensitive your buyers are per product, then let the engine find the sweet spot between margin and volume.",
     gate: "Needs 90 days of your sales history to calibrate",
   },
   {
     id: "channel-push",
     title: "Channel Push (Storefront Sync)",
-    description: "Push approved prices to Noon, Amazon, and Talabat in one click — no re-entering them in each seller portal.",
+    description: "Push approved prices to Noon, Amazon, and Talabat in one click without re-entering them in each seller portal.",
     gate: "Requires your seller credentials for each platform",
   },
   {
@@ -992,10 +992,10 @@ function CapabilitiesPage() {
       title={t("capabilities.title")}
       subtitle={t("capabilities.subtitle")}
       helpItems={[
-        "Every tile calls a live endpoint on the deployed server — you see real status codes and real response times, not simulated results.",
+        "Every tile calls a live endpoint on the deployed server. You see real status codes and real response times, not simulated results.",
         "Competitor Intel reads from cached prices. Clicking it does not trigger a live scrape or use any credits.",
-        "Group Buying creates a demo campaign and closes it immediately in the same run — it leaves no test data behind.",
-        "If a tile shows 'Ready — awaiting data,' the endpoint is working fine but your product catalog hasn't been synced yet.",
+        "Group Buying creates a demo campaign and closes it immediately in the same run, leaving no test data behind.",
+        "If a tile shows 'Ready, awaiting data,' the endpoint is working fine but your product catalog has not been synced yet.",
       ]}
       primaryAction={
         <button

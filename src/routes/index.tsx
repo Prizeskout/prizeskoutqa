@@ -306,7 +306,7 @@ function TrustStrip() {
             marginBottom: 18,
           }}
         >
-          Trusted by platforms, malls, and retailers across GCC
+          Built for platforms, malls, and retailers across GCC
         </div>
         <div
           style={{
@@ -912,12 +912,10 @@ function WhiteLabelSection() {
 
 function EnterpriseStats() {
   const stats = [
-    { value: "99.95%", label: "Uptime SLA" },
-    { value: "<150ms", label: "p95 response time" },
-    { value: "SOC 2", label: "Type II certified" },
     { value: "19", label: "Production APIs" },
+    { value: "<2s", label: "Repricing response" },
     { value: "AR + EN", label: "Arabic-first" },
-    { value: "GCC", label: "Data residency" },
+    { value: "GCC", label: "Built for the region" },
   ];
 
   return (
