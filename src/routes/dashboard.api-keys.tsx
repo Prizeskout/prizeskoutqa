@@ -80,11 +80,12 @@ function ApiKeysPage() {
       const currentName = name.trim();
       const currentMode = mode;
       const res = await createFn({ data: { name: currentName, mode: currentMode } });
+      setShowCreate(false);
+      setName("");
       setNewSecret(res.secret);
       setNewKeyMeta({ name: currentName, mode: currentMode });
       setRevealed(false);
       setAckStored(false);
-      setName("");
       await load();
     } catch (e) {
       alert((e as Error).message);
@@ -128,6 +129,7 @@ function ApiKeysPage() {
     setRevealed(false);
     setAckStored(false);
     setCopied(false);
+    setShowCreate(false);
   };
 
   const handleSubmitLiveRequest = async () => {
