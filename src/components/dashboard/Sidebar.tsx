@@ -209,7 +209,7 @@ function SidebarContent({
       </div>
 
       {/* Primary nav */}
-      <nav aria-label="Primary navigation" className="mt-6 flex flex-col gap-1">
+      <nav aria-label="Primary navigation" className="dark-scroll mt-6 flex flex-col gap-1" style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {groups.map((group) => (
           <div key={group.label} className="flex flex-col">
             {!collapsed ? (
@@ -243,8 +243,6 @@ function SidebarContent({
           </div>
         ))}
       </nav>
-
-      <div className="flex-1" />
 
       <div style={{ margin: "0 16px", height: 1, backgroundColor: "#1A1A1A" }} />
       <nav aria-label="Settings navigation" className="py-2">
