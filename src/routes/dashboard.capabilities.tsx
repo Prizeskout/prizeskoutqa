@@ -353,7 +353,7 @@ function buildTiles(): TileConfig[] {
     {
       id: "competitors",
       title: "Competitor Intel",
-      description: "See what Carrefour, Noon, and Lulu are charging right now — automatically updated, no manual checking.",
+      description: "See what your competitors are charging right now — automatically updated, no manual checking.",
       methodBadge: "GET /v1/competitors/prices",
       badgeVariant: "cached",
       run: async (secret) => {
