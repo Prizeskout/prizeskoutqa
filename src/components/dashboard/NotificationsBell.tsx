@@ -4,6 +4,11 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
+// Monotonic counter ensures each subscription gets a unique channel name.
+// supabase.channel(name) returns an EXISTING subscribed channel when names
+// collide, causing "Cannot add postgres_changes callbacks after subscribe()".
+let _notifChannelSeq = 0;
+
 type NotificationRow = {
   id: string;
   category: string;
@@ -62,6 +67,7 @@ export function NotificationsBell() {
     }
     let cancelled = false;
     setLoading(true);
+
     (async () => {
       const { data } = await supabase
         .from("notifications")
@@ -74,41 +80,38 @@ export function NotificationsBell() {
       }
     })();
 
+    // Each mount gets a unique channel name. supabase.channel() caches by name
+    // and returns an already-subscribed channel on collision, which then throws
+    // "Cannot add postgres_changes callbacks after subscribe()" when .on() is
+    // called on it. The unique suffix breaks the cache hit on remount.
+    const channelName = `notifications-${user.id}-${++_notifChannelSeq}`;
+
     const channel = supabase
-      .channel(`notifications-${user.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
-          setItems((prev) => {
-            const next = [payload.new as NotificationRow, ...prev];
-            return next.slice(0, RECENT_LIMIT);
-          });
+          if (!cancelled) {
+            setItems((prev) => [payload.new as NotificationRow, ...prev].slice(0, RECENT_LIMIT));
+          }
         },
       )
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
+        { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
-          const updated = payload.new as NotificationRow;
-          setItems((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+          if (!cancelled) {
+            const updated = payload.new as NotificationRow;
+            setItems((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+          }
         },
       )
       .subscribe();
 
     return () => {
       cancelled = true;
-      void supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [user]);
 
