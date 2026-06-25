@@ -13,6 +13,8 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoiCalculatorRouteImport } from './routes/roi-calculator'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MarginDashboardRouteImport } from './routes/margin-dashboard'
+import { Route as MarginRouteImport } from './routes/margin'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocsRouteImport } from './routes/docs'
@@ -21,12 +23,17 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarginDashboardIndexRouteImport } from './routes/margin-dashboard.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ProductsPromotionsRouteImport } from './routes/products.promotions'
 import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
 import { Route as ProductsMarketRouteImport } from './routes/products.market'
 import { Route as ProductsFieldIntelRouteImport } from './routes/products.field-intel'
 import { Route as ProductsCompetitorsRouteImport } from './routes/products.competitors'
+import { Route as MarginDashboardUploadRouteImport } from './routes/margin-dashboard.upload'
+import { Route as MarginDashboardSettingsRouteImport } from './routes/margin-dashboard.settings'
+import { Route as MarginDashboardItemsRouteImport } from './routes/margin-dashboard.items'
+import { Route as MarginDashboardChannelsRouteImport } from './routes/margin-dashboard.channels'
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
@@ -83,6 +90,16 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarginDashboardRoute = MarginDashboardRouteImport.update({
+  id: '/margin-dashboard',
+  path: '/margin-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarginRoute = MarginRouteImport.update({
+  id: '/margin',
+  path: '/margin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -123,6 +140,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarginDashboardIndexRoute = MarginDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarginDashboardRoute,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -152,6 +174,26 @@ const ProductsCompetitorsRoute = ProductsCompetitorsRouteImport.update({
   id: '/products/competitors',
   path: '/products/competitors',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MarginDashboardUploadRoute = MarginDashboardUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => MarginDashboardRoute,
+} as any)
+const MarginDashboardSettingsRoute = MarginDashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => MarginDashboardRoute,
+} as any)
+const MarginDashboardItemsRoute = MarginDashboardItemsRouteImport.update({
+  id: '/items',
+  path: '/items',
+  getParentRoute: () => MarginDashboardRoute,
+} as any)
+const MarginDashboardChannelsRoute = MarginDashboardChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => MarginDashboardRoute,
 } as any)
 const EmbedWidgetRoute = EmbedWidgetRouteImport.update({
   id: '/embed/widget',
@@ -345,6 +387,8 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/margin': typeof MarginRoute
+  '/margin-dashboard': typeof MarginDashboardRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
@@ -368,12 +412,17 @@ export interface FileRoutesByFullPath {
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
+  '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
+  '/margin-dashboard/items': typeof MarginDashboardItemsRoute
+  '/margin-dashboard/settings': typeof MarginDashboardSettingsRoute
+  '/margin-dashboard/upload': typeof MarginDashboardUploadRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
@@ -399,6 +448,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/margin': typeof MarginRoute
   '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
@@ -421,12 +471,17 @@ export interface FileRoutesByTo {
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
+  '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
+  '/margin-dashboard/items': typeof MarginDashboardItemsRoute
+  '/margin-dashboard/settings': typeof MarginDashboardSettingsRoute
+  '/margin-dashboard/upload': typeof MarginDashboardUploadRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/margin-dashboard': typeof MarginDashboardIndexRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
@@ -454,6 +509,8 @@ export interface FileRoutesById {
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/margin': typeof MarginRoute
+  '/margin-dashboard': typeof MarginDashboardRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
@@ -477,12 +534,17 @@ export interface FileRoutesById {
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
+  '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
+  '/margin-dashboard/items': typeof MarginDashboardItemsRoute
+  '/margin-dashboard/settings': typeof MarginDashboardSettingsRoute
+  '/margin-dashboard/upload': typeof MarginDashboardUploadRoute
   '/products/competitors': typeof ProductsCompetitorsRoute
   '/products/field-intel': typeof ProductsFieldIntelRoute
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
@@ -511,6 +573,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/forgot-password'
     | '/login'
+    | '/margin'
+    | '/margin-dashboard'
     | '/privacy'
     | '/roi-calculator'
     | '/signup'
@@ -534,12 +598,17 @@ export interface FileRouteTypes {
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
+    | '/margin-dashboard/channels'
+    | '/margin-dashboard/items'
+    | '/margin-dashboard/settings'
+    | '/margin-dashboard/upload'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/margin-dashboard/'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
@@ -565,6 +634,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/forgot-password'
     | '/login'
+    | '/margin'
     | '/privacy'
     | '/roi-calculator'
     | '/signup'
@@ -587,12 +657,17 @@ export interface FileRouteTypes {
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
+    | '/margin-dashboard/channels'
+    | '/margin-dashboard/items'
+    | '/margin-dashboard/settings'
+    | '/margin-dashboard/upload'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard'
+    | '/margin-dashboard'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
@@ -619,6 +694,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/forgot-password'
     | '/login'
+    | '/margin'
+    | '/margin-dashboard'
     | '/privacy'
     | '/roi-calculator'
     | '/signup'
@@ -642,12 +719,17 @@ export interface FileRouteTypes {
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
+    | '/margin-dashboard/channels'
+    | '/margin-dashboard/items'
+    | '/margin-dashboard/settings'
+    | '/margin-dashboard/upload'
     | '/products/competitors'
     | '/products/field-intel'
     | '/products/market'
     | '/products/pricing'
     | '/products/promotions'
     | '/dashboard/'
+    | '/margin-dashboard/'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/docs/guides/authentication'
@@ -675,6 +757,8 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  MarginRoute: typeof MarginRoute
+  MarginDashboardRoute: typeof MarginDashboardRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
@@ -724,6 +808,20 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/margin-dashboard': {
+      id: '/margin-dashboard'
+      path: '/margin-dashboard'
+      fullPath: '/margin-dashboard'
+      preLoaderRoute: typeof MarginDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/margin': {
+      id: '/margin'
+      path: '/margin'
+      fullPath: '/margin'
+      preLoaderRoute: typeof MarginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -782,6 +880,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/margin-dashboard/': {
+      id: '/margin-dashboard/'
+      path: '/'
+      fullPath: '/margin-dashboard/'
+      preLoaderRoute: typeof MarginDashboardIndexRouteImport
+      parentRoute: typeof MarginDashboardRoute
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -823,6 +928,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/products/competitors'
       preLoaderRoute: typeof ProductsCompetitorsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/margin-dashboard/upload': {
+      id: '/margin-dashboard/upload'
+      path: '/upload'
+      fullPath: '/margin-dashboard/upload'
+      preLoaderRoute: typeof MarginDashboardUploadRouteImport
+      parentRoute: typeof MarginDashboardRoute
+    }
+    '/margin-dashboard/settings': {
+      id: '/margin-dashboard/settings'
+      path: '/settings'
+      fullPath: '/margin-dashboard/settings'
+      preLoaderRoute: typeof MarginDashboardSettingsRouteImport
+      parentRoute: typeof MarginDashboardRoute
+    }
+    '/margin-dashboard/items': {
+      id: '/margin-dashboard/items'
+      path: '/items'
+      fullPath: '/margin-dashboard/items'
+      preLoaderRoute: typeof MarginDashboardItemsRouteImport
+      parentRoute: typeof MarginDashboardRoute
+    }
+    '/margin-dashboard/channels': {
+      id: '/margin-dashboard/channels'
+      path: '/channels'
+      fullPath: '/margin-dashboard/channels'
+      preLoaderRoute: typeof MarginDashboardChannelsRouteImport
+      parentRoute: typeof MarginDashboardRoute
     }
     '/embed/widget': {
       id: '/embed/widget'
@@ -1161,6 +1294,26 @@ const DocsRouteChildren: DocsRouteChildren = {
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
+interface MarginDashboardRouteChildren {
+  MarginDashboardChannelsRoute: typeof MarginDashboardChannelsRoute
+  MarginDashboardItemsRoute: typeof MarginDashboardItemsRoute
+  MarginDashboardSettingsRoute: typeof MarginDashboardSettingsRoute
+  MarginDashboardUploadRoute: typeof MarginDashboardUploadRoute
+  MarginDashboardIndexRoute: typeof MarginDashboardIndexRoute
+}
+
+const MarginDashboardRouteChildren: MarginDashboardRouteChildren = {
+  MarginDashboardChannelsRoute: MarginDashboardChannelsRoute,
+  MarginDashboardItemsRoute: MarginDashboardItemsRoute,
+  MarginDashboardSettingsRoute: MarginDashboardSettingsRoute,
+  MarginDashboardUploadRoute: MarginDashboardUploadRoute,
+  MarginDashboardIndexRoute: MarginDashboardIndexRoute,
+}
+
+const MarginDashboardRouteWithChildren = MarginDashboardRoute._addFileChildren(
+  MarginDashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiReferenceRoute: ApiReferenceRoute,
@@ -1170,6 +1323,8 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  MarginRoute: MarginRoute,
+  MarginDashboardRoute: MarginDashboardRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,

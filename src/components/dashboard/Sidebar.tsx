@@ -254,6 +254,40 @@ function SidebarContent({
         />
       </nav>
 
+      {/* Margin product switcher */}
+      <div style={{ margin: "4px 8px 0" }}>
+        <Link
+          to="/margin-dashboard"
+          title={collapsed ? "Switch to Margin" : undefined}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: collapsed ? "8px 0" : "8px 12px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            borderRadius: 8,
+            textDecoration: "none",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#4A7A5A",
+            background: "rgba(16, 185, 129, 0.06)",
+            border: "1px solid rgba(16, 185, 129, 0.15)",
+            transition: "color 0.15s, background 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#10B981";
+            e.currentTarget.style.background = "rgba(16, 185, 129, 0.12)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "#4A7A5A";
+            e.currentTarget.style.background = "rgba(16, 185, 129, 0.06)";
+          }}
+        >
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#10B981", flexShrink: 0 }}>M</span>
+          {!collapsed && <span>Switch to Margin</span>}
+        </Link>
+      </div>
+
       {/* Collapse toggle (desktop only) */}
       {showCollapseToggle && (
         <button

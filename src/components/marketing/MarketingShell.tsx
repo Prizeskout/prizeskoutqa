@@ -66,11 +66,13 @@ function LangSwitcher({ compact }: { compact?: boolean }) {
 
 type SimpleNavItem = {
   label: string;
-  to?: "/docs" | "/docs/changelog";
+  to?: "/docs" | "/docs/changelog" | "/margin";
   hash?: string;
+  highlight?: boolean;
 };
 
 const NAV_ITEMS: SimpleNavItem[] = [
+  { label: "Margin", to: "/margin", highlight: true },
   { label: "Docs", to: "/docs" },
   { label: "Pricing", hash: "pricing" },
   { label: "Changelog", to: "/docs/changelog" },
@@ -99,9 +101,13 @@ function NavLink({
     return (
       <Link
         to={item.to}
-        style={baseStyle}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
+        style={item.highlight ? {
+          ...baseStyle,
+          color: "#10B981",
+          fontWeight: 600,
+        } : baseStyle}
+        onMouseEnter={(e) => (e.currentTarget.style.color = item.highlight ? "#34D399" : "#FAFAF9")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = item.highlight ? "#10B981" : "#A8A8A8")}
       >
         {item.label}
       </Link>
