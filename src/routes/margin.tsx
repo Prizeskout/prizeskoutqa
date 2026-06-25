@@ -46,7 +46,7 @@ const PLATFORMS = [
 const WHO_ITS_FOR = [
   {
     title: "Restaurants & Cafes",
-    desc: "Multiple delivery apps, different commission rates, packaging costs, and prep time — all eating margin you can't see.",
+    desc: "Multiple delivery apps, different commission rates, packaging costs, and prep time all eat into the margin you cannot see.",
   },
   {
     title: "Cloud & Ghost Kitchens",
@@ -58,7 +58,7 @@ const WHO_ITS_FOR = [
   },
   {
     title: "Quick Commerce Shops",
-    desc: "Convenience stores, pharmacies, and specialty shops on Talabat Mart or Noon Minutes — the same problem, different categories.",
+    desc: "Convenience stores, pharmacies, and specialty shops on Talabat Mart or Noon Minutes face the same margin problem across different categories.",
   },
   {
     title: "Bakeries & Dessert Shops",
@@ -156,7 +156,7 @@ function MarginLandingPage() {
             }}
           >
             GCC restaurants and marketplace sellers lose 15–35% of every order to
-            aggregator commissions — and most don't know which channels, items, or
+            aggregator commissions. Most don't know which channels, items, or
             dayparts are actually profitable after those fees are netted out.
           </p>
 
@@ -266,7 +266,7 @@ function MarginLandingPage() {
               {
                 stat: "3+ systems",
                 label: "hold the data needed to compute real margin",
-                sub: "Aggregator payouts, POS, and cost sheets — never reconciled.",
+                sub: "Aggregator payouts, POS, and cost sheets are never reconciled.",
               },
               {
                 stat: "0 alerts",
@@ -342,7 +342,7 @@ function MarginLandingPage() {
               </h2>
               <p style={{ fontSize: 15, color: "#5A7A68", marginTop: 12, maxWidth: 520, margin: "12px auto 0" }}>
                 No integrations to set up. No developer needed. Just upload your payout
-                statement and enter your costs — the rest is automatic.
+                statement and enter your costs. The rest is automatic.
               </p>
             </div>
 
@@ -503,7 +503,7 @@ function MarginLandingPage() {
                 {
                   icon: Layers,
                   title: "Channel breakdown",
-                  desc: "Net margin per aggregator — after commission, packaging, and prep — ranked worst to best.",
+                  desc: "Net margin per aggregator, after commission, packaging, and prep costs, ranked worst to best.",
                 },
                 {
                   icon: TrendingDown,
