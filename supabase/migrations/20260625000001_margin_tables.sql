@@ -1,6 +1,15 @@
 -- Margin product: per-channel net margin analytics for aggregator sellers.
 -- Tables are separate from PrizeSkout intelligence tables — no cross-contamination.
 
+-- Ensure the updated_at trigger function exists (may already exist from earlier migrations)
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Supported aggregator platform enum
 CREATE TYPE margin_platform AS ENUM (
   'talabat', 'snoonu', 'noon', 'amazon_ae', 'deliveroo', 'careem', 'other'
