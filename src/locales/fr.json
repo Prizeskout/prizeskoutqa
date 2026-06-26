@@ -286,6 +286,125 @@
   },
   "landing": {
     "langSwitcher": "Langue",
+    "home": {
+      "hero": {
+        "eyebrow": "Infrastructure tarifaire · Natif GCC · Mondial",
+        "title1": "Le cerveau tarifaire derrière le retail.",
+        "title2": "Invisible par conception.",
+        "subtitle": "Licenciez les APIs qui décident, synchronisent et défendent les prix sur chaque canal, sous votre marque, dans votre plateforme, sans que PrizeSkout n'apparaisse jamais.",
+        "cta1": "Obtenir des clés API, gratuit",
+        "cta2": "Parler aux partenariats",
+        "backedBy": "Soutenu par",
+        "qstp": "Qatar Science & Technology Park (QSTP)"
+      },
+      "trust": {
+        "label": "Conçu pour les plateformes, centres commerciaux et détaillants du CCG",
+        "pill1": "Plateformes e-commerce",
+        "pill2": "Gestionnaires de centres commerciaux",
+        "pill3": "Détaillants omnicanaux",
+        "pill4": "Marques grand public",
+        "pill5": "Applications de livraison"
+      },
+      "benefits": {
+        "eyebrow": "Pour les marques et les plateformes",
+        "title": "Une licence. Quatre choses débloquées immédiatement.",
+        "b1Title": "Lancez la tarification comme fonctionnalité en quelques jours",
+        "b1Desc": "19 APIs de production, un bac à sable et une documentation complète dès le premier jour. Pas de sprint de recherche, pas de construction de zéro. Vos ingénieurs s'intègrent ; nous gérons l'infrastructure.",
+        "b2Title": "Votre marque sur chaque surface",
+        "b2Desc": "Les recommandations, widgets et données portent votre logo — pas le nôtre. Définissez powered_by_visible: false et PrizeSkout disparaît complètement. Vos marchands vous font davantage confiance.",
+        "b3Title": "Remportez des contrats enterprise que vous ne pouviez pas conclure avant",
+        "b3Desc": "Les équipes d'achats demandent des journaux d'audit, la surveillance MAP et des tableaux de conformité. Nous construisons cette couche. Vous arrivez avec la preuve. Vous obtenez le contrat.",
+        "b4Title": "Natif GCC dès le départ",
+        "b4Desc": "Interface Arabic-first, normes tarifaires QAR/SAR/AED et couverture de données en direct sur le Qatar, les EAU et l'Arabie Saoudite. Pas un produit occidental adapté à la région — construit ici."
+      },
+      "problem": {
+        "eyebrow": "Le problème",
+        "title": "Votre plateforme est puissante. La tarification est encore un tableur.",
+        "subtitle": "Vos marchands sont en concurrence avec des plateformes qui repricent automatiquement, répondent aux concurrents en temps réel et gèrent des promotions intelligentes sans équipe. Vous pouvez leur offrir ça. Sans le construire vous-même.",
+        "p1n": "Problème 01",
+        "p1Title": "Vos marchands perdent des ventes face à des concurrents qui ont repricé il y a six heures",
+        "p1Desc": "Sans intelligence en temps réel, chaque marchand sur votre plateforme navigue à l'aveugle tandis que ses rivaux réagissent aux mouvements du marché en quelques minutes.",
+        "p2n": "Problème 02",
+        "p2Title": "Les prix sont faux sur Talabat mais corrects sur le site. Encore.",
+        "p2Desc": "L'incohérence des prix omnicanaux détruit la confiance et la marge simultanément. Aucune plateforme n'a résolu cela nativement. PrizeSkout le fait en un seul appel API.",
+        "p3n": "Problème 03",
+        "p3Title": "Les contrats enterprise stagnent parce que vous ne pouvez pas montrer la gouvernance tarifaire",
+        "p3Desc": "Les grands détaillants et marques ont besoin de journaux d'audit, de rapports de conformité et de surveillance MAP. Votre plateforme n'en a aucun. PrizeSkout les intègre."
+      },
+      "howItWorks": {
+        "eyebrow": "Comment ça marche",
+        "title": "Une licence. Trois étapes. Zéro exposition.",
+        "subtitle": "PrizeSkout est une infrastructure. Vos marchands voient votre produit. Nous restons en arrière-plan et maintenons le fonctionnement.",
+        "s1Title": "Licenciez l'infrastructure",
+        "s1Desc": "Une clé API de plateforme, délimitée à votre projet. Accédez aux 19 APIs en bac à sable sans limites de débit. Passez en production dans l'après-midi.",
+        "s2Title": "Intégrez sous votre marque",
+        "s2Desc": "Widgets en marque blanche, webhooks enrichis et clés délimitées, tous brandés à votre plateforme. Définissez powered_by_visible: false et disparaissez.",
+        "s3Title": "Lancez comme votre fonctionnalité",
+        "s3Desc": "Vos marchands voient « Tarification intelligente par [Votre Plateforme]. » Ils obtiennent l'intelligence. Vous obtenez le crédit. Nous obtenons les frais de licence."
+      },
+      "whiteLabel": {
+        "eyebrow": "Marque blanche par défaut",
+        "title": "Votre nom sur l'intelligence. Notre moteur en dessous.",
+        "subtitle": "Chaque surface alimentée par PrizeSkout peut porter votre marque. Vos marchands ne nous voient jamais. Vos acheteurs enterprise ne nous demandent jamais. Nous travaillons mieux quand nous sommes invisibles.",
+        "merchantSees": "Ce que voit votre marchand",
+        "smartPricing": "Tarification intelligente",
+        "poweredBy": "Propulsé par Votre Plateforme",
+        "priceRec": "Recommandation de prix :",
+        "competitorMoved": "Concurrent bougé · confiance 91%",
+        "priceComp": "Compétitivité du prix",
+        "electronics": "Électronique · marché Qatar",
+        "noMention": "Aucune mention de PrizeSkout nulle part",
+        "whatPowers": "Ce qui l'alimente"
+      },
+      "pillars": {
+        "eyebrow": "Le produit",
+        "title": "19 APIs. Quatre piliers. Une surface propre.",
+        "subtitle": "Chaque API est conçue pour s'ancrer profondément dans votre stack opérationnel, pas en surface où elle peut être remplacée.",
+        "p1Name": "Opérations tarifaires",
+        "p1Outcome": "Chaque prix, chaque canal, toujours synchronisé.",
+        "p2Name": "Intelligence commerciale",
+        "p2Outcome": "Recommandations IA qui protègent la marge et réagissent aux concurrents.",
+        "p3Name": "Événements commerciaux",
+        "p3Outcome": "Flux d'événements en temps réel sur lequel vos ingénieurs peuvent tout construire.",
+        "p4Name": "Infrastructure de plateforme",
+        "p4Outcome": "Multi-tenant, mesuré et gouverné — conçu pour les plateformes à grande échelle.",
+        "l1": "Synchronisation des prix omnicanaux",
+        "l2": "Moteur de règles tarifaires",
+        "l3": "Intelligence de marge",
+        "l4": "Orchestration des ventes flash",
+        "l5": "Moteur de tarification dynamique",
+        "l6": "Gouvernance et audit",
+        "l7": "Intention acheteur",
+        "l8": "Widget marque blanche",
+        "l9": "Firehose d'événements",
+        "l10": "Webhooks signés",
+        "l11": "Journal de replay d'événements",
+        "l12": "Pipeline d'enrichissement",
+        "l13": "Clés API délimitées",
+        "l14": "Mesure d'utilisation",
+        "l15": "Ops multi-tenant",
+        "l16": "Statut et santé"
+      },
+      "enterprise": {
+        "eyebrow": "Qualité enterprise",
+        "title": "Infrastructure sur laquelle vous pouvez miser un contrat enterprise",
+        "stat1Label": "APIs de production",
+        "stat2Label": "Réponse de repricing",
+        "stat3Label": "Arabic-first",
+        "stat4Label": "Construit pour la région"
+      },
+      "qstp": {
+        "backedBy": "Soutenu par",
+        "name": "Qatar Science & Technology Park",
+        "desc": "PrizeSkout est une entreprise soutenue par QSTP — le hub national du Qatar pour la technologie et l'innovation. Construit au Qatar, pour la région."
+      },
+      "cta": {
+        "title": "Obtenez les clés API. Disparaissez dans votre plateforme.",
+        "subtitle": "Gratuit en bac à sable. Pas de carte de crédit. Pas d'appel commercial.",
+        "cta1": "Obtenir les clés API",
+        "cta2": "Parler aux partenariats"
+      }
+    },
     "pricing": {
       "eyebrow": "Tarifs",
       "title": "Tarification simple et transparente.",

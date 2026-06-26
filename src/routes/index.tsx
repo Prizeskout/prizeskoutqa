@@ -4,6 +4,9 @@ import { ArrowRight, Zap, ShieldCheck, TrendingUp, Globe, Award } from "lucide-r
 import { useTranslation } from "react-i18next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
+// Shorthand used throughout this file
+function useT() { return useTranslation().t; }
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -77,6 +80,7 @@ const HERO_CODE = `// A competitor just dropped their price.
 }`;
 
 function Hero() {
+  const t = useT();
   return (
     <section
       style={{
@@ -114,7 +118,7 @@ function Hero() {
         className="ps-hero-grid"
       >
         <div className="ps-hero-copy">
-          <Eyebrow>Pricing infrastructure · GCC-native · Global-ready</Eyebrow>
+          <Eyebrow>{t("landing.home.hero.eyebrow")}</Eyebrow>
           <h1
             className="ps-hero-title"
             style={{
@@ -125,7 +129,7 @@ function Hero() {
               margin: "18px 0 0",
             }}
           >
-            The pricing brain behind retail.{" "}
+            {t("landing.home.hero.title1")}{" "}
             <span
               style={{
                 fontStyle: "normal",
@@ -135,7 +139,7 @@ function Hero() {
                 backgroundClip: "text",
               }}
             >
-              Invisible by design.
+              {t("landing.home.hero.title2")}
             </span>
           </h1>
 
@@ -149,7 +153,7 @@ function Hero() {
               fontSize: 16,
             }}
           >
-            License the APIs that decide, sync, and defend prices across every channel, under your brand, inside your platform, without PrizeSkout ever appearing.
+            {t("landing.home.hero.subtitle")}
           </p>
 
           <div
@@ -176,7 +180,7 @@ function Hero() {
                 boxShadow: "0 10px 28px rgba(234,88,12,0.32)",
               }}
             >
-              Get API keys, free
+              {t("landing.home.hero.cta1")}
               <ArrowRight size={14} />
             </Link>
             <Link
@@ -192,7 +196,7 @@ function Hero() {
                 textDecoration: "none",
               }}
             >
-              Talk to partnerships
+              {t("landing.home.hero.cta2")}
             </Link>
           </div>
 
@@ -211,8 +215,8 @@ function Hero() {
           >
             <Award size={13} color={ORANGE_LIGHT} strokeWidth={2} />
             <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(250,250,249,0.75)", letterSpacing: "0.02em" }}>
-              Backed by{" "}
-              <span style={{ color: TEXT }}>Qatar Science &amp; Technology Park (QSTP)</span>
+              {t("landing.home.hero.backedBy")}{" "}
+              <span style={{ color: TEXT }}>{t("landing.home.hero.qstp")}</span>
             </span>
           </div>
         </div>
@@ -298,12 +302,13 @@ function Hero() {
    ========================================================================= */
 
 function TrustStrip() {
+  const t = useT();
   const pills = [
-    "Ecommerce platforms",
-    "Mall operators",
-    "Omnichannel retailers",
-    "Consumer brands",
-    "Delivery apps",
+    t("landing.home.trust.pill1"),
+    t("landing.home.trust.pill2"),
+    t("landing.home.trust.pill3"),
+    t("landing.home.trust.pill4"),
+    t("landing.home.trust.pill5"),
   ];
   return (
     <section
@@ -326,7 +331,7 @@ function TrustStrip() {
             marginBottom: 18,
           }}
         >
-          Built for platforms, malls, and retailers across GCC
+          {t("landing.home.trust.label")}
         </div>
         <div
           style={{
@@ -361,30 +366,15 @@ function TrustStrip() {
    PARTNER BENEFITS — what brands and platforms unlock
    ========================================================================= */
 
-const PARTNER_BENEFITS = [
-  {
-    Icon: Zap,
-    title: "Launch pricing as a feature in days",
-    desc: "19 production APIs, a sandbox, and full documentation on day one. No research sprint, no build-from-scratch. Your engineers integrate; we run the infrastructure.",
-  },
-  {
-    Icon: ShieldCheck,
-    title: "Your brand on every surface",
-    desc: "Recommendations, widgets, and data carry your logo — not ours. Set powered_by_visible: false and PrizeSkout disappears completely. Merchants trust you more.",
-  },
-  {
-    Icon: TrendingUp,
-    title: "Win enterprise deals you couldn't close before",
-    desc: "Procurement teams ask for audit trails, MAP monitoring, and compliance dashboards. We build that layer. You walk in with proof. You get the contract.",
-  },
-  {
-    Icon: Globe,
-    title: "GCC-native from the ground up",
-    desc: "Arabic-first UI, QAR/SAR/AED pricing norms, and live data coverage across Qatar, UAE, and KSA. Not a Western product adapted for the region — built here.",
-  },
-];
+const PARTNER_BENEFIT_ICONS = [Zap, ShieldCheck, TrendingUp, Globe];
 
 function PartnerBenefits() {
+  const t = useT();
+  const benefits = [1, 2, 3, 4].map((n) => ({
+    Icon: PARTNER_BENEFIT_ICONS[n - 1],
+    title: t(`landing.home.benefits.b${n}Title`),
+    desc: t(`landing.home.benefits.b${n}Desc`),
+  }));
   return (
     <section
       style={{
@@ -397,17 +387,17 @@ function PartnerBenefits() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
-          <Eyebrow>For brands and platforms</Eyebrow>
+          <Eyebrow>{t("landing.home.benefits.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{ color: TEXT, marginTop: 14 }}
           >
-            One licence. Four things you unlock immediately.
+            {t("landing.home.benefits.title")}
           </h2>
         </div>
 
         <div className="ps-benefits-grid" style={{ display: "grid", gap: 16 }}>
-          {PARTNER_BENEFITS.map(({ Icon, title, desc }) => (
+          {benefits.map(({ Icon, title, desc }) => (
             <div
               key={title}
               style={{
@@ -465,23 +455,12 @@ function PartnerBenefits() {
    ========================================================================= */
 
 function ProblemSection() {
-  const pains = [
-    {
-      n: "Pain 01",
-      title: "Your merchants lose sales to competitors who repriced six hours ago",
-      desc: "Without real-time intelligence, every merchant on your platform is flying blind while their rivals react to market moves in minutes.",
-    },
-    {
-      n: "Pain 02",
-      title: "Prices are wrong on Talabat but right on the website. Again.",
-      desc: "Omnichannel price inconsistency destroys trust and margin simultaneously. No platform has solved this natively. PrizeSkout does it in one API call.",
-    },
-    {
-      n: "Pain 03",
-      title: "Enterprise deals stall because you cannot show pricing governance",
-      desc: "Large retailers and brands need audit trails, compliance reports, and MAP monitoring. Your platform has none of it. PrizeSkout builds it in.",
-    },
-  ];
+  const t = useT();
+  const pains = [1, 2, 3].map((n) => ({
+    n: t(`landing.home.problem.p${n}n`),
+    title: t(`landing.home.problem.p${n}Title`),
+    desc: t(`landing.home.problem.p${n}Desc`),
+  }));
 
   return (
     <section
@@ -493,7 +472,7 @@ function ProblemSection() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ marginBottom: 48, maxWidth: 760 }}>
-          <Eyebrow color={ORANGE}>The problem</Eyebrow>
+          <Eyebrow color={ORANGE}>{t("landing.home.problem.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{
@@ -503,7 +482,7 @@ function ProblemSection() {
               letterSpacing: "-0.02em",
             }}
           >
-            Your platform is powerful. Pricing is still a spreadsheet.
+            {t("landing.home.problem.title")}
           </h2>
           <p
             style={{
@@ -513,7 +492,7 @@ function ProblemSection() {
               marginTop: 18,
             }}
           >
-            Your merchants are competing against platforms that reprice automatically, respond to competitors in real time, and run intelligent promotions without a team. You can give them that. Without building it yourself.
+            {t("landing.home.problem.subtitle")}
           </p>
         </div>
 
@@ -583,22 +562,11 @@ function ProblemSection() {
    ========================================================================= */
 
 function HowItWorks() {
+  const t = useT();
   const steps = [
-    {
-      n: "01",
-      title: "License the infrastructure",
-      desc: "One platform API key, scoped to your project. Access all 19 APIs in sandbox with no rate limits. Go live in an afternoon.",
-    },
-    {
-      n: "02",
-      title: "Embed under your brand",
-      desc: "White-label widgets, enriched webhooks, and scoped keys, all branded to your platform. Set powered_by_visible: false and disappear.",
-    },
-    {
-      n: "03",
-      title: "Launch as your feature",
-      desc: 'Your merchants see "Smart Pricing by [Your Platform]." They get the intelligence. You get the credit. We get the licence fee.',
-    },
+    { n: "01", title: t("landing.home.howItWorks.s1Title"), desc: t("landing.home.howItWorks.s1Desc") },
+    { n: "02", title: t("landing.home.howItWorks.s2Title"), desc: t("landing.home.howItWorks.s2Desc") },
+    { n: "03", title: t("landing.home.howItWorks.s3Title"), desc: t("landing.home.howItWorks.s3Desc") },
   ];
 
   return (
@@ -612,12 +580,12 @@ function HowItWorks() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
-          <Eyebrow>How it works</Eyebrow>
+          <Eyebrow>{t("landing.home.howItWorks.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{ color: TEXT, marginTop: 14 }}
           >
-            One licence. Three steps. Zero exposure.
+            {t("landing.home.howItWorks.title")}
           </h2>
           <p
             style={{
@@ -628,7 +596,7 @@ function HowItWorks() {
               margin: "16px auto 0",
             }}
           >
-            PrizeSkout is infrastructure. Your merchants see your product. We stay in the background and keep it running.
+            {t("landing.home.howItWorks.subtitle")}
           </p>
         </div>
 
@@ -700,45 +668,46 @@ function HowItWorks() {
    ========================================================================= */
 
 function ProductPillars() {
+  const t = useT();
   const pillars = [
     {
-      name: "Price operations",
-      outcome: "Every price, every channel, always in sync.",
+      name: t("landing.home.pillars.p1Name"),
+      outcome: t("landing.home.pillars.p1Outcome"),
       apis: [
-        { method: "POST", path: "/v1/sync", label: "Omnichannel Price Sync" },
-        { method: "POST", path: "/v1/rules", label: "Price Rules Engine" },
-        { method: "GET", path: "/v1/margin", label: "Margin Intelligence" },
-        { method: "POST", path: "/v1/flash", label: "Flash Sale Orchestration" },
+        { method: "POST", path: "/v1/sync", label: t("landing.home.pillars.l1") },
+        { method: "POST", path: "/v1/rules", label: t("landing.home.pillars.l2") },
+        { method: "GET", path: "/v1/margin", label: t("landing.home.pillars.l3") },
+        { method: "POST", path: "/v1/flash", label: t("landing.home.pillars.l4") },
       ],
     },
     {
-      name: "Commerce intelligence",
-      outcome: "AI recommendations that protect margin and react to competitors.",
+      name: t("landing.home.pillars.p2Name"),
+      outcome: t("landing.home.pillars.p2Outcome"),
       apis: [
-        { method: "POST", path: "/v1/dynprice", label: "Dynamic Pricing Engine" },
-        { method: "GET", path: "/v1/audit", label: "Governance & Audit" },
-        { method: "POST", path: "/v1/intent", label: "Shopper Intent" },
-        { method: "POST", path: "/v1/embed", label: "White-Label Embed" },
+        { method: "POST", path: "/v1/dynprice", label: t("landing.home.pillars.l5") },
+        { method: "GET", path: "/v1/audit", label: t("landing.home.pillars.l6") },
+        { method: "POST", path: "/v1/intent", label: t("landing.home.pillars.l7") },
+        { method: "POST", path: "/v1/embed", label: t("landing.home.pillars.l8") },
       ],
     },
     {
-      name: "Commerce events",
-      outcome: "Real-time event stream your engineers can build anything on top of.",
+      name: t("landing.home.pillars.p3Name"),
+      outcome: t("landing.home.pillars.p3Outcome"),
       apis: [
-        { method: "POST", path: "/v1/events", label: "Event Firehose" },
-        { method: "POST", path: "/v1/webhooks", label: "Signed Webhooks" },
-        { method: "GET", path: "/v1/replay", label: "Event Replay Log" },
-        { method: "POST", path: "/v1/enrich", label: "Enrichment Pipeline" },
+        { method: "POST", path: "/v1/events", label: t("landing.home.pillars.l9") },
+        { method: "POST", path: "/v1/webhooks", label: t("landing.home.pillars.l10") },
+        { method: "GET", path: "/v1/replay", label: t("landing.home.pillars.l11") },
+        { method: "POST", path: "/v1/enrich", label: t("landing.home.pillars.l12") },
       ],
     },
     {
-      name: "Platform infrastructure",
-      outcome: "Multi-tenant, metered, and governed — built for platforms at scale.",
+      name: t("landing.home.pillars.p4Name"),
+      outcome: t("landing.home.pillars.p4Outcome"),
       apis: [
-        { method: "POST", path: "/v1/keys", label: "Scoped API Keys" },
-        { method: "GET", path: "/v1/usage", label: "Usage Metering" },
-        { method: "POST", path: "/v1/tenants", label: "Multi-Tenant Ops" },
-        { method: "GET", path: "/v1/health", label: "Status & Health" },
+        { method: "POST", path: "/v1/keys", label: t("landing.home.pillars.l13") },
+        { method: "GET", path: "/v1/usage", label: t("landing.home.pillars.l14") },
+        { method: "POST", path: "/v1/tenants", label: t("landing.home.pillars.l15") },
+        { method: "GET", path: "/v1/health", label: t("landing.home.pillars.l16") },
       ],
     },
   ];
@@ -755,12 +724,12 @@ function ProductPillars() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ marginBottom: 48, maxWidth: 760 }}>
-          <Eyebrow>The product</Eyebrow>
+          <Eyebrow>{t("landing.home.pillars.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{ color: TEXT, marginTop: 14 }}
           >
-            19 APIs. Four pillars. One clean surface.
+            {t("landing.home.pillars.title")}
           </h2>
           <p
             style={{
@@ -770,7 +739,7 @@ function ProductPillars() {
               marginTop: 16,
             }}
           >
-            Every API is designed to sit deep in your operational stack, not on the surface where it can be replaced.
+            {t("landing.home.pillars.subtitle")}
           </p>
         </div>
 
@@ -869,6 +838,7 @@ function ProductPillars() {
    ========================================================================= */
 
 function WhiteLabelSection() {
+  const t = useT();
   return (
     <section
       style={{
@@ -880,12 +850,12 @@ function WhiteLabelSection() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56, maxWidth: 760, marginLeft: "auto", marginRight: "auto" }}>
-          <Eyebrow>White-label by default</Eyebrow>
+          <Eyebrow>{t("landing.home.whiteLabel.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{ color: TEXT, marginTop: 14 }}
           >
-            Your name on the intelligence. Our engine underneath.
+            {t("landing.home.whiteLabel.title")}
           </h2>
           <p
             style={{
@@ -895,7 +865,7 @@ function WhiteLabelSection() {
               marginTop: 16,
             }}
           >
-            Every surface PrizeSkout powers can carry your brand. Your merchants never see us. Your enterprise buyers never ask about us. We work best when we are invisible.
+            {t("landing.home.whiteLabel.subtitle")}
           </p>
         </div>
 
@@ -919,7 +889,7 @@ function WhiteLabelSection() {
                 marginBottom: 20,
               }}
             >
-              What your merchant sees
+              {t("landing.home.whiteLabel.merchantSees")}
             </div>
             <div
               style={{
@@ -931,13 +901,13 @@ function WhiteLabelSection() {
               }}
             >
               <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 6 }}>
-                Smart Pricing
+                {t("landing.home.whiteLabel.smartPricing")}
               </div>
               <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 18 }}>
-                Powered by Your Platform
+                {t("landing.home.whiteLabel.poweredBy")}
               </div>
               <div style={{ fontSize: 13, color: "#1A1A18", marginBottom: 4 }}>
-                Price recommendation:
+                {t("landing.home.whiteLabel.priceRec")}
               </div>
               <div
                 style={{
@@ -951,7 +921,7 @@ function WhiteLabelSection() {
                 QAR 455
               </div>
               <div style={{ fontSize: 12, color: "#6B7280" }}>
-                Competitor moved · confidence 91%
+                {t("landing.home.whiteLabel.competitorMoved")}
               </div>
             </div>
             <div
@@ -963,13 +933,13 @@ function WhiteLabelSection() {
               }}
             >
               <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 6 }}>
-                Price competitiveness
+                {t("landing.home.whiteLabel.priceComp")}
               </div>
               <div style={{ fontSize: 22, fontWeight: 700, color: "#1A1A18" }}>
                 Top 18%
               </div>
               <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>
-                Electronics · Qatar market
+                {t("landing.home.whiteLabel.electronics")}
               </div>
             </div>
             <div
@@ -981,7 +951,7 @@ function WhiteLabelSection() {
                 textAlign: "center",
               }}
             >
-              No mention of PrizeSkout anywhere
+              {t("landing.home.whiteLabel.noMention")}
             </div>
           </div>
 
@@ -1004,7 +974,7 @@ function WhiteLabelSection() {
                 marginBottom: 20,
               }}
             >
-              What is powering it
+              {t("landing.home.whiteLabel.whatPowers")}
             </div>
             <pre
               style={{
@@ -1049,11 +1019,12 @@ function WhiteLabelSection() {
    ========================================================================= */
 
 function EnterpriseStats() {
+  const t = useT();
   const stats = [
-    { value: "19", label: "Production APIs" },
-    { value: "<2s", label: "Repricing response" },
-    { value: "AR + EN", label: "Arabic-first" },
-    { value: "GCC", label: "Built for the region" },
+    { value: "19", label: t("landing.home.enterprise.stat1Label") },
+    { value: "<2s", label: t("landing.home.enterprise.stat2Label") },
+    { value: "AR + EN", label: t("landing.home.enterprise.stat3Label") },
+    { value: "GCC", label: t("landing.home.enterprise.stat4Label") },
   ];
 
   return (
@@ -1067,12 +1038,12 @@ function EnterpriseStats() {
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
-          <Eyebrow>Enterprise grade</Eyebrow>
+          <Eyebrow>{t("landing.home.enterprise.eyebrow")}</Eyebrow>
           <h2
             className="ps-section-title"
             style={{ color: TEXT, marginTop: 14 }}
           >
-            Infrastructure you can stake an enterprise deal on
+            {t("landing.home.enterprise.title")}
           </h2>
         </div>
 
@@ -1122,6 +1093,7 @@ function EnterpriseStats() {
    ========================================================================= */
 
 function QSTPSection() {
+  const t = useT();
   return (
     <section
       style={{
@@ -1190,7 +1162,7 @@ function QSTPSection() {
             marginBottom: 14,
           }}
         >
-          Backed by
+          {t("landing.home.qstp.backedBy")}
         </div>
 
         {/* Name */}
@@ -1204,7 +1176,7 @@ function QSTPSection() {
             margin: "0 0 16px",
           }}
         >
-          Qatar Science &amp; Technology Park
+          {t("landing.home.qstp.name")}
         </h2>
 
         {/* Description */}
@@ -1217,8 +1189,7 @@ function QSTPSection() {
             margin: 0,
           }}
         >
-          PrizeSkout is a QSTP-backed company — Qatar's national hub for
-          technology and innovation. Built in Qatar, for the region.
+          {t("landing.home.qstp.desc")}
         </p>
       </div>
     </section>
@@ -1426,6 +1397,7 @@ function PricingSection() {
    ========================================================================= */
 
 function FinalCTA() {
+  const t = useT();
   return (
     <section
       style={{
@@ -1462,7 +1434,7 @@ function FinalCTA() {
         }}
       >
         <h2 className="ps-section-title" style={{ color: TEXT }}>
-          Get the API keys. Disappear inside your platform.
+          {t("landing.home.cta.title")}
         </h2>
         <p
           style={{
@@ -1472,7 +1444,7 @@ function FinalCTA() {
             marginTop: 18,
           }}
         >
-          Free in sandbox. No credit card. No sales call.
+          {t("landing.home.cta.subtitle")}
         </p>
         <div
           style={{
@@ -1499,7 +1471,7 @@ function FinalCTA() {
               boxShadow: "0 10px 28px rgba(234,88,12,0.32)",
             }}
           >
-            Get API keys
+            {t("landing.home.cta.cta1")}
             <ArrowRight size={14} />
           </Link>
           <Link
@@ -1515,7 +1487,7 @@ function FinalCTA() {
               textDecoration: "none",
             }}
           >
-            Talk to partnerships
+            {t("landing.home.cta.cta2")}
           </Link>
         </div>
       </div>
