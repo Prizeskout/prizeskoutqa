@@ -623,7 +623,7 @@ function Footer() {
             © {new Date().getFullYear()} PrizeSkout. All rights reserved. Qatar
           </span>
           <div style={{ display: "inline-flex", flexWrap: "wrap", gap: 8 }}>
-            {["SOC 2 Type II", "99.95% uptime", "GCC residency"].map((badge) => (
+            {["99.95% uptime", "GCC residency"].map((badge) => (
               <span
                 key={badge}
                 style={{
