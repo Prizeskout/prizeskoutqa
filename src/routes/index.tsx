@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 import qstpMonogram from "@/assets/qstp-monogram-white.png";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
+import qatarFoundationLogo from "@/assets/qatar-foundation-logo.png";
 
 // Shorthand used throughout this file
 function useT() { return useTranslation().t; }
@@ -202,20 +203,22 @@ function Hero() {
             </Link>
           </div>
 
-          {/* QSTP trust badge */}
+          {/* Backers trust badge */}
           <div
             style={{
               marginTop: 28,
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: 10,
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.10)",
               borderRadius: 999,
-              padding: "7px 14px",
+              padding: "7px 16px",
             }}
           >
             <img src={qstpMonogram} alt="QSTP" style={{ height: 18, width: 18, objectFit: "contain" }} />
+            <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.18)", flexShrink: 0 }} />
+            <img src={qatarFoundationLogo} alt="Qatar Foundation" style={{ height: 16, width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.85 }} />
             <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(250,250,249,0.75)", letterSpacing: "0.02em" }}>
               {t("landing.home.hero.backedBy")}{" "}
               <span style={{ color: TEXT }}>{t("landing.home.hero.qstp")}</span>
@@ -1150,24 +1153,42 @@ function QSTPSection() {
           {t("landing.home.qstp.backedBy")}
         </div>
 
-        {/* QSTP Logo */}
-        <div
-          style={{
-            background: "rgba(255,255,255,0.97)",
-            borderRadius: 14,
-            padding: "14px 28px",
-            marginBottom: 22,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
-          }}
-        >
-          <img
-            src={qstpLogoColored}
-            alt="Qatar Science & Technology Park"
-            style={{ height: 52, width: "auto", display: "block" }}
-          />
+        {/* Backer logos */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 22, flexWrap: "wrap", justifyContent: "center" }}>
+          <div
+            style={{
+              background: "rgba(255,255,255,0.97)",
+              borderRadius: 14,
+              padding: "14px 28px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
+            }}
+          >
+            <img
+              src={qstpLogoColored}
+              alt="Qatar Science & Technology Park"
+              style={{ height: 52, width: "auto", display: "block" }}
+            />
+          </div>
+          <div
+            style={{
+              background: "rgba(255,255,255,0.97)",
+              borderRadius: 14,
+              padding: "14px 28px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
+            }}
+          >
+            <img
+              src={qatarFoundationLogo}
+              alt="Qatar Foundation"
+              style={{ height: 52, width: "auto", display: "block" }}
+            />
+          </div>
         </div>
 
         {/* Description */}

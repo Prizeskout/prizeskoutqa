@@ -295,7 +295,7 @@
         "cta1": "Get API keys, free",
         "cta2": "Talk to partnerships",
         "backedBy": "Backed by",
-        "qstp": "Qatar Science & Technology Park (QSTP)"
+        "qstp": "QSTP & Qatar Foundation"
       },
       "trust": {
         "label": "Built for platforms, malls, and retailers across GCC",
@@ -394,9 +394,9 @@
         "stat4Label": "Built for the region"
       },
       "qstp": {
-        "backedBy": "Backed by",
+        "backedBy": "Our Backers",
         "name": "Qatar Science & Technology Park",
-        "desc": "PrizeSkout is a QSTP-backed company — Qatar's national hub for technology and innovation. Built in Qatar, for the region."
+        "desc": "PrizeSkout is backed by QSTP and Qatar Foundation — Qatar's leading institutions for technology, innovation, and national development. Built in Qatar, for the region."
       },
       "cta": {
         "title": "Get the API keys. Disappear inside your platform.",
