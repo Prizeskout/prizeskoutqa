@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ArrowRight, Zap, ShieldCheck, TrendingUp, Globe, Award } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, TrendingUp, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
+import qstpMonogram from "@/assets/qstp-monogram-white.png";
+import qstpLogoColored from "@/assets/qstp-logo-colored.png";
 
 // Shorthand used throughout this file
 function useT() { return useTranslation().t; }
@@ -213,7 +215,7 @@ function Hero() {
               padding: "7px 14px",
             }}
           >
-            <Award size={13} color={ORANGE_LIGHT} strokeWidth={2} />
+            <img src={qstpMonogram} alt="QSTP" style={{ height: 18, width: 18, objectFit: "contain" }} />
             <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(250,250,249,0.75)", letterSpacing: "0.02em" }}>
               {t("landing.home.hero.backedBy")}{" "}
               <span style={{ color: TEXT }}>{t("landing.home.hero.qstp")}</span>
@@ -1134,23 +1136,6 @@ function QSTPSection() {
           gap: 0,
         }}
       >
-        {/* Icon */}
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 14,
-            background: "rgba(234,88,12,0.10)",
-            border: "1px solid rgba(234,88,12,0.30)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 20,
-          }}
-        >
-          <Award size={24} color={ORANGE_LIGHT} strokeWidth={1.75} />
-        </div>
-
         {/* Eyebrow */}
         <div
           style={{
@@ -1159,25 +1144,31 @@ function QSTPSection() {
             letterSpacing: "0.12em",
             textTransform: "uppercase",
             color: ORANGE_LIGHT,
-            marginBottom: 14,
+            marginBottom: 20,
           }}
         >
           {t("landing.home.qstp.backedBy")}
         </div>
 
-        {/* Name */}
-        <h2
+        {/* QSTP Logo */}
+        <div
           style={{
-            fontSize: "clamp(22px, 4vw, 34px)",
-            fontWeight: 700,
-            color: TEXT,
-            letterSpacing: "-0.02em",
-            lineHeight: 1.2,
-            margin: "0 0 16px",
+            background: "rgba(255,255,255,0.97)",
+            borderRadius: 14,
+            padding: "14px 28px",
+            marginBottom: 22,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
           }}
         >
-          {t("landing.home.qstp.name")}
-        </h2>
+          <img
+            src={qstpLogoColored}
+            alt="Qatar Science & Technology Park"
+            style={{ height: 52, width: "auto", display: "block" }}
+          />
+        </div>
 
         {/* Description */}
         <p
