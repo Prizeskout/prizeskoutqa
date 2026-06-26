@@ -1,65 +1,149 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useContext, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { applyLocale, type Locale } from "@/lib/i18n";
+import { applyLocale, getStoredLocale, LOCALE_NAMES, type Locale } from "@/lib/i18n";
+import { GeoSuggestionContext } from "@/lib/lang-suggestion";
 import logoDark from "@/assets/logo-dark.svg";
 
-const LANGS: { code: Locale; label: string }[] = [
-  { code: "en", label: "EN" },
-  { code: "ar", label: "AR" },
-  { code: "fr", label: "FR" },
-];
+const LANG_CODES: Locale[] = ["en", "ar", "fr"];
 
 function LangSwitcher({ compact }: { compact?: boolean }) {
   const { i18n } = useTranslation();
-  const active = i18n.language.slice(0, 2);
+  const geo = useContext(GeoSuggestionContext);
+  const active = (i18n.language.slice(0, 2) ?? "en") as Locale;
+  const [open, setOpen] = useState(false);
+
+  // Restore stored locale on mount so language choice survives page reloads
+  useEffect(() => {
+    const stored = getStoredLocale();
+    if (stored !== i18n.language.slice(0, 2)) {
+      i18n.changeLanguage(stored);
+      applyLocale(stored);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
 
   function switchLang(code: Locale) {
     i18n.changeLanguage(code);
-    applyLocale(code); // persists choice to localStorage + updates dir/lang attrs
+    applyLocale(code);
+    setOpen(false);
   }
 
   return (
     <div
-      style={{
-        display: "inline-flex",
-        gap: 2,
-        background: "#0A0A0A",
-        border: "1px solid #1A1A1A",
-        borderRadius: 8,
-        padding: 2,
-        ...(compact ? {} : {}),
-      }}
+      style={{ display: "inline-flex", alignItems: "center", gap: compact ? 6 : 10 }}
+      onMouseDown={(e) => e.stopPropagation()}
     >
-      {LANGS.map(({ code, label }) => (
+      {!compact && (
+        <span style={{ fontSize: 11, color: "#6B6B6B", whiteSpace: "nowrap" }}>
+          Choose your language
+        </span>
+      )}
+      <div style={{ position: "relative" }}>
         <button
-          key={code}
-          onClick={() => switchLang(code)}
+          onClick={() => setOpen((v) => !v)}
           style={{
-            background: active === code ? "#1A1A1A" : "transparent",
-            border: "none",
-            borderRadius: 6,
-            color: active === code ? "#FAFAF9" : "#6B6B6B",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            background: "#0A0A0A",
+            border: "1px solid #1A1A1A",
+            borderRadius: 8,
+            color: "#FAFAF9",
             cursor: "pointer",
             fontSize: 11,
             fontWeight: 600,
-            letterSpacing: "0.06em",
-            padding: compact ? "4px 7px" : "5px 9px",
-            transition: "background 0.15s, color 0.15s",
+            padding: compact ? "4px 9px" : "5px 11px",
+            transition: "border-color 0.15s",
           }}
-          onMouseEnter={(e) => {
-            if (active !== code) e.currentTarget.style.color = "#A8A8A8";
-          }}
-          onMouseLeave={(e) => {
-            if (active !== code) e.currentTarget.style.color = "#6B6B6B";
-          }}
-          aria-label={`Switch language to ${code.toUpperCase()}`}
-          aria-pressed={active === code}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2A2A2A"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1A1A1A"; }}
+          aria-haspopup="listbox"
+          aria-expanded={open}
         >
-          {label}
+          {LOCALE_NAMES[active] ?? "English"}
+          <ChevronDown
+            size={11}
+            style={{
+              color: "#6B6B6B",
+              transform: open ? "rotate(180deg)" : "none",
+              transition: "transform 0.15s",
+            }}
+          />
         </button>
-      ))}
+        {open && (
+          <div
+            role="listbox"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 4px)",
+              right: 0,
+              background: "#0A0A0A",
+              border: "1px solid #1A1A1A",
+              borderRadius: 8,
+              padding: 4,
+              zIndex: 200,
+              minWidth: 120,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+            }}
+          >
+            {LANG_CODES.map((code) => {
+              const isActive = active === code;
+              const isSuggested = geo.suggestedLocale === code && !isActive;
+              return (
+                <button
+                  key={code}
+                  role="option"
+                  aria-selected={isActive}
+                  onClick={() => switchLang(code)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    background: isActive ? "#1A1A1A" : "transparent",
+                    border: "none",
+                    borderRadius: 6,
+                    color: isActive ? "#FAFAF9" : "#A8A8A8",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: isActive ? 600 : 400,
+                    padding: "7px 10px",
+                    textAlign: "left",
+                    transition: "background 0.1s, color 0.1s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "#111";
+                      e.currentTarget.style.color = "#FAFAF9";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "#A8A8A8";
+                    }
+                  }}
+                >
+                  {LOCALE_NAMES[code]}
+                  {isSuggested && (
+                    <span style={{ fontSize: 9, color: "#EA580C", fontWeight: 600, letterSpacing: "0.04em" }}>
+                      Suggested
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
