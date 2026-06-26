@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, type ReactNode } from "react";
+import { useEffect, useState, useContext, useRef, type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ function LangSwitcher({ compact }: { compact?: boolean }) {
   const geo = useContext(GeoSuggestionContext);
   const active = (i18n.language.slice(0, 2) ?? "en") as Locale;
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Restore stored locale on mount so language choice survives page reloads
   useEffect(() => {
@@ -23,11 +24,17 @@ function LangSwitcher({ compact }: { compact?: boolean }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Close on outside click using a click listener (not mousedown) so dropdown
+  // items receive their onClick before the document handler fires.
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
+    const close = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
   }, [open]);
 
   function switchLang(code: Locale) {
@@ -38,8 +45,8 @@ function LangSwitcher({ compact }: { compact?: boolean }) {
 
   return (
     <div
+      ref={containerRef}
       style={{ display: "inline-flex", alignItems: "center", gap: compact ? 6 : 10 }}
-      onMouseDown={(e) => e.stopPropagation()}
     >
       {!compact && (
         <span style={{ fontSize: 11, color: "#6B6B6B", whiteSpace: "nowrap" }}>
