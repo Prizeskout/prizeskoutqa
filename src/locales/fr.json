@@ -1,9 +1,13 @@
 {
   "nav": {
     "groups": {
+      "controlPlane": "Plan de contrôle",
       "developers": "Développeurs",
       "intelligence": "Intelligence"
     },
+    "revenueHub": "Hub Revenus",
+    "policyEngine": "Moteur de politiques",
+    "integrationVault": "Coffre d'intégrations",
     "overview": "Vue d'ensemble",
     "apiKeys": "Clés API",
     "apiExplorer": "Explorateur API",
@@ -286,6 +290,55 @@
   },
   "landing": {
     "langSwitcher": "Langue",
+    "infra": {
+      "nav": { "infrastructure": "Infrastructure", "loop": "Boucle", "latency": "Latence", "docs": "Docs", "generateKeys": "Générer des clés" },
+      "hero": {
+        "eyebrow": "PRIZESKOUT // INFRASTRUCTURE TARIFAIRE",
+        "title": "La couche d'infrastructure tarifaire pour le commerce GCC.",
+        "subtitle": "Arrêtez de gérer l'enfer des API et les dépendances de scraping. Déployez un middleware événementiel sans serveur qui synchronise, calcule et défend les marges marchandes sur toutes les plateformes régionales — instantanément.",
+        "tagline": "Boucle de retarification < 2s · Licencié QFC · Qatar · EAU · Arabie Saoudite",
+        "cta1": "Générer des clés API →", "cta2": "Lire la doc SDK",
+        "stat1Label": "budget aller-retour", "stat2Label": "SLA de livraison", "stat3Label": "surfaces API"
+      },
+      "backedBy": "Soutenu par",
+      "surface": {
+        "sectionLabel": "[ 02 ] — QUATRE SURFACES API", "title": "La matrice des surfaces d'infrastructure",
+        "subtitle": "Un contrat. Quatre primitives. Chaque décision de marge acheminée via la même colonne événementielle.",
+        "syncName": "Sync", "syncBadge": "INGESTION EN TEMPS RÉEL", "syncDesc": "Normalisez les charges SAP S/4HANA et Salla en un seul événement de tarification canonique à la périphérie.",
+        "decideName": "Décider", "decideBadge": "MOTEUR DE MARGE", "decideDesc": "L'évaluation JSON en ligne résout la commission de la plateforme régionale contre votre seuil de marge nette en mémoire.",
+        "defendName": "Défendre", "defendBadge": "BOUCLE AUTOMATISÉE", "defendDesc": "Une baisse de prix d'un concurrent déclenche une mise à jour automatique sur les marchés Talabat et Jahez.",
+        "governName": "Gouverner", "governBadge": "AUDIT SOUVERAIN", "governDesc": "Un journal de conformité cryptographique bilingue cartographie le routage transfrontalier sous QFC et KSA PDPL."
+      },
+      "loop": {
+        "sectionLabel": "[ 03 ] — TRANSIT DE MESSAGES ASYNCHRONE", "title": "La boucle de retarification en moins de 2 secondes",
+        "eventLabel": "CYCLE DE VIE DE L'ÉVÉNEMENT", "inFlight": "en vol",
+        "node1Name": "Périphérie d'ingestion", "node1Sub": "Webhook Salla / Foodics",
+        "node2Name": "Courtier de flux", "node2Sub": "Partition Kafka / Redpanda",
+        "node3Name": "Moteur de règles", "node3Sub": "Calcul de marge Redis en mémoire",
+        "node4Name": "Routage réseau", "node4Sub": "Sortie Talabat / Jahez",
+        "complete": "TERMINÉ", "processing": "TRAITEMENT", "idle": "INACTIF"
+      },
+      "latency": {
+        "sectionLabel": "[ 04 ] — BUDGET DE LATENCE", "title": "Matrice d'assurance des performances", "p99": "P99 · SLA verrouillé",
+        "colNode": "NŒUD DE ROUTAGE", "colOp": "OPÉRATION", "colMax": "ALLOC MAX",
+        "r1Node": "Capture Hook d'ingestion", "r1Detail": "Réception Webhook + auth signature",
+        "r2Node": "Transit flux", "r2Detail": "Enqueue courtier + assignation partition",
+        "r3Node": "Normalisation charge", "r3Detail": "Mapping schéma canonique",
+        "r4Node": "Exécution règle de marge", "r4Detail": "Résolution commission en mémoire",
+        "r5Node": "Routage réseau en vol", "r5Detail": "Sortie API agrégateur",
+        "r6Node": "Tampon retry / ack", "r6Detail": "Fenêtre de confirmation idempotente",
+        "totalLabel": "Budget total aller-retour · verrouillé"
+      },
+      "deploy": {
+        "sectionLabel": "[ 05 ] — DÉPLOIEMENT", "title": "Livrez la couche tarifaire en une commande.",
+        "subtitle": "Sans serveur, souverain régionalement et idempotent par défaut. Pas de scrapers. Pas d'enfer API.",
+        "copy": "COPIER", "copied": "COPIÉ ✓", "cta1": "Générer des clés API →", "cta2": "Lire la doc SDK",
+        "footerDesc": "Infrastructure tarifaire en temps réel pour le commerce numérique GCC. Middleware événementiel, souverain par conception.",
+        "footerLicense": "LICENCIÉ QFC · Doha · Qatar",
+        "col1": "ARCHITECTURE", "col2": "DÉVELOPPEURS", "col3": "LÉGAL & CONFORMITÉ",
+        "copyright": "© 2026 PrizeSkout Infrastructure. Qatar · EAU · Arabie Saoudite.", "tagline": "Conçu pour la périphérie GCC · <2s"
+      }
+    },
     "home": {
       "hero": {
         "eyebrow": "Infrastructure tarifaire · Natif GCC · Mondial",

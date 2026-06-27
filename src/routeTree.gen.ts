@@ -25,6 +25,7 @@ import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarginDashboardIndexRouteImport } from './routes/margin-dashboard.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as ProductsPromotionsRouteImport } from './routes/products.promotions'
 import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
 import { Route as ProductsMarketRouteImport } from './routes/products.market'
@@ -33,6 +34,7 @@ import { Route as ProductsCompetitorsRouteImport } from './routes/products.compe
 import { Route as MarginDashboardUploadRouteImport } from './routes/margin-dashboard.upload'
 import { Route as MarginDashboardSettingsRouteImport } from './routes/margin-dashboard.settings'
 import { Route as MarginDashboardItemsRouteImport } from './routes/margin-dashboard.items'
+import { Route as MarginDashboardDemoRouteImport } from './routes/margin-dashboard.demo'
 import { Route as MarginDashboardChannelsRouteImport } from './routes/margin-dashboard.channels'
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
@@ -40,11 +42,15 @@ import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DashboardWebhooksRouteImport } from './routes/dashboard.webhooks'
 import { Route as DashboardUsageRouteImport } from './routes/dashboard.usage'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardScenariosRouteImport } from './routes/dashboard.scenarios'
+import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
 import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
+import { Route as DashboardPolicyEngineRouteImport } from './routes/dashboard.policy-engine'
 import { Route as DashboardPlansRouteImport } from './routes/dashboard.plans'
 import { Route as DashboardMarketRouteImport } from './routes/dashboard.market'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardIntegrationVaultRouteImport } from './routes/dashboard.integration-vault'
 import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.field-intel'
 import { Route as DashboardConsoleRouteImport } from './routes/dashboard.console'
 import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
@@ -53,11 +59,13 @@ import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benc
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as DashboardScenariosIndexRouteImport } from './routes/dashboard.scenarios.index'
 import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
 import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
 import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.quickstart'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
+import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
@@ -150,6 +158,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const StoreSlugRoute = StoreSlugRouteImport.update({
+  id: '/store/$slug',
+  path: '/store/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsPromotionsRoute = ProductsPromotionsRouteImport.update({
   id: '/products/promotions',
   path: '/products/promotions',
@@ -190,6 +203,11 @@ const MarginDashboardItemsRoute = MarginDashboardItemsRouteImport.update({
   path: '/items',
   getParentRoute: () => MarginDashboardRoute,
 } as any)
+const MarginDashboardDemoRoute = MarginDashboardDemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => MarginDashboardRoute,
+} as any)
 const MarginDashboardChannelsRoute = MarginDashboardChannelsRouteImport.update({
   id: '/channels',
   path: '/channels',
@@ -225,6 +243,16 @@ const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardScenariosRoute = DashboardScenariosRouteImport.update({
+  id: '/scenarios',
+  path: '/scenarios',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRevenueHubRoute = DashboardRevenueHubRouteImport.update({
+  id: '/revenue-hub',
+  path: '/revenue-hub',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardPromotionsRoute = DashboardPromotionsRouteImport.update({
   id: '/promotions',
   path: '/promotions',
@@ -233,6 +261,11 @@ const DashboardPromotionsRoute = DashboardPromotionsRouteImport.update({
 const DashboardPricingRoute = DashboardPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPolicyEngineRoute = DashboardPolicyEngineRouteImport.update({
+  id: '/policy-engine',
+  path: '/policy-engine',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardPlansRoute = DashboardPlansRouteImport.update({
@@ -250,6 +283,12 @@ const DashboardLogsRoute = DashboardLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardIntegrationVaultRoute =
+  DashboardIntegrationVaultRouteImport.update({
+    id: '/integration-vault',
+    path: '/integration-vault',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardFieldIntelRoute = DashboardFieldIntelRouteImport.update({
   id: '/field-intel',
   path: '/field-intel',
@@ -290,6 +329,11 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardScenariosIndexRoute = DashboardScenariosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardScenariosRoute,
+} as any)
 const DashboardConsoleIndexRoute = DashboardConsoleIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -316,6 +360,11 @@ const DocsGuidesAuthenticationRoute =
     path: '/authentication',
     getParentRoute: () => DocsGuidesRoute,
   } as any)
+const DashboardScenariosSlugRoute = DashboardScenariosSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => DashboardScenariosRoute,
+} as any)
 const DashboardConsoleTenantsRoute = DashboardConsoleTenantsRouteImport.update({
   id: '/tenants',
   path: '/tenants',
@@ -401,11 +450,15 @@ export interface FileRoutesByFullPath {
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/console': typeof DashboardConsoleRouteWithChildren
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/integration-vault': typeof DashboardIntegrationVaultRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
   '/dashboard/plans': typeof DashboardPlansRoute
+  '/dashboard/policy-engine': typeof DashboardPolicyEngineRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
+  '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
+  '/dashboard/scenarios': typeof DashboardScenariosRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
@@ -413,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
+  '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
   '/margin-dashboard/items': typeof MarginDashboardItemsRoute
   '/margin-dashboard/settings': typeof MarginDashboardSettingsRoute
   '/margin-dashboard/upload': typeof MarginDashboardUploadRoute
@@ -421,15 +475,18 @@ export interface FileRoutesByFullPath {
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
+  '/store/$slug': typeof StoreSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
+  '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
+  '/dashboard/scenarios/': typeof DashboardScenariosIndexRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -460,11 +517,14 @@ export interface FileRoutesByTo {
   '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/integration-vault': typeof DashboardIntegrationVaultRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
   '/dashboard/plans': typeof DashboardPlansRoute
+  '/dashboard/policy-engine': typeof DashboardPolicyEngineRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
+  '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
@@ -472,6 +532,7 @@ export interface FileRoutesByTo {
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
+  '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
   '/margin-dashboard/items': typeof MarginDashboardItemsRoute
   '/margin-dashboard/settings': typeof MarginDashboardSettingsRoute
   '/margin-dashboard/upload': typeof MarginDashboardUploadRoute
@@ -480,15 +541,18 @@ export interface FileRoutesByTo {
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
+  '/store/$slug': typeof StoreSlugRoute
   '/dashboard': typeof DashboardIndexRoute
   '/margin-dashboard': typeof MarginDashboardIndexRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
+  '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
+  '/dashboard/scenarios': typeof DashboardScenariosIndexRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -523,11 +587,15 @@ export interface FileRoutesById {
   '/dashboard/competitors': typeof DashboardCompetitorsRoute
   '/dashboard/console': typeof DashboardConsoleRouteWithChildren
   '/dashboard/field-intel': typeof DashboardFieldIntelRoute
+  '/dashboard/integration-vault': typeof DashboardIntegrationVaultRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/market': typeof DashboardMarketRoute
   '/dashboard/plans': typeof DashboardPlansRoute
+  '/dashboard/policy-engine': typeof DashboardPolicyEngineRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/promotions': typeof DashboardPromotionsRoute
+  '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
+  '/dashboard/scenarios': typeof DashboardScenariosRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/usage': typeof DashboardUsageRoute
   '/dashboard/webhooks': typeof DashboardWebhooksRoute
@@ -535,6 +603,7 @@ export interface FileRoutesById {
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
+  '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
   '/margin-dashboard/items': typeof MarginDashboardItemsRoute
   '/margin-dashboard/settings': typeof MarginDashboardSettingsRoute
   '/margin-dashboard/upload': typeof MarginDashboardUploadRoute
@@ -543,15 +612,18 @@ export interface FileRoutesById {
   '/products/market': typeof ProductsMarketRoute
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
+  '/store/$slug': typeof StoreSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
+  '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
+  '/dashboard/scenarios/': typeof DashboardScenariosIndexRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -587,11 +659,15 @@ export interface FileRouteTypes {
     | '/dashboard/competitors'
     | '/dashboard/console'
     | '/dashboard/field-intel'
+    | '/dashboard/integration-vault'
     | '/dashboard/logs'
     | '/dashboard/market'
     | '/dashboard/plans'
+    | '/dashboard/policy-engine'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
+    | '/dashboard/revenue-hub'
+    | '/dashboard/scenarios'
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
@@ -599,6 +675,7 @@ export interface FileRouteTypes {
     | '/docs/guides'
     | '/embed/widget'
     | '/margin-dashboard/channels'
+    | '/margin-dashboard/demo'
     | '/margin-dashboard/items'
     | '/margin-dashboard/settings'
     | '/margin-dashboard/upload'
@@ -607,15 +684,18 @@ export interface FileRouteTypes {
     | '/products/market'
     | '/products/pricing'
     | '/products/promotions'
+    | '/store/$slug'
     | '/dashboard/'
     | '/margin-dashboard/'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
+    | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
+    | '/dashboard/scenarios/'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -646,11 +726,14 @@ export interface FileRouteTypes {
     | '/dashboard/capabilities'
     | '/dashboard/competitors'
     | '/dashboard/field-intel'
+    | '/dashboard/integration-vault'
     | '/dashboard/logs'
     | '/dashboard/market'
     | '/dashboard/plans'
+    | '/dashboard/policy-engine'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
+    | '/dashboard/revenue-hub'
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
@@ -658,6 +741,7 @@ export interface FileRouteTypes {
     | '/docs/guides'
     | '/embed/widget'
     | '/margin-dashboard/channels'
+    | '/margin-dashboard/demo'
     | '/margin-dashboard/items'
     | '/margin-dashboard/settings'
     | '/margin-dashboard/upload'
@@ -666,15 +750,18 @@ export interface FileRouteTypes {
     | '/products/market'
     | '/products/pricing'
     | '/products/promotions'
+    | '/store/$slug'
     | '/dashboard'
     | '/margin-dashboard'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
+    | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console'
+    | '/dashboard/scenarios'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -708,11 +795,15 @@ export interface FileRouteTypes {
     | '/dashboard/competitors'
     | '/dashboard/console'
     | '/dashboard/field-intel'
+    | '/dashboard/integration-vault'
     | '/dashboard/logs'
     | '/dashboard/market'
     | '/dashboard/plans'
+    | '/dashboard/policy-engine'
     | '/dashboard/pricing'
     | '/dashboard/promotions'
+    | '/dashboard/revenue-hub'
+    | '/dashboard/scenarios'
     | '/dashboard/settings'
     | '/dashboard/usage'
     | '/dashboard/webhooks'
@@ -720,6 +811,7 @@ export interface FileRouteTypes {
     | '/docs/guides'
     | '/embed/widget'
     | '/margin-dashboard/channels'
+    | '/margin-dashboard/demo'
     | '/margin-dashboard/items'
     | '/margin-dashboard/settings'
     | '/margin-dashboard/upload'
@@ -728,15 +820,18 @@ export interface FileRouteTypes {
     | '/products/market'
     | '/products/pricing'
     | '/products/promotions'
+    | '/store/$slug'
     | '/dashboard/'
     | '/margin-dashboard/'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
+    | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
+    | '/dashboard/scenarios/'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -769,6 +864,7 @@ export interface RootRouteChildren {
   ProductsMarketRoute: typeof ProductsMarketRoute
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
+  StoreSlugRoute: typeof StoreSlugRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
   ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
@@ -894,6 +990,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/store/$slug': {
+      id: '/store/$slug'
+      path: '/store/$slug'
+      fullPath: '/store/$slug'
+      preLoaderRoute: typeof StoreSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products/promotions': {
       id: '/products/promotions'
       path: '/products/promotions'
@@ -950,6 +1053,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarginDashboardItemsRouteImport
       parentRoute: typeof MarginDashboardRoute
     }
+    '/margin-dashboard/demo': {
+      id: '/margin-dashboard/demo'
+      path: '/demo'
+      fullPath: '/margin-dashboard/demo'
+      preLoaderRoute: typeof MarginDashboardDemoRouteImport
+      parentRoute: typeof MarginDashboardRoute
+    }
     '/margin-dashboard/channels': {
       id: '/margin-dashboard/channels'
       path: '/channels'
@@ -999,6 +1109,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSettingsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/scenarios': {
+      id: '/dashboard/scenarios'
+      path: '/scenarios'
+      fullPath: '/dashboard/scenarios'
+      preLoaderRoute: typeof DashboardScenariosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/revenue-hub': {
+      id: '/dashboard/revenue-hub'
+      path: '/revenue-hub'
+      fullPath: '/dashboard/revenue-hub'
+      preLoaderRoute: typeof DashboardRevenueHubRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/promotions': {
       id: '/dashboard/promotions'
       path: '/promotions'
@@ -1011,6 +1135,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/dashboard/pricing'
       preLoaderRoute: typeof DashboardPricingRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/policy-engine': {
+      id: '/dashboard/policy-engine'
+      path: '/policy-engine'
+      fullPath: '/dashboard/policy-engine'
+      preLoaderRoute: typeof DashboardPolicyEngineRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/plans': {
@@ -1032,6 +1163,13 @@ declare module '@tanstack/react-router' {
       path: '/logs'
       fullPath: '/dashboard/logs'
       preLoaderRoute: typeof DashboardLogsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/integration-vault': {
+      id: '/dashboard/integration-vault'
+      path: '/integration-vault'
+      fullPath: '/dashboard/integration-vault'
+      preLoaderRoute: typeof DashboardIntegrationVaultRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/field-intel': {
@@ -1090,6 +1228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/scenarios/': {
+      id: '/dashboard/scenarios/'
+      path: '/'
+      fullPath: '/dashboard/scenarios/'
+      preLoaderRoute: typeof DashboardScenariosIndexRouteImport
+      parentRoute: typeof DashboardScenariosRoute
+    }
     '/dashboard/console/': {
       id: '/dashboard/console/'
       path: '/'
@@ -1124,6 +1269,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/docs/guides/authentication'
       preLoaderRoute: typeof DocsGuidesAuthenticationRouteImport
       parentRoute: typeof DocsGuidesRoute
+    }
+    '/dashboard/scenarios/$slug': {
+      id: '/dashboard/scenarios/$slug'
+      path: '/$slug'
+      fullPath: '/dashboard/scenarios/$slug'
+      preLoaderRoute: typeof DashboardScenariosSlugRouteImport
+      parentRoute: typeof DashboardScenariosRoute
     }
     '/dashboard/console/tenants': {
       id: '/dashboard/console/tenants'
@@ -1220,6 +1372,19 @@ const DashboardConsoleRouteChildren: DashboardConsoleRouteChildren = {
 const DashboardConsoleRouteWithChildren =
   DashboardConsoleRoute._addFileChildren(DashboardConsoleRouteChildren)
 
+interface DashboardScenariosRouteChildren {
+  DashboardScenariosSlugRoute: typeof DashboardScenariosSlugRoute
+  DashboardScenariosIndexRoute: typeof DashboardScenariosIndexRoute
+}
+
+const DashboardScenariosRouteChildren: DashboardScenariosRouteChildren = {
+  DashboardScenariosSlugRoute: DashboardScenariosSlugRoute,
+  DashboardScenariosIndexRoute: DashboardScenariosIndexRoute,
+}
+
+const DashboardScenariosRouteWithChildren =
+  DashboardScenariosRoute._addFileChildren(DashboardScenariosRouteChildren)
+
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardApiExplorerRoute: typeof DashboardApiExplorerRoute
@@ -1229,11 +1394,15 @@ interface DashboardRouteChildren {
   DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
   DashboardConsoleRoute: typeof DashboardConsoleRouteWithChildren
   DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
+  DashboardIntegrationVaultRoute: typeof DashboardIntegrationVaultRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMarketRoute: typeof DashboardMarketRoute
   DashboardPlansRoute: typeof DashboardPlansRoute
+  DashboardPolicyEngineRoute: typeof DashboardPolicyEngineRoute
   DashboardPricingRoute: typeof DashboardPricingRoute
   DashboardPromotionsRoute: typeof DashboardPromotionsRoute
+  DashboardRevenueHubRoute: typeof DashboardRevenueHubRoute
+  DashboardScenariosRoute: typeof DashboardScenariosRouteWithChildren
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardUsageRoute: typeof DashboardUsageRoute
   DashboardWebhooksRoute: typeof DashboardWebhooksRoute
@@ -1249,11 +1418,15 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCompetitorsRoute: DashboardCompetitorsRoute,
   DashboardConsoleRoute: DashboardConsoleRouteWithChildren,
   DashboardFieldIntelRoute: DashboardFieldIntelRoute,
+  DashboardIntegrationVaultRoute: DashboardIntegrationVaultRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMarketRoute: DashboardMarketRoute,
   DashboardPlansRoute: DashboardPlansRoute,
+  DashboardPolicyEngineRoute: DashboardPolicyEngineRoute,
   DashboardPricingRoute: DashboardPricingRoute,
   DashboardPromotionsRoute: DashboardPromotionsRoute,
+  DashboardRevenueHubRoute: DashboardRevenueHubRoute,
+  DashboardScenariosRoute: DashboardScenariosRouteWithChildren,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardUsageRoute: DashboardUsageRoute,
   DashboardWebhooksRoute: DashboardWebhooksRoute,
@@ -1296,6 +1469,7 @@ const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
 interface MarginDashboardRouteChildren {
   MarginDashboardChannelsRoute: typeof MarginDashboardChannelsRoute
+  MarginDashboardDemoRoute: typeof MarginDashboardDemoRoute
   MarginDashboardItemsRoute: typeof MarginDashboardItemsRoute
   MarginDashboardSettingsRoute: typeof MarginDashboardSettingsRoute
   MarginDashboardUploadRoute: typeof MarginDashboardUploadRoute
@@ -1304,6 +1478,7 @@ interface MarginDashboardRouteChildren {
 
 const MarginDashboardRouteChildren: MarginDashboardRouteChildren = {
   MarginDashboardChannelsRoute: MarginDashboardChannelsRoute,
+  MarginDashboardDemoRoute: MarginDashboardDemoRoute,
   MarginDashboardItemsRoute: MarginDashboardItemsRoute,
   MarginDashboardSettingsRoute: MarginDashboardSettingsRoute,
   MarginDashboardUploadRoute: MarginDashboardUploadRoute,
@@ -1335,6 +1510,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsMarketRoute: ProductsMarketRoute,
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
+  StoreSlugRoute: StoreSlugRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
   ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,

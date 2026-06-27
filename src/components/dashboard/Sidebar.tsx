@@ -21,6 +21,7 @@ import {
   Terminal,
   CreditCard,
   Zap,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -45,6 +46,15 @@ type NavGroup = {
 };
 
 const navGroups: NavGroup[] = [
+  {
+    label: "Control Plane",
+    tKey: "nav.groups.controlPlane",
+    items: [
+      { to: "/dashboard/revenue-hub", label: "Revenue Hub", tKey: "nav.revenueHub", icon: ShieldCheck },
+      { to: "/dashboard/policy-engine", label: "Policy Engine", tKey: "nav.policyEngine", icon: Layers },
+      { to: "/dashboard/integration-vault", label: "Integration Vault", tKey: "nav.integrationVault", icon: KeyRound },
+    ],
+  },
   {
     label: "Developers",
     tKey: "nav.groups.developers",
