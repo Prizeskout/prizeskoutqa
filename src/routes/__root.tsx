@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth-context";
 import { GeoSuggestionContext } from "@/lib/lang-suggestion";
 import { LangSuggestionPill } from "@/components/LangSuggestionPill";
+import { Toaster } from "@/components/ui/sonner";
 import { getGeoSuggestion } from "@/server/geo-suggest.functions";
 
 import appCss from "../styles.css?url";
@@ -205,6 +206,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: SITE_DESCRIPTION },
     ],
     links: [
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
       { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
@@ -289,6 +291,7 @@ function RootComponent() {
           `}</style>
           <Outlet />
           <LangSuggestionPill />
+          <Toaster position="bottom-right" richColors />
         </AuthProvider>
       </GeoSuggestionContext.Provider>
     </QueryClientProvider>

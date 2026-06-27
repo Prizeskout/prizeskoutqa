@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { applyLocale, type Locale } from "@/lib/i18n";
 import logoDark from "@/assets/logo-dark.svg";
+import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
 import qatarFoundationLogo from "@/assets/qatar-foundation-logo.png";
 
@@ -48,8 +49,8 @@ const LINE_POOL = [
 function kindColor(kind: string) {
   if (kind === "out" || kind === "defend") return OG;
   if (kind === "ok"  || kind === "audit")  return GN;
-  if (kind === "rule")                     return "#C97B4A";
-  return "#9C938F";
+  if (kind === "rule")                     return "var(--lp-rule-color)";
+  return "var(--lp-text-code)";
 }
 
 function nowStamp() {
@@ -75,12 +76,12 @@ function PacketStreamer() {
   return (
     <div style={{ position: "relative" }}>
       <div aria-hidden style={{ position: "absolute", inset: -1, borderRadius: 13, background: "linear-gradient(180deg,rgba(239,104,26,0.25),transparent 40%)", pointerEvents: "none" }} />
-      <div style={{ position: "relative", background: "#0B0807", border: "1px solid #251F1D", borderRadius: 12, overflow: "hidden", boxShadow: "0 30px 80px -20px rgba(0,0,0,0.8)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: "1px solid #1E1917", background: "#0E0A09" }}>
+      <div style={{ position: "relative", background: "var(--lp-surface-2)", border: "1px solid var(--lp-border-5)", borderRadius: 12, overflow: "hidden", boxShadow: "0 30px 80px -20px rgba(0,0,0,0.8)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: "1px solid var(--lp-border-3)", background: "var(--lp-surface-3)" }}>
           <div style={{ display: "flex", gap: 7 }}>
-            {[0,1,2].map(i => <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: "#241E1C", display: "block" }} />)}
+            {[0,1,2].map(i => <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: "var(--lp-surface-dots)", display: "block" }} />)}
           </div>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: "#6E6360" }}>packet-stream.prizeskout.io</span>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-dim)" }}>packet-stream.prizeskout.io</span>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 10, color: GN }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, display: "inline-block", animation: "ps-pulse 1.4s infinite" }} />
             LIVE
@@ -89,9 +90,9 @@ function PacketStreamer() {
         <div className="ps-scroll" style={{ height: 380, padding: "14px 15px", overflow: "hidden", fontFamily: MONO, fontSize: 12, lineHeight: 1.85, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           {lines.map((ln, i) => (
             <div key={i} className="ps-line-enter" style={{ display: "flex", alignItems: "baseline", gap: 9, whiteSpace: "nowrap" }}>
-              <span style={{ color: "#52483F", flexShrink: 0 }}>{ln.time}</span>
+              <span style={{ color: "var(--lp-faint)", flexShrink: 0 }}>{ln.time}</span>
               <span style={{ color: ln.evtColor, fontWeight: 500, flexShrink: 0 }}>{ln.evt}</span>
-              <span style={{ color: "#9C938F", overflow: "hidden", textOverflow: "ellipsis" }}>{ln.target}</span>
+              <span style={{ color: "var(--lp-text-code)", overflow: "hidden", textOverflow: "ellipsis" }}>{ln.target}</span>
               <span style={{ marginLeft: "auto", color: ln.slow ? "#C9742E" : GN, fontSize: 11, flexShrink: 0 }}>{ln.ms}ms</span>
             </div>
           ))}
@@ -132,14 +133,14 @@ function LoopSimulator() {
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.infra.loop.sectionLabel")}</div>
         <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.loop.title")}</h2>
       </div>
-      <div style={{ background: "#0A0706", border: "1px solid #221D1B", borderRadius: 16, padding: "40px 40px 36px", position: "relative", overflow: "hidden" }}>
+      <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border-4)", borderRadius: 16, padding: "40px 40px 36px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg,rgba(239,104,26,0.05),transparent)", pointerEvents: "none" }} />
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 34 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
             <span style={{ fontFamily: MONO, fontSize: 46, fontWeight: 600, color: OG, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" as const }}>{Math.round(elapsed).toLocaleString("en-US")}</span>
-            <span style={{ fontFamily: MONO, fontSize: 16, color: "#6E6360" }}>/ {BUDGET_MS.toLocaleString("en-US")}ms budget</span>
+            <span style={{ fontFamily: MONO, fontSize: 16, color: "var(--lp-dim)" }}>/ {BUDGET_MS.toLocaleString("en-US")}ms budget</span>
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 12, color: "#8A7F7B", textAlign: "right" }}>
+          <div style={{ fontFamily: MONO, fontSize: 12, color: "var(--lp-muted-2)", textAlign: "right" }}>
             <div>{t("landing.infra.loop.eventLabel")}</div>
             <div style={{ color: GN }}>● {t("landing.infra.loop.inFlight")}</div>
           </div>
@@ -151,25 +152,25 @@ function LoopSimulator() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
           {LOOP_NODE_KEYS.map((nd, i) => {
             const active = i === activeIdx, done = i < activeIdx;
-            const color = active ? OG : done ? GN : "#3A332F";
+            const color = active ? OG : done ? GN : "var(--lp-inactive)";
             const statusLabel = active ? t("landing.infra.loop.processing") : done ? t("landing.infra.loop.complete") : t("landing.infra.loop.idle");
             return (
-              <div key={nd.nameKey} style={{ background: "#0B0807", border: "1px solid #1E1917", borderRadius: 11, padding: "18px 16px 16px" }}>
+              <div key={nd.nameKey} style={{ background: "var(--lp-surface-2)", border: "1px solid var(--lp-border-3)", borderRadius: 11, padding: "18px 16px 16px" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 13 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10.5, color: "#6E6360" }}>0{i + 1}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 10.5, color: "var(--lp-dim)" }}>0{i + 1}</span>
                   <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, display: "inline-block", ...(active ? { boxShadow: `0 0 10px ${color}`, animation: "ps-pulse 1s infinite" } : {}) }} />
                 </div>
-                <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-0.01em", color: "#FAFAF9", marginBottom: 4 }}>{t(nd.nameKey)}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10.5, color: "#8A7F7B", lineHeight: 1.5, marginBottom: 14, minHeight: 30 }}>{t(nd.subKey)}</div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #1A1513", paddingTop: 11 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--lp-text)", marginBottom: 4 }}>{t(nd.nameKey)}</div>
+                <div style={{ fontFamily: MONO, fontSize: 10.5, color: "var(--lp-muted-2)", lineHeight: 1.5, marginBottom: 14, minHeight: 30 }}>{t(nd.subKey)}</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--lp-border-6)", paddingTop: 11 }}>
                   <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.04em", color }}>{statusLabel}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 11, color: "#C9C2BE", fontWeight: 600 }}>{nd.budget}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-text-max)", fontWeight: 600 }}>{nd.budget}</span>
                 </div>
               </div>
             );
           })}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 24, fontFamily: MONO, fontSize: 11.5, color: "#6E6360" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 24, fontFamily: MONO, fontSize: 11.5, color: "var(--lp-dim)" }}>
           <span style={{ color: OG }}>❯</span>
           Salla/Foodics webhook → Redpanda partition → Redis rule engine → Talabat/Jahez egress · idempotent · ordered · exactly-once
         </div>
@@ -211,7 +212,7 @@ function NavLangSwitcher() {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 7, border: "1px solid #2A2422", background: "transparent", color: "#A8A29E", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 7, border: "1px solid var(--lp-border-em)", background: "transparent", color: "var(--lp-muted)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
@@ -223,14 +224,14 @@ function NavLangSwitcher() {
         </svg>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#141010", border: "1px solid #2A2422", borderRadius: 10, padding: "10px 6px", zIndex: 200, minWidth: 168, boxShadow: "0 8px 32px rgba(0,0,0,0.55)" }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: "#52483F", padding: "2px 10px 10px" }}>LANGUAGE</div>
+        <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--lp-surface-6)", border: "1px solid var(--lp-border-em)", borderRadius: 10, padding: "10px 6px", zIndex: 200, minWidth: 168, boxShadow: "0 8px 32px rgba(0,0,0,0.55)" }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.1em", color: "var(--lp-faint)", padding: "2px 10px 10px" }}>LANGUAGE</div>
           {["en", "ar", "fr"].map(lng => {
             const active = current === lng;
             const d = LANG_DISPLAY[lng];
             return (
-              <button key={lng} type="button" onClick={() => handleChange(lng)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px", borderRadius: 6, border: "none", background: active ? "rgba(239,104,26,0.1)" : "transparent", color: active ? OG : "#A8A29E", fontSize: 13.5, fontWeight: active ? 600 : 400, cursor: "pointer", fontFamily: "inherit" }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, border: "1px solid #2A2422", borderRadius: 4, padding: "1px 5px", color: "#6E6360", flexShrink: 0 }}>{d.short}</span>
+              <button key={lng} type="button" onClick={() => handleChange(lng)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px", borderRadius: 6, border: "none", background: active ? "rgba(239,104,26,0.1)" : "transparent", color: active ? OG : "var(--lp-muted)", fontSize: 13.5, fontWeight: active ? 600 : 400, cursor: "pointer", fontFamily: "inherit" }}>
+                <span style={{ fontFamily: MONO, fontSize: 10, border: "1px solid var(--lp-border-em)", borderRadius: 4, padding: "1px 5px", color: "var(--lp-dim)", flexShrink: 0 }}>{d.short}</span>
                 {d.full}
                 {active && <span style={{ marginLeft: "auto", color: OG }}>✓</span>}
               </button>
@@ -249,9 +250,9 @@ function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }
       type="button"
       onClick={onToggle}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
-      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 7, border: "1px solid #2A2422", background: "transparent", color: "#A8A29E", cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s, color 0.15s" }}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 7, border: "1px solid var(--lp-border-em)", background: "transparent", color: "var(--lp-muted)", cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s, color 0.15s" }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = OG; e.currentTarget.style.color = OG; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2422"; e.currentTarget.style.color = "#A8A29E"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2422"; e.currentTarget.style.color = "var(--lp-muted)"; }}
     >
       {dark ? (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -280,8 +281,8 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
   return (
     <nav style={{ position: "relative", zIndex: 5, maxWidth: 1440, margin: "0 auto", padding: "22px clamp(24px,5vw,72px)", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--lp-border)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-        <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
-        <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--lp-dim)", border: "1px solid #2A2422", borderRadius: 4, padding: "2px 6px" }}>v1.0 · GA</span>
+        <img src={dark ? logoDark : logoLight} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
+        <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--lp-dim)", border: "1px solid var(--lp-border-em)", borderRadius: 4, padding: "2px 6px" }}>v1.0 · GA</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
         {navItems.map(item => (
@@ -301,17 +302,17 @@ function HeroSection() {
   return (
     <section className="ps-hero-grid" style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "90px clamp(24px,5vw,72px) 104px", alignItems: "center" }}>
       <div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#8A7F7B", border: "1px solid #2A2422", borderRadius: 100, padding: "6px 13px", marginBottom: 30 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "var(--lp-muted-2)", border: "1px solid var(--lp-border-em)", borderRadius: 100, padding: "6px 13px", marginBottom: 30 }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, boxShadow: `0 0 8px ${GN}`, animation: "ps-pulse 1.8s infinite", display: "inline-block" }} />
           {t("landing.infra.hero.eyebrow")}
         </div>
         <h1 style={{ fontSize: "clamp(40px,4.6vw,62px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 600, margin: "0 0 24px", color: "var(--lp-text)" }}>
           {t("landing.infra.hero.title")}
         </h1>
-        <p style={{ fontSize: 17, lineHeight: 1.62, color: "#A8A29E", margin: "0 0 18px", maxWidth: 520 }}>
+        <p style={{ fontSize: 17, lineHeight: 1.62, color: "var(--lp-muted)", margin: "0 0 18px", maxWidth: 520 }}>
           {t("landing.infra.hero.subtitle")}
         </p>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: MONO, fontSize: 12.5, color: "#8A7F7B", margin: "0 0 34px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: MONO, fontSize: 12.5, color: "var(--lp-muted-2)", margin: "0 0 34px", flexWrap: "wrap" }}>
           <span style={{ color: OG, fontWeight: 600, fontSize: 14 }}>&lt; 2s</span>
           <span style={{ width: 1, height: 13, background: "#2A2422" }} />
           <span>{t("landing.infra.hero.tagline")}</span>
@@ -320,7 +321,7 @@ function HeroSection() {
           <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 22px", cursor: "pointer", boxShadow: "0 0 0 1px rgba(239,104,26,0.4),0 8px 28px rgba(239,104,26,0.28)", textDecoration: "none", display: "inline-block" }}>
             {t("landing.infra.hero.cta1")}
           </a>
-          <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "#E7E2DF", background: "transparent", border: "1px solid #2A2422", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
+          <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
             {t("landing.infra.hero.cta2")}
           </a>
         </div>
@@ -328,7 +329,7 @@ function HeroSection() {
           {([["1,850ms", t("landing.infra.hero.stat1Label")], ["99.98%", t("landing.infra.hero.stat2Label")], ["4", t("landing.infra.hero.stat3Label")]] as [string,string][]).map(([val, label]) => (
             <div key={label}>
               <div style={{ fontFamily: MONO, fontSize: 21, fontWeight: 600, color: "var(--lp-text)" }}>{val}</div>
-              <div style={{ fontSize: 11.5, color: "#6E6360", marginTop: 3 }}>{label}</div>
+              <div style={{ fontSize: 11.5, color: "var(--lp-dim)", marginTop: 3 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -342,9 +343,9 @@ function HeroSection() {
 function CredentialStrip() {
   const { t } = useTranslation();
   return (
-    <div style={{ borderTop: "1px solid #1A1A1A", borderBottom: "1px solid #1A1A1A", background: "#050505", padding: "32px clamp(24px,5vw,72px)" }}>
+    <div style={{ borderTop: "1px solid var(--lp-border-strip)", borderBottom: "1px solid var(--lp-border-strip)", background: "var(--lp-surface-strip)", padding: "32px clamp(24px,5vw,72px)" }}>
       <div style={{ maxWidth: 1440, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", color: "#52483F", textTransform: "uppercase", whiteSpace: "nowrap" }}>{t("landing.infra.backedBy")}</span>
+        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", color: "var(--lp-faint)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{t("landing.infra.backedBy")}</span>
         <div style={{ width: 1, height: 28, background: "#2A2422" }} />
         <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 10, padding: "12px 28px", display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
           <img src={qstpLogoColored} alt="Qatar Science & Technology Park" style={{ height: 52, width: "auto", display: "block" }} />
@@ -368,30 +369,30 @@ function SurfaceMatrix() {
           <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.infra.surface.sectionLabel")}</div>
           <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.surface.title")}</h2>
         </div>
-        <p style={{ fontSize: 14, color: "#8A7F7B", maxWidth: 300, textAlign: "right", lineHeight: 1.55, margin: 0 }}>{t("landing.infra.surface.subtitle")}</p>
+        <p style={{ fontSize: 14, color: "var(--lp-muted-2)", maxWidth: 300, textAlign: "right", lineHeight: 1.55, margin: 0 }}>{t("landing.infra.surface.subtitle")}</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid #221D1B", borderRadius: 14, overflow: "hidden", background: "#0A0706" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)" }}>
         {/* SYNC */}
-        <div style={{ padding: "30px 30px 32px", borderRight: "1px solid #1C1715", borderBottom: "1px solid #1C1715" }}>
+        <div style={{ padding: "30px 30px 32px", borderRight: "1px solid var(--lp-border-2)", borderBottom: "1px solid var(--lp-border-2)" }}>
           <CardHeader idx="01" name={t("landing.infra.surface.syncName")} badge={t("landing.infra.surface.syncBadge")} />
           <p style={cardDesc}>{t("landing.infra.surface.syncDesc")}</p>
           <div style={codeBlock}>
-            <div style={{ color: "#52483F" }}># inbound · salla.order.updated</div>
-            <div style={{ color: "#9C938F" }}>{'{ '}<span style={{ color: "#C97B4A" }}>"sku"</span>{': '}<span style={{ color: GN }}>"QA-8842"</span>{', '}<span style={{ color: "#C97B4A" }}>"raw"</span>{': 41.00 }'}</div>
+            <div style={{ color: "var(--lp-faint)" }}># inbound · salla.order.updated</div>
+            <div style={{ color: "var(--lp-text-code)" }}>{'{ '}<span style={{ color: "var(--lp-rule-color)" }}>"sku"</span>{': '}<span style={{ color: GN }}>"QA-8842"</span>{', '}<span style={{ color: "var(--lp-rule-color)" }}>"raw"</span>{': 41.00 }'}</div>
             <div style={{ color: OG, margin: "5px 0" }}>  ▼ transform()</div>
-            <div style={{ color: "#9C938F" }}>{'{ '}<span style={{ color: "#C97B4A" }}>"sku"</span>:<span style={{ color: GN }}>"QA-8842"</span>{', '}<span style={{ color: "#C97B4A" }}>"region"</span>:<span style={{ color: GN }}>"QA"</span>{', '}<span style={{ color: "#C97B4A" }}>"event"</span>:<span style={{ color: GN }}>"price.sync"</span>{' }'}</div>
+            <div style={{ color: "var(--lp-text-code)" }}>{'{ '}<span style={{ color: "var(--lp-rule-color)" }}>"sku"</span>:<span style={{ color: GN }}>"QA-8842"</span>{', '}<span style={{ color: "var(--lp-rule-color)" }}>"region"</span>:<span style={{ color: GN }}>"QA"</span>{', '}<span style={{ color: "var(--lp-rule-color)" }}>"event"</span>:<span style={{ color: GN }}>"price.sync"</span>{' }'}</div>
           </div>
         </div>
 
         {/* DECIDE */}
-        <div style={{ padding: "30px 30px 32px", borderBottom: "1px solid #1C1715" }}>
+        <div style={{ padding: "30px 30px 32px", borderBottom: "1px solid var(--lp-border-2)" }}>
           <CardHeader idx="02" name={t("landing.infra.surface.decideName")} badge={t("landing.infra.surface.decideBadge")} />
           <p style={cardDesc}>{t("landing.infra.surface.decideDesc")}</p>
           <div style={codeBlock}>
-            <div style={{ color: "#9C938F" }}><span style={{ color: "#C97B4A" }}>net</span> = sell − commission(<span style={{ color: GN }}>region</span>)</div>
-            <div style={{ color: "#52483F", paddingLeft: 14 }}>↓ vat ↓ logistics</div>
-            <div style={{ display: "flex", gap: 14, margin: "9px 0", color: "#6E6360" }}>
+            <div style={{ color: "var(--lp-text-code)" }}><span style={{ color: "var(--lp-rule-color)" }}>net</span> = sell − commission(<span style={{ color: GN }}>region</span>)</div>
+            <div style={{ color: "var(--lp-faint)", paddingLeft: 14 }}>↓ vat ↓ logistics</div>
+            <div style={{ display: "flex", gap: 14, margin: "9px 0", color: "var(--lp-dim)" }}>
               <span>QA <span style={{ color: OG }}>22%</span></span>
               <span>AE <span style={{ color: OG }}>25%</span></span>
               <span>SA <span style={{ color: OG }}>21%</span></span>
@@ -401,10 +402,10 @@ function SurfaceMatrix() {
         </div>
 
         {/* DEFEND */}
-        <div style={{ padding: "30px 30px 32px", borderRight: "1px solid #1C1715" }}>
+        <div style={{ padding: "30px 30px 32px", borderRight: "1px solid var(--lp-border-2)" }}>
           <CardHeader idx="03" name={t("landing.infra.surface.defendName")} badge={t("landing.infra.surface.defendBadge")} />
           <p style={cardDesc}>{t("landing.infra.surface.defendDesc")}</p>
-          <div style={{ position: "relative", height: 92, background: "#080605", border: "1px solid #1E1917", borderRadius: 9, overflow: "hidden" }}>
+          <div style={{ position: "relative", height: 92, background: "var(--lp-surface-5)", border: "1px solid var(--lp-border-3)", borderRadius: 9, overflow: "hidden" }}>
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center" }}>
               <svg width="200%" height="100%" viewBox="0 0 800 92" preserveAspectRatio="none" style={{ animation: "ps-wave 3.4s linear infinite" }}>
                 <path d="M0,46 Q50,18 100,46 T200,46 T300,46 T400,46 T500,46 T600,46 T700,46 T800,46" fill="none" stroke={OG} strokeWidth="1.5" opacity="0.85" />
@@ -421,13 +422,13 @@ function SurfaceMatrix() {
           <CardHeader idx="04" name={t("landing.infra.surface.governName")} badge={t("landing.infra.surface.governBadge")} />
           <p style={cardDesc}>{t("landing.infra.surface.governDesc")}</p>
           <div style={codeBlock}>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "#9C938F" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "var(--lp-text-code)" }}>
               <span>sha256: 0xa4f9..e21b</span>
               <span style={{ color: GN }}>VERIFIED ✓</span>
             </div>
-            <div style={{ color: "#52483F" }}>route: QA → KSA · PDPL-compliant</div>
-            <div dir="rtl" style={{ color: "#A8A29E", marginTop: 6, fontFamily: "inherit" }}>تم التحقق من توجيه البيانات عبر الحدود</div>
-            <div dir="rtl" style={{ color: "#52483F", fontFamily: "inherit" }}>يتوافق مع إطار QFC و PDPL</div>
+            <div style={{ color: "var(--lp-faint)" }}>route: QA → KSA · PDPL-compliant</div>
+            <div dir="rtl" style={{ color: "var(--lp-muted)", marginTop: 6, fontFamily: "inherit" }}>تم التحقق من توجيه البيانات عبر الحدود</div>
+            <div dir="rtl" style={{ color: "var(--lp-faint)", fontFamily: "inherit" }}>يتوافق مع إطار QFC و PDPL</div>
           </div>
         </div>
       </div>
@@ -435,15 +436,15 @@ function SurfaceMatrix() {
   );
 }
 
-const cardDesc: React.CSSProperties = { fontSize: 13.5, lineHeight: 1.55, color: "#A8A29E", margin: "0 0 18px" };
-const codeBlock: React.CSSProperties = { fontFamily: MONO, fontSize: 11.5, lineHeight: 1.7, background: "#080605", border: "1px solid #1E1917", borderRadius: 9, padding: "13px 15px" };
+const cardDesc: React.CSSProperties = { fontSize: 13.5, lineHeight: 1.55, color: "var(--lp-muted)", margin: "0 0 18px" };
+const codeBlock: React.CSSProperties = { fontFamily: MONO, fontSize: 11.5, lineHeight: 1.7, background: "var(--lp-surface-5)", border: "1px solid var(--lp-border-3)", borderRadius: 9, padding: "13px 15px" };
 
 function CardHeader({ idx, name, badge }: { idx: string; name: string; badge: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
       <span style={{ fontFamily: MONO, fontSize: 12, color: OG }}>{idx}</span>
       <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em" }}>{name}</span>
-      <span style={{ fontFamily: MONO, fontSize: 10.5, color: "#6E6360", border: "1px solid #2A2422", borderRadius: 4, padding: "2px 7px" }}>{badge}</span>
+      <span style={{ fontFamily: MONO, fontSize: 10.5, color: "var(--lp-dim)", border: "1px solid var(--lp-border-em)", borderRadius: 4, padding: "2px 7px" }}>{badge}</span>
     </div>
   );
 }
@@ -467,18 +468,18 @@ function LatencyBudget() {
           <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.infra.latency.sectionLabel")}</div>
           <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.latency.title")}</h2>
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 12, color: "#8A7F7B" }}>{t("landing.infra.latency.p99")}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, color: "var(--lp-muted-2)" }}>{t("landing.infra.latency.p99")}</div>
       </div>
-      <div style={{ border: "1px solid #221D1B", borderRadius: 13, overflow: "hidden", background: "#0A0706" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 1.3fr 130px", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.06em", color: "#6E6360", background: "#0E0A09", borderBottom: "1px solid #1E1917", padding: "13px 22px" }}>
+      <div style={{ border: "1px solid var(--lp-border-4)", borderRadius: 13, overflow: "hidden", background: "var(--lp-surface)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 1.3fr 130px", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.06em", color: "var(--lp-dim)", background: "var(--lp-surface-3)", borderBottom: "1px solid var(--lp-border-3)", padding: "13px 22px" }}>
           <div>#</div><div>{t("landing.infra.latency.colNode")}</div><div>{t("landing.infra.latency.colOp")}</div><div style={{ textAlign: "right" }}>{t("landing.infra.latency.colMax")}</div>
         </div>
         {LATENCY_ROW_KEYS.map(r => (
-          <div key={r.idx} style={{ display: "grid", gridTemplateColumns: "40px 1fr 1.3fr 130px", alignItems: "center", padding: "15px 22px", borderBottom: "1px solid #15110F" }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: "#52483F" }}>{r.idx}</div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: "#EDE8E5" }}>{t(r.nodeKey)}</div>
-            <div style={{ fontSize: 13, color: "#8A7F7B" }}>{t(r.detailKey)}</div>
-            <div style={{ textAlign: "right", fontFamily: MONO, fontSize: 14, fontWeight: 600, color: "#FAFAF9" }}>{r.max}</div>
+          <div key={r.idx} style={{ display: "grid", gridTemplateColumns: "40px 1fr 1.3fr 130px", alignItems: "center", padding: "15px 22px", borderBottom: "1px solid var(--lp-border-3)" }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-faint)" }}>{r.idx}</div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: "var(--lp-text-3)" }}>{t(r.nodeKey)}</div>
+            <div style={{ fontSize: 13, color: "var(--lp-muted-2)" }}>{t(r.detailKey)}</div>
+            <div style={{ textAlign: "right", fontFamily: MONO, fontSize: 14, fontWeight: 600, color: "var(--lp-text)" }}>{r.max}</div>
           </div>
         ))}
         <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 130px", alignItems: "center", padding: "18px 22px", background: "rgba(239,104,26,0.05)" }}>
@@ -492,7 +493,7 @@ function LatencyBudget() {
 }
 
 // ── Deploy CTA + Footer ───────────────────────────────────────────────────────
-function DeployCTA() {
+function DeployCTA({ dark }: { dark: boolean }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   function handleCopy() {
@@ -514,48 +515,48 @@ function DeployCTA() {
         <h2 style={{ fontSize: "clamp(30px,3.6vw,46px)", lineHeight: 1.04, letterSpacing: "-0.03em", fontWeight: 600, margin: "0 0 16px", color: "var(--lp-text)" }}>
           {t("landing.infra.deploy.title")}
         </h2>
-        <p style={{ fontSize: 16, color: "#A8A29E", margin: "0 auto 36px", maxWidth: 460, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 16, color: "var(--lp-muted)", margin: "0 auto 36px", maxWidth: 460, lineHeight: 1.6 }}>
           {t("landing.infra.deploy.subtitle")}
         </p>
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0B0807", border: "1px solid #251F1D", borderRadius: 11, padding: "16px 18px", boxShadow: "0 20px 60px -20px rgba(0,0,0,0.7)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--lp-surface-2)", border: "1px solid var(--lp-border-5)", borderRadius: 11, padding: "16px 18px", boxShadow: "0 20px 60px -20px rgba(0,0,0,0.7)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 13, fontFamily: MONO, fontSize: 14 }}>
-              <span style={{ color: "#52483F" }}>❯</span>
-              <span style={{ color: "#E7E2DF" }}>npm install <span style={{ color: OG }}>@prizeskout/core</span></span>
+              <span style={{ color: "var(--lp-faint)" }}>❯</span>
+              <span style={{ color: "var(--lp-text-2)" }}>npm install <span style={{ color: OG }}>@prizeskout/core</span></span>
             </div>
-            <button onClick={handleCopy} style={{ fontFamily: MONO, fontSize: 11.5, fontWeight: 600, color: copied ? GN : "#A8A29E", background: "#15110F", border: "1px solid #2A2422", borderRadius: 7, padding: "8px 14px", cursor: "pointer" }}>
+            <button onClick={handleCopy} style={{ fontFamily: MONO, fontSize: 11.5, fontWeight: 600, color: copied ? GN : "var(--lp-muted)", background: "var(--lp-surface-4)", border: "1px solid var(--lp-border-em)", borderRadius: 7, padding: "8px 14px", cursor: "pointer" }}>
               {copied ? t("landing.infra.deploy.copied") : t("landing.infra.deploy.copy")}
             </button>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginTop: 22 }}>
             <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 24px", cursor: "pointer", boxShadow: "0 8px 28px rgba(239,104,26,0.28)", textDecoration: "none", display: "inline-block" }}>{t("landing.infra.deploy.cta1")}</a>
-            <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "#E7E2DF", background: "transparent", border: "1px solid #2A2422", borderRadius: 9, padding: "13px 24px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>{t("landing.infra.deploy.cta2")}</a>
+            <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 24px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>{t("landing.infra.deploy.cta2")}</a>
           </div>
         </div>
       </div>
 
-      <footer style={{ marginTop: 90, borderTop: "1px solid #1C1715", padding: "42px 0 50px", display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: 32 }}>
+      <footer style={{ marginTop: 90, borderTop: "1px solid var(--lp-border-2)", padding: "42px 0 50px", display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: 32 }}>
         <div>
           <div style={{ marginBottom: 14 }}>
-            <img src={logoDark} alt="PrizeSkout" style={{ height: 24, width: "auto", display: "block" }} />
+            <img src={dark ? logoDark : logoLight} alt="PrizeSkout" style={{ height: 24, width: "auto", display: "block" }} />
           </div>
-          <p style={{ fontSize: 12.5, color: "#6E6360", lineHeight: 1.6, margin: "0 0 16px", maxWidth: 260 }}>{t("landing.infra.deploy.footerDesc")}</p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: MONO, fontSize: 10.5, color: "#8A7F7B", border: "1px solid #2A2422", borderRadius: 6, padding: "6px 11px" }}>
+          <p style={{ fontSize: 12.5, color: "var(--lp-dim)", lineHeight: 1.6, margin: "0 0 16px", maxWidth: 260 }}>{t("landing.infra.deploy.footerDesc")}</p>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: MONO, fontSize: 10.5, color: "var(--lp-muted-2)", border: "1px solid var(--lp-border-em)", borderRadius: 6, padding: "6px 11px" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, display: "inline-block" }} />
             {t("landing.infra.deploy.footerLicense")}
           </div>
         </div>
         {footerCols.map(col => (
           <div key={col.titleKey}>
-            <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", color: "#52483F", marginBottom: 15 }}>{t(col.titleKey)}</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 11, fontSize: 13, color: "#A8A29E" }}>
+            <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", color: "var(--lp-faint)", marginBottom: 15 }}>{t(col.titleKey)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 11, fontSize: 13, color: "var(--lp-muted)" }}>
               {col.items.map(item => <span key={item}>{item}</span>)}
             </div>
           </div>
         ))}
       </footer>
 
-      <div style={{ borderTop: "1px solid #1C1715", padding: "20px 0 40px", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: MONO, fontSize: 11, color: "#52483F", flexWrap: "wrap", gap: 8 }}>
+      <div style={{ borderTop: "1px solid var(--lp-border-2)", padding: "20px 0 40px", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: MONO, fontSize: 11, color: "var(--lp-faint)", flexWrap: "wrap", gap: 8 }}>
         <span>{t("landing.infra.deploy.copyright")}</span>
         <span>{t("landing.infra.deploy.tagline")}</span>
       </div>
@@ -573,7 +574,7 @@ function ROISandbox() {
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
       <div style={{ borderTop: "1px solid var(--lp-border)", paddingTop: 40, marginBottom: 52 }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>[ MARGIN LEAK CALCULATOR ]</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>MARGIN LEAK CALCULATOR</div>
         <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>See exactly what you are losing</h2>
       </div>
       <div className="ps-roi-grid" style={{ display: "grid", gap: 48, alignItems: "start" }}>
@@ -594,19 +595,19 @@ function ROISandbox() {
                   style={{ width: "100%", height: 4, accentColor: OG, cursor: "pointer", background: "transparent" }}
                 />
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 10, color: "#52483F", marginTop: 5 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 10, color: "var(--lp-faint)", marginTop: 5 }}>
                 <span>{s.min.toLocaleString()}</span><span>{s.max.toLocaleString()}</span>
               </div>
             </div>
           ))}
         </div>
 
-        <div style={{ background: "#0A0706", border: "1px solid #221D1B", borderRadius: 16, padding: "36px" }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: "#6E6360", marginBottom: 10 }}>PROJECTED MONTHLY SAVINGS</div>
+        <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border-4)", borderRadius: 16, padding: "36px" }}>
+          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: "var(--lp-dim)", marginBottom: 10 }}>PROJECTED MONTHLY SAVINGS</div>
           <div style={{ fontFamily: MONO, fontSize: "clamp(38px,4vw,52px)", fontWeight: 700, color: GN, letterSpacing: "-0.03em", lineHeight: 1 }}>
             QAR {monthlySavings.toLocaleString()}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: "#6E6360", marginTop: 8, marginBottom: 28 }}>
+          <div style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-dim)", marginTop: 8, marginBottom: 28 }}>
             {commission}% commission · {orders.toLocaleString()} orders · 30 days
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 9, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 22 }}>
@@ -650,15 +651,15 @@ function PricingSection() {
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
       <div style={{ borderTop: "1px solid var(--lp-border)", paddingTop: 40, marginBottom: 18, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>[ GCC-SEGMENTED PRICING ]</div>
+          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>GCC-SEGMENTED PRICING</div>
           <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Pricing that scales with your margin</h2>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 0, background: "#0E0A09", border: "1px solid #2A2422", borderRadius: 9, padding: 3 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 0, background: "var(--lp-surface-3)", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: 3 }}>
           {(["Monthly", "Annual"] as const).map(b => (
             <button key={b} type="button" onClick={() => setAnnual(b === "Annual")}
               style={{ fontFamily: MONO, fontSize: 11.5, fontWeight: 600, padding: "7px 16px", borderRadius: 7, border: "none", cursor: "pointer", transition: "all 0.15s",
                 background: (b === "Annual") === annual ? OG : "transparent",
-                color: (b === "Annual") === annual ? BG : "#A8A29E",
+                color: (b === "Annual") === annual ? BG : "var(--lp-muted)",
               }}>
               {b}{b === "Annual" && <span style={{ marginLeft: 5, fontSize: 9.5, opacity: 0.85 }}>SAVE 20%</span>}
             </button>
@@ -669,8 +670,8 @@ function PricingSection() {
       <div className="ps-pricing-grid" style={{ display: "grid", gap: 20, marginTop: 44 }}>
         {TIERS.map(tier => (
           <div key={tier.name} style={{
-            background: "#0A0706", borderRadius: 16, padding: "32px 28px",
-            border: tier.featured ? `1px solid ${OG}` : "1px solid #221D1B",
+            background: "var(--lp-surface)", borderRadius: 16, padding: "32px 28px",
+            border: tier.featured ? `1px solid ${OG}` : "1px solid var(--lp-border-4)",
             position: "relative", display: "flex", flexDirection: "column",
             boxShadow: tier.featured ? `0 0 40px rgba(239,104,26,0.12)` : "none",
           }}>
@@ -680,27 +681,27 @@ function PricingSection() {
               </div>
             )}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#FAFAF9" }}>{tier.name}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "var(--lp-text)" }}>{tier.name}</div>
               {tier.badge && (
-                <span style={{ fontFamily: MONO, fontSize: 10, color: tier.featured ? OG : "#6E6360", border: `1px solid ${tier.featured ? "rgba(239,104,26,0.35)" : "#2A2422"}`, borderRadius: 4, padding: "2px 7px" }}>{tier.badge}</span>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: tier.featured ? OG : "var(--lp-dim)", border: `1px solid ${tier.featured ? "rgba(239,104,26,0.35)" : "#2A2422"}`, borderRadius: 4, padding: "2px 7px" }}>{tier.badge}</span>
               )}
             </div>
             <div style={{ marginBottom: 24 }}>
               {tier.monthly !== null ? (
                 <>
-                  <span style={{ fontFamily: MONO, fontSize: 38, fontWeight: 700, color: "#FAFAF9", letterSpacing: "-0.02em" }}>
+                  <span style={{ fontFamily: MONO, fontSize: 38, fontWeight: 700, color: "var(--lp-text)", letterSpacing: "-0.02em" }}>
                     {tier.currency} {annual ? tier.annual : tier.monthly}
                   </span>
-                  <span style={{ fontFamily: MONO, fontSize: 13, color: "#6E6360" }}> / mo</span>
+                  <span style={{ fontFamily: MONO, fontSize: 13, color: "var(--lp-dim)" }}> / mo</span>
                   {annual && <div style={{ fontFamily: MONO, fontSize: 10.5, color: GN, marginTop: 4 }}>↓ billed annually</div>}
                 </>
               ) : (
-                <span style={{ fontFamily: MONO, fontSize: 32, fontWeight: 700, color: "#FAFAF9" }}>Custom</span>
+                <span style={{ fontFamily: MONO, fontSize: 32, fontWeight: 700, color: "var(--lp-text)" }}>Custom</span>
               )}
             </div>
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
               {tier.features.map(f => (
-                <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "#A8A29E" }}>
+                <li key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--lp-muted)" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GN} strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
                   {f}
                 </li>
@@ -710,8 +711,8 @@ function PricingSection() {
               display: "block", textAlign: "center", fontSize: 13.5, fontWeight: 700, padding: "13px",
               borderRadius: 9, textDecoration: "none", fontFamily: MONO, letterSpacing: "0.02em",
               background: tier.featured ? OG : "transparent",
-              color: tier.featured ? BG : "#A8A29E",
-              border: tier.featured ? "none" : "1px solid #2A2422",
+              color: tier.featured ? BG : "var(--lp-muted)",
+              border: tier.featured ? "none" : "1px solid var(--lp-border-em)",
               boxShadow: tier.featured ? "0 6px 22px rgba(239,104,26,0.26)" : "none",
             }}>
               {tier.cta}
@@ -744,12 +745,12 @@ function FAQSection() {
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
       <div style={{ borderTop: "1px solid var(--lp-border)", paddingTop: 40, marginBottom: 52 }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>[ TECHNICAL OBJECTIONS ]</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>TECHNICAL OBJECTIONS</div>
         <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Built for GCC compliance teams</h2>
       </div>
-      <div style={{ border: "1px solid #221D1B", borderRadius: 14, overflow: "hidden", background: "#0A0706" }}>
+      <div style={{ border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)" }}>
         {FAQS.map((faq, i) => (
-          <div key={i} style={{ borderBottom: i < FAQS.length - 1 ? "1px solid #1C1715" : "none" }}>
+          <div key={i} style={{ borderBottom: i < FAQS.length - 1 ? "1px solid var(--lp-border-2)" : "none" }}>
             <button
               type="button"
               onClick={() => setOpenIdx(openIdx === i ? null : i)}
@@ -759,13 +760,13 @@ function FAQSection() {
                 textAlign: "left", gap: 20, fontFamily: "inherit",
               }}
             >
-              <span style={{ fontSize: 15.5, fontWeight: 600, color: "#E7E2DF", lineHeight: 1.35 }}>{faq.q}</span>
-              <span style={{ width: 26, height: 26, borderRadius: "50%", border: "1px solid #2A2422", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: openIdx === i ? OG : "#6E6360", flexShrink: 0, transition: "all 0.15s" }}>
+              <span style={{ fontSize: 15.5, fontWeight: 600, color: "var(--lp-text-2)", lineHeight: 1.35 }}>{faq.q}</span>
+              <span style={{ width: 26, height: 26, borderRadius: "50%", border: "1px solid var(--lp-border-em)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: openIdx === i ? OG : "var(--lp-dim)", flexShrink: 0, transition: "all 0.15s" }}>
                 {openIdx === i ? "−" : "+"}
               </span>
             </button>
             {openIdx === i && (
-              <div style={{ padding: "0 28px 24px", fontSize: 14.5, color: "#A8A29E", lineHeight: 1.7, maxWidth: 720 }}>
+              <div style={{ padding: "0 28px 24px", fontSize: 14.5, color: "var(--lp-muted)", lineHeight: 1.7, maxWidth: 720 }}>
                 {faq.a}
               </div>
             )}
@@ -792,7 +793,7 @@ function LandingPage() {
   return (
     <div
       data-lp-theme={dark ? "dark" : "light"}
-      style={{ position: "relative", minHeight: "100vh", width: "100%", background: dark ? BG : "#FAF9F7", color: dark ? "#FAFAF9" : "#1A1A18", fontFamily: "'Geist',-apple-system,BlinkMacSystemFont,sans-serif", WebkitFontSmoothing: "antialiased", transition: "background 0.2s, color 0.2s" }}
+      style={{ position: "relative", minHeight: "100vh", width: "100%", background: dark ? BG : "#FAF9F7", color: dark ? "var(--lp-text)" : "#1A1A18", fontFamily: "'Geist',-apple-system,BlinkMacSystemFont,sans-serif", WebkitFontSmoothing: "antialiased", transition: "background 0.2s, color 0.2s" }}
     >
       <style>{PAGE_CSS}</style>
       {/* Grid overlay */}
@@ -808,15 +809,39 @@ function LandingPage() {
       <ROISandbox />
       <PricingSection />
       <FAQSection />
-      <DeployCTA />
+      <DeployCTA dark={dark} />
     </div>
   );
 }
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-  :root { --lp-text: #FAFAF9; --lp-muted: #A8A29E; --lp-dim: #6E6360; --lp-border: #211C1A; }
-  [data-lp-theme="light"] { --lp-text: #1A1A18; --lp-muted: #57534E; --lp-dim: #8C8480; --lp-border: #D4CEC8; }
+  :root {
+    --lp-text:#FAFAF9; --lp-text-2:#E7E2DF; --lp-text-3:#EDE8E5;
+    --lp-text-code:#9C938F; --lp-text-max:#C9C2BE; --lp-rule-color:#C97B4A;
+    --lp-muted:#A8A29E; --lp-muted-2:#8A7F7B;
+    --lp-dim:#6E6360; --lp-faint:#52483F; --lp-inactive:#3A332F;
+    --lp-border:#211C1A; --lp-border-em:#2A2422;
+    --lp-border-2:#1C1715; --lp-border-3:#1E1917;
+    --lp-border-4:#221D1B; --lp-border-5:#251F1D; --lp-border-6:#1A1513;
+    --lp-border-strip:#1A1A1A;
+    --lp-surface:#0A0706; --lp-surface-2:#0B0807; --lp-surface-3:#0E0A09;
+    --lp-surface-4:#15110F; --lp-surface-5:#080605; --lp-surface-6:#141010;
+    --lp-surface-strip:#050505; --lp-surface-dots:#241E1C;
+  }
+  [data-lp-theme="light"] {
+    --lp-text:#1A1A18; --lp-text-2:#2C2C29; --lp-text-3:#3C3C38;
+    --lp-text-code:#57534E; --lp-text-max:#6B6560; --lp-rule-color:#8C5E2A;
+    --lp-muted:#6B6560; --lp-muted-2:#7C7873;
+    --lp-dim:#8C8883; --lp-faint:#9C9893; --lp-inactive:#B8B2AC;
+    --lp-border:#D4CEC8; --lp-border-em:#C8C2BB;
+    --lp-border-2:#D8D3CD; --lp-border-3:#D0CBC4;
+    --lp-border-4:#C8C2BB; --lp-border-5:#BDB7B0; --lp-border-6:#D4CEC8;
+    --lp-border-strip:#DDD8D3;
+    --lp-surface:#F0EDE9; --lp-surface-2:#EAE7E3; --lp-surface-3:#E5E1DC;
+    --lp-surface-4:#DEDAD4; --lp-surface-5:#EDEBE7; --lp-surface-6:#F5F3F0;
+    --lp-surface-strip:#F0EDE9; --lp-surface-dots:#D0CBC4;
+  }
   *, *::before, *::after { box-sizing: border-box; }
   @keyframes ps-blink  { 0%,49%{opacity:1} 50%,100%{opacity:0} }
   @keyframes ps-wave   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }

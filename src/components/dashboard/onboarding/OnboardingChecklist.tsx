@@ -14,13 +14,13 @@ type StepKey = "url" | "scrape" | "insight";
 type StepDef = {
   key: StepKey;
   tKey: string;
-  href: string;
+  href: string | null;
 };
 
 const STEPS: StepDef[] = [
   { key: "url", tKey: "onboarding.step1", href: "/dashboard/competitors" },
   { key: "scrape", tKey: "onboarding.step2", href: "/dashboard/competitors" },
-  { key: "insight", tKey: "onboarding.step3", href: "/dashboard" },
+  { key: "insight", tKey: "onboarding.step3", href: null },
 ];
 
 function useOnboardingStatus() {
@@ -263,35 +263,66 @@ export function OnboardingChecklist() {
               </div>
 
               {!isDone && (
-                <Link
-                  to={step.href}
-                  style={{
-                    flexShrink: 0,
-                    alignSelf: "center",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: isDoing ? "#FFFFFF" : "#1A1A18",
-                    background: isDoing ? "#EA580C" : "#FFFFFF",
-                    border: `1px solid ${isDoing ? "#EA580C" : "#E5E2DB"}`,
-                    padding: "7px 12px",
-                    borderRadius: 8,
-                    textDecoration: "none",
-                    whiteSpace: "nowrap",
-                    transition: "background 0.15s, border-color 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isDoing) {
-                      e.currentTarget.style.background = "#C2410C";
-                    } else {
-                      e.currentTarget.style.background = "#F5F4F1";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = isDoing ? "#EA580C" : "#FFFFFF";
-                  }}
-                >
-                  {t(`${step.tKey}.cta` as string)}
-                </Link>
+                step.href ? (
+                  <Link
+                    to={step.href}
+                    style={{
+                      flexShrink: 0,
+                      alignSelf: "center",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: isDoing ? "#FFFFFF" : "#1A1A18",
+                      background: isDoing ? "#EA580C" : "#FFFFFF",
+                      border: `1px solid ${isDoing ? "#EA580C" : "#E5E2DB"}`,
+                      padding: "7px 12px",
+                      borderRadius: 8,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                      transition: "background 0.15s, border-color 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isDoing) {
+                        e.currentTarget.style.background = "#C2410C";
+                      } else {
+                        e.currentTarget.style.background = "#F5F4F1";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isDoing ? "#EA580C" : "#FFFFFF";
+                    }}
+                  >
+                    {t(`${step.tKey}.cta` as string)}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document.getElementById("ai-insights-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }}
+                    style={{
+                      flexShrink: 0,
+                      alignSelf: "center",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: isDoing ? "#FFFFFF" : "#1A1A18",
+                      background: isDoing ? "#EA580C" : "#FFFFFF",
+                      border: `1px solid ${isDoing ? "#EA580C" : "#E5E2DB"}`,
+                      padding: "7px 12px",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "background 0.15s, border-color 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isDoing ? "#C2410C" : "#F5F4F1";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isDoing ? "#EA580C" : "#FFFFFF";
+                    }}
+                  >
+                    {t(`${step.tKey}.cta` as string)}
+                  </button>
+                )
               )}
             </li>
           );

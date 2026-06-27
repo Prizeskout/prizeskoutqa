@@ -16,6 +16,15 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type ProductUrl = {
+  id: string;
+  product: string;
+  url: string;
+  category: string | null;
+};
+
 type Channel = "Online" | "In-Store";
 type Status = "Active" | "Partial";
 
@@ -249,11 +258,214 @@ function ConfirmDeleteModal({
   );
 }
 
+// ── Edit competitor modal (manage individual product URLs) ─────────────────────
+
+function EditCompetitorModal({
+  competitorName,
+  userId,
+  onClose,
+  onChanged,
+}: {
+  competitorName: string;
+  userId: string;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [urls, setUrls] = useState<ProductUrl[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newProduct, setNewProduct] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("competitor_product_urls")
+        .select("id, product, url, category")
+        .eq("user_id", userId)
+        .eq("competitor", competitorName)
+        .order("created_at", { ascending: true });
+      setUrls((data ?? []) as ProductUrl[]);
+      setLoading(false);
+    })();
+  }, [competitorName, userId]);
+
+  const handleAdd = async () => {
+    if (!newProduct.trim() || !newUrl.trim()) return;
+    setAdding(true);
+    try {
+      const { data, error } = await supabase
+        .from("competitor_product_urls")
+        .insert({
+          user_id: userId,
+          competitor: competitorName,
+          product: newProduct.trim(),
+          url: newUrl.trim(),
+          category: newCategory.trim() || null,
+        })
+        .select("id, product, url, category")
+        .single();
+      if (error) throw error;
+      setUrls((prev) => [...prev, data as ProductUrl]);
+      setNewProduct("");
+      setNewUrl("");
+      setNewCategory("");
+      onChanged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add URL");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDeleteUrl = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from("competitor_product_urls")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      setUrls((prev) => prev.filter((u) => u.id !== id));
+      onChanged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove URL");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const canAdd = newProduct.trim() && newUrl.trim();
+
+  return (
+    <ModalShell title={`Edit — ${competitorName}`} onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Tracked URLs list */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#6B6B6B", marginBottom: 8 }}>
+            Tracked product URLs
+          </div>
+          {loading ? (
+            <div style={{ fontSize: 12, color: "#9A9A9A" }}>Loading…</div>
+          ) : urls.length === 0 ? (
+            <div style={{ fontSize: 12, color: "#9A9A9A" }}>No URLs yet. Add one below.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {urls.map((u) => (
+                <div
+                  key={u.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    padding: "10px 12px",
+                    backgroundColor: "#FAFAF9",
+                    border: "1px solid #E5E2DB",
+                    borderRadius: 8,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "#1A1A18" }}>{u.product}</div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#6B6B6B",
+                        wordBreak: "break-all",
+                        marginTop: 2,
+                        fontFamily: "ui-monospace, monospace",
+                      }}
+                    >
+                      {u.url}
+                    </div>
+                    {u.category && (
+                      <div style={{ fontSize: 10, color: "#9A9A9A", marginTop: 2 }}>{u.category}</div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Remove URL"
+                    disabled={deletingId === u.id}
+                    onClick={() => handleDeleteUrl(u.id)}
+                    style={{
+                      flexShrink: 0,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 4,
+                      opacity: deletingId === u.id ? 0.5 : 1,
+                      display: "inline-flex",
+                    }}
+                  >
+                    <Trash2 size={14} color="#9A9A9A" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Add new URL */}
+        <div style={{ borderTop: "1px solid #E5E2DB", paddingTop: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#6B6B6B", marginBottom: 10 }}>
+            Add product URL
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <FieldRow>
+              <Field label="Product name">
+                <TextField value={newProduct} onChange={setNewProduct} placeholder="e.g. Sony WH-1000XM5" />
+              </Field>
+            </FieldRow>
+            <FieldRow>
+              <Field label="URL">
+                <TextField value={newUrl} onChange={setNewUrl} placeholder="https://..." />
+              </Field>
+            </FieldRow>
+            <FieldRow>
+              <Field label="Category (optional)">
+                <TextField value={newCategory} onChange={setNewCategory} placeholder="e.g. Electronics" />
+              </Field>
+            </FieldRow>
+            <div>
+              <div style={{ opacity: canAdd ? 1 : 0.5, pointerEvents: canAdd ? "auto" : "none", display: "inline-block" }}>
+                <PrimaryButton onClick={handleAdd}>
+                  {adding ? "Adding…" : "Add URL"}
+                </PrimaryButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #E5E2DB", paddingTop: 14 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "1px solid #E5E2DB",
+              color: "#1A1A18",
+              fontSize: 13,
+              fontWeight: 500,
+              padding: "10px 18px",
+              borderRadius: 8,
+              cursor: "pointer",
+            }}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
 export function CompetitorsTab() {
   const { user } = useAuth();
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [editCompetitor, setEditCompetitor] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -389,7 +601,7 @@ export function CompetitorsTab() {
                     <IconAction
                       ariaLabel={`Edit ${c.name}`}
                       icon={<Pencil size={14} color="#6B6B6B" />}
-                      onClick={() => toast.info("Manage individual product URLs from the Competitors page")}
+                      onClick={() => setEditCompetitor(c.name)}
                     />
                     <IconAction
                       ariaLabel={`Remove ${c.name}`}
@@ -409,6 +621,15 @@ export function CompetitorsTab() {
         <AddCompetitorModal
           onClose={() => setAddOpen(false)}
           onAdded={load}
+        />
+      )}
+
+      {editCompetitor && user && (
+        <EditCompetitorModal
+          competitorName={editCompetitor}
+          userId={user.id}
+          onClose={() => setEditCompetitor(null)}
+          onChanged={load}
         />
       )}
 

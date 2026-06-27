@@ -29,11 +29,161 @@ type ApiKeyRow = {
   revoked_at: string | null;
 };
 
+function KeysBody({
+  loading,
+  loadError,
+  keys,
+  load,
+  setShowCreate,
+  handleRevoke,
+  handleDelete,
+}: {
+  loading: boolean;
+  loadError: string | null;
+  keys: ApiKeyRow[];
+  load: () => Promise<void>;
+  setShowCreate: (v: boolean) => void;
+  handleRevoke: (id: string) => Promise<void>;
+  handleDelete: (id: string) => Promise<void>;
+}) {
+  const { mode: dashboardMode } = useModeContext();
+
+  if (loading) {
+    return <div style={{ padding: 24, fontSize: 13, color: "#8A8A8A" }}>Loading…</div>;
+  }
+  if (loadError) {
+    return (
+      <div style={{ padding: 24, fontSize: 13, color: "#DC2626" }}>
+        Could not load keys: {loadError}{" "}
+        <button
+          type="button"
+          onClick={load}
+          style={{ marginLeft: 8, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", color: "#DC2626", fontSize: 13 }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const modeFilter = dashboardMode === "live" ? "live" : "test";
+  const filtered = keys.filter((k) => k.mode === modeFilter);
+
+  if (filtered.length === 0) {
+    return (
+      <div style={{ padding: 32, textAlign: "center" }}>
+        <KeyRound size={24} color="#9A9A9A" style={{ margin: "0 auto 10px" }} />
+        <div style={{ fontSize: 13, color: "#6B6B6B", marginBottom: 12 }}>
+          No {modeFilter} keys yet. Create one to get started.
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          style={{
+            padding: "8px 14px",
+            backgroundColor: "#EA580C",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Create your first {modeFilter} key
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {filtered.map((k) => (
+        <div
+          key={k.id}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.4fr 0.7fr 1.2fr 1fr 1fr 80px",
+            alignItems: "center",
+            padding: "12px 16px",
+            fontSize: 13,
+            color: "#1A1A18",
+            borderBottom: "1px solid #F1EDE4",
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>{k.name}</span>
+          <span>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "2px 8px",
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 600,
+                backgroundColor: k.mode === "live" ? "#DCFCE7" : "#FEF3C7",
+                color: k.mode === "live" ? "#166534" : "#92400E",
+              }}
+            >
+              {k.mode}
+            </span>
+          </span>
+          <code style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, color: "#6B6B6B" }}>
+            {k.key_prefix}_…{k.last_four}
+          </code>
+          <span style={{ color: "#6B6B6B", fontSize: 12 }}>
+            {new Date(k.created_at).toLocaleDateString()}
+          </span>
+          <span style={{ color: "#6B6B6B", fontSize: 12 }}>
+            {k.revoked_at
+              ? "Revoked"
+              : k.last_used_at
+                ? new Date(k.last_used_at).toLocaleDateString()
+                : "Never"}
+          </span>
+          <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            {!k.revoked_at && (
+              <button
+                type="button"
+                onClick={() => handleRevoke(k.id)}
+                title="Revoke"
+                style={{
+                  padding: 6,
+                  background: "transparent",
+                  border: "1px solid #E5E2DB",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  color: "#6B6B6B",
+                }}
+              >
+                <Ban size={13} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleDelete(k.id)}
+              title="Delete"
+              style={{
+                padding: 6,
+                background: "transparent",
+                border: "1px solid #E5E2DB",
+                borderRadius: 6,
+                cursor: "pointer",
+                color: "#DC2626",
+              }}
+            >
+              <Trash2 size={13} />
+            </button>
+          </span>
+        </div>
+      ))}
+    </>
+  );
+}
+
 function ApiKeysPage() {
   const { data: account, refetch: refetchAccount } = useAccount();
   const liveStatus = account?.live_status ?? "none";
   const liveApproved = liveStatus === "approved";
-  const { mode: dashboardMode } = useModeContext();
 
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -536,127 +686,15 @@ function ApiKeysPage() {
           <span>Last used</span>
           <span></span>
         </div>
-        {loading ? (
-          <div style={{ padding: 24, fontSize: 13, color: "#8A8A8A" }}>Loading…</div>
-        ) : loadError ? (
-          <div style={{ padding: 24, fontSize: 13, color: "#DC2626" }}>
-            Could not load keys: {loadError}{" "}
-            <button
-              type="button"
-              onClick={load}
-              style={{ marginLeft: 8, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", color: "#DC2626", fontSize: 13 }}
-            >
-              Retry
-            </button>
-          </div>
-        ) : (
-          (() => {
-            const modeFilter = dashboardMode === "live" ? "live" : "test";
-            const filtered = keys.filter((k) => k.mode === modeFilter);
-            if (filtered.length === 0) return (
-              <div style={{ padding: 32, textAlign: "center" }}>
-                <KeyRound size={24} color="#9A9A9A" style={{ margin: "0 auto 10px" }} />
-                <div style={{ fontSize: 13, color: "#6B6B6B", marginBottom: 12 }}>
-                  No {modeFilter} keys yet. Create one to get started.
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(true)}
-                  style={{
-                    padding: "8px 14px",
-                    backgroundColor: "#EA580C",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  Create your first {modeFilter} key
-                </button>
-              </div>
-            );
-            return filtered.map((k) => (
-            <div
-              key={k.id}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.4fr 0.7fr 1.2fr 1fr 1fr 80px",
-                alignItems: "center",
-                padding: "12px 16px",
-                fontSize: 13,
-                color: "#1A1A18",
-                borderBottom: "1px solid #F1EDE4",
-              }}
-            >
-              <span style={{ fontWeight: 600 }}>{k.name}</span>
-              <span>
-                <span
-                  style={{
-                    display: "inline-block",
-                    padding: "2px 8px",
-                    borderRadius: 999,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    backgroundColor: k.mode === "live" ? "#DCFCE7" : "#FEF3C7",
-                    color: k.mode === "live" ? "#166534" : "#92400E",
-                  }}
-                >
-                  {k.mode}
-                </span>
-              </span>
-              <code style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, color: "#6B6B6B" }}>
-                {k.key_prefix}_…{k.last_four}
-              </code>
-              <span style={{ color: "#6B6B6B", fontSize: 12 }}>
-                {new Date(k.created_at).toLocaleDateString()}
-              </span>
-              <span style={{ color: "#6B6B6B", fontSize: 12 }}>
-                {k.revoked_at
-                  ? "Revoked"
-                  : k.last_used_at
-                    ? new Date(k.last_used_at).toLocaleDateString()
-                    : "Never"}
-              </span>
-              <span style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                {!k.revoked_at && (
-                  <button
-                    type="button"
-                    onClick={() => handleRevoke(k.id)}
-                    title="Revoke"
-                    style={{
-                      padding: 6,
-                      background: "transparent",
-                      border: "1px solid #E5E2DB",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      color: "#6B6B6B",
-                    }}
-                  >
-                    <Ban size={13} />
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleDelete(k.id)}
-                  title="Delete"
-                  style={{
-                    padding: 6,
-                    background: "transparent",
-                    border: "1px solid #E5E2DB",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    color: "#DC2626",
-                  }}
-                >
-                  <Trash2 size={13} />
-                </button>
-              </span>
-            </div>
-          ));
-          })()
-        )}
+        <KeysBody
+          loading={loading}
+          loadError={loadError}
+          keys={keys}
+          load={load}
+          setShowCreate={setShowCreate}
+          handleRevoke={handleRevoke}
+          handleDelete={handleDelete}
+        />
       </div>
     </DashboardLayout>
   );

@@ -1,10 +1,7 @@
-// Test-mode API dispatcher.
-// Powers the "Try it out" button in /docs by accepting any /api/v1/* request,
-// validating the caller's test-mode API key, and returning the documented
-// sample response. This is a sandbox - it does NOT touch real account data.
-//
-// Live-mode keys are rejected here. They will eventually route to real
-// production handlers; for now they get a clear "not yet available" response.
+// API dispatcher.
+// Test-mode keys return documented sample responses (sandbox).
+// Live-mode keys are accepted for platform accounts (is_platform = true) and
+// route to real production handlers. All other live keys are rejected.
 
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
@@ -100,23 +97,13 @@ async function handle(request: Request, splat: string) {
   if (keyRow.revoked_at) {
     return json({ error: { code: "unauthorized", message: "This API key has been revoked." } }, 401);
   }
-  if (keyRow.mode !== "test") {
-    return json(
-      {
-        error: {
-          code: "live_mode_unavailable",
-          message:
-            "Live mode endpoints are not yet generally available. Use a test key (sk_test_...) to explore the API in the sandbox.",
-        },
-      },
-      403,
-    );
-  }
+
+  const isLive = keyRow.mode === "live";
 
   // ---------------------------------------------------------------------------
-  // Real-handler branch: if this path/method has a Week 2+ implementation,
-  // run it against actual account-scoped Postgres tables instead of returning
-  // the documented sample response.
+  // Real-handler branch: if this path/method has a real implementation,
+  // resolve the account and run against actual Postgres tables.
+  // Live-mode keys are allowed only for platform accounts (is_platform = true).
   // ---------------------------------------------------------------------------
   if (V1_HANDLER_KEYS.has(`${request.method} ${fullPath}`)) {
     // Resolve the account for this API key (uses find_account_for_api_key SQL helper).
@@ -144,6 +131,20 @@ async function handle(request: Request, splat: string) {
     };
     const plan: Plan = (acct.plan as Plan) ?? "starter";
     const isPlatform: boolean = acct.is_platform ?? false;
+
+    if (isLive && !isPlatform) {
+      return json(
+        {
+          error: {
+            code: "live_mode_unavailable",
+            message:
+              "Live mode is not yet available for this account. Use a test key (sk_test_...) to explore the API in the sandbox.",
+          },
+        },
+        403,
+      );
+    }
+
     const keyScopes: string[] = Array.isArray(keyRow.scopes) ? (keyRow.scopes as string[]) : [];
 
     // Reject keys whose scopes exceed what the plan allows.
@@ -242,11 +243,25 @@ async function handle(request: Request, splat: string) {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "X-Api-Mode": "test",
+        "X-Api-Mode": isLive ? "live" : "test",
         "X-Request-Id": requestId,
         ...(result.headers ?? {}),
       },
     });
+  }
+
+  // Live-mode keys have no sample response fallback — only real handlers are allowed.
+  if (isLive) {
+    return json(
+      {
+        error: {
+          code: "live_mode_unavailable",
+          message:
+            "Live mode is not yet available for this account. Use a test key (sk_test_...) to explore the API in the sandbox.",
+        },
+      },
+      403,
+    );
   }
 
   // Find the spec

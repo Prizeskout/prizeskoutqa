@@ -203,6 +203,7 @@ export function AIInsightsCard({
 
   return (
     <div
+      id="ai-insights-card"
       style={{
         backgroundColor: "#FFFFFF",
         border: "1px solid #E5E2DB",
@@ -264,7 +265,7 @@ export function AIInsightsCard({
           <button
             type="button"
             onClick={refresh}
-            disabled={loading}
+            disabled={loading || authLoading}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -276,7 +277,7 @@ export function AIInsightsCard({
               color: "#1A1A18",
               fontSize: 12,
               fontWeight: 500,
-              cursor: loading ? "wait" : "pointer",
+              cursor: loading || authLoading ? "wait" : "pointer",
               whiteSpace: "nowrap",
             }}
           >

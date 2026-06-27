@@ -293,7 +293,7 @@
   "landing": {
     "langSwitcher": "Language",
     "infra": {
-      "nav": { "infrastructure": "Infrastructure", "loop": "Loop", "latency": "Latency", "docs": "Docs", "generateKeys": "Generate Keys" },
+      "nav": { "infrastructure": "Infrastructure", "loop": "Loop", "latency": "Latency", "docs": "Docs", "signIn": "Sign In", "generateKeys": "Generate Keys" },
       "hero": {
         "eyebrow": "PRIZESKOUT // PRICING INFRASTRUCTURE",
         "title": "The Pricing Infrastructure Layer for GCC Commerce.",
@@ -304,7 +304,7 @@
       },
       "backedBy": "Backed by",
       "surface": {
-        "sectionLabel": "[ 02 ] — FOUR API SURFACES", "title": "The Infrastructure Surface Matrix",
+        "sectionLabel": "FOUR API SURFACES", "title": "The Infrastructure Surface Matrix",
         "subtitle": "One contract. Four primitives. Every margin decision routed through the same event spine.",
         "syncName": "Sync", "syncBadge": "REAL-TIME INGESTION", "syncDesc": "Normalize incoming SAP S/4HANA & Salla payloads into a single canonical pricing event at the edge.",
         "decideName": "Decide", "decideBadge": "MARGIN ENGINE", "decideDesc": "Inline JSON evaluation solves regional platform commission against your net-margin floor in-memory.",
@@ -312,7 +312,7 @@
         "governName": "Govern", "governBadge": "SOVEREIGN AUDIT", "governDesc": "A dual-language cryptographic compliance log maps cross-border routing under QFC & KSA PDPL."
       },
       "loop": {
-        "sectionLabel": "[ 03 ] — ASYNCHRONOUS MESSAGE TRANSIT", "title": "The Sub-2-Second Reprice Loop",
+        "sectionLabel": "ASYNCHRONOUS MESSAGE TRANSIT", "title": "The Sub-2-Second Reprice Loop",
         "eventLabel": "EVENT LIFECYCLE", "inFlight": "in-flight",
         "node1Name": "Ingestion Edge", "node1Sub": "Salla / Foodics webhook",
         "node2Name": "Stream Broker", "node2Sub": "Kafka / Redpanda partition",
@@ -321,7 +321,7 @@
         "complete": "COMPLETE", "processing": "PROCESSING", "idle": "IDLE"
       },
       "latency": {
-        "sectionLabel": "[ 04 ] — LATENCY BUDGET", "title": "Performance Assurance Matrix", "p99": "P99 · hard-locked SLA",
+        "sectionLabel": "LATENCY BUDGET", "title": "Performance Assurance Matrix", "p99": "P99 · hard-locked SLA",
         "colNode": "PIPELINE ROUTING NODE", "colOp": "OPERATION", "colMax": "MAX ALLOC",
         "r1Node": "Ingestion Hook Capture", "r1Detail": "Webhook receive + signature auth",
         "r2Node": "Stream Transit", "r2Detail": "Broker enqueue + partition assign",
@@ -332,7 +332,7 @@
         "totalLabel": "Total round-trip pipeline budget · hard-locked"
       },
       "deploy": {
-        "sectionLabel": "[ 05 ] — DEPLOY", "title": "Ship the pricing layer in one command.",
+        "sectionLabel": "DEPLOY", "title": "Ship the pricing layer in one command.",
         "subtitle": "Serverless, region-sovereign, and idempotent by default. No scrapers. No API hell.",
         "copy": "COPY", "copied": "COPIED ✓", "cta1": "Generate API Keys →", "cta2": "Read SDK Docs",
         "footerDesc": "Real-time pricing infrastructure for GCC digital commerce. Event-driven middleware, sovereign by design.",

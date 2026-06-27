@@ -105,6 +105,29 @@ function WhyExpander({ detail }: { detail: string }) {
   );
 }
 
+function ImpactStat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div
+      style={{
+        background: highlight ? "rgba(34,197,94,0.06)" : "#F5F4F1",
+        border: highlight ? "1px solid rgba(34,197,94,0.2)" : "1px solid #E5E2DB",
+        borderRadius: 6,
+        padding: "4px 10px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+      }}
+    >
+      <div style={{ fontSize: 9, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: highlight ? "#16A34A" : "#1A1A18" }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export function RecommendationCard({
   rec,
   initialDecision,
@@ -289,6 +312,21 @@ export function RecommendationCard({
 
       {/* ── Why? expander ── */}
       <WhyExpander detail={detail} />
+
+      {/* ── Impact stats strip ── */}
+      {(rec.unitImpact || rec.marginImpact || rec.netMonthly) && (
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          {rec.unitImpact && (
+            <ImpactStat label="Unit impact" value={rec.unitImpact} />
+          )}
+          {rec.marginImpact && (
+            <ImpactStat label="Margin Δ" value={rec.marginImpact} />
+          )}
+          {rec.netMonthly && (
+            <ImpactStat label="Net monthly" value={rec.netMonthly} highlight />
+          )}
+        </div>
+      )}
 
       {/* ── Price panel ── */}
       <div

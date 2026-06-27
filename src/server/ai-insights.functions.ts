@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -19,7 +20,7 @@ const WINDOW_HOURS: Record<InsightWindow, number> = {
   "30d": 24 * 30,
 };
 
-const MODEL = "google/gemini-3-flash-preview";
+const MODEL = "claude-opus-4-8";
 
 export type Citation = {
   label: string;
@@ -295,7 +296,13 @@ const SYSTEM_PROMPT = `You are a senior retail pricing & e-commerce analyst for 
 
 You will receive a JSON snapshot of one dashboard page, scoped to a specific time window (e.g. last 24 hours, 7 days, 30 days). Generate concise, decision-ready insights for the brand operator viewing this page, framed against that window.
 
-Rules:
+SPARSE OR EMPTY DATA — strict rules:
+- If the snapshot contains empty arrays or only zero-value metrics, state what is observed ("no competitor prices, alerts, or channel data arrived in the last Xh") and list 2-3 neutral possible reasons WITHOUT asserting any one cause as fact. Example neutral reasons: no competitor URLs have been added yet, no price changes occurred in this window, the account was recently set up.
+- NEVER diagnose a specific technical failure (e.g. "pipeline broken", "crawlers failed", "ingestion stopped", "restart any crawlers") solely from an absence of data. Absence of data cannot distinguish between "nothing happened" and "something is broken." If you cannot tell which it is, say so explicitly.
+- Do NOT invent products, competitor names, prices, or error records that are not in the snapshot.
+- When data is absent, cite the observable facts (empty array, zero count) as your citations rather than fabricating specific failure records.
+
+Rules (when data is present):
 - Reference the time window naturally in the headline or first bullet (for example, "In the last 24 hours...").
 - Be specific. Reference actual products, competitors, categories, and numbers from the data.
 - Use Qatari Riyal (QAR) when referring to money.
@@ -306,7 +313,7 @@ Rules:
 - Headline: one bold-friendly sentence (max 16 words) summarising the most important read.
 
 CITATIONS - required:
-- Build a "citations" array listing the specific records you used (products, rules, competitor rows, patterns, categories, etc.).
+- Build a "citations" array listing the specific records you used (products, rules, competitor rows, patterns, categories, etc.). For empty snapshots, cite the observable absence (e.g. label: "Overview metrics", kind: "metric", ref: "0 records returned").
 - Each citation has { label, kind, ref }. Use the exact product name, competitor name, rule text or category from the snapshot in "label". Put numeric evidence (price, gap %, confidence, etc.) in "ref".
 - "kind" MUST be one of: ${ALLOWED_KINDS.join(", ")}.
 - Every bullet and every action MUST include a "cites" array of 1-indexed positions into "citations" identifying the records that back it. Use 1-3 cites per item.
@@ -314,73 +321,70 @@ CITATIONS - required:
 
 Return ONLY a tool call to "emit_insights".`;
 
-const TOOL_SCHEMA = {
-  type: "function" as const,
-  function: {
-    name: "emit_insights",
-    description: "Emit dashboard insights for the operator with citations.",
-    parameters: {
-      type: "object",
-      properties: {
-        headline: { type: "string", maxLength: 200 },
-        citations: {
-          type: "array",
-          minItems: 2,
-          maxItems: 12,
-          items: {
-            type: "object",
-            properties: {
-              label: { type: "string", maxLength: 120 },
-              kind: { type: "string", enum: [...ALLOWED_KINDS] },
-              ref: { type: "string", maxLength: 160 },
-            },
-            required: ["label", "kind"],
-            additionalProperties: false,
+const TOOL_SCHEMA: Anthropic.Tool = {
+  name: "emit_insights",
+  description: "Emit dashboard insights for the operator with citations.",
+  input_schema: {
+    type: "object",
+    properties: {
+      headline: { type: "string", maxLength: 200 },
+      citations: {
+        type: "array",
+        minItems: 2,
+        maxItems: 12,
+        items: {
+          type: "object",
+          properties: {
+            label: { type: "string", maxLength: 120 },
+            kind: { type: "string", enum: [...ALLOWED_KINDS] },
+            ref: { type: "string", maxLength: 160 },
           },
-        },
-        bullets: {
-          type: "array",
-          minItems: 3,
-          maxItems: 5,
-          items: {
-            type: "object",
-            properties: {
-              text: { type: "string", maxLength: 220 },
-              cites: {
-                type: "array",
-                minItems: 1,
-                maxItems: 3,
-                items: { type: "integer", minimum: 1 },
-              },
-            },
-            required: ["text", "cites"],
-            additionalProperties: false,
-          },
-        },
-        actions: {
-          type: "array",
-          minItems: 2,
-          maxItems: 4,
-          items: {
-            type: "object",
-            properties: {
-              title: { type: "string", maxLength: 60 },
-              detail: { type: "string", maxLength: 240 },
-              cites: {
-                type: "array",
-                minItems: 1,
-                maxItems: 3,
-                items: { type: "integer", minimum: 1 },
-              },
-            },
-            required: ["title", "detail", "cites"],
-            additionalProperties: false,
-          },
+          required: ["label", "kind"],
+          additionalProperties: false,
         },
       },
-      required: ["headline", "bullets", "actions", "citations"],
-      additionalProperties: false,
+      bullets: {
+        type: "array",
+        minItems: 3,
+        maxItems: 5,
+        items: {
+          type: "object",
+          properties: {
+            text: { type: "string", maxLength: 220 },
+            cites: {
+              type: "array",
+              minItems: 1,
+              maxItems: 3,
+              items: { type: "integer", minimum: 1 },
+            },
+          },
+          required: ["text", "cites"],
+          additionalProperties: false,
+        },
+      },
+      actions: {
+        type: "array",
+        minItems: 2,
+        maxItems: 4,
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string", maxLength: 60 },
+            detail: { type: "string", maxLength: 240 },
+            cites: {
+              type: "array",
+              minItems: 1,
+              maxItems: 3,
+              items: { type: "integer", minimum: 1 },
+            },
+          },
+          required: ["title", "detail", "cites"],
+          additionalProperties: false,
+        },
+      },
     },
+    required: ["headline", "bullets", "actions", "citations"],
+    additionalProperties: false,
   },
 };
 
@@ -391,56 +395,48 @@ type RawInsightPayload = {
   citations: unknown;
 };
 
-async function callLovableAI(
+async function callAnthropicAI(
   page: Page,
   window: InsightWindow,
   contextJson: string,
 ): Promise<RawInsightPayload> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
 
+  const client = new Anthropic({ apiKey });
   const userPrompt = `Page: ${page}\nTime window: ${WINDOW_LABEL[window]}\n\nData snapshot:\n${contextJson}\n\nProduce insights now.`;
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-      tools: [TOOL_SCHEMA],
-      tool_choice: { type: "function", function: { name: "emit_insights" } },
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      throw new Error("AI rate limit reached. Please wait a moment and try again.");
-    }
-    if (response.status === 402) {
-      throw new Error("AI credits exhausted. Add credits in Settings → Workspace → Usage.");
-    }
-    const text = await response.text();
-    console.error("Lovable AI error", response.status, text);
-    throw new Error(`AI gateway error (${response.status})`);
-  }
-
-  const json = await response.json();
-  const toolCall = json?.choices?.[0]?.message?.tool_calls?.[0];
-  const argsRaw = toolCall?.function?.arguments;
-  if (!argsRaw) throw new Error("AI returned no insights");
-  let parsed: RawInsightPayload;
+  let response: Anthropic.Message;
   try {
-    parsed = typeof argsRaw === "string" ? JSON.parse(argsRaw) : argsRaw;
-  } catch {
-    throw new Error("AI returned malformed insights");
+    response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userPrompt }],
+      tools: [TOOL_SCHEMA],
+      tool_choice: { type: "tool", name: "emit_insights" },
+    });
+  } catch (err: unknown) {
+    if (err instanceof Anthropic.APIError) {
+      if (err.status === 429) throw new Error("AI rate limit reached. Please wait a moment and try again.");
+      if (err.status === 402 || err.status === 529) throw new Error("AI credits exhausted. Add credits in Settings → Workspace → Usage.");
+      const body = (err as any).error;
+      const isLowBalance =
+        err.status === 400 &&
+        typeof body?.message === "string" &&
+        body.message.includes("credit balance");
+      if (isLowBalance || err.status === 402 || err.status === 529) {
+        throw new Error("AI credits exhausted. Add credits at console.anthropic.com/settings/billing.");
+      }
+      console.error("Anthropic API error", err.status, err.message);
+      throw new Error(`AI gateway error (${err.status}): ${err.message}`);
+    }
+    throw err;
   }
-  return parsed;
+
+  const toolUse = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+  if (!toolUse) throw new Error("AI returned no insights");
+  return toolUse.input as RawInsightPayload;
 }
 
 /** Generate fresh insights for a page+window and cache them. */
@@ -454,7 +450,7 @@ export const generateInsight = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const contextJson = await gatherContext(supabase, userId, data.page, data.window);
-    const result = await callLovableAI(data.page, data.window, contextJson);
+    const result = await callAnthropicAI(data.page, data.window, contextJson);
 
     const citations = normalizeCitations(result.citations);
     const maxIdx = citations.length;

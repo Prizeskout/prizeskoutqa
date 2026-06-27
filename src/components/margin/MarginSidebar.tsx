@@ -10,6 +10,7 @@ import {
   ArrowLeftRight,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -22,6 +23,7 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { to: "/margin-dashboard",          label: "Overview",  icon: LayoutDashboard },
+  { to: "/margin-dashboard/demo",     label: "Demo",      icon: Sparkles },
   { to: "/margin-dashboard/upload",   label: "Upload",    icon: Upload },
   { to: "/margin-dashboard/channels", label: "Channels",  icon: Layers },
   { to: "/margin-dashboard/items",    label: "Items",     icon: Package },
