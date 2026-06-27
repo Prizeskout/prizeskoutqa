@@ -13,6 +13,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoiCalculatorRouteImport } from './routes/roi-calculator'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MarginDashboardRouteImport } from './routes/margin-dashboard'
 import { Route as MarginRouteImport } from './routes/margin'
 import { Route as LoginRouteImport } from './routes/login'
@@ -96,6 +97,11 @@ const RoiCalculatorRoute = RoiCalculatorRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarginDashboardRoute = MarginDashboardRouteImport.update({
@@ -438,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/margin-dashboard': typeof MarginDashboardRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
@@ -506,6 +513,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
+  '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
@@ -575,6 +583,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/margin-dashboard': typeof MarginDashboardRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
@@ -647,6 +656,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/margin'
     | '/margin-dashboard'
+    | '/onboarding'
     | '/privacy'
     | '/roi-calculator'
     | '/signup'
@@ -715,6 +725,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/margin'
+    | '/onboarding'
     | '/privacy'
     | '/roi-calculator'
     | '/signup'
@@ -783,6 +794,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/margin'
     | '/margin-dashboard'
+    | '/onboarding'
     | '/privacy'
     | '/roi-calculator'
     | '/signup'
@@ -854,6 +866,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MarginRoute: typeof MarginRoute
   MarginDashboardRoute: typeof MarginDashboardRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
@@ -904,6 +917,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/margin-dashboard': {
@@ -1500,6 +1520,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MarginRoute: MarginRoute,
   MarginDashboardRoute: MarginDashboardRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,

@@ -12,6 +12,8 @@ import { ModeProvider } from "@/lib/mode-context";
 import { SidebarCollapseProvider } from "./SidebarCollapseContext";
 import { PlanGateModal } from "./PlanGateModal";
 import { i18n as i18nInstance, getStoredLocale, applyLocale, type Locale } from "@/lib/i18n";
+import logoDark from "@/assets/logo-dark.svg";
+import logoLight from "@/assets/logo-light.svg";
 
 // Ensure i18n module initialises.
 void i18nInstance;
@@ -93,7 +95,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
   const { user } = useAuth();
   const router = useRouter();
   const navigate = useNavigate();
-  const displayName = (user?.user_metadata?.display_name as string | undefined) || user?.email?.split("@")[0] || "Account";
+  const displayName = (user?.user_metadata?.display_name as string | undefined) || user?.email?.split("@")[0] || "Demo User";
   const company = (user?.user_metadata?.company as string | undefined) || "";
 
   const handleSignOut = async () => {
@@ -109,19 +111,12 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
       padding: "22px 16px", position: "sticky", top: 0, height: "100vh", overflowY: "auto",
     }}>
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "4px 6px 22px 6px" }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: 9, flexShrink: 0,
-          background: "linear-gradient(145deg,#EF681A,#c14f0d)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 4px 16px rgba(239,104,26,0.32)",
-        }}>
-          <div style={{ width: 12, height: 12, borderRadius: 3, background: "#fff", transform: "rotate(45deg)" }} />
-        </div>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.3px", color: "var(--ps-text)" }}>PrizeSkout</div>
-          <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.4px" }}>PRICING&nbsp;INFRA</div>
-        </div>
+      <div style={{ padding: "4px 6px 22px 6px" }}>
+        <img
+          src={theme === "light" ? logoLight : logoDark}
+          alt="PrizeSkout"
+          style={{ height: 28, width: "auto", display: "block" }}
+        />
       </div>
 
       {/* Nav label */}
@@ -194,14 +189,16 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
               {company || user?.email || ""}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            title="Sign out"
-            style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ps-faint)", padding: 4, borderRadius: 6, flexShrink: 0 }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
+          {user && (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              title="Sign out"
+              style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ps-faint)", padding: 4, borderRadius: 6, flexShrink: 0 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          )}
         </div>
       </div>
     </aside>
