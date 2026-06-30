@@ -27,7 +27,7 @@ function PrivacyPage() {
       <MarketingHero eyebrow="LEGAL" title="Privacy policy" />
       <MarketingBody>
         <MarketingProse>
-          <p className="ps-meta">Last updated: April 1, 2026</p>
+          <p className="ps-meta">Last updated: June 30th 2026. Version 1.0.</p>
 
           <p>
             This policy explains what data PrizeSkout collects, how we use it, and the choices
@@ -93,7 +93,7 @@ function PrivacyPage() {
 
           <h2>7. Contact</h2>
           <p>
-            Questions about this policy? Email <strong>privacy@prizeskout.qa</strong> and we
+            Questions about this policy? Email <strong>legal@app.prizeskout.qa</strong> and we
             will get back to you within one business day.
           </p>
         </MarketingProse>

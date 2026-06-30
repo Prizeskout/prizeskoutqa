@@ -5,16 +5,16 @@ import { MarketingHero, MarketingBody, MarketingProse } from "@/components/marke
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of service | PrizeSkout" },
+      { title: "Terms of Service | PrizeSkout" },
       {
         name: "description",
         content:
-          "The terms that govern your use of PrizeSkout, accounts, billing, acceptable use, and the limits of our service.",
+          "Terms of Service governing your use of PrizeSkout pricing infrastructure middleware. Operated under QFC No. 04412.",
       },
-      { property: "og:title", content: "Terms of service | PrizeSkout" },
+      { property: "og:title", content: "Terms of Service | PrizeSkout" },
       {
         property: "og:description",
-        content: "Read the agreement between PrizeSkout and the businesses that use our platform.",
+        content: "Read the binding agreement between PrizeSkout and merchants using the pricing infrastructure platform.",
       },
     ],
   }),
@@ -24,85 +24,101 @@ export const Route = createFileRoute("/terms")({
 function TermsPage() {
   return (
     <MarketingShell>
-      <MarketingHero eyebrow="LEGAL" title="Terms of service" />
+      <MarketingHero eyebrow="LEGAL" title="Terms of Service" />
       <MarketingBody>
         <MarketingProse>
-          <p className="ps-meta">Last updated: April 1, 2026</p>
-
-          <p>
-            These terms govern your use of PrizeSkout. By creating an account or using the
-            service, you agree to them. If you are signing up on behalf of a company, you
-            confirm you have authority to do so.
+          <p className="ps-meta">
+            Operated by <strong>PrizeSkout</strong> (QFC No. 04412). Effective Date: June 22nd 2026. Last Updated: June 30th 2026. Version 1.0.
           </p>
 
-          <h2>1. The service</h2>
           <p>
-            PrizeSkout is a software-as-a-service platform that helps commerce brands monitor
-            competitors, optimize pricing, manage promotions, and gather field intelligence.
-            We may update the service from time to time to add or improve features.
+            These Terms of Service (the "Terms") constitute a binding agreement between PrizeSkout and any merchant, business, or authorized user (the "Merchant" or "you") that accesses or uses the PrizeSkout pricing infrastructure middleware (the "Service"). By installing the Service through the Salla App Store, the Zid App Market, the Foodics Marketplace, or by otherwise activating any PrizeSkout integration, you agree to be bound by these Terms. If you do not agree, you must not access or use the Service.
           </p>
 
-          <h2>2. Your account</h2>
+          <h2>1.0  Description of Service &amp; Integration Scope</h2>
           <p>
-            You are responsible for keeping your login credentials safe and for all activity
-            that happens under your account. Notify us promptly if you suspect unauthorized
-            access.
+            1.1  PrizeSkout is real-time pricing infrastructure middleware. It operates as background middleware that processes active inbound API calls from connected commerce platforms (Salla, Zid, Foodics) and active outbound API calls to connected delivery aggregators (Talabat, Jahez, Snoonu, Deliveroo) in order to deliver pricing intelligence, channel-margin analysis, and, where enabled, automated price adjustment.
+          </p>
+          <p>
+            1.2  The Service is a connective and analytical layer. PrizeSkout does not operate the Merchant's storefront, does not act as a payment processor, does not take title to goods, and does not control the systems, availability or commercial terms of any third-party platform or aggregator.
+          </p>
+          <p>
+            1.3  The Merchant is responsible for maintaining its own valid accounts, subscriptions and integration permissions with each connected platform and aggregator, and for ensuring that its use of the Service complies with the terms of those third-party platforms.
           </p>
 
-          <h2>3. Subscriptions and billing</h2>
+          <h2>2.0  Third-Party API Dependency &amp; System Liability</h2>
+          <p>
+            2.1  The Service is inherently dependent on third-party systems outside PrizeSkout's ownership or control. PrizeSkout does not warrant the availability, accuracy, latency, or continuity of any inbound platform or outbound aggregator, nor the stability of their application programming interfaces.
+          </p>
+          <p>
+            <strong>2.2  Exclusion of Liability for Downstream Failures.</strong> To the maximum extent permitted by applicable law, PrizeSkout shall not be liable for any transactional losses, margin leakage, lost profits, mispricing, or catalog synchronization failures arising from or relating to: (a) changes, deprecations, or breaking modifications to any third-party API; (b) service degradation, outage, throttling, or downtime of any aggregator (Talabat, Jahez, Snoonu, Deliveroo, etc.); (c) downtime, latency, or data errors originating from Salla, Zid, Foodics or any inbound platform; (d) revocation, expiry, or rate-limiting of API credentials by a third party; or (e) any act, omission, or commercial decision of a third-party platform, aggregator, or payment provider.
+          </p>
+          <p>
+            2.3  No Guarantee of Margin Outcome. The Service provides analytical outputs and, where enabled, automated adjustments based on data available at the time of processing. PrizeSkout does not guarantee any particular margin, revenue, ranking, or commercial result, and the Merchant retains full responsibility for its pricing strategy and commercial outcomes.
+          </p>
+          <p>
+            2.4  Limitation of Liability. To the maximum extent permitted by law, PrizeSkout's aggregate liability arising out of or relating to the Service shall not exceed the total fees paid by the Merchant to PrizeSkout in the twelve (12) months preceding the event giving rise to the claim. PrizeSkout shall not be liable for indirect, incidental, special, consequential or punitive damages. Nothing in these Terms excludes liability that cannot lawfully be excluded.
+          </p>
+          <p>
+            2.5  Service Availability. The Service is provided on an "as available" basis. PrizeSkout may suspend the Service for maintenance, security, or to comply with law, and will use reasonable efforts to minimize disruption.
+          </p>
+
+          <h2>3.0  Automated Execution Consent</h2>
+          <p>
+            3.1  By activating the "Active Margin Defense (Defend Loop)" toggle within the PrizeSkout dashboard, the Merchant grants PrizeSkout explicit, informed, and revocable authorization to execute automated price modifications on the Merchant's connected storefronts and channels, in accordance with the parameters configured by the Merchant.
+          </p>
+          <p>
+            <strong>3.2  Merchant Acknowledgement.</strong> The Merchant acknowledges and agrees that: (a) once the Defend Loop is enabled, the Service may write price changes to connected platforms automatically and without per-transaction confirmation; (b) the Merchant is solely responsible for the rules, floors, ceilings, and parameters it configures; (c) automated changes occur in real time based on then-available data; and (d) the Merchant is responsible for ensuring that automated pricing complies with applicable consumer-protection, competition, and platform-specific pricing rules in Qatar, KSA and the UAE.
+          </p>
+          <p>
+            3.3  Revocation. The Merchant may disable the Defend Loop at any time through the dashboard. Disabling the toggle ceases prospective automated execution but does not reverse price changes already written to connected platforms; reversal of prior changes is the Merchant's responsibility.
+          </p>
+          <p>
+            3.4  Safeguards. PrizeSkout will apply the configured guardrails (such as minimum-price floors) where set by the Merchant; however, PrizeSkout is not liable for outcomes resulting from parameters chosen by the Merchant, nor for changes propagated by downstream platforms outside PrizeSkout's control.
+          </p>
+
+          <h2>4.0  Acceptable Use &amp; Reverse Engineering</h2>
+          <p>
+            4.1  The Merchant shall use the Service only for its lawful internal business purposes and in compliance with all applicable laws and third-party platform terms.
+          </p>
+          <p>4.2  Prohibited Conduct. The Merchant shall not, and shall not permit any third party to:</p>
           <ul>
-            <li>Paid plans are billed monthly or annually in advance.</li>
-            <li>You can cancel at any time. Your plan remains active until the end of the current billing period.</li>
-            <li>We do not offer refunds for partial months, but we will not bill you for a renewal period after cancellation.</li>
-            <li>Prices may change with at least 30 days notice before your next renewal.</li>
+            <li>reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code, architecture, or operation of PrizeSkout's serverless event-loop engine or any component of the Service;</li>
+            <li>run scrapers, crawlers, bots, or automated extraction scripts against PrizeSkout's pricing telemetry clusters, APIs, or infrastructure;</li>
+            <li>circumvent, disable, or interfere with any security, rate-limiting, or access-control mechanism of the Service;</li>
+            <li>resell, sublicense, or provide the Service to third parties except as expressly permitted in writing;</li>
+            <li>use the Service to infringe intellectual property, violate competition law, or facilitate unlawful price coordination; or</li>
+            <li>introduce malicious code or attempt to gain unauthorized access to PrizeSkout systems or other tenants' data in the multi-tenant environment.</li>
           </ul>
-
-          <h2>4. Acceptable use</h2>
-          <p>You agree not to:</p>
-          <ul>
-            <li>Use the service to break the law or infringe on the rights of others.</li>
-            <li>Attempt to access another customer&apos;s data.</li>
-            <li>Reverse engineer the service or our underlying models.</li>
-            <li>Resell or sublicense PrizeSkout without a written agreement.</li>
-            <li>Submit content that is defamatory, obscene, or otherwise harmful.</li>
-          </ul>
-
-          <h2>5. Your data</h2>
           <p>
-            You own your data. You grant us a limited license to process it solely to provide
-            the service. We treat client data as confidential and we never share your numbers
-            with competitors. See our Privacy policy for details.
+            4.3  Intellectual Property. As between the parties, PrizeSkout retains all right, title and interest in and to the Service, its software, models, and telemetry infrastructure. No rights are granted except the limited, non-exclusive, non-transferable right to use the Service during the subscription term. The Merchant retains ownership of its own catalog, pricing, and transaction data.
+          </p>
+          <p>
+            4.4  Suspension. PrizeSkout may suspend or terminate access for a material breach of this Section, for security reasons, or where required to protect the integrity of the multi-tenant platform.
           </p>
 
-          <h2>6. Service availability</h2>
+          <h2>5.0  Governing Law &amp; Dispute Resolution</h2>
           <p>
-            We aim for high availability but we do not guarantee that the service will be
-            uninterrupted or error-free. Enterprise plans include an SLA, see your contract
-            for details.
+            5.1  Governing Law. These Terms shall be governed by and construed in accordance with the laws applicable in the Qatar Financial Centre (QFC), without regard to conflict-of-laws principles. For Merchants domiciled in KSA, the parties may elect the laws of the Kingdom of Saudi Arabia to govern that Merchant's subscription, as specified in the applicable order form.
+          </p>
+          <p>
+            5.2  Jurisdiction &amp; Dispute Resolution. The parties shall first attempt to resolve any dispute amicably through good-faith negotiation. Failing resolution within thirty (30) days, the dispute shall be referred to and finally resolved by arbitration in accordance with the QICCA / DIAC / SCCA arbitration rules then in force, before the default forum of the Courts of the Qatar Financial Centre in Doha; provided that, for KSA-domiciled Merchants, the parties may instead designate arbitration seated in Riyadh under the rules of the Saudi Center for Commercial Arbitration (SCCA), or the competent judicial authorities of Riyadh. The seat, language (English/Arabic), and number of arbitrators shall be as specified in the order form.
+          </p>
+          <p>
+            5.3  Interim Relief. Notwithstanding the above, either party may seek urgent injunctive or interim relief from a court of competent jurisdiction to protect its confidential information or intellectual property.
+          </p>
+          <p>
+            5.4  Severability &amp; Entire Agreement. If any provision of these Terms is held unenforceable, the remaining provisions remain in full force. These Terms, together with the Privacy &amp; Data Protection Policy and any applicable order form, constitute the entire agreement between the parties regarding the Service and supersede prior understandings.
+          </p>
+          <p>
+            5.5  Amendments. PrizeSkout may update these Terms to reflect changes in law or the Service. Material changes will be notified through the dashboard or by email, and continued use of the Service after the effective date of such changes constitutes acceptance.
           </p>
 
-          <h2>7. Limitation of liability</h2>
+          <h2>6.0  Contact</h2>
           <p>
-            To the maximum extent permitted by law, PrizeSkout is not liable for indirect,
-            incidental, or consequential damages, or for lost profits or revenue, even if we
-            have been advised of the possibility. Our total liability for any claim is limited
-            to the fees you paid in the 12 months before the event giving rise to the claim.
+            6.1  Notices and questions regarding these Terms may be directed to: <strong>legal@app.prizeskout.qa</strong>
           </p>
-
-          <h2>8. Termination</h2>
-          <p>
-            You can cancel any time from your account settings. We may suspend or terminate
-            your account if you violate these terms or if continued use creates legal or
-            security risk.
-          </p>
-
-          <h2>9. Governing law</h2>
-          <p>These terms are governed by the laws of Qatar.</p>
-
-          <h2>10. Contact</h2>
-          <p>
-            Questions about these terms? Email <strong>legal@prizeskout.qa</strong>.
-          </p>
+          <p>PrizeSkout, Office No. 4, Floor 9-902, QFC Tower 1, West Bay, Doha, State of Qatar.</p>
         </MarketingProse>
       </MarketingBody>
     </MarketingShell>

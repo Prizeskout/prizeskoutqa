@@ -6,6 +6,7 @@ import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
 import qatarFoundationLogo from "@/assets/qatar-foundation-logo.png";
+import { DemoPlayer } from "@/components/landing/DemoPlayer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Stop managing API hell and scraping liabilities. Deploy a serverless event middleware that programmatically syncs, calculates, and defends merchant net margins across regional delivery platforms — instantly.",
+          "Stop managing API hell and scraping liabilities. Deploy a serverless event middleware that programmatically syncs, calculates, and defends merchant net margins across regional delivery platforms, instantly.",
       },
       { property: "og:title", content: "PrizeSkout | Pricing Infrastructure for GCC Commerce" },
     ],
@@ -27,157 +28,6 @@ const OG = "#EF681A";
 const GN = "#56C28A";
 const BG = "#080505";
 const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
-
-// ── Packet stream ─────────────────────────────────────────────────────────────
-type LogLine = { time: string; evt: string; target: string; ms: number; evtColor: string; slow: boolean };
-
-const LINE_POOL = [
-  { evt: "POST /v1/ingest",  target: "salla.order.updated",       kind: "in"     },
-  { evt: "WEBHOOK",          target: "foodics.product.price",      kind: "in"     },
-  { evt: "POST /v1/ingest",  target: "sap.s4hana.material",        kind: "in"     },
-  { evt: "STREAM ▸",    target: "redpanda.partition-7",       kind: "stream" },
-  { evt: "EVAL margin",      target: "region=QA  comm=22%",        kind: "rule"   },
-  { evt: "EVAL margin",      target: "region=AE  comm=25%",        kind: "rule"   },
-  { evt: "CACHE hit",        target: "redis.floor.QA-8842",        kind: "rule"   },
-  { evt: "DEFEND",           target: "competitor ↓4.2% detected", kind: "defend" },
-  { evt: "PUSH price",       target: "talabat.menu.sync",          kind: "out"    },
-  { evt: "PUSH price",       target: "jahez.item.4821",            kind: "out"    },
-  { evt: "ACK 200",          target: "noon.food.confirm",          kind: "ok"     },
-  { evt: "AUDIT",            target: "pdpl.route QA→KSA ✓", kind: "audit" },
-] as const;
-
-function kindColor(kind: string) {
-  if (kind === "out" || kind === "defend") return OG;
-  if (kind === "ok"  || kind === "audit")  return GN;
-  if (kind === "rule")                     return "var(--lp-rule-color)";
-  return "var(--lp-text-code)";
-}
-
-function nowStamp() {
-  const d = new Date(), p = (n: number, l = 2) => String(n).padStart(l, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`;
-}
-
-function makeLine(): LogLine {
-  const p = LINE_POOL[Math.floor(Math.random() * LINE_POOL.length)];
-  const base = p.kind === "stream" ? 8 : p.kind === "in" ? 40 : p.kind === "rule" ? 130 : p.kind === "out" ? 540 : 90;
-  const ms = base + Math.floor(Math.random() * 22) - 8;
-  return { time: nowStamp(), evt: p.evt, target: p.target, ms, evtColor: kindColor(p.kind), slow: ms > 400 };
-}
-
-// ── PacketStreamer ────────────────────────────────────────────────────────────
-function PacketStreamer() {
-  const [lines, setLines] = useState<LogLine[]>(() => Array.from({ length: 9 }, makeLine));
-  useEffect(() => {
-    const id = setInterval(() => setLines(p => [...p.slice(-8), makeLine()]), 1150);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div style={{ position: "relative" }}>
-      <div aria-hidden style={{ position: "absolute", inset: -1, borderRadius: 13, background: "linear-gradient(180deg,rgba(239,104,26,0.25),transparent 40%)", pointerEvents: "none" }} />
-      <div style={{ position: "relative", background: "var(--lp-surface-2)", border: "1px solid var(--lp-border-5)", borderRadius: 12, overflow: "hidden", boxShadow: "0 30px 80px -20px rgba(0,0,0,0.8)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", borderBottom: "1px solid var(--lp-border-3)", background: "var(--lp-surface-3)" }}>
-          <div style={{ display: "flex", gap: 7 }}>
-            {[0,1,2].map(i => <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: "var(--lp-surface-dots)", display: "block" }} />)}
-          </div>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-dim)" }}>packet-stream.prizeskout.io</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: MONO, fontSize: 10, color: GN }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, display: "inline-block", animation: "ps-pulse 1.4s infinite" }} />
-            LIVE
-          </div>
-        </div>
-        <div className="ps-scroll" style={{ height: 380, padding: "14px 15px", overflow: "hidden", fontFamily: MONO, fontSize: 12, lineHeight: 1.85, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-          {lines.map((ln, i) => (
-            <div key={i} className="ps-line-enter" style={{ display: "flex", alignItems: "baseline", gap: 9, whiteSpace: "nowrap" }}>
-              <span style={{ color: "var(--lp-faint)", flexShrink: 0 }}>{ln.time}</span>
-              <span style={{ color: ln.evtColor, fontWeight: 500, flexShrink: 0 }}>{ln.evt}</span>
-              <span style={{ color: "var(--lp-text-code)", overflow: "hidden", textOverflow: "ellipsis" }}>{ln.target}</span>
-              <span style={{ marginLeft: "auto", color: ln.slow ? "#C9742E" : GN, fontSize: 11, flexShrink: 0 }}>{ln.ms}ms</span>
-            </div>
-          ))}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, color: OG }}>
-            <span>prizeskout&nbsp;❯</span>
-            <span className="ps-cursor" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── LoopSimulator ─────────────────────────────────────────────────────────────
-const BUDGET_MS = 1850;
-const LOOP_NODE_KEYS = [
-  { nameKey: "landing.infra.loop.node1Name", subKey: "landing.infra.loop.node1Sub", budget: "50ms",  w: 0.05 },
-  { nameKey: "landing.infra.loop.node2Name", subKey: "landing.infra.loop.node2Sub", budget: "10ms",  w: 0.13 },
-  { nameKey: "landing.infra.loop.node3Name", subKey: "landing.infra.loop.node3Sub", budget: "150ms", w: 0.42 },
-  { nameKey: "landing.infra.loop.node4Name", subKey: "landing.infra.loop.node4Sub", budget: "600ms", w: 1.00 },
-];
-
-function LoopSimulator() {
-  const { t } = useTranslation();
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setElapsed(p => { const n = p + BUDGET_MS / 64; return n >= BUDGET_MS ? 0 : n; }), 34);
-    return () => clearInterval(id);
-  }, []);
-
-  const pct = Math.min(100, (elapsed / BUDGET_MS) * 100);
-  let activeIdx = LOOP_NODE_KEYS.findIndex(d => pct / 100 <= d.w);
-  if (activeIdx < 0) activeIdx = LOOP_NODE_KEYS.length - 1;
-
-  return (
-    <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
-      <div style={{ borderTop: "1px solid var(--lp-border)", paddingTop: 40, marginBottom: 52 }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.infra.loop.sectionLabel")}</div>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.loop.title")}</h2>
-      </div>
-      <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border-4)", borderRadius: 16, padding: "40px 40px 36px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg,rgba(239,104,26,0.05),transparent)", pointerEvents: "none" }} />
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 34 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-            <span style={{ fontFamily: MONO, fontSize: 46, fontWeight: 600, color: OG, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums" as const }}>{Math.round(elapsed).toLocaleString("en-US")}</span>
-            <span style={{ fontFamily: MONO, fontSize: 16, color: "var(--lp-dim)" }}>/ {BUDGET_MS.toLocaleString("en-US")}ms budget</span>
-          </div>
-          <div style={{ fontFamily: MONO, fontSize: 12, color: "var(--lp-muted-2)", textAlign: "right" }}>
-            <div>{t("landing.infra.loop.eventLabel")}</div>
-            <div style={{ color: GN }}>● {t("landing.infra.loop.inFlight")}</div>
-          </div>
-        </div>
-        <div style={{ position: "relative", height: 3, background: "#1E1917", borderRadius: 2, marginBottom: 26 }}>
-          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, background: OG, borderRadius: 2, boxShadow: "0 0 12px rgba(239,104,26,0.6)", width: `${pct}%`, transition: "width 0.03s linear" }} />
-          <div style={{ position: "absolute", top: "50%", transform: "translate(-50%,-50%)", left: `${pct}%`, width: 13, height: 13, borderRadius: "50%", background: OG, boxShadow: "0 0 0 4px rgba(239,104,26,0.18),0 0 16px rgba(239,104,26,0.9)", transition: "left 0.03s linear" }} />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
-          {LOOP_NODE_KEYS.map((nd, i) => {
-            const active = i === activeIdx, done = i < activeIdx;
-            const color = active ? OG : done ? GN : "var(--lp-inactive)";
-            const statusLabel = active ? t("landing.infra.loop.processing") : done ? t("landing.infra.loop.complete") : t("landing.infra.loop.idle");
-            return (
-              <div key={nd.nameKey} style={{ background: "var(--lp-surface-2)", border: "1px solid var(--lp-border-3)", borderRadius: 11, padding: "18px 16px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 13 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10.5, color: "var(--lp-dim)" }}>0{i + 1}</span>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: color, display: "inline-block", ...(active ? { boxShadow: `0 0 10px ${color}`, animation: "ps-pulse 1s infinite" } : {}) }} />
-                </div>
-                <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--lp-text)", marginBottom: 4 }}>{t(nd.nameKey)}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10.5, color: "var(--lp-muted-2)", lineHeight: 1.5, marginBottom: 14, minHeight: 30 }}>{t(nd.subKey)}</div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--lp-border-6)", paddingTop: 11 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.04em", color }}>{statusLabel}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-text-max)", fontWeight: 600 }}>{nd.budget}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 24, fontFamily: MONO, fontSize: 11.5, color: "var(--lp-dim)" }}>
-          <span style={{ color: OG }}>❯</span>
-          Salla/Foodics webhook → Redpanda partition → Redis rule engine → Talabat/Jahez egress · idempotent · ordered · exactly-once
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ── NavLangSwitcher ───────────────────────────────────────────────────────────
 const LANG_DISPLAY: Record<string, { short: string; full: string }> = {
@@ -282,7 +132,6 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
     <nav style={{ position: "relative", zIndex: 5, maxWidth: 1440, margin: "0 auto", padding: "22px clamp(24px,5vw,72px)", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--lp-border)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
         <img src={dark ? logoDark : logoLight} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
-        <span style={{ fontFamily: MONO, fontSize: 10, color: "var(--lp-dim)", border: "1px solid var(--lp-border-em)", borderRadius: 4, padding: "2px 6px" }}>v1.0 · GA</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
         {navItems.map(item => (
@@ -300,41 +149,38 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
 function HeroSection() {
   const { t } = useTranslation();
   return (
-    <section className="ps-hero-grid" style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "90px clamp(24px,5vw,72px) 104px", alignItems: "center" }}>
-      <div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 9, fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "var(--lp-muted-2)", border: "1px solid var(--lp-border-em)", borderRadius: 100, padding: "6px 13px", marginBottom: 30 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, boxShadow: `0 0 8px ${GN}`, animation: "ps-pulse 1.8s infinite", display: "inline-block" }} />
-          {t("landing.infra.hero.eyebrow")}
-        </div>
-        <h1 style={{ fontSize: "clamp(40px,4.6vw,62px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 600, margin: "0 0 24px", color: "var(--lp-text)" }}>
-          {t("landing.infra.hero.title")}
-        </h1>
-        <p style={{ fontSize: 17, lineHeight: 1.62, color: "var(--lp-muted)", margin: "0 0 18px", maxWidth: 520 }}>
-          {t("landing.infra.hero.subtitle")}
-        </p>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, fontFamily: MONO, fontSize: 12.5, color: "var(--lp-muted-2)", margin: "0 0 34px", flexWrap: "wrap" }}>
-          <span style={{ color: OG, fontWeight: 600, fontSize: 14 }}>&lt; 2s</span>
-          <span style={{ width: 1, height: 13, background: "#2A2422" }} />
-          <span>{t("landing.infra.hero.tagline")}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
-          <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 22px", cursor: "pointer", boxShadow: "0 0 0 1px rgba(239,104,26,0.4),0 8px 28px rgba(239,104,26,0.28)", textDecoration: "none", display: "inline-block" }}>
-            {t("landing.infra.hero.cta1")}
-          </a>
-          <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
-            {t("landing.infra.hero.cta2")}
-          </a>
-        </div>
-        <div style={{ display: "flex", gap: 30, marginTop: 42, paddingTop: 26, borderTop: "1px solid var(--lp-border)" }}>
-          {([["1,850ms", t("landing.infra.hero.stat1Label")], ["99.98%", t("landing.infra.hero.stat2Label")], ["4", t("landing.infra.hero.stat3Label")]] as [string,string][]).map(([val, label]) => (
-            <div key={label}>
-              <div style={{ fontFamily: MONO, fontSize: 21, fontWeight: 600, color: "var(--lp-text)" }}>{val}</div>
-              <div style={{ fontSize: 11.5, color: "var(--lp-dim)", marginTop: 3 }}>{label}</div>
-            </div>
-          ))}
-        </div>
+    <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "90px clamp(24px,5vw,72px) 72px", textAlign: "center" }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 9, fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "var(--lp-muted-2)", border: "1px solid var(--lp-border-em)", borderRadius: 100, padding: "6px 13px", marginBottom: 30 }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, boxShadow: `0 0 8px ${GN}`, animation: "ps-pulse 1.8s infinite", display: "inline-block" }} />
+        {t("landing.infra.hero.eyebrow")}
       </div>
-      <PacketStreamer />
+      <h1 style={{ fontSize: "clamp(40px,5vw,72px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 600, margin: "0 0 24px", color: "var(--lp-text)", maxWidth: 900, marginInline: "auto" }}>
+        {t("landing.infra.hero.title")}
+      </h1>
+      <p style={{ fontSize: 18, lineHeight: 1.62, color: "var(--lp-muted)", margin: "0 auto 28px", maxWidth: 560 }}>
+        {t("landing.infra.hero.subtitle")}
+      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, fontFamily: MONO, fontSize: 12.5, color: "var(--lp-muted-2)", marginBottom: 36, flexWrap: "wrap" }}>
+        <span style={{ color: OG, fontWeight: 600, fontSize: 14 }}>&lt; 2s</span>
+        <span style={{ width: 1, height: 13, background: "#2A2422" }} />
+        <span>{t("landing.infra.hero.tagline")}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 13, flexWrap: "wrap", marginBottom: 52 }}>
+        <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 26px", cursor: "pointer", boxShadow: "0 0 0 1px rgba(239,104,26,0.4),0 8px 28px rgba(239,104,26,0.28)", textDecoration: "none", display: "inline-block" }}>
+          {t("landing.infra.hero.cta1")}
+        </a>
+        <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 26px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
+          {t("landing.infra.hero.cta2")}
+        </a>
+      </div>
+      <div style={{ display: "flex", gap: 40, justifyContent: "center", paddingTop: 26, borderTop: "1px solid var(--lp-border)" }}>
+        {([["1,850ms", t("landing.infra.hero.stat1Label")], ["99.98%", t("landing.infra.hero.stat2Label")], ["4", t("landing.infra.hero.stat3Label")]] as [string,string][]).map(([val, label]) => (
+          <div key={label}>
+            <div style={{ fontFamily: MONO, fontSize: 21, fontWeight: 600, color: "var(--lp-text)" }}>{val}</div>
+            <div style={{ fontSize: 11.5, color: "var(--lp-dim)", marginTop: 3 }}>{label}</div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -345,7 +191,7 @@ function CredentialStrip() {
   return (
     <div style={{ borderTop: "1px solid var(--lp-border-strip)", borderBottom: "1px solid var(--lp-border-strip)", background: "var(--lp-surface-strip)", padding: "32px clamp(24px,5vw,72px)" }}>
       <div style={{ maxWidth: 1440, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", color: "var(--lp-faint)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{t("landing.infra.backedBy")}</span>
+        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", color: "var(--lp-fg)", textTransform: "uppercase", whiteSpace: "nowrap", fontWeight: 700 }}>{t("landing.infra.backedBy")}</span>
         <div style={{ width: 1, height: 28, background: "#2A2422" }} />
         <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 10, padding: "12px 28px", display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
           <img src={qstpLogoColored} alt="Qatar Science & Technology Park" style={{ height: 52, width: "auto", display: "block" }} />
@@ -413,7 +259,7 @@ function SurfaceMatrix() {
               </svg>
             </div>
             <div style={{ position: "absolute", top: 9, left: 13, fontFamily: MONO, fontSize: 10.5, color: OG }}>competitor ↓4.2% detected</div>
-            <div style={{ position: "absolute", bottom: 9, left: 13, fontFamily: MONO, fontSize: 10.5, color: GN }}>↻ reprice pushed · 540ms</div>
+            <div style={{ position: "absolute", bottom: 9, left: 13, fontFamily: MONO, fontSize: 10.5, color: GN }}>↻ reprice completed in 540ms</div>
           </div>
         </div>
 
@@ -426,7 +272,7 @@ function SurfaceMatrix() {
               <span>sha256: 0xa4f9..e21b</span>
               <span style={{ color: GN }}>VERIFIED ✓</span>
             </div>
-            <div style={{ color: "var(--lp-faint)" }}>route: QA → KSA · PDPL-compliant</div>
+            <div style={{ color: "var(--lp-faint)" }}>route: QA → KSA, PDPL compliant</div>
             <div dir="rtl" style={{ color: "var(--lp-muted)", marginTop: 6, fontFamily: "inherit" }}>تم التحقق من توجيه البيانات عبر الحدود</div>
             <div dir="rtl" style={{ color: "var(--lp-faint)", fontFamily: "inherit" }}>يتوافق مع إطار QFC و PDPL</div>
           </div>
@@ -505,7 +351,13 @@ function DeployCTA({ dark }: { dark: boolean }) {
   const footerCols = [
     { titleKey: "landing.infra.deploy.col1", items: ["Event Spine","Margin Engine","Reprice Loop","Status / SLA"] },
     { titleKey: "landing.infra.deploy.col2", items: ["SDK Docs","API Reference","Webhooks","Changelog"] },
-    { titleKey: "landing.infra.deploy.col3", items: ["QFC Licensing","KSA PDPL Framework","Data Residency","DPA / Terms"] },
+    { titleKey: "landing.infra.deploy.col3", items: [
+      { label: "QFC Licensing", href: null },
+      { label: "KSA PDPL Framework", href: null },
+      { label: "Data Residency", href: null },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+    ]},
   ];
 
   return (
@@ -550,7 +402,12 @@ function DeployCTA({ dark }: { dark: boolean }) {
           <div key={col.titleKey}>
             <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.08em", color: "var(--lp-faint)", marginBottom: 15 }}>{t(col.titleKey)}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 11, fontSize: 13, color: "var(--lp-muted)" }}>
-              {col.items.map(item => <span key={item}>{item}</span>)}
+              {col.items.map(item => {
+                if (typeof item === "string") return <span key={item}>{item}</span>;
+                return item.href
+                  ? <a key={item.label} href={item.href} style={{ color: "var(--lp-muted)", textDecoration: "none" }}>{item.label}</a>
+                  : <span key={item.label}>{item.label}</span>;
+              })}
             </div>
           </div>
         ))}
@@ -564,83 +421,25 @@ function DeployCTA({ dark }: { dark: boolean }) {
   );
 }
 
-// ── ROISandbox ────────────────────────────────────────────────────────────────
-function ROISandbox() {
-  const [orders, setOrders] = useState(180);
-  const [aov, setAov] = useState(145);
-  const [commission, setCommission] = useState(22);
-  const monthlySavings = Math.round(orders * 30 * aov * (commission / 100) * 0.32);
-
-  return (
-    <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
-      <div style={{ borderTop: "1px solid var(--lp-border)", paddingTop: 40, marginBottom: 52 }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>MARGIN LEAK CALCULATOR</div>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>See exactly what you are losing</h2>
-      </div>
-      <div className="ps-roi-grid" style={{ display: "grid", gap: 48, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          {([
-            { label: "Daily Orders", value: orders, set: setOrders, min: 10, max: 2000, fmt: (v: number) => v.toLocaleString() },
-            { label: "Avg Order Value (QAR)", value: aov, set: setAov, min: 20, max: 1000, fmt: (v: number) => `QAR ${v}` },
-            { label: "Platform Commission", value: commission, set: setCommission, min: 15, max: 35, fmt: (v: number) => `${v}%` },
-          ] as const).map(s => (
-            <div key={s.label}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-                <span style={{ fontSize: 13.5, color: "var(--lp-muted)" }}>{s.label}</span>
-                <span style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: OG }}>{s.fmt(s.value)}</span>
-              </div>
-              <div style={{ position: "relative" }}>
-                <input type="range" min={s.min} max={s.max} value={s.value}
-                  onChange={e => (s.set as (v: number) => void)(+e.target.value)}
-                  style={{ width: "100%", height: 4, accentColor: OG, cursor: "pointer", background: "transparent" }}
-                />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 10, color: "var(--lp-faint)", marginTop: 5 }}>
-                <span>{s.min.toLocaleString()}</span><span>{s.max.toLocaleString()}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ background: "var(--lp-surface)", border: "1px solid var(--lp-border-4)", borderRadius: 16, padding: "36px" }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: "var(--lp-dim)", marginBottom: 10 }}>PROJECTED MONTHLY SAVINGS</div>
-          <div style={{ fontFamily: MONO, fontSize: "clamp(38px,4vw,52px)", fontWeight: 700, color: GN, letterSpacing: "-0.03em", lineHeight: 1 }}>
-            QAR {monthlySavings.toLocaleString()}
-          </div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-dim)", marginTop: 8, marginBottom: 28 }}>
-            {commission}% commission · {orders.toLocaleString()} orders · 30 days
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 22 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: GN, flexShrink: 0, animation: "ps-pulse 1.8s infinite" }} />
-            <span style={{ fontSize: 12.5, color: GN, fontFamily: MONO }}>Guaranteed Min. Profit Protected</span>
-          </div>
-          <a href="/onboarding" style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13.5, fontWeight: 700, color: BG, background: OG, borderRadius: 10, padding: "14px", textDecoration: "none", boxShadow: "0 8px 28px rgba(239,104,26,0.28)", letterSpacing: "0.02em" }}>
-            Protect this Profit →
-          </a>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ── PricingSection ────────────────────────────────────────────────────────────
 const TIERS = [
   {
     name: "Core", badge: null, featured: false,
     monthly: 349, annual: 279, currency: "QAR",
-    features: ["1 Inbound Channel", "1,500 syncs / month", "Margin Engine", "Email Support", "QFC Licensing"],
+    features: ["1 Inbound Channel", "1,500 syncs / month", "Margin Engine", "Email Support"],
     cta: "Start Core Trial", ctaHref: "/onboarding",
   },
   {
     name: "Growth", badge: "72× ROI", featured: true,
     monthly: 1099, annual: 879, currency: "QAR",
-    features: ["Unlimited Channels", "Sub-2s Latency Guarantee", "15,000 syncs / month", "Competitor Radar", "Slack + Priority Support"],
+    features: ["Unlimited Channels", "Under 2 Second Latency Guarantee", "15,000 syncs / month", "Competitor Radar", "Slack + Priority Support"],
     cta: "Secure Growth Plan", ctaHref: "/onboarding",
   },
   {
     name: "Enterprise", badge: "Custom ACV", featured: false,
     monthly: null, annual: null, currency: null,
-    features: ["SAP / Oracle ERP Hooks", "Dedicated DB Residency", "99.99% SLA", "Dedicated CSM", "QFC + PDPL Advisory"],
+    features: ["SAP / Oracle ERP Hooks", "Dedicated DB Residency", "99.99% SLA", "Dedicated CSM", "Unlimited syncs / month", "24/7 Support"],
     cta: "Contact Sales", ctaHref: "/contact",
   },
 ] as const;
@@ -732,7 +531,7 @@ const FAQS = [
   },
   {
     q: "Will PrizeSkout impact our core POS performance?",
-    a: "No. PrizeSkout operates as an asynchronous event middleware — it listens to webhooks from your inbound channels (Salla, Foodics, SAP) and fires outbound reprices independently. Your POS, ERP, and checkout flows have zero latency dependency on us. We consume their events; they never wait on us.",
+    a: "No. PrizeSkout operates as an asynchronous event middleware. It listens to webhooks from your inbound channels (Salla, Foodics, SAP) and fires outbound reprices independently. Your POS, ERP, and checkout flows have zero latency dependency on us. We consume their events; they never wait on us.",
   },
   {
     q: "How do you guarantee the sub-2-second latency loops?",
@@ -802,11 +601,10 @@ function LandingPage() {
       <div aria-hidden style={{ position: "absolute", top: -280, left: "50%", transform: "translateX(-50%)", width: 900, height: 560, background: "radial-gradient(ellipse at center,rgba(239,104,26,0.16),transparent 68%)", pointerEvents: "none", zIndex: 0, filter: "blur(8px)", opacity: dark ? 1 : 0.35 }} />
       <Nav dark={dark} onToggleDark={toggleDark} />
       <HeroSection />
+      <DemoPlayer />
       <CredentialStrip />
       <SurfaceMatrix />
-      <LoopSimulator />
       <LatencyBudget />
-      <ROISandbox />
       <PricingSection />
       <FAQSection />
       <DeployCTA dark={dark} />
@@ -843,19 +641,10 @@ const PAGE_CSS = `
     --lp-surface-strip:#F0EDE9; --lp-surface-dots:#D0CBC4;
   }
   *, *::before, *::after { box-sizing: border-box; }
-  @keyframes ps-blink  { 0%,49%{opacity:1} 50%,100%{opacity:0} }
   @keyframes ps-wave   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
   @keyframes ps-pulse  { 0%,100%{opacity:0.35} 50%{opacity:1} }
-  @keyframes ps-fadein { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-  .ps-line-enter { animation: ps-fadein 0.28s ease-out; }
-  .ps-cursor     { width:8px; height:15px; background:#EF681A; display:inline-block; animation:ps-blink 1s step-end infinite; }
-  .ps-scroll::-webkit-scrollbar { width:0; height:0; }
-  .ps-hero-grid  { display:grid; grid-template-columns:1fr; gap:48px; }
-  .ps-roi-grid   { grid-template-columns:1fr; }
   .ps-pricing-grid { grid-template-columns:1fr; }
   @media(min-width:900px) {
-    .ps-hero-grid { grid-template-columns:1fr 1fr; gap:56px; }
-    .ps-roi-grid  { grid-template-columns:1fr 1fr; }
     .ps-pricing-grid { grid-template-columns:repeat(3,1fr); }
   }
   @media(max-width:640px) {

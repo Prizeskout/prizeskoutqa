@@ -112,6 +112,10 @@ import {
   handleIssueEmbedToken,
   handleListEmbedScopes,
 } from "@/server/embed-handlers";
+import { handleSyncIngest } from "@/server/core/ingest-handler";
+import { handleChannelConnect, handleListChannels, handleRevokeChannel, handleChannelSync } from "@/server/core/channel-vault";
+import { handleDefendDispatch, handleGetCircuitBreaker } from "@/server/core/defend-handler";
+import { handleListGovernAudit, handleGetGovernAuditEntry } from "@/server/core/govern-handler";
 
 export type V1Context = {
   apiKeyId: string;
@@ -920,6 +924,17 @@ function compileRoute(
 }
 
 const V1_ROUTES: V1Route[] = [
+  // New core: GCC pricing infrastructure pipeline
+  // /v1/sync/ingest must be listed BEFORE /v1/sync so the literal isn't shadowed
+  compileRoute("POST /v1/sync/ingest",                       (req, ctx)    => handleSyncIngest(req, ctx)),
+  compileRoute("POST /v1/channels/connect/{platform}",       (req, ctx, p) => handleChannelConnect(req, ctx, p.platform)),
+  compileRoute("GET /v1/channels",                           (req, ctx)    => handleListChannels(req, ctx)),
+  compileRoute("DELETE /v1/channels/{platform}/{merchant_id}", (req, ctx, p) => handleRevokeChannel(req, ctx, p.platform, p.merchant_id)),
+  compileRoute("POST /v1/channels/sync/{platform}",            (req, ctx, p) => handleChannelSync(req, ctx, p.platform)),
+  compileRoute("POST /v1/defend/dispatch",                   (req, ctx)    => handleDefendDispatch(req, ctx)),
+  compileRoute("GET /v1/defend/circuit-breaker",             (req, ctx)    => handleGetCircuitBreaker(req, ctx)),
+  compileRoute("GET /v1/govern/audit",                       (req, ctx)    => handleListGovernAudit(req, ctx)),
+  compileRoute("GET /v1/govern/audit/{trace_id}",            (req, ctx, p) => handleGetGovernAuditEntry(req, ctx, p.trace_id)),
   // Existing real handlers
   compileRoute("POST /v1/sync", (req, ctx) => handleSync(req, ctx)),
   compileRoute("POST /v1/margin/costs", (req, ctx) => handleMarginCosts(req, ctx)),
