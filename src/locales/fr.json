@@ -291,7 +291,7 @@
   "landing": {
     "langSwitcher": "Langue",
     "infra": {
-      "nav": { "infrastructure": "Infrastructure", "loop": "Boucle", "latency": "Latence", "docs": "Docs", "generateKeys": "Générer des clés" },
+      "nav": { "infrastructure": "Infrastructure", "loop": "Boucle", "latency": "Latence", "docs": "Docs", "signIn": "Se connecter", "generateKeys": "Générer des clés" },
       "hero": {
         "eyebrow": "PRIZESKOUT // INFRASTRUCTURE TARIFAIRE",
         "title": "La couche d'infrastructure tarifaire pour le commerce GCC.",
@@ -302,7 +302,7 @@
       },
       "backedBy": "Soutenu par",
       "surface": {
-        "sectionLabel": "[ 02 ] — QUATRE SURFACES API", "title": "La matrice des surfaces d'infrastructure",
+        "sectionLabel": "QUATRE SURFACES API", "title": "La matrice des surfaces d'infrastructure",
         "subtitle": "Un contrat. Quatre primitives. Chaque décision de marge acheminée via la même colonne événementielle.",
         "syncName": "Sync", "syncBadge": "INGESTION EN TEMPS RÉEL", "syncDesc": "Normalisez les charges SAP S/4HANA et Salla en un seul événement de tarification canonique à la périphérie.",
         "decideName": "Décider", "decideBadge": "MOTEUR DE MARGE", "decideDesc": "L'évaluation JSON en ligne résout la commission de la plateforme régionale contre votre seuil de marge nette en mémoire.",
@@ -310,7 +310,7 @@
         "governName": "Gouverner", "governBadge": "AUDIT SOUVERAIN", "governDesc": "Un journal de conformité cryptographique bilingue cartographie le routage transfrontalier sous QFC et KSA PDPL."
       },
       "loop": {
-        "sectionLabel": "[ 03 ] — TRANSIT DE MESSAGES ASYNCHRONE", "title": "La boucle de retarification en moins de 2 secondes",
+        "sectionLabel": "TRANSIT DE MESSAGES ASYNCHRONE", "title": "La boucle de retarification en moins de 2 secondes",
         "eventLabel": "CYCLE DE VIE DE L'ÉVÉNEMENT", "inFlight": "en vol",
         "node1Name": "Périphérie d'ingestion", "node1Sub": "Webhook Salla / Foodics",
         "node2Name": "Courtier de flux", "node2Sub": "Partition Kafka / Redpanda",
@@ -319,7 +319,7 @@
         "complete": "TERMINÉ", "processing": "TRAITEMENT", "idle": "INACTIF"
       },
       "latency": {
-        "sectionLabel": "[ 04 ] — BUDGET DE LATENCE", "title": "Matrice d'assurance des performances", "p99": "P99 · SLA verrouillé",
+        "sectionLabel": "BUDGET DE LATENCE", "title": "Matrice d'assurance des performances", "p99": "P99 · SLA verrouillé",
         "colNode": "NŒUD DE ROUTAGE", "colOp": "OPÉRATION", "colMax": "ALLOC MAX",
         "r1Node": "Capture Hook d'ingestion", "r1Detail": "Réception Webhook + auth signature",
         "r2Node": "Transit flux", "r2Detail": "Enqueue courtier + assignation partition",
@@ -330,13 +330,13 @@
         "totalLabel": "Budget total aller-retour · verrouillé"
       },
       "deploy": {
-        "sectionLabel": "[ 05 ] — DÉPLOIEMENT", "title": "Livrez la couche tarifaire en une commande.",
+        "sectionLabel": "DÉPLOIEMENT", "title": "Livrez la couche tarifaire en une commande.",
         "subtitle": "Sans serveur, souverain régionalement et idempotent par défaut. Pas de scrapers. Pas d'enfer API.",
         "copy": "COPIER", "copied": "COPIÉ ✓", "cta1": "Générer des clés API →", "cta2": "Lire la doc SDK",
         "footerDesc": "Infrastructure tarifaire en temps réel pour le commerce numérique GCC. Middleware événementiel, souverain par conception.",
         "footerLicense": "LICENCIÉ QFC · Doha · Qatar",
         "col1": "ARCHITECTURE", "col2": "DÉVELOPPEURS", "col3": "LÉGAL & CONFORMITÉ",
-        "copyright": "© 2026 PrizeSkout Infrastructure. Qatar · EAU · Arabie Saoudite.", "tagline": "Conçu pour la périphérie GCC · <2s"
+        "copyright": "© 2026 PrizeSkout LLC, Qatar", "tagline": "Conçu pour la périphérie GCC · <2s"
       }
     },
     "home": {

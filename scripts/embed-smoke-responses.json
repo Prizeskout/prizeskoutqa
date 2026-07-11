@@ -60,7 +60,7 @@
   },
   "06_issue_token": {
     "embed_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcml6ZXNrb3V0LWVtYmVkIiwic3ViIjoiNGEyOTJjN2ItZmE4OC00NjhhLThlMzMtZmRjNzk1ZTJmMDMwIiwiYWNjb3VudF9pZCI6IjRhMjkyYzdiLWZhODgtNDY4YS04ZTMzLWZkYzc5NWUyZjAzMCIsImxpY2Vuc2VlX2lkIjoiMWExZDBhMTctMzY2Yi00MjQyLWI1MDQtYWU3OGVlNjhiMzJjIiwic2NvcGVzIjpbInByaWNpbmdfd2lkZ2V0Iiwicm9pX3N1bW1hcnkiLCJjb21wZXRpdG9yX2NoYXJ0IiwiYWN0aW9uX2l0ZW1zIl0sImV4cCI6MTc4MjA0Mzk0NSwiaWF0IjoxNzgyMDQwMzQ1LCJqdGkiOiIxMTk1OTA2OWI0NWE0ODE4N2ZlYTM0MDgifQ.eHrMtS1Mb11C5K7lH4HPL8ZPKKFOIzIUHlKmrythWBQ",
-    "embed_url": "https://prizeskoutqa.prizeskoutqatar.workers.dev/embed/widget?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcml6ZXNrb3V0LWVtYmVkIiwic3ViIjoiNGEyOTJjN2ItZmE4OC00NjhhLThlMzMtZmRjNzk1ZTJmMDMwIiwiYWNjb3VudF9pZCI6IjRhMjkyYzdiLWZhODgtNDY4YS04ZTMzLWZkYzc5NWUyZjAzMCIsImxpY2Vuc2VlX2lkIjoiMWExZDBhMTctMzY2Yi00MjQyLWI1MDQtYWU3OGVlNjhiMzJjIiwic2NvcGVzIjpbInByaWNpbmdfd2lkZ2V0Iiwicm9pX3N1bW1hcnkiLCJjb21wZXRpdG9yX2NoYXJ0IiwiYWN0aW9uX2l0ZW1zIl0sImV4cCI6MTc4MjA0Mzk0NSwiaWF0IjoxNzgyMDQwMzQ1LCJqdGkiOiIxMTk1OTA2OWI0NWE0ODE4N2ZlYTM0MDgifQ.eHrMtS1Mb11C5K7lH4HPL8ZPKKFOIzIUHlKmrythWBQ",
+    "embed_url": "https://prizeskout.qa/embed/widget?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcml6ZXNrb3V0LWVtYmVkIiwic3ViIjoiNGEyOTJjN2ItZmE4OC00NjhhLThlMzMtZmRjNzk1ZTJmMDMwIiwiYWNjb3VudF9pZCI6IjRhMjkyYzdiLWZhODgtNDY4YS04ZTMzLWZkYzc5NWUyZjAzMCIsImxpY2Vuc2VlX2lkIjoiMWExZDBhMTctMzY2Yi00MjQyLWI1MDQtYWU3OGVlNjhiMzJjIiwic2NvcGVzIjpbInByaWNpbmdfd2lkZ2V0Iiwicm9pX3N1bW1hcnkiLCJjb21wZXRpdG9yX2NoYXJ0IiwiYWN0aW9uX2l0ZW1zIl0sImV4cCI6MTc4MjA0Mzk0NSwiaWF0IjoxNzgyMDQwMzQ1LCJqdGkiOiIxMTk1OTA2OWI0NWE0ODE4N2ZlYTM0MDgifQ.eHrMtS1Mb11C5K7lH4HPL8ZPKKFOIzIUHlKmrythWBQ",
     "expires_at": "2026-06-21T12:12:25.000Z",
     "token_type": "HS256",
     "decoded_claims": {
@@ -87,7 +87,7 @@
   "07_widget_html": {
     "status": 200,
     "length": 6571,
-    "snippet": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>GulfStyle Commerce â€” Price Intelligence</title>\n<style>\n  :root { --brand: #E8420A; }\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;\n    font-size: 13px; background: #f9fafb; color: #111827;\n    padding: 12px; min-width: 280px;\n  }\n  body.rtl { direction: rtl; text-align: right; }\n  .card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; p"
+    "snippet": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>GulfStyle Commerce — Price Intelligence</title>\n<style>\n  :root { --brand: #E8420A; }\n  * { box-sizing: border-box; margin: 0; padding: 0; }\n  body {\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;\n    font-size: 13px; background: #f9fafb; color: #111827;\n    padding: 12px; min-width: 280px;\n  }\n  body.rtl { direction: rtl; text-align: right; }\n  .card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; p"
   },
   "08_no_prizeskout": {
     "prizeskout_count": 0

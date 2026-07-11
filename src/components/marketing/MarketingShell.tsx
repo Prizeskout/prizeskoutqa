@@ -1,547 +1,49 @@
-import { useEffect, useState, useContext, useRef, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
-import { Menu, X, ChevronDown } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { applyLocale, getStoredLocale, LOCALE_NAMES, type Locale } from "@/lib/i18n";
-import { GeoSuggestionContext } from "@/lib/lang-suggestion";
+import { LandingNav } from "@/components/landing/LandingNav";
 import logoDark from "@/assets/logo-dark.svg";
 
-const LANG_CODES: Locale[] = ["en", "ar", "fr"];
-
-function LangSwitcher({ compact }: { compact?: boolean }) {
-  const { i18n } = useTranslation();
-  const geo = useContext(GeoSuggestionContext);
-  const active = (i18n.language.slice(0, 2) ?? "en") as Locale;
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Restore stored locale on mount so language choice survives page reloads
-  useEffect(() => {
-    const stored = getStoredLocale();
-    if (stored !== i18n.language.slice(0, 2)) {
-      i18n.changeLanguage(stored);
-      applyLocale(stored);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close on outside click using a click listener (not mousedown) so dropdown
-  // items receive their onClick before the document handler fires.
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [open]);
-
-  function switchLang(code: Locale) {
-    i18n.changeLanguage(code);
-    applyLocale(code);
-    setOpen(false);
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ display: "inline-flex", alignItems: "center", gap: compact ? 6 : 10 }}
-    >
-      {!compact && (
-        <span style={{ fontSize: 11, color: "#6B6B6B", whiteSpace: "nowrap" }}>
-          Choose your language
-        </span>
-      )}
-      <div style={{ position: "relative" }}>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            background: "#0A0A0A",
-            border: "1px solid #1A1A1A",
-            borderRadius: 8,
-            color: "#FAFAF9",
-            cursor: "pointer",
-            fontSize: 11,
-            fontWeight: 600,
-            padding: compact ? "4px 9px" : "5px 11px",
-            transition: "border-color 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2A2A2A"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1A1A1A"; }}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-        >
-          {LOCALE_NAMES[active] ?? "English"}
-          <ChevronDown
-            size={11}
-            style={{
-              color: "#6B6B6B",
-              transform: open ? "rotate(180deg)" : "none",
-              transition: "transform 0.15s",
-            }}
-          />
-        </button>
-        {open && (
-          <div
-            role="listbox"
-            style={{
-              position: "absolute",
-              top: "calc(100% + 4px)",
-              right: 0,
-              background: "#0A0A0A",
-              border: "1px solid #1A1A1A",
-              borderRadius: 8,
-              padding: 4,
-              zIndex: 200,
-              minWidth: 120,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-            }}
-          >
-            {LANG_CODES.map((code) => {
-              const isActive = active === code;
-              const isSuggested = geo.suggestedLocale === code && !isActive;
-              return (
-                <button
-                  key={code}
-                  role="option"
-                  aria-selected={isActive}
-                  onClick={() => switchLang(code)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    width: "100%",
-                    background: isActive ? "#1A1A1A" : "transparent",
-                    border: "none",
-                    borderRadius: 6,
-                    color: isActive ? "#FAFAF9" : "#A8A8A8",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: isActive ? 600 : 400,
-                    padding: "7px 10px",
-                    textAlign: "left",
-                    transition: "background 0.1s, color 0.1s",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "#111";
-                      e.currentTarget.style.color = "#FAFAF9";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#A8A8A8";
-                    }
-                  }}
-                >
-                  {LOCALE_NAMES[code]}
-                  {isSuggested && (
-                    <span style={{ fontSize: 9, color: "#EA580C", fontWeight: 600, letterSpacing: "0.04em" }}>
-                      Suggested
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-type SimpleNavItem = {
-  label: string;
-  to?: "/docs" | "/docs/changelog" | "/margin";
-  hash?: string;
-  highlight?: boolean;
-};
-
-const NAV_ITEMS: SimpleNavItem[] = [
-  { label: "Margin", to: "/margin", highlight: true },
-  { label: "Docs", to: "/docs" },
-  { label: "Pricing", hash: "pricing" },
-  { label: "Changelog", to: "/docs/changelog" },
-];
-
-function NavLink({
-  item,
-  onHashItem,
-}: {
-  item: SimpleNavItem;
-  onHashItem: (hash: string) => void;
-}) {
-  const baseStyle: React.CSSProperties = {
-    padding: "8px 14px",
-    fontSize: 14,
-    fontWeight: 500,
-    color: "#A8A8A8",
-    textDecoration: "none",
-    transition: "color 0.15s",
-    fontFamily: "inherit",
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-  };
-  if (item.to) {
-    return (
-      <Link
-        to={item.to}
-        style={item.highlight ? {
-          ...baseStyle,
-          color: "#10B981",
-          fontWeight: 600,
-        } : baseStyle}
-        onMouseEnter={(e) => (e.currentTarget.style.color = item.highlight ? "#34D399" : "#FAFAF9")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = item.highlight ? "#10B981" : "#A8A8A8")}
-      >
-        {item.label}
-      </Link>
-    );
-  }
-  return (
-    <a
-      href={`/#${item.hash ?? ""}`}
-      onClick={(e) => {
-        e.preventDefault();
-        if (item.hash) onHashItem(item.hash);
-      }}
-      style={baseStyle}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = "#A8A8A8")}
-    >
-      {item.label}
-    </a>
-  );
-}
-
 function smoothScrollToHash(hash: string) {
-  if (!hash) {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    return;
-  }
+  if (!hash) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
   const el = document.querySelector(`#${hash}`);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-
-function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const router = useRouter();
-  const location = useLocation();
-  const onLanding = location.pathname === "/";
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
-
-  const handleNavClick = async (e: React.MouseEvent, hash: string) => {
-    e.preventDefault();
-    setMobileOpen(false);
-    if (onLanding) {
-      setTimeout(() => smoothScrollToHash(hash), mobileOpen ? 100 : 0);
-    } else {
-      await router.navigate({ to: "/", hash });
-      setTimeout(() => smoothScrollToHash(hash), 100);
-    }
-  };
-
-  const handleLogoClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setMobileOpen(false);
-    if (onLanding) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      await router.navigate({ to: "/" });
-    }
-  };
-
-  return (
-    <>
-      <header
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 64,
-          zIndex: 50,
-          background: scrolled ? "rgba(5,5,5,0.85)" : "#050505",
-          borderBottom: "1px solid #1A1A1A",
-          backdropFilter: scrolled ? "blur(12px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
-          transition: "background 0.2s ease",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-          className="px-5 md:px-10"
-        >
-          <a
-            href="/"
-            onClick={handleLogoClick}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              textDecoration: "none",
-            }}
-          >
-            <img
-              src={logoDark}
-              alt="PrizeSkout"
-              style={{ height: 28, width: "auto", display: "block" }}
-            />
-          </a>
-
-          <nav className="hidden md:flex" style={{ gap: 4, alignItems: "center" }}>
-            {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.label}
-                item={item}
-                onHashItem={(hash) =>
-                  handleNavClick({ preventDefault: () => {} } as React.MouseEvent, hash)
-                }
-              />
-            ))}
-          </nav>
-
-          <div className="hidden md:flex" style={{ alignItems: "center", gap: 18 }}>
-            <LangSwitcher />
-            <Link
-              to="/login"
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: "#8A8A8A",
-                textDecoration: "none",
-                transition: "color 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#8A8A8A")}
-            >
-              Sign in
-            </Link>
-            <div className="ps-tip-wrap" style={{ position: "relative" }}>
-              <Link
-                to="/signup"
-                aria-label="Get API keys, create a free account, no credit card"
-                title="Free account · no credit card · test keys instantly"
-                style={{
-                  background: "#EA580C",
-                  color: "#FFFFFF",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  padding: "9px 20px",
-                  borderRadius: 8,
-                  textDecoration: "none",
-                  transition: "background 0.15s",
-                  display: "inline-block",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#EA580C")}
-              >
-                Get keys
-              </Link>
-              <span className="ps-tip" role="tooltip">
-                Free account · no card · test keys instantly
-                <span className="ps-tip-arrow" aria-hidden />
-              </span>
-            </div>
-          </div>
-
-          <button
-            className="md:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 4,
-              color: "#FAFAF9",
-            }}
-          >
-            <Menu size={22} />
-          </button>
-        </div>
-      </header>
-
-      {mobileOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            background: "#050505",
-            padding: 24,
-            animation: "ps-fade-in 0.2s ease",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <a
-              href="/"
-              onClick={handleLogoClick}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                textDecoration: "none",
-              }}
-            >
-              <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
-            </a>
-            <button
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#FAFAF9",
-                padding: 4,
-              }}
-            >
-              <X size={22} />
-            </button>
-          </div>
-
-          <nav style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 4 }}>
-            {NAV_ITEMS.map((item) => {
-              if (item.to) {
-                return (
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    onClick={() => setMobileOpen(false)}
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 500,
-                      color: "#FAFAF9",
-                      textDecoration: "none",
-                      padding: "16px 4px",
-                      borderBottom: "1px solid #141414",
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              }
-              return (
-                <a
-                  key={item.label}
-                  href={`/#${item.hash ?? ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileOpen(false);
-                    if (item.hash) {
-                      const hash = item.hash;
-                      setTimeout(() => {
-                        if (onLanding) {
-                          smoothScrollToHash(hash);
-                        } else {
-                          router.navigate({ to: "/", hash }).then(() => {
-                            setTimeout(() => smoothScrollToHash(hash), 100);
-                          });
-                        }
-                      }, 50);
-                    }
-                  }}
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 500,
-                    color: "#FAFAF9",
-                    textDecoration: "none",
-                    padding: "16px 4px",
-                    borderBottom: "1px solid #141414",
-                  }}
-                >
-                  {item.label}
-                </a>
-              );
-            })}
-            <div style={{ height: 1, background: "#1A1A1A", margin: "16px 0" }} />
-            <div style={{ padding: "8px 4px" }}>
-              <LangSwitcher compact />
-            </div>
-            <Link
-              to="/login"
-              onClick={() => setMobileOpen(false)}
-              style={{ fontSize: 16, fontWeight: 500, color: "#FAFAF9", textDecoration: "none", padding: "12px 4px" }}
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/signup"
-              onClick={() => setMobileOpen(false)}
-              style={{
-                background: "#EA580C",
-                color: "#FFFFFF",
-                fontSize: 15,
-                fontWeight: 600,
-                padding: "13px 22px",
-                borderRadius: 8,
-                textDecoration: "none",
-                textAlign: "center",
-                marginTop: 8,
-              }}
-            >
-              Get API keys
-            </Link>
-          </nav>
-        </div>
-      )}
-    </>
-  );
-}
-
-const FOOTER_LINK_STYLE: React.CSSProperties = {
-  fontSize: 13,
+const FL: React.CSSProperties = {
+  fontSize: 14.5,
   fontWeight: 400,
-  color: "#6B6B6B",
+  color: "#9BA1B0",
   textDecoration: "none",
   transition: "color 0.15s",
+  display: "block",
 };
 
-function FooterAnchor({ label }: { label: string }) {
+const LAYER_TAG: React.CSSProperties = {
+  display: "block",
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 10,
+  letterSpacing: "0.14em",
+  color: "#6B7180",
+  marginBottom: 16,
+};
+
+function FA({ label, children }: { label: string; children?: React.ReactNode }) {
   return (
     <a
       href="#"
       onClick={(e) => e.preventDefault()}
-      style={FOOTER_LINK_STYLE}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
+      style={FL}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
     >
-      {label}
+      {label}{children}
     </a>
   );
 }
 
 type FooterTo =
   | "/contact"
-  | "/privacy"
-  | "/terms"
+  | "/legal"
   | "/docs/changelog"
   | "/roi-calculator"
   | "/docs"
@@ -552,13 +54,13 @@ type FooterTo =
   | "/products/market"
   | "/products/field-intel";
 
-function FooterRouteLink({ label, to }: { label: string; to: FooterTo }) {
+function FL_Link({ label, to }: { label: string; to: FooterTo }) {
   return (
     <Link
       to={to}
-      style={FOOTER_LINK_STYLE}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
+      style={FL}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
     >
       {label}
     </Link>
@@ -581,14 +83,24 @@ function FooterHashLink({ label, hash }: { label: string; hash: string }) {
           setTimeout(() => smoothScrollToHash(hash), 100);
         }
       }}
-      style={FOOTER_LINK_STYLE}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "#FAFAF9")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
+      style={FL}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
     >
       {label}
     </a>
   );
 }
+
+const COL_HEAD: React.CSSProperties = {
+  fontWeight: 600,
+  fontSize: 15,
+  color: "#F5F6FA",
+  margin: "0 0 6px",
+  display: "flex",
+  alignItems: "center",
+  gap: 7,
+};
 
 function Footer() {
   const router = useRouter();
@@ -599,136 +111,150 @@ function Footer() {
   };
 
   return (
-    <footer
-      style={{
-        background: "#050505",
-        borderTop: "1px solid #1A1A1A",
-        padding: "60px 40px 30px",
-      }}
-    >
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+    <footer style={{ background: "#000", color: "#F5F6FA", padding: "72px 24px 32px" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div className="ps-footer-grid">
+
+          {/* Brand */}
           <div>
-            <a
-              href="/"
-              onClick={handleLogoClick}
-              style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
-            >
+            <a href="/" onClick={handleLogoClick} style={{ textDecoration: "none" }}>
               <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
-            <p
-              style={{
-                marginTop: 12,
-                fontSize: 13,
-                color: "#6B6B6B",
-                lineHeight: 1.6,
-                maxWidth: 280,
-              }}
-            >
-              Pricing intelligence APIs for retail teams. A clean REST surface
-              for competitor data, recommendations, ROI, and field intel.
+            <p style={{ marginTop: 18, fontSize: 14.5, lineHeight: 1.7, color: "#9BA1B0", maxWidth: 320 }}>
+              Real-time margin infrastructure for GCC commerce — plus autonomous agents that defend, audit, and recover your margin while you run the business.
             </p>
-            <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
-              {[
-                { label: "X", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>X</span> },
-                { label: "LinkedIn", node: <span style={{ fontSize: 13, fontWeight: 600, color: "#8A8A8A" }}>in</span> },
-              ].map((s) => (
+            <div style={{ marginTop: 24, display: "flex", gap: 10 }}>
+              {(["X", "in"] as const).map((lbl) => (
                 <a
-                  key={s.label}
+                  key={lbl}
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label={s.label}
+                  aria-label={lbl === "X" ? "X (Twitter)" : "LinkedIn"}
+                  className="ps-social-btn"
                   style={{
-                    width: 32,
-                    height: 32,
-                    background: "#0A0A0A",
-                    border: "1px solid #1A1A1A",
-                    borderRadius: 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "border-color 0.15s",
+                    width: 38, height: 38, borderRadius: 9,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#9BA1B0", textDecoration: "none",
+                    fontSize: 14, fontWeight: 700, transition: "border-color 0.15s, color 0.15s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#EA580C")}
-                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#1A1A1A")}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.color = "#F5F6FA"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#9BA1B0"; }}
                 >
-                  {s.node}
+                  {lbl}
                 </a>
               ))}
             </div>
           </div>
 
+          {/* Platform */}
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Products
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterRouteLink label="Price Rules Engine" to="/products/pricing" />
-              <FooterRouteLink label="Competitor Intelligence" to="/products/competitors" />
-              <FooterRouteLink label="Promotions & ROI" to="/products/promotions" />
-              <FooterRouteLink label="Market Signals" to="/products/market" />
-              <FooterRouteLink label="White-Label Embed" to="/products/field-intel" />
+            <h4 style={COL_HEAD}>Platform</h4>
+            <span style={LAYER_TAG}>INFRASTRUCTURE LAYER</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <FA label="Sync" />
+              <FA label="Decide" />
+              <FA label="Defend" />
+              <FA label="Govern" />
+              <FA label="Margin by PrizeSkout" />
             </div>
           </div>
 
+          {/* Agents */}
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Developers
+            <h4 style={COL_HEAD}>
+              Agents
+              <span aria-hidden="true" style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: "#FF5A1F",
+                boxShadow: "0 0 8px rgba(255,90,31,0.7)",
+                display: "inline-block", flexShrink: 0,
+              }} />
             </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterRouteLink label="Documentation" to="/docs" />
-              <FooterRouteLink label="API Reference" to="/api-reference" />
-              <FooterRouteLink label="Changelog" to="/docs/changelog" />
-              <FooterAnchor label="Status" />
-              <FooterRouteLink label="ROI Calculator" to="/roi-calculator" />
+            <span style={LAYER_TAG}>INTELLIGENCE LAYER</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <FA label="Agent CFO" />
+              <FA label="Dispute Audit Agent">
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 9.5, letterSpacing: "0.1em",
+                  color: "#FF5A1F",
+                  border: "1px solid rgba(255,90,31,0.35)",
+                  borderRadius: 4, padding: "2px 6px", marginLeft: 8,
+                  verticalAlign: "middle",
+                }}>NEW</span>
+              </FA>
             </div>
           </div>
 
+          {/* Developers */}
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 600, color: "#FAFAF9", margin: "0 0 16px" }}>
-              Company
-            </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <FooterAnchor label="About" />
-              <FooterAnchor label="Enterprise" />
-              <FooterRouteLink label="Contact sales" to="/contact" />
-              <FooterRouteLink label="Privacy policy" to="/privacy" />
-              <FooterRouteLink label="Terms of service" to="/terms" />
+            <h4 style={COL_HEAD}>Developers</h4>
+            <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <a href="/api-docs.html" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>SDK Docs</a>
+              <a href="/api-docs.html#auth" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>Authentication</a>
+              <a href="/api-docs.html#webhooks" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>Webhooks</a>
+              <FA label="Status" />
+              <FL_Link label="Margin Calculator" to="/roi-calculator" />
+            </div>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h4 style={COL_HEAD}>Company</h4>
+            <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <FA label="About" />
+              <FA label="Enterprise" />
+              <FL_Link label="Contact sales" to="/contact" />
+              <FL_Link label="Privacy Policy & Terms" to="/legal" />
             </div>
           </div>
         </div>
 
-        <div
-          style={{
-            marginTop: 40,
-            paddingTop: 20,
-            borderTop: "1px solid #1A1A1A",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          <span style={{ fontSize: 12, color: "#6B6B6B" }}>
-            © {new Date().getFullYear()} PrizeSkout. All rights reserved. Qatar
-          </span>
-          <div style={{ display: "inline-flex", flexWrap: "wrap", gap: 8 }}>
-            {["99.95% uptime", "GCC residency"].map((badge) => (
-              <span
-                key={badge}
-                style={{
-                  fontSize: 11,
-                  color: "#A8A8A8",
-                  background: "#0A0A0A",
-                  border: "1px solid #1A1A1A",
-                  borderRadius: 6,
-                  padding: "5px 10px",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {badge}
-              </span>
+        {/* Bottom bar */}
+        <div style={{
+          marginTop: 64, paddingTop: 28,
+          borderTop: "1px solid rgba(255,255,255,0.08)",
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap", gap: 20,
+        }}>
+          <div style={{ color: "#6B7180", fontSize: 13.5 }}>
+            © 2026 PrizeSkout · QFC-licensed, Doha, Qatar
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: "#6B7180" }}>
+              {" "}· QFC No. 04412
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="ps-bottom-pill ps-status-pill"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+                padding: "8px 14px", fontSize: 13, color: "#9BA1B0",
+                textDecoration: "none", transition: "border-color 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(16,185,129,0.5)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+            >
+              <span className="ps-status-dot" style={{
+                width: 7, height: 7, borderRadius: "50%",
+                background: "#10B981",
+                boxShadow: "0 0 8px rgba(16,185,129,0.8)",
+                flexShrink: 0,
+              }} />
+              All systems operational
+            </a>
+            {["99.95% uptime", "GCC data residency"].map((t) => (
+              <span key={t} style={{
+                display: "inline-flex", alignItems: "center",
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+                padding: "8px 14px", fontSize: 13, color: "#9BA1B0",
+              }}>{t}</span>
             ))}
           </div>
         </div>
@@ -738,6 +264,7 @@ function Footer() {
 }
 
 const SHELL_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
   @keyframes ps-fade-in { from { opacity: 0 } to { opacity: 1 } }
   @keyframes ps-dropdown-in {
     from { opacity: 0; transform: translateY(-4px) scale(0.98); }
@@ -747,101 +274,28 @@ const SHELL_STYLES = `
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes ps-flash {
-    0% { color: #EA580C; }
-    100% { color: inherit; }
-  }
-  @keyframes ps-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
-    70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-  }
-  @keyframes ps-spark-draw { to { stroke-dashoffset: 0; } }
-  @keyframes ps-slide-up {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+  @keyframes ps-status-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
   }
   html { scroll-behavior: smooth; }
-  .ps-tip-wrap .ps-tip {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
-    white-space: nowrap;
-    background: #0A0A0A;
-    color: #FAFAF9;
-    border: 1px solid #1F1F1F;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.45);
-    opacity: 0;
-    transform: translateY(-4px);
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    z-index: 60;
-  }
-  .ps-tip-wrap:hover .ps-tip,
-  .ps-tip-wrap:focus-within .ps-tip {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .ps-tip-arrow {
-    position: absolute;
-    top: -5px;
-    right: 22px;
-    width: 8px;
-    height: 8px;
-    background: #0A0A0A;
-    border-left: 1px solid #1F1F1F;
-    border-top: 1px solid #1F1F1F;
-    transform: rotate(45deg);
-  }
-  .ps-hero-title { font-size: 32px; }
-  .ps-hero-sub { font-size: 15px; }
   .ps-section-title { font-size: 26px; font-weight: 700; line-height: 1.2; margin: 0; }
-  .ps-feature-grid { grid-template-columns: 1fr; }
-  .ps-steps { display: flex; flex-direction: column; gap: 32px; }
-  .ps-step-line { display: none; }
-  .ps-pricing-grid { grid-template-columns: 1fr; }
-  .ps-footer-grid { display: flex; flex-direction: column; gap: 32px; }
-  .ps-faq-q:hover span { color: #EA580C !important; }
-  .ps-feature-card:hover { border-color: rgba(234, 88, 12, 0.3) !important; transform: translateY(-2px); }
-  .ps-mock-metrics { grid-template-columns: repeat(2, 1fr); }
-  .ps-mock-bottom { grid-template-columns: 1fr; }
-  @media (min-width: 560px) {
-    .ps-mock-metrics { grid-template-columns: repeat(4, 1fr); }
-    .ps-mock-bottom { grid-template-columns: 1.4fr 1fr; }
-  }
+  .ps-status-dot { animation: ps-status-pulse 2.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .ps-status-dot { animation: none; } }
+  .ps-footer-grid { display: flex; flex-direction: column; gap: 40px; }
   @media (min-width: 640px) {
-    .ps-feature-grid { grid-template-columns: repeat(2, 1fr); }
-    .ps-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .ps-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
   }
   @media (min-width: 768px) {
-    .ps-hero-title { font-size: 48px; }
-    .ps-hero-sub { font-size: 17px; }
     .ps-section-title { font-size: 36px; }
-    .ps-pricing-grid { grid-template-columns: repeat(3, 1fr); }
-    .ps-steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      position: relative;
-    }
-    .ps-step-line {
-      display: block;
-      position: absolute;
-      top: 20px;
-      left: calc(50% + 24px);
-      right: calc(-50% + 24px);
-      height: 0;
-      border-top: 1px dashed #E5E2DB;
-      z-index: 0;
-    }
-    .ps-footer-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px; }
+    .ps-footer-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 48px; }
   }
-  @media (min-width: 900px) {
-    .ps-feature-grid { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 980px) {
+    .ps-footer-grid { grid-template-columns: 1fr 1fr; }
+    .ps-footer-grid > div:first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 560px) {
+    .ps-footer-grid { grid-template-columns: 1fr; }
   }
 `;
 
@@ -849,8 +303,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
   return (
     <div style={{ background: "#050505", minHeight: "100vh", overflowX: "hidden" }}>
       <style>{SHELL_STYLES}</style>
-      <Header />
-      <main id="main-content" tabIndex={-1} style={{ paddingTop: 64, outline: "none" }}>{children}</main>
+      <LandingNav />
+      <main id="main-content" tabIndex={-1} style={{ outline: "none" }}>{children}</main>
       <Footer />
     </div>
   );

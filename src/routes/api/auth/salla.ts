@@ -1,0 +1,59 @@
+// GET /api/auth/salla
+//
+// Initiates the Salla OAuth 2.0 authorization flow.
+// Redirects the merchant's browser to Salla's consent screen.
+//
+// Query params:
+//   merchant_id  — the ps_merchant_id stored in localStorage (passed by the UI)
+//
+// Required env vars (set in Cloudflare dashboard → Workers → Settings → Variables):
+//   SALLA_CLIENT_ID      — from apps.salla.dev
+//   SALLA_CLIENT_SECRET  — from apps.salla.dev
+
+import { createFileRoute, redirect } from "@tanstack/react-router";
+
+const SALLA_AUTH_URL = "https://accounts.salla.sa/oauth2/auth";
+
+const SCOPES = [
+  "offline_access",   // refresh token
+  "orders.read",      // order-level payout data for dispute agent
+  "products.read",    // catalog ingest
+  "products.write",   // margin-safe price push
+].join(" ");
+
+export const Route = createFileRoute("/api/auth/salla")({
+  server: {
+    handlers: {
+      GET: ({ request }) => {
+        const clientId = process.env.SALLA_CLIENT_ID;
+        if (!clientId) {
+          return new Response(
+            JSON.stringify({ error: "SALLA_CLIENT_ID is not configured." }),
+            { status: 503, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        const url = new URL(request.url);
+        const merchantId = url.searchParams.get("merchant_id") ?? "";
+        if (!merchantId) {
+          return new Response(
+            JSON.stringify({ error: "merchant_id query param is required." }),
+            { status: 400, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
+        const redirectUri = `${url.origin}/api/auth/salla/callback`;
+
+        const params = new URLSearchParams({
+          client_id:     clientId,
+          redirect_uri:  redirectUri,
+          response_type: "code",
+          scope:         SCOPES,
+          state:         merchantId,  // round-tripped back in callback to identify the merchant
+        });
+
+        return Response.redirect(`${SALLA_AUTH_URL}?${params}`, 302);
+      },
+    },
+  },
+});

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter, redirect } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/components/auth/AuthShared";
 
 export const Route = createFileRoute("/signup")({
+  beforeLoad: () => { throw redirect({ to: "/onboarding" }); },
   head: () => ({
     meta: [
       { title: "Create your account | PrizeSkout" },

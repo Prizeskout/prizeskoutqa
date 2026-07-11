@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import logoDark from "@/assets/logo-dark.svg";
 
 export const Route = createFileRoute("/onboarding")({
@@ -18,15 +18,25 @@ const BG = "#080809";
 const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
 
 const STEPS = [
-  { label: "Store Config",      sub: "Identify your business" },
-  { label: "Channel Connect",   sub: "Link your platforms"    },
-  { label: "Defense Floors",    sub: "Set your margin rules"  },
+  { label: "Store Config",    sub: "Identify your business" },
+  { label: "Channel Connect", sub: "Link your platforms"    },
+  { label: "Defense Floors",  sub: "Set your margin rules"  },
 ];
 
-const REGIONS = ["Qatar", "Saudi Arabia", "UAE", "Kuwait", "Bahrain", "Oman"] as const;
+const REGIONS    = ["Qatar", "Saudi Arabia", "UAE", "Kuwait", "Bahrain", "Oman"] as const;
 const CURRENCIES = ["QAR", "SAR", "AED", "KWD", "BHD", "OMR"] as const;
-
 const CATEGORIES = ["Electronics", "Grocery", "Fashion", "Home & Garden", "F&B"];
+
+const REGION_CODE: Record<string, string> = {
+  "Qatar": "QA", "Saudi Arabia": "SA", "UAE": "AE",
+  "Kuwait": "KW", "Bahrain": "BH", "Oman": "OM",
+};
+
+function makeAccessCode(region: string): string {
+  const rc = REGION_CODE[region] ?? "QA";
+  const n  = String(Math.floor(1000 + Math.random() * 9000));
+  return `PSK-${rc}-${n}`;
+}
 
 function inputStyle(focus?: boolean): React.CSSProperties {
   return {
@@ -76,24 +86,62 @@ function FocusSelect({
 }: {
   value: string; onChange: (v: string) => void; options: readonly string[]; placeholder: string;
 }) {
-  const [focus, setFocus] = useState(false);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
   return (
-    <div style={{ position: "relative" }}>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
-        style={{ ...inputStyle(focus), appearance: "none", WebkitAppearance: "none", cursor: "pointer", paddingRight: 36, color: value ? "#E7E8EA" : "#6B7280" }}
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          ...inputStyle(open),
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          cursor: "pointer", textAlign: "left",
+          color: value ? "#E7E8EA" : "#6B7280",
+        }}
       >
-        <option value="" disabled>{placeholder}</option>
-        {options.map(o => (
-          <option key={o} value={o} style={{ color: "#1A1A18" }}>{o}</option>
-        ))}
-      </select>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
+        <span>{value || placeholder}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2"
+          style={{ flexShrink: 0, marginLeft: 8, transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none" }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+          background: "#0E0F12", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
+          overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+        }}>
+          {options.map(o => (
+            <button
+              key={o}
+              type="button"
+              onMouseDown={() => { onChange(o); setOpen(false); }}
+              style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "10px 14px", fontSize: 13, color: o === value ? OG : "#E7E8EA",
+                background: o === value ? "rgba(239,104,26,0.08)" : "transparent",
+                border: "none", cursor: "pointer", fontFamily: "inherit",
+              }}
+              onMouseEnter={e => { if (o !== value) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = o === value ? "rgba(239,104,26,0.08)" : "transparent"; }}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -163,7 +211,7 @@ function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick?: 
       onClick={onClick}
       style={{
         background: "transparent", color: "#6B7280", fontSize: 13, fontWeight: 500,
-        padding: "10px 20px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+        padding: "12px 20px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
         cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
       }}
     >
@@ -173,8 +221,7 @@ function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick?: 
 }
 
 function Step1({
-  storeName, setStoreName, region, setRegion, currency, setCurrency,
-  onNext,
+  storeName, setStoreName, region, setRegion, currency, setCurrency, onNext,
 }: {
   storeName: string; setStoreName: (v: string) => void;
   region: string; setRegion: (v: string) => void;
@@ -195,12 +242,12 @@ function Step1({
       </div>
 
       <div>
-        <FieldLabel>Primary Region</FieldLabel>
+        <FieldLabel>Region</FieldLabel>
         <FocusSelect value={region} onChange={setRegion} options={REGIONS} placeholder="Select region…" />
       </div>
 
       <div>
-        <FieldLabel>Functional Currency</FieldLabel>
+        <FieldLabel>Currency</FieldLabel>
         <FocusSelect value={currency} onChange={setCurrency} options={CURRENCIES} placeholder="Select currency…" />
       </div>
 
@@ -215,10 +262,14 @@ function Step1({
 
 function Step2({
   talabatToken, setTalabatToken,
+  snoonuToken, setSnoonuToken,
+  keetaToken, setKeetaToken,
   jahezToken, setJahezToken,
   onNext, onBack,
 }: {
   talabatToken: string; setTalabatToken: (v: string) => void;
+  snoonuToken: string; setSnoonuToken: (v: string) => void;
+  keetaToken: string; setKeetaToken: (v: string) => void;
   jahezToken: string; setJahezToken: (v: string) => void;
   onNext: () => void; onBack: () => void;
 }) {
@@ -226,10 +277,9 @@ function Step2({
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Inbound / Outbound Bridge</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Connect your platforms. Salla is linked automatically — add delivery platform tokens to unlock outbound repricing.</p>
+        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Connect your platforms. Salla is linked automatically; add delivery tokens to unlock outbound repricing.</p>
       </div>
 
-      {/* Salla — pre-connected */}
       <div style={{ border: "1px solid rgba(16,185,129,0.25)", background: "rgba(16,185,129,0.06)", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(16,185,129,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -243,13 +293,21 @@ function Step2({
         <span style={{ fontFamily: MONO, fontSize: 11, color: GN, border: "1px solid rgba(16,185,129,0.3)", borderRadius: 6, padding: "3px 8px" }}>CONNECTED</span>
       </div>
 
-      {/* Talabat */}
       <div>
         <FieldLabel>Talabat API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
         <FocusInput value={talabatToken} onChange={setTalabatToken} placeholder="tbt_live_xxxxxxxxxxxx" type="password" />
       </div>
 
-      {/* Jahez */}
+      <div>
+        <FieldLabel>Snoonu API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
+        <FocusInput value={snoonuToken} onChange={setSnoonuToken} placeholder="snu_live_xxxxxxxxxxxx" type="password" />
+      </div>
+
+      <div>
+        <FieldLabel>Keeta API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
+        <FocusInput value={keetaToken} onChange={setKeetaToken} placeholder="kta_live_xxxxxxxxxxxx" type="password" />
+      </div>
+
       <div>
         <FieldLabel>Jahez API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
         <FocusInput value={jahezToken} onChange={setJahezToken} placeholder="jhz_live_xxxxxxxxxxxx" type="password" />
@@ -258,9 +316,7 @@ function Step2({
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
         <GhostBtn onClick={onBack}>← Back</GhostBtn>
         <div style={{ flex: 1 }}>
-          <PrimaryBtn onClick={onNext}>
-            Continue to Defense Floors →
-          </PrimaryBtn>
+          <PrimaryBtn onClick={onNext}>Continue to Defense Floors →</PrimaryBtn>
         </div>
       </div>
     </div>
@@ -281,10 +337,9 @@ function Step3({
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Define Defense Floors</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Set your minimum net margin. PrizeSkout will defend these floors automatically across every connected aggregator.</p>
+        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Set your minimum net margin. PrizeSkout defends these floors automatically across every connected aggregator.</p>
       </div>
 
-      {/* Global floor */}
       <div style={{ background: "#0E0F12", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <div>
@@ -303,7 +358,6 @@ function Step3({
         </div>
       </div>
 
-      {/* Category overrides */}
       <div>
         <div style={{ fontSize: 12, fontWeight: 600, color: "#9CA3AF", marginBottom: 12, letterSpacing: "0.3px" }}>CATEGORY OVERRIDES (optional)</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -327,90 +381,305 @@ function Step3({
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
         <GhostBtn onClick={onBack}>← Back</GhostBtn>
         <div style={{ flex: 1 }}>
-          <PrimaryBtn onClick={onFinish}>
-            Activate Defense Loops & Enter Command Room
-          </PrimaryBtn>
+          <PrimaryBtn onClick={onFinish}>Activate Defense Loops & Enter Command Room</PrimaryBtn>
         </div>
       </div>
     </div>
   );
 }
 
-function OnboardingPage() {
+function AccessCodeScreen({ code, onEnter }: { code: string; onEnter: () => void }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyCode() {
+    try { await navigator.clipboard.writeText(code); } catch (_) {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  }
+
+  return (
+    <div style={{ textAlign: "center", padding: "8px 0" }}>
+      {/* Success ring */}
+      <div style={{
+        width: 60, height: 60, borderRadius: "50%",
+        background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.35)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        margin: "0 auto 22px",
+      }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12l4 4L19 7" />
+        </svg>
+      </div>
+
+      <h2 style={{ fontSize: 20, fontWeight: 700, color: "#E7E8EA", margin: "0 0 8px" }}>
+        Defense loops activated
+      </h2>
+      <p style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.75, margin: "0 auto 28px", maxWidth: 360 }}>
+        This is your store access code. Save it somewhere safe — entering it on any device restores your full dashboard. No account needed.
+      </p>
+
+      {/* Code badge */}
+      <div style={{
+        fontFamily: MONO, fontSize: 30, fontWeight: 700, letterSpacing: "0.14em",
+        color: OG, background: "rgba(239,104,26,0.07)",
+        border: "1px solid rgba(239,104,26,0.28)", borderRadius: 14,
+        padding: "20px 28px", display: "inline-block",
+        boxShadow: "0 0 32px rgba(239,104,26,0.12)",
+        marginBottom: 18,
+      }}>
+        {code}
+      </div>
+
+      {/* Copy button */}
+      <div style={{ marginBottom: 28 }}>
+        <button
+          type="button"
+          onClick={copyCode}
+          style={{
+            background: "transparent", color: copied ? GN : "#9CA3AF",
+            fontSize: 13, fontWeight: 500,
+            border: `1px solid ${copied ? "rgba(16,185,129,0.35)" : "rgba(255,255,255,0.10)"}`,
+            borderRadius: 8, padding: "9px 20px",
+            cursor: "pointer", fontFamily: "inherit",
+            transition: "all 0.15s", display: "inline-flex", alignItems: "center", gap: 7,
+          }}
+        >
+          {copied
+            ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg> Copied</>
+            : <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                </svg>
+                Copy code
+              </>
+          }
+        </button>
+      </div>
+
+      <PrimaryBtn onClick={onEnter}>Enter Command Room →</PrimaryBtn>
+
+      <div style={{ marginTop: 22, fontSize: 11.5, color: "#3A3D46", fontFamily: MONO }}>
+        You can also find this code in Settings → Store Access
+      </div>
+    </div>
+  );
+}
+
+function RestoreForm({ onCancel }: { onCancel: () => void }) {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
+  const [code, setCode] = useState("");
+  const [focus, setFocus] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleRestore() {
+    if (!code.trim()) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim() }),
+      });
+      if (!res.ok) {
+        setError("Code not found. Double-check the letters and numbers and try again.");
+        return;
+      }
+      const data = await res.json() as { merchant_id: string };
+      localStorage.setItem("ps_merchant_id", data.merchant_id);
+      localStorage.setItem("ps_access_code", code.trim().toUpperCase());
+      localStorage.setItem("ps_connected", "true");
+      navigate({ to: "/dashboard/revenue-hub" });
+    } catch {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Restore dashboard access</h2>
+        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Enter the store access code you received when you first connected. It looks like PSK-QA-0000.</p>
+      </div>
+
+      <div>
+        <FieldLabel>Access Code</FieldLabel>
+        <input
+          type="text"
+          value={code}
+          onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
+          placeholder="PSK-QA-0000"
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+          onKeyDown={e => { if (e.key === "Enter") handleRestore(); }}
+          style={{
+            ...inputStyle(focus),
+            fontFamily: MONO,
+            letterSpacing: "0.1em",
+            fontSize: 18,
+            fontWeight: 600,
+          }}
+        />
+        {error && (
+          <div style={{ fontSize: 12, color: "#F87171", marginTop: 8 }}>{error}</div>
+        )}
+      </div>
+
+      <PrimaryBtn onClick={handleRestore} disabled={!code.trim() || loading}>
+        {loading ? "Restoring…" : "Restore access →"}
+      </PrimaryBtn>
+
+      <button
+        type="button"
+        onClick={onCancel}
+        style={{
+          background: "transparent", border: "none", color: "#52555C",
+          fontSize: 13, cursor: "pointer", fontFamily: MONO,
+          padding: "12px 0", textAlign: "center",
+        }}
+      >
+        ← New store? Connect here
+      </button>
+    </div>
+  );
+}
+
+function OnboardingPage() {
+  const [step, setStep]             = useState(0);
+  const [restoreMode, setRestoreMode] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const navigate = useNavigate();
 
   // Step 1
   const [storeName, setStoreName] = useState("");
-  const [region, setRegion] = useState("");
-  const [currency, setCurrency] = useState("");
+  const [region, setRegion]       = useState("");
+  const [currency, setCurrency]   = useState("");
 
   // Step 2
   const [talabatToken, setTalabatToken] = useState("");
-  const [jahezToken, setJahezToken] = useState("");
+  const [snoonuToken,  setSnoonuToken]  = useState("");
+  const [keetaToken,   setKeetaToken]   = useState("");
+  const [jahezToken,   setJahezToken]   = useState("");
 
   // Step 3
-  const [marginFloor, setMarginFloor] = useState(18);
-  const [categoryFloors, setCategoryFloors] = useState<Record<string, number>>({});
-
+  const [marginFloor, setMarginFloor]         = useState(18);
+  const [categoryFloors, setCategoryFloors]   = useState<Record<string, number>>({});
   function setCategoryFloor(cat: string, v: number) {
     setCategoryFloors(prev => ({ ...prev, [cat]: v }));
   }
 
+  async function handleFinish() {
+    let mid = localStorage.getItem("ps_merchant_id");
+    if (!mid) {
+      mid = crypto.randomUUID();
+      localStorage.setItem("ps_merchant_id", mid);
+    }
+    const code = makeAccessCode(region);
+    localStorage.setItem("ps_access_code", code);
+    localStorage.setItem("ps_connected", "true");
+
+    // Persist code mapping in the background — don't block navigation
+    fetch("/api/register-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ merchant_id: mid, code }),
+    }).catch(() => {});
+
+    setAccessCode(code);
+    setStep(3);
+  }
+
+  const showProgress = !restoreMode && step < 3;
+
   return (
     <div style={{
       minHeight: "100vh", background: BG, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", padding: "32px 24px",
+      alignItems: "center", justifyContent: "center", padding: "24px 16px",
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        @media(min-width:600px){.ob-card{padding:36px 40px!important}}
+      `}</style>
 
       {/* Logo + back link */}
-      <div style={{ width: "100%", maxWidth: 560, marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ width: "100%", maxWidth: 560, marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <img src={logoDark} alt="PrizeSkout" style={{ height: 26, width: "auto" }} />
-        <a href="/" style={{ fontSize: 12, color: "#52555C", textDecoration: "none", fontFamily: MONO }}>← Back to home</a>
+        {step < 3 && (
+          <a href="/" style={{ fontSize: 13, color: "#52555C", textDecoration: "none", fontFamily: MONO, padding: "8px 0" }}>← Back to home</a>
+        )}
       </div>
 
-      {/* Progress */}
-      <div style={{ width: "100%", maxWidth: 560 }}>
-        <StepProgress current={step} />
-      </div>
+      {/* Step progress (hidden on code screen and restore mode) */}
+      {showProgress && (
+        <div style={{ width: "100%", maxWidth: 560 }}>
+          <StepProgress current={step} />
+        </div>
+      )}
 
       {/* Card */}
-      <div style={{
+      <div className="ob-card" style={{
         width: "100%", maxWidth: 560, background: "#0B0C0F",
-        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "36px 40px",
+        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "28px 20px",
       }}>
-        {step === 0 && (
+        {restoreMode ? (
+          <RestoreForm onCancel={() => setRestoreMode(false)} />
+        ) : step === 0 ? (
           <Step1
             storeName={storeName} setStoreName={setStoreName}
             region={region} setRegion={setRegion}
             currency={currency} setCurrency={setCurrency}
             onNext={() => setStep(1)}
           />
-        )}
-        {step === 1 && (
+        ) : step === 1 ? (
           <Step2
             talabatToken={talabatToken} setTalabatToken={setTalabatToken}
-            jahezToken={jahezToken} setJahezToken={setJahezToken}
+            snoonuToken={snoonuToken}   setSnoonuToken={setSnoonuToken}
+            keetaToken={keetaToken}     setKeetaToken={setKeetaToken}
+            jahezToken={jahezToken}     setJahezToken={setJahezToken}
             onNext={() => setStep(2)}
             onBack={() => setStep(0)}
           />
-        )}
-        {step === 2 && (
+        ) : step === 2 ? (
           <Step3
             marginFloor={marginFloor} setMarginFloor={setMarginFloor}
             categoryFloors={categoryFloors} setCategoryFloor={setCategoryFloor}
-            onFinish={() => navigate({ to: "/dashboard/revenue-hub" })}
+            onFinish={handleFinish}
             onBack={() => setStep(1)}
+          />
+        ) : (
+          <AccessCodeScreen
+            code={accessCode}
+            onEnter={() => navigate({ to: "/dashboard/revenue-hub" })}
           />
         )}
       </div>
 
-      {/* Footer note */}
-      <div style={{ marginTop: 28, fontFamily: MONO, fontSize: 10.5, color: "#3A3D46", textAlign: "center" }}>
-        PRIZESKOUT · DATA PROCESSED IN-REGION · QFC-COMPLIANT
-      </div>
+      {/* Footer row */}
+      {step < 3 && (
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10.5, color: "#3A3D46", textAlign: "center" }}>
+            PRIZESKOUT · DATA PROCESSED IN-REGION · QFC-COMPLIANT
+          </div>
+          {!restoreMode && (
+            <button
+              type="button"
+              onClick={() => setRestoreMode(true)}
+              style={{
+                background: "transparent", border: "none",
+                fontFamily: MONO, fontSize: 13, color: "#52555C",
+                cursor: "pointer", padding: "12px 0",
+                textDecoration: "underline", textUnderlineOffset: 3,
+              }}
+            >
+              Already have an access code? Restore access →
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

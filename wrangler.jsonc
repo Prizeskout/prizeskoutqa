@@ -14,5 +14,11 @@
   },
 
   "compatibility_date": "2025-09-24",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Public-facing origin — used in invite URLs, embed URLs, and cron hooks.
+  // Keep the workers.dev fallback in code for local dev; set this in production.
+  "vars": {
+    "PUBLIC_APP_URL": "https://prizeskout.qa"
+  }
 }

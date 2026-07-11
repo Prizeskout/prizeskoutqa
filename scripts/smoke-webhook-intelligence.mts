@@ -1,26 +1,26 @@
 /**
- * HTTP smoke test — Enriched Webhook Intelligence API (API 17)
+ * HTTP smoke test � Enriched Webhook Intelligence API (API 17)
  *
  * Verifies over live HTTP:
- *  1. POST /v1/webhooks/subscribe — create subscription → secret in response
- *  2. GET  /v1/webhooks/subscriptions — list (secret NOT returned)
- *  3. POST /v1/webhooks/test — fire test event to httpbin.org/post
- *        → enriched payload with margin_impact + competitor_context +
+ *  1. POST /v1/webhooks/subscribe � create subscription ? secret in response
+ *  2. GET  /v1/webhooks/subscriptions � list (secret NOT returned)
+ *  3. POST /v1/webhooks/test � fire test event to httpbin.org/post
+ *        ? enriched payload with margin_impact + competitor_context +
  *          action_suggestion + action_ar
- *        → HMAC signature header present and verifiable
- *  4. GET  /v1/webhooks/deliveries?subscription_id=… — delivery logged
- *  5. POST /v1/webhooks/subscribe with wrong-scope key → 403
+ *        ? HMAC signature header present and verifiable
+ *  4. GET  /v1/webhooks/deliveries?subscription_id=� � delivery logged
+ *  5. POST /v1/webhooks/subscribe with wrong-scope key ? 403
  *  6. Cleanup: DELETE /v1/webhooks/subscriptions/{id}
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { createHash, createHmac, randomBytes } from "crypto";
 
-const BASE = "https://prizeskoutqa.prizeskoutqatar.workers.dev/api/public";
+const BASE = "https://prizeskout.qa/api/public";
 const UID  = "bed12406-2798-47f7-a30c-5de559e90d6d";
 const LIC  = "1a1d0a17-366b-4242-b504-ae78ee68b32c";
 
-// httpbin.org/post echoes back the POST body + headers as JSON → HTTP 200
+// httpbin.org/post echoes back the POST body + headers as JSON ? HTTP 200
 // This lets us capture the enriched payload exactly as it was delivered.
 const CATCHER = "https://httpbin.org/post";
 
@@ -39,7 +39,7 @@ async function cleanup() {
   // subscription cleanup done in TEST 6
 }
 
-// ── Create test API keys ──────────────────────────────────────────────────────
+// -- Create test API keys ------------------------------------------------------
 
 const raw = randKey();
 const { data: k } = await (admin as any).from("api_keys").insert({
@@ -60,7 +60,7 @@ const { data: bk } = await (admin as any).from("api_keys").insert({
 badKeyId = bk?.id;
 const BAD_KEY = badRaw;
 
-// ── HTTP helpers ──────────────────────────────────────────────────────────────
+// -- HTTP helpers --------------------------------------------------------------
 
 async function call(method: string, path: string, key: string, body?: unknown) {
   const t0 = Date.now();
@@ -75,9 +75,9 @@ async function call(method: string, path: string, key: string, body?: unknown) {
   return { status: res.status, body: parsed, ms: Date.now() - t0, raw: text };
 }
 
-function section(t: string) { console.log(`\n${"═".repeat(76)}\n  ${t}\n${"═".repeat(76)}`); }
-function pass(msg: string)  { console.log(`  ✓ ${msg}`); }
-function fail(msg: string)  { console.log(`  ✗ ${msg}`); }
+function section(t: string) { console.log(`\n${"-".repeat(76)}\n  ${t}\n${"-".repeat(76)}`); }
+function pass(msg: string)  { console.log(`  ? ${msg}`); }
+function fail(msg: string)  { console.log(`  ? ${msg}`); }
 function dump(label: string, v: unknown) {
   const s = typeof v === "string" ? v : JSON.stringify(v, null, 2);
   console.log(`\n  ${label}:\n${s.split("\n").map(l => `    ${l}`).join("\n")}`);
@@ -87,8 +87,8 @@ let passed = 0, failed = 0;
 
 try {
 
-// ═══ TEST 1 — Subscribe ══════════════════════════════════════════════════════
-section("TEST 1 — POST /v1/webhooks/subscribe");
+// --- TEST 1 � Subscribe ------------------------------------------------------
+section("TEST 1 � POST /v1/webhooks/subscribe");
 
 const r1 = await call("POST", "/v1/webhooks/subscribe", KEY, {
   endpoint_url:    CATCHER,
@@ -98,8 +98,8 @@ const r1 = await call("POST", "/v1/webhooks/subscribe", KEY, {
     competitor_context:  true,
     action_suggestion:   true,
   },
-  description: "Smoke-test subscription — httpbin echo catcher",
-  // no filters → matches all events
+  description: "Smoke-test subscription � httpbin echo catcher",
+  // no filters ? matches all events
 });
 
 console.log(`  HTTP ${r1.status}  (${r1.ms} ms)`);
@@ -111,7 +111,7 @@ if (r1.status === 201 && b1?.id && b1?.secret) {
   pass(`subscription created: ${subId}`);
   pass(`endpoint_url: ${b1.endpoint_url}`);
   pass(`events: ${JSON.stringify(b1.events)}`);
-  pass(`secret present: ${subSecret!.slice(0, 8)}… (${subSecret!.length} chars)`);
+  pass(`secret present: ${subSecret!.slice(0, 8)}� (${subSecret!.length} chars)`);
   pass(`enrichment_config: ${JSON.stringify(b1.enrichment_config)}`);
   passed++;
 } else {
@@ -119,8 +119,8 @@ if (r1.status === 201 && b1?.id && b1?.secret) {
   failed++;
 }
 
-// ═══ TEST 2 — List subscriptions (secret NOT in list response) ═══════════════
-section("TEST 2 — GET /v1/webhooks/subscriptions");
+// --- TEST 2 � List subscriptions (secret NOT in list response) ---------------
+section("TEST 2 � GET /v1/webhooks/subscriptions");
 
 const r2 = await call("GET", "/v1/webhooks/subscriptions", KEY);
 const b2 = r2.body as any;
@@ -131,10 +131,10 @@ if (r2.status === 200 && found) {
   pass(`subscription ${subId} appears in list`);
   const hasSecret = "secret" in found;
   if (!hasSecret) {
-    pass(`secret NOT returned in list (correct — only returned on create)`);
+    pass(`secret NOT returned in list (correct � only returned on create)`);
     passed++;
   } else {
-    fail(`secret IS returned in list — should be omitted`);
+    fail(`secret IS returned in list � should be omitted`);
     failed++;
   }
 } else {
@@ -142,8 +142,8 @@ if (r2.status === 200 && found) {
   failed++;
 }
 
-// ═══ TEST 3 — Fire test event, inspect enriched payload ══════════════════════
-section("TEST 3 — POST /v1/webhooks/test  (fire to httpbin, verify enriched payload)");
+// --- TEST 3 � Fire test event, inspect enriched payload ----------------------
+section("TEST 3 � POST /v1/webhooks/test  (fire to httpbin, verify enriched payload)");
 console.log(`  Delivering to ${CATCHER}...`);
 
 const r3 = await call("POST", "/v1/webhooks/test", KEY, {
@@ -180,7 +180,7 @@ if (r3.status !== 200) {
     const parts = Object.fromEntries(sig.split(",").map((p: string) => p.split("=")));
     const ts = parts["t"];
     const expectedV1 = parts["v1"];
-    // Build the body that was signed (approximate — we can verify the structure)
+    // Build the body that was signed (approximate � we can verify the structure)
     const sentBody = JSON.stringify({
       id: b3.event_id,
       type: "rule.price_change_fired",
@@ -189,7 +189,7 @@ if (r3.status !== 200) {
     });
     // We can at least verify the sig is 64 hex chars (SHA-256)
     if (expectedV1?.length === 64 && /^[0-9a-f]+$/.test(expectedV1)) {
-      pass(`HMAC v1 = ${expectedV1.slice(0, 16)}… (64-char hex ✓)`);
+      pass(`HMAC v1 = ${expectedV1.slice(0, 16)}� (64-char hex ?)`);
     }
     passed++;
   } else {
@@ -220,7 +220,7 @@ if (r3.status !== 200) {
     if (Object.keys(cc.competitors ?? {}).length > 0) {
       pass(`competitors: ${JSON.stringify(cc.competitors)}`);
     } else {
-      console.log(`    (no competitor_prices row for SONY-WH1000XM5 in DB yet — no_data expected)`);
+      console.log(`    (no competitor_prices row for SONY-WH1000XM5 in DB yet � no_data expected)`);
     }
     passed++;
   } else {
@@ -250,8 +250,8 @@ if (r3.status !== 200) {
   dump("ENRICHED PAYLOAD", b3.enriched_payload);
 }
 
-// ═══ TEST 4 — Delivery log ═══════════════════════════════════════════════════
-section(`TEST 4 — GET /v1/webhooks/deliveries?subscription_id=${subId}`);
+// --- TEST 4 � Delivery log ---------------------------------------------------
+section(`TEST 4 � GET /v1/webhooks/deliveries?subscription_id=${subId}`);
 
 const r4 = await call("GET", `/v1/webhooks/deliveries?subscription_id=${subId}`, KEY);
 const b4 = r4.body as any;
@@ -265,12 +265,12 @@ if (r4.status === 200 && b4?.count >= 1) {
   pass(`response_time_ms=${d.response_time_ms}  dead_lettered=${d.dead_lettered}`);
   passed++;
 } else {
-  fail(`Expected ≥1 delivery, got count=${b4?.count}`);
+  fail(`Expected =1 delivery, got count=${b4?.count}`);
   failed++;
 }
 
-// ═══ TEST 5 — Wrong scope → 403 ══════════════════════════════════════════════
-section("TEST 5 — POST /v1/webhooks/subscribe with wrong-scope key → 403");
+// --- TEST 5 � Wrong scope ? 403 ----------------------------------------------
+section("TEST 5 � POST /v1/webhooks/subscribe with wrong-scope key ? 403");
 
 const r5 = await call("POST", "/v1/webhooks/subscribe", BAD_KEY, {
   endpoint_url: CATCHER,
@@ -280,21 +280,21 @@ console.log(`  HTTP ${r5.status}  (${r5.ms} ms)`);
 const b5 = r5.body as any;
 
 if (r5.status === 403 && b5?.error?.code === "forbidden") {
-  pass(`403 forbidden ✓ code="${b5.error.code}"`);
+  pass(`403 forbidden ? code="${b5.error.code}"`);
   passed++;
 } else {
   fail(`Expected 403 forbidden, got ${r5.status}: ${JSON.stringify(b5)}`);
   failed++;
 }
 
-// ═══ TEST 6 — DELETE subscription ════════════════════════════════════════════
-section(`TEST 6 — DELETE /v1/webhooks/subscriptions/${subId}`);
+// --- TEST 6 � DELETE subscription --------------------------------------------
+section(`TEST 6 � DELETE /v1/webhooks/subscriptions/${subId}`);
 
 const r6 = await call("DELETE", `/v1/webhooks/subscriptions/${subId}`, KEY);
 console.log(`  HTTP ${r6.status}  (${r6.ms} ms)`);
 
 if (r6.status === 204) {
-  pass(`subscription ${subId} deleted ✓`);
+  pass(`subscription ${subId} deleted ?`);
   passed++;
 } else {
   fail(`Expected 204, got ${r6.status}: ${r6.raw}`);
@@ -308,7 +308,7 @@ if (r6.status === 204) {
   await cleanup();
 }
 
-console.log(`\n${"═".repeat(76)}`);
+console.log(`\n${"-".repeat(76)}`);
 console.log(`  RESULTS: ${passed} passed  ${failed} failed  (${passed + failed} total)`);
-console.log(`${"═".repeat(76)}\n`);
+console.log(`${"-".repeat(76)}\n`);
 if (failed > 0) process.exit(1);

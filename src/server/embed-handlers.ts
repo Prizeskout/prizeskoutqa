@@ -339,7 +339,7 @@ export async function handleIssueEmbedToken(
 
   const token = signEmbedJWT(claims, cfg.signing_key_hex);
 
-  const origin = process.env.WORKER_ORIGIN ?? "https://prizeskoutqa.prizeskoutqatar.workers.dev";
+  const origin = process.env.PUBLIC_APP_URL ?? "https://prizeskout.qa";
   const embedUrl = `${origin}/embed/widget?token=${token}`;
 
   return ok({

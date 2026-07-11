@@ -1420,7 +1420,7 @@ function CapabilitiesPage() {
       {/* Live tile grid */}
       <div style={{ marginBottom: 8 }}>
         <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B6B6B", margin: "0 0 12px" }}>
-          Live — every tile calls the deployed Worker
+          Live: every tile calls the deployed Worker
         </h2>
       </div>
       <div

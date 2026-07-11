@@ -15,7 +15,7 @@ export function MarketingHero({
     <section
       style={{
         background: "#050505",
-        paddingTop: 96,
+        paddingTop: 48,
         paddingBottom: 56,
       }}
       className="px-5 md:px-10"

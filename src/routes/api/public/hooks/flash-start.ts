@@ -1,9 +1,9 @@
-// Flash Sale start hook â€” activates events whose start_at <= now.
+// Flash Sale start hook — activates events whose start_at <= now.
 //
 // Schedule via pg_cron every minute:
 //   SELECT cron.schedule('flash-start', '* * * * *', $$
 //     SELECT net.http_post(
-//       url     := 'https://prizeskoutqa.prizeskoutqatar.workers.dev/api/public/hooks/flash-start',
+//       url     := 'https://prizeskout.qa/api/public/hooks/flash-start',
 //       headers := '{"Authorization":"Bearer <SUPABASE_PUBLISHABLE_KEY>"}'::jsonb,
 //       body    := '{}'::jsonb
 //     );
@@ -18,7 +18,8 @@ export const Route = createFileRoute("/api/public/hooks/flash-start")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
+        // Auth: prefer CRON_SECRET; falls back to SUPABASE_PUBLISHABLE_KEY while pg_cron schedules are migrated.
+        const expected = process.env.CRON_SECRET ?? process.env.SUPABASE_PUBLISHABLE_KEY;
         const token    = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         if (!expected || !token || token !== expected) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {

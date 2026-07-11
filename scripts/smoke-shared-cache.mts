@@ -2,14 +2,14 @@
  * Smoke test: shared competitor URL cache
  *
  * Verifies:
- *  1. URL normalization — two superficially different URLs → same cache key
- *  2. required_freshness — enterprise watcher forces 1 h cadence
- *  3. Scrape deduplication — 5 merchants × 3 shared URLs → 3 Firecrawl calls, NOT 15
- *  4. Propagation — all 5 merchants receive fresh competitor_prices
- *  5. Failure isolation — null_price scrape leaves last good price intact
- *  6. scrapes_saved metric — increments correctly
+ *  1. URL normalization � two superficially different URLs ? same cache key
+ *  2. required_freshness � enterprise watcher forces 1 h cadence
+ *  3. Scrape deduplication � 5 merchants � 3 shared URLs ? 3 Firecrawl calls, NOT 15
+ *  4. Propagation � all 5 merchants receive fresh competitor_prices
+ *  5. Failure isolation � null_price scrape leaves last good price intact
+ *  6. scrapes_saved metric � increments correctly
  *
- * Setup: 5 synthetic licensees (starter×2, standard×2, enterprise×1), each
+ * Setup: 5 synthetic licensees (starter�2, standard�2, enterprise�1), each
  * tracking the SAME 3 competitor URLs plus 2 unique ones.
  * Uses dry_run=1 so no Firecrawl credits are spent.
  *
@@ -19,7 +19,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { normalizeUrl } from "../src/server/url-normalize.ts";
 
-const WORKER = "https://prizeskoutqa.prizeskoutqatar.workers.dev";
+const WORKER = "https://prizeskout.qa";
 const ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zmhla2N2bWNibnRqbmR2aHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzczNjYsImV4cCI6MjA5NTE1MzM2Nn0.Xz_3vvq_EY_jYBkXggC-7U_CdUSDLwroLTbyVlxfGMo";
 
@@ -28,11 +28,11 @@ const db = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-// ── Test data ─────────────────────────────────────────────────────────────────
+// -- Test data -----------------------------------------------------------------
 
-// Three shared URLs — same page, superficially different raw forms.
+// Three shared URLs � same page, superficially different raw forms.
 // User 1's talabat URL has utm_source, user 2's has fbclid and uppercase scheme,
-// users 3-5 use the canonical URL — all must deduplicate to one cache entry.
+// users 3-5 use the canonical URL � all must deduplicate to one cache entry.
 const SHARED_URLS = {
   talabat: [
     "https://www.talabat.com/qatar/product/shared-tv-001?utm_source=google&product_id=tv42",
@@ -52,24 +52,24 @@ const uniqueUrl = (user: number, comp: "amazon" | "lulu") =>
 const PLANS = ["starter", "starter", "standard", "standard", "enterprise"] as const;
 const PRODUCT = "Smoke-Test-TV-55";
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// -- State ---------------------------------------------------------------------
 
 const testUserIds: string[]    = [];
 const testLicenseeIds: string[] = [];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// -- Helpers -------------------------------------------------------------------
 
 let passed = 0, failed = 0;
 function section(t: string) {
-  console.log(`\n${"═".repeat(72)}\n  ${t}\n${"═".repeat(72)}`);
+  console.log(`\n${"-".repeat(72)}\n  ${t}\n${"-".repeat(72)}`);
 }
 function assert(label: string, condition: boolean, detail?: string) {
-  const sym = condition ? "✓" : "✗";
-  console.log(`  ${sym} ${label}${detail ? `  →  ${detail}` : ""}`);
+  const sym = condition ? "?" : "?";
+  console.log(`  ${sym} ${label}${detail ? `  ?  ${detail}` : ""}`);
   if (condition) passed++; else failed++;
 }
 
-// ── Cleanup ───────────────────────────────────────────────────────────────────
+// -- Cleanup -------------------------------------------------------------------
 
 async function cleanup() {
   if (testUserIds.length === 0) return;
@@ -112,11 +112,11 @@ async function cleanup() {
   console.log("  (cleaned up test data)");
 }
 
-// ── Setup ─────────────────────────────────────────────────────────────────────
+// -- Setup ---------------------------------------------------------------------
 
 async function setup() {
   for (let i = 0; i < 5; i++) {
-    // Real auth user so competitor_scrapes FK (→ auth.users) is satisfied
+    // Real auth user so competitor_scrapes FK (? auth.users) is satisfied
     const tag = Date.now() + i;
     const { data: authData, error: authErr } = await db.auth.admin.createUser({
       email:          `smoke-cache-${tag}@prizeskout.test`,
@@ -159,14 +159,14 @@ async function setup() {
   }
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// -- Main ----------------------------------------------------------------------
 
 await cleanup();
 await setup();
 
 try {
-  // ══ TEST 1: URL normalization ═══════════════════════════════════════════════
-  section("TEST 1 — URL normalization: different raw forms → same cache key");
+  // -- TEST 1: URL normalization -----------------------------------------------
+  section("TEST 1 � URL normalization: different raw forms ? same cache key");
   {
     const rawA = SHARED_URLS.talabat[0]; // utm_source=google + product_id=tv42
     const rawB = SHARED_URLS.talabat[1]; // HTTPS uppercase + fbclid + trailing slash
@@ -187,8 +187,8 @@ try {
     assert("lowercased",                    normA === normA.toLowerCase());
   }
 
-  // ══ TEST 2: required_freshness picks most-demanding watcher ════════════════
-  section("TEST 2 — required_freshness: enterprise watcher → 3600 s (1 hour)");
+  // -- TEST 2: required_freshness picks most-demanding watcher ----------------
+  section("TEST 2 � required_freshness: enterprise watcher ? 3600 s (1 hour)");
   {
     // All 5 users (including enterprise) track the talabat shared URL
     const normTalabat = normalizeUrl(SHARED_URLS.talabat[0]);
@@ -199,7 +199,7 @@ try {
       p_url: normTalabat,
     });
     console.log(`\n  normalized_url:           ${normTalabat}`);
-    console.log(`  Watchers: starter×2, standard×2, enterprise×1`);
+    console.log(`  Watchers: starter�2, standard�2, enterprise�1`);
     console.log(`  required_freshness_seconds: ${freshness} s  (expected 3600)`);
     console.log(`  max_freshness_seconds:       ${maxFresh} s  (expected 86400)`);
     assert("required_freshness = 3600 (enterprise wins)", freshness === 3600, `${freshness}s`);
@@ -212,12 +212,12 @@ try {
     const { data: enterpriseFresh }  = await (db as any).rpc("required_freshness_seconds", { p_url: normAmazonU5 });
     console.log(`\n  Starter-only URL freshness:     ${starterFresh} s  (expected 86400)`);
     console.log(`  Enterprise-only URL freshness:  ${enterpriseFresh} s  (expected 3600)`);
-    assert("starter-only URL → 86400 s", starterFresh === 86400, `${starterFresh}s`);
-    assert("enterprise-only URL → 3600 s", enterpriseFresh === 3600, `${enterpriseFresh}s`);
+    assert("starter-only URL ? 86400 s", starterFresh === 86400, `${starterFresh}s`);
+    assert("enterprise-only URL ? 3600 s", enterpriseFresh === 3600, `${enterpriseFresh}s`);
   }
 
-  // ══ TEST 3: Cache population (trigger) ═════════════════════════════════════
-  section("TEST 3 — competitor_url_cache seeded by trigger on competitor_product_urls INSERT");
+  // -- TEST 3: Cache population (trigger) -------------------------------------
+  section("TEST 3 � competitor_url_cache seeded by trigger on competitor_product_urls INSERT");
   {
     const sharedNorms = [
       normalizeUrl(SHARED_URLS.talabat[0]),
@@ -231,7 +231,7 @@ try {
 
     console.log("\n  Shared cache entries:");
     for (const r of cacheRows ?? []) {
-      console.log(`    ${r.normalized_url}  →  watcher_count=${r.watcher_count}`);
+      console.log(`    ${r.normalized_url}  ?  watcher_count=${r.watcher_count}`);
     }
     assert("3 shared URLs in cache",        (cacheRows ?? []).length === 3,
       `${(cacheRows ?? []).length} entries`);
@@ -240,8 +240,8 @@ try {
       (cacheRows ?? []).map((r: any) => r.watcher_count).join(","));
   }
 
-  // ══ TEST 4: URL-centric dry-run scrape ═════════════════════════════════════
-  section("TEST 4 — URL-centric dry-run scrape (dry_run=1, no Firecrawl credits)");
+  // -- TEST 4: URL-centric dry-run scrape -------------------------------------
+  section("TEST 4 � URL-centric dry-run scrape (dry_run=1, no Firecrawl credits)");
   {
     const res = await fetch(
       `${WORKER}/api/public/hooks/scrape-all?dry_run=1`,
@@ -259,27 +259,27 @@ try {
     assert(`at least ${testUrls} due URLs processed`,  body.due_urls >= testUrls,
       `${body.due_urls} due`);
 
-    // Old system: 5×3 + 5×2 = 25 scrapes for our test URLs
+    // Old system: 5�3 + 5�2 = 25 scrapes for our test URLs
     // New system: 3 + 10 = 13 Firecrawl calls
     // scrapes_saved should be AT LEAST 12 (from our test set)
-    assert("scrapes_saved ≥ 12 (from shared-URL dedup)", body.scrapes_saved >= 12,
+    assert("scrapes_saved = 12 (from shared-URL dedup)", body.scrapes_saved >= 12,
       `scrapes_saved=${body.scrapes_saved}`);
     assert("scrapes_performed < scrapes_saved + scrapes_performed (savings exist)",
       body.savings_pct > 0, `${body.savings_pct}%`);
-    assert("watchers_notified ≥ 25 (5×3 + 5×2)",        body.watchers_notified >= 25,
+    assert("watchers_notified = 25 (5�3 + 5�2)",        body.watchers_notified >= 25,
       `${body.watchers_notified}`);
     assert("ok > 0",                                     body.ok > 0, `${body.ok}`);
 
-    console.log(`\n  ── Scrape cost summary ──`);
-    console.log(`  Shared URLs:  3 unique × 5 watchers each = 15 old scrapes → 3 new`);
-    console.log(`  Unique URLs:  10 unique × 1 watcher each = 10 old scrapes → 10 new`);
+    console.log(`\n  -- Scrape cost summary --`);
+    console.log(`  Shared URLs:  3 unique � 5 watchers each = 15 old scrapes ? 3 new`);
+    console.log(`  Unique URLs:  10 unique � 1 watcher each = 10 old scrapes ? 10 new`);
     console.log(`  Old system total:  25  Firecrawl calls`);
     console.log(`  New system total:  ${body.scrapes_performed - (body.due_urls - 13)} calls for test URLs`);
     console.log(`  Saved (test set):  ${body.scrapes_saved} calls  (${body.savings_pct}% reduction vs old system)`);
   }
 
-  // ══ TEST 5: Propagation — all 5 merchants got competitor_scrapes rows ═══════
-  section("TEST 5 — Propagation: all 5 merchants received competitor_scrapes rows");
+  // -- TEST 5: Propagation � all 5 merchants got competitor_scrapes rows -------
+  section("TEST 5 � Propagation: all 5 merchants received competitor_scrapes rows");
   {
     for (let i = 0; i < 5; i++) {
       const { data: rows } = await (db as any)
@@ -298,7 +298,7 @@ try {
       );
     }
 
-    // Verify shared URL rows: 5 merchants × 3 URLs = 15 rows with status=success
+    // Verify shared URL rows: 5 merchants � 3 URLs = 15 rows with status=success
     const normTalabat = normalizeUrl(SHARED_URLS.talabat[0]);
     const { data: sharedRows } = await (db as any)
       .from("competitor_scrapes")
@@ -315,8 +315,8 @@ try {
     console.log(`\n  Talabat price propagated to all 5 merchants: ${(sharedRows?.[0] as any)?.price} QAR`);
   }
 
-  // ══ TEST 6: Failure isolation ═══════════════════════════════════════════════
-  section("TEST 6 — Failure isolation: null_price insert leaves last good price intact");
+  // -- TEST 6: Failure isolation -----------------------------------------------
+  section("TEST 6 � Failure isolation: null_price insert leaves last good price intact");
   {
     // Simulate what the scrape worker does for a null_price result:
     // insert with status=null_price, price=null for user 1 / talabat
@@ -361,8 +361,8 @@ try {
       String(cacheRow?.last_price));
   }
 
-  // ══ TEST 7: scrapes_saved metric ════════════════════════════════════════════
-  section("TEST 7 — scrapes_saved metric in scrape_cost_log");
+  // -- TEST 7: scrapes_saved metric --------------------------------------------
+  section("TEST 7 � scrapes_saved metric in scrape_cost_log");
   {
     const { data: log } = await (db as any)
       .from("scrape_cost_log")
@@ -390,10 +390,10 @@ try {
   await cleanup();
 }
 
-// ── Summary ───────────────────────────────────────────────────────────────────
+// -- Summary -------------------------------------------------------------------
 
-console.log(`\n${"═".repeat(72)}`);
+console.log(`\n${"-".repeat(72)}`);
 console.log(`  RESULTS: ${passed} passed  ${failed} failed  (${passed + failed} total)`);
-console.log(`${"═".repeat(72)}\n`);
+console.log(`${"-".repeat(72)}\n`);
 
 if (failed > 0) process.exit(1);

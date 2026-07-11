@@ -1,0 +1,10 @@
+node_modules
+.wrangler
+.tanstack
+screenshots
+screenshots_test
+*.log
+.env
+.env.local
+.git
+dist

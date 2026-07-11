@@ -107,7 +107,7 @@ async function buildInvite(
 ): Promise<{ wa_link: string; qr_data_url: string }> {
   const savingsPct = Math.round((1 - currentPrice / basePrice) * 100);
   const expiryDate = new Date(expiryAt).toLocaleDateString("en-QA", { dateStyle: "medium" });
-  const joinUrl = `${process.env.WORKER_ORIGIN ?? "https://prizeskoutqa.prizeskoutqatar.workers.dev"}/group/${campaignId}`;
+  const joinUrl = `${process.env.PUBLIC_APP_URL ?? "https://prizeskout.qa"}/group/${campaignId}`;
 
   const message = [
     `🛒 Group Buy: ${sku}`,

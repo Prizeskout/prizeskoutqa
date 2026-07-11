@@ -3,8 +3,8 @@
  *   1. Seed one licensee per plan (starter / standard / enterprise)
  *   2. Create one API key per plan with appropriate scopes
  *   3. Verify: each account's plan + allowed scopes
- *   4. Verify: Starter key denied enterprise scope → 403
- *   5. Verify: Starter product-cap hit → 402 naming the limit
+ *   4. Verify: Starter key denied enterprise scope ? 403
+ *   5. Verify: Starter product-cap hit ? 402 naming the limit
  *   6. Verify: Starter dynprice = advisory, Standard = automated
  *   7. Verify: merchant-facing response confirmed unbranded
  *   8. Confirm per-call packs gone (no usage_events enforcement)
@@ -13,7 +13,7 @@
 import { createHash, randomBytes } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
-const WORKER   = "https://prizeskoutqa.prizeskoutqatar.workers.dev";
+const WORKER   = "https://prizeskout.qa";
 const SUPA_URL = "https://itfhekcvmcbntjndvhzg.supabase.co";
 const SVC      = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const BASE_UID = "bed12406-2798-47f7-a30c-5de559e90d6d";
@@ -24,10 +24,10 @@ function hashKey(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
 }
 function section(t: string) {
-  console.log(`\n${"═".repeat(72)}\n  ${t}\n${"═".repeat(72)}`);
+  console.log(`\n${"-".repeat(72)}\n  ${t}\n${"-".repeat(72)}`);
 }
-function pass(msg: string) { console.log(`  ✓ ${msg}`); }
-function fail(msg: string) { console.log(`  ✗ ${msg}`); }
+function pass(msg: string) { console.log(`  ? ${msg}`); }
+function fail(msg: string) { console.log(`  ? ${msg}`); }
 function info(msg: string) { console.log(`    ${msg}`); }
 
 const cleanup: Array<() => Promise<void>> = [];
@@ -106,8 +106,8 @@ async function api(
 }
 
 try {
-  // ── STEP 1: Seed licensees ──────────────────────────────────────────────────
-  section("STEP 1 — Seed one licensee per plan");
+  // -- STEP 1: Seed licensees --------------------------------------------------
+  section("STEP 1 � Seed one licensee per plan");
 
   const starterLicId   = await makeLicensee("billing-verify-starter",    "starter");
   const standardLicId  = await makeLicensee("billing-verify-standard",   "standard");
@@ -117,19 +117,19 @@ try {
   pass(`Standard licensee:   ${standardLicId}`);
   pass(`Enterprise licensee: ${enterpriseLicId}`);
 
-  // ── STEP 2: Create API keys ──────────────────────────────────────────────────
-  section("STEP 2 — Create API keys with plan-appropriate scopes");
+  // -- STEP 2: Create API keys --------------------------------------------------
+  section("STEP 2 � Create API keys with plan-appropriate scopes");
 
   const starterKey    = await makeKey(starterLicId,   ["read", "write"]);
   const standardKey   = await makeKey(standardLicId,  ["read", "write", "audit:read"]);
   const enterpriseKey = await makeKey(enterpriseLicId, ["read", "write", "admin", "audit:read", "embed:read", "embed:write"]);
-  // A "bad" starter key that claims enterprise scopes — should be rejected
+  // A "bad" starter key that claims enterprise scopes � should be rejected
   const badStarterKey = await makeKey(starterLicId,   ["read", "write", "embed:write"]);
 
   pass("All keys created");
 
-  // ── STEP 3: Verify plan + allowed scopes via DB ─────────────────────────────
-  section("STEP 3 — Verify DB plan assignment");
+  // -- STEP 3: Verify plan + allowed scopes via DB -----------------------------
+  section("STEP 3 � Verify DB plan assignment");
 
   for (const [label, licId, expectedPlan] of [
     ["Starter",    starterLicId,    "starter"],
@@ -144,8 +144,8 @@ try {
     }
   }
 
-  // ── STEP 4: Starter key with enterprise scope → 403 ─────────────────────────
-  section("STEP 4 — Starter key with embed:write scope → 403 scope_denied");
+  // -- STEP 4: Starter key with enterprise scope ? 403 -------------------------
+  section("STEP 4 � Starter key with embed:write scope ? 403 scope_denied");
 
   const r4 = await api(badStarterKey, "GET", "/v1/pricing/recommendations");
   if (r4.status === 403 && (r4.body?.error as any)?.code === "scope_denied") {
@@ -156,8 +156,8 @@ try {
     fail(`Expected 403 scope_denied, got ${r4.status}: ${JSON.stringify(r4.body)}`);
   }
 
-  // ── STEP 5: Starter product-cap enforcement → 402 ────────────────────────────
-  section("STEP 5 — Starter product-cap hit → 402 plan_limit_exceeded");
+  // -- STEP 5: Starter product-cap enforcement ? 402 ----------------------------
+  section("STEP 5 � Starter product-cap hit ? 402 plan_limit_exceeded");
 
   // Get the starter account_id
   const { data: acctRows } = await (admin as any).rpc("find_account_for_api_key", {
@@ -199,8 +199,8 @@ try {
     fail(`Expected 402 plan_limit_exceeded, got ${r5.status}: ${JSON.stringify(r5.body).slice(0, 200)}`);
   }
 
-  // ── STEP 6: Starter dynprice = advisory, Standard = automated ───────────────
-  section("STEP 6 — Advisory (Starter) vs Automated (Standard) mode on POST /v1/dynprice");
+  // -- STEP 6: Starter dynprice = advisory, Standard = automated ---------------
+  section("STEP 6 � Advisory (Starter) vs Automated (Standard) mode on POST /v1/dynprice");
 
   // Seed a product for each account to test with
   const starterKeyId = (await (admin as any).from("api_keys").select("id").eq("key_prefix", starterKey.slice(0, 12)).single()).data?.id;
@@ -232,7 +232,7 @@ try {
   if (starterAccountId) await seedDynpriceProd(starterAccountId, starterLicId);
 
   const r6a = await api(starterKey, "POST", "/v1/dynprice", { sku: "DYNTEST-1", channel: "online" });
-  // Response is { sku, mode, applied, note, ... } — not wrapped in data
+  // Response is { sku, mode, applied, note, ... } � not wrapped in data
   const r6aMode = (r6a.body as any)?.mode;
   if (r6a.status === 200 && r6aMode === "advisory") {
     pass(`Starter dynprice: mode=advisory, applied=${(r6a.body as any)?.applied}`);
@@ -251,8 +251,8 @@ try {
     fail(`Standard dynprice: expected mode=automated, got ${r6b.status} mode=${r6bMode}: ${JSON.stringify(r6b.body).slice(0, 200)}`);
   }
 
-  // ── STEP 7: Merchant-facing response — no PrizeSkout brand ──────────────────
-  section("STEP 7 — Merchant-facing response confirmed unbranded");
+  // -- STEP 7: Merchant-facing response � no PrizeSkout brand ------------------
+  section("STEP 7 � Merchant-facing response confirmed unbranded");
 
   const r7 = await api(standardKey, "GET", "/v1/pricing/recommendations");
   const bodyStr = JSON.stringify(r7.body);
@@ -286,10 +286,10 @@ try {
     fail(`Group campaign response leaks 'prizeskout': ${groupBody.slice(0, 200)}`);
   }
 
-  // ── STEP 8: Per-call packs gone ─────────────────────────────────────────────
-  section("STEP 8 — Per-call rate-limit packs confirmed removed");
+  // -- STEP 8: Per-call packs gone ---------------------------------------------
+  section("STEP 8 � Per-call rate-limit packs confirmed removed");
 
-  // Make 5 rapid calls — should never 429 from per-call enforcement
+  // Make 5 rapid calls � should never 429 from per-call enforcement
   const callResults: number[] = [];
   for (let i = 0; i < 5; i++) {
     const r = await api(standardKey, "GET", "/v1/pricing/recommendations");
@@ -297,9 +297,9 @@ try {
   }
   const anyRateLimited = callResults.some((s) => s === 429);
   if (!anyRateLimited) {
-    pass(`5 rapid calls — no 429 rate limiting (statuses: ${callResults.join(", ")})`);
+    pass(`5 rapid calls � no 429 rate limiting (statuses: ${callResults.join(", ")})`);
   } else {
-    fail(`Got 429 rate limiting — per-call packs still enforced? Statuses: ${callResults.join(", ")}`);
+    fail(`Got 429 rate limiting � per-call packs still enforced? Statuses: ${callResults.join(", ")}`);
   }
 
   // Also verify standard plan can reach dynprice/config (standard feature)
@@ -313,7 +313,7 @@ try {
   // Verify starter is blocked from standard route
   const r8b = await api(starterKey, "GET", "/v1/dynprice/events");
   if (r8b.status === 402 && (r8b.body?.error as any)?.code === "plan_upgrade_required") {
-    pass(`Starter blocked from /v1/dynprice/events (standard only) → 402`);
+    pass(`Starter blocked from /v1/dynprice/events (standard only) ? 402`);
     info(`required_plan: ${(r8b.body?.error as any)?.required_plan}`);
   } else {
     fail(`Starter should get 402 for dynprice/events, got ${r8b.status}`);
@@ -322,14 +322,14 @@ try {
   // Verify starter is blocked from enterprise route
   const r8c = await api(starterKey, "GET", "/v1/embed/config");
   if (r8c.status === 402 && (r8c.body?.error as any)?.code === "plan_upgrade_required") {
-    pass(`Starter blocked from /v1/embed/config (enterprise only) → 402`);
+    pass(`Starter blocked from /v1/embed/config (enterprise only) ? 402`);
   } else if (r8c.status === 403 && (r8c.body?.error as any)?.code === "scope_denied") {
-    pass(`Starter blocked from /v1/embed/config → 403 scope_denied (key lacks embed:read)`);
+    pass(`Starter blocked from /v1/embed/config ? 403 scope_denied (key lacks embed:read)`);
   } else {
     fail(`Starter should get 402/403 for embed/config, got ${r8c.status}`);
   }
 
-  console.log("\n  ✓ All billing verification checks complete.\n");
+  console.log("\n  ? All billing verification checks complete.\n");
 
 } catch (e) {
   fail(`Unexpected error: ${(e as Error).message}`);

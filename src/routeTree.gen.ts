@@ -9,14 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoiCalculatorRouteImport } from './routes/roi-calculator'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MarginDashboardRouteImport } from './routes/margin-dashboard'
 import { Route as MarginRouteImport } from './routes/margin'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -60,6 +59,8 @@ import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benc
 import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
 import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
+import { Route as ApiRestoreRouteImport } from './routes/api/restore'
+import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
 import { Route as DashboardScenariosIndexRouteImport } from './routes/dashboard.scenarios.index'
 import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
@@ -69,6 +70,10 @@ import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guid
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
+import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
+import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
+import { Route as ApiAuthZidRouteImport } from './routes/api/auth/zid'
+import { Route as ApiAuthSallaRouteImport } from './routes/api/auth/salla'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
@@ -77,13 +82,10 @@ import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/public/hooks/group-expire'
 import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/public/hooks/flash-start'
 import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
+import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
+import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiPublicV1WebhooksTestSignatureRouteImport } from './routes/api/public/v1/webhooks.test-signature'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -92,11 +94,6 @@ const SignupRoute = SignupRouteImport.update({
 const RoiCalculatorRoute = RoiCalculatorRouteImport.update({
   id: '/roi-calculator',
   path: '/roi-calculator',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -117,6 +114,11 @@ const MarginRoute = MarginRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -335,6 +337,16 @@ const DashboardAdminRoute = DashboardAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ApiRestoreRoute = ApiRestoreRouteImport.update({
+  id: '/api/restore',
+  path: '/api/restore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRegisterCodeRoute = ApiRegisterCodeRouteImport.update({
+  id: '/api/register-code',
+  path: '/api/register-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardScenariosIndexRoute = DashboardScenariosIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -381,6 +393,26 @@ const DashboardConsoleTeamRoute = DashboardConsoleTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => DashboardConsoleRoute,
 } as any)
+const ApiWebhooksPlatformRoute = ApiWebhooksPlatformRouteImport.update({
+  id: '/api/webhooks/$platform',
+  path: '/api/webhooks/$platform',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChannelsStatusRoute = ApiChannelsStatusRouteImport.update({
+  id: '/api/channels/status',
+  path: '/api/channels/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthZidRoute = ApiAuthZidRouteImport.update({
+  id: '/api/auth/zid',
+  path: '/api/auth/zid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSallaRoute = ApiAuthSallaRouteImport.update({
+  id: '/api/auth/salla',
+  path: '/api/auth/salla',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   id: '/api/public/v1/$',
   path: '/api/public/v1/$',
@@ -426,6 +458,16 @@ const ApiPublicHooksFlashEndRoute = ApiPublicHooksFlashEndRouteImport.update({
   path: '/api/public/hooks/flash-end',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthZidRoute,
+} as any)
+const ApiAuthSallaCallbackRoute = ApiAuthSallaCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthSallaRoute,
+} as any)
 const ApiPublicV1WebhooksTestSignatureRoute =
   ApiPublicV1WebhooksTestSignatureRouteImport.update({
     id: '/api/public/v1/webhooks/test-signature',
@@ -441,14 +483,15 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/margin-dashboard': typeof MarginDashboardRouteWithChildren
   '/onboarding': typeof OnboardingRoute
-  '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
-  '/terms': typeof TermsRoute
+  '/api/register-code': typeof ApiRegisterCodeRoute
+  '/api/restore': typeof ApiRestoreRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
@@ -485,6 +528,10 @@ export interface FileRoutesByFullPath {
   '/store/$slug': typeof StoreSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
+  '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
+  '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
@@ -494,6 +541,8 @@ export interface FileRoutesByFullPath {
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/dashboard/scenarios/': typeof DashboardScenariosIndexRoute
+  '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
+  '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -511,13 +560,14 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/onboarding': typeof OnboardingRoute
-  '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
-  '/terms': typeof TermsRoute
+  '/api/register-code': typeof ApiRegisterCodeRoute
+  '/api/restore': typeof ApiRestoreRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
@@ -552,6 +602,10 @@ export interface FileRoutesByTo {
   '/store/$slug': typeof StoreSlugRoute
   '/dashboard': typeof DashboardIndexRoute
   '/margin-dashboard': typeof MarginDashboardIndexRoute
+  '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
+  '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
@@ -561,6 +615,8 @@ export interface FileRoutesByTo {
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console': typeof DashboardConsoleIndexRoute
   '/dashboard/scenarios': typeof DashboardScenariosIndexRoute
+  '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
+  '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -580,14 +636,15 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/margin-dashboard': typeof MarginDashboardRouteWithChildren
   '/onboarding': typeof OnboardingRoute
-  '/privacy': typeof PrivacyRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
-  '/terms': typeof TermsRoute
+  '/api/register-code': typeof ApiRegisterCodeRoute
+  '/api/restore': typeof ApiRestoreRoute
   '/dashboard/admin': typeof DashboardAdminRoute
   '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
   '/dashboard/api-keys': typeof DashboardApiKeysRoute
@@ -624,6 +681,10 @@ export interface FileRoutesById {
   '/store/$slug': typeof StoreSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
+  '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
+  '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
   '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
@@ -633,6 +694,8 @@ export interface FileRoutesById {
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/dashboard/console/': typeof DashboardConsoleIndexRoute
   '/dashboard/scenarios/': typeof DashboardScenariosIndexRoute
+  '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
+  '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -653,14 +716,15 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/forgot-password'
+    | '/legal'
     | '/login'
     | '/margin'
     | '/margin-dashboard'
     | '/onboarding'
-    | '/privacy'
     | '/roi-calculator'
     | '/signup'
-    | '/terms'
+    | '/api/register-code'
+    | '/api/restore'
     | '/dashboard/admin'
     | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
@@ -697,6 +761,10 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/dashboard/'
     | '/margin-dashboard/'
+    | '/api/auth/salla'
+    | '/api/auth/zid'
+    | '/api/channels/status'
+    | '/api/webhooks/$platform'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/dashboard/scenarios/$slug'
@@ -706,6 +774,8 @@ export interface FileRouteTypes {
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
     | '/dashboard/scenarios/'
+    | '/api/auth/salla/callback'
+    | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -723,13 +793,14 @@ export interface FileRouteTypes {
     | '/contact'
     | '/docs'
     | '/forgot-password'
+    | '/legal'
     | '/login'
     | '/margin'
     | '/onboarding'
-    | '/privacy'
     | '/roi-calculator'
     | '/signup'
-    | '/terms'
+    | '/api/register-code'
+    | '/api/restore'
     | '/dashboard/admin'
     | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
@@ -764,6 +835,10 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/dashboard'
     | '/margin-dashboard'
+    | '/api/auth/salla'
+    | '/api/auth/zid'
+    | '/api/channels/status'
+    | '/api/webhooks/$platform'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/dashboard/scenarios/$slug'
@@ -773,6 +848,8 @@ export interface FileRouteTypes {
     | '/docs/guides/webhooks'
     | '/dashboard/console'
     | '/dashboard/scenarios'
+    | '/api/auth/salla/callback'
+    | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -791,14 +868,15 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/forgot-password'
+    | '/legal'
     | '/login'
     | '/margin'
     | '/margin-dashboard'
     | '/onboarding'
-    | '/privacy'
     | '/roi-calculator'
     | '/signup'
-    | '/terms'
+    | '/api/register-code'
+    | '/api/restore'
     | '/dashboard/admin'
     | '/dashboard/api-explorer'
     | '/dashboard/api-keys'
@@ -835,6 +913,10 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/dashboard/'
     | '/margin-dashboard/'
+    | '/api/auth/salla'
+    | '/api/auth/zid'
+    | '/api/channels/status'
+    | '/api/webhooks/$platform'
     | '/dashboard/console/team'
     | '/dashboard/console/tenants'
     | '/dashboard/scenarios/$slug'
@@ -844,6 +926,8 @@ export interface FileRouteTypes {
     | '/docs/guides/webhooks'
     | '/dashboard/console/'
     | '/dashboard/scenarios/'
+    | '/api/auth/salla/callback'
+    | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -863,14 +947,15 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LegalRoute: typeof LegalRoute
   LoginRoute: typeof LoginRoute
   MarginRoute: typeof MarginRoute
   MarginDashboardRoute: typeof MarginDashboardRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
-  PrivacyRoute: typeof PrivacyRoute
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
-  TermsRoute: typeof TermsRoute
+  ApiRegisterCodeRoute: typeof ApiRegisterCodeRoute
+  ApiRestoreRoute: typeof ApiRestoreRoute
   EmbedWidgetRoute: typeof EmbedWidgetRoute
   ProductsCompetitorsRoute: typeof ProductsCompetitorsRoute
   ProductsFieldIntelRoute: typeof ProductsFieldIntelRoute
@@ -878,6 +963,10 @@ export interface RootRouteChildren {
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
   StoreSlugRoute: typeof StoreSlugRoute
+  ApiAuthSallaRoute: typeof ApiAuthSallaRouteWithChildren
+  ApiAuthZidRoute: typeof ApiAuthZidRouteWithChildren
+  ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
+  ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
   ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
@@ -891,13 +980,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -910,13 +992,6 @@ declare module '@tanstack/react-router' {
       path: '/roi-calculator'
       fullPath: '/roi-calculator'
       preLoaderRoute: typeof RoiCalculatorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -945,6 +1020,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -1248,6 +1330,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/restore': {
+      id: '/api/restore'
+      path: '/api/restore'
+      fullPath: '/api/restore'
+      preLoaderRoute: typeof ApiRestoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/register-code': {
+      id: '/api/register-code'
+      path: '/api/register-code'
+      fullPath: '/api/register-code'
+      preLoaderRoute: typeof ApiRegisterCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/scenarios/': {
       id: '/dashboard/scenarios/'
       path: '/'
@@ -1311,6 +1407,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConsoleTeamRouteImport
       parentRoute: typeof DashboardConsoleRoute
     }
+    '/api/webhooks/$platform': {
+      id: '/api/webhooks/$platform'
+      path: '/api/webhooks/$platform'
+      fullPath: '/api/webhooks/$platform'
+      preLoaderRoute: typeof ApiWebhooksPlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/channels/status': {
+      id: '/api/channels/status'
+      path: '/api/channels/status'
+      fullPath: '/api/channels/status'
+      preLoaderRoute: typeof ApiChannelsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/zid': {
+      id: '/api/auth/zid'
+      path: '/api/auth/zid'
+      fullPath: '/api/auth/zid'
+      preLoaderRoute: typeof ApiAuthZidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/salla': {
+      id: '/api/auth/salla'
+      path: '/api/auth/salla'
+      fullPath: '/api/auth/salla'
+      preLoaderRoute: typeof ApiAuthSallaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/$': {
       id: '/api/public/v1/$'
       path: '/api/public/v1/$'
@@ -1366,6 +1490,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/hooks/flash-end'
       preLoaderRoute: typeof ApiPublicHooksFlashEndRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/zid/callback': {
+      id: '/api/auth/zid/callback'
+      path: '/callback'
+      fullPath: '/api/auth/zid/callback'
+      preLoaderRoute: typeof ApiAuthZidCallbackRouteImport
+      parentRoute: typeof ApiAuthZidRoute
+    }
+    '/api/auth/salla/callback': {
+      id: '/api/auth/salla/callback'
+      path: '/callback'
+      fullPath: '/api/auth/salla/callback'
+      preLoaderRoute: typeof ApiAuthSallaCallbackRouteImport
+      parentRoute: typeof ApiAuthSallaRoute
     }
     '/api/public/v1/webhooks/test-signature': {
       id: '/api/public/v1/webhooks/test-signature'
@@ -1509,6 +1647,30 @@ const MarginDashboardRouteWithChildren = MarginDashboardRoute._addFileChildren(
   MarginDashboardRouteChildren,
 )
 
+interface ApiAuthSallaRouteChildren {
+  ApiAuthSallaCallbackRoute: typeof ApiAuthSallaCallbackRoute
+}
+
+const ApiAuthSallaRouteChildren: ApiAuthSallaRouteChildren = {
+  ApiAuthSallaCallbackRoute: ApiAuthSallaCallbackRoute,
+}
+
+const ApiAuthSallaRouteWithChildren = ApiAuthSallaRoute._addFileChildren(
+  ApiAuthSallaRouteChildren,
+)
+
+interface ApiAuthZidRouteChildren {
+  ApiAuthZidCallbackRoute: typeof ApiAuthZidCallbackRoute
+}
+
+const ApiAuthZidRouteChildren: ApiAuthZidRouteChildren = {
+  ApiAuthZidCallbackRoute: ApiAuthZidCallbackRoute,
+}
+
+const ApiAuthZidRouteWithChildren = ApiAuthZidRoute._addFileChildren(
+  ApiAuthZidRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiReferenceRoute: ApiReferenceRoute,
@@ -1517,14 +1679,15 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  LegalRoute: LegalRoute,
   LoginRoute: LoginRoute,
   MarginRoute: MarginRoute,
   MarginDashboardRoute: MarginDashboardRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
-  PrivacyRoute: PrivacyRoute,
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,
-  TermsRoute: TermsRoute,
+  ApiRegisterCodeRoute: ApiRegisterCodeRoute,
+  ApiRestoreRoute: ApiRestoreRoute,
   EmbedWidgetRoute: EmbedWidgetRoute,
   ProductsCompetitorsRoute: ProductsCompetitorsRoute,
   ProductsFieldIntelRoute: ProductsFieldIntelRoute,
@@ -1532,6 +1695,10 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
   StoreSlugRoute: StoreSlugRoute,
+  ApiAuthSallaRoute: ApiAuthSallaRouteWithChildren,
+  ApiAuthZidRoute: ApiAuthZidRouteWithChildren,
+  ApiChannelsStatusRoute: ApiChannelsStatusRoute,
+  ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
   ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,

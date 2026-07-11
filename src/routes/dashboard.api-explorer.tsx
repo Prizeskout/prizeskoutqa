@@ -16,7 +16,7 @@ export const Route = createFileRoute("/dashboard/api-explorer")({
       {
         name: "description",
         content:
-          "Sandbox API Explorer — pick an endpoint, sign with your sk_test_ key, and run it against the PrizeSkout test-mode dispatcher.",
+          "Sandbox API Explorer: pick an endpoint, sign with your sk_test_ key, and run it against the PrizeSkout test-mode dispatcher.",
       },
     ],
   }),
@@ -279,7 +279,7 @@ function ApiExplorerPage() {
       subtitle="Build and run sandbox requests against any v1 endpoint. Every call is signed with your sk_test_ key, routed through the test-mode dispatcher, and logged in Usage."
       helpItems={[
         "Test-mode keys never touch live data. Sample responses come from the documented spec; new vertical-slice endpoints (sync, margin, dynprice, webhooks/enrich) hit real per-account Postgres tables seeded for you.",
-        "Lovable Cloud stores a one-way hash of every key. To run, paste your sk_test_ secret here once per session — it is held in memory only.",
+        "Lovable Cloud stores a one-way hash of every key. To run, paste your sk_test_ secret here once per session. It is held in memory only.",
         "Use the cURL preview to copy the request into your terminal or a CI runner.",
       ]}
     >

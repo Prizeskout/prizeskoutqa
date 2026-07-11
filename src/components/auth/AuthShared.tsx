@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Crosshair, TrendingUp, Target } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 
@@ -31,139 +31,108 @@ export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) 
 
 export function BrandLogo() {
   return (
-    <div>
-      <img
-        src={logoDark}
-        alt="PrizeSkout"
-        style={{ height: 32, width: "auto", display: "block" }}
-      />
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 400,
-          color: "#8A8A8A",
-          marginTop: 8,
-        }}
-      >
-        Commerce Intelligence
-      </div>
-    </div>
+    <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
   );
 }
 
 export function BrandLogoLight() {
   return (
-    <div>
-      <img
-        src={logoLight}
-        alt="PrizeSkout"
-        style={{ height: 28, width: "auto", display: "block" }}
-      />
-      <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 4 }}>
-        Commerce Intelligence
-      </div>
-    </div>
+    <img src={logoLight} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
   );
 }
 
+const MONO = "'JetBrains Mono', 'Fira Mono', monospace";
+const OG = "#EF681A";
+
+const METRICS = [
+  { label: "Price Updates Today", value: "2,847", delta: "+12%", live: true },
+  { label: "Active Rules", value: "6", delta: "defending", live: false },
+  { label: "Avg Margin Saved", value: "31.4%", delta: "vs baseline", live: false },
+];
+
+const RULES = [
+  { name: "Electronics", floor: "22%", status: "Defending" },
+  { name: "Grocery", floor: "ceiling 115%", status: "Defending" },
+  { name: "Home", floor: "QAR 18", status: "Paused" },
+];
+
 export function AuthLeftPanel() {
-  const bullets = [
-    {
-      Icon: Crosshair,
-      text: "Real-time competitive price monitoring across online and in-store channels",
-    },
-    {
-      Icon: TrendingUp,
-      text: "AI pricing recommendations that improve every month with your data",
-    },
-    {
-      Icon: Target,
-      text: "Anonymized market benchmarks without exposing your data to competitors",
-    },
-  ];
-  const brands = ["Snoonu", "Talabat", "Carrefour", "Lulu"];
   return (
-    <div
-      style={{
-        flex: 1,
-        backgroundColor: "#050505",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        padding: 40,
-        minHeight: "100vh",
-      }}
-    >
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", paddingTop: 40, paddingBottom: 40 }}>
-        <div style={{ maxWidth: 420, width: "100%" }}>
-          <BrandLogo />
-          <h1
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#FAFAF9",
-              lineHeight: 1.3,
-              margin: "40px 0 0 0",
-            }}
-          >
-            The pricing brain behind commerce.
-          </h1>
-          <p
-            style={{
-              fontSize: 14,
-              color: "#8A8A8A",
-              lineHeight: 1.7,
-              margin: "14px 0 0 0",
-            }}
-          >
-            AI-powered pricing intelligence for e-commerce platforms, physical
-            retailers, and omnichannel brands across Qatar and the Middle East.
-          </p>
-          <div
-            style={{
-              marginTop: 40,
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-            }}
-          >
-            {bullets.map(({ Icon, text }, i) => (
-              <div
-                key={i}
-                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-              >
-                <Icon size={18} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
-                <div style={{ fontSize: 13, color: "#8A8A8A", flex: 1, lineHeight: 1.55 }}>
-                  {text}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div style={{
+      flex: 1,
+      backgroundColor: "#080809",
+      borderRight: "1px solid rgba(255,255,255,0.07)",
+      display: "flex",
+      flexDirection: "column",
+      padding: "40px 44px",
+      minHeight: "100vh",
+      fontFamily: "'Manrope', system-ui, sans-serif",
+    }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');`}</style>
+
+      {/* Logo */}
+      <div>
+        <BrandLogo />
       </div>
-      <div style={{ maxWidth: 420, width: "100%", marginLeft: "auto", marginRight: "auto" }}>
-        <div style={{ fontSize: 11, color: "#6B6B6B" }}>
-          Trusted by commerce brands across Qatar
+
+      {/* Main content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 48, paddingBottom: 48 }}>
+
+        {/* Eyebrow */}
+        <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: "1.4px", color: OG, marginBottom: 18, textTransform: "uppercase" }}>
+          PRICING INFRASTRUCTURE · GCC
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: "#6B6B6B",
-            letterSpacing: "0.02em",
-            marginTop: 8,
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          {brands.map((b, i) => (
-            <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-              {b}
-              {i < brands.length - 1 && <span style={{ color: "#3A3A3A" }}>•</span>}
-            </span>
+
+        <h1 style={{ fontSize: 30, fontWeight: 700, color: "#ffffff", lineHeight: 1.25, margin: "0 0 14px 0", letterSpacing: "-0.5px" }}>
+          The pricing brain<br />behind commerce.
+        </h1>
+        <p style={{ fontSize: 13.5, color: "#6B7280", lineHeight: 1.65, margin: 0, maxWidth: 360 }}>
+          Set margin floors. Defend them automatically across every aggregator — no engineers required.
+        </p>
+
+        {/* Metric cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 36 }}>
+          {METRICS.map((m) => (
+            <div key={m.label} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10,
+              padding: "14px 16px", background: "#0E0F12",
+            }}>
+              <div>
+                <div style={{ fontSize: 11, color: "#6B7280", fontFamily: MONO, letterSpacing: "0.3px", marginBottom: 4 }}>{m.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: "#ffffff", fontFamily: MONO, letterSpacing: "-0.5px" }}>{m.value}</div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                {m.live && <span style={{ width: 6, height: 6, borderRadius: 999, background: "#10B981", flexShrink: 0 }} />}
+                <span style={{ fontFamily: MONO, fontSize: 11, color: m.live ? "#10B981" : "#6B7280" }}>{m.delta}</span>
+              </div>
+            </div>
           ))}
         </div>
+
+        {/* Rule list */}
+        <div style={{ marginTop: 20, border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, overflow: "hidden", background: "#0E0F12" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", padding: "9px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "#101116" }}>
+            {["Category", "Floor", "Status"].map((h) => (
+              <div key={h} style={{ fontFamily: MONO, fontSize: 9.5, fontWeight: 600, letterSpacing: "0.9px", color: "#52555C", textTransform: "uppercase" }}>{h}</div>
+            ))}
+          </div>
+          {RULES.map((r, i) => (
+            <div key={r.name} style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr", padding: "11px 14px",
+              borderBottom: i < RULES.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+            }}>
+              <div style={{ fontSize: 12.5, fontWeight: 500, color: "#E7E8EA" }}>{r.name}</div>
+              <div style={{ fontFamily: MONO, fontSize: 12, color: OG }}>{r.floor}</div>
+              <div style={{ fontSize: 11.5, fontFamily: MONO, color: r.status === "Defending" ? "#10B981" : "#6B7280" }}>{r.status}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ fontFamily: MONO, fontSize: 10.5, color: "#3A3D46" }}>
+        PRIZESKOUT · DEFEND LOOP ACTIVE · QA · KSA · UAE
       </div>
     </div>
   );
@@ -176,10 +145,13 @@ export function AuthShell({ children }: { children: ReactNode }) {
         display: "flex",
         minHeight: "100vh",
         width: "100%",
-        fontFamily:
-          "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+        fontFamily: "'Manrope', system-ui, -apple-system, sans-serif",
       }}
     >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+        @media (max-width: 767px) { .auth-left-panel { display: none !important; } }
+      `}</style>
       <div className="auth-left-panel" style={{ display: "flex", flex: 1 }}>
         <AuthLeftPanel />
       </div>
@@ -188,7 +160,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
         tabIndex={-1}
         style={{
           flex: 1,
-          backgroundColor: "#FAFAF9",
+          backgroundColor: "#080809",
+          borderLeft: "1px solid rgba(255,255,255,0.07)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -197,34 +170,23 @@ export function AuthShell({ children }: { children: ReactNode }) {
           outline: "none",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            top: 24,
-            left: 24,
-          }}
-        >
-          <BackToHomeLink />
+        <div style={{ position: "absolute", top: 24, left: 24 }}>
+          <BackToHomeLink tone="dark" />
         </div>
         <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>
       </main>
-      <style>{`
-        @media (max-width: 767px) {
-          .auth-left-panel { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 }
 
 export const inputBaseStyle: CSSProperties = {
   width: "100%",
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #E5E2DB",
+  backgroundColor: "#0E0F12",
+  border: "1px solid rgba(255,255,255,0.10)",
   borderRadius: 8,
   padding: "11px 14px 11px 40px",
   fontSize: 13,
-  color: "#1A1A18",
+  color: "#E7E8EA",
   outline: "none",
   fontFamily: "inherit",
   transition: "border-color 0.15s, box-shadow 0.15s",
@@ -237,7 +199,7 @@ export function FormLabel({ children }: { children: ReactNode }) {
         display: "block",
         fontSize: 12,
         fontWeight: 500,
-        color: "#6B6B6B",
+        color: "#9CA3AF",
         marginBottom: 4,
       }}
     >
@@ -274,7 +236,7 @@ export function IconInput({
           display: "flex",
           alignItems: "center",
           pointerEvents: "none",
-          color: "#9A9A9A",
+          color: "#6B7280",
         }}
       >
         {leftIcon}
@@ -285,11 +247,11 @@ export function IconInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#EA580C";
-          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(234, 88, 12, 0.08)";
+          e.currentTarget.style.borderColor = "#EF681A";
+          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(239,104,26,0.12)";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#E5E2DB";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
           e.currentTarget.style.boxShadow = "none";
         }}
         style={{
@@ -348,11 +310,11 @@ export function IconSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#EA580C";
-          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(234, 88, 12, 0.08)";
+          e.currentTarget.style.borderColor = "#EF681A";
+          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(239,104,26,0.12)";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#E5E2DB";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
           e.currentTarget.style.boxShadow = "none";
         }}
         style={{
@@ -362,7 +324,7 @@ export function IconSelect({
           WebkitAppearance: "none",
           MozAppearance: "none",
           cursor: "pointer",
-          color: value ? "#1A1A18" : "#9A9A9A",
+          color: value ? "#E7E8EA" : "#6B7280",
         }}
       >
         <option value="" disabled>
@@ -430,8 +392,8 @@ export function AuthCheckbox({
           width: 16,
           height: 16,
           borderRadius: 4,
-          border: `1px solid ${checked ? "#EA580C" : "#E5E2DB"}`,
-          backgroundColor: checked ? "#EA580C" : "#FFFFFF",
+          border: `1px solid ${checked ? "#EF681A" : "rgba(255,255,255,0.15)"}`,
+          backgroundColor: checked ? "#EF681A" : "transparent",
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
@@ -456,7 +418,7 @@ export function AuthCheckbox({
           </svg>
         )}
       </button>
-      <span style={{ fontSize: 12, color: "#6B6B6B", marginLeft: 8 }}>
+      <span style={{ fontSize: 12, color: "#9CA3AF", marginLeft: 8 }}>
         {label}
       </span>
     </label>
@@ -517,13 +479,13 @@ export function LegalFooter() {
         marginTop: 32,
         textAlign: "center",
         fontSize: 11,
-        color: "#9A9A9A",
+        color: "#52555C",
         lineHeight: 1.6,
       }}
     >
       By signing in, you agree to our{" "}
-      <span style={{ color: "#6B6B6B" }}>Terms of Service</span> and{" "}
-      <span style={{ color: "#6B6B6B" }}>Privacy Policy</span>
+      <span style={{ color: "#6B7280" }}>Terms of Service</span> and{" "}
+      <span style={{ color: "#6B7280" }}>Privacy Policy</span>
     </div>
   );
 }

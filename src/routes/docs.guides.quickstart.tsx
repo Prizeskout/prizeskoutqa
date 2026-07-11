@@ -1,5 +1,5 @@
 // Quickstart guide. First stop for new users and developers.
-// Walks through: account setup → API key → first request → competitor tracking → recommendations.
+// Walks through: store connect → API key → first request → competitor tracking → recommendations.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/docs/guides/quickstart")({
       {
         name: "description",
         content:
-          "Get up and running with PrizeSkout in 5 minutes. Create your account, mint a test key, track your first competitor, and pull your first pricing recommendation.",
+          "Get up and running with PrizeSkout in 5 minutes. Connect your store, mint a test key, track your first competitor, and pull your first pricing recommendation.",
       },
       { property: "og:title", content: "Quickstart | PrizeSkout" },
       {
@@ -186,11 +186,11 @@ function Callout({ children }: { children: React.ReactNode }) {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
-const FIRST_REQUEST = `curl -G 'https://prizeskoutqa.prizeskoutqatar.workers.dev/api/public/v1/competitors/prices' \\
+const FIRST_REQUEST = `curl -G 'https://prizeskout.qa/api/public/v1/competitors/prices' \\
   -H 'Authorization: Bearer sk_test_YOUR_KEY' \\
   --data-urlencode 'category=Electronics'`;
 
-const RECOMMENDATIONS_REQUEST = `curl 'https://prizeskoutqa.prizeskoutqatar.workers.dev/api/public/v1/pricing/recommendations' \\
+const RECOMMENDATIONS_REQUEST = `curl 'https://prizeskout.qa/api/public/v1/pricing/recommendations' \\
   -H 'Authorization: Bearer sk_test_YOUR_KEY'`;
 
 const RESPONSE_EXAMPLE = `{
@@ -252,7 +252,7 @@ function QuickstartPage() {
               maxWidth: 660,
             }}
           >
-            From signup to your first real price recommendation in under five minutes. No SDK
+            From store connection to your first real price recommendation in under five minutes. No SDK
             required — every step works with cURL, any HTTP client, or the in-dashboard API
             Explorer.
           </p>
@@ -262,23 +262,24 @@ function QuickstartPage() {
           <Step
             n={1}
             icon={Zap}
-            title="Create your account"
+            title="Connect your store"
             body={
               <>
                 Head to{" "}
-                <Link to="/signup" style={{ color: "#EA580C", fontWeight: 600 }}>
-                  prizeskout.qa/signup
+                <Link to="/onboarding" style={{ color: "#EA580C", fontWeight: 600 }}>
+                  prizeskout.qa
                 </Link>{" "}
-                and create a free account. Once you verify your email you land on the
-                dashboard — it comes pre-loaded with a sample dataset so you can explore
-                every feature before connecting real data.
+                and click <strong>Connect a Store</strong>. Complete the three-step setup — store config,
+                channel connect, and margin floors. At the end you'll receive a short access code
+                (e.g. <code style={{ fontFamily: FONT_MONO, fontSize: 12, background: "#F5F4F1", padding: "1px 5px", borderRadius: 3 }}>PSK-QA-8842</code>).
+                Save it — it's your key to the dashboard on any device. No email or password needed.
               </>
             }
           >
             <Callout>
-              The sample data shows real Qatar market prices for products like Sony XM5 and
-              MacBook Air M3. Everything labelled <strong>seed</strong> in the API is demo data
-              — your live data appears once you complete steps 3–5 below.
+              The dashboard comes pre-loaded with a sample dataset so you can explore every
+              feature before connecting real data. Everything labelled <strong>seed</strong> in
+              the API is demo data — your live data appears once you complete steps 3–5 below.
             </Callout>
           </Step>
 

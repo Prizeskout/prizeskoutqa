@@ -1,27 +1,27 @@
 /**
- * HTTP smoke test — White-Label Embed API (API 13)
+ * HTTP smoke test � White-Label Embed API (API 13)
  *
  * Tests:
- *  1.  GET  /v1/embed/config           — 404 (not configured yet)
- *  2.  GET  /v1/embed/scopes           — 200  lists all 4 scopes
- *  3.  POST /v1/embed/config           — 201  create with custom branding
- *  4.  GET  /v1/embed/config           — 200  verify saved config
- *  5.  POST /v1/embed/config           — 200  update primary_color
- *  6.  POST /v1/embed/token            — 200  issue token, all 4 scopes
- *  7.  GET  /embed/widget?token=...    — 200  renders branded HTML, check for brand name
- *  8.  GET  /embed/widget              — verify NO "Prizeskout" string in body
- *  9.  GET  /embed/widget?token=...    — expired token → 401
- * 10.  GET  /embed/widget?token=...    — wrong-scope token → 401
- * 11.  GET  /embed/widget?token=...    — tampered signature → 401
- * 12.  POST /v1/embed/token            — 403 wrong scope
- * 13.  POST /v1/embed/config           — 422 missing brand_name
+ *  1.  GET  /v1/embed/config           � 404 (not configured yet)
+ *  2.  GET  /v1/embed/scopes           � 200  lists all 4 scopes
+ *  3.  POST /v1/embed/config           � 201  create with custom branding
+ *  4.  GET  /v1/embed/config           � 200  verify saved config
+ *  5.  POST /v1/embed/config           � 200  update primary_color
+ *  6.  POST /v1/embed/token            � 200  issue token, all 4 scopes
+ *  7.  GET  /embed/widget?token=...    � 200  renders branded HTML, check for brand name
+ *  8.  GET  /embed/widget              � verify NO "Prizeskout" string in body
+ *  9.  GET  /embed/widget?token=...    � expired token ? 401
+ * 10.  GET  /embed/widget?token=...    � wrong-scope token ? 401
+ * 11.  GET  /embed/widget?token=...    � tampered signature ? 401
+ * 12.  POST /v1/embed/token            � 403 wrong scope
+ * 13.  POST /v1/embed/config           � 422 missing brand_name
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { createHash, createHmac, randomBytes } from "crypto";
 import { writeFileSync } from "fs";
 
-const BASE      = "https://prizeskoutqa.prizeskoutqatar.workers.dev";
+const BASE      = "https://prizeskout.qa";
 const API_BASE  = `${BASE}/api/public`;
 const MAIN_LIC  = "1a1d0a17-366b-4242-b504-ae78ee68b32c";
 const UID       = "bed12406-2798-47f7-a30c-5de559e90d6d";
@@ -41,7 +41,7 @@ function randKey() {
   return "sk_test_" + randomBytes(16).toString("hex");
 }
 
-// ─── Test infra ───────────────────────────────────────────────────────────────
+// --- Test infra ---------------------------------------------------------------
 
 let passed = 0;
 let failed = 0;
@@ -49,10 +49,10 @@ const live: Record<string, unknown> = {};
 
 function assert(label: string, cond: boolean, detail?: unknown) {
   if (cond) {
-    console.log(`  ✓ ${label}`);
+    console.log(`  ? ${label}`);
     passed++;
   } else {
-    console.error(`  ✗ ${label}`, detail ?? "");
+    console.error(`  ? ${label}`, detail ?? "");
     failed++;
   }
 }
@@ -77,7 +77,7 @@ async function req(
   return { status: res.status, body, text };
 }
 
-// ─── Setup: create write-scoped and read-only API keys ───────────────────────
+// --- Setup: create write-scoped and read-only API keys -----------------------
 
 async function insertKey(name: string, raw: string, scopes: string[]): Promise<string> {
   const { data, error } = await (admin as any).from("api_keys").insert({
@@ -104,11 +104,11 @@ const wkId  = await insertKey("embed-write-test",  writeKey, ["embed:write", "em
 const rkId  = await insertKey("embed-read-test",   readKey,  ["embed:read"]);
 const bkId  = await insertKey("embed-no-scope",    badKey,   ["read"]);
 
-console.log("\n=== API 13 — White-Label Embed ===\n");
+console.log("\n=== API 13 � White-Label Embed ===\n");
 
-// ─── 1. GET /v1/embed/config — not configured yet ────────────────────────────
+// --- 1. GET /v1/embed/config � not configured yet ----------------------------
 
-console.log("1. GET /v1/embed/config (not configured → 404)");
+console.log("1. GET /v1/embed/config (not configured ? 404)");
 {
   const r = await req("GET", "/v1/embed/config", { key: writeKey });
   live["01_get_config_404"] = r.body;
@@ -116,7 +116,7 @@ console.log("1. GET /v1/embed/config (not configured → 404)");
   assert("error code not_found", (r.body as any)?.error?.code === "not_found");
 }
 
-// ─── 2. GET /v1/embed/scopes ─────────────────────────────────────────────────
+// --- 2. GET /v1/embed/scopes -------------------------------------------------
 
 console.log("\n2. GET /v1/embed/scopes");
 {
@@ -129,7 +129,7 @@ console.log("\n2. GET /v1/embed/scopes");
   assert("contains action_items",   scopes?.some((s: any) => s.scope === "action_items"));
 }
 
-// ─── 3. POST /v1/embed/config — create ───────────────────────────────────────
+// --- 3. POST /v1/embed/config � create ---------------------------------------
 
 console.log("\n3. POST /v1/embed/config (create)");
 {
@@ -148,7 +148,7 @@ console.log("\n3. POST /v1/embed/config (create)");
   assert("powered_by_visible false", (r.body as any)?.config?.powered_by_visible === false);
 }
 
-// ─── 4. GET /v1/embed/config — verify ────────────────────────────────────────
+// --- 4. GET /v1/embed/config � verify ----------------------------------------
 
 console.log("\n4. GET /v1/embed/config (verify saved)");
 {
@@ -159,9 +159,9 @@ console.log("\n4. GET /v1/embed/config (verify saved)");
   assert("no signing_key_hex exposed", !(r.body as any)?.config?.signing_key_hex);
 }
 
-// ─── 5. POST /v1/embed/config — update color ─────────────────────────────────
+// --- 5. POST /v1/embed/config � update color ---------------------------------
 
-console.log("\n5. POST /v1/embed/config (update → 200)");
+console.log("\n5. POST /v1/embed/config (update ? 200)");
 {
   const r = await req("POST", "/v1/embed/config", {
     key: writeKey,
@@ -178,7 +178,7 @@ await req("POST", "/v1/embed/config", {
   body: { brand_name: BRAND, primary_color: COLOR, powered_by_visible: false },
 });
 
-// ─── 6. POST /v1/embed/token — issue token ────────────────────────────────────
+// --- 6. POST /v1/embed/token � issue token ------------------------------------
 
 console.log("\n6. POST /v1/embed/token (all 4 scopes)");
 let embedToken = "";
@@ -210,7 +210,7 @@ let embedUrl = "";
   console.log("  " + JSON.stringify(claims, null, 2).replace(/\n/g, "\n  "));
 }
 
-// ─── 7. GET /embed/widget — renders branded HTML ──────────────────────────────
+// --- 7. GET /embed/widget � renders branded HTML ------------------------------
 
 console.log("\n7. GET /embed/widget?token=... (renders branded HTML)");
 {
@@ -221,14 +221,14 @@ console.log("\n7. GET /embed/widget?token=... (renders branded HTML)");
   assert("content-type text/html", r.headers.get("content-type")?.includes("text/html") ?? false);
   assert(`brand name "${BRAND}" in HTML`, html.includes(BRAND));
   assert(`brand color ${COLOR} in HTML`, html.includes(COLOR));
-  assert("Arabic content present (ريال)", html.includes("ريال"));
+  assert("Arabic content present (????)", html.includes("????"));
   console.log("\n  Widget HTML snippet (first 600 chars):");
   console.log("  " + html.slice(0, 600).replace(/\n/g, "\n  "));
 }
 
-// ─── 8. Verify NO "Prizeskout" reference ─────────────────────────────────────
+// --- 8. Verify NO "Prizeskout" reference -------------------------------------
 
-console.log("\n8. GET /embed/widget — no Prizeskout reference (powered_by_visible=false)");
+console.log("\n8. GET /embed/widget � no Prizeskout reference (powered_by_visible=false)");
 {
   const r = await fetch(`${BASE}/embed/widget?token=${embedToken}`);
   const html = await r.text();
@@ -237,9 +237,9 @@ console.log("\n8. GET /embed/widget — no Prizeskout reference (powered_by_visi
   assert("zero Prizeskout references", count === 0, `found ${count}`);
 }
 
-// ─── 9. Expired token → 401 ──────────────────────────────────────────────────
+// --- 9. Expired token ? 401 --------------------------------------------------
 
-console.log("\n9. GET /embed/widget with expired token → 401");
+console.log("\n9. GET /embed/widget with expired token ? 401");
 {
   // Build a token with exp in the past using the licensee's actual signing key.
   const { data: cfg } = await (admin as any)
@@ -275,9 +275,9 @@ console.log("\n9. GET /embed/widget with expired token → 401");
   assert("error code token_expired", (body as any)?.error?.code === "token_expired");
 }
 
-// ─── 10. Wrong-scope token → 401 ─────────────────────────────────────────────
+// --- 10. Wrong-scope token ? 401 ---------------------------------------------
 
-console.log("\n10. POST /v1/embed/token (no-embed-scope key) → 403 then test wrong token scope");
+console.log("\n10. POST /v1/embed/token (no-embed-scope key) ? 403 then test wrong token scope");
 {
   // Wrong-scope API key (no embed:write)
   const r = await req("POST", "/v1/embed/token", {
@@ -320,9 +320,9 @@ console.log("\n10. POST /v1/embed/token (no-embed-scope key) → 403 then test w
   assert("error code insufficient_scope", (wb as any)?.error?.code === "insufficient_scope");
 }
 
-// ─── 11. Tampered signature → 401 ────────────────────────────────────────────
+// --- 11. Tampered signature ? 401 --------------------------------------------
 
-console.log("\n11. GET /embed/widget with tampered signature → 401");
+console.log("\n11. GET /embed/widget with tampered signature ? 401");
 {
   const parts = embedToken.split(".");
   const tamperedToken = `${parts[0]}.${parts[1]}.invalidsignatureXYZ`;
@@ -333,9 +333,9 @@ console.log("\n11. GET /embed/widget with tampered signature → 401");
   assert("error code invalid_token", (body as any)?.error?.code === "invalid_token");
 }
 
-// ─── 12. POST /v1/embed/token — wrong scope key ───────────────────────────────
+// --- 12. POST /v1/embed/token � wrong scope key -------------------------------
 
-console.log("\n12. POST /v1/embed/token — read-only key → 403");
+console.log("\n12. POST /v1/embed/token � read-only key ? 403");
 {
   const r = await req("POST", "/v1/embed/token", {
     key: readKey,
@@ -345,9 +345,9 @@ console.log("\n12. POST /v1/embed/token — read-only key → 403");
   assert("status 403 (embed:read key cannot issue tokens)", r.status === 403, r.status);
 }
 
-// ─── 13. POST /v1/embed/config — missing brand_name → 422 ───────────────────
+// --- 13. POST /v1/embed/config � missing brand_name ? 422 -------------------
 
-console.log("\n13. POST /v1/embed/config — missing brand_name → 422");
+console.log("\n13. POST /v1/embed/config � missing brand_name ? 422");
 {
   const r = await req("POST", "/v1/embed/config", {
     key: writeKey,
@@ -358,15 +358,15 @@ console.log("\n13. POST /v1/embed/config — missing brand_name → 422");
   assert("error code validation_failed", (r.body as any)?.error?.code === "validation_failed");
 }
 
-// ─── Cleanup ──────────────────────────────────────────────────────────────────
+// --- Cleanup ------------------------------------------------------------------
 
 await (admin as any).from("api_keys").delete().in("id", [wkId, rkId, bkId]);
 
-// ─── Summary ──────────────────────────────────────────────────────────────────
+// --- Summary ------------------------------------------------------------------
 
 writeFileSync("scripts/embed-smoke-responses.json", JSON.stringify(live, null, 2));
 
-console.log(`\n${"─".repeat(50)}`);
+console.log(`\n${"-".repeat(50)}`);
 console.log(`Results: ${passed} passed, ${failed} failed`);
 if (failed > 0) {
   console.error("SOME TESTS FAILED");

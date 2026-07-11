@@ -291,7 +291,7 @@
   "landing": {
     "langSwitcher": "اللغة",
     "infra": {
-      "nav": { "infrastructure": "البنية التحتية", "loop": "الحلقة", "latency": "الكمون", "docs": "الوثائق", "generateKeys": "توليد المفاتيح" },
+      "nav": { "infrastructure": "البنية التحتية", "loop": "الحلقة", "latency": "الكمون", "docs": "الوثائق", "signIn": "تسجيل الدخول", "generateKeys": "توليد المفاتيح" },
       "hero": {
         "eyebrow": "PRIZESKOUT // بنية تحتية للتسعير",
         "title": "طبقة البنية التحتية للتسعير لتجارة الخليج.",
@@ -302,7 +302,7 @@
       },
       "backedBy": "مدعوم من",
       "surface": {
-        "sectionLabel": "[ ٠٢ ] — أربع واجهات API", "title": "مصفوفة الواجهات التحتية",
+        "sectionLabel": "أربع واجهات API", "title": "مصفوفة الواجهات التحتية",
         "subtitle": "عقد واحد. أربعة عناصر أساسية. كل قرار هامش يمر عبر نفس العمود الحدثي.",
         "syncName": "مزامنة", "syncBadge": "استيعاب فوري", "syncDesc": "تطبيع حمولات SAP S/4HANA وSalla الواردة في حدث تسعير قانوني واحد عند الحافة.",
         "decideName": "قرار", "decideBadge": "محرك الهامش", "decideDesc": "تقييم JSON المضمّن يحل عمولة المنصة الإقليمية مقابل حد الهامش الصافي في الذاكرة.",
@@ -310,7 +310,7 @@
         "governName": "حوكمة", "governBadge": "تدقيق سيادي", "governDesc": "سجل امتثال تشفيري ثنائي اللغة يرسم مسارات التوجيه العابر للحدود وفق QFC وPDPL السعودية."
       },
       "loop": {
-        "sectionLabel": "[ ٠٣ ] — عبور الرسائل غير المتزامن", "title": "حلقة إعادة التسعير في أقل من ثانيتين",
+        "sectionLabel": "عبور الرسائل غير المتزامن", "title": "حلقة إعادة التسعير في أقل من ثانيتين",
         "eventLabel": "دورة حياة الحدث", "inFlight": "قيد التنفيذ",
         "node1Name": "حافة الاستيعاب", "node1Sub": "Webhook سلة / فودكس",
         "node2Name": "وسيط البث", "node2Sub": "قسيمة Kafka / Redpanda",
@@ -319,7 +319,7 @@
         "complete": "مكتمل", "processing": "معالجة", "idle": "خامل"
       },
       "latency": {
-        "sectionLabel": "[ ٠٤ ] — ميزانية الكمون", "title": "مصفوفة ضمان الأداء", "p99": "P99 · اتفاقية خدمة مقفلة",
+        "sectionLabel": "ميزانية الكمون", "title": "مصفوفة ضمان الأداء", "p99": "P99 · اتفاقية خدمة مقفلة",
         "colNode": "عقدة التوجيه", "colOp": "العملية", "colMax": "الحد الأقصى",
         "r1Node": "استيعاب الـ Hook", "r1Detail": "استلام Webhook + التحقق من التوقيع",
         "r2Node": "عبور البث", "r2Detail": "إدراج في الوسيط + تعيين القسيمة",
@@ -330,13 +330,13 @@
         "totalLabel": "إجمالي ميزانية مسار الرحلة الكاملة · مقفل"
       },
       "deploy": {
-        "sectionLabel": "[ ٠٥ ] — النشر", "title": "أطلق طبقة التسعير بأمر واحد.",
+        "sectionLabel": "النشر", "title": "أطلق طبقة التسعير بأمر واحد.",
         "subtitle": "بلا خوادم، ذو سيادة إقليمية، ولامثيلي بالتصميم. لا أدوات تجريف. لا جحيم API.",
         "copy": "نسخ", "copied": "تم النسخ ✓", "cta1": "توليد مفاتيح API →", "cta2": "قراءة وثائق SDK",
         "footerDesc": "بنية تحتية للتسعير الفوري في التجارة الرقمية الخليجية. برنامج وسيط مدفوع بالأحداث، سيادي بالتصميم.",
         "footerLicense": "مرخص QFC · الدوحة · قطر",
         "col1": "البنية التحتية", "col2": "المطوّرون", "col3": "القانونية والامتثال",
-        "copyright": "© 2026 PrizeSkout Infrastructure. قطر · الإمارات · السعودية.", "tagline": "مبني لحافة الخليج · أقل من ثانيتين"
+        "copyright": "© 2026 PrizeSkout LLC, Qatar", "tagline": "مبني لحافة الخليج · أقل من ثانيتين"
       }
     },
     "home": {
@@ -496,5 +496,85 @@
       "enterpriseF5": "مدير نجاح مخصص · Webhooks موقّعة",
       "enterpriseCta": "تواصل معنا"
     }
+  },
+  "psShell": {
+    "controlPlane": "لوحة التحكم",
+    "defendLoopOnline": "حلقة الدفاع نشطة",
+    "edgeNodesHealthy": "4 عقد حافة · سليمة",
+    "liveBadge": "مباشر",
+    "toggleTheme": "تبديل المظهر",
+    "nav": {
+      "revenueHubTitle": "مركز حماية الإيرادات",
+      "revenueHubDesc": "التحليلات",
+      "policyEngineTitle": "محرك سياسة الهوامش",
+      "policyEngineDesc": "كتاب القواعد",
+      "integrationVaultTitle": "خزينة التكاملات",
+      "integrationVaultDesc": "الاتصالات"
+    }
+  },
+  "revenueHub": {
+    "subtitle": "تحسين الأسعار الفعّال والوقاية من الخسائر",
+    "profitsProtected": "الأرباح المحمية · هذا الشهر",
+    "acrossAllItems": "عبر جميع عناصر المتجر النشطة",
+    "trackedProducts": "المنتجات المتتبعة",
+    "addedToday": "+48 اليوم",
+    "priceUpdatesToday": "تحديثات الأسعار اليوم",
+    "avgLatency": "متوسط 540ms",
+    "avgMarginSaved": "متوسط الهامش المحفوظ",
+    "aboveFloor": "فوق الحد الأدنى",
+    "activeRules": "القواعد النشطة",
+    "priceGuardrails": "حواجز الأسعار",
+    "systemNodes": "عقد النظام وأوقات الاستجابة",
+    "activeCount": "4 / 4 نشطة",
+    "nodeActive": "✓ نشط",
+    "liveExecStream": "تدفق التنفيذ المباشر",
+    "simulatedFeed": "محاكى · ليس تدفقاً حقيقياً",
+    "downloadAuditLog": "تنزيل سجل المراجعة (CSV)",
+    "exportDisputeProofs": "تصدير إثباتات النزاعات",
+    "streaming": "بث مباشر",
+    "repriceOn": "إعادة تسعير على",
+    "marginDefendedAt": "الهامش محمي عند",
+    "demo": "تجريبي",
+    "today": "اليوم"
+  },
+  "policyEngine": {
+    "subtitle": "اكتب قواعد التسعير دون كتابة كود",
+    "bannerHeading": "اكتب قواعد التسعير دون كود",
+    "bannerDesc": "حدد حداً أدنى لصافي الهامش لكل فئة. تعيد حلقة الدفاع التسعير باستمرار عبر كل موزع لعدم اختراق الحد. لا جداول بيانات، لا مهندسين.",
+    "categoriesDefended": "الفئات المحمية",
+    "colRuleCategory": "القاعدة / الفئة",
+    "colNetMarginFloor": "الحد الأدنى لصافي الهامش",
+    "colActiveDefense": "الدفاع النشط",
+    "loadingRules": "جارٍ تحميل القواعد…",
+    "noRules": "لا توجد قواعد تسعير بعد. أضف قواعد عبر صفحة التسعير.",
+    "ruleBased": "قائم على قواعد (بدون معامل حد)",
+    "defending": "يدافع",
+    "paused": "موقوف",
+    "floorLabelCeiling": "% سقف",
+    "footerNote": "تنتشر التغييرات إلى جميع عقد الحافة الـ 4 في أقل من ثانيتين · آخر مزامنة الآن"
+  },
+  "integrationVault": {
+    "subtitle": "ربط وتأمين حزمة التجارة الخاصة بك",
+    "inboundHeading": "الاتصالات الواردة",
+    "inboundSubLabel": "نقاط البيع · التجارة الإلكترونية",
+    "inboundDesc": "حيث يقرأ PrizeSkout الكتالوج والتكاليف والمخزون المباشر.",
+    "connected": "✓ متصل",
+    "installApp": "تثبيت التطبيق",
+    "ecommerce": "تجارة إلكترونية",
+    "posTerminal": "نقطة بيع",
+    "outboundHeading": "الاتصالات الصادرة",
+    "outboundSubLabel": "موزعون محليون",
+    "outboundDesc": "حيث ستدفع حلقة الدفاع الأسعار المحسّنة في الوقت الفعلي.",
+    "notYetActive": "(غير نشط بعد)",
+    "setupBadge": "إعداد",
+    "awaitingBuild": "في انتظار بناء التكامل",
+    "keyVaultHeading": "خزينة مفاتيح التاجر",
+    "keyVaultDesc": "يتم تشفير بيانات الاعتماد عند الحافة ولا يتم تخزينها أبداً بنص واضح.",
+    "apiKeyLabel": "أدخل مفتاح API للتاجر",
+    "verifying": "جارٍ التحقق…",
+    "reconnect": "إعادة الاتصال",
+    "connect": "اتصال",
+    "handshakeVerified": "تم التحقق من مصافحة API. الاتصال آمن.",
+    "tlsTiming": "TLS 1.3 · 540ms"
   }
 }

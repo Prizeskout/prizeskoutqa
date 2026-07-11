@@ -5,10 +5,6 @@ interface ExecCtx {
   waitUntil(promise: Promise<unknown>): void;
 }
 
-// Cloudflare Workers attach geo metadata to the request via request.cf.
-// This type narrows what we use — the full type is IncomingRequestCfProperties.
-type CfRequest = Request & { cf?: { country?: string } };
-
 const startFetch = createStartHandler(defaultStreamHandler);
 
 export function createServerEntry(entry: { fetch: (...args: unknown[]) => unknown }) {
@@ -19,17 +15,48 @@ export function createServerEntry(entry: { fetch: (...args: unknown[]) => unknow
   };
 }
 
+// Embed widget responses set X-Frame-Options: ALLOWALL so partners can iframe the widget.
+// All other responses get SAMEORIGIN + a restrictive CSP with frame-ancestors 'self'.
+const EMBED_FRAME_HEADER = "ALLOWALL";
+
+const CSP_POLICY = [
+  "default-src 'self'",
+  // TanStack SSR hydration writes inline <script> blocks — unsafe-inline is required.
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "frame-ancestors 'self'",
+  "form-action 'self'",
+  "base-uri 'self'",
+].join("; ");
+
+function applySecurityHeaders(headers: Headers): void {
+  const isEmbedResponse = headers.get("X-Frame-Options") === EMBED_FRAME_HEADER;
+
+  // Always enforce HTTPS with a 2-year HSTS window.
+  headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+
+  // Prevent MIME-type sniffing on all responses.
+  headers.set("X-Content-Type-Options", "nosniff");
+
+  // Limit referrer leakage to same-origin cross-origin requests.
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Disable unnecessary browser features.
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+
+  if (!isEmbedResponse) {
+    // Non-embed pages must not be framed by third-party sites.
+    headers.set("X-Frame-Options", "SAMEORIGIN");
+    headers.set("Content-Security-Policy", CSP_POLICY);
+  }
+  // Embed widget keeps its own X-Frame-Options: ALLOWALL set by the route handler.
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx?: ExecCtx): Promise<Response> {
-    // Read the country at the Worker boundary where request.cf is available.
-    // This is the authoritative source — request.cf.country is set by the
-    // Cloudflare runtime before the fetch handler is invoked.
-    const cfReq = request as CfRequest;
-    const cfCountry =
-      cfReq.cf?.country?.trim().toUpperCase() ||
-      request.headers.get("CF-IPCountry")?.trim().toUpperCase() ||
-      "unknown";
-
     const runFetch = () =>
       (startFetch as (req: Request, env: unknown) => Promise<Response>)(request, env);
 
@@ -37,12 +64,8 @@ export default {
       ? await cfCtxStorage.run(ctx.waitUntil.bind(ctx), runFetch)
       : await runFetch();
 
-    // X-PS-Country: debug header — shows exactly what the Worker detected for
-    // this request. Verify with: curl -sI https://…workers.dev/ | grep X-PS-Country
-    // Safe to leave in: it's only a country code, not a user identifier.
-    // Remove once geo detection is confirmed working in production.
     const headers = new Headers(response.headers);
-    headers.set("X-PS-Country", cfCountry);
+    applySecurityHeaders(headers);
 
     return new Response(response.body, {
       status: response.status,

@@ -3,7 +3,7 @@
  * Wraps: Revenue Protection Hub, Margin Policy Engine, Integration Vault.
  * Preserves: existing auth, i18n (useTranslation + applyLocale), ModeProvider, PlanGateModal.
  */
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, createContext, useContext, type ReactNode } from "react";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth-context";
@@ -23,8 +23,11 @@ export type PsRegion = "Qatar" | "KSA" | "UAE";
 
 const CURRENCY: Record<PsRegion, string> = { Qatar: "QAR", KSA: "SAR", UAE: "AED" };
 
+const PsRegionContext = createContext<{ region: PsRegion; currency: string }>({ region: "Qatar", currency: "QAR" });
+export function usePsRegion() { return useContext(PsRegionContext); }
+
 const PS_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 [data-ps-theme="dark"] {
   --ps-page:#080809; --ps-surface-2:#0B0C0E; --ps-surface-3:#0e0f12; --ps-card:#101116;
   --ps-card-veil:rgba(18,19,26,0.4); --ps-veil-strong:rgba(18,19,26,0.6);
@@ -49,27 +52,29 @@ const PS_CSS = `
   --ps-slider-track:#E5E7EB; --ps-header-bg:rgba(244,245,246,0.85);
   --ps-thumb-border:#ffffff;
 }
-.ps-root { font-family:'Inter',system-ui,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
+.ps-root { font-family:'Manrope',system-ui,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
 .ps-root ::-webkit-scrollbar { width:8px; height:8px; }
 .ps-root ::-webkit-scrollbar-track { background:transparent; }
 .ps-root ::-webkit-scrollbar-thumb { background:var(--ps-scroll); border-radius:8px; }
 .ps-root ::-webkit-scrollbar-thumb:hover { background:var(--ps-scroll-h); }
 .ps-root input[type=range] { -webkit-appearance:none; appearance:none; accent-color:#EF681A; background:transparent; width:100%; }
 .ps-root input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:999px; background:var(--ps-slider-track); }
-.ps-root input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:18px; height:18px; margin-top:-7px; border-radius:999px; background:#EF681A; border:2px solid var(--ps-thumb-border); box-shadow:0 0 0 3px rgba(239,104,26,0.18),0 2px 6px rgba(0,0,0,0.4); cursor:pointer; transition:box-shadow .15s ease; }
-.ps-root input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 0 0 5px rgba(239,104,26,0.22),0 2px 8px rgba(0,0,0,0.5); }
-@keyframes psPulse { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0.55)} 70%{box-shadow:0 0 0 7px rgba(16,185,129,0)} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} }
+.ps-root input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:18px; height:18px; margin-top:-7px; border-radius:999px; background:#EF681A; border:2px solid var(--ps-thumb-border); box-shadow:0 2px 6px rgba(0,0,0,0.25); cursor:pointer; transition:box-shadow .15s ease; }
+.ps-root input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 2px 8px rgba(0,0,0,0.35); }
+@keyframes psPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes psSpin { to{transform:rotate(360deg)} }
 @keyframes psIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-@keyframes psFlash { 0%{color:#ffb27a;text-shadow:0 0 24px rgba(239,104,26,0.65)} 100%{color:#EF681A;text-shadow:0 0 14px rgba(239,104,26,0.28)} }
+@keyframes psFlash { 0%{color:#ffb27a} 100%{color:#EF681A} }
 @keyframes psBar { from{opacity:.4} to{opacity:1} }
 `;
 
-const NAV_ITEMS: { screen: PsScreen; title: string; desc: string }[] = [
-  { screen: "revenue-hub", title: "Revenue Protection Hub", desc: "Analytics" },
-  { screen: "policy-engine", title: "Margin Policy Engine", desc: "Rule Book" },
-  { screen: "integration-vault", title: "Integration Vault", desc: "Connections" },
+const NAV_ITEMS: { screen: PsScreen; titleKey: string; descKey: string }[] = [
+  { screen: "revenue-hub", titleKey: "psShell.nav.revenueHubTitle", descKey: "psShell.nav.revenueHubDesc" },
+  { screen: "policy-engine", titleKey: "psShell.nav.policyEngineTitle", descKey: "psShell.nav.policyEngineDesc" },
+  { screen: "integration-vault", titleKey: "psShell.nav.integrationVaultTitle", descKey: "psShell.nav.integrationVaultDesc" },
 ];
+
+const SETTINGS_PATH = "/dashboard/settings";
 
 const SCREEN_TO_PATH: Record<PsScreen, string> = {
   "revenue-hub": "/dashboard/revenue-hub",
@@ -92,6 +97,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
   region: PsRegion;
   onRegionChange: (r: PsRegion) => void;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
   const navigate = useNavigate();
@@ -112,16 +118,18 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
     }}>
       {/* Logo */}
       <div style={{ padding: "4px 6px 22px 6px" }}>
-        <img
-          src={theme === "light" ? logoLight : logoDark}
-          alt="PrizeSkout"
-          style={{ height: 28, width: "auto", display: "block" }}
-        />
+        <a href="/" style={{ display: "inline-block", lineHeight: 0 }}>
+          <img
+            src={theme === "light" ? logoLight : logoDark}
+            alt="PrizeSkout"
+            style={{ height: 28, width: "auto", display: "block" }}
+          />
+        </a>
       </div>
 
       {/* Nav label */}
       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "1.2px", color: "var(--ps-faint)", padding: "6px 8px 8px 8px" }}>
-        CONTROL&nbsp;PLANE
+        {t("psShell.controlPlane").toUpperCase()}
       </div>
 
       {/* Nav items */}
@@ -145,18 +153,55 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
                 flexShrink: 0, width: 7, height: 7, borderRadius: 2,
                 transform: "rotate(45deg)", transition: "all .15s ease",
                 background: active ? "#EF681A" : "var(--ps-inactive)",
-                boxShadow: active ? "0 0 9px rgba(239,104,26,0.85)" : "none",
               }} />
               <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.25 }}>
-                <span style={{ fontSize: 13.5, fontWeight: 600 }}>{item.title}</span>
-                <span style={{ fontSize: 11, fontWeight: 500, marginTop: 1, color: active ? "#c98f64" : "var(--ps-faint-2)" }}>{item.desc}</span>
+                <span style={{ fontSize: 13.5, fontWeight: 600 }}>{t(item.titleKey)}</span>
+                <span style={{ fontSize: 11, fontWeight: 500, marginTop: 1, color: active ? "#c98f64" : "var(--ps-faint-2)" }}>{t(item.descKey)}</span>
               </span>
             </Link>
           );
         })}
       </nav>
 
-      <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Settings link */}
+      <div style={{ marginTop: "auto", marginBottom: 4 }}>
+        <Link
+          to={SETTINGS_PATH}
+          style={{
+            display: "flex", alignItems: "center", gap: 10, width: "100%",
+            padding: "10px 12px", borderRadius: 10, cursor: "pointer", textDecoration: "none",
+            color: "var(--ps-soft)", transition: "background .15s ease, color .15s ease",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ps-text)"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--ps-hover)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ps-soft)"; (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Settings</span>
+        </Link>
+
+        {/* Back to landing page */}
+        <a
+          href="/"
+          style={{
+            display: "flex", alignItems: "center", gap: 10, width: "100%",
+            padding: "10px 12px", borderRadius: 10, cursor: "pointer", textDecoration: "none",
+            color: "var(--ps-faint)", transition: "background .15s ease, color .15s ease",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ps-soft)"; (e.currentTarget as HTMLAnchorElement).style.background = "var(--ps-hover)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ps-faint)"; (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>Back to site</span>
+        </a>
+      </div>
+
+      <div style={{ margin: "0 4px 8px", height: 1, background: "var(--ps-border)" }} />
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {/* DEMO: Defend Loop status — static, not live infrastructure data */}
         <div style={{
           border: "1px solid rgba(16,185,129,0.18)", background: "rgba(16,185,129,0.06)",
@@ -164,9 +209,8 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
         }}>
           <span style={{ width: 8, height: 8, borderRadius: 999, background: "#10B981", animation: "psPulse 2.4s infinite", flexShrink: 0 }} />
           <div style={{ lineHeight: 1.3 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>Defend Loop Online</div>
-            {/* ↓ static demo text — infrastructure status not measured by this app */}
-            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "'JetBrains Mono',monospace" }}>4 edge nodes · healthy</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>{t("psShell.defendLoopOnline")}</div>
+            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "'JetBrains Mono',monospace" }}>{t("psShell.edgeNodesHealthy")}</div>
           </div>
         </div>
 
@@ -174,7 +218,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
         <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "8px 6px" }}>
           <div style={{
             width: 34, height: 34, borderRadius: 999, flexShrink: 0,
-            background: "linear-gradient(145deg,var(--ps-chip-2),var(--ps-chip))",
+            background: "var(--ps-chip-2)",
             border: "1px solid var(--ps-border)", display: "flex", alignItems: "center",
             justifyContent: "center", fontSize: 12, fontWeight: 700,
             color: "var(--ps-text-3)", fontFamily: "'JetBrains Mono',monospace",
@@ -211,6 +255,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
   region: PsRegion; onRegionChange: (r: PsRegion) => void;
   lang: string; onLangChange: (l: string) => void;
 }) {
+  const { t } = useTranslation();
   const dark = theme === "dark";
   const segBtn = (active: boolean): React.CSSProperties => ({
     padding: "8px 13px", fontSize: 12, fontWeight: 600, cursor: "pointer",
@@ -235,7 +280,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
             fontSize: 10, fontWeight: 600, color: "#10B981", fontFamily: "'JetBrains Mono',monospace",
             border: "1px solid rgba(16,185,129,0.28)", background: "rgba(16,185,129,0.10)",
             padding: "2px 7px", borderRadius: 6,
-          }}>LIVE</span>
+          }}>{t("psShell.liveBadge")}</span>
         </div>
         <div style={{ fontSize: 12.5, color: "var(--ps-muted)", marginTop: 3 }}>{subtitle}</div>
       </div>
@@ -248,7 +293,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
             background: "var(--ps-pill)", border: "1px solid var(--ps-border-3)",
             display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 8px", flexShrink: 0,
           }}
-          role="button" tabIndex={0} aria-label="Toggle theme"
+          role="button" tabIndex={0} aria-label={t("psShell.toggleTheme")}
           onKeyDown={(e) => e.key === "Enter" && onToggleTheme()}
         >
           <span style={{ fontSize: 12, lineHeight: 1, color: dark ? "var(--ps-text)" : "var(--ps-faint)" }}>☾</span>
@@ -347,16 +392,18 @@ function PsShellInner({ screen, title, subtitle, children }: PsShellProps) {
       )}
       <main style={{
         flex: 1, minWidth: 0, display: "flex", flexDirection: "column",
-        background: `radial-gradient(1200px 500px at 70% -10%, rgba(239,104,26,0.06), transparent 60%), var(--ps-page)`,
+        background: "var(--ps-page)",
       }}>
         <PsHeader
           title={title} subtitle={subtitle} theme={theme} onToggleTheme={toggleTheme}
           region={region} onRegionChange={setRegion}
           lang={i18nHook.language?.slice(0, 2) || "en"} onLangChange={handleLangChange}
         />
-        <div style={{ flex: 1, padding: isMobile ? "16px 16px 96px" : "28px 32px 40px" }}>
-          {children}
-        </div>
+        <PsRegionContext.Provider value={{ region, currency: CURRENCY[region] }}>
+          <div style={{ flex: 1, padding: isMobile ? "16px 16px 96px" : "28px 32px 40px" }}>
+            {children}
+          </div>
+        </PsRegionContext.Provider>
       </main>
       <PlanGateModal />
     </div>

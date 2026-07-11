@@ -1,25 +1,25 @@
 /**
- * Smoke test — Competitor Intelligence (API 05)
+ * Smoke test � Competitor Intelligence (API 05)
  *
  * Sequence:
  *  1. Seed real competitor URLs via seed-real-urls script (idempotent reset)
- *  2. GET /v1/competitors/coverage  — baseline (before scrape)
- *  3. POST /api/public/hooks/scrape-all — full-catalog scrape (synchronous)
- *  4. GET /v1/competitors/coverage  — post-scrape matrix
- *  5. Print per-(product × competitor) coverage table
+ *  2. GET /v1/competitors/coverage  � baseline (before scrape)
+ *  3. POST /api/public/hooks/scrape-all � full-catalog scrape (synchronous)
+ *  4. GET /v1/competitors/coverage  � post-scrape matrix
+ *  5. Print per-(product � competitor) coverage table
  *  6. Prove null_price/OOS handling: verify competitor_prices has NO null prices
  *  7. Show pricing engine ran on fresh multi-competitor data for 2+ products
  *
  * Auth:
- *   scrape-all hook → Bearer SUPABASE_PUBLISHABLE_KEY
- *   v1 endpoints    → Bearer <test API key>
+ *   scrape-all hook ? Bearer SUPABASE_PUBLISHABLE_KEY
+ *   v1 endpoints    ? Bearer <test API key>
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { createHash, randomBytes } from "crypto";
 import { execSync } from "child_process";
 
-const WORKER   = "https://prizeskoutqa.prizeskoutqatar.workers.dev";
+const WORKER   = "https://prizeskout.qa";
 const BASE     = `${WORKER}/api/public`;
 const UID      = "bed12406-2798-47f7-a30c-5de559e90d6d";
 const MAIN_LIC = "1a1d0a17-366b-4242-b504-ae78ee68b32c";
@@ -41,7 +41,7 @@ async function cleanup() {
   if (testKeyId) await (admin as any).from("api_keys").delete().eq("id", testKeyId);
 }
 
-// ─── HTTP helper ─────────────────────────────────────────────────────────────
+// --- HTTP helper -------------------------------------------------------------
 
 type Hit = { method: string; path: string; status: number; body: unknown; ms: number };
 
@@ -57,13 +57,13 @@ async function call(method: string, url: string, auth: string, body?: unknown): 
 }
 
 function section(t: string) {
-  console.log(`\n${"═".repeat(72)}\n  ${t}\n${"═".repeat(72)}`);
+  console.log(`\n${"-".repeat(72)}\n  ${t}\n${"-".repeat(72)}`);
 }
 
 function render(label: string, hit: Hit, expectStatus: number): boolean {
   const ok   = hit.status === expectStatus;
-  const icon = ok ? "✓" : "✗";
-  const flag = ok ? "" : ` ← EXPECTED ${expectStatus}, GOT ${hit.status}`;
+  const icon = ok ? "?" : "?";
+  const flag = ok ? "" : ` ? EXPECTED ${expectStatus}, GOT ${hit.status}`;
   console.log(`\n  ${icon} ${label}`);
   console.log(`    ${hit.method} ${hit.path}  (${hit.ms} ms)${flag}`);
   const body = JSON.stringify(hit.body, null, 2).split("\n").slice(0, 60).join("\n    ");
@@ -71,7 +71,7 @@ function render(label: string, hit: Hit, expectStatus: number): boolean {
   return ok;
 }
 
-// ─── Coverage table printer ───────────────────────────────────────────────────
+// --- Coverage table printer ---------------------------------------------------
 
 function printCoverageTable(coverage: any[]) {
   const COL_PROD = 34;
@@ -85,9 +85,9 @@ function printCoverageTable(coverage: any[]) {
     "Status".padEnd(COL_STATUS),
     "Price (QAR)".padEnd(COL_PRICE),
     "Age (h)",
-  ].join(" │ ");
+  ].join(" � ");
 
-  const divider = "─".repeat(header.length);
+  const divider = "-".repeat(header.length);
 
   console.log(`\n  ${divider}`);
   console.log(`  ${header}`);
@@ -99,32 +99,32 @@ function printCoverageTable(coverage: any[]) {
     const status  = String(row.status ?? "").padEnd(COL_STATUS);
     const price   = row.price != null
       ? String(Number(row.price).toFixed(2)).padEnd(COL_PRICE)
-      : (row.skip_reason ? "(OOS/fail)".padEnd(COL_PRICE) : "—".padEnd(COL_PRICE));
-    const age     = row.age_hours != null ? `${row.age_hours}` : "—";
-    console.log(`  ${prod} │ ${comp} │ ${status} │ ${price} │ ${age}`);
+      : (row.skip_reason ? "(OOS/fail)".padEnd(COL_PRICE) : "�".padEnd(COL_PRICE));
+    const age     = row.age_hours != null ? `${row.age_hours}` : "�";
+    console.log(`  ${prod} � ${comp} � ${status} � ${price} � ${age}`);
     if (row.skip_reason) {
       const reason = String(row.skip_reason).slice(0, 80);
-      console.log(`  ${"".padEnd(COL_PROD)}   ↳ ${reason}`);
+      console.log(`  ${"".padEnd(COL_PROD)}   ? ${reason}`);
     }
   }
   console.log(`  ${divider}`);
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
+// --- MAIN ---------------------------------------------------------------------
 
-console.log(`\nCompetitor Intelligence (API 05) — full pipeline smoke test`);
+console.log(`\nCompetitor Intelligence (API 05) � full pipeline smoke test`);
 console.log(`Worker: ${WORKER}`);
 console.log(`Date:   ${new Date().toISOString()}`);
 
 let passed = 0;
 let failed = 0;
 
-function pass(label: string) { passed++; console.log(`  ✓ ${label}`); }
-function fail(label: string) { failed++; console.log(`  ✗ ${label}`); }
+function pass(label: string) { passed++; console.log(`  ? ${label}`); }
+function fail(label: string) { failed++; console.log(`  ? ${label}`); }
 
 try {
-  // ── Step 0: Provision test API key ────────────────────────────────────────
-  section("STEP 0 — Provision test API key");
+  // -- Step 0: Provision test API key ----------------------------------------
+  section("STEP 0 � Provision test API key");
   const rawKey = randKey();
   const { data: keyRow, error: kErr } = await (admin as any).from("api_keys").insert({
     user_id:     UID,
@@ -139,10 +139,10 @@ try {
   if (kErr) throw new Error(`key insert: ${kErr.message}`);
   testKeyId = keyRow.id;
   const KEY = rawKey;
-  console.log(`  ✓ Test API key created (${rawKey.slice(0, 16)}...)`);
+  console.log(`  ? Test API key created (${rawKey.slice(0, 16)}...)`);
 
-  // ── Step 1: Seed real URLs ─────────────────────────────────────────────────
-  section("STEP 1 — Seed real competitor URLs (idempotent)");
+  // -- Step 1: Seed real URLs -------------------------------------------------
+  section("STEP 1 � Seed real competitor URLs (idempotent)");
   try {
     // Run seed script via tsx
     const output = execSync(
@@ -156,8 +156,8 @@ try {
     fail("seed-real-urls failed");
   }
 
-  // ── Step 2: Coverage BEFORE scrape ────────────────────────────────────────
-  section("STEP 2 — GET /v1/competitors/coverage (BEFORE scrape)");
+  // -- Step 2: Coverage BEFORE scrape ----------------------------------------
+  section("STEP 2 � GET /v1/competitors/coverage (BEFORE scrape)");
   const r2 = await call("GET", `${BASE}/v1/competitors/coverage`, KEY);
   const ok2 = render("Coverage before scrape", r2, 200);
   if (ok2) { passed++; } else { failed++; }
@@ -165,9 +165,9 @@ try {
   const beforeSummary = (r2.body as any)?.summary ?? {};
   console.log(`\n  Pre-scrape summary: ${JSON.stringify(beforeSummary)}`);
 
-  // ── Step 3: Full-catalog scrape ────────────────────────────────────────────
-  section("STEP 3 — POST /api/public/hooks/scrape-all (full catalog)");
-  console.log(`  Scraping all competitor URLs — this may take 30–120 seconds...`);
+  // -- Step 3: Full-catalog scrape --------------------------------------------
+  section("STEP 3 � POST /api/public/hooks/scrape-all (full catalog)");
+  console.log(`  Scraping all competitor URLs � this may take 30�120 seconds...`);
   const t0 = Date.now();
   const r3 = await call("POST", `${BASE}/hooks/scrape-all`, HOOK_AUTH);
   const ok3 = render("Full-catalog scrape", r3, 200);
@@ -185,8 +185,8 @@ try {
     console.log(`    engine.seeds   : ${scrapeBody.engine?.seedsWiped ?? "?"}`);
   }
 
-  // ── Step 4: Coverage AFTER scrape ─────────────────────────────────────────
-  section("STEP 4 — GET /v1/competitors/coverage (AFTER scrape)");
+  // -- Step 4: Coverage AFTER scrape -----------------------------------------
+  section("STEP 4 � GET /v1/competitors/coverage (AFTER scrape)");
   const r4 = await call("GET", `${BASE}/v1/competitors/coverage`, KEY);
   const ok4 = render("Coverage after scrape (raw)", r4, 200);
   if (ok4) { passed++; } else { failed++; }
@@ -195,20 +195,20 @@ try {
   const coverage: any[] = afterBody?.coverage ?? [];
   const summary = afterBody?.summary ?? {};
 
-  // ── Step 5: Print coverage table ──────────────────────────────────────────
-  section("STEP 5 — Per-(product × competitor) coverage matrix");
+  // -- Step 5: Print coverage table ------------------------------------------
+  section("STEP 5 � Per-(product � competitor) coverage matrix");
   printCoverageTable(coverage);
   console.log(`\n  Summary counts:`);
   console.log(`    total         : ${summary.total ?? 0}`);
   console.log(`    success       : ${summary.success ?? 0}`);
-  console.log(`    null_price    : ${summary.null_price ?? 0}  ← OOS / no price on page`);
+  console.log(`    null_price    : ${summary.null_price ?? 0}  ? OOS / no price on page`);
   console.log(`    failed        : ${summary.failed ?? 0}`);
   console.log(`    never_scraped : ${summary.never_scraped ?? 0}`);
   console.log(`    stale         : ${summary.stale ?? 0}`);
   console.log(`\n  ${afterBody?.ceiling_note ?? ""}`);
 
-  // ── Step 6: Null/OOS proof ─────────────────────────────────────────────────
-  section("STEP 6 — Prove null/OOS cases are NOT written to competitor_prices");
+  // -- Step 6: Null/OOS proof -------------------------------------------------
+  section("STEP 6 � Prove null/OOS cases are NOT written to competitor_prices");
   console.log(`  Querying competitor_scrapes for this user...`);
 
   const { data: allScrapes, error: sErr } = await (admin as any)
@@ -228,14 +228,14 @@ try {
 
     console.log(`\n  competitor_scrapes (last 50 rows):`);
     console.log(`    success    : ${successes.length}`);
-    console.log(`    null_price : ${nullPrices.length}  ← OOS/unscrapeable — safely persisted, never forwarded`);
-    console.log(`    failed     : ${failures.length}  ← network/API errors`);
+    console.log(`    null_price : ${nullPrices.length}  ? OOS/unscrapeable � safely persisted, never forwarded`);
+    console.log(`    failed     : ${failures.length}  ? network/API errors`);
 
     if (nullPrices.length > 0) {
       console.log(`\n  null_price rows (skip reasons):`);
       for (const s of nullPrices.slice(0, 5)) {
-        console.log(`    • ${s.competitor}/${s.product}: ${s.error?.slice(0, 100) ?? "(no error msg)"}`);
-        console.log(`      price field in DB: ${s.price}  ← must be null`);
+        console.log(`    � ${s.competitor}/${s.product}: ${s.error?.slice(0, 100) ?? "(no error msg)"}`);
+        console.log(`      price field in DB: ${s.price}  ? must be null`);
         if (s.price !== null) {
           fail(`null_price row has non-null price: ${s.price}`);
         }
@@ -245,8 +245,8 @@ try {
     if (failures.length > 0) {
       console.log(`\n  failed rows (recent):`);
       for (const s of failures.slice(0, 3)) {
-        console.log(`    • ${s.competitor}/${s.product}: ${s.error?.slice(0, 100) ?? "(no error msg)"}`);
-        console.log(`      price field in DB: ${s.price}  ← must be null`);
+        console.log(`    � ${s.competitor}/${s.product}: ${s.error?.slice(0, 100) ?? "(no error msg)"}`);
+        console.log(`      price field in DB: ${s.price}  ? must be null`);
         if (s.price !== null) {
           fail(`failed row has non-null price: ${s.price}`);
         }
@@ -297,8 +297,8 @@ try {
     }
   }
 
-  // ── Step 7: Engine ran on fresh multi-competitor data ──────────────────────
-  section("STEP 7 — Pricing engine ran on fresh multi-competitor data");
+  // -- Step 7: Engine ran on fresh multi-competitor data ----------------------
+  section("STEP 7 � Pricing engine ran on fresh multi-competitor data");
   console.log(`  Querying pricing_recommendations for this user...`);
 
   const { data: decRows, error: decErr } = await (admin as any)
@@ -318,7 +318,7 @@ try {
     if (decs.length >= 2) {
       pass(`Engine produced ${decs.length} pricing recommendations`);
     } else {
-      fail(`Engine produced only ${decs.length} recommendations (expected ≥2)`);
+      fail(`Engine produced only ${decs.length} recommendations (expected =2)`);
     }
 
     // Check that reason mentions competitor data (multi-competitor signal)
@@ -329,7 +329,7 @@ try {
     if (withCompetitorReason.length >= 1) {
       pass(`${withCompetitorReason.length} recommendations include live competitor signals in reason`);
     } else {
-      console.log(`  ⚠  No recommendations reference competitor data in reason field`);
+      console.log(`  ?  No recommendations reference competitor data in reason field`);
     }
 
     const D_PROD = 28, D_CUR = 10, D_REC = 10, D_CONF = 10;
@@ -339,10 +339,10 @@ try {
       "Rec QAR".padEnd(D_REC),
       "Conf".padEnd(D_CONF),
       "Reason (truncated)",
-    ].join(" │ ");
-    console.log(`\n  ${"─".repeat(90)}`);
+    ].join(" � ");
+    console.log(`\n  ${"-".repeat(90)}`);
     console.log(`  ${dh}`);
-    console.log(`  ${"─".repeat(90)}`);
+    console.log(`  ${"-".repeat(90)}`);
 
     for (const d of decs.slice(0, 6)) {
       const prod = String(d.product ?? "").slice(0, D_PROD - 1).padEnd(D_PROD);
@@ -350,9 +350,9 @@ try {
       const rec  = String(Number(d.recommended_price ?? 0).toFixed(0)).padEnd(D_REC);
       const conf = `${d.confidence ?? "?"}%`.padEnd(D_CONF);
       const reason = String(d.reason ?? "").slice(0, 55);
-      console.log(`  ${prod} │ ${cur} │ ${rec} │ ${conf} │ ${reason}`);
+      console.log(`  ${prod} � ${cur} � ${rec} � ${conf} � ${reason}`);
     }
-    console.log(`  ${"─".repeat(90)}`);
+    console.log(`  ${"-".repeat(90)}`);
 
     // Show freshness
     if (decs.length > 0) {
@@ -362,15 +362,15 @@ try {
       if (ageMin <= 10) {
         pass("Engine recommendations are fresh (within 10 minutes of scrape)");
       } else {
-        console.log(`  ⚠  Recommendations are ${ageMin}m old — engine may not have re-run for this user`);
+        console.log(`  ?  Recommendations are ${ageMin}m old � engine may not have re-run for this user`);
       }
     }
   }
 
-  // ── Step 8: API surface test ──────────────────────────────────────────────
-  section("STEP 8 — Verify API surface");
+  // -- Step 8: API surface test ----------------------------------------------
+  section("STEP 8 � Verify API surface");
 
-  // GET /v1/competitors/prices — should have live data now
+  // GET /v1/competitors/prices � should have live data now
   const r8a = await call("GET", `${BASE}/v1/competitors/prices`, KEY);
   const ok8a = render("GET /v1/competitors/prices", r8a, 200);
   if (ok8a) {
@@ -378,12 +378,12 @@ try {
     if (hasLiveData) {
       pass("/v1/competitors/prices returns live data (no _fallback)");
     } else {
-      console.log(`  ⚠  prices returned fallback sample — competitor_prices may be empty for this user`);
+      console.log(`  ?  prices returned fallback sample � competitor_prices may be empty for this user`);
       passed++; // 200 is still correct behavior
     }
   } else { failed++; }
 
-  // GET /v1/competitors/coverage — confirm it's idempotent
+  // GET /v1/competitors/coverage � confirm it's idempotent
   const r8b = await call("GET", `${BASE}/v1/competitors/coverage`, KEY);
   if (r8b.status === 200) {
     pass("GET /v1/competitors/coverage idempotent (200)");
@@ -395,10 +395,10 @@ try {
   await cleanup();
 }
 
-// ─── Final report ─────────────────────────────────────────────────────────────
+// --- Final report -------------------------------------------------------------
 
-console.log(`\n${"═".repeat(72)}`);
+console.log(`\n${"-".repeat(72)}`);
 console.log(`  RESULTS: ${passed} passed, ${failed} failed`);
-console.log(`${"═".repeat(72)}\n`);
+console.log(`${"-".repeat(72)}\n`);
 
 if (failed > 0) process.exit(1);

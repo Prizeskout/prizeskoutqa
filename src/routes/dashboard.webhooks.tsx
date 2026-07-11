@@ -214,11 +214,11 @@ function WebhooksPage() {
   return (
     <DashboardLayout
       title="Webhooks"
-      subtitle="Receive real-time events from PrizeSkout — price changes, competitor scrapes, and ready recommendations."
+      subtitle="Receive real-time events from PrizeSkout: price changes, competitor scrapes, and ready recommendations."
       helpItems={[
         "Register an HTTPS endpoint and subscribe to the events you care about.",
         "Verify every delivery using the signing secret before trusting the payload.",
-        "Failed deliveries retry with exponential backoff — configure attempts per endpoint.",
+        "Failed deliveries retry with exponential backoff. Configure attempts per endpoint.",
       ]}
       primaryAction={
         <button
@@ -740,7 +740,7 @@ function SecretRevealDialog({
           ) : (
             <>
               This is the only time we will show this secret in full. Copy it now and store it
-              somewhere safe — you will only see a masked version afterwards.
+              somewhere safe. You will only see a masked version afterwards.
             </>
           )}
           {url && (
@@ -891,7 +891,7 @@ function RetryConfigDrawer({
         </div>
         <ul style={{ margin: 0, paddingLeft: 18, color: "#334155", fontSize: 12.5 }}>
           {schedule.length === 0 ? (
-            <li>No retries — one attempt only.</li>
+            <li>No retries. One attempt only.</li>
           ) : (
             schedule.map((s) => <li key={s}>{s}</li>)
           )}

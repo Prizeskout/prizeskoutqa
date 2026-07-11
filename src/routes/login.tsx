@@ -65,10 +65,10 @@ function LoginPage() {
 
   return (
     <AuthShell>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A1A18", margin: 0 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: "#ffffff", margin: 0 }}>
         Sign in to your account
       </h1>
-      <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 6, margin: "6px 0 0 0" }}>
+      <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6, margin: "6px 0 0 0" }}>
         Enter your credentials to access your dashboard
       </p>
 
@@ -113,7 +113,7 @@ function LoginPage() {
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  color: "#9A9A9A",
+                  color: "#6B7280",
                 }}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -152,7 +152,7 @@ function LoginPage() {
             style={{
               fontSize: 12,
               fontWeight: 500,
-              color: "#EA580C",
+              color: "#EF681A",
               textDecoration: "none",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
@@ -174,21 +174,10 @@ function LoginPage() {
           marginTop: 16,
           textAlign: "center",
           fontSize: 13,
-          color: "#6B6B6B",
+          color: "#9CA3AF",
         }}
       >
-        Do not have an account?{" "}
-        <Link
-          to="/signup"
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: "#EA580C",
-            textDecoration: "none",
-          }}
-        >
-          Get started
-        </Link>
+        Contact <a href="mailto:hello@prizeskout.qa" style={{ fontSize: 13, fontWeight: 600, color: "#EF681A", textDecoration: "none" }}>hello@prizeskout.qa</a> to request access.
       </div>
 
       <LegalFooter />

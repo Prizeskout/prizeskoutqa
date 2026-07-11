@@ -46,7 +46,7 @@ function NotFoundPage() {
               color: "#FFFFFF",
               fontWeight: 700,
               fontSize: 16,
-              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              fontFamily: '"Manrope", sans-serif',
               lineHeight: 1,
             }}
           >
@@ -57,7 +57,7 @@ function NotFoundPage() {
               fontSize: 17,
               fontWeight: 700,
               color: "#1A1A18",
-              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              fontFamily: '"Manrope", sans-serif',
             }}
           >
             PrizeSkout
@@ -69,7 +69,7 @@ function NotFoundPage() {
             fontWeight: 700,
             color: "#EA580C",
             lineHeight: 1,
-            fontFamily: '"Plus Jakarta Sans", sans-serif',
+            fontFamily: '"Manrope", sans-serif',
           }}
         >
           404
@@ -80,7 +80,7 @@ function NotFoundPage() {
             fontWeight: 600,
             color: "#1A1A18",
             marginTop: 16,
-            fontFamily: '"Plus Jakarta Sans", sans-serif',
+            fontFamily: '"Manrope", sans-serif',
           }}
         >
           Page not found
@@ -91,7 +91,7 @@ function NotFoundPage() {
             color: "#6B6B6B",
             marginTop: 8,
             lineHeight: 1.6,
-            fontFamily: '"Plus Jakarta Sans", sans-serif',
+            fontFamily: '"Manrope", sans-serif',
           }}
         >
           The page you are looking for does not exist or has been moved.
@@ -108,7 +108,7 @@ function NotFoundPage() {
               padding: "10px 20px",
               borderRadius: 8,
               textDecoration: "none",
-              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              fontFamily: '"Manrope", sans-serif',
               transition: "background-color 0.15s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
@@ -122,7 +122,7 @@ function NotFoundPage() {
               fontSize: 13,
               color: "#6B6B6B",
               textDecoration: "none",
-              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              fontFamily: '"Manrope", sans-serif',
               transition: "color 0.15s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#EA580C")}
@@ -136,7 +136,7 @@ function NotFoundPage() {
   );
 }
 
-const SITE_URL = "https://prizeskoutqa.lovable.app";
+const SITE_URL = "https://prizeskout.qa";
 
 const ORGANIZATION_JSON_LD = {
   "@context": "https://schema.org",
@@ -214,7 +214,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap",
       },
       {
         rel: "stylesheet",
@@ -271,7 +271,7 @@ function RootComponent() {
               z-index: 1000;
               background: #EA580C;
               color: #FFFFFF;
-              font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+              font-family: 'Manrope', system-ui, -apple-system, sans-serif;
               font-size: 13px;
               font-weight: 600;
               padding: 10px 16px;

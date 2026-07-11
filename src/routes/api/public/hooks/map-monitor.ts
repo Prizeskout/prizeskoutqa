@@ -1,4 +1,4 @@
-// MAP Compliance monitor hook â€” POST /api/public/hooks/map-monitor
+// MAP Compliance monitor hook — POST /api/public/hooks/map-monitor
 //
 // Iterates all active MAP agreements, scrapes each retailer URL via Firecrawl,
 // falls back to competitor_prices column data, detects price violations, and
@@ -9,7 +9,7 @@
 // pg_cron schedule (run 30 min after competitor scrape):
 //   SELECT cron.schedule('map-compliance-monitor', '30 6,15 * * *', $$
 //     SELECT net.http_post(
-//       url     := 'https://prizeskoutqa.prizeskoutqatar.workers.dev/api/public/hooks/map-monitor',
+//       url     := 'https://prizeskout.qa/api/public/hooks/map-monitor',
 //       headers := '{"Authorization":"Bearer <SUPABASE_PUBLISHABLE_KEY>"}'::jsonb,
 //       body    := '{}'::jsonb
 //     );
@@ -25,7 +25,8 @@ export const Route = createFileRoute("/api/public/hooks/map-monitor")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env.SUPABASE_PUBLISHABLE_KEY;
+        // Auth: prefer CRON_SECRET; falls back to SUPABASE_PUBLISHABLE_KEY while pg_cron schedules are migrated.
+        const expected = process.env.CRON_SECRET ?? process.env.SUPABASE_PUBLISHABLE_KEY;
         const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         if (!expected || !token || token !== expected) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {

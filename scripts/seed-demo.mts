@@ -12,11 +12,11 @@ const SRK     = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const ANON    = process.env.SUPABASE_PUBLISHABLE_KEY!;
 
 const DEMO_EMAIL    = "dvdegwu@gmail.com";
-const DEMO_PASSWORD = "(existing account — password unchanged)";
+const DEMO_PASSWORD = "(existing account � password unchanged)";
 
 const admin = createClient(BASE, SRK, { auth: { persistSession: false } });
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 function ok<T>(res: { data: T; error: unknown }, label: string): T {
   if (res.error) {
@@ -27,11 +27,11 @@ function ok<T>(res: { data: T; error: unknown }, label: string): T {
 }
 
 function log(msg: string) { console.log(msg); }
-function section(s: string) { log(`\n${"═".repeat(60)}\n  ${s}\n${"═".repeat(60)}`); }
+function section(s: string) { log(`\n${"-".repeat(60)}\n  ${s}\n${"-".repeat(60)}`); }
 
-// ── Step 1: look up existing account ─────────────────────────────────────────
+// -- Step 1: look up existing account -----------------------------------------
 
-section("STEP 1 — Look up existing account");
+section("STEP 1 � Look up existing account");
 
 const { data: { users }, error: listErr } = await admin.auth.admin.listUsers({ perPage: 1000 });
 if (listErr) { console.error("listUsers failed", listErr); process.exit(1); }
@@ -45,9 +45,9 @@ if (!existing) {
 const userId = existing.id;
 log(`  Found user: ${userId}  (${DEMO_EMAIL})`);
 
-// ── Step 2: resolve account IDs ───────────────────────────────────────────────
+// -- Step 2: resolve account IDs -----------------------------------------------
 
-section("STEP 2 — Resolve account / licensee IDs");
+section("STEP 2 � Resolve account / licensee IDs");
 
 const { data: ctxRows, error: ctxErr } = await (admin as any)
   .rpc("current_account_for_user", { _user_id: userId });
@@ -59,9 +59,9 @@ const { account_id: accountId, licensee_id: licenseeId } = ctxRows[0];
 log(`  account_id:  ${accountId}`);
 log(`  licensee_id: ${licenseeId}`);
 
-// ── Step 3: ROI model categories ──────────────────────────────────────────────
+// -- Step 3: ROI model categories ----------------------------------------------
 
-section("STEP 3 — Seed roi_model_categories");
+section("STEP 3 � Seed roi_model_categories");
 
 const roiRows = [
   {
@@ -88,9 +88,9 @@ ok(
 );
 log(`  Inserted ${roiRows.length} ROI categories`);
 
-// ── Step 4: catalog_products ──────────────────────────────────────────────────
+// -- Step 4: catalog_products --------------------------------------------------
 
-section("STEP 4 — Seed catalog_products");
+section("STEP 4 � Seed catalog_products");
 
 type Product = {
   sku: string; name: string; brand: string; category: string;
@@ -98,19 +98,19 @@ type Product = {
 };
 
 const PRODUCTS: Product[] = [
-  // Electronics – clean match
+  // Electronics � clean match
   { sku: "SONY-WH1000XM5",    name: "Sony WH-1000XM5 Headphones",  brand: "Sony",    category: "Electronics", list_price: 1299, cogs: 750 },
-  // Electronics – ceiling clamp (5% above lowest competitor fires)
+  // Electronics � ceiling clamp (5% above lowest competitor fires)
   { sku: "APPLE-MBA-M3-256",  name: "Apple MacBook Air M3 256GB",  brand: "Apple",   category: "Electronics", list_price: 4799, cogs: 3200 },
-  // Electronics – clean match
+  // Electronics � clean match
   { sku: "APPLE-IP15PRO-256", name: "iPhone 15 Pro 256GB",         brand: "Apple",   category: "Electronics", list_price: 4499, cogs: 3100 },
-  // Grocery – Carrefour ceiling clamp
+  // Grocery � Carrefour ceiling clamp
   { sku: "ARIEL-AUTO-3KG",    name: "Ariel Automatic Detergent 3kg", brand: "Ariel", category: "Grocery",     list_price: 48   },
-  // Grocery – Carrefour ceiling clamp (staple)
+  // Grocery � Carrefour ceiling clamp (staple)
   { sku: "ALMEERA-RICE-5KG",  name: "Al Meera Basmati Rice 5kg",   brand: "Al Meera", category: "Grocery",   list_price: 49   },
-  // Home – COGS floor override (won't sell below cost)
+  // Home � COGS floor override (won't sell below cost)
   { sku: "DYSON-V15-DETECT",  name: "Dyson V15 Detect Vacuum",     brand: "Dyson",   category: "Home",        list_price: 2799, cogs: 2200 },
-  // Home – clean match (COGS floor passes)
+  // Home � clean match (COGS floor passes)
   { sku: "PHILIPS-AP-AC2889", name: "Philips Air Purifier AC2889",  brand: "Philips", category: "Home",       list_price: 899,  cogs: 550 },
 ];
 
@@ -139,9 +139,9 @@ const productIdBySku = new Map<string, string>(
 );
 log(`  Inserted ${insertedProducts?.length} catalog_products`);
 
-// ── Step 5: catalog_prices ────────────────────────────────────────────────────
+// -- Step 5: catalog_prices ----------------------------------------------------
 
-section("STEP 5 — Seed catalog_prices");
+section("STEP 5 � Seed catalog_prices");
 
 const priceRows = PRODUCTS.map(p => ({
   account_id:  accountId,
@@ -159,9 +159,9 @@ ok(
 );
 log(`  Inserted ${priceRows.length} catalog_prices`);
 
-// ── Step 6: margin_inputs (COGS) ──────────────────────────────────────────────
+// -- Step 6: margin_inputs (COGS) ----------------------------------------------
 
-section("STEP 6 — Seed margin_inputs (COGS)");
+section("STEP 6 � Seed margin_inputs (COGS)");
 
 const marginRows = PRODUCTS
   .filter(p => p.cogs !== undefined)
@@ -183,9 +183,9 @@ ok(
 );
 log(`  Inserted ${marginRows.length} margin_inputs (COGS rows)`);
 
-// ── Step 7: competitor_product_urls ──────────────────────────────────────────
+// -- Step 7: competitor_product_urls ------------------------------------------
 
-section("STEP 7 — Seed competitor_product_urls");
+section("STEP 7 � Seed competitor_product_urls");
 
 type CompRow = { product: string; competitor: string; url: string; category: string };
 const compUrls: CompRow[] = [];
@@ -203,46 +203,46 @@ function addComp(product: string, category: string, competitor: string) {
 // The engine reads product category from the competitor='self' URL row.
 // Without a self URL the category is "" and category-scoped rules (ceiling,
 // COGS floor) never fire. Add one self entry per product carrying the category;
-// no matching scrape row → engine falls back to catalog_prices for self-price.
+// no matching scrape row ? engine falls back to catalog_prices for self-price.
 
-// Sony WH-1000XM5 – self + 3 competitors
+// Sony WH-1000XM5 � self + 3 competitors
 addComp("Sony WH-1000XM5 Headphones", "Electronics", "self");
 addComp("Sony WH-1000XM5 Headphones", "Electronics", "Carrefour");
 addComp("Sony WH-1000XM5 Headphones", "Electronics", "Lulu");
 addComp("Sony WH-1000XM5 Headphones", "Electronics", "Amazon");
 
-// MacBook Air M3 – self + 3 competitors (5% ceiling fires)
+// MacBook Air M3 � self + 3 competitors (5% ceiling fires)
 addComp("Apple MacBook Air M3 256GB", "Electronics", "self");
 addComp("Apple MacBook Air M3 256GB", "Electronics", "Carrefour");
 addComp("Apple MacBook Air M3 256GB", "Electronics", "Amazon");
 addComp("Apple MacBook Air M3 256GB", "Electronics", "Talabat");
 
-// iPhone 15 Pro – self + 3 competitors
+// iPhone 15 Pro � self + 3 competitors
 addComp("iPhone 15 Pro 256GB", "Electronics", "self");
 addComp("iPhone 15 Pro 256GB", "Electronics", "Carrefour");
 addComp("iPhone 15 Pro 256GB", "Electronics", "Lulu");
 addComp("iPhone 15 Pro 256GB", "Electronics", "Amazon");
 
-// Ariel – self + 3 competitors (Carrefour ceiling fires)
+// Ariel � self + 3 competitors (Carrefour ceiling fires)
 addComp("Ariel Automatic Detergent 3kg", "Grocery", "self");
 addComp("Ariel Automatic Detergent 3kg", "Grocery", "Carrefour");
 addComp("Ariel Automatic Detergent 3kg", "Grocery", "Lulu");
 addComp("Ariel Automatic Detergent 3kg", "Grocery", "Amazon");
 
-// Al Meera Basmati Rice – self + 3 competitors (Carrefour ceiling fires)
+// Al Meera Basmati Rice � self + 3 competitors (Carrefour ceiling fires)
 addComp("Al Meera Basmati Rice 5kg", "Grocery", "self");
 addComp("Al Meera Basmati Rice 5kg", "Grocery", "Carrefour");
 addComp("Al Meera Basmati Rice 5kg", "Grocery", "Lulu");
 addComp("Al Meera Basmati Rice 5kg", "Grocery", "Talabat");
 
-// Dyson V15 – self + 4 competitors (COGS floor fires)
+// Dyson V15 � self + 4 competitors (COGS floor fires)
 addComp("Dyson V15 Detect Vacuum", "Home", "self");
 addComp("Dyson V15 Detect Vacuum", "Home", "Carrefour");
 addComp("Dyson V15 Detect Vacuum", "Home", "Lulu");
 addComp("Dyson V15 Detect Vacuum", "Home", "Amazon");
 addComp("Dyson V15 Detect Vacuum", "Home", "Talabat");
 
-// Philips Air Purifier – self + 3 competitors
+// Philips Air Purifier � self + 3 competitors
 addComp("Philips Air Purifier AC2889", "Home", "self");
 addComp("Philips Air Purifier AC2889", "Home", "Carrefour");
 addComp("Philips Air Purifier AC2889", "Home", "Lulu");
@@ -258,15 +258,15 @@ ok(
 );
 log(`  Inserted ${compUrls.length} competitor_product_urls`);
 
-// ── Step 8: competitor_scrapes ────────────────────────────────────────────────
+// -- Step 8: competitor_scrapes ------------------------------------------------
 
-section("STEP 8 — Seed competitor_scrapes");
+section("STEP 8 � Seed competitor_scrapes");
 
 // Prices are deliberately varied so the engine produces interesting outcomes:
-//   - MacBook: Carrefour cheapest (3,999) → ceiling 3,999*1.05=4,199 clamps median 4,366 → 4,199
-//   - Ariel: Carrefour cheapest (36.50) → ceiling clamps median 39.13 → 36.50
-//   - Basmati: Carrefour cheapest (34.90) → ceiling clamps median 37.13 → 34.90
-//   - Dyson: ALL competitors below COGS+15=2,215 → floor clamps median 2,124 → 2,215
+//   - MacBook: Carrefour cheapest (3,999) ? ceiling 3,999*1.05=4,199 clamps median 4,366 ? 4,199
+//   - Ariel: Carrefour cheapest (36.50) ? ceiling clamps median 39.13 ? 36.50
+//   - Basmati: Carrefour cheapest (34.90) ? ceiling clamps median 37.13 ? 34.90
+//   - Dyson: ALL competitors below COGS+15=2,215 ? floor clamps median 2,124 ? 2,215
 
 const SCRAPE_PRICES: Record<string, Record<string, number>> = {
   "Sony WH-1000XM5 Headphones":   { Carrefour: 1149, Lulu: 1199, Amazon: 1179 },
@@ -304,9 +304,9 @@ ok(
 );
 log(`  Inserted ${scrapeRows.length} competitor_scrapes`);
 
-// ── Step 8b: ensure pricing_rules exist ──────────────────────────────────────
+// -- Step 8b: ensure pricing_rules exist --------------------------------------
 
-section("STEP 8b — Ensure pricing_rules (upsert if missing)");
+section("STEP 8b � Ensure pricing_rules (upsert if missing)");
 
 const { data: existingRules } = await (admin.from("pricing_rules") as any)
   .select("id")
@@ -342,12 +342,12 @@ if ((existingRules?.length ?? 0) === 0) {
   );
   log(`  Inserted ${ruleRows.length} structured pricing_rules`);
 } else {
-  log(`  ${existingRules!.length} pricing_rules already present — skipping`);
+  log(`  ${existingRules!.length} pricing_rules already present � skipping`);
 }
 
-// ── Step 9: clear existing seed recs ─────────────────────────────────────────
+// -- Step 9: clear existing seed recs -----------------------------------------
 
-section("STEP 9 — Clear seed pricing_recommendations");
+section("STEP 9 � Clear seed pricing_recommendations");
 
 const { error: delErr, count: delCount } = await (admin.from("pricing_recommendations") as any)
   .delete({ count: "exact" })
@@ -357,9 +357,9 @@ const { error: delErr, count: delCount } = await (admin.from("pricing_recommenda
 if (delErr) { console.error("delete seed recs failed", delErr); }
 else { log(`  Deleted ${delCount} existing recommendation rows`); }
 
-// ── Step 10: run the engine ───────────────────────────────────────────────────
+// -- Step 10: run the engine ---------------------------------------------------
 
-section("STEP 10 — Run pricing engine");
+section("STEP 10 � Run pricing engine");
 
 const result = await runPricingEngineForUser(admin as any, userId);
 
@@ -369,16 +369,16 @@ log(`  seeds wiped:  ${result.seedsWiped}`);
 
 if (result.reasons.length) {
   log("\n  Skip reasons:");
-  result.reasons.forEach(r => log(`    · ${r}`));
+  result.reasons.forEach(r => log(`    � ${r}`));
 }
 
-// ── Step 11: print diagnostics ────────────────────────────────────────────────
+// -- Step 11: print diagnostics ------------------------------------------------
 
-section("STEP 11 — Recommendation diagnostics");
+section("STEP 11 � Recommendation diagnostics");
 
 for (const d of result.diagnostics) {
   if (d.skipped) {
-    log(`\n  ⊘ SKIPPED  ${d.product}`);
+    log(`\n  ? SKIPPED  ${d.product}`);
     log(`    reason: ${d.skipReason}`);
     continue;
   }
@@ -387,7 +387,7 @@ for (const d of result.diagnostics) {
     .map(e => `[${e.ruleType}] ${e.reason}`)
     .join("\n             ");
 
-  log(`\n  ✓ ${d.product}`);
+  log(`\n  ? ${d.product}`);
   log(`    self-price src: ${d.selfPriceSource}`);
   log(`    current price:  QAR ${d.selfPrice}`);
   log(`    competitor min: QAR ${d.competitorMin}`);
@@ -396,9 +396,9 @@ for (const d of result.diagnostics) {
   if (ruleNote) log(`    rule override:  ${ruleNote}`);
 }
 
-// ── Step 12: read back from DB ────────────────────────────────────────────────
+// -- Step 12: read back from DB ------------------------------------------------
 
-section("STEP 12 — Verify DB rows written");
+section("STEP 12 � Verify DB rows written");
 
 const { data: written } = await (admin.from("pricing_recommendations") as any)
   .select("product, current_price, recommended_price, source, confidence, reason")
@@ -408,10 +408,10 @@ const { data: written } = await (admin.from("pricing_recommendations") as any)
 
 log(`\n  ${written?.length ?? 0} computed rows in pricing_recommendations:\n`);
 for (const r of written ?? []) {
-  log(`  ${r.product.padEnd(36)} ${String(r.current_price).padStart(7)} → ${String(r.recommended_price).padStart(7)} QAR   conf=${r.confidence}`);
+  log(`  ${r.product.padEnd(36)} ${String(r.current_price).padStart(7)} ? ${String(r.recommended_price).padStart(7)} QAR   conf=${r.confidence}`);
 }
 
 section("DONE");
 log(`\n  Login`);
 log(`  Email: ${DEMO_EMAIL}`);
-log(`  URL:   https://prizeskoutqa.prizeskoutqatar.workers.dev/login\n`);
+log(`  URL:   https://prizeskout.qa/login\n`);

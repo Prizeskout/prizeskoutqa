@@ -605,7 +605,8 @@ function FieldsTable({ fields, title }: { fields: FieldSpec[]; title: string }) 
   return (
     <section style={{ marginBottom: 28 }}>
       <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1A1A18" }}>{title}</h3>
-      <div style={{ border: "1px solid #E8E8E5", borderRadius: 8, overflow: "hidden", background: "#FFF" }}>
+      <div style={{ border: "1px solid #E8E8E5", borderRadius: 8, overflowX: "auto", background: "#FFF" }}>
+        <div style={{ minWidth: 520 }}>
         <div
           style={{
             display: "grid",
@@ -668,6 +669,7 @@ function FieldsTable({ fields, title }: { fields: FieldSpec[]; title: string }) 
             </div>
           </div>
         ))}
+        </div>
       </div>
     </section>
   );
@@ -831,7 +833,8 @@ function EndpointDetail({ group, endpoint }: { group: GroupSpec; endpoint: Endpo
       {endpoint.errors && endpoint.errors.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1A1A18" }}>Errors</h3>
-          <div style={{ border: "1px solid #E8E8E5", borderRadius: 8, overflow: "hidden", background: "#FFF" }}>
+          <div style={{ border: "1px solid #E8E8E5", borderRadius: 8, overflowX: "auto", background: "#FFF" }}>
+            <div style={{ minWidth: 360 }}>
             {endpoint.errors.map((er, i) => (
               <div
                 key={er.status + er.code}
@@ -858,6 +861,7 @@ function EndpointDetail({ group, endpoint }: { group: GroupSpec; endpoint: Endpo
                 <span style={{ color: "#3A3A38" }}>{er.description}</span>
               </div>
             ))}
+            </div>
           </div>
         </section>
       )}

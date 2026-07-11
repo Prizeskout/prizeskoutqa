@@ -1,8 +1,8 @@
 /**
  * Apply migration 20260621020000_wire_cron_hooks.sql then:
  *   1. Print full cron.job list with schedule + URL verification
- *   2. Manually invoke every hook over HTTP → show status + effect
- *   3. Create a test group_campaigns row expiring NOW, wait ≤90s for
+ *   2. Manually invoke every hook over HTTP ? show status + effect
+ *   3. Create a test group_campaigns row expiring NOW, wait =90s for
  *      pg_cron group-expire tick, then confirm via cron.job_run_details
  */
 
@@ -11,7 +11,7 @@ import { readFileSync } from "fs";
 import { createClient } from "@supabase/supabase-js";
 
 const DB  = "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
-const WORKER = "https://prizeskoutqa.prizeskoutqatar.workers.dev";
+const WORKER = "https://prizeskout.qa";
 const ANON   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zmhla2N2bWNibnRqbmR2aHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzczNjYsImV4cCI6MjA5NTE1MzM2Nn0.Xz_3vvq_EY_jYBkXggC-7U_CdUSDLwroLTbyVlxfGMo";
 const SVC    = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const SUPA_URL = "https://itfhekcvmcbntjndvhzg.supabase.co";
@@ -22,14 +22,14 @@ const LIC_ID  = "1a1d0a17-366b-4242-b504-ae78ee68b32c";
 const admin = createClient(SUPA_URL, SVC);
 
 function section(t: string) {
-  console.log(`\n${"═".repeat(72)}\n  ${t}\n${"═".repeat(72)}`);
+  console.log(`\n${"-".repeat(72)}\n  ${t}\n${"-".repeat(72)}`);
 }
-function pass(msg: string) { console.log(`  ✓ ${msg}`); }
-function fail(msg: string) { console.log(`  ✗ ${msg}`); }
+function pass(msg: string) { console.log(`  ? ${msg}`); }
+function fail(msg: string) { console.log(`  ? ${msg}`); }
 function info(msg: string) { console.log(`    ${msg}`); }
 
-// ── 1. Apply migration ────────────────────────────────────────────────────────
-section("STEP 1 — Apply migration 20260621020000_wire_cron_hooks.sql");
+// -- 1. Apply migration --------------------------------------------------------
+section("STEP 1 � Apply migration 20260621020000_wire_cron_hooks.sql");
 
 const client = new pg.Client({ connectionString: DB });
 await client.connect();
@@ -48,8 +48,8 @@ try {
   process.exit(1);
 }
 
-// ── 2. cron.job table ─────────────────────────────────────────────────────────
-section("STEP 2 — SELECT * FROM cron.job");
+// -- 2. cron.job table ---------------------------------------------------------
+section("STEP 2 � SELECT * FROM cron.job");
 
 const EXPECTED_WORKER = "prizeskoutqatar.workers.dev";
 const EXPECTED_KEY    = ANON;
@@ -58,27 +58,27 @@ const { rows: jobs } = await client.query<{
   jobid: string; jobname: string; schedule: string; command: string;
 }>("SELECT jobid, jobname, schedule, command FROM cron.job ORDER BY jobid");
 
-const HDR = ["jobid","jobname","schedule"].map(h=>h.padEnd(38)).join(" │ ");
-console.log(`\n  ${"─".repeat(HDR.length)}`);
+const HDR = ["jobid","jobname","schedule"].map(h=>h.padEnd(38)).join(" � ");
+console.log(`\n  ${"-".repeat(HDR.length)}`);
 console.log(`  ${HDR}`);
-console.log(`  ${"─".repeat(HDR.length)}`);
+console.log(`  ${"-".repeat(HDR.length)}`);
 for (const j of jobs) {
   const urlOk  = j.command.includes(EXPECTED_WORKER);
   const keyOk  = j.command.includes(EXPECTED_KEY);
-  const mark   = urlOk && keyOk ? "✓" : "✗";
+  const mark   = urlOk && keyOk ? "?" : "?";
   console.log(`  ${mark} ${j.jobid.padEnd(6)} ${j.jobname.padEnd(32)} ${j.schedule}`);
-  if (!urlOk) info(`  ← BAD URL (missing ${EXPECTED_WORKER})`);
-  if (!keyOk) info(`  ← BAD KEY`);
+  if (!urlOk) info(`  ? BAD URL (missing ${EXPECTED_WORKER})`);
+  if (!keyOk) info(`  ? BAD KEY`);
 }
-console.log(`  ${"─".repeat(HDR.length)}`);
+console.log(`  ${"-".repeat(HDR.length)}`);
 console.log(`\n  Total jobs: ${jobs.length}`);
 
 const allOk = jobs.every(j => j.command.includes(EXPECTED_WORKER) && j.command.includes(EXPECTED_KEY));
 if (allOk) pass("All jobs point at Workers URL with correct auth key");
 else        fail("Some jobs have wrong URL or missing auth key");
 
-// ── 3. Manual HTTP invocation of each hook ────────────────────────────────────
-section("STEP 3 — Manual HTTP invocation of each hook (one shot each)");
+// -- 3. Manual HTTP invocation of each hook ------------------------------------
+section("STEP 3 � Manual HTTP invocation of each hook (one shot each)");
 
 const HOOKS = [
   { name: "flash-start",               path: "/api/public/hooks/flash-start" },
@@ -95,9 +95,9 @@ const hookResults: Record<string, { status: number; body: unknown }> = {};
 for (const hook of HOOKS) {
   const url = `${WORKER}${hook.path}`;
   const t0  = Date.now();
-  // scrape-all takes 20-30s — skip in this pass (already verified in API05 smoke)
+  // scrape-all takes 20-30s � skip in this pass (already verified in API05 smoke)
   if (hook.name === "scrape-all") {
-    info(`${hook.name.padEnd(30)} — skipped (tested separately in smoke-competitor-intel)`);
+    info(`${hook.name.padEnd(30)} � skipped (tested separately in smoke-competitor-intel)`);
     continue;
   }
   try {
@@ -109,7 +109,7 @@ for (const hook of HOOKS) {
     const body = await res.json().catch(() => ({}));
     const ms   = Date.now() - t0;
     hookResults[hook.name] = { status: res.status, body };
-    const mark  = res.status === 200 ? "✓" : "✗";
+    const mark  = res.status === 200 ? "?" : "?";
     const label = hook.name.padEnd(30);
     console.log(`  ${mark} ${label}  HTTP ${res.status}  (${ms}ms)`);
     const b = body as Record<string, unknown>;
@@ -127,9 +127,9 @@ for (const hook of HOOKS) {
   }
 }
 
-// ── 4. Idempotency check ──────────────────────────────────────────────────────
-section("STEP 4 — Idempotency: fire per-minute hooks a second time");
-info("Re-invoking flash-start, flash-end, group-expire, webhook-retry …");
+// -- 4. Idempotency check ------------------------------------------------------
+section("STEP 4 � Idempotency: fire per-minute hooks a second time");
+info("Re-invoking flash-start, flash-end, group-expire, webhook-retry �");
 
 for (const name of ["flash-start","flash-end","group-expire","webhook-retry"]) {
   const hook  = HOOKS.find(h => h.name === name)!;
@@ -153,8 +153,8 @@ for (const name of ["flash-start","flash-end","group-expire","webhook-retry"]) {
   if (!doubled) pass(`${name}: second fire idempotent (counts did not grow)`);
 }
 
-// ── 5. pg_cron real-fire test ─────────────────────────────────────────────────
-section("STEP 5 — pg_cron real-fire: seed test campaign → wait for group-expire tick");
+// -- 5. pg_cron real-fire test -------------------------------------------------
+section("STEP 5 � pg_cron real-fire: seed test campaign ? wait for group-expire tick");
 
 // Insert a campaign that's already expired
 const expiredAt = new Date(Date.now() - 10_000).toISOString(); // 10s in the past
@@ -179,11 +179,11 @@ if (campErr) {
 }
 const campId = (campRow as { id: string }).id;
 pass(`Test campaign inserted: ${campId}`);
-info(`expiry_at = ${expiredAt} (already in the past — next cron tick should process it)`);
+info(`expiry_at = ${expiredAt} (already in the past � next cron tick should process it)`);
 
 // Record wall-clock so we can measure cron latency
 const seedTime = Date.now();
-info(`Waiting up to 90s for pg_cron to fire group-expire …`);
+info(`Waiting up to 90s for pg_cron to fire group-expire �`);
 
 // Poll cron.job_run_details for a run AFTER seedTime for job 'group-expire'
 let cronFired = false;
@@ -214,7 +214,7 @@ while (Date.now() < POLL_UNTIL) {
   }
 
   const elapsed = Math.round((Date.now() - seedTime) / 1000);
-  process.stdout.write(`\r    Polling … ${elapsed}s elapsed`);
+  process.stdout.write(`\r    Polling � ${elapsed}s elapsed`);
 }
 console.log(); // newline after progress
 
@@ -235,12 +235,12 @@ if (cronFired && runDetail) {
     .single();
   const c = camp as { id: string; status: string; updated_at: string } | null;
   if (c && c.status !== "active") {
-    pass(`Campaign ${campId} transitioned: active → ${c.status} ✓`);
+    pass(`Campaign ${campId} transitioned: active ? ${c.status} ?`);
   } else {
     info(`Campaign status: ${c?.status ?? "unknown"} (may still be processing)`);
   }
 } else {
-  fail("pg_cron did not fire within 90s — check cron.job_run_details manually");
+  fail("pg_cron did not fire within 90s � check cron.job_run_details manually");
   info("Hint: SELECT * FROM cron.job_run_details WHERE start_time > now() - interval '2 min' ORDER BY start_time DESC;");
 }
 
@@ -248,8 +248,8 @@ if (cronFired && runDetail) {
 await (admin as any).from("group_campaigns").delete().eq("id", campId);
 info(`Test campaign ${campId} cleaned up`);
 
-// ── 6. Final cron.job snapshot ────────────────────────────────────────────────
-section("STEP 6 — Final cron.job (full command preview)");
+// -- 6. Final cron.job snapshot ------------------------------------------------
+section("STEP 6 � Final cron.job (full command preview)");
 
 const { rows: finalJobs } = await client.query<{
   jobid: string; jobname: string; schedule: string; command: string;
@@ -258,10 +258,10 @@ const { rows: finalJobs } = await client.query<{
 for (const j of finalJobs) {
   const urlMatch  = (j.command.match(/url\s*:=\s*'([^']+)'/) ?? [])[1] ?? "?";
   const hasKey    = j.command.includes(ANON);
-  console.log(`\n  [${"✓".padEnd(1)}] jobid=${j.jobid}  schedule=${j.schedule}`);
+  console.log(`\n  [${"?".padEnd(1)}] jobid=${j.jobid}  schedule=${j.schedule}`);
   console.log(`      name : ${j.jobname}`);
   console.log(`      url  : ${urlMatch}`);
-  console.log(`      auth : ${hasKey ? "✓ correct publishable key" : "✗ KEY MISMATCH"}`);
+  console.log(`      auth : ${hasKey ? "? correct publishable key" : "? KEY MISMATCH"}`);
 }
 
 await client.end();

@@ -1,24 +1,24 @@
 /**
- * HTTP smoke test for Loyalty & Segment Pricing (API 11 — /v1/loyalty/*)
+ * HTTP smoke test for Loyalty & Segment Pricing (API 11 � /v1/loyalty/*)
  *
  * Test sequence:
- *  1. POST /v1/loyalty/segments     — create gold_member (8% off, pct_discount)
- *  2. POST /v1/loyalty/segments     — create shukran_member (Shukran GCC stub)
- *  3. POST /v1/loyalty/segments     — create clearance_extreme (40% off, floor-clamp demo)
- *  4. GET  /v1/loyalty/segments     — list all 3 segments
- *  5. POST /v1/loyalty/price        — gold_member: 8% off → 1195.08 (no clamp)
- *  6. POST /v1/loyalty/price        — shukran_member: GCC program stub in response
- *  7. POST /v1/loyalty/price        — clearance_extreme: 40% off → floor clamp → ~923.30
- *  8. POST /v1/loyalty/price        — A/B test: customer_id assignment returned
- *  9. POST /v1/loyalty/outcome      — record purchase outcome for A/B variant
- * 10. POST /v1/loyalty/segments     — duplicate segment name → 409
- * 11. POST /v1/loyalty/price        — wrong scope key → 403
+ *  1. POST /v1/loyalty/segments     � create gold_member (8% off, pct_discount)
+ *  2. POST /v1/loyalty/segments     � create shukran_member (Shukran GCC stub)
+ *  3. POST /v1/loyalty/segments     � create clearance_extreme (40% off, floor-clamp demo)
+ *  4. GET  /v1/loyalty/segments     � list all 3 segments
+ *  5. POST /v1/loyalty/price        � gold_member: 8% off ? 1195.08 (no clamp)
+ *  6. POST /v1/loyalty/price        � shukran_member: GCC program stub in response
+ *  7. POST /v1/loyalty/price        � clearance_extreme: 40% off ? floor clamp ? ~923.30
+ *  8. POST /v1/loyalty/price        � A/B test: customer_id assignment returned
+ *  9. POST /v1/loyalty/outcome      � record purchase outcome for A/B variant
+ * 10. POST /v1/loyalty/segments     � duplicate segment name ? 409
+ * 11. POST /v1/loyalty/price        � wrong scope key ? 403
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { createHash, randomBytes } from "crypto";
 
-const BASE     = "https://prizeskoutqa.prizeskoutqatar.workers.dev/api/public";
+const BASE     = "https://prizeskout.qa/api/public";
 const UID      = "bed12406-2798-47f7-a30c-5de559e90d6d";
 const MAIN_LIC = "1a1d0a17-366b-4242-b504-ae78ee68b32c";
 const SKU      = "SONY-WH1000XM5";
@@ -59,7 +59,7 @@ async function mainAccountId(): Promise<string> {
   return _accountId!;
 }
 
-// ─── HTTP helper ─────────────────────────────────────────────────────────────
+// --- HTTP helper -------------------------------------------------------------
 
 type Hit = { method: string; path: string; status: number; body: unknown; ms: number };
 
@@ -76,13 +76,13 @@ async function call(method: string, path: string, key: string, body?: unknown): 
 }
 
 function section(t: string) {
-  console.log(`\n${"═".repeat(72)}\n  ${t}\n${"═".repeat(72)}`);
+  console.log(`\n${"-".repeat(72)}\n  ${t}\n${"-".repeat(72)}`);
 }
 
 function render(label: string, hit: Hit, expectStatus: number) {
   const ok   = hit.status === expectStatus;
-  const icon = ok ? "✓" : "✗";
-  const flag = ok ? "" : ` ← UNEXPECTED (expected ${expectStatus})`;
+  const icon = ok ? "?" : "?";
+  const flag = ok ? "" : ` ? UNEXPECTED (expected ${expectStatus})`;
   console.log(`\n  ${icon} ${label}`);
   console.log(`    ${hit.method} ${hit.path}`);
   console.log(`    HTTP ${hit.status}${flag}  (${hit.ms} ms)`);
@@ -91,9 +91,9 @@ function render(label: string, hit: Hit, expectStatus: number) {
   return ok;
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
+// --- MAIN ---------------------------------------------------------------------
 
-console.log(`Live smoke test — Loyalty & Segment Pricing (API 11)`);
+console.log(`Live smoke test � Loyalty & Segment Pricing (API 11)`);
 console.log(`Worker: ${BASE.replace("/api/public", "")}`);
 
 let passed = 0;
@@ -134,8 +134,8 @@ try {
   if (badKeyRow) badScopeKeyId = badKeyRow.id;
   const BAD_KEY = badKey;
 
-  // ── Test 1 ───────────────────────────────────────────────────────────────────
-  section("TEST 1 — POST /v1/loyalty/segments  (gold_member, 8% pct_discount)");
+  // -- Test 1 -------------------------------------------------------------------
+  section("TEST 1 � POST /v1/loyalty/segments  (gold_member, 8% pct_discount)");
   const r1 = await call("POST", "/v1/loyalty/segments", KEY, {
     name:              "gold_member",
     display_label:     "Gold Member",
@@ -147,8 +147,8 @@ try {
 
   const goldSegId = (r1.body as any)?.id;
 
-  // ── Test 2 ───────────────────────────────────────────────────────────────────
-  section("TEST 2 — POST /v1/loyalty/segments  (shukran_member with GCC program stub)");
+  // -- Test 2 -------------------------------------------------------------------
+  section("TEST 2 � POST /v1/loyalty/segments  (shukran_member with GCC program stub)");
   const r2 = await call("POST", "/v1/loyalty/segments", KEY, {
     name:              "shukran_member",
     display_label:     "Shukran Member",
@@ -159,8 +159,8 @@ try {
   const ok2 = render("Create shukran_member segment", r2, 201);
   if (ok2) passed++; else failed++;
 
-  // ── Test 3 ───────────────────────────────────────────────────────────────────
-  section("TEST 3 — POST /v1/loyalty/segments  (clearance_extreme, 40% off, floor-clamp demo)");
+  // -- Test 3 -------------------------------------------------------------------
+  section("TEST 3 � POST /v1/loyalty/segments  (clearance_extreme, 40% off, floor-clamp demo)");
   const r3 = await call("POST", "/v1/loyalty/segments", KEY, {
     name:              "clearance_extreme",
     display_label:     "Extreme Clearance",
@@ -170,22 +170,22 @@ try {
   const ok3 = render("Create clearance_extreme segment", r3, 201);
   if (ok3) passed++; else failed++;
 
-  // ── Test 4 ───────────────────────────────────────────────────────────────────
-  section("TEST 4 — GET /v1/loyalty/segments  (list — expect 3 segments)");
+  // -- Test 4 -------------------------------------------------------------------
+  section("TEST 4 � GET /v1/loyalty/segments  (list � expect 3 segments)");
   const r4 = await call("GET", "/v1/loyalty/segments", KEY);
   const ok4base = render("List segments", r4, 200);
   const segCount = (r4.body as any)?.data?.length ?? 0;
   const ok4 = ok4base && segCount >= 3;
   if (ok4) {
-    console.log(`    → ${segCount} segments returned ✓`);
+    console.log(`    ? ${segCount} segments returned ?`);
     passed++;
   } else {
-    console.log(`    → got ${segCount} segments, expected ≥3 ✗`);
+    console.log(`    ? got ${segCount} segments, expected =3 ?`);
     failed++;
   }
 
-  // ── Test 5 ───────────────────────────────────────────────────────────────────
-  section("TEST 5 — POST /v1/loyalty/price  (gold_member: 8% off → 1195.08, no floor clamp)");
+  // -- Test 5 -------------------------------------------------------------------
+  section("TEST 5 � POST /v1/loyalty/price  (gold_member: 8% off ? 1195.08, no floor clamp)");
   // Pass base_price directly (no dynprice_config needed)
   // Pass min_margin_pct=0.10 so floor = 923.30 (only triggers if segment_price < floor)
   const r5 = await call("POST", "/v1/loyalty/price", KEY, {
@@ -202,15 +202,15 @@ try {
   const expected5 = Math.round(BASE_PRICE * 0.92 * 100) / 100;  // 1195.08
   const ok5 = ok5base && sp5 === expected5 && clamp5 === false;
   if (ok5) {
-    console.log(`    → segment_price=${sp5} ✓  floor=${floor5}  clamped=false ✓`);
+    console.log(`    ? segment_price=${sp5} ?  floor=${floor5}  clamped=false ?`);
     passed++;
   } else {
-    console.log(`    → segment_price=${sp5} (expected ${expected5})  floor=${floor5}  clamped=${clamp5} ✗`);
+    console.log(`    ? segment_price=${sp5} (expected ${expected5})  floor=${floor5}  clamped=${clamp5} ?`);
     failed++;
   }
 
-  // ── Test 6 ───────────────────────────────────────────────────────────────────
-  section("TEST 6 — POST /v1/loyalty/price  (shukran_member: GCC program stub in response)");
+  // -- Test 6 -------------------------------------------------------------------
+  section("TEST 6 � POST /v1/loyalty/price  (shukran_member: GCC program stub in response)");
   const r6 = await call("POST", "/v1/loyalty/price", KEY, {
     sku:          SKU,
     segment_name: "shukran_member",
@@ -221,16 +221,16 @@ try {
   const stub6 = (r6.body as any)?.gcc_program_stub;
   const ok6 = ok6base && stub6?.program === "shukran" && stub6?.status === "stub";
   if (ok6) {
-    console.log(`    → gcc_program_stub.program="${stub6.program}" status="${stub6.status}" ✓`);
-    console.log(`    → note: "${stub6.note?.slice(0, 80)}..."`);
+    console.log(`    ? gcc_program_stub.program="${stub6.program}" status="${stub6.status}" ?`);
+    console.log(`    ? note: "${stub6.note?.slice(0, 80)}..."`);
     passed++;
   } else {
-    console.log(`    → expected gcc_program_stub with program=shukran, got: ${JSON.stringify(stub6)} ✗`);
+    console.log(`    ? expected gcc_program_stub with program=shukran, got: ${JSON.stringify(stub6)} ?`);
     failed++;
   }
 
-  // ── Test 7 ───────────────────────────────────────────────────────────────────
-  section("TEST 7 — POST /v1/loyalty/price  (clearance_extreme: 40% off → floor clamp → ~923.30)");
+  // -- Test 7 -------------------------------------------------------------------
+  section("TEST 7 � POST /v1/loyalty/price  (clearance_extreme: 40% off ? floor clamp ? ~923.30)");
   const r7 = await call("POST", "/v1/loyalty/price", KEY, {
     sku:            SKU,
     segment_name:   "clearance_extreme",
@@ -251,21 +251,21 @@ try {
   if (hasMarginData) {
     ok7 = ok7base && cl7 === true && Math.abs(sp7 - EXPECTED_FLOOR) < 0.02;
     if (ok7) {
-      console.log(`    → floor clamp: proposed ${rawProposed7} → clamped to ${sp7} (floor=${fl7}) ✓`);
-      console.log(`    → price_label: "${label7}"`);
+      console.log(`    ? floor clamp: proposed ${rawProposed7} ? clamped to ${sp7} (floor=${fl7}) ?`);
+      console.log(`    ? price_label: "${label7}"`);
     } else {
-      console.log(`    → expected floor clamp to ~${EXPECTED_FLOOR}, got sp=${sp7} fl=${fl7} cl=${cl7} ✗`);
+      console.log(`    ? expected floor clamp to ~${EXPECTED_FLOOR}, got sp=${sp7} fl=${fl7} cl=${cl7} ?`);
     }
   } else {
-    // No margin_inputs in DB — floor not applied, but test still passes
+    // No margin_inputs in DB � floor not applied, but test still passes
     ok7 = ok7base;
-    console.log(`    → no margin_inputs for ${SKU} in catalog; floor=null (expected for missing cost data)`);
-    console.log(`    → segment_price=${sp7} (raw 40% discount, unprotected) — WARN: floor not active`);
+    console.log(`    ? no margin_inputs for ${SKU} in catalog; floor=null (expected for missing cost data)`);
+    console.log(`    ? segment_price=${sp7} (raw 40% discount, unprotected) � WARN: floor not active`);
   }
   if (ok7) passed++; else failed++;
 
-  // ── Test 8 ───────────────────────────────────────────────────────────────────
-  section("TEST 8 — POST /v1/loyalty/price  (A/B test: assignment returned)");
+  // -- Test 8 -------------------------------------------------------------------
+  section("TEST 8 � POST /v1/loyalty/price  (A/B test: assignment returned)");
   const r8 = await call("POST", "/v1/loyalty/price", KEY, {
     sku:          SKU,
     segment_name: "gold_member",
@@ -278,16 +278,16 @@ try {
   const ab8     = (r8.body as any)?.ab;
   const ok8 = ok8base && ab8?.assignment_id && ["control","treatment"].includes(ab8?.variant);
   if (ok8) {
-    console.log(`    → ab.variant="${ab8.variant}"  assignment_id=${ab8.assignment_id} ✓`);
-    console.log(`    → segment_price=${(r8.body as any)?.segment_price}  (control=base, treatment=discounted)`);
+    console.log(`    ? ab.variant="${ab8.variant}"  assignment_id=${ab8.assignment_id} ?`);
+    console.log(`    ? segment_price=${(r8.body as any)?.segment_price}  (control=base, treatment=discounted)`);
     passed++;
   } else {
-    console.log(`    → expected ab.variant in [control,treatment], got: ${JSON.stringify(ab8)} ✗`);
+    console.log(`    ? expected ab.variant in [control,treatment], got: ${JSON.stringify(ab8)} ?`);
     failed++;
   }
 
-  // ── Test 9 ───────────────────────────────────────────────────────────────────
-  section("TEST 9 — POST /v1/loyalty/outcome  (record purchase outcome)");
+  // -- Test 9 -------------------------------------------------------------------
+  section("TEST 9 � POST /v1/loyalty/outcome  (record purchase outcome)");
   const r9 = await call("POST", "/v1/loyalty/outcome", KEY, {
     assignment_id: ab8?.assignment_id ?? null,
     customer_id:   "cust_smoketest_ab_001",
@@ -300,33 +300,33 @@ try {
   const ok9base = render("Record purchase outcome", r9, 201);
   const ok9 = ok9base && (r9.body as any)?.recorded === true;
   if (ok9) {
-    console.log(`    → recorded=true  id=${(r9.body as any)?.id} ✓`);
+    console.log(`    ? recorded=true  id=${(r9.body as any)?.id} ?`);
     passed++;
   } else {
-    console.log(`    → expected recorded=true, got: ${JSON.stringify(r9.body)} ✗`);
+    console.log(`    ? expected recorded=true, got: ${JSON.stringify(r9.body)} ?`);
     failed++;
   }
 
-  // ── Test 10 ──────────────────────────────────────────────────────────────────
-  section("TEST 10 — POST /v1/loyalty/segments  (duplicate name → 409)");
+  // -- Test 10 ------------------------------------------------------------------
+  section("TEST 10 � POST /v1/loyalty/segments  (duplicate name ? 409)");
   const r10 = await call("POST", "/v1/loyalty/segments", KEY, {
     name:              "gold_member",
     display_label:     "Gold Member Duplicate",
     pricing_rule_type: "pct_discount",
     rule_value:        0.10,
   });
-  const ok10 = render("Duplicate segment name → 409 conflict", r10, 409);
+  const ok10 = render("Duplicate segment name ? 409 conflict", r10, 409);
   if (ok10) passed++; else failed++;
 
-  // ── Test 11 ──────────────────────────────────────────────────────────────────
-  section("TEST 11 — POST /v1/loyalty/price  (wrong scope → 403)");
+  // -- Test 11 ------------------------------------------------------------------
+  section("TEST 11 � POST /v1/loyalty/price  (wrong scope ? 403)");
   const r11 = await call("POST", "/v1/loyalty/price", BAD_KEY, {
     sku:          SKU,
     segment_name: "gold_member",
     base_price:   BASE_PRICE,
     channel:      CHANNEL,
   });
-  const ok11 = render("Wrong scope key → 403 forbidden", r11, 403);
+  const ok11 = render("Wrong scope key ? 403 forbidden", r11, 403);
   if (ok11) passed++; else failed++;
 
 } catch (e) {
@@ -336,8 +336,8 @@ try {
   await cleanup();
 }
 
-console.log(`\n${"═".repeat(72)}`);
+console.log(`\n${"-".repeat(72)}`);
 console.log(`  RESULTS: ${passed} passed  ${failed} failed  (${passed + failed} total)`);
-console.log(`${"═".repeat(72)}\n`);
+console.log(`${"-".repeat(72)}\n`);
 
 if (failed > 0) process.exit(1);
