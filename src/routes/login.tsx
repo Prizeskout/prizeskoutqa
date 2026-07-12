@@ -172,12 +172,42 @@ function LoginPage() {
       <div
         style={{
           marginTop: 16,
-          textAlign: "center",
-          fontSize: 13,
-          color: "#9CA3AF",
+          padding: "14px 16px",
+          borderRadius: 10,
+          border: "1px solid rgba(255,255,255,0.07)",
+          background: "#0E0F12",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
         }}
       >
-        Contact <a href="mailto:hello@prizeskout.qa" style={{ fontSize: 13, fontWeight: 600, color: "#EF681A", textDecoration: "none" }}>hello@prizeskout.qa</a> to request access.
+        <span style={{ fontSize: 12.5, color: "#6B7280" }}>
+          No password? Use email link
+        </span>
+        <Link
+          to="/access"
+          style={{
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: "#EF681A",
+            textDecoration: "none",
+            flexShrink: 0,
+          }}
+        >
+          Send access link →
+        </Link>
+      </div>
+
+      <div
+        style={{
+          marginTop: 16,
+          textAlign: "center",
+          fontSize: 11.5,
+          color: "#52555C",
+        }}
+      >
+        Contact <a href="mailto:hello@prizeskout.qa" style={{ fontSize: 11.5, fontWeight: 500, color: "#6B7280", textDecoration: "none" }}>hello@prizeskout.qa</a> to request access.
       </div>
 
       <LegalFooter />
