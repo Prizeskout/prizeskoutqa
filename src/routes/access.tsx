@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Mail, Store, KeyRound } from "lucide-react";
 import {
@@ -8,7 +8,6 @@ import {
   PrimaryAuthButton,
   LegalFooter,
 } from "@/components/auth/AuthShared";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/access")({
   head: () => ({
@@ -38,7 +37,6 @@ function AccessPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const router = useRouter();
 
   function switchMode(m: "email" | "code") {
     setMode(m);
@@ -55,7 +53,6 @@ function AccessPage() {
     }
     setSubmitting(true);
 
-    let otpToken: string;
     try {
       const res = await fetch("/api/auth/email-bridge", {
         method: "POST",
@@ -63,32 +60,19 @@ function AccessPage() {
         body: JSON.stringify({ email: trimmed, store_name: storeName.trim() || undefined }),
       });
       const json = await res.json();
-      if (!res.ok || !json.token) {
-        setError(json.error ?? "No account found for this email.");
+      if (!res.ok || !json.action_link) {
+        setError(json.error ?? "Could not verify access. Please try again.");
         setSubmitting(false);
         return;
       }
-      otpToken = json.token;
+      // Redirect the browser directly to the magic link — same mechanism as
+      // clicking the link in an email, guaranteed to work regardless of
+      // Supabase project auth settings.
+      window.location.href = json.action_link;
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
-      return;
     }
-
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email: trimmed,
-      token: otpToken,
-      type: "magiclink",
-    });
-
-    if (verifyError) {
-      setError("Could not verify access. Please try again.");
-      setSubmitting(false);
-      return;
-    }
-
-    await router.invalidate();
-    navigate({ to: "/dashboard" });
   };
 
   const handleCodeSubmit = async (e: FormEvent) => {

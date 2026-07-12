@@ -38,34 +38,52 @@ export const Route = createFileRoute("/api/auth/email-bridge")({
         });
 
         const origin = new URL(request.url).origin;
+        const redirectTo = `${origin}/dashboard`;
+
+        // Try to generate a magic link. If the user doesn't exist yet, create
+        // them first (email_confirm: true skips the confirmation requirement).
+        let actionLink: string | null = null;
 
         const { data, error } = await admin.auth.admin.generateLink({
           type: "magiclink",
           email,
-          options: { redirectTo: `${origin}/dashboard` },
+          options: { redirectTo },
         });
 
-        if (error || !data?.properties?.action_link) {
-          return new Response(
-            JSON.stringify({ error: "No account found for this email." }),
-            { status: 404, headers: { "Content-Type": "application/json" } },
-          );
-        }
+        if (!error && data?.properties?.action_link) {
+          actionLink = data.properties.action_link;
+        } else {
+          // User likely doesn't exist — create them, then generate the link.
+          const { error: createError } = await admin.auth.admin.createUser({
+            email,
+            email_confirm: true,
+          });
 
-        // Extract the raw token from the action_link URL — more reliable than
-        // hashed_token across different Supabase project auth configurations.
-        const actionUrl = new URL(data.properties.action_link);
-        const token = actionUrl.searchParams.get("token");
+          if (createError && createError.message !== "A user with this email address has already been registered") {
+            return new Response(
+              JSON.stringify({ error: "Could not create access for this email." }),
+              { status: 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
 
-        if (!token) {
-          return new Response(
-            JSON.stringify({ error: "Could not generate access token." }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          );
+          const { data: data2, error: error2 } = await admin.auth.admin.generateLink({
+            type: "magiclink",
+            email,
+            options: { redirectTo },
+          });
+
+          if (error2 || !data2?.properties?.action_link) {
+            return new Response(
+              JSON.stringify({ error: "Could not generate access link." }),
+              { status: 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          actionLink = data2.properties.action_link;
         }
 
         return new Response(
-          JSON.stringify({ token, email }),
+          JSON.stringify({ action_link: actionLink }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
       },
