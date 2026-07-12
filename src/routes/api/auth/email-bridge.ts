@@ -45,15 +45,27 @@ export const Route = createFileRoute("/api/auth/email-bridge")({
           options: { redirectTo: `${origin}/dashboard` },
         });
 
-        if (error || !data?.properties?.hashed_token) {
+        if (error || !data?.properties?.action_link) {
           return new Response(
             JSON.stringify({ error: "No account found for this email." }),
             { status: 404, headers: { "Content-Type": "application/json" } },
           );
         }
 
+        // Extract the raw token from the action_link URL — more reliable than
+        // hashed_token across different Supabase project auth configurations.
+        const actionUrl = new URL(data.properties.action_link);
+        const token = actionUrl.searchParams.get("token");
+
+        if (!token) {
+          return new Response(
+            JSON.stringify({ error: "Could not generate access token." }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
+        }
+
         return new Response(
-          JSON.stringify({ token_hash: data.properties.hashed_token }),
+          JSON.stringify({ token, email }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
       },

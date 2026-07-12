@@ -43,7 +43,7 @@ function AccessPage() {
 
     // Step 1: ask the server to generate a sign-in token for this email.
     // The server uses the service role key — no email is dispatched to the user.
-    let token_hash: string;
+    let otpToken: string;
     try {
       const res = await fetch("/api/auth/email-bridge", {
         method: "POST",
@@ -51,12 +51,12 @@ function AccessPage() {
         body: JSON.stringify({ email: trimmed, store_name: storeName.trim() || undefined }),
       });
       const json = await res.json();
-      if (!res.ok || !json.token_hash) {
+      if (!res.ok || !json.token) {
         setError(json.error ?? "No account found for this email.");
         setSubmitting(false);
         return;
       }
-      token_hash = json.token_hash;
+      otpToken = json.token;
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
@@ -65,7 +65,8 @@ function AccessPage() {
 
     // Step 2: exchange the token for a live session — no redirect, no email click.
     const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash,
+      email: trimmed,
+      token: otpToken,
       type: "magiclink",
     });
 
