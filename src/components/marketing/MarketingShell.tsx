@@ -20,7 +20,7 @@ const FL: React.CSSProperties = {
 
 const LAYER_TAG: React.CSSProperties = {
   display: "block",
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
   fontSize: 10,
   letterSpacing: "0.14em",
   color: "#6B7180",
@@ -176,7 +176,7 @@ function Footer() {
               <FA label="Agent CFO" />
               <FA label="Dispute Audit Agent">
                 <span style={{
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
                   fontSize: 9.5, letterSpacing: "0.1em",
                   color: "#FF5A1F",
                   border: "1px solid rgba(255,90,31,0.35)",
@@ -223,7 +223,7 @@ function Footer() {
         }}>
           <div style={{ color: "#6B7180", fontSize: 13.5 }}>
             © 2026 PrizeSkout · QFC-licensed, Doha, Qatar
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: "#6B7180" }}>
+            <span style={{ fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace", fontSize: 11.5, color: "#6B7180" }}>
               {" "}· QFC No. 04412
             </span>
           </div>
@@ -264,7 +264,6 @@ function Footer() {
 }
 
 const SHELL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
   @keyframes ps-fade-in { from { opacity: 0 } to { opacity: 1 } }
   @keyframes ps-dropdown-in {
     from { opacity: 0; transform: translateY(-4px) scale(0.98); }

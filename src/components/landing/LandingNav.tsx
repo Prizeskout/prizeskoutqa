@@ -5,7 +5,7 @@ import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 
 const OG = "#EF681A";
-const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 
 const MARKETS = [
   { code: "QA", currency: "QAR", country: "Qatar",                rate: 1.000 },

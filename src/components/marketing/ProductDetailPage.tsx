@@ -4,7 +4,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 const MONO =
-  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 
 export type ProductDetailProps = {
   eyebrow: string;

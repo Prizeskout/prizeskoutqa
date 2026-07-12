@@ -15,7 +15,7 @@ export const Route = createFileRoute("/onboarding")({
 const OG = "#EF681A";
 const GN = "#10B981";
 const BG = "#080809";
-const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 
 const STEPS = [
   { label: "Store Config",    sub: "Identify your business" },
@@ -598,10 +598,9 @@ function OnboardingPage() {
     <div style={{
       minHeight: "100vh", background: BG, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", padding: "24px 16px",
-      fontFamily: "'Inter', system-ui, sans-serif",
+      fontFamily: "system-ui, -apple-system, sans-serif",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
         @media(min-width:600px){.ob-card{padding:36px 40px!important}}
       `}</style>
 

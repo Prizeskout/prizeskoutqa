@@ -4,7 +4,7 @@ import { MarginRulesTab } from "./MarginRulesTab";
 import { LocationsTab } from "./LocationsTab";
 import { NotificationsTab } from "./NotificationsTab";
 
-const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 const OG = "#EF681A";
 
 function StoreAccessTab() {

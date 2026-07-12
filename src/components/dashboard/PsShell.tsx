@@ -27,7 +27,6 @@ const PsRegionContext = createContext<{ region: PsRegion; currency: string }>({ 
 export function usePsRegion() { return useContext(PsRegionContext); }
 
 const PS_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 [data-ps-theme="dark"] {
   --ps-page:#080809; --ps-surface-2:#0B0C0E; --ps-surface-3:#0e0f12; --ps-card:#101116;
   --ps-card-veil:rgba(18,19,26,0.4); --ps-veil-strong:rgba(18,19,26,0.6);
@@ -52,7 +51,7 @@ const PS_CSS = `
   --ps-slider-track:#E5E7EB; --ps-header-bg:rgba(244,245,246,0.85);
   --ps-thumb-border:#ffffff;
 }
-.ps-root { font-family:'Manrope',system-ui,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
+.ps-root { font-family:system-ui,-apple-system,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
 .ps-root ::-webkit-scrollbar { width:8px; height:8px; }
 .ps-root ::-webkit-scrollbar-track { background:transparent; }
 .ps-root ::-webkit-scrollbar-thumb { background:var(--ps-scroll); border-radius:8px; }
@@ -210,7 +209,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
           <span style={{ width: 8, height: 8, borderRadius: 999, background: "#10B981", animation: "psPulse 2.4s infinite", flexShrink: 0 }} />
           <div style={{ lineHeight: 1.3 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>{t("psShell.defendLoopOnline")}</div>
-            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "'JetBrains Mono',monospace" }}>{t("psShell.edgeNodesHealthy")}</div>
+            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace" }}>{t("psShell.edgeNodesHealthy")}</div>
           </div>
         </div>
 
@@ -221,7 +220,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
             background: "var(--ps-chip-2)",
             border: "1px solid var(--ps-border)", display: "flex", alignItems: "center",
             justifyContent: "center", fontSize: 12, fontWeight: 700,
-            color: "var(--ps-text-3)", fontFamily: "'JetBrains Mono',monospace",
+            color: "var(--ps-text-3)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace",
           }}>
             {getInitials(displayName, user?.email)}
           </div>
@@ -277,7 +276,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <h1 style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: "-0.4px", color: "var(--ps-text)" }}>{title}</h1>
           <span style={{
-            fontSize: 10, fontWeight: 600, color: "#10B981", fontFamily: "'JetBrains Mono',monospace",
+            fontSize: 10, fontWeight: 600, color: "#10B981", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace",
             border: "1px solid rgba(16,185,129,0.28)", background: "rgba(16,185,129,0.10)",
             padding: "2px 7px", borderRadius: 6,
           }}>{t("psShell.liveBadge")}</span>
@@ -311,7 +310,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
             <button key={r} onClick={() => onRegionChange(r)} style={{
               ...segBtn(region === r),
               ...(region === r ? { background: "#EF681A", color: "#fff" } : {}),
-              fontFamily: "'JetBrains Mono',monospace",
+              fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace",
             }}>
               {CURRENCY[r]}
             </button>

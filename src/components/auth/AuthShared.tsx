@@ -41,7 +41,7 @@ export function BrandLogoLight() {
   );
 }
 
-const MONO = "'JetBrains Mono', 'Fira Mono', monospace";
+const MONO = "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 const OG = "#EF681A";
 
 const METRICS = [
@@ -66,9 +66,8 @@ export function AuthLeftPanel() {
       flexDirection: "column",
       padding: "40px 44px",
       minHeight: "100vh",
-      fontFamily: "'Manrope', system-ui, sans-serif",
+      fontFamily: "system-ui, -apple-system, sans-serif",
     }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');`}</style>
 
       {/* Logo */}
       <div>
@@ -145,11 +144,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
         display: "flex",
         minHeight: "100vh",
         width: "100%",
-        fontFamily: "'Manrope', system-ui, -apple-system, sans-serif",
+        fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
         @media (max-width: 767px) { .auth-left-panel { display: none !important; } }
       `}</style>
       <div className="auth-left-panel" style={{ display: "flex", flex: 1 }}>

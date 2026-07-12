@@ -10,7 +10,7 @@
  */
 
 @theme inline {
-  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-sans: system-ui, -apple-system, sans-serif;
 
   --radius-card: 12px;
   --radius-button: 8px;
@@ -99,7 +99,7 @@
   body {
     margin: 0;
     padding: 0;
-    font-family: "Manrope", system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 1.6;

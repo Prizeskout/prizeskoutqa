@@ -18,7 +18,7 @@ import {
 } from "@/lib/api-spec";
 
 const FONT_MONO =
-  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 
 const METHOD_COLORS: Record<EndpointSpec["method"], { bg: string; fg: string }> = {
   GET: { bg: "rgba(34, 197, 94, 0.10)", fg: "#16A34A" },

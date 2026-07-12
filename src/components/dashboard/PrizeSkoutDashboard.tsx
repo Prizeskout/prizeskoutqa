@@ -10,10 +10,10 @@ interface Rule { name: string; desc: string; floor: number; active: boolean; }
 
 const OG = "#EF681A";
 const GN = "#10B981";
-const MONO = "'JetBrains Mono',monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
   @keyframes pk-pulse{0%,100%{opacity:1}50%{opacity:.3}}
   @keyframes pk-ring{0%,100%{opacity:1}50%{opacity:.35}}
   @keyframes pk-glow{from{}to{}}
@@ -363,7 +363,7 @@ export function PrizeSkoutDashboard() {
   return (
     <div className="ps-db" data-theme={theme} dir={dir}
       style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--text)",
-        fontFamily:"'Manrope',-apple-system,BlinkMacSystemFont,sans-serif",
+        fontFamily:"system-ui,-apple-system,sans-serif",
         display:"flex", alignItems:"stretch", overflowX:"hidden" }}>
       <style>{CSS}</style>
 

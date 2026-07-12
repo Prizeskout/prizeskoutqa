@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 const OG = "#EF681A";
 const GN = "#56C28A";
 const BG = "#080505";
-const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 
 // ── Market data ───────────────────────────────────────────────────────────────
 const MARKETS = [
@@ -942,7 +942,7 @@ function LandingPage() {
   return (
     <div
       data-lp-theme={dark ? "dark" : "light"}
-      style={{ position: "relative", minHeight: "100vh", width: "100%", background: dark ? BG : "#FAF9F7", color: dark ? "var(--lp-text)" : "#1A1A18", fontFamily: "'Manrope',-apple-system,BlinkMacSystemFont,sans-serif", WebkitFontSmoothing: "antialiased", transition: "background 0.2s, color 0.2s" }}
+      style={{ position: "relative", minHeight: "100vh", width: "100%", background: dark ? BG : "#FAF9F7", color: dark ? "var(--lp-text)" : "#1A1A18", fontFamily: "system-ui,-apple-system,sans-serif", WebkitFontSmoothing: "antialiased", transition: "background 0.2s, color 0.2s" }}
     >
       <style>{PAGE_CSS}</style>
       <Nav dark={dark} onToggleDark={toggleDark} market={market} onMarketChange={setMarket} />
@@ -960,7 +960,6 @@ function LandingPage() {
 }
 
 const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
   :root {
     --lp-text:#FAFAF9; --lp-text-2:#E7E2DF; --lp-text-3:#EDE8E5;
     --lp-text-code:#9C938F; --lp-text-max:#C9C2BE; --lp-rule-color:#C97B4A;

@@ -330,7 +330,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
           style={{
             fontSize: 10,
             color: "#9A9A9A",
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
           }}
@@ -368,7 +368,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
           fontSize: 12.5,
           lineHeight: 1.6,
           color: "#E5E2DB",
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
           whiteSpace: "pre",
         }}
       >

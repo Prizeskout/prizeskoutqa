@@ -31,7 +31,7 @@ function ForgotPasswordPage() {
         minHeight: "100vh",
         backgroundColor: "#FAFAF9",
         fontFamily:
-          "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+          "system-ui, -apple-system, sans-serif",
         padding: "10vh 24px 40px 24px",
       }}
     >

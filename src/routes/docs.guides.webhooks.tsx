@@ -27,7 +27,7 @@ export const Route = createFileRoute("/docs/guides/webhooks")({
 });
 
 const FONT_MONO =
-  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 
 function CodeBlock({ children, lang }: { children: string; lang?: string }) {
   return (

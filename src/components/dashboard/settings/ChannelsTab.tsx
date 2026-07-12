@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const OG  = "#EF681A";
 const GN  = "#10B981";
-const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 
 type ChannelStatus = "connected" | "pending" | "error" | "not_connected";
 

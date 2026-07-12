@@ -28,7 +28,7 @@ export const Route = createFileRoute("/docs/guides/quickstart")({
 });
 
 const FONT_MONO =
-  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 
 // ── Code block ─────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const OG = "#EF681A";
-const MONO = "'JetBrains Mono','SFMono-Regular',Menlo,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
 
 interface Outlet {
   id: string;

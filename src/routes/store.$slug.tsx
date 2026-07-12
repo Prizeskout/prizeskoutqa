@@ -62,7 +62,7 @@ function StorefrontContent({ scenario }: { scenario: DemoScenario }) {
     <div style={{
       minHeight: "100vh",
       background: "#FAFAFA",
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      fontFamily: "system-ui, -apple-system, sans-serif",
     }}>
       <StorefrontHeader scenario={scenario} appliedCount={appliedCount} />
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>

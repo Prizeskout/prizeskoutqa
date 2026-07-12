@@ -26,7 +26,7 @@ export const Route = createFileRoute("/docs/guides/authentication")({
 });
 
 const FONT_MONO =
-  "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
 
 const SCOPES: { scope: string; desc: string }[] = [
   { scope: "competitors.read", desc: "Read competitor prices, history, and detected patterns." },

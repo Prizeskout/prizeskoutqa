@@ -50,9 +50,8 @@ export function DemoPlayer({ currency = "QAR", dark = true }: { currency?: strin
 
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');`}</style>
       <div style={{ paddingTop: 0, marginBottom: 40 }}>
-        <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, letterSpacing: "0.1em", color: ACC, marginBottom: 12 }}>PRODUCT WALKTHROUGH</div>
+        <div style={{ fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace", fontSize: 11, letterSpacing: "0.1em", color: ACC, marginBottom: 12 }}>PRODUCT WALKTHROUGH</div>
         <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Watch PrizeSkout defend a margin in real time</h2>
       </div>
 
