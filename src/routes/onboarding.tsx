@@ -221,14 +221,16 @@ function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick?: 
 }
 
 function Step1({
-  storeName, setStoreName, region, setRegion, currency, setCurrency, onNext,
+  storeName, setStoreName, email, setEmail, region, setRegion, currency, setCurrency, onNext,
 }: {
   storeName: string; setStoreName: (v: string) => void;
+  email: string; setEmail: (v: string) => void;
   region: string; setRegion: (v: string) => void;
   currency: string; setCurrency: (v: string) => void;
   onNext: () => void;
 }) {
-  const canProceed = storeName.trim().length > 0 && region.length > 0 && currency.length > 0;
+  const emailValid = email.trim().length === 0 || email.includes("@");
+  const canProceed = storeName.trim().length > 0 && region.length > 0 && currency.length > 0 && email.trim().length > 0 && emailValid;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
@@ -239,6 +241,14 @@ function Step1({
       <div>
         <FieldLabel>Store Name</FieldLabel>
         <FocusInput value={storeName} onChange={setStoreName} placeholder="e.g. Al Noor Electronics" />
+      </div>
+
+      <div>
+        <FieldLabel>Email address</FieldLabel>
+        <FocusInput value={email} onChange={setEmail} placeholder="you@company.com" type="email" />
+        <div style={{ fontSize: 11, color: "#52555C", marginTop: 5 }}>
+          Used to access your dashboard from any device later.
+        </div>
       </div>
 
       <div>
@@ -555,6 +565,7 @@ function OnboardingPage() {
 
   // Step 1
   const [storeName, setStoreName] = useState("");
+  const [email, setEmail]         = useState("");
   const [region, setRegion]       = useState("");
   const [currency, setCurrency]   = useState("");
 
@@ -587,6 +598,16 @@ function OnboardingPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ merchant_id: mid, code }),
     }).catch(() => {});
+
+    // Create Supabase account in the background so the merchant can use
+    // email access immediately after onboarding without needing the code.
+    if (email.trim()) {
+      fetch("/api/auth/email-bridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), store_name: storeName.trim() }),
+      }).catch(() => {});
+    }
 
     setAccessCode(code);
     setStep(3);
@@ -629,6 +650,7 @@ function OnboardingPage() {
         ) : step === 0 ? (
           <Step1
             storeName={storeName} setStoreName={setStoreName}
+            email={email} setEmail={setEmail}
             region={region} setRegion={setRegion}
             currency={currency} setCurrency={setCurrency}
             onNext={() => setStep(1)}
