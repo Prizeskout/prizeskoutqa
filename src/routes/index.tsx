@@ -244,8 +244,8 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
             <NavLangSwitcher />
             <ThemeToggle dark={dark} onToggle={onToggleDark} />
           </div>
-          <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Dashboard</a>
-          <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
+          <a href="/dashboard" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Dashboard</a>
+          <a href="/access" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
@@ -290,11 +290,11 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
               <ThemeToggle dark={dark} onToggle={onToggleDark} />
             </div>
             <div style={{ padding: "16px 24px 32px", marginTop: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
-              <a href="/onboarding" onClick={() => setMobileOpen(false)}
+              <a href="/access" onClick={() => setMobileOpen(false)}
                 style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13, fontWeight: 600, color: "#080505", background: OG, borderRadius: 9, padding: "13px", textDecoration: "none" }}>
                 Connect a Store
               </a>
-              <a href="/onboarding" onClick={() => setMobileOpen(false)}
+              <a href="/dashboard" onClick={() => setMobileOpen(false)}
                 style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13, color: "#A8A29E", border: "1px solid #2A2422", borderRadius: 9, padding: "12px", textDecoration: "none" }}>
                 Dashboard
               </a>
@@ -323,7 +323,7 @@ function HeroSection({ dark }: { dark: boolean }) {
 
       {/* CTAs */}
       <div style={{ display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
-        <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
+        <a href="/access" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
           Get Access
         </a>
         <a href="/api-docs.html" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
