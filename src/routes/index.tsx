@@ -843,37 +843,65 @@ const FAQS = [
 ];
 
 function FAQSection() {
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const active = FAQS[activeIdx];
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
-      <div style={{ paddingTop: 40, marginBottom: 52 }}>
+      <style>{`
+        @keyframes ps-faq-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .ps-faq-answer { animation: ps-faq-in 0.28s cubic-bezier(.22,.68,0,1.2) both; }
+        .ps-faq-q-btn { transition: color 0.15s, background 0.15s; }
+        .ps-faq-q-btn:hover { background: var(--lp-surface-3) !important; }
+        @media(max-width:768px) { .ps-faq-layout { flex-direction:column !important; } .ps-faq-list { border-right:none !important; border-bottom:1px solid var(--lp-border-2) !important; } }
+      `}</style>
+      <div style={{ marginBottom: 48 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>FAQs</div>
         <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Everything you need to know</h2>
       </div>
-      <div style={{ border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)" }}>
-        {FAQS.map((faq, i) => (
-          <div key={i} style={{ borderBottom: i < FAQS.length - 1 ? "1px solid var(--lp-border-2)" : "none" }}>
+
+      <div className="ps-faq-layout" style={{ display: "flex", border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)", minHeight: 420 }}>
+        {/* Left: question list */}
+        <div className="ps-faq-list" style={{ width: "38%", flexShrink: 0, borderRight: "1px solid var(--lp-border-2)", overflowY: "auto" }}>
+          {FAQS.map((faq, i) => (
             <button
+              key={i}
               type="button"
-              onClick={() => setOpenIdx(openIdx === i ? null : i)}
+              className="ps-faq-q-btn"
+              onClick={() => setActiveIdx(i)}
               style={{
-                width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "22px 28px", background: "transparent", border: "none", cursor: "pointer",
-                textAlign: "left", gap: 20, fontFamily: "inherit",
+                display: "flex", alignItems: "flex-start", gap: 12, width: "100%",
+                padding: "14px 20px", background: activeIdx === i ? "var(--lp-surface-3)" : "transparent",
+                border: "none", borderBottom: "1px solid var(--lp-border-2)", cursor: "pointer",
+                textAlign: "left", fontFamily: "inherit",
               }}
             >
-              <span style={{ fontSize: 15.5, fontWeight: 600, color: "var(--lp-text-2)", lineHeight: 1.35 }}>{faq.q}</span>
-              <span style={{ width: 26, height: 26, borderRadius: "50%", border: "1px solid var(--lp-border-em)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: openIdx === i ? OG : "var(--lp-dim)", flexShrink: 0, transition: "all 0.15s" }}>
-                {openIdx === i ? "−" : "+"}
+              <span style={{ fontFamily: MONO, fontSize: 10, color: activeIdx === i ? OG : "var(--lp-faint)", flexShrink: 0, paddingTop: 2 }}>
+                {String(i + 1).padStart(2, "0")}
               </span>
+              <span style={{ fontSize: 13, fontWeight: activeIdx === i ? 600 : 400, color: activeIdx === i ? "var(--lp-text)" : "var(--lp-muted)", lineHeight: 1.45 }}>
+                {faq.q}
+              </span>
+              {activeIdx === i && (
+                <span style={{ marginLeft: "auto", flexShrink: 0, width: 3, alignSelf: "stretch", background: OG, borderRadius: 2 }} />
+              )}
             </button>
-            {openIdx === i && (
-              <div style={{ padding: "0 28px 24px", fontSize: 14.5, color: "var(--lp-muted)", lineHeight: 1.7, maxWidth: 720 }}>
-                {faq.a}
-              </div>
-            )}
+          ))}
+        </div>
+
+        {/* Right: answer */}
+        <div style={{ flex: 1, padding: "36px 40px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div key={activeIdx} className="ps-faq-answer">
+            <div style={{ fontFamily: MONO, fontSize: 10.5, color: OG, letterSpacing: "0.08em", marginBottom: 14 }}>
+              {String(activeIdx + 1).padStart(2, "0")} / {FAQS.length}
+            </div>
+            <h3 style={{ fontSize: "clamp(17px,1.6vw,22px)", fontWeight: 600, color: "var(--lp-text)", margin: "0 0 18px", lineHeight: 1.3 }}>
+              {active.q}
+            </h3>
+            <p style={{ fontSize: 15, color: "var(--lp-muted)", lineHeight: 1.75, margin: 0, maxWidth: 560 }}>
+              {active.a}
+            </p>
           </div>
-        ))}
+        </div>
       </div>
     </section>
   );
