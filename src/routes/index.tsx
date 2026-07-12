@@ -575,7 +575,7 @@ function LandingFooter() {
           <div>
             <img src={logoDark} alt="PrizeSkout" style={{ height: 26, width: "auto", display: "block", marginBottom: 18 }} />
             <p style={{ fontSize: 14.5, color: "#9BA1B0", lineHeight: 1.7, margin: "0 0 24px", maxWidth: 300 }}>
-              Real-time margin infrastructure for GCC commerce — plus autonomous agents that defend, audit, and recover your margin while you run the business.
+              Real time margin infrastructure for GCC commerce. Autonomous agents that defend, audit, and recover your margin while you run the business.
             </p>
             <div style={{ display: "flex", gap: 10 }}>
               {(["X", "in"] as const).map(lbl => (

@@ -121,7 +121,7 @@ function Footer() {
               <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
             <p style={{ marginTop: 18, fontSize: 14.5, lineHeight: 1.7, color: "#9BA1B0", maxWidth: 320 }}>
-              Real-time margin infrastructure for GCC commerce — plus autonomous agents that defend, audit, and recover your margin while you run the business.
+              Real time margin infrastructure for GCC commerce. Autonomous agents that defend, audit, and recover your margin while you run the business.
             </p>
             <div style={{ marginTop: 24, display: "flex", gap: 10 }}>
               {(["X", "in"] as const).map((lbl) => (
