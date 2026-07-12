@@ -86,7 +86,7 @@ export function AuthLeftPanel() {
           The pricing brain<br />behind commerce.
         </h1>
         <p style={{ fontSize: 13.5, color: "#6B7280", lineHeight: 1.65, margin: 0, maxWidth: 360 }}>
-          Set margin floors. Defend them automatically across every aggregator — no engineers required.
+          Set margin floors. Defend them automatically across every aggregator. No engineers required.
         </p>
 
         {/* Metric cards */}

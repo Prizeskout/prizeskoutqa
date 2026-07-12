@@ -114,7 +114,7 @@ function AccessPage() {
       </h1>
       <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6, margin: "6px 0 0 0" }}>
         {mode === "email"
-          ? "Enter your store email and you're in — no password needed."
+          ? "Enter your store email and you are in. No password needed."
           : "Enter the access code you received when you first connected."}
       </p>
 
