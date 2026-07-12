@@ -11,6 +11,7 @@
 //   SALLA_CLIENT_SECRET  — from apps.salla.dev
 
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getPublicOrigin } from "@/server/public-origin";
 
 const SALLA_AUTH_URL = "https://accounts.salla.sa/oauth2/auth";
 
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/api/auth/salla")({
           );
         }
 
-        const redirectUri = `${url.origin}/api/auth/salla/callback`;
+        const redirectUri = `${getPublicOrigin(request)}/api/auth/salla/callback`;
 
         const params = new URLSearchParams({
           client_id:     clientId,

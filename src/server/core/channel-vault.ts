@@ -20,6 +20,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { writeAuditLog, channelConnectSummary } from "./govern";
 import { syncPlatformCatalog } from "./platform-sync";
+import { getPublicOrigin } from "@/server/public-origin";
 
 // ---------------------------------------------------------------------------
 // Webhook helpers
@@ -240,7 +241,7 @@ export async function handleChannelConnect(
     const region = (body.region as string | undefined) ?? "QA";
 
     // Derive the public base URL from the incoming request origin
-    const origin = new URL(request.url).origin;
+    const origin = getPublicOrigin(request);
     webhookRegistration = await registerPlatformWebhook(
       platform,
       bearer_token as string,
@@ -278,7 +279,7 @@ export async function handleChannelConnect(
     status: "connected",
     connected_at: row.connected_at,
     scopes,
-    webhook_endpoint: `${new URL(request.url).origin}/api/webhooks/${platform}`,
+    webhook_endpoint: `${getPublicOrigin(request)}/api/webhooks/${platform}`,
     ...(webhookRegistration ? { webhook_registered: webhookRegistration.ok } : {}),
     ...(catalogSync ? { catalog_sync: catalogSync } : {}),
   }, 201);

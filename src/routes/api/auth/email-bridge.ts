@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { getPublicOrigin } from "@/server/public-origin";
 
 export const Route = createFileRoute("/api/auth/email-bridge")({
   server: {
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/api/auth/email-bridge")({
           auth: { autoRefreshToken: false, persistSession: false },
         });
 
-        const origin = new URL(request.url).origin;
+        const origin = getPublicOrigin(request);
         const redirectTo = `${origin}/dashboard`;
 
         // Try to generate a magic link. If the user doesn't exist yet, create

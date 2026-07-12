@@ -18,6 +18,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getPublicOrigin } from "@/server/public-origin";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 
 const ZID_TOKEN_URL    = "https://oauth.zid.sa/oauth/token";
@@ -92,7 +93,7 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         }
 
         const merchantId  = state;
-        const redirectUri = `${url.origin}/api/auth/zid/callback`;
+        const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
         // 1. Exchange authorization code for tokens
         let tokens: ZidTokenResponse;

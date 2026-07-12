@@ -11,6 +11,7 @@
 //   ZID_CLIENT_SECRET  — from partner.zid.sa
 
 import { createFileRoute } from "@tanstack/react-router";
+import { getPublicOrigin } from "@/server/public-origin";
 
 const ZID_AUTH_URL = "https://oauth.zid.sa/oauth/authorize";
 
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/api/auth/zid")({
           );
         }
 
-        const redirectUri = `${url.origin}/api/auth/zid/callback`;
+        const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
         const params = new URLSearchParams({
           client_id:     clientId,

@@ -10,6 +10,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
+import { getPublicOrigin } from "@/server/public-origin";
 
 const SALLA_TOKEN_URL = "https://accounts.salla.sa/oauth2/token";
 
@@ -87,7 +88,7 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
         }
 
         const merchantId  = state;
-        const redirectUri = `${url.origin}/api/auth/salla/callback`;
+        const redirectUri = `${getPublicOrigin(request)}/api/auth/salla/callback`;
 
         // 1. Exchange authorization code for access + refresh tokens
         let tokens: SallaTokenResponse;
