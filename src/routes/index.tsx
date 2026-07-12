@@ -792,7 +792,7 @@ function PricingSection({ market }: { market: Market }) {
 const FAQS = [
   {
     q: "What is PrizeSkout?",
-    a: "PrizeSkout is real-time pricing infrastructure for restaurants selling on GCC delivery aggregators. We monitor your prices, fees, and commissions across every channel — Talabat, Snoonu, Jahez, Noon Food, and Careem — and defend your margin automatically, so every order stays profitable.",
+    a: "PrizeSkout is real time pricing infrastructure for restaurants selling on GCC delivery aggregators. We monitor your prices, fees, and commissions across every channel including Talabat, Snoonu, Jahez, Noon Food, and Careem, and defend your margin automatically so every order stays profitable.",
   },
   {
     q: "Who is PrizeSkout for?",
@@ -800,19 +800,19 @@ const FAQS = [
   },
   {
     q: "What problem does it actually solve?",
-    a: "Most restaurants price their aggregator menus once, then never touch them while commissions, delivery fees, promotions, and platform charges quietly erode margin on every order. PrizeSkout gives you a live view of your true per-channel margin and adjusts channel prices within rules you set, so you stop discovering losses at the end of the month.",
+    a: "Most restaurants price their aggregator menus once, then never touch them while commissions, delivery fees, promotions, and platform charges quietly erode margin on every order. PrizeSkout gives you a live view of your true per channel margin and adjusts channel prices within rules you set, so you stop discovering losses at the end of the month.",
   },
   {
     q: "How does it work?",
-    a: "Four steps, running continuously: Sync — we connect to your aggregator channels and POS, pulling live menus, prices, fees, and commission structures. Decide — our engine calculates your true margin per item, per channel, factoring in commissions, packaging, and delivery costs. Defend — when margin drops below your threshold, PrizeSkout recommends or applies price adjustments within guardrails you control. Govern — every change is logged, auditable, and reversible. You stay in control; nothing moves without your rules approving it.",
+    a: "Four steps, running continuously. Sync connects to your aggregator channels and POS, pulling live menus, prices, fees, and commission structures. Decide calculates your true margin per item and per channel, factoring in commissions, packaging, and delivery costs. Defend recommends or applies price adjustments within guardrails you control whenever margin drops below your threshold. Govern logs every change so it is auditable and reversible. You stay in control and nothing moves without your rules approving it.",
   },
   {
     q: "Will PrizeSkout change my prices without asking me?",
-    a: "Only if you tell it to. You choose the mode: Review mode, where every recommendation waits for your approval, or Autopilot, where changes execute automatically inside min/max guardrails you define. Most operators start in Review mode and switch on Autopilot once they trust the engine.",
+    a: "Only if you tell it to. You choose the mode: Review mode, where every recommendation waits for your approval, or Autopilot, where changes execute automatically inside the min and max guardrails you define. Most operators start in Review mode and switch on Autopilot once they trust the engine.",
   },
   {
     q: "What is Margin by PrizeSkout?",
-    a: "Margin is our channel margin recovery tool — the fastest way to see exactly what each aggregator is costing you, outlet by outlet, item by item. It's mobile-first, takes minutes to set up, and is priced by one subscription so it scales with you.",
+    a: "Margin is our channel margin recovery tool and the fastest way to see exactly what each aggregator is costing you, outlet by outlet, item by item. It is mobile first, takes minutes to set up, and is priced as one subscription so it scales with you.",
   },
   {
     q: "Which delivery aggregators do you support?",
@@ -824,7 +824,7 @@ const FAQS = [
   },
   {
     q: "I run a marketplace, aggregator, or POS platform. Can I offer this under my own brand?",
-    a: "Yes. PrizeSkout is white-label-first. Platforms can embed our pricing and margin infrastructure under their own brand via API — talk to us about partnership terms.",
+    a: "Yes. PrizeSkout is built to be white labelled. Platforms can embed our pricing and margin infrastructure under their own brand via API. Talk to us about partnership terms.",
   },
   {
     q: "Is my data safe?",
@@ -836,11 +836,11 @@ const FAQS = [
   },
   {
     q: "Where is PrizeSkout based?",
-    a: "We're headquartered in Doha, Qatar, incorporated under the Qatar Financial Centre, and backed by Qatar Science & Technology Park (QSTP). We're GCC-native — built for this market's aggregators, currencies, and regulations from day one.",
+    a: "We are headquartered in Doha, Qatar, incorporated under the Qatar Financial Centre, and backed by Qatar Science and Technology Park (QSTP). We are GCC native, built for this market's aggregators, currencies, and regulations from day one.",
   },
   {
     q: "Do I need a developer to use it?",
-    a: "No. Margin and the PrizeSkout dashboard are built for operators, not engineers. The API and SDK exist for platforms and teams who want deeper integration — but you'll never need to touch them to defend your margin.",
+    a: "No. Margin and the PrizeSkout dashboard are built for operators, not engineers. The API and SDK exist for platforms and teams who want deeper integration, but you will never need to touch them to defend your margin.",
   },
 ];
 
