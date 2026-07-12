@@ -664,18 +664,29 @@ function OnboardingPage() {
             PRIZESKOUT · DATA PROCESSED IN-REGION · QFC-COMPLIANT
           </div>
           {!restoreMode && (
-            <button
-              type="button"
-              onClick={() => setRestoreMode(true)}
-              style={{
-                background: "transparent", border: "none",
-                fontFamily: MONO, fontSize: 13, color: "#52555C",
-                cursor: "pointer", padding: "12px 0",
-                textDecoration: "underline", textUnderlineOffset: 3,
-              }}
-            >
-              Already have an access code? Restore access →
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setRestoreMode(true)}
+                style={{
+                  background: "transparent", border: "none",
+                  fontFamily: MONO, fontSize: 13, color: "#52555C",
+                  cursor: "pointer", padding: "4px 0",
+                  textDecoration: "underline", textUnderlineOffset: 3,
+                }}
+              >
+                Already have an access code? Restore access →
+              </button>
+              <a
+                href="/access"
+                style={{
+                  fontFamily: MONO, fontSize: 13, color: "#52555C",
+                  textDecoration: "underline", textUnderlineOffset: 3,
+                }}
+              >
+                Or access via email →
+              </a>
+            </>
           )}
         </div>
       )}
