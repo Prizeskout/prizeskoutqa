@@ -73,8 +73,11 @@ import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.
 import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
+import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
+import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/connect'
 import { Route as ApiAuthZidRouteImport } from './routes/api/auth/zid'
 import { Route as ApiAuthSallaRouteImport } from './routes/api/auth/salla'
+import { Route as ApiAuthEmailBridgeRouteImport } from './routes/api/auth/email-bridge'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
@@ -409,6 +412,16 @@ const ApiChannelsStatusRoute = ApiChannelsStatusRouteImport.update({
   path: '/api/channels/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChannelsDisconnectRoute = ApiChannelsDisconnectRouteImport.update({
+  id: '/api/channels/disconnect',
+  path: '/api/channels/disconnect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChannelsConnectRoute = ApiChannelsConnectRouteImport.update({
+  id: '/api/channels/connect',
+  path: '/api/channels/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthZidRoute = ApiAuthZidRouteImport.update({
   id: '/api/auth/zid',
   path: '/api/auth/zid',
@@ -417,6 +430,11 @@ const ApiAuthZidRoute = ApiAuthZidRouteImport.update({
 const ApiAuthSallaRoute = ApiAuthSallaRouteImport.update({
   id: '/api/auth/salla',
   path: '/api/auth/salla',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthEmailBridgeRoute = ApiAuthEmailBridgeRouteImport.update({
+  id: '/api/auth/email-bridge',
+  path: '/api/auth/email-bridge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
@@ -535,8 +553,11 @@ export interface FileRoutesByFullPath {
   '/store/$slug': typeof StoreSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
+  '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/connect': typeof ApiChannelsConnectRoute
+  '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
@@ -610,8 +631,11 @@ export interface FileRoutesByTo {
   '/store/$slug': typeof StoreSlugRoute
   '/dashboard': typeof DashboardIndexRoute
   '/margin-dashboard': typeof MarginDashboardIndexRoute
+  '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/connect': typeof ApiChannelsConnectRoute
+  '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
@@ -690,8 +714,11 @@ export interface FileRoutesById {
   '/store/$slug': typeof StoreSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
+  '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/connect': typeof ApiChannelsConnectRoute
+  '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/console/team': typeof DashboardConsoleTeamRoute
@@ -771,8 +798,11 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/dashboard/'
     | '/margin-dashboard/'
+    | '/api/auth/email-bridge'
     | '/api/auth/salla'
     | '/api/auth/zid'
+    | '/api/channels/connect'
+    | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/webhooks/$platform'
     | '/dashboard/console/team'
@@ -846,8 +876,11 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/dashboard'
     | '/margin-dashboard'
+    | '/api/auth/email-bridge'
     | '/api/auth/salla'
     | '/api/auth/zid'
+    | '/api/channels/connect'
+    | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/webhooks/$platform'
     | '/dashboard/console/team'
@@ -925,8 +958,11 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/dashboard/'
     | '/margin-dashboard/'
+    | '/api/auth/email-bridge'
     | '/api/auth/salla'
     | '/api/auth/zid'
+    | '/api/channels/connect'
+    | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/webhooks/$platform'
     | '/dashboard/console/team'
@@ -976,8 +1012,11 @@ export interface RootRouteChildren {
   ProductsPricingRoute: typeof ProductsPricingRoute
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
   StoreSlugRoute: typeof StoreSlugRoute
+  ApiAuthEmailBridgeRoute: typeof ApiAuthEmailBridgeRoute
   ApiAuthSallaRoute: typeof ApiAuthSallaRouteWithChildren
   ApiAuthZidRoute: typeof ApiAuthZidRouteWithChildren
+  ApiChannelsConnectRoute: typeof ApiChannelsConnectRoute
+  ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
@@ -1441,6 +1480,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChannelsStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/channels/disconnect': {
+      id: '/api/channels/disconnect'
+      path: '/api/channels/disconnect'
+      fullPath: '/api/channels/disconnect'
+      preLoaderRoute: typeof ApiChannelsDisconnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/channels/connect': {
+      id: '/api/channels/connect'
+      path: '/api/channels/connect'
+      fullPath: '/api/channels/connect'
+      preLoaderRoute: typeof ApiChannelsConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid': {
       id: '/api/auth/zid'
       path: '/api/auth/zid'
@@ -1453,6 +1506,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/salla'
       fullPath: '/api/auth/salla'
       preLoaderRoute: typeof ApiAuthSallaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/email-bridge': {
+      id: '/api/auth/email-bridge'
+      path: '/api/auth/email-bridge'
+      fullPath: '/api/auth/email-bridge'
+      preLoaderRoute: typeof ApiAuthEmailBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/$': {
@@ -1716,8 +1776,11 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsPricingRoute: ProductsPricingRoute,
   ProductsPromotionsRoute: ProductsPromotionsRoute,
   StoreSlugRoute: StoreSlugRoute,
+  ApiAuthEmailBridgeRoute: ApiAuthEmailBridgeRoute,
   ApiAuthSallaRoute: ApiAuthSallaRouteWithChildren,
   ApiAuthZidRoute: ApiAuthZidRouteWithChildren,
+  ApiChannelsConnectRoute: ApiChannelsConnectRoute,
+  ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
@@ -1734,3 +1797,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
