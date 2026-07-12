@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter, redirect } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import {
@@ -12,17 +12,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
-    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
-  }),
+  beforeLoad: () => { throw redirect({ to: "/access" }); },
   head: () => ({
-    meta: [
-      { title: "Sign in | PrizeSkout" },
-      {
-        name: "description",
-        content: "Sign in to your PrizeSkout commerce intelligence dashboard.",
-      },
-    ],
+    meta: [{ title: "PrizeSkout" }],
   }),
   component: LoginPage,
 });

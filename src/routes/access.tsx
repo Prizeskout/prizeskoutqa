@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Mail, Store } from "lucide-react";
 import {
@@ -157,36 +157,6 @@ function AccessPage() {
           </PrimaryAuthButton>
         </div>
       </form>
-
-      <div
-        style={{
-          marginTop: 20,
-          padding: "14px 16px",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.07)",
-          background: "#0E0F12",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <span style={{ fontSize: 12.5, color: "#6B7280" }}>
-          Have a password?
-        </span>
-        <Link
-          to="/login"
-          style={{
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: "#EF681A",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
-        >
-          Sign in instead →
-        </Link>
-      </div>
 
       <LegalFooter />
     </AuthShell>
