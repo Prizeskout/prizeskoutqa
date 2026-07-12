@@ -535,51 +535,6 @@ function CardHeader({ idx, name, badge }: { idx: string; name: string; badge: st
   );
 }
 
-// ── LatencyBudget ─────────────────────────────────────────────────────────────
-const LATENCY_ROW_KEYS = [
-  { idx: "01", nodeKey: "landing.infra.latency.r1Node", detailKey: "landing.infra.latency.r1Detail", max: "50ms"   },
-  { idx: "02", nodeKey: "landing.infra.latency.r2Node", detailKey: "landing.infra.latency.r2Detail", max: "10ms"   },
-  { idx: "03", nodeKey: "landing.infra.latency.r3Node", detailKey: "landing.infra.latency.r3Detail", max: "40ms"   },
-  { idx: "04", nodeKey: "landing.infra.latency.r4Node", detailKey: "landing.infra.latency.r4Detail", max: "150ms"  },
-  { idx: "05", nodeKey: "landing.infra.latency.r5Node", detailKey: "landing.infra.latency.r5Detail", max: "600ms"  },
-  { idx: "06", nodeKey: "landing.infra.latency.r6Node", detailKey: "landing.infra.latency.r6Detail", max: "1000ms" },
-];
-
-function LatencyBudget() {
-  const { t } = useTranslation();
-  return (
-    <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.infra.latency.sectionLabel")}</div>
-          <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.latency.title")}</h2>
-        </div>
-        <div style={{ fontFamily: MONO, fontSize: 12, color: "var(--lp-muted-2)" }}>{t("landing.infra.latency.p99")}</div>
-      </div>
-      <div className="ps-latency-scroll">
-      <div className="ps-latency-min" style={{ border: "1px solid var(--lp-border-4)", borderRadius: 13, overflow: "hidden", background: "var(--lp-surface)" }}>
-        <div className="ps-latency-grid" style={{ display: "grid", gridTemplateColumns: "40px 1fr 1.3fr 130px", fontFamily: MONO, fontSize: 10.5, letterSpacing: "0.06em", color: "var(--lp-dim)", background: "var(--lp-surface-3)", borderBottom: "1px solid var(--lp-border-3)", padding: "13px 22px" }}>
-          <div>#</div><div>{t("landing.infra.latency.colNode")}</div><div className="ps-latency-op">{t("landing.infra.latency.colOp")}</div><div style={{ textAlign: "right" }}>{t("landing.infra.latency.colMax")}</div>
-        </div>
-        {LATENCY_ROW_KEYS.map(r => (
-          <div key={r.idx} className="ps-latency-grid" style={{ display: "grid", gridTemplateColumns: "40px 1fr 1.3fr 130px", alignItems: "center", padding: "15px 22px", borderBottom: "1px solid var(--lp-border-3)" }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: "var(--lp-faint)" }}>{r.idx}</div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: "var(--lp-text-3)" }}>{t(r.nodeKey)}</div>
-            <div className="ps-latency-op" style={{ fontSize: 13, color: "var(--lp-muted-2)" }}>{t(r.detailKey)}</div>
-            <div style={{ textAlign: "right", fontFamily: MONO, fontSize: 14, fontWeight: 600, color: "var(--lp-text)" }}>{r.max}</div>
-          </div>
-        ))}
-        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 130px", alignItems: "center", padding: "18px 22px", background: "var(--lp-surface-3)", borderTop: "1px solid var(--lp-border-3)" }}>
-          <div />
-          <div style={{ fontSize: 14, fontWeight: 600, color: OG }}>{t("landing.infra.latency.totalLabel")}</div>
-          <div style={{ textAlign: "right", fontFamily: MONO, fontSize: 18, fontWeight: 700, color: OG }}>1,850ms</div>
-        </div>
-      </div>
-      </div>{/* end ps-latency-scroll */}
-    </section>
-  );
-}
-
 // ── Deploy CTA + Footer ───────────────────────────────────────────────────────
 function DeployCTA({ dark }: { dark: boolean }) {
   const { t } = useTranslation();
@@ -943,7 +898,6 @@ function LandingPage() {
       <HeroSection dark={dark} />
       <DemoPlayer currency={market.currency} dark={dark} />
       <SurfaceMatrix />
-      <LatencyBudget />
       <PricingSection market={market} />
       <FAQSection />
       <CredentialStrip />
@@ -994,8 +948,7 @@ const PAGE_CSS = `
   .ps-nav-utils  { display:flex; align-items:center; gap:10px; }
   .ps-flow-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .ps-surface-grid { display:grid; grid-template-columns:1fr 1fr; }
-  .ps-latency-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .ps-lp-footer { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr 1fr; gap:48px; }
+.ps-lp-footer { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr 1fr; gap:48px; }
   .ps-status-dot { animation: ps-status-pulse 2.4s ease-in-out infinite; }
   @keyframes ps-status-pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
   @media(prefers-reduced-motion:reduce){.ps-status-dot{animation:none}}
@@ -1026,9 +979,7 @@ const PAGE_CSS = `
     .ps-surface-grid { grid-template-columns:1fr; }
     .ps-surface-grid > div { border-right:none !important; border-bottom:1px solid var(--lp-border-2) !important; }
     .ps-surface-grid > div:last-child { border-bottom:none !important; }
-    .ps-latency-grid { grid-template-columns: 40px 1fr 90px !important; }
-    .ps-latency-op   { display: none !important; }
-    .ps-lp-footer { grid-template-columns:1fr 1fr; gap:20px; }
+.ps-lp-footer { grid-template-columns:1fr 1fr; gap:20px; }
     .ps-lp-footer > div:first-child { grid-column:1/-1; }
   }
   /* small mobile ≤ 480px */
