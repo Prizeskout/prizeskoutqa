@@ -310,12 +310,6 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
 function HeroSection({ dark }: { dark: boolean }) {
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "72px clamp(24px,5vw,72px) 84px" }}>
-      {/* Badge */}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 9, fontFamily: MONO, fontSize: 11, letterSpacing: "0.06em", color: "var(--lp-muted-2)", border: "1px solid var(--lp-border-em)", borderRadius: 100, padding: "6px 13px", marginBottom: 28 }}>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: GN, animation: "ps-pulse 1.8s infinite", display: "inline-block" }} />
-        PRIZESKOUT // MARGIN INFRASTRUCTURE FOR GCC COMMERCE
-      </div>
-
       {/* H1 */}
       <h1 style={{ fontSize: "clamp(44px,5.6vw,82px)", lineHeight: 1.05, letterSpacing: "-0.035em", fontWeight: 700, margin: "0 0 24px", color: "var(--lp-text)", maxWidth: "20ch" }}>
         Every aggregator order.{" "}
