@@ -147,19 +147,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      <style>{`
-        @media (max-width: 767px) { .auth-left-panel { display: none !important; } }
-      `}</style>
-      <div className="auth-left-panel" style={{ display: "flex", flex: 1 }}>
-        <AuthLeftPanel />
-      </div>
       <main
         id="main-content"
         tabIndex={-1}
         style={{
           flex: 1,
           backgroundColor: "#080809",
-          borderLeft: "1px solid rgba(255,255,255,0.07)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
