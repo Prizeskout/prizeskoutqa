@@ -85,6 +85,17 @@ function AccessPage() {
     }
     setSubmitting(true);
     try {
+      // If this device already has the matching code in localStorage, restore
+      // directly — avoids a round-trip and handles codes generated before the
+      // DB registration fix was deployed.
+      const storedCode = localStorage.getItem("ps_access_code");
+      const storedMid  = localStorage.getItem("ps_merchant_id");
+      if (storedCode === trimmedCode && storedMid) {
+        localStorage.setItem("ps_connected", "true");
+        navigate({ to: "/dashboard" });
+        return;
+      }
+
       const res = await fetch("/api/restore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

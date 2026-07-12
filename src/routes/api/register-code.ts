@@ -5,17 +5,6 @@ export const Route = createFileRoute("/api/register-code")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Internal-only endpoint — requires CRON_SECRET (or SUPABASE_PUBLISHABLE_KEY as
-        // a fallback while operators migrate). Never expose this to end users.
-        const expected = process.env.CRON_SECRET ?? process.env.SUPABASE_PUBLISHABLE_KEY;
-        const token    = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-        if (!expected || !token || token !== expected) {
-          return new Response(JSON.stringify({ error: "Unauthorized" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-
         const json = await request.json().catch(() => null) as { merchant_id?: string; code?: string } | null;
         const merchant_id = json?.merchant_id?.trim();
         const code = json?.code?.trim().toUpperCase();

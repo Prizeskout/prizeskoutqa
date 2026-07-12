@@ -2,6 +2,15 @@
 @source "../src";
 @import "tw-animate-css";
 
+/* Self-hosted via @fontsource — bundled by Vite, no CDN dependency */
+@import "@fontsource/space-grotesk/400.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/nunito-sans/400.css";
+@import "@fontsource/nunito-sans/600.css";
+@import "@fontsource/nunito-sans/700.css";
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -10,7 +19,8 @@
  */
 
 @theme inline {
-  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-sans: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
 
   --radius-card: 12px;
   --radius-button: 8px;
@@ -99,7 +109,7 @@
   body {
     margin: 0;
     padding: 0;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Nunito Sans', system-ui, -apple-system, sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 1.6;
@@ -107,6 +117,10 @@
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2 {
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   }
 
   * {

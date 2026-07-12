@@ -66,7 +66,7 @@ export function AuthLeftPanel() {
       flexDirection: "column",
       padding: "40px 44px",
       minHeight: "100vh",
-      fontFamily: "system-ui, -apple-system, sans-serif",
+      fontFamily: "'Nunito Sans', system-ui, -apple-system, sans-serif",
     }}>
 
       {/* Logo */}
@@ -144,7 +144,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         display: "flex",
         minHeight: "100vh",
         width: "100%",
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: "'Nunito Sans', system-ui, -apple-system, sans-serif",
       }}
     >
       <main
