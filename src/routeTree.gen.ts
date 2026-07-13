@@ -60,6 +60,8 @@ import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.s
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/catalog'
 import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
+import { Route as ApiDisputeVoucherRouteImport } from './routes/api/dispute/voucher'
+import { Route as ApiCopilotCompileRouteImport } from './routes/api/copilot/compile'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
 import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/connect'
@@ -335,6 +337,16 @@ const ApiRepricingApplyRoute = ApiRepricingApplyRouteImport.update({
   path: '/api/repricing/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDisputeVoucherRoute = ApiDisputeVoucherRouteImport.update({
+  id: '/api/dispute/voucher',
+  path: '/api/dispute/voucher',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCopilotCompileRoute = ApiCopilotCompileRouteImport.update({
+  id: '/api/copilot/compile',
+  path: '/api/copilot/compile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChannelsStatusRoute = ApiChannelsStatusRouteImport.update({
   id: '/api/channels/status',
   path: '/api/channels/status',
@@ -483,6 +495,8 @@ export interface FileRoutesByFullPath {
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/copilot/compile': typeof ApiCopilotCompileRoute
+  '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -551,6 +565,8 @@ export interface FileRoutesByTo {
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/copilot/compile': typeof ApiCopilotCompileRoute
+  '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -623,6 +639,8 @@ export interface FileRoutesById {
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/copilot/compile': typeof ApiCopilotCompileRoute
+  '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -696,6 +714,8 @@ export interface FileRouteTypes {
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
+    | '/api/copilot/compile'
+    | '/api/dispute/voucher'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -764,6 +784,8 @@ export interface FileRouteTypes {
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
+    | '/api/copilot/compile'
+    | '/api/dispute/voucher'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -835,6 +857,8 @@ export interface FileRouteTypes {
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
+    | '/api/copilot/compile'
+    | '/api/dispute/voucher'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -889,6 +913,8 @@ export interface RootRouteChildren {
   ApiChannelsConnectRoute: typeof ApiChannelsConnectRoute
   ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
+  ApiCopilotCompileRoute: typeof ApiCopilotCompileRoute
+  ApiDisputeVoucherRoute: typeof ApiDisputeVoucherRoute
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
@@ -1262,6 +1288,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRepricingApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/dispute/voucher': {
+      id: '/api/dispute/voucher'
+      path: '/api/dispute/voucher'
+      fullPath: '/api/dispute/voucher'
+      preLoaderRoute: typeof ApiDisputeVoucherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/copilot/compile': {
+      id: '/api/copilot/compile'
+      path: '/api/copilot/compile'
+      fullPath: '/api/copilot/compile'
+      preLoaderRoute: typeof ApiCopilotCompileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/channels/status': {
       id: '/api/channels/status'
       path: '/api/channels/status'
@@ -1540,6 +1580,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChannelsConnectRoute: ApiChannelsConnectRoute,
   ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
+  ApiCopilotCompileRoute: ApiCopilotCompileRoute,
+  ApiDisputeVoucherRoute: ApiDisputeVoucherRoute,
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,

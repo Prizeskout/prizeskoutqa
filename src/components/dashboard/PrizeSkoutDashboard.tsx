@@ -53,7 +53,6 @@ const CSS = `
 `;
 
 type Dispute = { partner:string; title:string; order:string; place:string; contract:string; charged:string; leak:string; hash:string; en:string; ar:string };
-const DISPUTES: Dispute[] = [];
 
 const INBOUND_INTEGRATIONS = [
   { name:"Foodics POS", glyph:"F", kind:"POS Terminal", platform:"foodics", oauthPath:null as string|null },
@@ -237,15 +236,27 @@ export function PrizeSkoutDashboard() {
     { name:"Bakery margin defense", desc:"category: bakery · Doha + Riyadh",     floor:25, active:true },
     { name:"Hot drinks storm floor",desc:"trigger: weather.rain_storm",          floor:35, active:true },
   ]);
-  const [modal, setModal] = useState<number|null>(null);
-  const [fileStep, setFileStep] = useState(0);
-  const [toast, setToast] = useState<string|null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [disputes, setDisputes]         = useState<Dispute[]>([]);
+  const [modal, setModal]               = useState<number|null>(null);
+  const [fileStep, setFileStep]         = useState(0);
+  const [toast, setToast]               = useState<string|null>(null);
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [byokPlatform, setByokPlatform] = useState<string|null>(null);
   const [byokFields, setByokFields]     = useState<Record<string,string>>({});
   const [byokStatus, setByokStatus]     = useState<"idle"|"loading"|"ok"|"err">("idle");
   const [byokError, setByokError]       = useState<string|null>(null);
   const [channelStatuses, setChannelStatuses] = useState<Record<string,string>>({});
+  // Dispute form state
+  const [showDisputeForm, setShowDisputeForm]       = useState(false);
+  const [disputePartner, setDisputePartner]         = useState("Talabat");
+  const [disputeOrderId, setDisputeOrderId]         = useState("");
+  const [disputePlace, setDisputePlace]             = useState("");
+  const [disputeRate, setDisputeRate]               = useState("18");
+  const [disputeCharged, setDisputeCharged]         = useState("");
+  const [disputeOurPrice, setDisputeOurPrice]       = useState("");
+  const [disputeNotes, setDisputeNotes]             = useState("");
+  const [disputeLoading, setDisputeLoading]         = useState(false);
+  const [cpError, setCpError]                       = useState<string|null>(null);
 
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
   const laterRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -296,11 +307,28 @@ export function PrizeSkoutDashboard() {
     toastT.current = setTimeout(() => setToast(null), 4000);
   };
 
-  const runCopilot = (text: string) => {
+  const runCopilot = async (text: string) => {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return;
-    setCpPhase("loading"); setCpPrompt(prompt); setApplied(false);
-    later(() => { setCpPhase("result"); setCpObj(parseIntent(prompt)); }, 1200);
+    setCpPhase("loading"); setCpPrompt(prompt); setApplied(false); setCpError(null);
+    try {
+      const res  = await fetch("/api/copilot/compile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json() as { rule?: Record<string,unknown>; error?: string };
+      if (!res.ok || !data.rule) {
+        setCpError(data.error ?? "Compilation failed — try again.");
+        setCpPhase("idle");
+        return;
+      }
+      setCpObj(data.rule);
+      setCpPhase("result");
+    } catch {
+      setCpError("Network error — check your connection.");
+      setCpPhase("idle");
+    }
   };
 
   const applyConfig = () => {
@@ -342,7 +370,7 @@ export function PrizeSkoutDashboard() {
   const headerSub = tab === "analytics" ? t.subA : tab === "rules" ? t.subR : tab === "settings" ? "Store access, channels, margin rules, outlets and notifications." : t.subV;
   const headerTitle = tab === "analytics" ? t.navA : tab === "rules" ? t.navR : tab === "settings" ? "Settings" : t.navV;
 
-  const md = modal != null ? DISPUTES[modal] : null;
+  const md = modal != null ? disputes[modal] : null;
 
   return (
     <div className="ps-db" data-theme={theme} dir={dir}
@@ -678,13 +706,13 @@ export function PrizeSkoutDashboard() {
                     <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>
                       {t.discLog}
                     </div>
-                    {DISPUTES.length === 0 ? (
+                    {disputes.length === 0 ? (
                       <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                         borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
                         <span style={{ width:9, height:9, borderRadius:"50%", background:GN, flexShrink:0, animation:"pk-pulse 2.4s infinite" }} />
-                        <span style={{ fontSize:13.5, color:"var(--muted)" }}>No discrepancies detected · audit agent monitoring payouts in real time</span>
+                        <span style={{ fontSize:13.5, color:"var(--muted)" }}>No discrepancies logged · audit agent monitoring payouts in real time</span>
                       </div>
-                    ) : DISPUTES.map((d,i) => (
+                    ) : disputes.map((d,i) => (
                       <div key={i} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                         borderRadius:12, padding:"14px 16px", display:"flex", flexWrap:"wrap",
                         gap:12, alignItems:"center", justifyContent:"space-between" }}>
@@ -706,6 +734,116 @@ export function PrizeSkoutDashboard() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Log Discrepancy button + form */}
+                  <button
+                    onClick={()=>setShowDisputeForm(v=>!v)}
+                    style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:12.5, fontWeight:700,
+                      color: showDisputeForm ? OG : "var(--text)",
+                      background:"transparent", border:`1.5px solid ${showDisputeForm ? OG : "var(--border)"}`,
+                      borderRadius:10, padding:"10px 15px", fontFamily:"inherit", transition:"border-color .2s,color .2s" }}>
+                    {showDisputeForm ? "− Cancel" : "+ Log Discrepancy"}
+                  </button>
+
+                  {showDisputeForm && (
+                    <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
+                      borderRadius:14, padding:"20px 22px", display:"flex", flexDirection:"column", gap:14,
+                      animation:"pk-in .2s ease" }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--text)" }}>New Discrepancy</div>
+                      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:10 }}>
+                        {/* Partner */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Partner</label>
+                          <select value={disputePartner} onChange={e=>setDisputePartner(e.target.value)}
+                            style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
+                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit" }}>
+                            {["Talabat","Jahez","Noon","Amazon","Careem"].map(p=>(
+                              <option key={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {/* Order ID */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Order ID</label>
+                          <input value={disputeOrderId} onChange={e=>setDisputeOrderId(e.target.value)} placeholder="e.g. #84201-A"
+                            style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
+                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                        </div>
+                        {/* Location */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Branch / Location</label>
+                          <input value={disputePlace} onChange={e=>setDisputePlace(e.target.value)} placeholder="e.g. Doha Mall branch"
+                            style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
+                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                        </div>
+                        {/* Contracted rate */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Contracted rate (%)</label>
+                          <input type="number" min="1" max="40" value={disputeRate} onChange={e=>setDisputeRate(e.target.value)} placeholder="18"
+                            style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
+                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                        </div>
+                        {/* Order value */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Order value ({currency})</label>
+                          <input type="number" min="0" value={disputeOurPrice} onChange={e=>setDisputeOurPrice(e.target.value)} placeholder="120.00"
+                            style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
+                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                        </div>
+                        {/* Charged amount */}
+                        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Charged by partner ({currency})</label>
+                          <input type="number" min="0" value={disputeCharged} onChange={e=>setDisputeCharged(e.target.value)} placeholder="30.00"
+                            style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
+                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                        </div>
+                      </div>
+                      {/* Notes */}
+                      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                        <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Additional notes (optional)</label>
+                        <textarea value={disputeNotes} onChange={e=>setDisputeNotes(e.target.value)} rows={2}
+                          placeholder="Any context about the discrepancy..."
+                          style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px", resize:"vertical",
+                            background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                      </div>
+                      <button
+                        disabled={disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice}
+                        onClick={async()=>{
+                          const mid = localStorage.getItem("ps_merchant_id") ?? "";
+                          const ac  = localStorage.getItem("ps_access_code") ?? "";
+                          if (!mid || !ac) { showToast("Please connect your store first."); return; }
+                          setDisputeLoading(true);
+                          try {
+                            const res = await fetch("/api/dispute/voucher",{
+                              method:"POST", headers:{"Content-Type":"application/json"},
+                              body: JSON.stringify({
+                                merchant_id: mid, access_code: ac,
+                                partner: disputePartner, order_id: disputeOrderId,
+                                place: disputePlace || "Main branch",
+                                contracted_rate: Number(disputeRate),
+                                charged_amount: Number(disputeCharged),
+                                our_price: Number(disputeOurPrice),
+                                currency, notes: disputeNotes,
+                              }),
+                            });
+                            const data = await res.json() as Dispute & { error?:string };
+                            if (!res.ok || data.error) { showToast("⚠ "+  (data.error??"Voucher generation failed")); return; }
+                            setDisputes(prev=>[...prev, data]);
+                            setShowDisputeForm(false);
+                            setDisputeOrderId(""); setDisputeCharged(""); setDisputeOurPrice(""); setDisputeNotes(""); setDisputePlace("");
+                            showToast("🟢 Dispute voucher generated · bilingual package ready");
+                          } catch { showToast("⚠ Network error — try again."); }
+                          finally { setDisputeLoading(false); }
+                        }}
+                        style={{ cursor: disputeLoading||!disputeOrderId||!disputeCharged||!disputeOurPrice ? "not-allowed" : "pointer",
+                          alignSelf:"flex-start", fontSize:13, fontWeight:700, color:"#fff", background: disputeLoading ? "#9A9A9A" : OG,
+                          border:"none", borderRadius:10, padding:"11px 20px", fontFamily:"inherit",
+                          opacity: disputeLoading||!disputeOrderId||!disputeCharged||!disputeOurPrice ? 0.6 : 1,
+                          transition:"background .2s,opacity .2s" }}>
+                        {disputeLoading ? "Generating…" : "Generate Bilingual Voucher ↗"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -772,6 +910,14 @@ export function PrizeSkoutDashboard() {
                   <span style={{ fontSize:13, color:"var(--muted)", animation:"pk-pulse 1.4s infinite" }}>
                     Parsing business intent into JSON config...
                   </span>
+                </div>
+              )}
+              {cpError && cpPhase === "idle" && (
+                <div style={{ fontSize:12.5, color:"#DC2626", padding:"8px 12px",
+                  background:"color-mix(in srgb,#DC2626 8%,var(--surface))",
+                  border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
+                  borderRadius:9, animation:"pk-in .2s ease" }}>
+                  {cpError}
                 </div>
               )}
               {cpPhase === "result" && cpObj && (
