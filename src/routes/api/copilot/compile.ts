@@ -1,44 +1,70 @@
 // POST /api/copilot/compile
 //
-// Parses a natural-language pricing rule into a deterministic engine config
-// JSON using Claude. No auth required — the input is merchant-supplied text
-// with no private data read from the DB.
+// Dual-mode CFO Copilot:
+//   - Pricing intent  → compiles to deterministic engine config JSON
+//   - Questions/chat  → responds conversationally about pricing strategy
 //
 // Body:  { prompt: string }
-// Returns: { rule: Record<string, unknown>, latency_ms: number }
+// Returns:
+//   { type: "rule",    rule: Record<string,unknown>, latency_ms: number }
+//   { type: "chat",    message: string,             latency_ms: number }
 
 import { createFileRoute } from "@tanstack/react-router";
 import Anthropic from "@anthropic-ai/sdk";
 
-const SYSTEM_PROMPT = `You are a pricing rule compiler for a food and e-commerce margin management platform.
-Convert the merchant's natural-language pricing intent into a structured JSON engine config.
+// Used only when the input is a conversational question.
+// No JSON schema — model outputs plain text, we return it as-is.
+const CHAT_SYSTEM = `You are the CFO Copilot, a friendly expert pricing strategist built into PrizeSkout — a margin management platform for food and e-commerce merchants in the Gulf region (Qatar, Saudi Arabia, UAE).
 
-Output ONLY a single valid JSON object — no markdown fences, no explanation, no extra text.
+Answer the merchant's question in plain, concise language. Be practical and specific to Gulf-region food/e-commerce contexts.
 
-Schema (all fields optional except engine_rule and minimum_floor):
+You can help merchants:
+- Set margin floors by category, region, or trigger condition
+- Match or beat competitor prices (Talabat, Jahez, Noon, Amazon, etc.)
+- Build conditional rules (weather-based, time-based, stock-based)
+- Enforce MOCI government price ceilings
+- Lock prices across channels for parity
+- Just describe your pricing intent in plain language and I'll compile it into a live engine config
+
+Keep your answer under 120 words. Respond in the same language the merchant used.`;
+
+// Used when the input looks like a pricing rule intent.
+// Model must output pure JSON — no markdown, no prose.
+const RULE_SYSTEM = `You are a pricing rule compiler for PrizeSkout, a margin management platform for Gulf-region merchants.
+
+Convert the merchant's pricing intent into a JSON engine config. Output ONLY valid JSON — no markdown, no explanation, no extra text.
+
+Schema:
 {
-  "engine_rule": string,           // snake_case rule type: active_margin_defense | competitor_price_match | conditional_floor_raise | moci_ceiling_clamp | price_parity_lock
-  "target_category": string,       // e.g. "bakery", "hot_drinks", "dairy", "all_categories"
-  "target_sku_class": string,      // e.g. "sourdough", "espresso", "all"
-  "minimum_floor": number,         // decimal fraction, e.g. 0.25 for 25%
-  "maximum_ceiling": number,       // decimal fraction, optional
-  "competitor": string,            // "talabat" | "jahez" | "noon" | "amazon" | other
-  "match_direction": string,       // "up" | "down" | "both"
-  "trigger": string,               // e.g. "weather.rain_storm" | "time.peak_hours" | "stock.low_inventory"
-  "revert_after_hours": number,    // how long the override lasts
-  "region": string,                // "Doha" | "Riyadh" | "Dubai" | "all"
+  "engine_rule": "active_margin_defense" | "competitor_price_match" | "conditional_floor_raise" | "moci_ceiling_clamp" | "price_parity_lock",
+  "target_category": string,
+  "target_sku_class": string,
+  "minimum_floor": number,
+  "maximum_ceiling": number,
+  "competitor": string,
+  "match_direction": "up" | "down" | "both",
+  "trigger": string,
+  "revert_after_hours": number,
+  "region": string,
   "regional_override_allowed": boolean,
-  "latency_budget_ms": number      // always 1850
+  "latency_budget_ms": 1850
 }
 
-Rules for engine_rule selection:
-- If the intent involves matching or beating a specific competitor → "competitor_price_match"
-- If the intent involves a weather/event/time-based temporary change → "conditional_floor_raise"
-- If the intent involves an absolute MOCI/government price cap → "moci_ceiling_clamp"
-- If the intent involves keeping prices equal across channels → "price_parity_lock"
-- Otherwise → "active_margin_defense"
+Rules:
+- minimum_floor and maximum_ceiling are decimal fractions (0.25 = 25%)
+- latency_budget_ms is always 1850
+- competitor matching/beating → "competitor_price_match"
+- weather/event/time triggered → "conditional_floor_raise"
+- government price cap → "moci_ceiling_clamp"
+- cross-channel parity → "price_parity_lock"
+- default → "active_margin_defense"`;
 
-Always include latency_budget_ms: 1850.`;
+// Detect conversational questions vs pricing rule intents
+function isQuestion(text: string): boolean {
+  const QUESTION_RE = /^(what|how|why|who|when|where|can you|could you|do you|tell me|explain|describe|help|hi\b|hello|hey\b|thanks|thank you|مرحبا|ما هو|كيف|هل يمكن|شرح|ماذا)/i;
+  const HAS_RULE_SIGNAL = /\d+%|lock\b|match\b|raise\b|lower\b|set\b|apply\b|enforce\b|clamp\b|parity\b|floor\b|ceiling\b|margin\b|competitor\b|talabat|jahez|noon|salla|zid|foodics/i;
+  return QUESTION_RE.test(text) && !HAS_RULE_SIGNAL.test(text);
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -68,15 +94,14 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
         const client = new Anthropic({ apiKey });
         const t0 = Date.now();
+        const chatMode = isQuestion(prompt);
 
         try {
           const message = await client.messages.create({
             model: "claude-haiku-4-5-20251001",
-            max_tokens: 512,
-            system: SYSTEM_PROMPT,
-            messages: [
-              { role: "user", content: prompt },
-            ],
+            max_tokens: chatMode ? 512 : 768,
+            system: chatMode ? CHAT_SYSTEM : RULE_SYSTEM,
+            messages: [{ role: "user", content: prompt }],
           });
 
           const raw = message.content
@@ -85,39 +110,50 @@ export const Route = createFileRoute("/api/copilot/compile")({
             .join("")
             .trim();
 
-          // Parse JSON — strip markdown fences if model added them
-          const jsonStr = raw
+          const latency_ms = Date.now() - t0;
+
+          // Chat mode: raw text IS the message — no JSON parsing needed.
+          // Also include a `rule` shim so older cached UI builds don't show
+          // an error when data.rule is undefined.
+          if (chatMode) {
+            return json({
+              type: "chat",
+              message: raw,
+              rule: { _type: "chat", response: raw },
+              latency_ms,
+            });
+          }
+
+          // Rule mode: parse JSON output
+          const cleaned = raw
             .replace(/^```(?:json)?\s*/i, "")
             .replace(/\s*```\s*$/i, "")
             .trim();
 
           let rule: Record<string, unknown>;
           try {
-            rule = JSON.parse(jsonStr) as Record<string, unknown>;
+            rule = JSON.parse(cleaned) as Record<string, unknown>;
           } catch {
-            // Fallback: extract the first JSON object from the response
-            const match = jsonStr.match(/\{[\s\S]*\}/);
+            const match = cleaned.match(/\{[\s\S]*\}/);
             if (!match) {
-              return json({ error: "Model returned unparseable output", raw }, 502);
+              return json({ error: "Model returned unparseable output" }, 502);
             }
             rule = JSON.parse(match[0]) as Record<string, unknown>;
           }
 
-          // Ensure minimum_floor is a decimal (handle both 0.25 and 25 inputs)
+          // Normalise percentages if model returns e.g. 25 instead of 0.25
           if (typeof rule.minimum_floor === "number" && rule.minimum_floor > 1) {
             rule.minimum_floor = rule.minimum_floor / 100;
           }
           if (typeof rule.maximum_ceiling === "number" && rule.maximum_ceiling > 1) {
             rule.maximum_ceiling = rule.maximum_ceiling / 100;
           }
-
-          // Always enforce latency_budget_ms
           rule.latency_budget_ms = 1850;
 
-          return json({ rule, latency_ms: Date.now() - t0 });
+          return json({ type: "rule", rule, latency_ms });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          return json({ error: `Compilation failed: ${msg}` }, 500);
+          return json({ error: `Request failed: ${msg}` }, 500);
         }
       },
     },

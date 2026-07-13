@@ -101,9 +101,9 @@ const T = {
     stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
-    copilotDesc:"Describe pricing intent in plain language. The copilot compiles it into a deterministic engine config.",
+    copilotDesc:"Ask anything about pricing strategy, or describe a rule to compile it into a live engine config.",
     copilotLive:"🟢 Copilot Live",
-    compile:"Compile ↗",
+    compile:"Send ↗",
     try:"Try:", guardrails:"Active Guardrails",
     agentTitle:"Autonomous Dispute Audit Agent", agentActive:"Agent Active",
     discLog:"Discrepancy Log · POS Payouts vs Contracts",
@@ -143,9 +143,9 @@ const T = {
     stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
     copilotTitle:"مساعد المدير المالي", copilotSub:"محرك القواعد باللغة الطبيعية",
-    copilotDesc:"صف نيتك التسعيرية بلغة طبيعية. يحولها المساعد إلى تهيئة محرك حتمية.",
+    copilotDesc:"اسأل عن أي شيء يخص التسعير، أو صف قاعدة لتحويلها إلى تهيئة محرك مباشرة.",
     copilotLive:"🟢 المساعد نشط",
-    compile:"تحليل ↗",
+    compile:"إرسال ↗",
     try:"جرب:", guardrails:"الحواجز النشطة",
     agentTitle:"وكيل تدقيق النزاعات المستقل", agentActive:"الوكيل نشط",
     discLog:"سجل التناقضات · مدفوعات نقاط البيع مقابل العقود",
@@ -230,6 +230,7 @@ export function PrizeSkoutDashboard() {
   const [cpInput, setCpInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
   const [cpObj, setCpObj] = useState<Record<string,unknown>|null>(null);
+  const [cpChatMessage, setCpChatMessage] = useState<string|null>(null);
   const [applied, setApplied] = useState(false);
   const [rules, setRules] = useState<Rule[]>([
     { name:"Global margin floor",   desc:"all categories · all regions",         floor:18, active:true },
@@ -311,21 +312,32 @@ export function PrizeSkoutDashboard() {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return;
     setCpPhase("loading"); setCpPrompt(prompt); setApplied(false); setCpError(null);
+    setCpObj(null); setCpChatMessage(null);
     try {
       const res  = await fetch("/api/copilot/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
-      let data: { rule?: Record<string,unknown>; error?: string } = {};
+      let data: { type?: string; rule?: Record<string,unknown>; message?: string; error?: string } = {};
       try { data = await res.json() as typeof data; } catch { /* non-JSON body */ }
-      if (!res.ok || !data.rule) {
+      if (!res.ok) {
         setCpError(data.error ?? `Server error (${res.status}) — the route may still be deploying. Try again in a moment.`);
         setCpPhase("idle");
         return;
       }
-      setCpObj(data.rule);
-      setCpPhase("result");
+      if (data.type === "chat" && data.message) {
+        setCpChatMessage(data.message);
+        setCpObj(null);
+        setCpPhase("result");
+      } else if (data.rule) {
+        setCpObj(data.rule);
+        setCpChatMessage(null);
+        setCpPhase("result");
+      } else {
+        setCpError(data.error ?? "Unexpected response — try rephrasing your request.");
+        setCpPhase("idle");
+      }
     } catch {
       setCpError("Request failed — check your connection or try again.");
       setCpPhase("idle");
@@ -878,7 +890,7 @@ export function PrizeSkoutDashboard() {
                 <span style={{ fontSize:16, opacity:.55 }}>✦</span>
                 <input value={cpInput} onChange={e=>setCpInput(e.target.value)}
                   onKeyDown={e=>{ if(e.key==="Enter") runCopilot(cpInput); }}
-                  placeholder={lang==="ar" ? "اكتب قاعدة تسعير..." : "Type a pricing rule (e.g., 'Lock bakery margins at 25% except on sourdough when competitor drops prices...')"}
+                  placeholder={lang==="ar" ? "اسأل أي شيء أو اكتب قاعدة تسعير..." : "Ask anything or describe a rule (e.g., 'Lock bakery margins at 25% during rain storms...')"}
                   style={{ flex:1, minWidth:0, border:"none", outline:"none", background:"transparent",
                     color:"var(--text)", fontSize:14.5, fontFamily:"inherit", padding:"10px 0" }} />
                 <button onClick={()=>runCopilot(cpInput)} style={{ cursor:"pointer", flex:"0 0 auto",
@@ -909,7 +921,7 @@ export function PrizeSkoutDashboard() {
                     border:`3px solid color-mix(in srgb,${OG} 18%,transparent)`,
                     borderTopColor:OG, animation:"pk-spin .75s linear infinite", flex:"0 0 22px" }} />
                   <span style={{ fontSize:13, color:"var(--muted)", animation:"pk-pulse 1.4s infinite" }}>
-                    Parsing business intent into JSON config...
+                    Thinking...
                   </span>
                 </div>
               )}
@@ -919,6 +931,22 @@ export function PrizeSkoutDashboard() {
                   border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
                   borderRadius:9, animation:"pk-in .2s ease" }}>
                   {cpError}
+                </div>
+              )}
+              {cpPhase === "result" && cpChatMessage && (
+                <div style={{ animation:"pk-in .35s ease", display:"flex", flexDirection:"column", gap:10 }}>
+                  <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.06em", color:OG, textTransform:"uppercase" as const, paddingLeft:2 }}>
+                    CFO Copilot
+                  </div>
+                  <div style={{ background:`color-mix(in srgb,${OG} 6%,var(--surface))`,
+                    border:`1px solid color-mix(in srgb,${OG} 22%,transparent)`,
+                    borderRadius:14, padding:"18px 20px", fontSize:14.5, lineHeight:1.7,
+                    color:"var(--fg)", whiteSpace:"pre-wrap" as const }}>
+                    {cpChatMessage}
+                  </div>
+                  <div style={{ fontSize:12, color:"var(--muted)", paddingLeft:2 }}>
+                    Describe a pricing rule to compile it into an engine config →
+                  </div>
                 </div>
               )}
               {cpPhase === "result" && cpObj && (
