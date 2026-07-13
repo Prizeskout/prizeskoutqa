@@ -270,57 +270,123 @@ function Step1({
   );
 }
 
+function EcommCard({
+  name, glyph, glyphColor, glyphBg, connected, onConnect,
+}: {
+  name: string; glyph: string; glyphColor: string; glyphBg: string;
+  connected: boolean; onConnect: () => void;
+}) {
+  return (
+    <div style={{
+      border: `1px solid ${connected ? "rgba(16,185,129,0.25)" : "rgba(255,255,255,0.08)"}`,
+      background: connected ? "rgba(16,185,129,0.06)" : "#0E0F12",
+      borderRadius: 10, padding: "14px 16px",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 8, background: glyphBg,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {connected
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GN} strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            : <span style={{ fontWeight: 700, fontSize: 14, color: glyphColor, fontFamily: MONO }}>{glyph}</span>
+          }
+        </div>
+        <div>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: "#E7E8EA" }}>{name}</div>
+          <div style={{ fontSize: 11, color: "#6B7280", fontFamily: MONO }}>
+            {connected ? "Connected · syncing catalog" : "E-commerce platform · OAuth 2.0"}
+          </div>
+        </div>
+      </div>
+      {connected
+        ? <span style={{ fontFamily: MONO, fontSize: 11, color: GN, border: "1px solid rgba(16,185,129,0.3)", borderRadius: 6, padding: "3px 8px" }}>CONNECTED</span>
+        : <button
+            type="button"
+            onClick={onConnect}
+            style={{
+              background: OG, color: "#fff", fontSize: 12, fontWeight: 600,
+              padding: "7px 14px", border: "none", borderRadius: 7,
+              cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+              boxShadow: "0 4px 12px rgba(239,104,26,0.22)",
+            }}
+          >
+            Connect {name} →
+          </button>
+      }
+    </div>
+  );
+}
+
 function Step2({
+  merchantId,
+  sallaConnected, zidConnected,
   talabatToken, setTalabatToken,
   snoonuToken, setSnoonuToken,
   keetaToken, setKeetaToken,
   jahezToken, setJahezToken,
   onNext, onBack,
 }: {
+  merchantId: string;
+  sallaConnected: boolean;
+  zidConnected: boolean;
   talabatToken: string; setTalabatToken: (v: string) => void;
   snoonuToken: string; setSnoonuToken: (v: string) => void;
   keetaToken: string; setKeetaToken: (v: string) => void;
   jahezToken: string; setJahezToken: (v: string) => void;
   onNext: () => void; onBack: () => void;
 }) {
+  function connectSalla() {
+    window.location.href = `/api/auth/salla?merchant_id=${encodeURIComponent(merchantId)}&return_to=%2Fonboarding`;
+  }
+  function connectZid() {
+    window.location.href = `/api/auth/zid?merchant_id=${encodeURIComponent(merchantId)}&return_to=%2Fonboarding`;
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Inbound / Outbound Bridge</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Connect your platforms. Salla is linked automatically; add delivery tokens to unlock outbound repricing.</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Connect Your Platforms</h2>
+        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Connect your e-commerce store and delivery aggregators to start tracking margin in real time.</p>
       </div>
 
-      <div style={{ border: "1px solid rgba(16,185,129,0.25)", background: "rgba(16,185,129,0.06)", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(16,185,129,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GN} strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", letterSpacing: "0.6px", marginBottom: 10 }}>E-COMMERCE PLATFORMS</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <EcommCard
+            name="Salla" glyph="S" glyphColor="#E7E8EA" glyphBg="rgba(99,102,241,0.15)"
+            connected={sallaConnected} onConnect={connectSalla}
+          />
+          <EcommCard
+            name="Zid" glyph="Z" glyphColor="#E7E8EA" glyphBg="rgba(239,104,26,0.15)"
+            connected={zidConnected} onConnect={connectZid}
+          />
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", letterSpacing: "0.6px", marginBottom: 10 }}>
+          DELIVERY AGGREGATORS <span style={{ color: "#3A3D46", fontWeight: 400 }}>(optional)</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <FieldLabel>Talabat API Token</FieldLabel>
+            <FocusInput value={talabatToken} onChange={setTalabatToken} placeholder="tbt_live_xxxxxxxxxxxx" type="password" />
           </div>
           <div>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: "#E7E8EA" }}>Salla</div>
-            <div style={{ fontSize: 11, color: "#6B7280", fontFamily: MONO }}>Inbound webhook · active</div>
+            <FieldLabel>Snoonu API Token</FieldLabel>
+            <FocusInput value={snoonuToken} onChange={setSnoonuToken} placeholder="snu_live_xxxxxxxxxxxx" type="password" />
+          </div>
+          <div>
+            <FieldLabel>Keeta API Token</FieldLabel>
+            <FocusInput value={keetaToken} onChange={setKeetaToken} placeholder="kta_live_xxxxxxxxxxxx" type="password" />
+          </div>
+          <div>
+            <FieldLabel>Jahez API Token</FieldLabel>
+            <FocusInput value={jahezToken} onChange={setJahezToken} placeholder="jhz_live_xxxxxxxxxxxx" type="password" />
           </div>
         </div>
-        <span style={{ fontFamily: MONO, fontSize: 11, color: GN, border: "1px solid rgba(16,185,129,0.3)", borderRadius: 6, padding: "3px 8px" }}>CONNECTED</span>
-      </div>
-
-      <div>
-        <FieldLabel>Talabat API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
-        <FocusInput value={talabatToken} onChange={setTalabatToken} placeholder="tbt_live_xxxxxxxxxxxx" type="password" />
-      </div>
-
-      <div>
-        <FieldLabel>Snoonu API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
-        <FocusInput value={snoonuToken} onChange={setSnoonuToken} placeholder="snu_live_xxxxxxxxxxxx" type="password" />
-      </div>
-
-      <div>
-        <FieldLabel>Keeta API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
-        <FocusInput value={keetaToken} onChange={setKeetaToken} placeholder="kta_live_xxxxxxxxxxxx" type="password" />
-      </div>
-
-      <div>
-        <FieldLabel>Jahez API Token <span style={{ color: "#52555C" }}>(optional)</span></FieldLabel>
-        <FocusInput value={jahezToken} onChange={setJahezToken} placeholder="jhz_live_xxxxxxxxxxxx" type="password" />
       </div>
 
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
@@ -558,18 +624,23 @@ function RestoreForm({ onCancel }: { onCancel: () => void }) {
 }
 
 function OnboardingPage() {
-  const [step, setStep]             = useState(0);
+  const [step, setStep]               = useState(0);
   const [restoreMode, setRestoreMode] = useState(false);
-  const [accessCode, setAccessCode] = useState("");
+  const [accessCode, setAccessCode]   = useState("");
   const navigate = useNavigate();
 
   // Step 1
-  const [storeName, setStoreName] = useState("");
-  const [email, setEmail]         = useState("");
-  const [region, setRegion]       = useState("");
-  const [currency, setCurrency]   = useState("");
+  const [storeName, setStoreName] = useState(() => sessionStorage.getItem("ps_ob_storeName") ?? "");
+  const [email, setEmail]         = useState(() => sessionStorage.getItem("ps_ob_email")     ?? "");
+  const [region, setRegion]       = useState(() => sessionStorage.getItem("ps_ob_region")    ?? "");
+  const [currency, setCurrency]   = useState(() => sessionStorage.getItem("ps_ob_currency")  ?? "");
 
-  // Step 2
+  // Step 2 — merchant_id generated when advancing from Step 1
+  const [merchantId,     setMerchantId]     = useState(() => localStorage.getItem("ps_merchant_id") ?? "");
+  const [sallaConnected, setSallaConnected] = useState(false);
+  const [zidConnected,   setZidConnected]   = useState(false);
+
+  // Step 2 aggregator tokens
   const [talabatToken, setTalabatToken] = useState("");
   const [snoonuToken,  setSnoonuToken]  = useState("");
   const [keetaToken,   setKeetaToken]   = useState("");
@@ -582,11 +653,43 @@ function OnboardingPage() {
     setCategoryFloors(prev => ({ ...prev, [cat]: v }));
   }
 
-  async function handleFinish() {
-    let mid = localStorage.getItem("ps_merchant_id");
+  // Handle return from OAuth (Salla/Zid redirect back here with ?salla_connected=1 etc.)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sc = params.get("salla_connected") === "1";
+    const zc = params.get("zid_connected")   === "1";
+    if (sc) setSallaConnected(true);
+    if (zc) setZidConnected(true);
+    if (sc || zc) {
+      setStep(1);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleStep1Next() {
+    // Persist form data so it survives the OAuth redirect
+    sessionStorage.setItem("ps_ob_storeName", storeName);
+    sessionStorage.setItem("ps_ob_email",     email);
+    sessionStorage.setItem("ps_ob_region",    region);
+    sessionStorage.setItem("ps_ob_currency",  currency);
+
+    // Ensure merchant_id exists before showing OAuth buttons
+    let mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) {
       mid = crypto.randomUUID();
       localStorage.setItem("ps_merchant_id", mid);
+    }
+    setMerchantId(mid);
+    setStep(1);
+  }
+
+  async function handleFinish() {
+    let mid = merchantId || localStorage.getItem("ps_merchant_id") || "";
+    if (!mid) {
+      mid = crypto.randomUUID();
+      localStorage.setItem("ps_merchant_id", mid);
+      setMerchantId(mid);
     }
     const code = makeAccessCode(region);
     localStorage.setItem("ps_access_code", code);
@@ -653,10 +756,13 @@ function OnboardingPage() {
             email={email} setEmail={setEmail}
             region={region} setRegion={setRegion}
             currency={currency} setCurrency={setCurrency}
-            onNext={() => setStep(1)}
+            onNext={handleStep1Next}
           />
         ) : step === 1 ? (
           <Step2
+            merchantId={merchantId}
+            sallaConnected={sallaConnected}
+            zidConnected={zidConnected}
             talabatToken={talabatToken} setTalabatToken={setTalabatToken}
             snoonuToken={snoonuToken}   setSnoonuToken={setSnoonuToken}
             keetaToken={keetaToken}     setKeetaToken={setKeetaToken}

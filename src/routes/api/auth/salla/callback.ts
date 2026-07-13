@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
           return errorPage("Missing authorization code or state. Please try connecting again.");
         }
 
-        // Verify CSRF nonce: cookie __ps_salla_n must be "nonce:merchantId"
+        // Verify CSRF nonce: cookie __ps_salla_n must be "nonce:merchantId[:returnTo]"
         const rawCookie = request.headers.get("cookie") ?? "";
         const cookieEntry = rawCookie.split(";").map(s => s.trim()).find(s => s.startsWith("__ps_salla_n="));
         const cookieVal = cookieEntry ? cookieEntry.slice("__ps_salla_n=".length) : "";
@@ -94,7 +94,10 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
         if (colonIdx < 1 || cookieVal.slice(0, colonIdx) !== state) {
           return errorPage("State verification failed. Please try connecting again.");
         }
-        const merchantId = cookieVal.slice(colonIdx + 1);
+        const afterNonce  = cookieVal.slice(colonIdx + 1);
+        const secondColon = afterNonce.indexOf(":");
+        const merchantId  = secondColon >= 0 ? afterNonce.slice(0, secondColon) : afterNonce;
+        const returnTo    = secondColon >= 0 ? afterNonce.slice(secondColon + 1) : "";
         if (!merchantId) {
           return errorPage("Session expired. Please try connecting again.");
         }
@@ -214,8 +217,10 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
           region:     "SA",
         }).catch(() => { /* background — don't block redirect */ });
 
-        // 6. Redirect to dashboard with a success flag
-        return htmlRedirect(`/dashboard/revenue-hub?salla_connected=1`);
+        // 6. Redirect to return_to (onboarding) or dashboard
+        const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : "/dashboard/revenue-hub";
+        const sep  = dest.includes("?") ? "&" : "?";
+        return htmlRedirect(`${dest}${sep}salla_connected=1`);
       },
     },
   },

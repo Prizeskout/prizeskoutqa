@@ -43,12 +43,15 @@ export const Route = createFileRoute("/api/auth/salla")({
           );
         }
 
+        // Optional return path after OAuth (only internal paths allowed)
+        const rawReturn = url.searchParams.get("return_to") ?? "";
+        const returnTo  = rawReturn.startsWith("/") && !rawReturn.startsWith("//") ? rawReturn : "";
+
         const redirectUri = `${getPublicOrigin(request)}/api/auth/salla/callback`;
 
-        // CSRF protection: generate a random nonce, store merchantId in a cookie keyed by nonce.
-        // The nonce travels in the OAuth state param; the cookie is origin-bound and HttpOnly.
+        // CSRF protection: nonce in state param, cookie encodes "nonce:merchantId[:returnTo]"
         const nonce = crypto.randomUUID().replace(/-/g, "");
-        const cookieVal = `${nonce}:${merchantId}`;
+        const cookieVal = `${nonce}:${merchantId}:${returnTo}`;
 
         const params = new URLSearchParams({
           client_id:     clientId,

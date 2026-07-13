@@ -15,6 +15,13 @@ import { getPublicOrigin } from "@/server/public-origin";
 
 const ZID_AUTH_URL = "https://oauth.zid.sa/oauth/authorize";
 
+// Scopes to request — update once Zid's OAuth guide arrives
+const SCOPES = [
+  "catalog:read",
+  "catalog:write",
+  "orders:read",
+].join(" ");
+
 export const Route = createFileRoute("/api/auth/zid")({
   server: {
     handlers: {
@@ -36,15 +43,21 @@ export const Route = createFileRoute("/api/auth/zid")({
           );
         }
 
+        // Optional return path after OAuth (only internal paths allowed)
+        const rawReturn = url.searchParams.get("return_to") ?? "";
+        const returnTo  = rawReturn.startsWith("/") && !rawReturn.startsWith("//") ? rawReturn : "";
+
         const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
         const nonce = crypto.randomUUID().replace(/-/g, "");
-        const cookieVal = `${nonce}:${merchantId}`;
+        // Cookie encodes: nonce:merchantId:returnTo (returnTo may be empty)
+        const cookieVal = `${nonce}:${merchantId}:${returnTo}`;
 
         const params = new URLSearchParams({
           client_id:     clientId,
           redirect_uri:  redirectUri,
           response_type: "code",
+          scope:         SCOPES,
           state:         nonce,
         });
 
