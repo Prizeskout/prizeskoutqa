@@ -15,14 +15,10 @@ import { getPublicOrigin } from "@/server/public-origin";
 
 const ZID_AUTH_URL = "https://oauth.zid.sa/oauth/authorize";
 
-// Required by Zid partner review. embedded_apps_tokens_write is mandatory for embedded apps.
-// Adjust catalog/orders scope names once Zid's partner dashboard lists the exact identifiers.
-const SCOPES = [
-  "embedded_apps_tokens_write",
-  "catalog:read",
-  "catalog:write",
-  "orders:read",
-].join(" ");
+// Zid determines granted scopes from the partner dashboard selection.
+// The scope param is not required by Zid's OAuth spec; only request the
+// embedded_apps scope which is mandatory when the Embedded App toggle is on.
+const SCOPES = "embedded_apps_tokens_write";
 
 export const Route = createFileRoute("/api/auth/zid")({
   server: {

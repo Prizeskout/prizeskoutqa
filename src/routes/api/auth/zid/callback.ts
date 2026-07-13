@@ -87,24 +87,36 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         if (errParam) {
           return errorPage("Zid declined the connection. Please try again.");
         }
-        if (!code || !state) {
-          return errorPage("Missing authorization code or state. Please try connecting again.");
+        if (!code) {
+          return errorPage("Missing authorization code. Please try connecting again.");
         }
 
-        // Verify CSRF nonce: cookie __ps_zid_n must be "nonce:merchantId[:returnTo]"
-        const rawCookie = request.headers.get("cookie") ?? "";
+        // Two install paths:
+        //   A) User-initiated (from our /api/auth/zid): CSRF cookie __ps_zid_n present, state matches nonce
+        //   B) Marketplace-initiated (merchant installs from Zid app store): no cookie, no state
+        const rawCookie   = request.headers.get("cookie") ?? "";
         const cookieEntry = rawCookie.split(";").map(s => s.trim()).find(s => s.startsWith("__ps_zid_n="));
-        const cookieVal = cookieEntry ? cookieEntry.slice("__ps_zid_n=".length) : "";
-        const colonIdx = cookieVal.indexOf(":");
-        if (colonIdx < 1 || cookieVal.slice(0, colonIdx) !== state) {
-          return errorPage("State verification failed. Please try connecting again.");
-        }
-        const afterNonce  = cookieVal.slice(colonIdx + 1);
-        const secondColon = afterNonce.indexOf(":");
-        const merchantId  = secondColon >= 0 ? afterNonce.slice(0, secondColon) : afterNonce;
-        const returnTo    = secondColon >= 0 ? afterNonce.slice(secondColon + 1) : "";
-        if (!merchantId) {
-          return errorPage("Session expired. Please try connecting again.");
+        const cookieVal   = cookieEntry ? cookieEntry.slice("__ps_zid_n=".length) : "";
+
+        let merchantId = "";
+        let returnTo   = "";
+
+        if (cookieVal) {
+          // Path A: verify CSRF nonce
+          const colonIdx = cookieVal.indexOf(":");
+          if (colonIdx < 1 || cookieVal.slice(0, colonIdx) !== (state ?? "")) {
+            return errorPage("State verification failed. Please try connecting again.");
+          }
+          const afterNonce  = cookieVal.slice(colonIdx + 1);
+          const secondColon = afterNonce.indexOf(":");
+          merchantId = secondColon >= 0 ? afterNonce.slice(0, secondColon) : afterNonce;
+          returnTo   = secondColon >= 0 ? afterNonce.slice(secondColon + 1) : "";
+          if (!merchantId) {
+            return errorPage("Session expired. Please try connecting again.");
+          }
+        } else {
+          // Path B: marketplace-initiated install — generate a fresh merchant_id
+          merchantId = crypto.randomUUID();
         }
         const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
@@ -237,8 +249,9 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           region:     "SA",
         }).catch(() => { /* background — don't block redirect */ });
 
-        // 6. Redirect to return_to (onboarding) or dashboard
-        const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : "/dashboard/revenue-hub";
+        // 6. Redirect: honour return_to, else marketplace installs go to onboarding, user-initiated to dashboard
+        const defaultDest = cookieVal ? "/dashboard/revenue-hub" : "/onboarding";
+        const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : defaultDest;
         const sep  = dest.includes("?") ? "&" : "?";
         return htmlRedirect(`${dest}${sep}zid_connected=1`);
       },
