@@ -15,8 +15,10 @@ import { getPublicOrigin } from "@/server/public-origin";
 
 const ZID_AUTH_URL = "https://oauth.zid.sa/oauth/authorize";
 
-// Scopes to request — update once Zid's OAuth guide arrives
+// Required by Zid partner review. embedded_apps_tokens_write is mandatory for embedded apps.
+// Adjust catalog/orders scope names once Zid's partner dashboard lists the exact identifiers.
 const SCOPES = [
+  "embedded_apps_tokens_write",
   "catalog:read",
   "catalog:write",
   "orders:read",

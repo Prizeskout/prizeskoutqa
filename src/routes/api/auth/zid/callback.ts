@@ -130,10 +130,11 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           return errorPage("Failed to reach Zid. Please try connecting again.");
         }
 
-        // Zid returns both access_token (Bearer) and authorization (X-MANAGER-TOKEN)
-        const bearerToken = tokens.access_token ?? "";
-        // authorization field is the manager/store token for X-MANAGER-TOKEN header
-        const storeToken  = tokens.authorization ?? tokens.store_token ?? tokens.manager_token ?? null;
+        // Zid token response fields (per Zid docs):
+        //   authorization → Bearer token (Authorization: Bearer header)
+        //   access_token  → manager token (X-MANAGER-TOKEN header)
+        const bearerToken = tokens.authorization ?? tokens.access_token ?? "";
+        const storeToken  = tokens.access_token ?? tokens.store_token ?? tokens.manager_token ?? null;
 
         if (!bearerToken) {
           return errorPage("Zid did not return an access token. Please try again.");
