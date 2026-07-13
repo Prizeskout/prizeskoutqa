@@ -1,8 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 const OG = "#EF681A";
 const GN = "#10B981";
-const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 
 const CATEGORIES = [
   { name: "Mains",        default: 22 },

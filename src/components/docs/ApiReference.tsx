@@ -1,4 +1,4 @@
-// Three-pane API reference UI.
+﻿// Three-pane API reference UI.
 // Left: grouped endpoint nav with search.
 // Center: endpoint detail (auth, params, body, responses, errors, notes).
 // Right: cURL/JS request examples + sample response + live "Try it out".
@@ -18,7 +18,7 @@ import {
 } from "@/lib/api-spec";
 
 const FONT_MONO =
-  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 
 const METHOD_COLORS: Record<EndpointSpec["method"], { bg: string; fg: string }> = {
   GET: { bg: "rgba(34, 197, 94, 0.10)", fg: "#16A34A" },

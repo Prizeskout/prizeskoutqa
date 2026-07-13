@@ -45,15 +45,26 @@ export const Route = createFileRoute("/api/auth/salla")({
 
         const redirectUri = `${getPublicOrigin(request)}/api/auth/salla/callback`;
 
+        // CSRF protection: generate a random nonce, store merchantId in a cookie keyed by nonce.
+        // The nonce travels in the OAuth state param; the cookie is origin-bound and HttpOnly.
+        const nonce = crypto.randomUUID().replace(/-/g, "");
+        const cookieVal = `${nonce}:${merchantId}`;
+
         const params = new URLSearchParams({
           client_id:     clientId,
           redirect_uri:  redirectUri,
           response_type: "code",
           scope:         SCOPES,
-          state:         merchantId,  // round-tripped back in callback to identify the merchant
+          state:         nonce,
         });
 
-        return Response.redirect(`${SALLA_AUTH_URL}?${params}`, 302);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": `${SALLA_AUTH_URL}?${params}`,
+            "Set-Cookie": `__ps_salla_n=${cookieVal}; HttpOnly; SameSite=Lax; Path=/api/auth/salla; Max-Age=600`,
+          },
+        });
       },
     },
   },

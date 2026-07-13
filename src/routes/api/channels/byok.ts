@@ -3,7 +3,7 @@
 // Supports: talabat (OAuth BYOK), jahez (secret key BYOK)
 
 import { createFileRoute } from "@tanstack/react-router";
-import { connectTalabat, connectJahez } from "@/server/core/byok-connect";
+import { connectTalabat, connectJahez, verifyMerchantAccess } from "@/server/core/byok-connect";
 
 type Body = Record<string, string>;
 
@@ -20,9 +20,12 @@ export const Route = createFileRoute("/api/channels/byok")({
         try { body = await request.json() as Body; }
         catch { return json(); }
 
-        const { merchant_id, platform } = body;
+        const { merchant_id, access_code, platform } = body;
         if (!merchant_id) return resp({ error: "merchant_id is required." }, 400);
         if (!platform)    return resp({ error: "platform is required." }, 400);
+
+        const authorized = await verifyMerchantAccess(merchant_id, access_code ?? "");
+        if (!authorized) return resp({ error: "Unauthorized." }, 401);
 
         try {
           if (platform === "talabat") {

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { applyLocale, type Locale } from "@/lib/i18n";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 const OG = "#EF681A";
 const GN = "#56C28A";
 const BG = "#080505";
-const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 const DISPLAY = "'Space Grotesk',system-ui,-apple-system,sans-serif";
 const BODY = "'Nunito Sans',system-ui,-apple-system,sans-serif";
 

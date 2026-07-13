@@ -1,4 +1,4 @@
-// Webhooks guide. Stripe-style HMAC verification, replay protection, retries.
+﻿// Webhooks guide. Stripe-style HMAC verification, replay protection, retries.
 // Linked from the guides hub and from Dashboard → Webhooks.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/docs/guides/webhooks")({
 });
 
 const FONT_MONO =
-  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 
 function CodeBlock({ children, lang }: { children: string; lang?: string }) {
   return (

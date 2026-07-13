@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/register-code")({
           .upsert({ code, merchant_id }, { onConflict: "code" });
 
         if (error) {
-          return new Response(JSON.stringify({ error: error.message }), {
+          return new Response(JSON.stringify({ error: "Registration failed. Please try again." }), {
             status: 500, headers: { "Content-Type": "application/json" },
           });
         }

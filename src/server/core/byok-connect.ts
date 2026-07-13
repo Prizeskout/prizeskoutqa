@@ -13,6 +13,17 @@ export const JAHEZ_BASE   = "https://integration-api.jahez.net";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = () => (supabaseAdmin as any).from("ps_merchant_channels");
 
+export async function verifyMerchantAccess(merchantId: string, accessCode: string): Promise<boolean> {
+  if (!merchantId || !accessCode) return false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count } = await (supabaseAdmin as any)
+    .from("ps_access_codes")
+    .select("*", { count: "exact", head: true })
+    .eq("code", accessCode.toUpperCase().trim())
+    .eq("merchant_id", merchantId);
+  return typeof count === "number" && count > 0;
+}
+
 export async function connectTalabat(params: {
   merchantId: string;
   clientId: string;

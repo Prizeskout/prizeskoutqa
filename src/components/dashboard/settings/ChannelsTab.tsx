@@ -130,13 +130,14 @@ export function ChannelsTab() {
     e.preventDefault();
     const p = byokPlatform as string;
     const mid = typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
+    const accessCode = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "") : "";
     if (!mid) { setByokError("No merchant session found. Please complete onboarding first."); return; }
     setByokStatus("loading"); setByokError(null);
     try {
       const res = await fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: mid, platform: p, ...byokFields }),
+        body: JSON.stringify({ merchant_id: mid, access_code: accessCode, platform: p, ...byokFields }),
       });
       const data = await res.json() as { ok?: boolean; error?: string };
       if (data.ok) {

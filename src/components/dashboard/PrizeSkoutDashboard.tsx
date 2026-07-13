@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 
 type Tab = "analytics" | "rules" | "vault" | "settings";
@@ -52,47 +52,13 @@ const CSS = `
   @keyframes pk-drawer-rtl{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
 `;
 
-const FEED_POOL = [
-  { tag:"REPRICE", tagColor:"#7EE2A8", text:"Karak Tea 500ml · QAR 12.00 → 12.50 · margin +2.1% · Doha" },
-  { tag:"DEFENSE", tagColor:"#F2A971", text:"Blocked underprice on Sourdough Loaf · floor 25% held · Riyadh" },
-  { tag:"REPRICE", tagColor:"#7EE2A8", text:"Saffron Latte 12oz · QAR 18.00 → 18.75 · margin +1.4% · Dubai" },
-  { tag:"SCAN",    tagColor:"#79C0FF", text:"Competitor sweep · 214 SKUs · Jahez + Talabat · 340ms" },
-  { tag:"REPRICE", tagColor:"#7EE2A8", text:"Date Ma'amoul Box · QAR 24.00 → 23.50 · match + hold floor" },
-  { tag:"DEFENSE", tagColor:"#F2A971", text:"Promo overlap detected · Order #1049 flagged to audit agent" },
-  { tag:"REPRICE", tagColor:"#7EE2A8", text:"Halloumi Croissant · QAR 14.00 → 14.25 · margin +0.9% · Doha" },
-  { tag:"SYNC",    tagColor:"#D2A8FF", text:"Rule set v3 pushed to 4 edge nodes · in-memory Redis · 14ms" },
-  { tag:"REPRICE", tagColor:"#7EE2A8", text:"Spanish Latte 16oz · QAR 21.00 → 21.50 · margin +1.1% · Kuwait" },
-  { tag:"AUDIT",   tagColor:"#F2A971", text:"Payout ledger diff · Talabat batch #2211 · 1 discrepancy" },
-];
-
-const BAR_HEIGHTS = [34,38,52,28,26,44,46,30,36,40,54,32,29,35,33,39,37,31,27,41,58,54,46,42,44,48,41,46,51,56,24,40,52];
-
-const NODES = [
-  { city:"Doha",        meta:"QA · West Bay",  ms:"14" },
-  { city:"Riyadh",      meta:"KSA · Olaya",    ms:"24" },
-  { city:"Dubai",       meta:"UAE · Marina",   ms:"21" },
-  { city:"Kuwait City", meta:"KW · Salmiya",   ms:"26" },
-];
-
-const DISPUTES = [
-  {
-    partner:"Talabat", title:"Talabat Overcharge", order:"#9421", place:"Doha West Bay",
-    contract:"25%", charged:"30%", leak:"QAR 18.50", hash:"3f9a67d0e4b1…88c2e2d1",
-    en:`To: Talabat Partner Support, Ref: TLB-9421\n\nOn 28 June 2026, order #9421 (Doha West Bay branch) was settled at a 30% commission rate. Our active partner agreement (§4.2, signed 12 Jan 2026) fixes the commission for this category at 25%.\n\nWe request a credit of QAR 18.50 to our merchant account within the 14-day resolution window. POS payout records and the contract excerpt are attached and hash-verified.`,
-    ar:`إلى: دعم شركاء طلبات، المرجع: TLB-9421\n\nبتاريخ 28 يونيو 2026، تمت تسوية الطلب رقم #9421 (فرع الدوحة، الخليج الغربي) بعمولة قدرها 30٪. تنص اتفاقية الشراكة السارية (البند 4.2) على عمولة 25٪ لهذه الفئة.\n\nنطلب قيد مبلغ 18.50 ريال قطري إلى حساب التاجر خلال مهلة التسوية البالغة 14 يوماً.`,
-  },
-  {
-    partner:"Jahez", title:"Jahez Promo Overlap", order:"#1049", place:"Riyadh Al Olaya",
-    contract:"22%", charged:"25%", leak:"SAR 14.10", hash:"b81c44f29a07…5d19aa3c",
-    en:`To: Jahez Merchant Support, Ref: JHZ-1049\n\nOn 30 June 2026, order #1049 (Riyadh Al Olaya branch) was charged a 25% commission during an overlapping promotion window. Our merchant agreement (§3.1) caps the commission for this category at 22%, promotions inclusive.\n\nWe request a credit of SAR 14.10 to our merchant account. The POS payout ledger and the promotion schedule are attached and hash-verified.`,
-    ar:`إلى: دعم تجار جاهز، المرجع: JHZ-1049\n\nبتاريخ 30 يونيو 2026، تم احتساب عمولة 25٪ على الطلب رقم #1049 (فرع الرياض، العليا) خلال فترة عرض ترويجي متداخل. تنص اتفاقية التاجر (البند 3.1) على حد أقصى للعمولة قدره 22٪.\n\nنطلب قيد مبلغ 14.10 ريال سعودي إلى حساب التاجر.`,
-  },
-];
+type Dispute = { partner:string; title:string; order:string; place:string; contract:string; charged:string; leak:string; hash:string; en:string; ar:string };
+const DISPUTES: Dispute[] = [];
 
 const INBOUND_INTEGRATIONS = [
-  { name:"Foodics POS",  glyph:"F", kind:"POS Terminal",   status:"Connected", meta:"last sync 2m ago · 1,203 SKUs",         key:"fdx_live_••••••••7031", actionLabel:"Sync Now",   toast:"🟢 Foodics sync complete · 1,203 SKUs (610ms)" },
-  { name:"Zid",          glyph:"Z", kind:"E-Commerce",     status:"Connected", meta:"storefront webhook · order ingest live", key:"zid_pk_••••••••4418",   actionLabel:"Rotate Key", toast:"🟢 Zid API key rotated · scopes preserved" },
-  { name:"Salla",        glyph:"S", kind:"E-Commerce",     status:"Connected", meta:"product catalog · price sync active",   key:"sla_sk_••••••••8823",   actionLabel:"Rotate Key", toast:"🟢 Salla API key rotated · scopes preserved" },
+  { name:"Foodics POS", glyph:"F", kind:"POS Terminal", platform:"foodics", oauthPath:null as string|null },
+  { name:"Zid",         glyph:"Z", kind:"E-Commerce",   platform:"zid",     oauthPath:"/api/auth/zid" as string|null },
+  { name:"Salla",       glyph:"S", kind:"E-Commerce",   platform:"salla",   oauthPath:"/api/auth/salla" as string|null },
 ];
 
 const OUTBOUND_INTEGRATIONS = [
@@ -133,8 +99,7 @@ const T = {
     subA:"Active price optimization and loss prevention",
     subR:"Natural-language pricing rules and margin guardrails",
     subV:"POS, aggregator and cache connections",
-    nodes:"System Nodes & Response Times",
-    stream:"Live Execution Stream", streamS:"Simulated · not real event feed",
+    stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
     copilotDesc:"Describe pricing intent in plain language. The copilot compiles it into a deterministic engine config.",
@@ -164,11 +129,9 @@ const T = {
     applyLabel0:"Apply Config to Core Loop",
     applyLabel1:"✓ Pushed to Core Loop · Redis 340ms",
     rulesEnforced:"rules · enforced at edge",
-    nodesDemo:"4 / 4 active (DEMO)",
-    activeLabel:"✓ enforcing · 4 edge nodes · <2ms eval",
+    activeLabel:"✓ enforcing · <2ms eval",
     pausedLabel:"Paused. Not currently enforced.",
     floorWarn:"⚠ Floor is below 15% cost basis. The guardrail will reject all executions at this level.",
-    demoUser:"Demo User",
   },
   ar: {
     cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
@@ -178,8 +141,7 @@ const T = {
     subA:"تحسين الأسعار الفعال ومنع الخسائر",
     subR:"قواعد تسعير بلغة طبيعية وحدود حماية الهوامش",
     subV:"اتصالات نقاط البيع والمجمعات والذاكرة المؤقتة",
-    nodes:"عقد النظام وأزمنة الاستجابة",
-    stream:"بث التنفيذ المباشر", streamS:"محاكاة · ليست بيانات حقيقية",
+    stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
     copilotTitle:"مساعد المدير المالي", copilotSub:"محرك القواعد باللغة الطبيعية",
     copilotDesc:"صف نيتك التسعيرية بلغة طبيعية. يحولها المساعد إلى تهيئة محرك حتمية.",
@@ -209,11 +171,9 @@ const T = {
     applyLabel0:"تطبيق الإعداد على حلقة الأساس",
     applyLabel1:"✓ تم الرفع إلى Redis · 340ms",
     rulesEnforced:"قواعد · مفعّلة على الحافة",
-    nodesDemo:"4 / 4 نشطة (تجريبي)",
-    activeLabel:"✓ مفعّل · 4 عقد · تقييم <2ms",
+    activeLabel:"✓ مفعّل · تقييم <2ms",
     pausedLabel:"متوقف. غير مفعّل حالياً.",
     floorWarn:"⚠ الحد أقل من 15% تكلفة أساسية. سيرفض الحارس جميع التنفيذات عند هذا المستوى.",
-    demoUser:"مستخدم تجريبي",
   },
 };
 
@@ -280,9 +240,6 @@ export function PrizeSkoutDashboard() {
   const [modal, setModal] = useState<number|null>(null);
   const [fileStep, setFileStep] = useState(0);
   const [toast, setToast] = useState<string|null>(null);
-  const [sallaConnected, setSallaConnected] = useState(() =>
-    typeof window !== "undefined" && localStorage.getItem("ps_salla_connected") === "1"
-  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [byokPlatform, setByokPlatform] = useState<string|null>(null);
   const [byokFields, setByokFields]     = useState<Record<string,string>>({});
@@ -290,7 +247,6 @@ export function PrizeSkoutDashboard() {
   const [byokError, setByokError]       = useState<string|null>(null);
   const [channelStatuses, setChannelStatuses] = useState<Record<string,string>>({});
 
-  const feedIdx = useRef(0);
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
   const laterRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -300,14 +256,6 @@ export function PrizeSkoutDashboard() {
     return t;
   };
 
-  const tickFeed = useCallback(() => {
-    const p = FEED_POOL[feedIdx.current % FEED_POOL.length];
-    feedIdx.current++;
-    const time = new Date().toTimeString().slice(0,8);
-    setFeed(prev => [{...p,time}, ...prev].slice(0,9));
-    if (p.tag === "REPRICE") setUpdatesToday(n => n+1);
-  }, []);
-
   useEffect(() => {
     const mq = window.matchMedia("(min-width:980px)");
     const h = () => setIsDesktop(mq.matches);
@@ -316,18 +264,11 @@ export function PrizeSkoutDashboard() {
   }, []);
 
   useEffect(() => {
-    for (let i = 0; i < 5; i++) tickFeed();
-    const id = setInterval(tickFeed, 2600);
-    return () => clearInterval(id);
-  }, [tickFeed]);
-
-  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("salla_connected") === "1") {
-      localStorage.setItem("ps_salla_connected", "1");
-      setSallaConnected(true);
+      setChannelStatuses(prev => ({ ...prev, salla: "connected" }));
       window.history.replaceState({}, "", window.location.pathname);
-      showToast("🟢 Salla connected · product catalog syncing");
+      showToast("Salla connected · product catalog syncing");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -485,8 +426,8 @@ export function PrizeSkoutDashboard() {
             <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4 }}>
               <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                 border:"1px solid var(--border)", display:"grid", placeItems:"center",
-                fontSize:11.5, fontWeight:700, fontFamily:MONO }}>DU</span>
-              <span style={{ fontSize:14, fontWeight:600 }}>{t.demoUser}</span>
+                fontSize:11.5, fontWeight:700, fontFamily:MONO }}>M</span>
+              <span style={{ fontSize:14, fontWeight:600 }}>My Account</span>
             </div>
           </div>
         </aside>
@@ -621,74 +562,34 @@ export function PrizeSkoutDashboard() {
                 <div style={{ display:"flex", alignItems:"center", gap:18, flexWrap:"wrap" }}>
                   <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                     <span style={{ fontFamily:DISPLAY, fontSize:17, fontWeight:500, color:"var(--muted)" }}>{currency}</span>
-                    <span style={{ fontFamily:DISPLAY, fontSize:62, fontWeight:700, lineHeight:1, color:OG, fontVariantNumeric:"tabular-nums" }}>{fmtMoney(50900,currency)}</span>
+                    <span style={{ fontFamily:DISPLAY, fontSize:62, fontWeight:700, lineHeight:1, color:"var(--muted)", fontVariantNumeric:"tabular-nums" }}>—</span>
                   </div>
                 </div>
-                <div style={{ display:"flex", alignItems:"center", gap:13, flexWrap:"wrap" }}>
-                  <span style={{ fontSize:13, fontWeight:600, color:GN,
-                    background:"var(--surface)", border:"1px solid var(--border)",
-                    borderRadius:9, padding:"6px 12px" }}>
-                    ↑ {fmtMoney(33,currency)} {currency} / cycle
-                  </span>
-                  <span style={{ fontSize:14, color:"var(--muted)" }}>across all active store items</span>
-                </div>
-                {/* Bar chart */}
-                <div style={{ display:"flex", alignItems:"flex-end", gap:4, height:70, marginTop:6 }}>
-                  {BAR_HEIGHTS.map((h,i) => (
-                    <span key={i} style={{ flex:1, borderRadius:"3px 3px 0 0", height:h,
-                      background: i >= BAR_HEIGHTS.length-2 ? OG : `color-mix(in srgb,${OG} 26%,var(--surface))` }} />
+                <div style={{ fontSize:13.5, color:"var(--muted)" }}>No activity yet · connect a store to begin tracking</div>
+                {/* Empty chart placeholder */}
+                <div style={{ display:"flex", alignItems:"flex-end", gap:4, height:70, marginTop:6, opacity:.18 }}>
+                  {Array.from({length:33}).map((_,i) => (
+                    <span key={i} style={{ flex:1, borderRadius:"3px 3px 0 0", height:8,
+                      background:`color-mix(in srgb,${OG} 40%,var(--surface))` }} />
                   ))}
                 </div>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--muted)" }}>
-                  <span>01 Jun</span><span>10 Jun</span><span>20 Jun</span><span>Today</span>
-                </div>
-                <span style={{ position:"absolute", bottom:12, insetInlineEnd:16, fontSize:9.5,
-                  fontWeight:600, letterSpacing:"0.05em", color:"var(--muted)", opacity:.7 }}>DEMO</span>
               </div>
 
               {/* Stat cards */}
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
                 gap:18, gridColumn:"span 2", minWidth:"min(100%,420px)", alignContent:"stretch" }}>
                 {[
-                  { label:"Tracked Products",   value:"1,203",          foot:"+48 today",       footColor:GN,            demo:true },
-                  { label:"Price Updates Today",value:String(updatesToday), foot:"avg 540ms",   footColor:"var(--muted)", demo:false },
-                  { label:"Avg. Margin Saved",  value:"31.4%",          foot:"above floor",     footColor:GN,            demo:true },
-                  { label:"Active Rules",       value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)", demo:false },
+                  { label:"Tracked Products",   value:"—",                                     foot:"connect a store",  footColor:"var(--muted)" },
+                  { label:"Price Updates Today",value:String(updatesToday),                    foot:"avg latency <2s",  footColor:"var(--muted)" },
+                  { label:"Avg. Margin Saved",  value:"—",                                     foot:"no data yet",      footColor:"var(--muted)" },
+                  { label:"Active Rules",       value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)" },
                 ].map(s => (
-                  <div key={s.label} style={{ position:"relative", background:"var(--surface)",
+                  <div key={s.label} style={{ background:"var(--surface)",
                     border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                     padding:"20px 22px", display:"flex", flexDirection:"column", gap:12, justifyContent:"space-between" }}>
                     <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>{s.label}</div>
                     <div style={{ fontFamily:DISPLAY, fontSize:34, fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>{s.value}</div>
                     <div style={{ fontSize:12.5, color:s.footColor }}>{s.foot}</div>
-                    {s.demo && <span style={{ position:"absolute", top:12, insetInlineEnd:14, fontSize:9.5,
-                      fontWeight:600, letterSpacing:"0.05em", color:"var(--muted)", opacity:.7 }}>DEMO</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* System nodes */}
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.nodes}</h2>
-                <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.nodesDemo}</span>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))", gap:18 }}>
-                {NODES.map(nd => (
-                  <div key={nd.city} style={{ background:"var(--surface)", border:"1px solid var(--border)",
-                    borderRadius:16, boxShadow:"var(--shadow)", padding:"20px 22px",
-                    display:"flex", flexDirection:"column", gap:10 }}>
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                      <span style={{ fontSize:16, fontWeight:800 }}>{nd.city}</span>
-                      <span style={{ width:9, height:9, borderRadius:"50%", background:GN, animation:"pk-pulse 2.4s infinite" }} />
-                    </div>
-                    <div style={{ fontSize:12.5, color:"var(--muted)" }}>{nd.meta}</div>
-                    <div style={{ display:"flex", alignItems:"baseline", gap:5, marginTop:6 }}>
-                      <span style={{ fontFamily:DISPLAY, fontSize:30, fontWeight:700, fontVariantNumeric:"tabular-nums" }}>{nd.ms}</span>
-                      <span style={{ fontSize:13, color:"var(--muted)" }}>ms</span>
-                    </div>
-                    <div style={{ fontSize:12, fontWeight:600, color:GN }}>✓ Active</div>
                   </div>
                 ))}
               </div>
@@ -730,7 +631,13 @@ export function PrizeSkoutDashboard() {
                       defend-loop · edge-doha-01
                     </span>
                   </div>
-                  {feed.map((f,i) => (
+                  {feed.length === 0 ? (
+                    <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+                      gap:10, color:"#5A6472", fontFamily:MONO, fontSize:12.5, textAlign:"center" }}>
+                      <span style={{ fontSize:22, opacity:.4 }}>◉</span>
+                      <span>No events yet · connect a store to start</span>
+                    </div>
+                  ) : feed.map((f,i) => (
                     <div key={i} style={{ display:"flex", gap:10, alignItems:"baseline",
                       fontFamily:MONO, fontSize:12.5, lineHeight:1.9, animation:"pk-in .3s ease" }}>
                       <span style={{ color:"#5A6472", flex:"0 0 auto" }}>{f.time}</span>
@@ -756,9 +663,9 @@ export function PrizeSkoutDashboard() {
                   </div>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:10 }}>
                     {[
-                      { value:`${currency} ${fmtMoney(4320,currency)}`, label:"Recovered Profits", color:GN },
-                      { value:"42", label:"Claims Auto-Filed", color:"var(--text)" },
-                      { value:"3",  label:"Pending Aggregator Audits", color:OG },
+                      { value:`${currency} 0`, label:"Recovered Profits", color:"var(--muted)" },
+                      { value:"0", label:"Claims Auto-Filed", color:"var(--text)" },
+                      { value:"0", label:"Pending Aggregator Audits", color:"var(--muted)" },
                     ].map(m => (
                       <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                         borderRadius:12, padding:"13px 14px", display:"flex", flexDirection:"column", gap:5 }}>
@@ -771,13 +678,19 @@ export function PrizeSkoutDashboard() {
                     <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>
                       {t.discLog}
                     </div>
-                    {DISPUTES.map((d,i) => (
+                    {DISPUTES.length === 0 ? (
+                      <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
+                        borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
+                        <span style={{ width:9, height:9, borderRadius:"50%", background:GN, flexShrink:0, animation:"pk-pulse 2.4s infinite" }} />
+                        <span style={{ fontSize:13.5, color:"var(--muted)" }}>No discrepancies detected · audit agent monitoring payouts in real time</span>
+                      </div>
+                    ) : DISPUTES.map((d,i) => (
                       <div key={i} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                         borderRadius:12, padding:"14px 16px", display:"flex", flexWrap:"wrap",
                         gap:12, alignItems:"center", justifyContent:"space-between" }}>
                         <div style={{ display:"flex", flexDirection:"column", gap:6, minWidth:0, flex:1 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700 }}>
-                            ⚠️ {d.title}
+                            ⚠ {d.title}
                             <span style={{ fontSize:12, color:"var(--muted)", fontWeight:400 }}>(Order {d.order})</span>
                           </div>
                           <div style={{ fontSize:12, color:"var(--muted)" }}>
@@ -957,7 +870,10 @@ export function PrizeSkoutDashboard() {
                 <span style={{ fontSize:14, color:"var(--muted)" }}>POS and e-commerce platforms that feed orders and catalog data into PrizeSkout.</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))", gap:16 }}>
-                {INBOUND_INTEGRATIONS.map(ig => (
+                {INBOUND_INTEGRATIONS.map(ig => {
+                  const isConnected = channelStatuses[ig.platform] === "connected";
+                  const canConnect  = !!ig.oauthPath;
+                  return (
                   <div key={ig.name} style={{ background:"var(--surface)", border:"1px solid var(--border)",
                     borderRadius:16, boxShadow:"var(--shadow)", padding:"20px 22px",
                     display:"flex", flexDirection:"column", gap:14 }}>
@@ -972,38 +888,38 @@ export function PrizeSkoutDashboard() {
                         </div>
                       </div>
                       <span style={{ width:9,height:9,borderRadius:"50%", flexShrink:0,
-                        background: ig.name === "Salla" && !sallaConnected ? "#F59E0B" : GN,
-                        animation: ig.name === "Salla" && !sallaConnected ? "none" : "pk-pulse 2.2s infinite" }} />
+                        background: isConnected ? GN : "#F59E0B",
+                        animation: isConnected ? "pk-pulse 2.2s infinite" : "none" }} />
                     </div>
                     <div style={{ fontSize:12, color:"var(--muted)" }}>
-                      {ig.name === "Salla" && !sallaConnected ? "not connected · click to authorize" : ig.meta}
+                      {isConnected ? "connected · data syncing" : canConnect ? "not connected · click to authorize" : "integration coming soon"}
                     </div>
-                    <div dir="ltr" style={{ fontFamily:MONO, fontSize:12, color:"var(--text)",
-                      background:"var(--surface2)", border:"1px solid var(--border)",
-                      borderRadius:9, padding:"9px 12px" }}>
-                      {ig.name === "Salla" && !sallaConnected ? "awaiting OAuth" : ig.key}
-                    </div>
-                    <button onClick={() => {
-                      if (ig.name === "Salla" && !sallaConnected) {
+                    {isConnected && (
+                      <div dir="ltr" style={{ fontFamily:MONO, fontSize:12, color:GN,
+                        background:`color-mix(in srgb,${GN} 8%,var(--surface2))`,
+                        border:`1px solid color-mix(in srgb,${GN} 22%,transparent)`,
+                        borderRadius:9, padding:"9px 12px" }}>
+                        ✓ active
+                      </div>
+                    )}
+                    {canConnect && !isConnected && (
+                      <button onClick={() => {
                         const mid = localStorage.getItem("ps_merchant_id");
                         if (mid) {
-                          window.location.href = `/api/auth/salla?merchant_id=${mid}`;
+                          window.location.href = `${ig.oauthPath}?merchant_id=${encodeURIComponent(mid)}`;
                         } else {
-                          showToast("⚠ Please complete onboarding first.");
+                          showToast("Please complete onboarding first.");
                         }
-                      } else {
-                        showToast(ig.toast);
-                      }
-                    }} className="ps-ig-btn"
-                      style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:12.5, fontWeight:700,
-                        color: ig.name === "Salla" && !sallaConnected ? "#fff" : "var(--text)",
-                        background: ig.name === "Salla" && !sallaConnected ? OG : "transparent",
-                        border: ig.name === "Salla" && !sallaConnected ? `1.5px solid ${OG}` : "1.5px solid var(--border)",
-                        borderRadius:10, padding:"9px 14px", fontFamily:"inherit", transition:"border-color .2s,color .2s,background .2s" }}>
-                      {ig.name === "Salla" && !sallaConnected ? "Connect Salla" : ig.actionLabel}
-                    </button>
+                      }} className="ps-ig-btn"
+                        style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:12.5, fontWeight:700,
+                          color:"#fff", background:OG, border:`1.5px solid ${OG}`,
+                          borderRadius:10, padding:"9px 14px", fontFamily:"inherit", transition:"border-color .2s,color .2s,background .2s" }}>
+                        Connect {ig.name}
+                      </button>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -1243,12 +1159,12 @@ export function PrizeSkoutDashboard() {
                   <span style={{ fontSize:12, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
                 </span>
               </div>
-              {/* Demo User */}
+              {/* Account */}
               <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4, paddingTop:4 }}>
                 <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                   border:"1px solid var(--border)", display:"grid", placeItems:"center",
-                  fontSize:11.5, fontWeight:700, fontFamily:MONO }}>DU</span>
-                <span style={{ fontSize:14, fontWeight:600 }}>{t.demoUser}</span>
+                  fontSize:11.5, fontWeight:700, fontFamily:MONO }}>M</span>
+                <span style={{ fontSize:14, fontWeight:600 }}>My Account</span>
               </div>
             </div>
           </div>
@@ -1266,11 +1182,12 @@ export function PrizeSkoutDashboard() {
           const mid = localStorage.getItem("ps_merchant_id") ?? "";
           if (!mid) { setByokError("No merchant session found. Please complete onboarding first."); return; }
           setByokStatus("loading"); setByokError(null);
+          const accessCode = localStorage.getItem("ps_access_code") ?? "";
           try {
             const res = await fetch("/api/channels/connect", {
               method:"POST",
               headers:{ "Content-Type":"application/json" },
-              body: JSON.stringify({ merchant_id:mid, platform:p, ...byokFields }),
+              body: JSON.stringify({ merchant_id:mid, access_code:accessCode, platform:p, ...byokFields }),
             });
             const data = await res.json() as { ok?:boolean; error?:string };
             if (data.ok) {

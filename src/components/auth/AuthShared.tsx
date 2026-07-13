@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+﻿import { useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
@@ -41,7 +41,7 @@ export function BrandLogoLight() {
   );
 }
 
-const MONO = "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+const MONO = "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 const OG = "#EF681A";
 
 const METRICS = [

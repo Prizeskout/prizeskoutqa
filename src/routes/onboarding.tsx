@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import logoDark from "@/assets/logo-dark.svg";
 
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/onboarding")({
 const OG = "#EF681A";
 const GN = "#10B981";
 const BG = "#080809";
-const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 
 const STEPS = [
   { label: "Store Config",    sub: "Identify your business" },

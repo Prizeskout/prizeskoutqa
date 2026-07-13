@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+﻿import { type ReactNode } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
 import { LandingNav } from "@/components/landing/LandingNav";
 import logoDark from "@/assets/logo-dark.svg";
@@ -20,7 +20,7 @@ const FL: React.CSSProperties = {
 
 const LAYER_TAG: React.CSSProperties = {
   display: "block",
-  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
+  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
   fontSize: 10,
   letterSpacing: "0.14em",
   color: "#6B7180",
@@ -176,7 +176,7 @@ function Footer() {
               <FA label="Agent CFO" />
               <FA label="Dispute Audit Agent">
                 <span style={{
-                  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
+                  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
                   fontSize: 9.5, letterSpacing: "0.1em",
                   color: "#FF5A1F",
                   border: "1px solid rgba(255,90,31,0.35)",
@@ -223,7 +223,7 @@ function Footer() {
         }}>
           <div style={{ color: "#6B7180", fontSize: 13.5 }}>
             © 2026 PrizeSkout · QFC-licensed, Doha, Qatar
-            <span style={{ fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace", fontSize: 11.5, color: "#6B7180" }}>
+            <span style={{ fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace", fontSize: 11.5, color: "#6B7180" }}>
               {" "}· QFC No. 04412
             </span>
           </div>

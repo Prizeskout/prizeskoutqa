@@ -1,4 +1,4 @@
-// Quickstart guide. First stop for new users and developers.
+﻿// Quickstart guide. First stop for new users and developers.
 // Walks through: store connect → API key → first request → competitor tracking → recommendations.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/docs/guides/quickstart")({
 });
 
 const FONT_MONO =
-  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 
 // ── Code block ─────────────────────────────────────────────────────────────────
 

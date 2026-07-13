@@ -1,4 +1,4 @@
-// Flash Sale start hook — activates events whose start_at <= now.
+// Flash Sale start hook ï¿½ activates events whose start_at <= now.
 //
 // Schedule via pg_cron every minute:
 //   SELECT cron.schedule('flash-start', '* * * * *', $$
@@ -18,8 +18,8 @@ export const Route = createFileRoute("/api/public/hooks/flash-start")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Auth: prefer CRON_SECRET; falls back to SUPABASE_PUBLISHABLE_KEY while pg_cron schedules are migrated.
-        const expected = process.env.CRON_SECRET ?? process.env.SUPABASE_PUBLISHABLE_KEY;
+        // Auth: CRON_SECRET â€” set via `wrangler secret put CRON_SECRET` or env var.
+        const expected = process.env.CRON_SECRET;
         const token    = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         if (!expected || !token || token !== expected) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {

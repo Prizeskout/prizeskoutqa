@@ -1,4 +1,4 @@
-// SDK Quickstart guide. Walks a new licensee through:
+﻿// SDK Quickstart guide. Walks a new licensee through:
 //   1. Mint a test key.
 //   2. Drop in a tiny TypeScript SDK snippet.
 //   3. Make their first signed request.
@@ -330,7 +330,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
           style={{
             fontSize: 10,
             color: "#9A9A9A",
-            fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
+            fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
           }}
@@ -368,7 +368,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
           fontSize: 12.5,
           lineHeight: 1.6,
           color: "#E5E2DB",
-          fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace",
+          fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
           whiteSpace: "pre",
         }}
       >

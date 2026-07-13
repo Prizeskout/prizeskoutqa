@@ -1,7 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 const OG = "#EF681A";
-const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 
 interface Outlet {
   id: string;

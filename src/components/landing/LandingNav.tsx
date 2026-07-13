@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { applyLocale, type Locale } from "@/lib/i18n";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 
 const OG = "#EF681A";
-const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 
 const MARKETS = [
   { code: "QA", currency: "QAR", country: "Qatar",                rate: 1.000 },

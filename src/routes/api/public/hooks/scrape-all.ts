@@ -64,9 +64,8 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Auth: prefer CRON_SECRET (set via `wrangler secret put CRON_SECRET`).
-        // Falls back to SUPABASE_PUBLISHABLE_KEY only while pg_cron schedules are migrated.
-        const expected   = process.env.CRON_SECRET ?? process.env.SUPABASE_PUBLISHABLE_KEY;
+        // Auth: CRON_SECRET — set via `wrangler secret put CRON_SECRET` or env var.
+        const expected   = process.env.CRON_SECRET;
         const authHeader = request.headers.get("authorization");
         const token      = authHeader?.replace(/^Bearer\s+/i, "");
 

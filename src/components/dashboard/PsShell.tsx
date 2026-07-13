@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PsShell — new dark-theme dashboard shell.
  * Wraps: Revenue Protection Hub, Margin Policy Engine, Integration Vault.
  * Preserves: existing auth, i18n (useTranslation + applyLocale), ModeProvider, PlanGateModal.
@@ -210,7 +210,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
           <span style={{ width: 8, height: 8, borderRadius: 999, background: "#10B981", animation: "psPulse 2.4s infinite", flexShrink: 0 }} />
           <div style={{ lineHeight: 1.3 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>{t("psShell.defendLoopOnline")}</div>
-            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace" }}>{t("psShell.edgeNodesHealthy")}</div>
+            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace" }}>{t("psShell.edgeNodesHealthy")}</div>
           </div>
         </div>
 
@@ -221,7 +221,7 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
             background: "var(--ps-chip-2)",
             border: "1px solid var(--ps-border)", display: "flex", alignItems: "center",
             justifyContent: "center", fontSize: 12, fontWeight: 700,
-            color: "var(--ps-text-3)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace",
+            color: "var(--ps-text-3)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace",
           }}>
             {getInitials(displayName, user?.email)}
           </div>
@@ -277,7 +277,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <h1 style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: "-0.4px", color: "var(--ps-text)" }}>{title}</h1>
           <span style={{
-            fontSize: 10, fontWeight: 600, color: "#10B981", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace",
+            fontSize: 10, fontWeight: 600, color: "#10B981", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace",
             border: "1px solid rgba(16,185,129,0.28)", background: "rgba(16,185,129,0.10)",
             padding: "2px 7px", borderRadius: 6,
           }}>{t("psShell.liveBadge")}</span>
@@ -311,7 +311,7 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
             <button key={r} onClick={() => onRegionChange(r)} style={{
               ...segBtn(region === r),
               ...(region === r ? { background: "#EF681A", color: "#fff" } : {}),
-              fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace",
+              fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace",
             }}>
               {CURRENCY[r]}
             </button>

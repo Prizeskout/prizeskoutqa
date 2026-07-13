@@ -38,14 +38,23 @@ export const Route = createFileRoute("/api/auth/zid")({
 
         const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
+        const nonce = crypto.randomUUID().replace(/-/g, "");
+        const cookieVal = `${nonce}:${merchantId}`;
+
         const params = new URLSearchParams({
           client_id:     clientId,
           redirect_uri:  redirectUri,
           response_type: "code",
-          state:         merchantId,
+          state:         nonce,
         });
 
-        return Response.redirect(`${ZID_AUTH_URL}?${params}`, 302);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": `${ZID_AUTH_URL}?${params}`,
+            "Set-Cookie": `__ps_zid_n=${cookieVal}; HttpOnly; SameSite=Lax; Path=/api/auth/zid; Max-Age=600`,
+          },
+        });
       },
     },
   },

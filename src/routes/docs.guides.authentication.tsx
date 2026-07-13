@@ -1,4 +1,4 @@
-// Authentication guide. Single source of truth for how PrizeSkout API keys work.
+﻿// Authentication guide. Single source of truth for how PrizeSkout API keys work.
 // Linked from every endpoint in the API reference via the scope chip row.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/docs/guides/authentication")({
 });
 
 const FONT_MONO =
-  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 
 const SCOPES: { scope: string; desc: string }[] = [
   { scope: "competitors.read", desc: "Read competitor prices, history, and detected patterns." },

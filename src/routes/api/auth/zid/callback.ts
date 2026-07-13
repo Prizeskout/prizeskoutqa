@@ -81,18 +81,28 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
 
         const url      = new URL(request.url);
         const code     = url.searchParams.get("code");
-        const state    = url.searchParams.get("state");   // merchant_id
+        const state    = url.searchParams.get("state");   // nonce (CSRF protection)
         const errParam = url.searchParams.get("error");
 
         if (errParam) {
-          const desc = url.searchParams.get("error_description") ?? errParam;
-          return errorPage(`Zid declined the connection: ${desc}`);
+          return errorPage("Zid declined the connection. Please try again.");
         }
         if (!code || !state) {
           return errorPage("Missing authorization code or state. Please try connecting again.");
         }
 
-        const merchantId  = state;
+        // Verify CSRF nonce: cookie __ps_zid_n must be "nonce:merchantId"
+        const rawCookie = request.headers.get("cookie") ?? "";
+        const cookieEntry = rawCookie.split(";").map(s => s.trim()).find(s => s.startsWith("__ps_zid_n="));
+        const cookieVal = cookieEntry ? cookieEntry.slice("__ps_zid_n=".length) : "";
+        const colonIdx = cookieVal.indexOf(":");
+        if (colonIdx < 1 || cookieVal.slice(0, colonIdx) !== state) {
+          return errorPage("State verification failed. Please try connecting again.");
+        }
+        const merchantId = cookieVal.slice(colonIdx + 1);
+        if (!merchantId) {
+          return errorPage("Session expired. Please try connecting again.");
+        }
         const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
         // 1. Exchange authorization code for tokens
@@ -110,12 +120,11 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
             }),
           });
           if (!tokenRes.ok) {
-            const text = await tokenRes.text().catch(() => "");
-            return errorPage(`Token exchange failed (HTTP ${tokenRes.status}): ${text.slice(0, 300)}`);
+            return errorPage("Token exchange failed. Please try connecting again.");
           }
           tokens = await tokenRes.json() as ZidTokenResponse;
-        } catch (e) {
-          return errorPage(`Failed to reach Zid token endpoint: ${String(e)}`);
+        } catch {
+          return errorPage("Failed to reach Zid. Please try connecting again.");
         }
 
         // Zid returns both access_token (Bearer) and authorization (X-MANAGER-TOKEN)

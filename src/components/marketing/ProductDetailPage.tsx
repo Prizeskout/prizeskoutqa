@@ -1,10 +1,10 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 import type { ComponentType } from "react";
 import { ArrowRight, Check } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 const MONO =
-  "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace";
+  "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 
 export type ProductDetailProps = {
   eyebrow: string;
