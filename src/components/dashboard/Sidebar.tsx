@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard,
-  Crosshair,
-  TrendingUp,
-  BarChart3,
-  Megaphone,
-  Target,
-  MapPin,
   Settings,
   X,
   LogOut,
@@ -19,8 +12,6 @@ import {
   Webhook,
   ShieldCheck,
   Terminal,
-  CreditCard,
-  Zap,
   Layers,
   type LucideIcon,
 } from "lucide-react";
@@ -45,40 +36,25 @@ type NavGroup = {
   items: NavItem[];
 };
 
+const adminGroup: NavGroup = {
+  label: "Admin",
+  tKey: "nav.groups.admin",
+  items: [
+    { to: "/dashboard/admin", label: "Admin Console", tKey: "nav.admin", icon: ShieldCheck },
+  ],
+};
+
 const navGroups: NavGroup[] = [
   {
-    label: "Control Plane",
-    tKey: "nav.groups.controlPlane",
-    items: [
-      { to: "/dashboard/revenue-hub", label: "Revenue Hub", tKey: "nav.revenueHub", icon: ShieldCheck },
-      { to: "/dashboard/policy-engine", label: "Policy Engine", tKey: "nav.policyEngine", icon: Layers },
-      { to: "/dashboard/integration-vault", label: "Integration Vault", tKey: "nav.integrationVault", icon: KeyRound },
-    ],
-  },
-  {
-    label: "Developers",
+    label: "Platform",
     tKey: "nav.groups.developers",
     items: [
-      { to: "/dashboard", label: "Overview", tKey: "nav.overview", icon: LayoutDashboard },
-      { to: "/dashboard/api-keys", label: "API Keys", tKey: "nav.apiKeys", icon: KeyRound },
-      { to: "/dashboard/api-explorer", label: "API Explorer", tKey: "nav.apiExplorer", icon: Terminal },
-      { to: "/dashboard/usage", label: "Usage", tKey: "nav.usage", icon: Activity },
-      { to: "/dashboard/plans", label: "Plans", tKey: "nav.plans", icon: CreditCard },
-      { to: "/dashboard/logs", label: "Logs", tKey: "nav.logs", icon: FileCode2 },
-      { to: "/dashboard/webhooks", label: "Webhooks", tKey: "nav.webhooks", icon: Webhook },
-      { to: "/dashboard/capabilities", label: "Live Demo", tKey: "nav.capabilities", icon: Zap },
-    ],
-  },
-  {
-    label: "Intelligence",
-    tKey: "nav.groups.intelligence",
-    items: [
-      { to: "/dashboard/competitors", label: "Competitors", tKey: "nav.competitors", icon: Crosshair },
-      { to: "/dashboard/field-intel", label: "Field Intel", tKey: "nav.fieldIntel", icon: MapPin },
-      { to: "/dashboard/pricing", label: "Pricing", tKey: "nav.pricing", icon: TrendingUp },
-      { to: "/dashboard/promotions", label: "Promotions", tKey: "nav.promotions", icon: Megaphone },
-      { to: "/dashboard/market", label: "Market", tKey: "nav.market", icon: BarChart3 },
-      { to: "/dashboard/benchmarks", label: "Benchmarks", tKey: "nav.benchmarks", icon: Target },
+      { to: "/dashboard/api-keys",     label: "API Keys",     tKey: "nav.apiKeys",     icon: KeyRound  },
+      { to: "/dashboard/api-explorer", label: "API Explorer", tKey: "nav.apiExplorer", icon: Terminal  },
+      { to: "/dashboard/webhooks",     label: "Webhooks",     tKey: "nav.webhooks",    icon: Webhook   },
+      { to: "/dashboard/usage",        label: "Usage",        tKey: "nav.usage",       icon: Activity  },
+      { to: "/dashboard/logs",         label: "Logs",         tKey: "nav.logs",        icon: FileCode2 },
+      { to: "/dashboard/console",      label: "Console",      tKey: "nav.console",     icon: Layers    },
     ],
   },
 ];
@@ -103,7 +79,7 @@ function NavLinkItem({
 }) {
   const { t } = useTranslation();
   const Icon = item.icon;
-  const label = t(item.tKey);
+  const label = t(item.tKey, item.label);
   return (
     <Link
       to={item.to}
@@ -151,19 +127,7 @@ function SidebarContent({
   const { toggle } = useSidebarCollapse();
   const { data: isAdmin } = useIsAdmin();
 
-  const groups: NavGroup[] = isAdmin
-    ? navGroups.map((g) =>
-        g.label === "Developers"
-          ? {
-              ...g,
-              items: [
-                ...g.items,
-                { to: "/dashboard/admin", label: "Admin", tKey: "nav.admin", icon: ShieldCheck },
-              ],
-            }
-          : g,
-      )
-    : navGroups;
+  const groups: NavGroup[] = isAdmin ? [adminGroup, ...navGroups] : navGroups;
 
   const isActive = (to: string) =>
     to === "/dashboard" ? pathname === "/dashboard" : pathname === to || pathname.startsWith(to + "/");
@@ -233,7 +197,7 @@ function SidebarContent({
                   color: "#5A5A5A",
                 }}
               >
-                {t(group.tKey)}
+                {t(group.tKey, group.label)}
               </div>
             ) : (
               <div
@@ -263,40 +227,6 @@ function SidebarContent({
           onNavigate={onNavigate}
         />
       </nav>
-
-      {/* Margin product switcher */}
-      <div style={{ margin: "4px 8px 0" }}>
-        <Link
-          to="/margin-dashboard"
-          title={collapsed ? "Switch to Margin" : undefined}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: collapsed ? "8px 0" : "8px 12px",
-            justifyContent: collapsed ? "center" : "flex-start",
-            borderRadius: 8,
-            textDecoration: "none",
-            fontSize: 12,
-            fontWeight: 600,
-            color: "#4A7A5A",
-            background: "rgba(16, 185, 129, 0.06)",
-            border: "1px solid rgba(16, 185, 129, 0.15)",
-            transition: "color 0.15s, background 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#10B981";
-            e.currentTarget.style.background = "rgba(16, 185, 129, 0.12)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#4A7A5A";
-            e.currentTarget.style.background = "rgba(16, 185, 129, 0.06)";
-          }}
-        >
-          <span style={{ fontSize: 11, fontWeight: 800, color: "#10B981", flexShrink: 0 }}>M</span>
-          {!collapsed && <span>Switch to Margin</span>}
-        </Link>
-      </div>
 
       {/* Collapse toggle (desktop only) */}
       {showCollapseToggle && (
