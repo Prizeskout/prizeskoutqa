@@ -317,16 +317,17 @@ export function PrizeSkoutDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
-      const data = await res.json() as { rule?: Record<string,unknown>; error?: string };
+      let data: { rule?: Record<string,unknown>; error?: string } = {};
+      try { data = await res.json() as typeof data; } catch { /* non-JSON body */ }
       if (!res.ok || !data.rule) {
-        setCpError(data.error ?? "Compilation failed — try again.");
+        setCpError(data.error ?? `Server error (${res.status}) — the route may still be deploying. Try again in a moment.`);
         setCpPhase("idle");
         return;
       }
       setCpObj(data.rule);
       setCpPhase("result");
     } catch {
-      setCpError("Network error — check your connection.");
+      setCpError("Request failed — check your connection or try again.");
       setCpPhase("idle");
     }
   };
