@@ -84,8 +84,9 @@ function ConnectButton({ platform, onConnect }: { platform: string; onConnect: (
 }
 
 export function ChannelsTab() {
-  const [statuses, setStatuses] = useState<Record<string, ChannelStatus>>({});
-  const [loading, setLoading] = useState(true);
+  const [statuses, setStatuses]         = useState<Record<string, ChannelStatus>>({});
+  const [loading, setLoading]           = useState(true);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [byokPlatform, setByokPlatform] = useState<string | null>(null);
   const [byokFields, setByokFields]     = useState<Record<string, string>>({});
   const [byokStatus, setByokStatus]     = useState<"idle" | "loading" | "ok" | "err">("idle");
@@ -123,6 +124,27 @@ export function ChannelsTab() {
       window.location.href = `/api/auth/${platform}?merchant_id=${encodeURIComponent(merchantId)}`;
     } else if (platform in BYOK_PLATFORMS) {
       setByokPlatform(platform); setByokFields({}); setByokStatus("idle"); setByokError(null);
+    }
+  }
+
+  async function handleDisconnect(platform: string) {
+    const name = CHANNELS.find(c => c.platform === platform)?.name ?? platform;
+    if (!confirm(`Disconnect ${name}? This will remove the channel and its credentials from your account.`)) return;
+
+    const mid        = typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
+    const accessCode = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "")  : "";
+
+    setDisconnecting(platform);
+    try {
+      const res  = await fetch("/api/channels/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: mid, access_code: accessCode, platform }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (data.ok) setStatuses(prev => ({ ...prev, [platform]: "not_connected" }));
+    } catch { /* silent — status unchanged */ } finally {
+      setDisconnecting(null);
     }
   }
 
@@ -185,17 +207,37 @@ export function ChannelsTab() {
                     <ConnectButton platform={ch.platform} onConnect={handleConnect} />
                   )}
                   {!loading && status === "connected" && OAUTH_PLATFORMS.has(ch.platform) && (
-                    <button
-                      type="button"
-                      onClick={() => handleConnect(ch.platform)}
-                      style={{
-                        fontSize: 12, fontWeight: 500, color: "#6B7280", background: "transparent",
-                        border: "1px solid #E5E2DB", borderRadius: 7, padding: "10px 16px",
-                        cursor: "pointer", fontFamily: "inherit", minHeight: 44,
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "#9CA3AF"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "#E5E2DB"; }}
-                    >Reconnect</button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleDisconnect(ch.platform)}
+                        disabled={disconnecting === ch.platform}
+                        style={{
+                          fontSize: 12, fontWeight: 500,
+                          color: disconnecting === ch.platform ? "#9CA3AF" : "#EF4444",
+                          background: "transparent",
+                          border: `1px solid ${disconnecting === ch.platform ? "#E5E2DB" : "rgba(239,68,68,0.3)"}`,
+                          borderRadius: 7, padding: "10px 16px",
+                          cursor: disconnecting === ch.platform ? "default" : "pointer",
+                          fontFamily: "inherit", minHeight: 44, transition: "all .15s",
+                        }}
+                        onMouseEnter={e => { if (disconnecting !== ch.platform) e.currentTarget.style.background = "rgba(239,68,68,0.06)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                      >
+                        {disconnecting === ch.platform ? "Disconnecting…" : "Disconnect"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConnect(ch.platform)}
+                        style={{
+                          fontSize: 12, fontWeight: 500, color: "#6B7280", background: "transparent",
+                          border: "1px solid #E5E2DB", borderRadius: 7, padding: "10px 16px",
+                          cursor: "pointer", fontFamily: "inherit", minHeight: 44,
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#9CA3AF"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#E5E2DB"; }}
+                      >Reconnect</button>
+                    </>
                   )}
                   {!loading && status === "not_connected" && !OAUTH_PLATFORMS.has(ch.platform) && ch.platform in BYOK_PLATFORMS && (
                     <ConnectButton platform={ch.platform} onConnect={handleConnect} />
