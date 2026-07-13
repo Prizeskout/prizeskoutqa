@@ -22,10 +22,12 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as ApiReferenceRouteImport } from './routes/api-reference'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarginDashboardIndexRouteImport } from './routes/margin-dashboard.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as ProductsPromotionsRouteImport } from './routes/products.promotions'
 import { Route as ProductsPricingRouteImport } from './routes/products.pricing'
@@ -40,37 +42,20 @@ import { Route as MarginDashboardChannelsRouteImport } from './routes/margin-das
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
-import { Route as DashboardWebhooksRouteImport } from './routes/dashboard.webhooks'
-import { Route as DashboardUsageRouteImport } from './routes/dashboard.usage'
-import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
-import { Route as DashboardScenariosRouteImport } from './routes/dashboard.scenarios'
 import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
-import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
-import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
-import { Route as DashboardPolicyEngineRouteImport } from './routes/dashboard.policy-engine'
-import { Route as DashboardPlansRouteImport } from './routes/dashboard.plans'
-import { Route as DashboardMarketRouteImport } from './routes/dashboard.market'
-import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
-import { Route as DashboardIntegrationVaultRouteImport } from './routes/dashboard.integration-vault'
-import { Route as DashboardFieldIntelRouteImport } from './routes/dashboard.field-intel'
-import { Route as DashboardConsoleRouteImport } from './routes/dashboard.console'
-import { Route as DashboardCompetitorsRouteImport } from './routes/dashboard.competitors'
-import { Route as DashboardCapabilitiesRouteImport } from './routes/dashboard.capabilities'
-import { Route as DashboardBenchmarksRouteImport } from './routes/dashboard.benchmarks'
-import { Route as DashboardApiKeysRouteImport } from './routes/dashboard.api-keys'
-import { Route as DashboardApiExplorerRouteImport } from './routes/dashboard.api-explorer'
-import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
-import { Route as DashboardScenariosIndexRouteImport } from './routes/dashboard.scenarios.index'
-import { Route as DashboardConsoleIndexRouteImport } from './routes/dashboard.console.index'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
+import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
+import { Route as AdminLiveAccessRouteImport } from './routes/admin.live-access'
+import { Route as AdminCodesRouteImport } from './routes/admin.codes'
+import { Route as AdminChannelsRouteImport } from './routes/admin.channels'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
 import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
 import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.quickstart'
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
-import { Route as DashboardConsoleTenantsRouteImport } from './routes/dashboard.console.tenants'
-import { Route as DashboardConsoleTeamRouteImport } from './routes/dashboard.console.team'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
@@ -155,6 +140,11 @@ const ApiReferenceRoute = ApiReferenceRouteImport.update({
   path: '/api-reference',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccessRoute = AccessRouteImport.update({
   id: '/access',
   path: '/access',
@@ -174,6 +164,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const StoreSlugRoute = StoreSlugRouteImport.update({
   id: '/store/$slug',
@@ -245,105 +240,9 @@ const DocsChangelogRoute = DocsChangelogRouteImport.update({
   path: '/changelog',
   getParentRoute: () => DocsRoute,
 } as any)
-const DashboardWebhooksRoute = DashboardWebhooksRouteImport.update({
-  id: '/webhooks',
-  path: '/webhooks',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardUsageRoute = DashboardUsageRouteImport.update({
-  id: '/usage',
-  path: '/usage',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardScenariosRoute = DashboardScenariosRouteImport.update({
-  id: '/scenarios',
-  path: '/scenarios',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardRevenueHubRoute = DashboardRevenueHubRouteImport.update({
   id: '/revenue-hub',
   path: '/revenue-hub',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardPromotionsRoute = DashboardPromotionsRouteImport.update({
-  id: '/promotions',
-  path: '/promotions',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardPricingRoute = DashboardPricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardPolicyEngineRoute = DashboardPolicyEngineRouteImport.update({
-  id: '/policy-engine',
-  path: '/policy-engine',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardPlansRoute = DashboardPlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMarketRoute = DashboardMarketRouteImport.update({
-  id: '/market',
-  path: '/market',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardLogsRoute = DashboardLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardIntegrationVaultRoute =
-  DashboardIntegrationVaultRouteImport.update({
-    id: '/integration-vault',
-    path: '/integration-vault',
-    getParentRoute: () => DashboardRoute,
-  } as any)
-const DashboardFieldIntelRoute = DashboardFieldIntelRouteImport.update({
-  id: '/field-intel',
-  path: '/field-intel',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardConsoleRoute = DashboardConsoleRouteImport.update({
-  id: '/console',
-  path: '/console',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardCompetitorsRoute = DashboardCompetitorsRouteImport.update({
-  id: '/competitors',
-  path: '/competitors',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardCapabilitiesRoute = DashboardCapabilitiesRouteImport.update({
-  id: '/capabilities',
-  path: '/capabilities',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardBenchmarksRoute = DashboardBenchmarksRouteImport.update({
-  id: '/benchmarks',
-  path: '/benchmarks',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardApiKeysRoute = DashboardApiKeysRouteImport.update({
-  id: '/api-keys',
-  path: '/api-keys',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardApiExplorerRoute = DashboardApiExplorerRouteImport.update({
-  id: '/api-explorer',
-  path: '/api-explorer',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAdminRoute = DashboardAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => DashboardRoute,
 } as any)
 const ApiRestoreRoute = ApiRestoreRouteImport.update({
@@ -356,15 +255,35 @@ const ApiRegisterCodeRoute = ApiRegisterCodeRouteImport.update({
   path: '/api/register-code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardScenariosIndexRoute = DashboardScenariosIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardScenariosRoute,
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
 } as any)
-const DashboardConsoleIndexRoute = DashboardConsoleIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardConsoleRoute,
+const AdminMerchantsRoute = AdminMerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLiveAccessRoute = AdminLiveAccessRouteImport.update({
+  id: '/live-access',
+  path: '/live-access',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCodesRoute = AdminCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminChannelsRoute = AdminChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AdminRoute,
 } as any)
 const DocsGuidesWebhooksRoute = DocsGuidesWebhooksRouteImport.update({
   id: '/webhooks',
@@ -388,19 +307,9 @@ const DocsGuidesAuthenticationRoute =
     getParentRoute: () => DocsGuidesRoute,
   } as any)
 const DashboardScenariosSlugRoute = DashboardScenariosSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => DashboardScenariosRoute,
-} as any)
-const DashboardConsoleTenantsRoute = DashboardConsoleTenantsRouteImport.update({
-  id: '/tenants',
-  path: '/tenants',
-  getParentRoute: () => DashboardConsoleRoute,
-} as any)
-const DashboardConsoleTeamRoute = DashboardConsoleTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => DashboardConsoleRoute,
+  id: '/scenarios/$slug',
+  path: '/scenarios/$slug',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ApiWebhooksPlatformRoute = ApiWebhooksPlatformRouteImport.update({
   id: '/api/webhooks/$platform',
@@ -502,6 +411,7 @@ const ApiPublicV1WebhooksTestSignatureRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
+  '/admin': typeof AdminRouteWithChildren
   '/api-reference': typeof ApiReferenceRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
@@ -515,28 +425,15 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/channels': typeof AdminChannelsRoute
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/live-access': typeof AdminLiveAccessRoute
+  '/admin/merchants': typeof AdminMerchantsRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
-  '/dashboard/admin': typeof DashboardAdminRoute
-  '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
-  '/dashboard/api-keys': typeof DashboardApiKeysRoute
-  '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
-  '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
-  '/dashboard/competitors': typeof DashboardCompetitorsRoute
-  '/dashboard/console': typeof DashboardConsoleRouteWithChildren
-  '/dashboard/field-intel': typeof DashboardFieldIntelRoute
-  '/dashboard/integration-vault': typeof DashboardIntegrationVaultRoute
-  '/dashboard/logs': typeof DashboardLogsRoute
-  '/dashboard/market': typeof DashboardMarketRoute
-  '/dashboard/plans': typeof DashboardPlansRoute
-  '/dashboard/policy-engine': typeof DashboardPolicyEngineRoute
-  '/dashboard/pricing': typeof DashboardPricingRoute
-  '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
-  '/dashboard/scenarios': typeof DashboardScenariosRouteWithChildren
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/usage': typeof DashboardUsageRoute
-  '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
@@ -551,6 +448,7 @@ export interface FileRoutesByFullPath {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/store/$slug': typeof StoreSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
@@ -560,15 +458,11 @@ export interface FileRoutesByFullPath {
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
-  '/dashboard/console/team': typeof DashboardConsoleTeamRoute
-  '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
-  '/dashboard/console/': typeof DashboardConsoleIndexRoute
-  '/dashboard/scenarios/': typeof DashboardScenariosIndexRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -595,26 +489,15 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/channels': typeof AdminChannelsRoute
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/live-access': typeof AdminLiveAccessRoute
+  '/admin/merchants': typeof AdminMerchantsRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
-  '/dashboard/admin': typeof DashboardAdminRoute
-  '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
-  '/dashboard/api-keys': typeof DashboardApiKeysRoute
-  '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
-  '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
-  '/dashboard/competitors': typeof DashboardCompetitorsRoute
-  '/dashboard/field-intel': typeof DashboardFieldIntelRoute
-  '/dashboard/integration-vault': typeof DashboardIntegrationVaultRoute
-  '/dashboard/logs': typeof DashboardLogsRoute
-  '/dashboard/market': typeof DashboardMarketRoute
-  '/dashboard/plans': typeof DashboardPlansRoute
-  '/dashboard/policy-engine': typeof DashboardPolicyEngineRoute
-  '/dashboard/pricing': typeof DashboardPricingRoute
-  '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/usage': typeof DashboardUsageRoute
-  '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
@@ -629,6 +512,7 @@ export interface FileRoutesByTo {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/store/$slug': typeof StoreSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/margin-dashboard': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
@@ -638,15 +522,11 @@ export interface FileRoutesByTo {
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
-  '/dashboard/console/team': typeof DashboardConsoleTeamRoute
-  '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
-  '/dashboard/console': typeof DashboardConsoleIndexRoute
-  '/dashboard/scenarios': typeof DashboardScenariosIndexRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -663,6 +543,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
+  '/admin': typeof AdminRouteWithChildren
   '/api-reference': typeof ApiReferenceRoute
   '/changelog': typeof ChangelogRoute
   '/contact': typeof ContactRoute
@@ -676,28 +557,15 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/channels': typeof AdminChannelsRoute
+  '/admin/codes': typeof AdminCodesRoute
+  '/admin/live-access': typeof AdminLiveAccessRoute
+  '/admin/merchants': typeof AdminMerchantsRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
-  '/dashboard/admin': typeof DashboardAdminRoute
-  '/dashboard/api-explorer': typeof DashboardApiExplorerRoute
-  '/dashboard/api-keys': typeof DashboardApiKeysRoute
-  '/dashboard/benchmarks': typeof DashboardBenchmarksRoute
-  '/dashboard/capabilities': typeof DashboardCapabilitiesRoute
-  '/dashboard/competitors': typeof DashboardCompetitorsRoute
-  '/dashboard/console': typeof DashboardConsoleRouteWithChildren
-  '/dashboard/field-intel': typeof DashboardFieldIntelRoute
-  '/dashboard/integration-vault': typeof DashboardIntegrationVaultRoute
-  '/dashboard/logs': typeof DashboardLogsRoute
-  '/dashboard/market': typeof DashboardMarketRoute
-  '/dashboard/plans': typeof DashboardPlansRoute
-  '/dashboard/policy-engine': typeof DashboardPolicyEngineRoute
-  '/dashboard/pricing': typeof DashboardPricingRoute
-  '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
-  '/dashboard/scenarios': typeof DashboardScenariosRouteWithChildren
-  '/dashboard/settings': typeof DashboardSettingsRoute
-  '/dashboard/usage': typeof DashboardUsageRoute
-  '/dashboard/webhooks': typeof DashboardWebhooksRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
@@ -712,6 +580,7 @@ export interface FileRoutesById {
   '/products/pricing': typeof ProductsPricingRoute
   '/products/promotions': typeof ProductsPromotionsRoute
   '/store/$slug': typeof StoreSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
@@ -721,15 +590,11 @@ export interface FileRoutesById {
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
-  '/dashboard/console/team': typeof DashboardConsoleTeamRoute
-  '/dashboard/console/tenants': typeof DashboardConsoleTenantsRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
-  '/dashboard/console/': typeof DashboardConsoleIndexRoute
-  '/dashboard/scenarios/': typeof DashboardScenariosIndexRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -747,6 +612,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/access'
+    | '/admin'
     | '/api-reference'
     | '/changelog'
     | '/contact'
@@ -760,28 +626,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
+    | '/admin/audit'
+    | '/admin/channels'
+    | '/admin/codes'
+    | '/admin/live-access'
+    | '/admin/merchants'
+    | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
-    | '/dashboard/admin'
-    | '/dashboard/api-explorer'
-    | '/dashboard/api-keys'
-    | '/dashboard/benchmarks'
-    | '/dashboard/capabilities'
-    | '/dashboard/competitors'
-    | '/dashboard/console'
-    | '/dashboard/field-intel'
-    | '/dashboard/integration-vault'
-    | '/dashboard/logs'
-    | '/dashboard/market'
-    | '/dashboard/plans'
-    | '/dashboard/policy-engine'
-    | '/dashboard/pricing'
-    | '/dashboard/promotions'
     | '/dashboard/revenue-hub'
-    | '/dashboard/scenarios'
-    | '/dashboard/settings'
-    | '/dashboard/usage'
-    | '/dashboard/webhooks'
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
@@ -796,6 +649,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/store/$slug'
+    | '/admin/'
     | '/dashboard/'
     | '/margin-dashboard/'
     | '/api/auth/email-bridge'
@@ -805,15 +659,11 @@ export interface FileRouteTypes {
     | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/webhooks/$platform'
-    | '/dashboard/console/team'
-    | '/dashboard/console/tenants'
     | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
-    | '/dashboard/console/'
-    | '/dashboard/scenarios/'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
@@ -840,26 +690,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
+    | '/admin/audit'
+    | '/admin/channels'
+    | '/admin/codes'
+    | '/admin/live-access'
+    | '/admin/merchants'
+    | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
-    | '/dashboard/admin'
-    | '/dashboard/api-explorer'
-    | '/dashboard/api-keys'
-    | '/dashboard/benchmarks'
-    | '/dashboard/capabilities'
-    | '/dashboard/competitors'
-    | '/dashboard/field-intel'
-    | '/dashboard/integration-vault'
-    | '/dashboard/logs'
-    | '/dashboard/market'
-    | '/dashboard/plans'
-    | '/dashboard/policy-engine'
-    | '/dashboard/pricing'
-    | '/dashboard/promotions'
     | '/dashboard/revenue-hub'
-    | '/dashboard/settings'
-    | '/dashboard/usage'
-    | '/dashboard/webhooks'
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
@@ -874,6 +713,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/store/$slug'
+    | '/admin'
     | '/dashboard'
     | '/margin-dashboard'
     | '/api/auth/email-bridge'
@@ -883,15 +723,11 @@ export interface FileRouteTypes {
     | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/webhooks/$platform'
-    | '/dashboard/console/team'
-    | '/dashboard/console/tenants'
     | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
-    | '/dashboard/console'
-    | '/dashboard/scenarios'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
@@ -907,6 +743,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/access'
+    | '/admin'
     | '/api-reference'
     | '/changelog'
     | '/contact'
@@ -920,28 +757,15 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
+    | '/admin/audit'
+    | '/admin/channels'
+    | '/admin/codes'
+    | '/admin/live-access'
+    | '/admin/merchants'
+    | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
-    | '/dashboard/admin'
-    | '/dashboard/api-explorer'
-    | '/dashboard/api-keys'
-    | '/dashboard/benchmarks'
-    | '/dashboard/capabilities'
-    | '/dashboard/competitors'
-    | '/dashboard/console'
-    | '/dashboard/field-intel'
-    | '/dashboard/integration-vault'
-    | '/dashboard/logs'
-    | '/dashboard/market'
-    | '/dashboard/plans'
-    | '/dashboard/policy-engine'
-    | '/dashboard/pricing'
-    | '/dashboard/promotions'
     | '/dashboard/revenue-hub'
-    | '/dashboard/scenarios'
-    | '/dashboard/settings'
-    | '/dashboard/usage'
-    | '/dashboard/webhooks'
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
@@ -956,6 +780,7 @@ export interface FileRouteTypes {
     | '/products/pricing'
     | '/products/promotions'
     | '/store/$slug'
+    | '/admin/'
     | '/dashboard/'
     | '/margin-dashboard/'
     | '/api/auth/email-bridge'
@@ -965,15 +790,11 @@ export interface FileRouteTypes {
     | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/webhooks/$platform'
-    | '/dashboard/console/team'
-    | '/dashboard/console/tenants'
     | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
-    | '/dashboard/console/'
-    | '/dashboard/scenarios/'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
@@ -990,6 +811,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRoute: typeof AccessRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ApiReferenceRoute: typeof ApiReferenceRoute
   ChangelogRoute: typeof ChangelogRoute
   ContactRoute: typeof ContactRoute
@@ -1123,6 +945,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiReferenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/access': {
       id: '/access'
       path: '/access'
@@ -1150,6 +979,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/store/$slug': {
       id: '/store/$slug'
@@ -1249,144 +1085,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsChangelogRouteImport
       parentRoute: typeof DocsRoute
     }
-    '/dashboard/webhooks': {
-      id: '/dashboard/webhooks'
-      path: '/webhooks'
-      fullPath: '/dashboard/webhooks'
-      preLoaderRoute: typeof DashboardWebhooksRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/usage': {
-      id: '/dashboard/usage'
-      path: '/usage'
-      fullPath: '/dashboard/usage'
-      preLoaderRoute: typeof DashboardUsageRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/settings': {
-      id: '/dashboard/settings'
-      path: '/settings'
-      fullPath: '/dashboard/settings'
-      preLoaderRoute: typeof DashboardSettingsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/scenarios': {
-      id: '/dashboard/scenarios'
-      path: '/scenarios'
-      fullPath: '/dashboard/scenarios'
-      preLoaderRoute: typeof DashboardScenariosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/revenue-hub': {
       id: '/dashboard/revenue-hub'
       path: '/revenue-hub'
       fullPath: '/dashboard/revenue-hub'
       preLoaderRoute: typeof DashboardRevenueHubRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/promotions': {
-      id: '/dashboard/promotions'
-      path: '/promotions'
-      fullPath: '/dashboard/promotions'
-      preLoaderRoute: typeof DashboardPromotionsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/pricing': {
-      id: '/dashboard/pricing'
-      path: '/pricing'
-      fullPath: '/dashboard/pricing'
-      preLoaderRoute: typeof DashboardPricingRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/policy-engine': {
-      id: '/dashboard/policy-engine'
-      path: '/policy-engine'
-      fullPath: '/dashboard/policy-engine'
-      preLoaderRoute: typeof DashboardPolicyEngineRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/plans': {
-      id: '/dashboard/plans'
-      path: '/plans'
-      fullPath: '/dashboard/plans'
-      preLoaderRoute: typeof DashboardPlansRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/market': {
-      id: '/dashboard/market'
-      path: '/market'
-      fullPath: '/dashboard/market'
-      preLoaderRoute: typeof DashboardMarketRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/logs': {
-      id: '/dashboard/logs'
-      path: '/logs'
-      fullPath: '/dashboard/logs'
-      preLoaderRoute: typeof DashboardLogsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/integration-vault': {
-      id: '/dashboard/integration-vault'
-      path: '/integration-vault'
-      fullPath: '/dashboard/integration-vault'
-      preLoaderRoute: typeof DashboardIntegrationVaultRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/field-intel': {
-      id: '/dashboard/field-intel'
-      path: '/field-intel'
-      fullPath: '/dashboard/field-intel'
-      preLoaderRoute: typeof DashboardFieldIntelRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/console': {
-      id: '/dashboard/console'
-      path: '/console'
-      fullPath: '/dashboard/console'
-      preLoaderRoute: typeof DashboardConsoleRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/competitors': {
-      id: '/dashboard/competitors'
-      path: '/competitors'
-      fullPath: '/dashboard/competitors'
-      preLoaderRoute: typeof DashboardCompetitorsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/capabilities': {
-      id: '/dashboard/capabilities'
-      path: '/capabilities'
-      fullPath: '/dashboard/capabilities'
-      preLoaderRoute: typeof DashboardCapabilitiesRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/benchmarks': {
-      id: '/dashboard/benchmarks'
-      path: '/benchmarks'
-      fullPath: '/dashboard/benchmarks'
-      preLoaderRoute: typeof DashboardBenchmarksRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/api-keys': {
-      id: '/dashboard/api-keys'
-      path: '/api-keys'
-      fullPath: '/dashboard/api-keys'
-      preLoaderRoute: typeof DashboardApiKeysRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/api-explorer': {
-      id: '/dashboard/api-explorer'
-      path: '/api-explorer'
-      fullPath: '/dashboard/api-explorer'
-      preLoaderRoute: typeof DashboardApiExplorerRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/admin': {
-      id: '/dashboard/admin'
-      path: '/admin'
-      fullPath: '/dashboard/admin'
-      preLoaderRoute: typeof DashboardAdminRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/api/restore': {
@@ -1403,19 +1106,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRegisterCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/scenarios/': {
-      id: '/dashboard/scenarios/'
-      path: '/'
-      fullPath: '/dashboard/scenarios/'
-      preLoaderRoute: typeof DashboardScenariosIndexRouteImport
-      parentRoute: typeof DashboardScenariosRoute
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/dashboard/console/': {
-      id: '/dashboard/console/'
-      path: '/'
-      fullPath: '/dashboard/console/'
-      preLoaderRoute: typeof DashboardConsoleIndexRouteImport
-      parentRoute: typeof DashboardConsoleRoute
+    '/admin/merchants': {
+      id: '/admin/merchants'
+      path: '/merchants'
+      fullPath: '/admin/merchants'
+      preLoaderRoute: typeof AdminMerchantsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/live-access': {
+      id: '/admin/live-access'
+      path: '/live-access'
+      fullPath: '/admin/live-access'
+      preLoaderRoute: typeof AdminLiveAccessRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/codes': {
+      id: '/admin/codes'
+      path: '/codes'
+      fullPath: '/admin/codes'
+      preLoaderRoute: typeof AdminCodesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/channels': {
+      id: '/admin/channels'
+      path: '/channels'
+      fullPath: '/admin/channels'
+      preLoaderRoute: typeof AdminChannelsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/docs/guides/webhooks': {
       id: '/docs/guides/webhooks'
@@ -1447,24 +1178,10 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/scenarios/$slug': {
       id: '/dashboard/scenarios/$slug'
-      path: '/$slug'
+      path: '/scenarios/$slug'
       fullPath: '/dashboard/scenarios/$slug'
       preLoaderRoute: typeof DashboardScenariosSlugRouteImport
-      parentRoute: typeof DashboardScenariosRoute
-    }
-    '/dashboard/console/tenants': {
-      id: '/dashboard/console/tenants'
-      path: '/tenants'
-      fullPath: '/dashboard/console/tenants'
-      preLoaderRoute: typeof DashboardConsoleTenantsRouteImport
-      parentRoute: typeof DashboardConsoleRoute
-    }
-    '/dashboard/console/team': {
-      id: '/dashboard/console/team'
-      path: '/team'
-      fullPath: '/dashboard/console/team'
-      preLoaderRoute: typeof DashboardConsoleTeamRouteImport
-      parentRoute: typeof DashboardConsoleRoute
+      parentRoute: typeof DashboardRoute
     }
     '/api/webhooks/$platform': {
       id: '/api/webhooks/$platform'
@@ -1595,80 +1312,38 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface DashboardConsoleRouteChildren {
-  DashboardConsoleTeamRoute: typeof DashboardConsoleTeamRoute
-  DashboardConsoleTenantsRoute: typeof DashboardConsoleTenantsRoute
-  DashboardConsoleIndexRoute: typeof DashboardConsoleIndexRoute
+interface AdminRouteChildren {
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminChannelsRoute: typeof AdminChannelsRoute
+  AdminCodesRoute: typeof AdminCodesRoute
+  AdminLiveAccessRoute: typeof AdminLiveAccessRoute
+  AdminMerchantsRoute: typeof AdminMerchantsRoute
+  AdminSystemRoute: typeof AdminSystemRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
-const DashboardConsoleRouteChildren: DashboardConsoleRouteChildren = {
-  DashboardConsoleTeamRoute: DashboardConsoleTeamRoute,
-  DashboardConsoleTenantsRoute: DashboardConsoleTenantsRoute,
-  DashboardConsoleIndexRoute: DashboardConsoleIndexRoute,
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditRoute: AdminAuditRoute,
+  AdminChannelsRoute: AdminChannelsRoute,
+  AdminCodesRoute: AdminCodesRoute,
+  AdminLiveAccessRoute: AdminLiveAccessRoute,
+  AdminMerchantsRoute: AdminMerchantsRoute,
+  AdminSystemRoute: AdminSystemRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
-const DashboardConsoleRouteWithChildren =
-  DashboardConsoleRoute._addFileChildren(DashboardConsoleRouteChildren)
-
-interface DashboardScenariosRouteChildren {
-  DashboardScenariosSlugRoute: typeof DashboardScenariosSlugRoute
-  DashboardScenariosIndexRoute: typeof DashboardScenariosIndexRoute
-}
-
-const DashboardScenariosRouteChildren: DashboardScenariosRouteChildren = {
-  DashboardScenariosSlugRoute: DashboardScenariosSlugRoute,
-  DashboardScenariosIndexRoute: DashboardScenariosIndexRoute,
-}
-
-const DashboardScenariosRouteWithChildren =
-  DashboardScenariosRoute._addFileChildren(DashboardScenariosRouteChildren)
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface DashboardRouteChildren {
-  DashboardAdminRoute: typeof DashboardAdminRoute
-  DashboardApiExplorerRoute: typeof DashboardApiExplorerRoute
-  DashboardApiKeysRoute: typeof DashboardApiKeysRoute
-  DashboardBenchmarksRoute: typeof DashboardBenchmarksRoute
-  DashboardCapabilitiesRoute: typeof DashboardCapabilitiesRoute
-  DashboardCompetitorsRoute: typeof DashboardCompetitorsRoute
-  DashboardConsoleRoute: typeof DashboardConsoleRouteWithChildren
-  DashboardFieldIntelRoute: typeof DashboardFieldIntelRoute
-  DashboardIntegrationVaultRoute: typeof DashboardIntegrationVaultRoute
-  DashboardLogsRoute: typeof DashboardLogsRoute
-  DashboardMarketRoute: typeof DashboardMarketRoute
-  DashboardPlansRoute: typeof DashboardPlansRoute
-  DashboardPolicyEngineRoute: typeof DashboardPolicyEngineRoute
-  DashboardPricingRoute: typeof DashboardPricingRoute
-  DashboardPromotionsRoute: typeof DashboardPromotionsRoute
   DashboardRevenueHubRoute: typeof DashboardRevenueHubRoute
-  DashboardScenariosRoute: typeof DashboardScenariosRouteWithChildren
-  DashboardSettingsRoute: typeof DashboardSettingsRoute
-  DashboardUsageRoute: typeof DashboardUsageRoute
-  DashboardWebhooksRoute: typeof DashboardWebhooksRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardScenariosSlugRoute: typeof DashboardScenariosSlugRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardAdminRoute: DashboardAdminRoute,
-  DashboardApiExplorerRoute: DashboardApiExplorerRoute,
-  DashboardApiKeysRoute: DashboardApiKeysRoute,
-  DashboardBenchmarksRoute: DashboardBenchmarksRoute,
-  DashboardCapabilitiesRoute: DashboardCapabilitiesRoute,
-  DashboardCompetitorsRoute: DashboardCompetitorsRoute,
-  DashboardConsoleRoute: DashboardConsoleRouteWithChildren,
-  DashboardFieldIntelRoute: DashboardFieldIntelRoute,
-  DashboardIntegrationVaultRoute: DashboardIntegrationVaultRoute,
-  DashboardLogsRoute: DashboardLogsRoute,
-  DashboardMarketRoute: DashboardMarketRoute,
-  DashboardPlansRoute: DashboardPlansRoute,
-  DashboardPolicyEngineRoute: DashboardPolicyEngineRoute,
-  DashboardPricingRoute: DashboardPricingRoute,
-  DashboardPromotionsRoute: DashboardPromotionsRoute,
   DashboardRevenueHubRoute: DashboardRevenueHubRoute,
-  DashboardScenariosRoute: DashboardScenariosRouteWithChildren,
-  DashboardSettingsRoute: DashboardSettingsRoute,
-  DashboardUsageRoute: DashboardUsageRoute,
-  DashboardWebhooksRoute: DashboardWebhooksRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardScenariosSlugRoute: DashboardScenariosSlugRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
@@ -1754,6 +1429,7 @@ const ApiAuthZidRouteWithChildren = ApiAuthZidRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRoute: AccessRoute,
+  AdminRoute: AdminRouteWithChildren,
   ApiReferenceRoute: ApiReferenceRoute,
   ChangelogRoute: ChangelogRoute,
   ContactRoute: ContactRoute,
