@@ -1,4 +1,4 @@
-// POST /api/channels/connect
+// POST /api/channels/byok
 // Dashboard-facing endpoint — no API key required, uses merchant_id from body.
 // Supports: talabat (OAuth BYOK), jahez (secret key BYOK)
 
@@ -7,7 +7,7 @@ import { connectTalabat, connectJahez } from "@/server/core/byok-connect";
 
 type Body = Record<string, string>;
 
-export const Route = createFileRoute("/api/channels/connect")({
+export const Route = createFileRoute("/api/channels/byok")({
   server: {
     handlers: {
       POST: async ({ request }) => {
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/channels/connect")({
 
           return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez.` }, 400);
         } catch (err) {
-          console.error("[connect] unhandled error:", err);
+          console.error("[byok] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);
         }
       },

@@ -60,6 +60,7 @@ import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
 import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/connect'
+import { Route as ApiChannelsByokRouteImport } from './routes/api/channels/byok'
 import { Route as ApiAuthZidRouteImport } from './routes/api/auth/zid'
 import { Route as ApiAuthSallaRouteImport } from './routes/api/auth/salla'
 import { Route as ApiAuthEmailBridgeRouteImport } from './routes/api/auth/email-bridge'
@@ -331,6 +332,11 @@ const ApiChannelsConnectRoute = ApiChannelsConnectRouteImport.update({
   path: '/api/channels/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChannelsByokRoute = ApiChannelsByokRouteImport.update({
+  id: '/api/channels/byok',
+  path: '/api/channels/byok',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthZidRoute = ApiAuthZidRouteImport.update({
   id: '/api/auth/zid',
   path: '/api/auth/zid',
@@ -454,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
@@ -518,6 +525,7 @@ export interface FileRoutesByTo {
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
@@ -586,6 +594,7 @@ export interface FileRoutesById {
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
+  '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
@@ -655,6 +664,7 @@ export interface FileRouteTypes {
     | '/api/auth/email-bridge'
     | '/api/auth/salla'
     | '/api/auth/zid'
+    | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
@@ -719,6 +729,7 @@ export interface FileRouteTypes {
     | '/api/auth/email-bridge'
     | '/api/auth/salla'
     | '/api/auth/zid'
+    | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
@@ -786,6 +797,7 @@ export interface FileRouteTypes {
     | '/api/auth/email-bridge'
     | '/api/auth/salla'
     | '/api/auth/zid'
+    | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
@@ -837,6 +849,7 @@ export interface RootRouteChildren {
   ApiAuthEmailBridgeRoute: typeof ApiAuthEmailBridgeRoute
   ApiAuthSallaRoute: typeof ApiAuthSallaRouteWithChildren
   ApiAuthZidRoute: typeof ApiAuthZidRouteWithChildren
+  ApiChannelsByokRoute: typeof ApiChannelsByokRoute
   ApiChannelsConnectRoute: typeof ApiChannelsConnectRoute
   ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
@@ -1211,6 +1224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChannelsConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/channels/byok': {
+      id: '/api/channels/byok'
+      path: '/api/channels/byok'
+      fullPath: '/api/channels/byok'
+      preLoaderRoute: typeof ApiChannelsByokRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid': {
       id: '/api/auth/zid'
       path: '/api/auth/zid'
@@ -1455,6 +1475,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthEmailBridgeRoute: ApiAuthEmailBridgeRoute,
   ApiAuthSallaRoute: ApiAuthSallaRouteWithChildren,
   ApiAuthZidRoute: ApiAuthZidRouteWithChildren,
+  ApiChannelsByokRoute: ApiChannelsByokRoute,
   ApiChannelsConnectRoute: ApiChannelsConnectRoute,
   ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,

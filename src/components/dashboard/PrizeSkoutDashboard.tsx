@@ -10,7 +10,8 @@ interface Rule { name: string; desc: string; floor: number; active: boolean; }
 
 const OG = "#EF681A";
 const GN = "#10B981";
-const MONO = "ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
+const DISPLAY = "'Space Grotesk','Nunito Sans',system-ui,sans-serif";
 
 const CSS = `
 
@@ -21,6 +22,7 @@ const CSS = `
   @keyframes pk-in{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
   @keyframes pk-toast{from{transform:translateY(14px) scale(.97)}to{transform:none}}
   .ps-db{
+    font-family:'Nunito Sans',system-ui,-apple-system,sans-serif;
     --bg:#F6F6F4;--surface:#FFFFFF;--surface2:#FBFBFA;--border:#E5E7EB;
     --text:#111827;--muted:#6B7280;--accent:#EF681A;--green:#10B981;
     --term:#0D1117;--term-border:#222B38;--term-text:#C9D1D9;
@@ -94,12 +96,33 @@ const INBOUND_INTEGRATIONS = [
 ];
 
 const OUTBOUND_INTEGRATIONS = [
-  { name:"Talabat", region:"QA · KSA · UAE", status:"Awaiting build", meta:"outbound price push · not yet active" },
-  { name:"Snoonu",  region:"QA",             status:"Awaiting build", meta:"outbound price push · not yet active" },
-  { name:"Keeta",   region:"QA · KSA",       status:"Awaiting build", meta:"outbound price push · not yet active" },
-  { name:"Jahez",   region:"KSA · hyperlocal", status:"Awaiting build", meta:"outbound price push · not yet active" },
-  { name:"Deliveroo", region:"UAE · QA",     status:"Awaiting build", meta:"outbound price push · not yet active" },
+  { name:"Talabat",   platform:"talabat",   region:"QA · KSA · UAE",     byok:true },
+  { name:"Snoonu",    platform:"snoonu",    region:"QA",                  byok:false },
+  { name:"Keeta",     platform:"keeta",     region:"QA · KSA",            byok:false },
+  { name:"Jahez",     platform:"jahez",     region:"KSA · hyperlocal",    byok:true },
+  { name:"Deliveroo", platform:"deliveroo", region:"UAE · QA",            byok:false },
 ];
+
+type ByokField = { key:string; label:string; hint?:string };
+const BYOK_CONFIG: Record<string, { fields:ByokField[]; portalHint?:string }> = {
+  talabat: {
+    fields:[
+      { key:"client_id",     label:"Client ID",     hint:"Talabat Partner Portal → Settings → API Credentials" },
+      { key:"client_secret", label:"Client Secret" },
+      { key:"vendor_id",     label:"Vendor ID",     hint:"Your store's vendor ID from the Talabat portal" },
+      { key:"chain_id",      label:"Chain ID" },
+    ],
+    portalHint:"Find your credentials at partner.talabat.com",
+  },
+  jahez: {
+    fields:[
+      { key:"api_key",     label:"API Key",     hint:"Request from integration@jahez.net" },
+      { key:"secret_code", label:"Secret Code" },
+      { key:"branch_id",   label:"Branch ID",   hint:"Your branch ID from the Jahez partner dashboard" },
+    ],
+    portalHint:"Contact integration@jahez.net to receive your API credentials",
+  },
+};
 
 const T = {
   en: {
@@ -112,14 +135,14 @@ const T = {
     subV:"POS, aggregator and cache connections",
     nodes:"System Nodes & Response Times",
     stream:"Live Execution Stream", streamS:"Simulated · not real event feed",
-    profLabel:"PROFITS PROTECTED · THIS MONTH",
+    profLabel:"Profits Protected · This Month",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
     copilotDesc:"Describe pricing intent in plain language. The copilot compiles it into a deterministic engine config.",
     copilotLive:"🟢 Copilot Live",
     compile:"Compile ↗",
     try:"Try:", guardrails:"Active Guardrails",
     agentTitle:"Autonomous Dispute Audit Agent", agentActive:"Agent Active",
-    discLog:"DISCREPANCY LOG · POS PAYOUTS vs SUPPLIER CONTRACTS",
+    discLog:"Discrepancy Log · POS Payouts vs Contracts",
     genVoucher:"Generate Dispute Voucher",
     downloadCsv:"Download Audit Log (CSV)",
     exportProofs:"Export Dispute Proofs",
@@ -135,7 +158,7 @@ const T = {
     verified:"SHA-256", verifiedS:"· VERIFIED ✓",
     autoCompiled:"auto-compiled by dispute agent",
     close:"✕",
-    intentLabel:"BUSINESS INTENT · SOURCE",
+    intentLabel:"Business Intent · Source",
     intent:"intent:", confidence:"confidence:", ambiguity:"ambiguity:",
     intentResolved:"resolved ✓",
     applyLabel0:"Apply Config to Core Loop",
@@ -261,6 +284,11 @@ export function PrizeSkoutDashboard() {
     typeof window !== "undefined" && localStorage.getItem("ps_salla_connected") === "1"
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [byokPlatform, setByokPlatform] = useState<string|null>(null);
+  const [byokFields, setByokFields]     = useState<Record<string,string>>({});
+  const [byokStatus, setByokStatus]     = useState<"idle"|"loading"|"ok"|"err">("idle");
+  const [byokError, setByokError]       = useState<string|null>(null);
+  const [channelStatuses, setChannelStatuses] = useState<Record<string,string>>({});
 
   const feedIdx = useRef(0);
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -305,6 +333,21 @@ export function PrizeSkoutDashboard() {
   }, []);
 
   useEffect(() => () => { laterRefs.current.forEach(clearTimeout); }, []);
+
+  useEffect(() => {
+    if (tab !== "vault") return;
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    if (!mid) return;
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { channels?: { platform:string; status:string }[] } | null) => {
+        if (!d?.channels) return;
+        const m: Record<string,string> = {};
+        for (const ch of d.channels) m[ch.platform] = ch.status;
+        setChannelStatuses(m);
+      })
+      .catch(() => {});
+  }, [tab]);
 
   const showToast = (msg: string) => {
     if (toastT.current) clearTimeout(toastT.current);
@@ -363,7 +406,6 @@ export function PrizeSkoutDashboard() {
   return (
     <div className="ps-db" data-theme={theme} dir={dir}
       style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--text)",
-        fontFamily:"system-ui,-apple-system,sans-serif",
         display:"flex", alignItems:"stretch", overflowX:"hidden" }}>
       <style>{CSS}</style>
 
@@ -571,19 +613,19 @@ export function PrizeSkoutDashboard() {
                 background:"var(--surface)",
                 border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                 padding:"26px 28px", display:"flex", flexDirection:"column", gap:18 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:9, fontSize:12, fontWeight:700,
-                  letterSpacing:"1.4px", color:"var(--muted)", fontFamily:MONO }}>
+                <div style={{ display:"flex", alignItems:"center", gap:9, fontSize:11, fontWeight:500,
+                  letterSpacing:"0.06em", color:"var(--muted)", textTransform:"uppercase" as const }}>
                   <span style={{ width:8, height:8, borderRadius:"50%", background:GN }} />
                   {t.profLabel}
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:18, flexWrap:"wrap" }}>
-                  <div style={{ display:"flex", alignItems:"baseline", gap:12 }}>
-                    <span style={{ fontFamily:MONO, fontSize:20, fontWeight:600, color:"var(--muted)" }}>{currency}</span>
-                    <span style={{ fontFamily:MONO, fontSize:62, fontWeight:700, lineHeight:1, color:OG }}>{fmtMoney(50900,currency)}</span>
+                  <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
+                    <span style={{ fontFamily:DISPLAY, fontSize:17, fontWeight:500, color:"var(--muted)" }}>{currency}</span>
+                    <span style={{ fontFamily:DISPLAY, fontSize:62, fontWeight:700, lineHeight:1, color:OG, fontVariantNumeric:"tabular-nums" }}>{fmtMoney(50900,currency)}</span>
                   </div>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:13, flexWrap:"wrap" }}>
-                  <span style={{ fontFamily:MONO, fontSize:13, fontWeight:700, color:GN,
+                  <span style={{ fontSize:13, fontWeight:600, color:GN,
                     background:"var(--surface)", border:"1px solid var(--border)",
                     borderRadius:9, padding:"6px 12px" }}>
                     ↑ {fmtMoney(33,currency)} {currency} / cycle
@@ -597,30 +639,30 @@ export function PrizeSkoutDashboard() {
                       background: i >= BAR_HEIGHTS.length-2 ? OG : `color-mix(in srgb,${OG} 26%,var(--surface))` }} />
                   ))}
                 </div>
-                <div style={{ display:"flex", justifyContent:"space-between", fontFamily:MONO, fontSize:12, color:"var(--muted)" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--muted)" }}>
                   <span>01 Jun</span><span>10 Jun</span><span>20 Jun</span><span>Today</span>
                 </div>
-                <span style={{ position:"absolute", bottom:12, insetInlineEnd:16, fontSize:10,
-                  fontWeight:700, letterSpacing:"1.5px", color:"var(--muted)", opacity:.7, fontFamily:MONO }}>DEMO</span>
+                <span style={{ position:"absolute", bottom:12, insetInlineEnd:16, fontSize:9.5,
+                  fontWeight:600, letterSpacing:"0.05em", color:"var(--muted)", opacity:.7 }}>DEMO</span>
               </div>
 
               {/* Stat cards */}
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
                 gap:18, gridColumn:"span 2", minWidth:"min(100%,420px)", alignContent:"stretch" }}>
                 {[
-                  { label:"TRACKED PRODUCTS",    value:"1,203",          foot:"+48 today",       footColor:GN,            demo:true },
-                  { label:"PRICE UPDATES TODAY", value:String(updatesToday), foot:"avg 540ms",   footColor:"var(--muted)", demo:false },
-                  { label:"AVG. MARGIN SAVED",   value:"31.4%",          foot:"above floor",     footColor:GN,            demo:true },
-                  { label:"ACTIVE RULES",        value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)", demo:false },
+                  { label:"Tracked Products",   value:"1,203",          foot:"+48 today",       footColor:GN,            demo:true },
+                  { label:"Price Updates Today",value:String(updatesToday), foot:"avg 540ms",   footColor:"var(--muted)", demo:false },
+                  { label:"Avg. Margin Saved",  value:"31.4%",          foot:"above floor",     footColor:GN,            demo:true },
+                  { label:"Active Rules",       value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)", demo:false },
                 ].map(s => (
                   <div key={s.label} style={{ position:"relative", background:"var(--surface)",
                     border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                     padding:"20px 22px", display:"flex", flexDirection:"column", gap:12, justifyContent:"space-between" }}>
-                    <div style={{ fontSize:11.5, fontWeight:700, letterSpacing:"1.3px", color:"var(--muted)", fontFamily:MONO }}>{s.label}</div>
-                    <div style={{ fontFamily:MONO, fontSize:34, fontWeight:700, lineHeight:1 }}>{s.value}</div>
-                    <div style={{ fontFamily:MONO, fontSize:12.5, color:s.footColor }}>{s.foot}</div>
+                    <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>{s.label}</div>
+                    <div style={{ fontFamily:DISPLAY, fontSize:34, fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>{s.value}</div>
+                    <div style={{ fontSize:12.5, color:s.footColor }}>{s.foot}</div>
                     {s.demo && <span style={{ position:"absolute", top:12, insetInlineEnd:14, fontSize:9.5,
-                      fontWeight:700, letterSpacing:"1.4px", color:"var(--muted)", opacity:.7, fontFamily:MONO }}>DEMO</span>}
+                      fontWeight:600, letterSpacing:"0.05em", color:"var(--muted)", opacity:.7 }}>DEMO</span>}
                   </div>
                 ))}
               </div>
@@ -630,7 +672,7 @@ export function PrizeSkoutDashboard() {
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
                 <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.nodes}</h2>
-                <span style={{ fontFamily:MONO, fontSize:12.5, color:"var(--muted)" }}>{t.nodesDemo}</span>
+                <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.nodesDemo}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))", gap:18 }}>
                 {NODES.map(nd => (
@@ -641,12 +683,12 @@ export function PrizeSkoutDashboard() {
                       <span style={{ fontSize:16, fontWeight:800 }}>{nd.city}</span>
                       <span style={{ width:9, height:9, borderRadius:"50%", background:GN, animation:"pk-pulse 2.4s infinite" }} />
                     </div>
-                    <div style={{ fontFamily:MONO, fontSize:12.5, color:"var(--muted)" }}>{nd.meta}</div>
+                    <div style={{ fontSize:12.5, color:"var(--muted)" }}>{nd.meta}</div>
                     <div style={{ display:"flex", alignItems:"baseline", gap:5, marginTop:6 }}>
-                      <span style={{ fontFamily:MONO, fontSize:30, fontWeight:700 }}>{nd.ms}</span>
-                      <span style={{ fontFamily:MONO, fontSize:13, color:"var(--muted)" }}>ms</span>
+                      <span style={{ fontFamily:DISPLAY, fontSize:30, fontWeight:700, fontVariantNumeric:"tabular-nums" }}>{nd.ms}</span>
+                      <span style={{ fontSize:13, color:"var(--muted)" }}>ms</span>
                     </div>
-                    <div style={{ fontFamily:MONO, fontSize:12, fontWeight:700, color:GN }}>✓ ACTIVE</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:GN }}>✓ Active</div>
                   </div>
                 ))}
               </div>
@@ -657,16 +699,16 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
                   <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.stream}</h2>
-                  <span style={{ fontFamily:MONO, fontSize:12.5, color:"var(--muted)" }}>{t.streamS}</span>
+                  <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.streamS}</span>
                 </div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                  <button onClick={downloadCsv} style={{ cursor:"pointer", fontFamily:MONO, fontSize:12.5,
+                  <button onClick={downloadCsv} style={{ cursor:"pointer", fontFamily:"inherit", fontSize:13,
                     fontWeight:600, color:"var(--text)", background:"var(--surface)",
                     border:"1px solid var(--border)", borderRadius:10, padding:"11px 16px" }}>
                     {t.downloadCsv}
                   </button>
                   <button onClick={()=>showToast("🟢 Dispute proof bundle exported · 2 claims · hash-verified")}
-                    style={{ cursor:"pointer", fontFamily:MONO, fontSize:12.5, fontWeight:700, color:OG,
+                    style={{ cursor:"pointer", fontFamily:"inherit", fontSize:13, fontWeight:700, color:OG,
                       background:`color-mix(in srgb,${OG} 7%,var(--surface))`,
                       border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                       borderRadius:10, padding:"11px 16px" }}>
@@ -720,13 +762,13 @@ export function PrizeSkoutDashboard() {
                     ].map(m => (
                       <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                         borderRadius:12, padding:"13px 14px", display:"flex", flexDirection:"column", gap:5 }}>
-                        <span style={{ fontFamily:MONO, fontSize:19, fontWeight:700, color:m.color }}>{m.value}</span>
+                        <span style={{ fontFamily:DISPLAY, fontSize:19, fontWeight:700, color:m.color, fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
                         <span style={{ fontSize:11, color:"var(--muted)", fontWeight:600, lineHeight:1.35 }}>{m.label}</span>
                       </div>
                     ))}
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                    <div style={{ fontSize:11.5, fontWeight:700, letterSpacing:"1.3px", color:"var(--muted)", fontFamily:MONO }}>
+                    <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>
                       {t.discLog}
                     </div>
                     {DISPUTES.map((d,i) => (
@@ -736,9 +778,9 @@ export function PrizeSkoutDashboard() {
                         <div style={{ display:"flex", flexDirection:"column", gap:6, minWidth:0, flex:1 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700 }}>
                             ⚠️ {d.title}
-                            <span style={{ fontFamily:MONO, fontSize:12, color:"var(--muted)", fontWeight:500 }}>(Order {d.order})</span>
+                            <span style={{ fontSize:12, color:"var(--muted)", fontWeight:400 }}>(Order {d.order})</span>
                           </div>
-                          <div style={{ fontFamily:MONO, fontSize:12, color:"var(--muted)" }}>
+                          <div style={{ fontSize:12, color:"var(--muted)" }}>
                             {d.place} · Contract: {d.contract} · Charged: <span style={{ color:OG,fontWeight:700 }}>{d.charged}</span> · Leak: <span style={{ color:OG,fontWeight:700 }}>{d.leak}</span>
                           </div>
                         </div>
@@ -814,7 +856,7 @@ export function PrizeSkoutDashboard() {
                   <span style={{ width:22,height:22,borderRadius:"50%",
                     border:`3px solid color-mix(in srgb,${OG} 18%,transparent)`,
                     borderTopColor:OG, animation:"pk-spin .75s linear infinite", flex:"0 0 22px" }} />
-                  <span style={{ fontFamily:MONO, fontSize:13, color:"var(--muted)", animation:"pk-pulse 1.4s infinite" }}>
+                  <span style={{ fontSize:13, color:"var(--muted)", animation:"pk-pulse 1.4s infinite" }}>
                     Parsing business intent into JSON config...
                   </span>
                 </div>
@@ -824,11 +866,11 @@ export function PrizeSkoutDashboard() {
                   <div style={{ background:`color-mix(in srgb,${OG} 6%,var(--surface))`,
                     border:`1px solid color-mix(in srgb,${OG} 24%,transparent)`,
                     borderRadius:14, padding:"20px 22px", display:"flex", flexDirection:"column", gap:12 }}>
-                    <div style={{ fontSize:11.5, fontWeight:700, letterSpacing:"1.3px", color:OG, fontFamily:MONO }}>
+                    <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:OG, textTransform:"uppercase" as const }}>
                       {t.intentLabel}
                     </div>
                     <div style={{ fontSize:16.5, lineHeight:1.55, fontWeight:600 }}>"{cpPrompt}"</div>
-                    <div style={{ marginTop:"auto", display:"flex", gap:14, fontFamily:MONO, fontSize:11.5, color:"var(--muted)", flexWrap:"wrap" }}>
+                    <div style={{ marginTop:"auto", display:"flex", gap:14, fontSize:11.5, color:"var(--muted)", flexWrap:"wrap" }}>
                       <span>{t.intent} <span style={{ color:GN }}>{t.intentResolved}</span></span>
                       <span>{t.confidence} <span style={{ color:GN }}>0.97</span></span>
                       <span>{t.ambiguity} none</span>
@@ -858,7 +900,7 @@ export function PrizeSkoutDashboard() {
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
                 <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.guardrails}</h2>
-                <span style={{ fontFamily:MONO, fontSize:12.5, color:"var(--muted)" }}>{rules.length} {t.rulesEnforced}</span>
+                <span style={{ fontSize:12.5, color:"var(--muted)" }}>{rules.length} {t.rulesEnforced}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))", gap:16 }}>
                 {rules.map((r,i) => (
@@ -867,8 +909,8 @@ export function PrizeSkoutDashboard() {
                     display:"flex", flexDirection:"column", gap:14 }}>
                     <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
                       <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                        <span style={{ fontSize:15, fontWeight:800 }}>{r.name}</span>
-                        <span style={{ fontFamily:MONO, fontSize:11.5, color:"var(--muted)" }}>{r.desc}</span>
+                        <span style={{ fontSize:15, fontWeight:700 }}>{r.name}</span>
+                        <span style={{ fontSize:11.5, color:"var(--muted)" }}>{r.desc}</span>
                       </div>
                       <button onClick={()=>setRules(prev=>prev.map((x,j)=>j===i?{...x,active:!x.active}:x))}
                         aria-label="Toggle rule"
@@ -885,7 +927,7 @@ export function PrizeSkoutDashboard() {
                       <input type="range" min={5} max={60} step={1} value={r.floor}
                         onChange={e=>setRules(prev=>prev.map((x,j)=>j===i?{...x,floor:+e.target.value}:x))}
                         style={{ flex:1 }} />
-                      <span style={{ fontFamily:MONO, fontSize:17, fontWeight:700,
+                      <span style={{ fontFamily:DISPLAY, fontSize:17, fontWeight:700, fontVariantNumeric:"tabular-nums",
                         color: r.floor < 15 ? "#DC2626" : OG, minWidth:52, textAlign:"end" }}>{r.floor}%</span>
                     </div>
                     {r.floor < 15 && r.active && (
@@ -894,7 +936,7 @@ export function PrizeSkoutDashboard() {
                         border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
                         borderRadius:9, padding:"8px 12px" }}>{t.floorWarn}</div>
                     )}
-                    <div style={{ fontFamily:MONO, fontSize:11.5, color: r.active ? GN : "var(--muted)" }}>
+                    <div style={{ fontSize:11.5, color: r.active ? GN : "var(--muted)" }}>
                       {r.active ? t.activeLabel : t.pausedLabel}
                     </div>
                   </div>
@@ -923,7 +965,7 @@ export function PrizeSkoutDashboard() {
                       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                         <span style={{ width:38, height:38, borderRadius:10, background:`color-mix(in srgb,${OG} 10%,var(--surface2))`,
                           border:`1px solid color-mix(in srgb,${OG} 22%,var(--border))`,
-                          display:"grid", placeItems:"center", fontSize:15, fontWeight:800, color:OG, fontFamily:MONO, flexShrink:0 }}>{ig.glyph}</span>
+                          display:"grid", placeItems:"center", fontSize:15, fontWeight:700, color:OG, flexShrink:0 }}>{ig.glyph}</span>
                         <div>
                           <div style={{ fontSize:15, fontWeight:800 }}>{ig.name}</div>
                           <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:2 }}>{ig.kind}</div>
@@ -933,7 +975,7 @@ export function PrizeSkoutDashboard() {
                         background: ig.name === "Salla" && !sallaConnected ? "#F59E0B" : GN,
                         animation: ig.name === "Salla" && !sallaConnected ? "none" : "pk-pulse 2.2s infinite" }} />
                     </div>
-                    <div style={{ fontFamily:MONO, fontSize:12, color:"var(--muted)" }}>
+                    <div style={{ fontSize:12, color:"var(--muted)" }}>
                       {ig.name === "Salla" && !sallaConnected ? "not connected · click to authorize" : ig.meta}
                     </div>
                     <div dir="ltr" style={{ fontFamily:MONO, fontSize:12, color:"var(--text)",
@@ -972,25 +1014,44 @@ export function PrizeSkoutDashboard() {
                 <span style={{ fontSize:14, color:"var(--muted)" }}>Delivery aggregators that PrizeSkout pushes margin-safe prices to in real time.</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:14 }}>
-                {OUTBOUND_INTEGRATIONS.map(o => (
+                {OUTBOUND_INTEGRATIONS.map(o => {
+                  const connected = channelStatuses[o.platform] === "connected";
+                  return (
                   <div key={o.name} style={{ background:"var(--surface)", border:"1px solid var(--border)",
                     borderRadius:14, boxShadow:"var(--shadow)", padding:"18px 20px",
                     display:"flex", flexDirection:"column", gap:10 }}>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
                       <span style={{ fontSize:15, fontWeight:800 }}>{o.name}</span>
-                      <span style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
-                        background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
-                        color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
-                        borderRadius:6, padding:"3px 8px", fontFamily:MONO }}>SETUP</span>
+                      {connected ? (
+                        <span style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                          background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
+                          color:GN, border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
+                          borderRadius:6, padding:"3px 8px" }}>LIVE</span>
+                      ) : o.byok ? (
+                        <button
+                          type="button"
+                          onClick={() => { setByokPlatform(o.platform); setByokFields({}); setByokStatus("idle"); setByokError(null); }}
+                          style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                            background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
+                            color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
+                            borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>SETUP</button>
+                      ) : (
+                        <span style={{ fontSize:9.5, fontWeight:600, letterSpacing:"0.6px",
+                          color:"var(--muted)", border:"1px solid var(--border)",
+                          borderRadius:6, padding:"3px 8px" }}>SOON</span>
+                      )}
                     </div>
-                    <div style={{ fontFamily:MONO, fontSize:11.5, color:"var(--muted)" }}>{o.region}</div>
+                    <div style={{ fontSize:11.5, color:"var(--muted)" }}>{o.region}</div>
                     <div style={{ display:"flex", alignItems:"center", gap:7, paddingTop:10,
                       borderTop:"1px solid var(--border)", fontSize:11.5, color:"var(--muted)" }}>
-                      <span style={{ width:7,height:7,borderRadius:"50%",background:OG,flexShrink:0 }} />
-                      Awaiting integration build
+                      <span style={{ width:7,height:7,borderRadius:"50%",
+                        background: connected ? GN : OG,flexShrink:0,
+                        animation: connected ? "pk-pulse 2s ease infinite" : "none" }} />
+                      {connected ? "Store connected · prices syncing" : o.byok ? "Tap SETUP to connect your store" : "Awaiting integration build"}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -1028,7 +1089,7 @@ export function PrizeSkoutDashboard() {
                     borderRadius:7, padding:"5px 10px" }}>
                     {t.verified} {md.hash} {t.verifiedS}
                   </span>
-                  <span style={{ fontFamily:MONO, fontSize:11.5, color:"var(--muted)" }}>{t.autoCompiled}</span>
+                  <span style={{ fontSize:11.5, color:"var(--muted)" }}>{t.autoCompiled}</span>
                 </div>
               </div>
               <button onClick={()=>setModal(null)} aria-label="Close"
@@ -1193,6 +1254,148 @@ export function PrizeSkoutDashboard() {
           </div>
         </>
       )}
+
+      {/* BYOK SETUP MODAL */}
+      {byokPlatform && (() => {
+        const p = byokPlatform as string;
+        const cfg = BYOK_CONFIG[p];
+        const platformName = OUTBOUND_INTEGRATIONS.find(o => o.platform === p)?.name ?? p;
+        function closeByok() { setByokPlatform(null); setByokStatus("idle"); setByokError(null); setByokFields({}); }
+        async function submitByok(e: React.FormEvent) {
+          e.preventDefault();
+          const mid = localStorage.getItem("ps_merchant_id") ?? "";
+          if (!mid) { setByokError("No merchant session found. Please complete onboarding first."); return; }
+          setByokStatus("loading"); setByokError(null);
+          try {
+            const res = await fetch("/api/channels/connect", {
+              method:"POST",
+              headers:{ "Content-Type":"application/json" },
+              body: JSON.stringify({ merchant_id:mid, platform:p, ...byokFields }),
+            });
+            const data = await res.json() as { ok?:boolean; error?:string };
+            if (data.ok) {
+              setByokStatus("ok");
+              setChannelStatuses(prev => ({ ...prev, [p]: "connected" }));
+              setTimeout(() => { closeByok(); showToast(`${platformName} store connected · prices syncing`); }, 1200);
+            } else {
+              setByokStatus("err");
+              setByokError(data.error ?? "Connection failed. Check your credentials and try again.");
+            }
+          } catch {
+            setByokStatus("err");
+            setByokError("Network error. Please try again.");
+          }
+        }
+        return (
+          <div onClick={closeByok}
+            style={{ position:"fixed", inset:0, zIndex:70, background:"rgba(9,12,18,.5)",
+              backdropFilter:"blur(6px)", display:"grid", placeItems:"center",
+              padding:20, animation:"pk-in .2s ease" }}>
+            <div onClick={e=>e.stopPropagation()}
+              style={{ width:"min(520px,100%)", background:"var(--surface)",
+                border:"1px solid var(--border)", borderRadius:20,
+                boxShadow:"var(--shadow-lg)", padding:"28px 30px",
+                display:"flex", flexDirection:"column", gap:22 }}>
+
+              {/* Header */}
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
+                <div>
+                  <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.3px" }}>
+                    Connect {platformName}
+                  </h3>
+                  <p style={{ margin:"6px 0 0", fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
+                    Paste your credentials from your {platformName} partner portal. PrizeSkout uses them to push margin-safe prices to your live menu.
+                  </p>
+                </div>
+                <button onClick={closeByok} aria-label="Close"
+                  style={{ cursor:"pointer", flexShrink:0, width:34, height:34,
+                    borderRadius:10, border:"1px solid var(--border)", background:"var(--surface)",
+                    color:"var(--muted)", fontSize:15, fontWeight:700 }}>✕</button>
+              </div>
+
+              {cfg ? (
+                <form onSubmit={submitByok} style={{ display:"flex", flexDirection:"column", gap:16 }}>
+                  {cfg.fields.map(f => (
+                    <div key={f.key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                      <label htmlFor={`byok-${f.key}`}
+                        style={{ fontSize:12.5, fontWeight:600, color:"var(--text)" }}>
+                        {f.label}
+                      </label>
+                      {f.hint && (
+                        <span style={{ fontSize:11.5, color:"var(--muted)", marginTop:-3 }}>{f.hint}</span>
+                      )}
+                      <input
+                        id={`byok-${f.key}`}
+                        type="password"
+                        autoComplete="off"
+                        required
+                        value={byokFields[f.key] ?? ""}
+                        onChange={e => setByokFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                        style={{ height:44, borderRadius:9, border:"1px solid var(--border)",
+                          background:"var(--surface)", color:"var(--text)", padding:"0 13px",
+                          fontSize:14, fontFamily:"inherit", outline:"none",
+                          transition:"border-color .15s" }}
+                        onFocus={e => { e.currentTarget.style.borderColor = OG; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                      />
+                    </div>
+                  ))}
+
+                  {cfg.portalHint && (
+                    <p style={{ margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6,
+                      padding:"10px 14px", background:"var(--surface2)",
+                      borderRadius:9, border:"1px solid var(--border)" }}>
+                      {cfg.portalHint}
+                    </p>
+                  )}
+
+                  {byokError && (
+                    <p style={{ margin:0, fontSize:13, color:"#EF4444", fontWeight:500,
+                      padding:"10px 14px", background:"rgba(239,68,68,.07)",
+                      borderRadius:9, border:"1px solid rgba(239,68,68,.2)" }}>
+                      {byokError}
+                    </p>
+                  )}
+
+                  {byokStatus === "ok" && (
+                    <p style={{ margin:0, fontSize:13, color:GN, fontWeight:600,
+                      padding:"10px 14px", background:`color-mix(in srgb,${GN} 8%,var(--surface))`,
+                      borderRadius:9, border:`1px solid color-mix(in srgb,${GN} 25%,transparent)` }}>
+                      Store connected successfully
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={byokStatus === "loading" || byokStatus === "ok"}
+                    style={{ height:46, borderRadius:10, border:"none", cursor: byokStatus === "loading" || byokStatus === "ok" ? "default" : "pointer",
+                      background: byokStatus === "ok" ? GN : OG, color:"#fff",
+                      fontSize:14, fontWeight:700, fontFamily:"inherit",
+                      opacity: byokStatus === "loading" ? .75 : 1,
+                      transition:"opacity .2s,background .2s" }}>
+                    {byokStatus === "loading" ? "Connecting…" : byokStatus === "ok" ? "Connected" : `Connect ${platformName}`}
+                  </button>
+                </form>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+                  <p style={{ margin:0, fontSize:13.5, color:"var(--text)", lineHeight:1.7,
+                    padding:"16px 18px", background:"var(--surface2)",
+                    borderRadius:10, border:"1px solid var(--border)" }}>
+                    {platformName} integration is coming soon. We are working with their partner team to get API access. To be notified when it is ready, email us at <strong>hello@prizeskout.qa</strong>.
+                  </p>
+                  <button onClick={closeByok}
+                    style={{ height:44, borderRadius:10, border:`1px solid var(--border)`,
+                      background:"var(--surface)", color:"var(--muted)",
+                      fontSize:14, fontWeight:600, fontFamily:"inherit", cursor:"pointer" }}>
+                    Close
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* TOAST */}
       {toast && (
