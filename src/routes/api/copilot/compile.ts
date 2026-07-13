@@ -57,11 +57,22 @@ Rules:
 - cross-channel parity → "price_parity_lock"
 - default → "active_margin_defense"`;
 
-// Detect conversational questions vs pricing rule intents
+// Detect conversational questions vs pricing rule intents.
+// Strategy: look for HARD RULE SIGNALS; anything without them is conversational.
 function isQuestion(text: string): boolean {
-  const QUESTION_RE = /^(what|how|why|who|when|where|can you|could you|do you|tell me|explain|describe|help|hi\b|hello|hey\b|thanks|thank you|مرحبا|ما هو|كيف|هل يمكن|شرح|ماذا)/i;
-  const HAS_RULE_SIGNAL = /\d+%|lock\b|match\b|raise\b|lower\b|set\b|apply\b|enforce\b|clamp\b|parity\b|floor\b|ceiling\b|margin\b|competitor\b|talabat|jahez|noon|salla|zid|foodics/i;
-  return QUESTION_RE.test(text) && !HAS_RULE_SIGNAL.test(text);
+  // A specific percentage → pricing rule
+  if (/\d+(\.\d+)?%/.test(text)) return false;
+
+  // A named platform → pricing rule
+  if (/\b(talabat|jahez|noon|salla|zid|foodics|amazon)\b/i.test(text)) return false;
+
+  // A pricing action verb paired with a pricing noun → pricing rule
+  const ACTION  = /\b(lock|match|beat|raise|lower|drop|cap|clamp|enforce|parity|set|apply|trigger|push)\b/i;
+  const NOUN    = /\b(price|prices|margin|margins|floor|ceiling|cost|rate|markup)\b/i;
+  if (ACTION.test(text) && NOUN.test(text)) return false;
+
+  // Everything else is conversational
+  return true;
 }
 
 function json(data: unknown, status = 200) {
