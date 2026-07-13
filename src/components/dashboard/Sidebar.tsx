@@ -40,7 +40,7 @@ const adminGroup: NavGroup = {
   label: "Admin",
   tKey: "nav.groups.admin",
   items: [
-    { to: "/dashboard/admin", label: "Admin Console", tKey: "nav.admin", icon: ShieldCheck },
+    { to: "/admin", label: "Admin Console", tKey: "nav.admin", icon: ShieldCheck },
   ],
 };
 

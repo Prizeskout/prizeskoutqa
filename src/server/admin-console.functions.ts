@@ -19,7 +19,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await requireAdmin(supabase, userId);
 
-    const [appsRes, pendingRes, channelsRes, codesRes, auditRes] = await Promise.all([
+    const [appsRes, pendingRes, approvedRes, channelsRes, codesRes, auditRes, updates24hRes] = await Promise.all([
       supabaseAdmin
         .from("licensee_applications")
         .select("*", { count: "exact", head: true }),
@@ -27,6 +27,10 @@ export const getAdminStats = createServerFn({ method: "GET" })
         .from("licensee_applications")
         .select("*", { count: "exact", head: true })
         .eq("live_status", "pending"),
+      supabaseAdmin
+        .from("licensee_applications")
+        .select("*", { count: "exact", head: true })
+        .eq("live_status", "approved"),
       supabaseAdmin
         .from("ps_merchant_channels")
         .select("*", { count: "exact", head: true })
@@ -37,6 +41,11 @@ export const getAdminStats = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("ps_govern_audit_log")
         .select("*", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("ps_govern_audit_log")
+        .select("*", { count: "exact", head: true })
+        .eq("event_type", "dispatch")
+        .gte("created_at", new Date(Date.now() - 86_400_000).toISOString()),
     ]);
 
     const { data: recentAudit } = await supabaseAdmin
@@ -58,12 +67,14 @@ export const getAdminStats = createServerFn({ method: "GET" })
     }
 
     return {
-      totalApps:      appsRes.count     ?? 0,
-      pendingApps:    pendingRes.count   ?? 0,
-      activeChannels: channelsRes.count  ?? 0,
-      totalCodes:     codesRes.count     ?? 0,
-      totalAuditEvents: auditRes.count   ?? 0,
-      recentAudit:    recentAudit        ?? [],
+      totalApps:        appsRes.count       ?? 0,
+      pendingApps:      pendingRes.count     ?? 0,
+      approvedMerchants: approvedRes.count  ?? 0,
+      activeChannels:   channelsRes.count   ?? 0,
+      totalCodes:       codesRes.count      ?? 0,
+      totalAuditEvents: auditRes.count      ?? 0,
+      priceUpdates24h:  updates24hRes.count ?? 0,
+      recentAudit:      recentAudit         ?? [],
       channelBreakdown,
     };
   });

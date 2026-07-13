@@ -111,7 +111,7 @@ async function loadOverview(): Promise<OverviewPageData> {
 }
 
 export const Route = createFileRoute("/dashboard/")({
-  beforeLoad: () => { throw redirect({ to: "/dashboard/admin" }); },
+  beforeLoad: () => { throw redirect({ to: "/admin" }); },
   head: () => ({ meta: [{ title: "Overview | PrizeSkout" }] }),
   loader: () => loadOverview(),
   staleTime: 0,
