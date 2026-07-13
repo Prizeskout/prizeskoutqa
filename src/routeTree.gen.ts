@@ -43,6 +43,7 @@ import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
+import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
@@ -57,6 +58,8 @@ import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.q
 import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
+import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/catalog'
+import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
 import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/connect'
@@ -246,6 +249,11 @@ const DashboardRevenueHubRoute = DashboardRevenueHubRouteImport.update({
   path: '/revenue-hub',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPricingRoute = DashboardPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiRestoreRoute = ApiRestoreRouteImport.update({
   id: '/api/restore',
   path: '/api/restore',
@@ -315,6 +323,16 @@ const DashboardScenariosSlugRoute = DashboardScenariosSlugRouteImport.update({
 const ApiWebhooksPlatformRoute = ApiWebhooksPlatformRouteImport.update({
   id: '/api/webhooks/$platform',
   path: '/api/webhooks/$platform',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRepricingCatalogRoute = ApiRepricingCatalogRouteImport.update({
+  id: '/api/repricing/catalog',
+  path: '/api/repricing/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRepricingApplyRoute = ApiRepricingApplyRouteImport.update({
+  id: '/api/repricing/apply',
+  path: '/api/repricing/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChannelsStatusRoute = ApiChannelsStatusRouteImport.update({
@@ -439,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
+  '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
@@ -464,6 +483,8 @@ export interface FileRoutesByFullPath {
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/repricing/apply': typeof ApiRepricingApplyRoute
+  '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
@@ -504,6 +525,7 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
+  '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
@@ -529,6 +551,8 @@ export interface FileRoutesByTo {
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/repricing/apply': typeof ApiRepricingApplyRoute
+  '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
@@ -573,6 +597,7 @@ export interface FileRoutesById {
   '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
+  '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
@@ -598,6 +623,8 @@ export interface FileRoutesById {
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
+  '/api/repricing/apply': typeof ApiRepricingApplyRoute
+  '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
@@ -643,6 +670,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
+    | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/docs/changelog'
     | '/docs/guides'
@@ -668,6 +696,8 @@ export interface FileRouteTypes {
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
+    | '/api/repricing/apply'
+    | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
@@ -708,6 +738,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
+    | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/docs/changelog'
     | '/docs/guides'
@@ -733,6 +764,8 @@ export interface FileRouteTypes {
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
+    | '/api/repricing/apply'
+    | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
@@ -776,6 +809,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
+    | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/docs/changelog'
     | '/docs/guides'
@@ -801,6 +835,8 @@ export interface FileRouteTypes {
     | '/api/channels/connect'
     | '/api/channels/disconnect'
     | '/api/channels/status'
+    | '/api/repricing/apply'
+    | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
     | '/docs/guides/authentication'
@@ -853,6 +889,8 @@ export interface RootRouteChildren {
   ApiChannelsConnectRoute: typeof ApiChannelsConnectRoute
   ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
+  ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
+  ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
@@ -1105,6 +1143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRevenueHubRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/pricing': {
+      id: '/dashboard/pricing'
+      path: '/pricing'
+      fullPath: '/dashboard/pricing'
+      preLoaderRoute: typeof DashboardPricingRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/api/restore': {
       id: '/api/restore'
       path: '/api/restore'
@@ -1201,6 +1246,20 @@ declare module '@tanstack/react-router' {
       path: '/api/webhooks/$platform'
       fullPath: '/api/webhooks/$platform'
       preLoaderRoute: typeof ApiWebhooksPlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/repricing/catalog': {
+      id: '/api/repricing/catalog'
+      path: '/api/repricing/catalog'
+      fullPath: '/api/repricing/catalog'
+      preLoaderRoute: typeof ApiRepricingCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/repricing/apply': {
+      id: '/api/repricing/apply'
+      path: '/api/repricing/apply'
+      fullPath: '/api/repricing/apply'
+      preLoaderRoute: typeof ApiRepricingApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/channels/status': {
@@ -1355,12 +1414,14 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface DashboardRouteChildren {
+  DashboardPricingRoute: typeof DashboardPricingRoute
   DashboardRevenueHubRoute: typeof DashboardRevenueHubRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardScenariosSlugRoute: typeof DashboardScenariosSlugRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardPricingRoute: DashboardPricingRoute,
   DashboardRevenueHubRoute: DashboardRevenueHubRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardScenariosSlugRoute: DashboardScenariosSlugRoute,
@@ -1479,6 +1540,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChannelsConnectRoute: ApiChannelsConnectRoute,
   ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
+  ApiRepricingApplyRoute: ApiRepricingApplyRoute,
+  ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,

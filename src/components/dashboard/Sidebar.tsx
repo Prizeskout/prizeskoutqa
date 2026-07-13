@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Terminal,
   Layers,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -45,6 +46,13 @@ const adminGroup: NavGroup = {
 };
 
 const navGroups: NavGroup[] = [
+  {
+    label: "Intelligence",
+    tKey: "nav.groups.intelligence",
+    items: [
+      { to: "/dashboard/pricing", label: "Repricing", tKey: "nav.repricing", icon: TrendingUp },
+    ],
+  },
   {
     label: "Platform",
     tKey: "nav.groups.developers",
