@@ -22,8 +22,12 @@ import { getPublicOrigin } from "@/server/public-origin";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 
 const ZID_TOKEN_URL    = "https://oauth.zid.sa/oauth/token";
+const ZID_AUTH_URL     = "https://oauth.zid.sa/oauth/authorize";
 const ZID_PROFILE_URL  = "https://api.zid.sa/v1/profile/";
 const ZID_WEBHOOK_URL  = "https://api.zid.sa/v1/managers/webhooks";
+
+// Zid determines granted scopes from the partner dashboard selection.
+const SCOPES = "embedded_apps_tokens_write";
 
 type ZidTokenResponse = {
   access_token?:   string;
@@ -87,9 +91,6 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         if (errParam) {
           return errorPage("Zid declined the connection. Please try again.");
         }
-        if (!code) {
-          return errorPage("Missing authorization code. Please try connecting again.");
-        }
 
         // Two install paths:
         //   A) User-initiated (from our /api/auth/zid): CSRF cookie __ps_zid_n present, state matches nonce
@@ -97,6 +98,34 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         const rawCookie   = request.headers.get("cookie") ?? "";
         const cookieEntry = rawCookie.split(";").map(s => s.trim()).find(s => s.startsWith("__ps_zid_n="));
         const cookieVal   = cookieEntry ? cookieEntry.slice("__ps_zid_n=".length) : "";
+
+        // Zid's "Activate app" action (App Store listing / partner dashboard review)
+        // sometimes lands the merchant directly on this callback URL with no code,
+        // no error, and no CSRF cookie — i.e. no OAuth round-trip ever happened.
+        // Rather than dead-ending, kick off the real authorize flow so the user
+        // lands on Zid's consent screen and completes the install normally.
+        if (!code && !cookieVal) {
+          const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
+          const nonce       = crypto.randomUUID().replace(/-/g, "");
+          const merchantId  = crypto.randomUUID();
+          const params = new URLSearchParams({
+            client_id:     clientId,
+            redirect_uri:  redirectUri,
+            response_type: "code",
+            scope:         SCOPES,
+            state:         nonce,
+          });
+          return new Response(null, {
+            status: 302,
+            headers: {
+              "Location":   `${ZID_AUTH_URL}?${params}`,
+              "Set-Cookie": `__ps_zid_n=${nonce}:${merchantId}:; HttpOnly; SameSite=Lax; Path=/api/auth/zid; Max-Age=600`,
+            },
+          });
+        }
+        if (!code) {
+          return errorPage("Missing authorization code. Please try connecting again.");
+        }
 
         let merchantId = "";
         let returnTo   = "";
