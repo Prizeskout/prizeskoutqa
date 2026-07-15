@@ -174,6 +174,91 @@ export const deleteAccessCode = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// --- System health ---
+
+export const getSystemHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await requireAdmin(supabase, userId);
+
+    const [channelsRes, governRes, authRes] = await Promise.all([
+      supabaseAdmin.from("ps_merchant_channels").select("platform, status"),
+      supabaseAdmin.from("ps_govern_audit_log").select("*", { count: "exact", head: true }),
+      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+    ]);
+
+    return {
+      database: !channelsRes.error,
+      govern:   !governRes.error,
+      auth:     !authRes.error,
+      channels: (channelsRes.data ?? []) as { platform: string; status: string }[],
+    };
+  });
+
+// --- Global search ---
+
+export type AdminSearchResult = {
+  type: "merchant" | "code" | "channel";
+  label: string;
+  sublabel: string;
+  to: string;
+};
+
+export const adminGlobalSearch = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { query: string }) => ({
+    query: String(input?.query ?? "").trim().replace(/[,()%_]/g, "").slice(0, 100),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireAdmin(supabase, userId);
+
+    if (!data.query) return { results: [] as AdminSearchResult[] };
+    const like = `%${data.query}%`;
+
+    const [merchantsRes, codesRes, channelsRes] = await Promise.all([
+      supabaseAdmin
+        .from("licensee_applications")
+        .select("user_id, company_name, company_domain, billing_email")
+        .or(`company_name.ilike.${like},company_domain.ilike.${like},billing_email.ilike.${like}`)
+        .limit(5),
+      supabaseAdmin
+        .from("ps_access_codes")
+        .select("code, merchant_id")
+        .or(`code.ilike.${like},merchant_id.ilike.${like}`)
+        .limit(5),
+      supabaseAdmin
+        .from("ps_merchant_channels")
+        .select("account_id, platform, status")
+        .ilike("platform", like)
+        .limit(5),
+    ]);
+
+    const results: AdminSearchResult[] = [
+      ...(merchantsRes.data ?? []).map((m) => ({
+        type: "merchant" as const,
+        label: m.company_name || "Untitled account",
+        sublabel: m.company_domain || m.billing_email || m.user_id,
+        to: "/admin/merchants",
+      })),
+      ...(codesRes.data ?? []).map((c) => ({
+        type: "code" as const,
+        label: c.code,
+        sublabel: c.merchant_id || "unassigned",
+        to: "/admin/codes",
+      })),
+      ...(channelsRes.data ?? []).map((c) => ({
+        type: "channel" as const,
+        label: `${c.platform} · ${c.account_id}`,
+        sublabel: c.status,
+        to: "/admin/channels",
+      })),
+    ];
+
+    return { results };
+  });
+
 // --- Audit log ---
 
 export const getAuditLog = createServerFn({ method: "GET" })

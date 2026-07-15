@@ -1,8 +1,10 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { adminGlobalSearch, type AdminSearchResult } from "@/server/admin-console.functions";
 import {
   LayoutGrid,
   ClipboardList,
@@ -57,8 +59,14 @@ const PAGE_LABELS: Record<string, string> = {
 function AdminShell() {
   const { data: isAdmin, isLoading } = useIsAdmin();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [pending, setPending] = useState(0);
+  const searchFn = useServerFn(adminGlobalSearch);
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [searchResults, setSearchResults] = useState<AdminSearchResult[]>([]);
+  const [searchOpen, setSearchOpen]       = useState(false);
+  const [searchBusy, setSearchBusy]       = useState(false);
 
   useEffect(() => {
     supabase
@@ -67,6 +75,29 @@ function AdminShell() {
       .eq("live_status", "pending")
       .then(({ count }) => setPending(count ?? 0));
   }, []);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) { setSearchResults([]); setSearchBusy(false); return; }
+    setSearchBusy(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await (searchFn as any)({ data: { query: q } });
+        setSearchResults(res.results as AdminSearchResult[]);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchBusy(false);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [searchQuery, searchFn]);
+
+  const goToResult = (r: AdminSearchResult) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    navigate({ to: r.to });
+  };
 
   const isActive = (to: string, exact: boolean) =>
     exact
@@ -215,20 +246,64 @@ function AdminShell() {
           <span style={{ fontSize: 15, fontWeight: 700, color: "#1A1A18" }}>{title}</span>
           <div style={{ flex: 1 }} />
 
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            border: "1px solid #E5E2DB", borderRadius: 8,
-            padding: "6px 12px", backgroundColor: "#FAFAF9",
-          }}>
-            <Search size={13} color="#9A9A9A" />
-            <input
-              type="search"
-              placeholder="Search merchants, codes…"
-              style={{
-                border: "none", outline: "none", fontSize: 13,
-                color: "#1A1A18", backgroundColor: "transparent", width: 200,
-              }}
-            />
+          <div style={{ position: "relative" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              border: "1px solid #E5E2DB", borderRadius: 8,
+              padding: "6px 12px", backgroundColor: "#FAFAF9",
+            }}>
+              <Search size={13} color="#9A9A9A" />
+              <input
+                type="search"
+                placeholder="Search merchants, codes…"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+                onFocus={() => setSearchOpen(true)}
+                onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                style={{
+                  border: "none", outline: "none", fontSize: 13,
+                  color: "#1A1A18", backgroundColor: "transparent", width: 200,
+                }}
+              />
+            </div>
+            {searchOpen && searchQuery.trim() && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 6px)", right: 0, width: 320,
+                backgroundColor: "#fff", border: "1px solid #E5E2DB", borderRadius: 10,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.08)", overflow: "hidden", zIndex: 50,
+              }}>
+                {searchBusy ? (
+                  <div style={{ padding: "14px 16px", fontSize: 12.5, color: "#8A8A8A" }}>Searching…</div>
+                ) : searchResults.length === 0 ? (
+                  <div style={{ padding: "14px 16px", fontSize: 12.5, color: "#8A8A8A" }}>No matches for "{searchQuery}".</div>
+                ) : (
+                  searchResults.map((r, i) => (
+                    <button
+                      key={`${r.type}-${r.label}-${i}`}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => goToResult(r)}
+                      style={{
+                        display: "flex", flexDirection: "column", gap: 2, width: "100%",
+                        padding: "9px 14px", border: "none", background: "none", cursor: "pointer",
+                        textAlign: "left", borderBottom: i < searchResults.length - 1 ? "1px solid #F1EFE9" : "none",
+                      }}
+                    >
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "#1A1A18" }}>
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase",
+                          color: "#EA580C", backgroundColor: "#FFF4EC", borderRadius: 4, padding: "1px 5px",
+                        }}>
+                          {r.type}
+                        </span>
+                        {r.label}
+                      </span>
+                      <span style={{ fontSize: 11, color: "#8A8A8A" }}>{r.sublabel}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           <button

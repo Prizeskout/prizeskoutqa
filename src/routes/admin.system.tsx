@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { Activity, CheckCircle, AlertCircle, RefreshCcw } from "lucide-react";
+import { getSystemHealth } from "@/server/admin-console.functions";
 
 export const Route = createFileRoute("/admin/system")({
   head: () => ({ meta: [{ title: "System Health | Admin Console | PrizeSkout" }] }),
@@ -28,23 +29,28 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 function SystemPage() {
+  const fetchHealth = useServerFn(getSystemHealth);
   const [channels, setChannels]   = useState<ChannelStatusRow[]>([]);
+  const [health, setHealth]       = useState<{ database: boolean; auth: boolean; govern: boolean } | null>(null);
   const [loading, setLoading]     = useState(true);
   const [lastChecked, setChecked] = useState(new Date());
 
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    supabase
-      .from("ps_merchant_channels")
-      .select("platform, status")
-      .then(({ data }) => {
-        setChannels((data ?? []) as ChannelStatusRow[]);
-        setChecked(new Date());
-        setLoading(false);
-      });
+    try {
+      const res = (await (fetchHealth as any)()) as Awaited<ReturnType<typeof getSystemHealth>>;
+      setChannels(res.channels as ChannelStatusRow[]);
+      setHealth({ database: res.database, auth: res.auth, govern: res.govern });
+    } catch {
+      setChannels([]);
+      setHealth({ database: false, auth: false, govern: false });
+    } finally {
+      setChecked(new Date());
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [fetchHealth]);
 
   const platformStatus: Record<string, { ok: number; error: number; total: number }> = {};
   for (const row of channels) {
@@ -56,7 +62,12 @@ function SystemPage() {
 
   const activePlatforms = Object.keys(PLATFORM_LABELS).filter((p) => platformStatus[p]?.total > 0);
 
-  const coreOk = !loading;
+  const SERVICE_OK: Record<string, boolean> = {
+    workers:  true, // this page rendered, so the Worker responded
+    database: health?.database ?? false,
+    auth:     health?.auth ?? false,
+    govern:   health?.govern ?? false,
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -82,9 +93,7 @@ function SystemPage() {
         </header>
         <div>
           {CORE_SERVICES.map((svc, i) => {
-            const ok = svc.key === "workers" || svc.key === "database" || svc.key === "auth" || svc.key === "govern"
-              ? coreOk
-              : true;
+            const ok = SERVICE_OK[svc.key] ?? true;
             return (
               <div
                 key={svc.key}

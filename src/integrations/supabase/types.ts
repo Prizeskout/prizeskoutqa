@@ -3598,6 +3598,449 @@ export type Database = {
         }
         Relationships: []
       }
+      ps_ingest_events: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          api_key_id: string | null
+          event_id: string
+          idempotency_key: string
+          region: string
+          source_platform: string
+          merchant_id: string
+          location_id: string | null
+          item_id: string | null
+          sku: string
+          item_name_en: string | null
+          item_name_ar: string | null
+          inventory_status: string
+          base_cost: number
+          current_retail_price: number
+          currency: string
+          vat_rate: number
+          raw_payload: Json
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          api_key_id?: string | null
+          event_id: string
+          idempotency_key: string
+          region: string
+          source_platform: string
+          merchant_id: string
+          location_id?: string | null
+          item_id?: string | null
+          sku: string
+          item_name_en?: string | null
+          item_name_ar?: string | null
+          inventory_status?: string
+          base_cost: number
+          current_retail_price: number
+          currency?: string
+          vat_rate?: number
+          raw_payload?: Json
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          api_key_id?: string | null
+          event_id?: string
+          idempotency_key?: string
+          region?: string
+          source_platform?: string
+          merchant_id?: string
+          location_id?: string | null
+          item_id?: string | null
+          sku?: string
+          item_name_en?: string | null
+          item_name_ar?: string | null
+          inventory_status?: string
+          base_cost?: number
+          current_retail_price?: number
+          currency?: string
+          vat_rate?: number
+          raw_payload?: Json
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      ps_decide_results: {
+        Row: {
+          id: string
+          ingest_event_id: string
+          account_id: string
+          licensee_id: string
+          region: string
+          merchant_id: string
+          sku: string
+          base_cost: number
+          current_retail_price: number
+          commission_rate: number
+          vat_rate: number
+          logistics_subsidy: number
+          margin_floor_pct: number
+          net_margin: number
+          net_margin_pct: number
+          floor_breached: boolean
+          recommended_price: number | null
+          decision_action: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ingest_event_id: string
+          account_id: string
+          licensee_id: string
+          region: string
+          merchant_id: string
+          sku: string
+          base_cost: number
+          current_retail_price: number
+          commission_rate: number
+          vat_rate: number
+          logistics_subsidy?: number
+          margin_floor_pct: number
+          net_margin: number
+          net_margin_pct: number
+          floor_breached: boolean
+          recommended_price?: number | null
+          decision_action: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ingest_event_id?: string
+          account_id?: string
+          licensee_id?: string
+          region?: string
+          merchant_id?: string
+          sku?: string
+          base_cost?: number
+          current_retail_price?: number
+          commission_rate?: number
+          vat_rate?: number
+          logistics_subsidy?: number
+          margin_floor_pct?: number
+          net_margin?: number
+          net_margin_pct?: number
+          floor_breached?: boolean
+          recommended_price?: number | null
+          decision_action?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ps_decide_results_ingest_event_id_fkey"
+            columns: ["ingest_event_id"]
+            isOneToOne: false
+            referencedRelation: "ps_ingest_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ps_merchant_channels: {
+        Row: {
+          id: string
+          account_id: string
+          licensee_id: string
+          merchant_id: string
+          platform: string
+          bearer_token: string | null
+          manager_token: string | null
+          scopes: string[]
+          status: string
+          error_message: string | null
+          connected_at: string | null
+          last_verified_at: string | null
+          metadata: Json
+          webhook_secret: string | null
+          webhook_registered_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          licensee_id: string
+          merchant_id: string
+          platform: string
+          bearer_token?: string | null
+          manager_token?: string | null
+          scopes?: string[]
+          status?: string
+          error_message?: string | null
+          connected_at?: string | null
+          last_verified_at?: string | null
+          metadata?: Json
+          webhook_secret?: string | null
+          webhook_registered_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          licensee_id?: string
+          merchant_id?: string
+          platform?: string
+          bearer_token?: string | null
+          manager_token?: string | null
+          scopes?: string[]
+          status?: string
+          error_message?: string | null
+          connected_at?: string | null
+          last_verified_at?: string | null
+          metadata?: Json
+          webhook_secret?: string | null
+          webhook_registered_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ps_aggregator_dispatch_log: {
+        Row: {
+          id: string
+          trace_id: string
+          ingest_event_id: string | null
+          decide_result_id: string | null
+          account_id: string
+          licensee_id: string
+          merchant_id: string
+          sku: string
+          target_channel: string
+          remote_branch_id: string | null
+          menu_item_id: string | null
+          action_type: string
+          old_price: number | null
+          new_price: number
+          currency: string
+          audit_snapshot: Json
+          status: string
+          http_status: number | null
+          upstream_message: string | null
+          retry_count: number
+          max_retries: number
+          next_retry_at: string | null
+          duration_ms: number | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          trace_id?: string
+          ingest_event_id?: string | null
+          decide_result_id?: string | null
+          account_id: string
+          licensee_id: string
+          merchant_id: string
+          sku: string
+          target_channel: string
+          remote_branch_id?: string | null
+          menu_item_id?: string | null
+          action_type?: string
+          old_price?: number | null
+          new_price: number
+          currency?: string
+          audit_snapshot: Json
+          status?: string
+          http_status?: number | null
+          upstream_message?: string | null
+          retry_count?: number
+          max_retries?: number
+          next_retry_at?: string | null
+          duration_ms?: number | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          trace_id?: string
+          ingest_event_id?: string | null
+          decide_result_id?: string | null
+          account_id?: string
+          licensee_id?: string
+          merchant_id?: string
+          sku?: string
+          target_channel?: string
+          remote_branch_id?: string | null
+          menu_item_id?: string | null
+          action_type?: string
+          old_price?: number | null
+          new_price?: number
+          currency?: string
+          audit_snapshot?: Json
+          status?: string
+          http_status?: number | null
+          upstream_message?: string | null
+          retry_count?: number
+          max_retries?: number
+          next_retry_at?: string | null
+          duration_ms?: number | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ps_aggregator_dispatch_log_ingest_event_id_fkey"
+            columns: ["ingest_event_id"]
+            isOneToOne: false
+            referencedRelation: "ps_ingest_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ps_aggregator_dispatch_log_decide_result_id_fkey"
+            columns: ["decide_result_id"]
+            isOneToOne: false
+            referencedRelation: "ps_decide_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ps_circuit_breaker_state: {
+        Row: {
+          id: string
+          account_id: string
+          target_channel: string
+          state: string
+          error_count: number
+          last_error_at: string | null
+          opened_at: string | null
+          next_probe_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          target_channel: string
+          state?: string
+          error_count?: number
+          last_error_at?: string | null
+          opened_at?: string | null
+          next_probe_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          target_channel?: string
+          state?: string
+          error_count?: number
+          last_error_at?: string | null
+          opened_at?: string | null
+          next_probe_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ps_govern_audit_log: {
+        Row: {
+          id: string
+          trace_id: string
+          account_id: string
+          licensee_id: string
+          ingest_event_id: string | null
+          dispatch_id: string | null
+          merchant_id: string
+          sku: string
+          region: string
+          source_platform: string | null
+          target_channel: string | null
+          event_type: string
+          summary_en: string
+          summary_ar: string
+          data_route: string | null
+          pdpl_compliant: boolean
+          payload_hash: string
+          payload_snapshot: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          trace_id: string
+          account_id: string
+          licensee_id: string
+          ingest_event_id?: string | null
+          dispatch_id?: string | null
+          merchant_id: string
+          sku: string
+          region: string
+          source_platform?: string | null
+          target_channel?: string | null
+          event_type: string
+          summary_en: string
+          summary_ar: string
+          data_route?: string | null
+          pdpl_compliant?: boolean
+          payload_hash: string
+          payload_snapshot: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          trace_id?: string
+          account_id?: string
+          licensee_id?: string
+          ingest_event_id?: string | null
+          dispatch_id?: string | null
+          merchant_id?: string
+          sku?: string
+          region?: string
+          source_platform?: string | null
+          target_channel?: string | null
+          event_type?: string
+          summary_en?: string
+          summary_ar?: string
+          data_route?: string | null
+          pdpl_compliant?: boolean
+          payload_hash?: string
+          payload_snapshot?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ps_govern_audit_log_ingest_event_id_fkey"
+            columns: ["ingest_event_id"]
+            isOneToOne: false
+            referencedRelation: "ps_ingest_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ps_govern_audit_log_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "ps_aggregator_dispatch_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ps_access_codes: {
+        Row: {
+          code: string
+          merchant_id: string
+          created_at: string
+        }
+        Insert: {
+          code: string
+          merchant_id: string
+          created_at?: string
+        }
+        Update: {
+          code?: string
+          merchant_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_url_due_status: {
