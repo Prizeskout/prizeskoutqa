@@ -264,8 +264,8 @@ function Footer() {
 }
 
 const SHELL_STYLES = `
-  body, button, input, select, textarea { font-family: 'Nunito Sans', system-ui, -apple-system, sans-serif; }
-  h1, h2, h3, h4 { font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif; }
+  body, button, input, select, textarea { font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif; }
+  h1, h2, h3, h4 { font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif; }
   @keyframes ps-fade-in { from { opacity: 0 } to { opacity: 1 } }
   @keyframes ps-dropdown-in {
     from { opacity: 0; transform: translateY(-4px) scale(0.98); }

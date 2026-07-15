@@ -41,7 +41,7 @@ export function BrandLogoLight() {
   );
 }
 
-const MONO = "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
+const MONO = "'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace";
 const OG = "#EF681A";
 
 const METRICS = [
@@ -66,7 +66,7 @@ export function AuthLeftPanel() {
       flexDirection: "column",
       padding: "40px 44px",
       minHeight: "100vh",
-      fontFamily: "'Nunito Sans', system-ui, -apple-system, sans-serif",
+      fontFamily: "'IBM Plex Sans', system-ui, -apple-system, sans-serif",
     }}>
 
       {/* Logo */}
@@ -144,7 +144,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         display: "flex",
         minHeight: "100vh",
         width: "100%",
-        fontFamily: "'Nunito Sans', system-ui, -apple-system, sans-serif",
+        fontFamily: "'IBM Plex Sans', system-ui, -apple-system, sans-serif",
       }}
     >
       <main
