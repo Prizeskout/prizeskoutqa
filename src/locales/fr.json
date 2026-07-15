@@ -43,7 +43,8 @@
     "dataFreshness": "État d'actualisation des données concurrentielles",
     "dataMinAgo": "Données : il y a {{count}} min",
     "competitiveData": "Données concurrentielles",
-    "refreshSchedule": "Actualisé toutes les 4 heures. Dernière actualisation complète : Aujourd'hui à 14h45. Prochaine : Aujourd'hui à 18h45."
+    "refreshSchedule": "Actualisé toutes les 4 heures. Dernière actualisation complète : Aujourd'hui à 14h45. Prochaine : Aujourd'hui à 18h45.",
+    "contactSupport": "Contacter le support"
   },
   "layout": {
     "sandbox": "Bac à sable",

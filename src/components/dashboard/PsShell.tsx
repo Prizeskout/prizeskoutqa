@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ModeProvider } from "@/lib/mode-context";
 import { SidebarCollapseProvider } from "./SidebarCollapseContext";
 import { PlanGateModal } from "./PlanGateModal";
+import { ContactSupportModal } from "./ContactSupportModal";
 import { i18n as i18nInstance, getStoredLocale, applyLocale, type Locale } from "@/lib/i18n";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
@@ -249,11 +250,12 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
   );
 }
 
-function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChange, lang, onLangChange }: {
+function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChange, lang, onLangChange, onOpenSupport }: {
   title: string; subtitle: string;
   theme: "dark" | "light"; onToggleTheme: () => void;
   region: PsRegion; onRegionChange: (r: PsRegion) => void;
   lang: string; onLangChange: (l: string) => void;
+  onOpenSupport: () => void;
 }) {
   const { t } = useTranslation();
   const dark = theme === "dark";
@@ -322,6 +324,24 @@ function PsHeader({ title, subtitle, theme, onToggleTheme, region, onRegionChang
           <button onClick={() => onLangChange("en")} style={segBtn(lang === "en")}>EN</button>
           <button onClick={() => onLangChange("ar")} style={segBtn(lang === "ar")}>عربية</button>
         </div>
+        {/* Support — visible on every screen size, unlike the sidebar */}
+        <button
+          type="button"
+          onClick={onOpenSupport}
+          title="Contact support"
+          aria-label="Contact support"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 34, height: 30, borderRadius: 9, cursor: "pointer", flexShrink: 0,
+            border: "1px solid var(--ps-border-3)", background: "transparent", color: "var(--ps-soft)",
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+          </svg>
+        </button>
       </div>
     </header>
   );
@@ -339,6 +359,7 @@ function PsShellInner({ screen, title, subtitle, children }: PsShellProps) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [region, setRegion] = useState<PsRegion>("Qatar");
   const [isMobile, setIsMobile] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   // Restore stored locale on mount
   useEffect(() => {
@@ -398,6 +419,7 @@ function PsShellInner({ screen, title, subtitle, children }: PsShellProps) {
           title={title} subtitle={subtitle} theme={theme} onToggleTheme={toggleTheme}
           region={region} onRegionChange={setRegion}
           lang={i18nHook.language?.slice(0, 2) || "en"} onLangChange={handleLangChange}
+          onOpenSupport={() => setSupportOpen(true)}
         />
         <PsRegionContext.Provider value={{ region, currency: CURRENCY[region] }}>
           <div style={{ flex: 1, padding: isMobile ? "16px 16px 96px" : "28px 32px 40px" }}>
@@ -406,6 +428,7 @@ function PsShellInner({ screen, title, subtitle, children }: PsShellProps) {
         </PsRegionContext.Provider>
       </main>
       <PlanGateModal />
+      <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
   );
 }

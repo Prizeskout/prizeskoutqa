@@ -1,13 +1,45 @@
 import { useEffect, useRef, useState } from "react";
-import { Menu, RefreshCw, LogOut } from "lucide-react";
+import { Menu, RefreshCw, LogOut, LifeBuoy } from "lucide-react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ChannelFilter, type Channel } from "./ChannelFilter";
 import { NotificationsBell } from "./NotificationsBell";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ModeSwitcher } from "./ModeSwitcher";
+import { ContactSupportModal } from "./ContactSupportModal";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+
+function SupportButton() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t("topbar.contactSupport")}
+        title={t("topbar.contactSupport")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: 8,
+          backgroundColor: "transparent",
+          border: "1px solid transparent",
+          color: "#6B6B6B",
+          cursor: "pointer",
+          flexShrink: 0,
+        }}
+      >
+        <LifeBuoy size={17} strokeWidth={1.75} />
+      </button>
+      <ContactSupportModal open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
 
 const DATA_FRESHNESS_MIN = 4;
 
@@ -301,6 +333,7 @@ export function TopBar({
         <LanguageSwitcher />
         <ChannelFilter value={channel} onChange={onChannelChange} />
         <DataFreshnessIndicator />
+        <SupportButton />
         <NotificationsBell />
         <UserMenu />
       </div>

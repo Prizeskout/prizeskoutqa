@@ -45,7 +45,8 @@
     "dataFreshness": "Competitive data refresh status",
     "dataMinAgo": "Data: {{count}} min ago",
     "competitiveData": "Competitive data",
-    "refreshSchedule": "Refreshed every 4 hours. Last full refresh: Today at 2:45 PM. Next refresh: Today at 6:45 PM."
+    "refreshSchedule": "Refreshed every 4 hours. Last full refresh: Today at 2:45 PM. Next refresh: Today at 6:45 PM.",
+    "contactSupport": "Contact support"
   },
   "layout": {
     "sandbox": "Sandbox",
