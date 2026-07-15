@@ -292,7 +292,7 @@
   "landing": {
     "langSwitcher": "اللغة",
     "infra": {
-      "nav": { "infrastructure": "البنية التحتية", "loop": "الحلقة", "latency": "الكمون", "docs": "الوثائق", "signIn": "تسجيل الدخول", "generateKeys": "توليد المفاتيح" },
+      "nav": { "infrastructure": "البنية التحتية", "loop": "الحلقة", "latency": "الكمون", "docs": "الوثائق", "signIn": "تسجيل الدخول", "generateKeys": "توليد المفاتيح", "support": "الدعم" },
       "hero": {
         "eyebrow": "PRIZESKOUT // بنية تحتية للتسعير",
         "title": "طبقة البنية التحتية للتسعير لتجارة الخليج.",

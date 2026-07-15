@@ -292,7 +292,7 @@
   "landing": {
     "langSwitcher": "Langue",
     "infra": {
-      "nav": { "infrastructure": "Infrastructure", "loop": "Boucle", "latency": "Latence", "docs": "Docs", "signIn": "Se connecter", "generateKeys": "Générer des clés" },
+      "nav": { "infrastructure": "Infrastructure", "loop": "Boucle", "latency": "Latence", "docs": "Docs", "signIn": "Se connecter", "generateKeys": "Générer des clés", "support": "Support" },
       "hero": {
         "eyebrow": "PRIZESKOUT // INFRASTRUCTURE TARIFAIRE",
         "title": "La couche d'infrastructure tarifaire pour le commerce GCC.",

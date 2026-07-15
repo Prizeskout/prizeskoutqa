@@ -1,8 +1,9 @@
 /**
- * ContactSupportModal — in-app "Contact support" surface for the dashboard
- * shell. Reachable from PsHeader on every screen size so merchants (including
- * those using PrizeSkout embedded inside a platform's own admin, e.g. Zid)
- * never have to leave the app to reach support.
+ * ContactSupportModal — shared in-app "Contact support" surface, reachable
+ * from the dashboard shells (PrizeSkoutDashboard, TopBar) and the public
+ * marketing nav (LandingNav) alike, so merchants — including those using
+ * PrizeSkout embedded inside a platform's own admin, e.g. Zid — never have
+ * to leave the app to reach support.
  *
  * Reuses the same submitContactMessage server function as the public
  * /contact page — no separate backend needed.

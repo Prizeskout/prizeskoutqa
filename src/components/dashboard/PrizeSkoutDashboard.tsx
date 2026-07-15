@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
-import { ContactSupportModal } from "@/components/dashboard/ContactSupportModal";
+import { ContactSupportModal } from "@/components/ContactSupportModal";
 
 type Tab = "analytics" | "rules" | "vault" | "settings";
 type Theme = "light" | "dark";
@@ -592,9 +592,10 @@ export function PrizeSkoutDashboard() {
             title="Contact support"
             aria-label="Contact support"
             style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 40, height: 40, borderRadius: 10, cursor: "pointer", flexShrink: 0,
+              display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+              height: 40, padding: "0 14px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
               border: "1px solid var(--border)", background: "var(--surface)", color: "var(--muted)",
+              fontSize: 13, fontWeight: 600, fontFamily: "inherit",
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -602,6 +603,7 @@ export function PrizeSkoutDashboard() {
               <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
               <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
             </svg>
+            Support
           </button>
         </header>
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />

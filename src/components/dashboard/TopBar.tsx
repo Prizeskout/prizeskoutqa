@@ -6,7 +6,7 @@ import { ChannelFilter, type Channel } from "./ChannelFilter";
 import { NotificationsBell } from "./NotificationsBell";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ModeSwitcher } from "./ModeSwitcher";
-import { ContactSupportModal } from "./ContactSupportModal";
+import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,18 +23,22 @@ function SupportButton() {
         style={{
           display: "flex",
           alignItems: "center",
+          gap: 6,
           justifyContent: "center",
-          width: 32,
           height: 32,
+          padding: "0 10px",
           borderRadius: 8,
           backgroundColor: "transparent",
-          border: "1px solid transparent",
+          border: "1px solid #E5E2DB",
           color: "#6B6B6B",
+          fontSize: 12.5,
+          fontWeight: 500,
           cursor: "pointer",
           flexShrink: 0,
         }}
       >
-        <LifeBuoy size={17} strokeWidth={1.75} />
+        <LifeBuoy size={16} strokeWidth={1.75} />
+        <span className="hidden sm:inline">{t("topbar.contactSupport")}</span>
       </button>
       <ContactSupportModal open={open} onClose={() => setOpen(false)} />
     </>

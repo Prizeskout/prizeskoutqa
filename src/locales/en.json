@@ -294,7 +294,7 @@
   "landing": {
     "langSwitcher": "Language",
     "infra": {
-      "nav": { "infrastructure": "Infrastructure", "loop": "Loop", "latency": "Latency", "docs": "Docs", "signIn": "Sign In", "generateKeys": "Generate Keys" },
+      "nav": { "infrastructure": "Infrastructure", "loop": "Loop", "latency": "Latency", "docs": "Docs", "signIn": "Sign In", "generateKeys": "Generate Keys", "support": "Support" },
       "hero": {
         "eyebrow": "PRIZESKOUT // PRICING INFRASTRUCTURE",
         "title": "The Pricing Infrastructure Layer for GCC Commerce.",

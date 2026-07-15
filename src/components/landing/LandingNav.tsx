@@ -1,6 +1,8 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { LifeBuoy } from "lucide-react";
 import { applyLocale, type Locale } from "@/lib/i18n";
+import { ContactSupportModal } from "@/components/ContactSupportModal";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 
@@ -192,6 +194,7 @@ export function LandingNav() {
   const [market, setMarket] = useState<Market>(MARKETS[0]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width:860px)");
@@ -240,6 +243,18 @@ export function LandingNav() {
             <NavLangSwitcher />
             <ThemeToggle dark={dark} onToggle={() => setDark(v => !v)} />
           </div>
+          <button
+            type="button"
+            onClick={() => setSupportOpen(true)}
+            style={{
+              display: isMobile ? "none" : "flex", alignItems: "center", gap: 6,
+              fontFamily: "inherit", fontSize: 13, color: "#A8A29E", border: "none",
+              background: "transparent", cursor: "pointer", padding: "7px 4px",
+            }}
+          >
+            <LifeBuoy size={15} strokeWidth={1.75} />
+            {t("landing.infra.nav.support")}
+          </button>
           <a
             href="/onboarding"
             style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "#A8A29E", border: "1px solid #211C1A", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}
@@ -286,6 +301,16 @@ export function LandingNav() {
                   onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}
                 >{item}</a>
               ))}
+              <button
+                type="button"
+                onClick={() => { setMobileOpen(false); setSupportOpen(true); }}
+                style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"17px 24px",
+                  fontSize:16, color:"#FAFAF9", background:"transparent", border:"none",
+                  borderBottom:"1px solid #15110F", textAlign:"start", cursor:"pointer", fontFamily:"inherit" }}
+              >
+                <LifeBuoy size={17} strokeWidth={1.75} />
+                {t("landing.infra.nav.support")}
+              </button>
             </div>
             {/* Utils */}
             <div style={{ padding:"16px 24px", display:"flex", gap:10, flexWrap:"wrap", borderTop:"1px solid #211C1A" }}>
@@ -309,6 +334,7 @@ export function LandingNav() {
           </div>
         </>
       )}
+      <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </>
   );
 }

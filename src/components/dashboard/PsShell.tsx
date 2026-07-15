@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ModeProvider } from "@/lib/mode-context";
 import { SidebarCollapseProvider } from "./SidebarCollapseContext";
 import { PlanGateModal } from "./PlanGateModal";
-import { ContactSupportModal } from "./ContactSupportModal";
+import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { i18n as i18nInstance, getStoredLocale, applyLocale, type Locale } from "@/lib/i18n";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
