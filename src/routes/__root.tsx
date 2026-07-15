@@ -46,7 +46,7 @@ function NotFoundPage() {
               color: "#FFFFFF",
               fontWeight: 700,
               fontSize: 16,
-              fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+              fontFamily: "'Chillax', system-ui, sans-serif",
               lineHeight: 1,
             }}
           >
@@ -57,7 +57,7 @@ function NotFoundPage() {
               fontSize: 17,
               fontWeight: 700,
               color: "#1A1A18",
-              fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+              fontFamily: "'Chillax', system-ui, sans-serif",
             }}
           >
             PrizeSkout
@@ -69,7 +69,7 @@ function NotFoundPage() {
             fontWeight: 700,
             color: "#EA580C",
             lineHeight: 1,
-            fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+            fontFamily: "'Chillax', system-ui, sans-serif",
           }}
         >
           404
@@ -80,7 +80,7 @@ function NotFoundPage() {
             fontWeight: 600,
             color: "#1A1A18",
             marginTop: 16,
-            fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+            fontFamily: "'Chillax', system-ui, sans-serif",
           }}
         >
           Page not found
@@ -91,7 +91,7 @@ function NotFoundPage() {
             color: "#6B6B6B",
             marginTop: 8,
             lineHeight: 1.6,
-            fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+            fontFamily: "'Chillax', system-ui, sans-serif",
           }}
         >
           The page you are looking for does not exist or has been moved.
@@ -108,7 +108,7 @@ function NotFoundPage() {
               padding: "10px 20px",
               borderRadius: 8,
               textDecoration: "none",
-              fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+              fontFamily: "'Chillax', system-ui, sans-serif",
               transition: "background-color 0.15s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "#C2410C")}
@@ -122,7 +122,7 @@ function NotFoundPage() {
               fontSize: 13,
               color: "#6B6B6B",
               textDecoration: "none",
-              fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+              fontFamily: "'Chillax', system-ui, sans-serif",
               transition: "color 0.15s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#EA580C")}
@@ -265,7 +265,7 @@ function RootComponent() {
               z-index: 1000;
               background: #EA580C;
               color: #FFFFFF;
-              font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+              font-family: 'Chillax', system-ui, -apple-system, sans-serif;
               font-size: 13px;
               font-weight: 600;
               padding: 10px 16px;

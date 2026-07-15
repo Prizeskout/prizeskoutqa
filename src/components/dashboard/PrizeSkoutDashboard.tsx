@@ -10,8 +10,8 @@ interface Rule { name: string; desc: string; floor: number; active: boolean; }
 
 const OG = "#EF681A";
 const GN = "#10B981";
-const MONO = "'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
-const DISPLAY = "'IBM Plex Sans',system-ui,sans-serif";
+const MONO = "'Chillax',ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
+const DISPLAY = "'Chillax',system-ui,sans-serif";
 
 const CSS = `
 
@@ -22,7 +22,7 @@ const CSS = `
   @keyframes pk-in{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
   @keyframes pk-toast{from{transform:translateY(14px) scale(.97)}to{transform:none}}
   .ps-db{
-    font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    font-family:'Chillax',system-ui,-apple-system,sans-serif;
     --bg:#F6F6F4;--surface:#FFFFFF;--surface2:#FBFBFA;--border:#E5E7EB;
     --text:#111827;--muted:#6B7280;--accent:#EF681A;--green:#10B981;
     --term:#0D1117;--term-border:#222B38;--term-text:#C9D1D9;

@@ -51,8 +51,8 @@ const PS_CSS = `
   --ps-slider-track:#E5E7EB; --ps-header-bg:rgba(244,245,246,0.85);
   --ps-thumb-border:#ffffff;
 }
-.ps-root { font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
-.ps-root h1,.ps-root h2,.ps-root h3 { font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif; }
+.ps-root { font-family:'Chillax',system-ui,-apple-system,sans-serif; font-size:14px; -webkit-font-smoothing:antialiased; }
+.ps-root h1,.ps-root h2,.ps-root h3 { font-family:'Chillax',system-ui,-apple-system,sans-serif; }
 .ps-root ::-webkit-scrollbar { width:8px; height:8px; }
 .ps-root ::-webkit-scrollbar-track { background:transparent; }
 .ps-root ::-webkit-scrollbar-thumb { background:var(--ps-scroll); border-radius:8px; }

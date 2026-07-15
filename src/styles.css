@@ -2,13 +2,55 @@
 @source "../src";
 @import "tw-animate-css";
 
-/* Self-hosted via @fontsource — bundled by Vite, no CDN dependency */
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-sans/700.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
+/*
+ * Chillax (Indian Type Foundry / Fontshare) — self-hosted, no CDN dependency.
+ * No @fontsource package exists for this family, so the woff2 files are
+ * vendored directly under assets/fonts/chillax/ and bundled by Vite like
+ * any other imported asset. This also avoids widening the CSP's
+ * font-src/style-src beyond 'self'.
+ */
+@font-face {
+  font-family: 'Chillax';
+  src: url('./assets/fonts/chillax/chillax-200-extralight.woff2') format('woff2');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chillax';
+  src: url('./assets/fonts/chillax/chillax-300-light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chillax';
+  src: url('./assets/fonts/chillax/chillax-400-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chillax';
+  src: url('./assets/fonts/chillax/chillax-500-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chillax';
+  src: url('./assets/fonts/chillax/chillax-600-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chillax';
+  src: url('./assets/fonts/chillax/chillax-700-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -18,9 +60,9 @@
  */
 
 @theme inline {
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-sans: 'Chillax', system-ui, -apple-system, sans-serif;
+  --font-display: 'Chillax', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Chillax', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --radius-card: 12px;
   --radius-button: 8px;
@@ -109,7 +151,7 @@
   body {
     margin: 0;
     padding: 0;
-    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Chillax', system-ui, -apple-system, sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 1.6;
@@ -120,7 +162,7 @@
   }
 
   h1, h2 {
-    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Chillax', system-ui, -apple-system, sans-serif;
     font-weight: 600;
   }
 

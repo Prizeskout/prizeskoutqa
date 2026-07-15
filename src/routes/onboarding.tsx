@@ -722,7 +722,7 @@ function OnboardingPage() {
     <div style={{
       minHeight: "100vh", background: BG, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", padding: "24px 16px",
-      fontFamily: "'IBM Plex Sans', system-ui, -apple-system, sans-serif",
+      fontFamily: "'Chillax', system-ui, -apple-system, sans-serif",
     }}>
       <style>{`
         @media(min-width:600px){.ob-card{padding:36px 40px!important}}

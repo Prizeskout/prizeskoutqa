@@ -27,9 +27,9 @@ export const Route = createFileRoute("/")({
 const OG = "#EF681A";
 const GN = "#56C28A";
 const BG = "#080505";
-const MONO = "'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
-const DISPLAY = "'IBM Plex Sans',system-ui,-apple-system,sans-serif";
-const BODY = "'IBM Plex Sans',system-ui,-apple-system,sans-serif";
+const MONO = "'Chillax',ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
+const DISPLAY = "'Chillax',system-ui,-apple-system,sans-serif";
+const BODY = "'Chillax',system-ui,-apple-system,sans-serif";
 
 // ── Market data ───────────────────────────────────────────────────────────────
 const MARKETS = [
@@ -965,7 +965,7 @@ const PAGE_CSS = `
     --lp-surface-strip:#F0EDE9; --lp-surface-dots:#D0CBC4;
   }
   *, *::before, *::after { box-sizing: border-box; }
-  h1, h2, h3 { font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif; }
+  h1, h2, h3 { font-family: 'Chillax', system-ui, -apple-system, sans-serif; }
   @keyframes ps-wave   { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
   @keyframes ps-pulse  { 0%,100%{opacity:0.3} 50%{opacity:1} }
   @keyframes ps-packet  { 0%{left:0%;opacity:0} 12%{opacity:0.7} 88%{opacity:0.7} 100%{left:100%;opacity:0} }
