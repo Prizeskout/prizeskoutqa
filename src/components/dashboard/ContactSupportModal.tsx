@@ -14,7 +14,7 @@ import { X, Mail, LifeBuoy } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { submitContactMessage } from "@/server/contact.functions";
 
-const SUPPORT_EMAIL = "hello@prizeskout.qa";
+const SUPPORT_EMAIL = "support@prizeskout.qa";
 
 export function ContactSupportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
