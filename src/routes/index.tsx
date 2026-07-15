@@ -1,7 +1,9 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { LifeBuoy } from "lucide-react";
 import { applyLocale, type Locale } from "@/lib/i18n";
+import { ContactSupportModal } from "@/components/ContactSupportModal";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
@@ -210,6 +212,7 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
   const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width:768px)");
@@ -246,6 +249,18 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
             <NavLangSwitcher />
             <ThemeToggle dark={dark} onToggle={onToggleDark} />
           </div>
+          <button
+            type="button"
+            onClick={() => setSupportOpen(true)}
+            style={{
+              display: isMobile ? "none" : "flex", alignItems: "center", gap: 6,
+              fontFamily: "inherit", fontSize: 13, color: "var(--lp-muted)", border: "none",
+              background: "transparent", cursor: "pointer", padding: "7px 4px",
+            }}
+          >
+            <LifeBuoy size={15} strokeWidth={1.75} />
+            {t("landing.infra.nav.support")}
+          </button>
           <a href="/access" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Dashboard</a>
           <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
@@ -285,6 +300,11 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
                   {item}
                 </button>
               ))}
+              <button type="button" onClick={() => { setMobileOpen(false); setSupportOpen(true); }}
+                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "14px 0", background: "transparent", border: "none", borderBottom: "1px solid #1A1513", cursor: "pointer", color: "#C4BAB5", fontSize: 14, fontFamily: "inherit", textAlign: "left" }}>
+                <LifeBuoy size={16} strokeWidth={1.75} />
+                {t("landing.infra.nav.support")}
+              </button>
             </div>
             <div style={{ padding: "16px 24px", borderTop: "1px solid #211C1A", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <NavMarketSwitcher market={market} onChange={onMarketChange} />
@@ -304,6 +324,7 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
           </div>
         </>
       )}
+      <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </>
   );
 }
