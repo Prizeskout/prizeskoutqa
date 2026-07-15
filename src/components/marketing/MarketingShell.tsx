@@ -1,6 +1,7 @@
-﻿import { type ReactNode } from "react";
+﻿import { type ReactNode, useState } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
 import { LandingNav } from "@/components/landing/LandingNav";
+import { ContactSupportModal } from "@/components/ContactSupportModal";
 import logoDark from "@/assets/logo-dark.svg";
 
 function smoothScrollToHash(hash: string) {
@@ -104,6 +105,7 @@ const COL_HEAD: React.CSSProperties = {
 
 function Footer() {
   const router = useRouter();
+  const [supportOpen, setSupportOpen] = useState(false);
   const handleLogoClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     await router.navigate({ to: "/" });
@@ -208,6 +210,15 @@ function Footer() {
               <FA label="About" />
               <FA label="Enterprise" />
               <FL_Link label="Contact sales" to="/contact" />
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); setSupportOpen(true); }}
+                style={FL}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
+              >
+                Support
+              </a>
               <FL_Link label="Privacy Policy & Terms" to="/legal" />
             </div>
           </div>
@@ -259,6 +270,7 @@ function Footer() {
           </div>
         </div>
       </div>
+      <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </footer>
   );
 }

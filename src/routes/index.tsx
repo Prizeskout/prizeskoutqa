@@ -212,7 +212,6 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
   const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width:768px)");
@@ -249,18 +248,6 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
             <NavLangSwitcher />
             <ThemeToggle dark={dark} onToggle={onToggleDark} />
           </div>
-          <button
-            type="button"
-            onClick={() => setSupportOpen(true)}
-            style={{
-              display: isMobile ? "none" : "flex", alignItems: "center", gap: 6,
-              fontFamily: "inherit", fontSize: 13, color: "var(--lp-muted)", border: "none",
-              background: "transparent", cursor: "pointer", padding: "7px 4px",
-            }}
-          >
-            <LifeBuoy size={15} strokeWidth={1.75} />
-            {t("landing.infra.nav.support")}
-          </button>
           <a href="/access" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Dashboard</a>
           <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
@@ -300,11 +287,6 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
                   {item}
                 </button>
               ))}
-              <button type="button" onClick={() => { setMobileOpen(false); setSupportOpen(true); }}
-                style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "14px 0", background: "transparent", border: "none", borderBottom: "1px solid #1A1513", cursor: "pointer", color: "#C4BAB5", fontSize: 14, fontFamily: "inherit", textAlign: "left" }}>
-                <LifeBuoy size={16} strokeWidth={1.75} />
-                {t("landing.infra.nav.support")}
-              </button>
             </div>
             <div style={{ padding: "16px 24px", borderTop: "1px solid #211C1A", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <NavMarketSwitcher market={market} onChange={onMarketChange} />
@@ -324,7 +306,6 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
           </div>
         </>
       )}
-      <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </>
   );
 }
@@ -476,7 +457,7 @@ function SurfaceMatrix() {
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 52, flexWrap: "wrap", gap: 16 }}>
         <div>
           <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.infra.surface.sectionLabel")}</div>
-          <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.surface.title")}</h2>
+          <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.infra.surface.title")}</h2>
         </div>
         <p style={{ fontSize: 14, color: "var(--lp-muted-2)", maxWidth: 300, textAlign: "right", lineHeight: 1.55, margin: 0 }}>{t("landing.infra.surface.subtitle")}</p>
       </div>
@@ -572,7 +553,7 @@ function DeployCTA({ dark }: { dark: boolean }) {
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 0" }}>
       <div style={{ paddingTop: 60, textAlign: "center" }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 18 }}>{t("landing.infra.deploy.sectionLabel")}</div>
-        <h2 style={{ fontSize: "clamp(30px,3.6vw,46px)", lineHeight: 1.04, letterSpacing: "-0.03em", fontWeight: 600, margin: "0 0 16px", color: "var(--lp-text)" }}>
+        <h2 style={{ fontSize: "clamp(36px,4.6vw,54px)", lineHeight: 1.04, letterSpacing: "-0.03em", fontWeight: 600, margin: "0 0 16px", color: "var(--lp-text)" }}>
           {t("landing.infra.deploy.title")}
         </h2>
         <p style={{ fontSize: 16, color: "var(--lp-muted)", margin: "0 auto 36px", maxWidth: 460, lineHeight: 1.6 }}>
@@ -590,6 +571,7 @@ function DeployCTA({ dark }: { dark: boolean }) {
 }
 
 function LandingFooter() {
+  const [supportOpen, setSupportOpen] = useState(false);
   return (
     <footer style={{ background: "#000", color: "#F5F6FA", padding: "72px 24px 32px", marginTop: 90 }}>
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
@@ -674,9 +656,10 @@ function LandingFooter() {
                 { label: "About", href: null },
                 { label: "Enterprise", href: null },
                 { label: "Contact sales", href: "/contact" },
+                { label: "Support", href: null, onClick: () => setSupportOpen(true) },
                 { label: "Privacy Policy & Terms", href: "/legal" },
-              ].map(({ label, href }) => (
-                <a key={label} href={href ?? "#"} onClick={!href ? (e) => e.preventDefault() : undefined}
+              ].map(({ label, href, onClick }) => (
+                <a key={label} href={href ?? "#"} onClick={onClick ? (e) => { e.preventDefault(); onClick(); } : !href ? (e) => e.preventDefault() : undefined}
                   style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}>{label}</a>
@@ -705,6 +688,7 @@ function LandingFooter() {
           </div>
         </div>
       </div>
+      <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </footer>
   );
 }
@@ -739,7 +723,7 @@ function PricingSection({ market }: { market: Market }) {
       <div style={{ paddingTop: 40, marginBottom: 18, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
         <div>
           <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>GCC-SEGMENTED PRICING</div>
-          <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Pricing that scales with your margin</h2>
+          <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Pricing that scales with your margin</h2>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 0, background: "var(--lp-surface-3)", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: 3 }}>
           {(["Monthly", "Annual"] as const).map(b => (
@@ -879,7 +863,7 @@ function FAQSection() {
       `}</style>
       <div style={{ marginBottom: 48 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>FAQs</div>
-        <h2 style={{ fontSize: "clamp(28px,3.2vw,40px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Everything you need to know</h2>
+        <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Everything you need to know</h2>
       </div>
 
       <div className="ps-faq-layout" style={{ display: "flex", border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)", minHeight: 420 }}>
