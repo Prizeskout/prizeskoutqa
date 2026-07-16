@@ -312,26 +312,27 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
 
 // ── HeroSection ───────────────────────────────────────────────────────────────
 function HeroSection({ dark }: { dark: boolean }) {
+  const { t } = useTranslation();
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "72px clamp(24px,5vw,72px) 84px" }}>
       {/* H1 */}
       <h1 style={{ fontSize: "clamp(44px,5.6vw,82px)", lineHeight: 1.05, letterSpacing: "-0.025em", fontWeight: 700, margin: "0 0 24px", color: "var(--lp-text)", maxWidth: "20ch", fontFamily: DISPLAY }}>
-        Every aggregator order.{" "}
-        <span style={{ color: OG }}>Your margin, defended.</span>
+        {t("landing.hero.h1Line1")}{" "}
+        <span style={{ color: OG }}>{t("landing.hero.h1Line2")}</span>
       </h1>
 
       {/* Subtitle */}
       <p style={{ fontSize: 18, lineHeight: 1.6, color: "var(--lp-muted)", margin: "0 0 28px", maxWidth: 640 }}>
-        PrizeSkout recalculates <strong style={{ color: "var(--lp-text-2)", fontWeight: 600 }}>margin-safe prices</strong> and pushes them live across Talabat, Jahez, Noon and Careem and others, in under two seconds, on every menu, automatically.
+        {t("landing.hero.subtitlePre")} <strong style={{ color: "var(--lp-text-2)", fontWeight: 600 }}>{t("landing.hero.subtitleStrong")}</strong> {t("landing.hero.subtitlePost")}
       </p>
 
       {/* CTAs */}
       <div style={{ display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
         <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
-          Get Access
+          {t("landing.hero.ctaPrimary")}
         </a>
         <a href="/api-docs.html" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
-          Read SDK Docs
+          {t("landing.hero.ctaSecondary")}
         </a>
         <span style={{ fontSize: 12.5, color: "var(--lp-muted-2)", marginLeft: 6 }}>QFC-licensed · Qatar</span>
       </div>
@@ -695,29 +696,51 @@ function LandingFooter() {
 
 
 // ── PricingSection ────────────────────────────────────────────────────────────
-const TIERS = [
-  {
-    name: "Core", badge: null, featured: false,
-    monthly: 349, annual: 279, currency: "QAR",
-    features: ["1 Inbound Channel", "1,500 syncs / month", "Margin Engine", "Email Support"],
-    cta: "Start Core Trial", ctaHref: "/onboarding",
-  },
-  {
-    name: "Growth", badge: null, featured: true,
-    monthly: 1099, annual: 879, currency: "QAR",
-    features: ["Unlimited Channels", "Under 2 Second Latency Guarantee", "15,000 syncs / month", "Competitor Radar", "Slack + Priority Support"],
-    cta: "Secure Growth Plan", ctaHref: "/onboarding",
-  },
-  {
-    name: "Enterprise", badge: "Custom ACV", featured: false,
-    monthly: null, annual: null, currency: null,
-    features: ["SAP / Oracle ERP Hooks", "Dedicated DB Residency", "99.99% SLA", "Dedicated CSM", "Unlimited syncs / month", "24/7 Support"],
-    cta: "Contact Sales", ctaHref: "/contact",
-  },
-] as const;
+function getTiers(t: (key: string) => string) {
+  return [
+    {
+      name: t("landing.pricing.tiers.core.name"), badge: null, featured: false,
+      monthly: 349, annual: 279, currency: "QAR",
+      features: [
+        t("landing.pricing.tiers.core.features.0"),
+        t("landing.pricing.tiers.core.features.1"),
+        t("landing.pricing.tiers.core.features.2"),
+        t("landing.pricing.tiers.core.features.3"),
+      ],
+      cta: t("landing.pricing.tiers.core.cta"), ctaHref: "/onboarding",
+    },
+    {
+      name: t("landing.pricing.tiers.growth.name"), badge: null, featured: true,
+      monthly: 1099, annual: 879, currency: "QAR",
+      features: [
+        t("landing.pricing.tiers.growth.features.0"),
+        t("landing.pricing.tiers.growth.features.1"),
+        t("landing.pricing.tiers.growth.features.2"),
+        t("landing.pricing.tiers.growth.features.3"),
+        t("landing.pricing.tiers.growth.features.4"),
+      ],
+      cta: t("landing.pricing.tiers.growth.cta"), ctaHref: "/onboarding",
+    },
+    {
+      name: t("landing.pricing.tiers.enterprise.name"), badge: t("landing.pricing.tiers.enterprise.badge"), featured: false,
+      monthly: null, annual: null, currency: null,
+      features: [
+        t("landing.pricing.tiers.enterprise.features.0"),
+        t("landing.pricing.tiers.enterprise.features.1"),
+        t("landing.pricing.tiers.enterprise.features.2"),
+        t("landing.pricing.tiers.enterprise.features.3"),
+        t("landing.pricing.tiers.enterprise.features.4"),
+        t("landing.pricing.tiers.enterprise.features.5"),
+      ],
+      cta: t("landing.pricing.tiers.enterprise.cta"), ctaHref: "/contact",
+    },
+  ];
+}
 
 function PricingSection({ market }: { market: Market }) {
+  const { t } = useTranslation();
   const [annual, setAnnual] = useState(false);
+  const TIERS = getTiers(t);
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
       <div style={{ paddingTop: 40, marginBottom: 18, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
@@ -794,63 +817,28 @@ function PricingSection({ market }: { market: Market }) {
 }
 
 // ── FAQSection ────────────────────────────────────────────────────────────────
-const FAQS = [
-  {
-    q: "What is PrizeSkout?",
-    a: "PrizeSkout is real time pricing infrastructure for restaurants selling on GCC delivery aggregators. We monitor your prices, fees, and commissions across every channel including Talabat, Snoonu, Jahez, Noon Food, and Careem, and defend your margin automatically so every order stays profitable.",
-  },
-  {
-    q: "Who is PrizeSkout for?",
-    a: "Restaurant operators, cloud kitchens, and F&B groups running on one or more delivery aggregators in the GCC. Whether you run a single outlet in Doha or fifty across Qatar, Saudi Arabia, and the UAE, if aggregator commissions are eating your margin, PrizeSkout is built for you.",
-  },
-  {
-    q: "What problem does it actually solve?",
-    a: "Most restaurants price their aggregator menus once, then never touch them while commissions, delivery fees, promotions, and platform charges quietly erode margin on every order. PrizeSkout gives you a live view of your true per channel margin and adjusts channel prices within rules you set, so you stop discovering losses at the end of the month.",
-  },
-  {
-    q: "How does it work?",
-    a: "Four steps, running continuously. Sync connects to your aggregator channels and POS, pulling live menus, prices, fees, and commission structures. Decide calculates your true margin per item and per channel, factoring in commissions, packaging, and delivery costs. Defend recommends or applies price adjustments within guardrails you control whenever margin drops below your threshold. Govern logs every change so it is auditable and reversible. You stay in control and nothing moves without your rules approving it.",
-  },
-  {
-    q: "Will PrizeSkout change my prices without asking me?",
-    a: "Only if you tell it to. You choose the mode: Review mode, where every recommendation waits for your approval, or Autopilot, where changes execute automatically inside the min and max guardrails you define. Most operators start in Review mode and switch on Autopilot once they trust the engine.",
-  },
-  {
-    q: "What is Margin by PrizeSkout?",
-    a: "Margin is our channel margin recovery tool and the fastest way to see exactly what each aggregator is costing you, outlet by outlet, item by item. It is mobile first, takes minutes to set up, and is priced as one subscription so it scales with you.",
-  },
-  {
-    q: "Which delivery aggregators do you support?",
-    a: "Talabat, Snoonu, Jahez, Noon Food, and Careem, with more GCC platforms on the roadmap.",
-  },
-  {
-    q: "Does it work with my POS?",
-    a: "PrizeSkout integrates with leading GCC POS and restaurant management platforms, including Foodics, Salla, and Zid.",
-  },
-  {
-    q: "I run a marketplace, aggregator, or POS platform. Can I offer this under my own brand?",
-    a: "Yes. PrizeSkout is built to be white labelled. Platforms can embed our pricing and margin infrastructure under their own brand via API. Talk to us about partnership terms.",
-  },
-  {
-    q: "Is my data safe?",
-    a: "Yes. Your menu, pricing, and sales data are encrypted in transit and at rest, and are never shared with other restaurants or third parties. We operate under the Qatar Financial Centre (QFC No. 04412) and comply with Qatar's Personal Data Privacy Protection Law (Law No. 13 of 2016), Saudi Arabia's PDPL, and UAE Federal Decree-Law No. 45 of 2021.",
-  },
-  {
-    q: "Can my competitors see my prices or margins?",
-    a: "No. Your data is yours. PrizeSkout never exposes one customer's pricing, costs, or margin data to another.",
-  },
-  {
-    q: "Where is PrizeSkout based?",
-    a: "We are headquartered in Doha, Qatar, incorporated under the Qatar Financial Centre, and backed by Qatar Science and Technology Park (QSTP). We are GCC native, built for this market's aggregators, currencies, and regulations from day one.",
-  },
-  {
-    q: "Do I need a developer to use it?",
-    a: "No. Margin and the PrizeSkout dashboard are built for operators, not engineers. The API and SDK exist for platforms and teams who want deeper integration, but you will never need to touch them to defend your margin.",
-  },
-];
+function getFaqs(t: (key: string) => string) {
+  return [
+    { q: t("landing.faq.items.0.q"), a: t("landing.faq.items.0.a") },
+    { q: t("landing.faq.items.1.q"), a: t("landing.faq.items.1.a") },
+    { q: t("landing.faq.items.2.q"), a: t("landing.faq.items.2.a") },
+    { q: t("landing.faq.items.3.q"), a: t("landing.faq.items.3.a") },
+    { q: t("landing.faq.items.4.q"), a: t("landing.faq.items.4.a") },
+    { q: t("landing.faq.items.5.q"), a: t("landing.faq.items.5.a") },
+    { q: t("landing.faq.items.6.q"), a: t("landing.faq.items.6.a") },
+    { q: t("landing.faq.items.7.q"), a: t("landing.faq.items.7.a") },
+    { q: t("landing.faq.items.8.q"), a: t("landing.faq.items.8.a") },
+    { q: t("landing.faq.items.9.q"), a: t("landing.faq.items.9.a") },
+    { q: t("landing.faq.items.10.q"), a: t("landing.faq.items.10.a") },
+    { q: t("landing.faq.items.11.q"), a: t("landing.faq.items.11.a") },
+    { q: t("landing.faq.items.12.q"), a: t("landing.faq.items.12.a") },
+  ];
+}
 
 function FAQSection() {
+  const { t } = useTranslation();
   const [activeIdx, setActiveIdx] = useState(0);
+  const FAQS = getFaqs(t);
   const active = FAQS[activeIdx];
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
@@ -863,7 +851,7 @@ function FAQSection() {
       `}</style>
       <div style={{ marginBottom: 48 }}>
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>FAQs</div>
-        <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Everything you need to know</h2>
+        <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.faq.heading")}</h2>
       </div>
 
       <div className="ps-faq-layout" style={{ display: "flex", border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)", minHeight: 420 }}>

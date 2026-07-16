@@ -1,8 +1,10 @@
 ﻿import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 const ACC = "#ff7a18";
 
 export function DemoPlayer({ currency = "QAR", dark = true }: { currency?: string; dark?: boolean }) {
+  const { t } = useTranslation();
   const wrapRef   = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -51,8 +53,8 @@ export function DemoPlayer({ currency = "QAR", dark = true }: { currency?: strin
   return (
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
       <div style={{ paddingTop: 0, marginBottom: 40 }}>
-        <div style={{ fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace", fontSize: 11, letterSpacing: "0.1em", color: ACC, marginBottom: 12 }}>PRODUCT WALKTHROUGH</div>
-        <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Watch PrizeSkout defend a margin in real time</h2>
+        <div style={{ fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace", fontSize: 11, letterSpacing: "0.1em", color: ACC, marginBottom: 12 }}>{t("landing.demo.eyebrow")}</div>
+        <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.demo.heading")}</h2>
       </div>
 
       <div ref={wrapRef} style={{ position: "relative", width: "100%", margin: "0 auto", display: "flex", justifyContent: "center" }}>
@@ -61,7 +63,7 @@ export function DemoPlayer({ currency = "QAR", dark = true }: { currency?: strin
           src="/demo-embed.html"
           style={{ width: 1264, height: 711, flexShrink: 0, border: "none", display: "block", borderRadius: 16 }}
           scrolling="no"
-          title="PrizeSkout Product Walkthrough"
+          title={t("landing.demo.iframeTitle")}
         />
       </div>
     </section>

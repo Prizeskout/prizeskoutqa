@@ -1,5 +1,6 @@
 ﻿import { type ReactNode, useState } from "react";
 import { Link, useRouter, useLocation } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import logoDark from "@/assets/logo-dark.svg";
@@ -104,6 +105,7 @@ const COL_HEAD: React.CSSProperties = {
 };
 
 function Footer() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [supportOpen, setSupportOpen] = useState(false);
   const handleLogoClick = async (e: React.MouseEvent) => {
@@ -123,7 +125,7 @@ function Footer() {
               <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
             <p style={{ marginTop: 18, fontSize: 14.5, lineHeight: 1.7, color: "#9BA1B0", maxWidth: 320 }}>
-              Real time margin infrastructure for GCC commerce. Autonomous agents that defend, audit, and recover your margin while you run the business.
+              {t("footer.tagline")}
             </p>
             <div style={{ marginTop: 24, display: "flex", gap: 10 }}>
               {(["X", "in"] as const).map((lbl) => (
@@ -131,7 +133,7 @@ function Footer() {
                   key={lbl}
                   href="#"
                   onClick={(e) => e.preventDefault()}
-                  aria-label={lbl === "X" ? "X (Twitter)" : "LinkedIn"}
+                  aria-label={lbl === "X" ? t("footer.social.x") : t("footer.social.linkedin")}
                   className="ps-social-btn"
                   style={{
                     width: 38, height: 38, borderRadius: 9,
@@ -151,21 +153,21 @@ function Footer() {
 
           {/* Platform */}
           <div>
-            <h4 style={COL_HEAD}>Platform</h4>
-            <span style={LAYER_TAG}>INFRASTRUCTURE LAYER</span>
+            <h4 style={COL_HEAD}>{t("footer.columns.platform")}</h4>
+            <span style={LAYER_TAG}>{t("footer.layerTags.infrastructure")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              <FA label="Sync" />
-              <FA label="Decide" />
-              <FA label="Defend" />
-              <FA label="Govern" />
-              <FA label="Margin by PrizeSkout" />
+              <FA label={t("footer.links.sync")} />
+              <FA label={t("footer.links.decide")} />
+              <FA label={t("footer.links.defend")} />
+              <FA label={t("footer.links.govern")} />
+              <FA label={t("footer.links.marginByPrizeskout")} />
             </div>
           </div>
 
           {/* Agents */}
           <div>
             <h4 style={COL_HEAD}>
-              Agents
+              {t("footer.columns.agents")}
               <span aria-hidden="true" style={{
                 width: 6, height: 6, borderRadius: "50%",
                 background: "#FF5A1F",
@@ -173,10 +175,10 @@ function Footer() {
                 display: "inline-block", flexShrink: 0,
               }} />
             </h4>
-            <span style={LAYER_TAG}>INTELLIGENCE LAYER</span>
+            <span style={LAYER_TAG}>{t("footer.layerTags.intelligence")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              <FA label="Agent CFO" />
-              <FA label="Dispute Audit Agent">
+              <FA label={t("footer.links.agentCfo")} />
+              <FA label={t("footer.links.disputeAuditAgent")}>
                 <span style={{
                   fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
                   fontSize: 9.5, letterSpacing: "0.1em",
@@ -184,32 +186,32 @@ function Footer() {
                   border: "1px solid rgba(255,90,31,0.35)",
                   borderRadius: 4, padding: "2px 6px", marginLeft: 8,
                   verticalAlign: "middle",
-                }}>NEW</span>
+                }}>{t("footer.links.new")}</span>
               </FA>
             </div>
           </div>
 
           {/* Developers */}
           <div>
-            <h4 style={COL_HEAD}>Developers</h4>
+            <h4 style={COL_HEAD}>{t("footer.columns.developers")}</h4>
             <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              <a href="/api-docs.html" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>SDK Docs</a>
-              <a href="/api-docs.html#auth" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>Authentication</a>
-              <a href="/api-docs.html#webhooks" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>Webhooks</a>
-              <FA label="Status" />
-              <FL_Link label="Margin Calculator" to="/roi-calculator" />
+              <a href="/api-docs.html" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>{t("footer.links.sdkDocs")}</a>
+              <a href="/api-docs.html#auth" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>{t("footer.links.authentication")}</a>
+              <a href="/api-docs.html#webhooks" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>{t("footer.links.webhooks")}</a>
+              <FA label={t("footer.links.status")} />
+              <FL_Link label={t("footer.links.marginCalculator")} to="/roi-calculator" />
             </div>
           </div>
 
           {/* Company */}
           <div>
-            <h4 style={COL_HEAD}>Company</h4>
+            <h4 style={COL_HEAD}>{t("footer.columns.company")}</h4>
             <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              <FA label="About" />
-              <FA label="Enterprise" />
-              <FL_Link label="Contact sales" to="/contact" />
+              <FA label={t("footer.links.about")} />
+              <FA label={t("footer.links.enterprise")} />
+              <FL_Link label={t("footer.links.contactSales")} to="/contact" />
               <a
                 href="#"
                 onClick={(e) => { e.preventDefault(); setSupportOpen(true); }}
@@ -217,9 +219,9 @@ function Footer() {
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
               >
-                Support
+                {t("footer.links.support")}
               </a>
-              <FL_Link label="Privacy Policy & Terms" to="/legal" />
+              <FL_Link label={t("footer.links.privacyTerms")} to="/legal" />
             </div>
           </div>
         </div>
@@ -233,9 +235,9 @@ function Footer() {
           flexWrap: "wrap", gap: 20,
         }}>
           <div style={{ color: "#6B7180", fontSize: 13.5 }}>
-            © 2026 PrizeSkout · QFC-licensed, Doha, Qatar
+            {t("footer.bottomBar.copyright")}
             <span style={{ fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace", fontSize: 11.5, color: "#6B7180" }}>
-              {" "}· QFC No. 04412
+              {" "}· {t("footer.bottomBar.qfcNumber")}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -258,14 +260,14 @@ function Footer() {
                 boxShadow: "0 0 8px rgba(16,185,129,0.8)",
                 flexShrink: 0,
               }} />
-              All systems operational
+              {t("footer.bottomBar.allSystemsOperational")}
             </a>
-            {["99.95% uptime", "GCC data residency"].map((t) => (
-              <span key={t} style={{
+            {[t("footer.bottomBar.uptime"), t("footer.bottomBar.dataResidency")].map((pill) => (
+              <span key={pill} style={{
                 display: "inline-flex", alignItems: "center",
                 border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
                 padding: "8px 14px", fontSize: 13, color: "#9BA1B0",
-              }}>{t}</span>
+              }}>{pill}</span>
             ))}
           </div>
         </div>

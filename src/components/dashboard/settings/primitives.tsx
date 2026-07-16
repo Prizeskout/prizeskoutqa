@@ -104,10 +104,13 @@ export function SelectField({
   value,
   onChange,
   options,
+  labels,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
+  /** Optional display-label override per option value (e.g. for translated labels). Falls back to the raw option value. */
+  labels?: Record<string, string>;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -129,7 +132,7 @@ export function SelectField({
       >
         {options.map((o) => (
           <option key={o} value={o}>
-            {o}
+            {labels?.[o] ?? o}
           </option>
         ))}
       </select>

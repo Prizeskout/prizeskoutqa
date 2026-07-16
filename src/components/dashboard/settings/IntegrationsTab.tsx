@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
   Card,
@@ -112,10 +113,10 @@ function SmallButton({
 // ── Add webhook modal ──────────────────────────────────────────────────────────
 
 const AVAILABLE_EVENTS = [
-  { id: "price.changed", label: "Price changed" },
-  { id: "stock.alert", label: "Stock alert" },
-  { id: "competitor.update", label: "Competitor update" },
-  { id: "promotion.detected", label: "Promotion detected" },
+  { id: "price.changed", labelKey: "settingsTabs.integrations.events.priceChanged" },
+  { id: "stock.alert", labelKey: "settingsTabs.integrations.events.stockAlert" },
+  { id: "competitor.update", labelKey: "settingsTabs.integrations.events.competitorUpdate" },
+  { id: "promotion.detected", labelKey: "settingsTabs.integrations.events.promotionDetected" },
 ];
 
 function AddWebhookModal({
@@ -127,6 +128,7 @@ function AddWebhookModal({
   onClose: () => void;
   onAdded: () => void;
 }) {
+  const { t } = useTranslation();
   const [url, setUrl] = useState("");
   const [desc, setDesc] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<string[]>(["price.changed"]);
@@ -153,11 +155,11 @@ function AddWebhookModal({
         signing_secret: crypto.randomUUID().replace(/-/g, ""),
       });
       if (error) throw error;
-      toast.success("Webhook endpoint added");
+      toast.success(t("settingsTabs.integrations.webhooks.toasts.added"));
       onAdded();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add webhook");
+      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.addFailed"));
     } finally {
       setSaving(false);
     }
@@ -198,10 +200,10 @@ function AddWebhookModal({
             borderBottom: "1px solid #E5E2DB",
           }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Add webhook endpoint</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.integrations.addModal.title")}</div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("settingsTabs.integrations.addModal.close")}
             onClick={onClose}
             style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}
           >
@@ -210,17 +212,17 @@ function AddWebhookModal({
         </div>
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
           <FieldRow>
-            <Field label="Endpoint URL">
-              <TextField value={url} onChange={setUrl} placeholder="https://your-domain.com/webhooks/prizeskout" />
+            <Field label={t("settingsTabs.integrations.addModal.endpointUrl")}>
+              <TextField value={url} onChange={setUrl} placeholder={t("settingsTabs.integrations.addModal.endpointUrlPlaceholder")} />
             </Field>
           </FieldRow>
           <FieldRow>
-            <Field label="Description (optional)">
-              <TextField value={desc} onChange={setDesc} placeholder="What this endpoint receives" />
+            <Field label={t("settingsTabs.integrations.addModal.description")}>
+              <TextField value={desc} onChange={setDesc} placeholder={t("settingsTabs.integrations.addModal.descriptionPlaceholder")} />
             </Field>
           </FieldRow>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B", marginBottom: 8 }}>Events to subscribe to</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B", marginBottom: 8 }}>{t("settingsTabs.integrations.addModal.eventsToSubscribe")}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {AVAILABLE_EVENTS.map((ev) => (
                 <label
@@ -240,7 +242,7 @@ function AddWebhookModal({
                     onChange={() => toggleEvent(ev.id)}
                     style={{ accentColor: "#EA580C", width: 14, height: 14 }}
                   />
-                  {ev.label}
+                  {t(ev.labelKey)}
                   <span style={{ fontSize: 11, color: "#9A9A9A", fontFamily: "ui-monospace, monospace" }}>
                     {ev.id}
                   </span>
@@ -263,11 +265,11 @@ function AddWebhookModal({
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {t("settingsTabs.integrations.addModal.cancel")}
             </button>
             <div style={{ opacity: canSave ? 1 : 0.5, pointerEvents: canSave ? "auto" : "none" }}>
               <PrimaryButton onClick={handleSave}>
-                {saving ? "Adding…" : "Add endpoint"}
+                {saving ? t("settingsTabs.integrations.addModal.adding") : t("settingsTabs.integrations.addModal.addEndpoint")}
               </PrimaryButton>
             </div>
           </div>
@@ -288,6 +290,7 @@ function EditWebhookModal({
   onClose: () => void;
   onSaved: (updated: WebhookRow) => void;
 }) {
+  const { t } = useTranslation();
   const initialEvents = Array.isArray(hook.events) ? (hook.events as string[]) : [];
   const [url, setUrl] = useState(hook.url);
   const [desc, setDesc] = useState(hook.description ?? "");
@@ -315,11 +318,11 @@ function EditWebhookModal({
         })
         .eq("id", hook.id);
       if (error) throw error;
-      toast.success("Webhook updated");
+      toast.success(t("settingsTabs.integrations.webhooks.toasts.updated"));
       onSaved({ ...hook, url: url.trim(), description: desc.trim() || null, events: selectedEvents });
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update webhook");
+      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -360,10 +363,10 @@ function EditWebhookModal({
             borderBottom: "1px solid #E5E2DB",
           }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Edit webhook endpoint</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.integrations.editModal.title")}</div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("settingsTabs.integrations.editModal.close")}
             onClick={onClose}
             style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}
           >
@@ -372,17 +375,17 @@ function EditWebhookModal({
         </div>
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
           <FieldRow>
-            <Field label="Endpoint URL">
-              <TextField value={url} onChange={setUrl} placeholder="https://..." />
+            <Field label={t("settingsTabs.integrations.editModal.endpointUrl")}>
+              <TextField value={url} onChange={setUrl} placeholder={t("settingsTabs.integrations.editModal.endpointUrlPlaceholder")} />
             </Field>
           </FieldRow>
           <FieldRow>
-            <Field label="Description (optional)">
-              <TextField value={desc} onChange={setDesc} placeholder="What this endpoint receives" />
+            <Field label={t("settingsTabs.integrations.editModal.description")}>
+              <TextField value={desc} onChange={setDesc} placeholder={t("settingsTabs.integrations.editModal.descriptionPlaceholder")} />
             </Field>
           </FieldRow>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B", marginBottom: 8 }}>Events</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B", marginBottom: 8 }}>{t("settingsTabs.integrations.editModal.events")}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {AVAILABLE_EVENTS.map((ev) => (
                 <label
@@ -395,7 +398,7 @@ function EditWebhookModal({
                     onChange={() => toggleEvent(ev.id)}
                     style={{ accentColor: "#EA580C", width: 14, height: 14 }}
                   />
-                  {ev.label}
+                  {t(ev.labelKey)}
                   <span style={{ fontSize: 11, color: "#9A9A9A", fontFamily: "ui-monospace, monospace" }}>{ev.id}</span>
                 </label>
               ))}
@@ -416,11 +419,11 @@ function EditWebhookModal({
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {t("settingsTabs.integrations.editModal.cancel")}
             </button>
             <div style={{ opacity: canSave ? 1 : 0.5, pointerEvents: canSave ? "auto" : "none" }}>
               <PrimaryButton onClick={handleSave}>
-                {saving ? "Saving…" : "Save changes"}
+                {saving ? t("settingsTabs.integrations.editModal.saving") : t("settingsTabs.integrations.editModal.saveChanges")}
               </PrimaryButton>
             </div>
           </div>
@@ -441,31 +444,43 @@ type DataConnectionCard = {
   cta: string;
 };
 
-const DATA_CONNECTIONS: DataConnectionCard[] = [
-  {
-    icon: <Package size={20} color="#EA580C" strokeWidth={1.75} />,
-    title: "Product catalog sync",
-    description: "Import your product catalog so we can match your products against competitors",
-    options: ["CSV upload", "API sync", "Shopify", "WooCommerce"],
-    status: { label: "Connected via API", color: "#22C55E" },
-    cta: "Configure",
-  },
-  {
-    icon: <LineChart size={20} color="#EA580C" strokeWidth={1.75} />,
-    title: "Sales and margin data",
-    description: "Share your sales volumes and margin targets for personalized pricing recommendations",
-    options: ["CSV upload", "ERP sync", "Manual entry"],
-    status: { label: "Not connected", color: "#9A9A9A" },
-    cta: "Configure",
-  },
-  {
-    icon: <MapPin size={20} color="#EA580C" strokeWidth={1.75} />,
-    title: "Store locations",
-    description: "Add your physical store locations for in-store competitive tracking and field intel",
-    status: { label: "Configured in Locations tab", color: "#22C55E" },
-    cta: "Manage",
-  },
-];
+function getDataConnections(t: (key: string) => string): DataConnectionCard[] {
+  const base = "settingsTabs.integrations.dataConnections";
+  return [
+    {
+      icon: <Package size={20} color="#EA580C" strokeWidth={1.75} />,
+      title: t(`${base}.productCatalog.title`),
+      description: t(`${base}.productCatalog.description`),
+      options: [
+        t(`${base}.options.csvUpload`),
+        t(`${base}.options.apiSync`),
+        "Shopify",
+        "WooCommerce",
+      ],
+      status: { label: t(`${base}.productCatalog.status`), color: "#22C55E" },
+      cta: t(`${base}.productCatalog.cta`),
+    },
+    {
+      icon: <LineChart size={20} color="#EA580C" strokeWidth={1.75} />,
+      title: t(`${base}.salesMargin.title`),
+      description: t(`${base}.salesMargin.description`),
+      options: [
+        t(`${base}.options.csvUpload`),
+        t(`${base}.options.erpSync`),
+        t(`${base}.options.manualEntry`),
+      ],
+      status: { label: t(`${base}.salesMargin.status`), color: "#9A9A9A" },
+      cta: t(`${base}.salesMargin.cta`),
+    },
+    {
+      icon: <MapPin size={20} color="#EA580C" strokeWidth={1.75} />,
+      title: t(`${base}.storeLocations.title`),
+      description: t(`${base}.storeLocations.description`),
+      status: { label: t(`${base}.storeLocations.status`), color: "#22C55E" },
+      cta: t(`${base}.storeLocations.cta`),
+    },
+  ];
+}
 
 function DataConnectionTile({ card }: { card: DataConnectionCard }) {
   return (
@@ -523,6 +538,7 @@ function DataConnectionTile({ card }: { card: DataConnectionCard }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function IntegrationsTab() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [apiKey, setApiKey] = useState<ApiKeyRow | null>(null);
   const [webhooks, setWebhooks] = useState<WebhookRow[]>([]);
@@ -574,7 +590,7 @@ export function IntegrationsTab() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error("Copy failed — please copy manually");
+      toast.error(t("settingsTabs.integrations.apiKey.copyFailed"));
     }
   };
 
@@ -590,7 +606,7 @@ export function IntegrationsTab() {
         prev.map((w) => (w.id === hook.id ? { ...w, enabled: !hook.enabled } : w))
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update webhook");
+      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.toggleFailed"));
     } finally {
       setTogglingId(null);
     }
@@ -602,9 +618,9 @@ export function IntegrationsTab() {
       const { error } = await supabase.from("webhook_endpoints").delete().eq("id", id);
       if (error) throw error;
       setWebhooks((prev) => prev.filter((w) => w.id !== id));
-      toast.success("Webhook endpoint removed");
+      toast.success(t("settingsTabs.integrations.webhooks.toasts.removed"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not delete webhook");
+      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.removeFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -615,24 +631,26 @@ export function IntegrationsTab() {
     : "";
 
   const eventsLabel = (events: unknown): string => {
-    if (!Array.isArray(events)) return "All events";
+    if (!Array.isArray(events)) return t("settingsTabs.integrations.webhooks.allEvents");
     return events.join(", ");
   };
+
+  const dataConnections = getDataConnections(t);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Card>
-        <CardTitle>API and integrations</CardTitle>
-        <CardSubtitle>Connect PrizeSkout to your existing systems</CardSubtitle>
+        <CardTitle>{t("settingsTabs.integrations.heading")}</CardTitle>
+        <CardSubtitle>{t("settingsTabs.integrations.description")}</CardSubtitle>
 
         {/* API key */}
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>Your API key</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.integrations.apiKey.heading")}</div>
           <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-            Use this key to pull PrizeSkout data into your own systems
+            {t("settingsTabs.integrations.apiKey.description")}
           </div>
           {loadingKey ? (
-            <div style={{ marginTop: 12, fontSize: 12, color: "#9A9A9A" }}>Loading…</div>
+            <div style={{ marginTop: 12, fontSize: 12, color: "#9A9A9A" }}>{t("settingsTabs.integrations.loading")}</div>
           ) : apiKey ? (
             <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <div
@@ -654,17 +672,17 @@ export function IntegrationsTab() {
                 {maskedKey}
               </div>
               <SmallButton icon={copied ? <Check size={14} color="#16A34A" /> : <Copy size={14} />} onClick={handleCopy}>
-                {copied ? "Copied" : "Copy"}
+                {copied ? t("settingsTabs.integrations.apiKey.copied") : t("settingsTabs.integrations.apiKey.copy")}
               </SmallButton>
               <SmallButton icon={<ExternalLink size={14} />} as="link" href="/dashboard/api-keys">
-                Manage keys
+                {t("settingsTabs.integrations.apiKey.manageKeys")}
               </SmallButton>
             </div>
           ) : (
             <div style={{ marginTop: 12, fontSize: 12, color: "#9A9A9A" }}>
-              No active API key.{" "}
+              {t("settingsTabs.integrations.apiKey.noKey")}{" "}
               <Link to="/dashboard/api-keys" style={{ color: "#EA580C", textDecoration: "none" }}>
-                Create one →
+                {t("settingsTabs.integrations.apiKey.createOne")}
               </Link>
             </div>
           )}
@@ -682,21 +700,21 @@ export function IntegrationsTab() {
             }}
           >
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>Webhook endpoints</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.integrations.webhooks.heading")}</div>
               <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-                Receive real-time event notifications in your systems
+                {t("settingsTabs.integrations.webhooks.description")}
               </div>
             </div>
             <OutlineAddButton
               icon={<Plus size={14} strokeWidth={2} />}
               onClick={() => setAddHookOpen(true)}
             >
-              Add webhook
+              {t("settingsTabs.integrations.webhooks.addWebhook")}
             </OutlineAddButton>
           </div>
 
           {loadingHooks ? (
-            <div style={{ marginTop: 12, fontSize: 12, color: "#9A9A9A" }}>Loading…</div>
+            <div style={{ marginTop: 12, fontSize: 12, color: "#9A9A9A" }}>{t("settingsTabs.integrations.loading")}</div>
           ) : webhooks.length === 0 ? (
             <div
               style={{
@@ -708,7 +726,7 @@ export function IntegrationsTab() {
                 borderTop: "1px solid #E5E2DB",
               }}
             >
-              No webhook endpoints configured yet.
+              {t("settingsTabs.integrations.webhooks.empty")}
             </div>
           ) : (
             webhooks.map((hook, i) => {
@@ -719,12 +737,10 @@ export function IntegrationsTab() {
                 ? "#22C55E"
                 : "#9A9A9A";
               const statusLabel = !hook.enabled
-                ? "Disabled"
+                ? t("settingsTabs.integrations.webhooks.status.disabled")
                 : hook.last_delivery_success === false
-                ? "Delivery failed"
-                : hook.last_delivery_at
-                ? "Active"
-                : "Active";
+                ? t("settingsTabs.integrations.webhooks.status.deliveryFailed")
+                : t("settingsTabs.integrations.webhooks.status.active");
               return (
                 <div
                   key={hook.id}
@@ -755,7 +771,7 @@ export function IntegrationsTab() {
                       <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 2 }}>{hook.description}</div>
                     )}
                     <div style={{ fontSize: 11, color: "#9A9A9A", marginTop: 4 }}>
-                      Events: {eventsLabel(hook.events)}
+                      {t("settingsTabs.integrations.webhooks.eventsLabel", { events: eventsLabel(hook.events) })}
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
@@ -770,12 +786,12 @@ export function IntegrationsTab() {
                     />
                     <div style={{ display: "flex", gap: 8 }}>
                       <IconAction
-                        ariaLabel="Edit webhook"
+                        ariaLabel={t("settingsTabs.integrations.webhooks.editAria")}
                         icon={<Pencil size={14} color="#6B6B6B" />}
                         onClick={() => setEditHook(hook)}
                       />
                       <IconAction
-                        ariaLabel="Remove webhook"
+                        ariaLabel={t("settingsTabs.integrations.webhooks.removeAria")}
                         hoverColor="#EF4444"
                         icon={
                           <Trash2
@@ -795,15 +811,15 @@ export function IntegrationsTab() {
 
         {/* ERP integrations */}
         <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>ERP and system integrations</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.integrations.erp.heading")}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginTop: 12 }}>
             {[
-              { name: "ERP System", desc: "Sync product catalog, margins, and inventory", connected: false },
-              { name: "POS System", desc: "Real-time in-store sales and pricing data", connected: false },
-              { name: "E-commerce Platform", desc: "Sync online catalog and order data", connected: true },
+              { name: t("settingsTabs.integrations.erp.cards.erp.name"), desc: t("settingsTabs.integrations.erp.cards.erp.desc"), connected: false },
+              { name: t("settingsTabs.integrations.erp.cards.pos.name"), desc: t("settingsTabs.integrations.erp.cards.pos.desc"), connected: false },
+              { name: t("settingsTabs.integrations.erp.cards.ecommerce.name"), desc: t("settingsTabs.integrations.erp.cards.ecommerce.desc"), connected: true },
             ].map((card) => {
               const dot = card.connected ? "#22C55E" : "#9A9A9A";
-              const label = card.connected ? "Connected" : "Not connected";
+              const label = card.connected ? t("settingsTabs.integrations.erp.connected") : t("settingsTabs.integrations.erp.notConnected");
               return (
                 <div
                   key={card.name}
@@ -828,7 +844,7 @@ export function IntegrationsTab() {
                     onClick={(e) => e.preventDefault()}
                     style={{ fontSize: 12, fontWeight: 500, color: "#EA580C", textDecoration: "none", marginTop: 4 }}
                   >
-                    Configure
+                    {t("settingsTabs.integrations.erp.configure")}
                   </a>
                 </div>
               );
@@ -838,12 +854,12 @@ export function IntegrationsTab() {
 
         {/* Data connections */}
         <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>Data connections</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.integrations.dataConnections.heading")}</div>
           <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4, lineHeight: 1.5 }}>
-            Connect your internal systems so PrizeSkout can combine your data with market intelligence
+            {t("settingsTabs.integrations.dataConnections.description")}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, marginTop: 12 }}>
-            {DATA_CONNECTIONS.map((card) => (
+            {dataConnections.map((card) => (
               <DataConnectionTile key={card.title} card={card} />
             ))}
           </div>

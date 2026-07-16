@@ -1,4 +1,5 @@
 ﻿import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChannelsTab } from "./ChannelsTab";
 import { MarginRulesTab } from "./MarginRulesTab";
 import { LocationsTab } from "./LocationsTab";
@@ -73,20 +74,29 @@ function StoreAccessTab() {
 const TABS = ["Store Access", "Channels", "Margin Rules", "Locations", "Notifications"] as const;
 type Tab = (typeof TABS)[number];
 
+const TAB_LABEL_KEYS: Record<Tab, string> = {
+  "Store Access": "storeAccess",
+  "Channels": "channels",
+  "Margin Rules": "marginRules",
+  "Locations": "locations",
+  "Notifications": "notifications",
+};
+
 export function SettingsTabs() {
+  const { t } = useTranslation();
   const [active, setActive] = useState<Tab>("Store Access");
 
   return (
     <div>
       <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #E5E2DB", marginBottom: 24,
         overflowX: "auto", WebkitOverflowScrolling: "touch" as never, scrollbarWidth: "none" as never }}>
-        {TABS.map((t) => {
-          const isActive = t === active;
+        {TABS.map((tab) => {
+          const isActive = tab === active;
           return (
             <button
-              key={t}
+              key={tab}
               type="button"
-              onClick={() => setActive(t)}
+              onClick={() => setActive(tab)}
               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "#1A1A18"; }}
               onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "#9A9A9A"; }}
               style={{
@@ -96,7 +106,7 @@ export function SettingsTabs() {
                 borderBottom: `2px solid ${isActive ? "#EA580C" : "transparent"}`,
                 transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0,
               }}
-            >{t}</button>
+            >{t(`settingsTabs.tabLabels.${TAB_LABEL_KEYS[tab]}`)}</button>
           );
         })}
       </div>

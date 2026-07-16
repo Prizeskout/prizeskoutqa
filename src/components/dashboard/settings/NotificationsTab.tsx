@@ -1,14 +1,15 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const OG = "#EF681A";
 
 const ALERTS = [
-  { key: "margin_breach",   name: "Margin breach",         desc: "Alert when a channel's true margin drops below your floor on any item" },
-  { key: "reprice_applied", name: "Reprice applied",        desc: "Notify every time PrizeSkout applies an automatic price adjustment" },
-  { key: "channel_down",    name: "Channel sync failure",   desc: "Alert if a delivery aggregator or POS connection stops syncing" },
-  { key: "competitor_drop", name: "Competitor price drop",  desc: "Notify when a tracked competitor lowers their price on a shared item" },
-  { key: "promo_overlap",   name: "Promotion conflict",     desc: "Alert when an active platform promotion could undermine your margin floor" },
-  { key: "weekly_digest",   name: "Weekly margin digest",   desc: "Summary of margin performance across all channels, every Monday" },
+  { key: "margin_breach",   i18nKey: "marginBreach" },
+  { key: "reprice_applied", i18nKey: "repriceApplied" },
+  { key: "channel_down",    i18nKey: "channelDown" },
+  { key: "competitor_drop", i18nKey: "competitorDrop" },
+  { key: "promo_overlap",   i18nKey: "promoOverlap" },
+  { key: "weekly_digest",   i18nKey: "weeklyDigest" },
 ];
 
 function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
@@ -32,16 +33,16 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 }
 
 export function NotificationsTab() {
+  const { t } = useTranslation();
   const [state, setState] = useState<Record<string, boolean>>(
     Object.fromEntries(ALERTS.map(a => [a.key, a.key !== "weekly_digest"]))
   );
 
   return (
     <div style={{ maxWidth: 560 }}>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>Notifications</h3>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>{t("settingsTabs.notifications.heading")}</h3>
       <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.7 }}>
-        Choose which events trigger an alert. Notifications are delivered in-dashboard
-        and via the webhook you configure in Channels.
+        {t("settingsTabs.notifications.description")}
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", borderRadius: 12, overflow: "hidden", border: "1px solid #E5E2DB" }}>
@@ -52,8 +53,8 @@ export function NotificationsTab() {
             gap: 20,
           }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{a.name}</div>
-              <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{a.desc}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t(`settingsTabs.notifications.alerts.${a.i18nKey}.name`)}</div>
+              <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{t(`settingsTabs.notifications.alerts.${a.i18nKey}.desc`)}</div>
             </div>
             <Toggle on={state[a.key]} onToggle={() => setState(p => ({ ...p, [a.key]: !p[a.key] }))} />
           </div>

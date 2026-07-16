@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, Trash2, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card, CardTitle, Field, FieldLabel, FieldRow, PrimaryButton, TextField } from "./primitives";
 import {
   DEFAULT_BRANDING,
@@ -24,6 +25,7 @@ const PRESET_COLORS = [
 const MAX_LOGO_BYTES = 500 * 1024; // 500 KB
 
 export function BrandingTab() {
+  const { t } = useTranslation();
   const initial = getBranding();
   const initialCompany = getCompany().name;
   const [companyName, setCompanyName] = useState(initialCompany);
@@ -68,11 +70,11 @@ export function BrandingTab() {
   const onPickLogo = (file: File) => {
     setLogoError(null);
     if (!file.type.startsWith("image/")) {
-      setLogoError("Please choose a PNG, JPG, or SVG image.");
+      setLogoError(t("settingsTabs.branding.logo.errors.invalidType"));
       return;
     }
     if (file.size > MAX_LOGO_BYTES) {
-      setLogoError("Logo must be under 500 KB.");
+      setLogoError(t("settingsTabs.branding.logo.errors.tooLarge"));
       return;
     }
     const reader = new FileReader();
@@ -80,7 +82,7 @@ export function BrandingTab() {
       const result = typeof reader.result === "string" ? reader.result : "";
       setLogoDataUrl(result);
     };
-    reader.onerror = () => setLogoError("Could not read that file.");
+    reader.onerror = () => setLogoError(t("settingsTabs.branding.logo.errors.readError"));
     reader.readAsDataURL(file);
   };
 
@@ -109,22 +111,21 @@ export function BrandingTab() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Card>
-        <CardTitle>Brand identity</CardTitle>
+        <CardTitle>{t("settingsTabs.branding.identity.heading")}</CardTitle>
         <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-          These values are used in PDF reports you export from PrizeSkout. Your
-          logo and accent color appear in the report header.
+          {t("settingsTabs.branding.identity.description")}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 18 }}>
           <FieldRow>
-            <Field label="Brand name">
+            <Field label={t("settingsTabs.branding.identity.brandName")}>
               <TextField
                 value={brandName}
                 onChange={setBrandName}
-                placeholder={companyName || "Your company"}
+                placeholder={companyName || t("settingsTabs.branding.identity.brandNamePlaceholderDefault")}
               />
             </Field>
-            <Field label="Accent color (hex)">
+            <Field label={t("settingsTabs.branding.identity.accentColor")}>
               <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
                 <div
                   aria-hidden
@@ -147,14 +148,14 @@ export function BrandingTab() {
               </div>
               {!colorIsValid && (
                 <div style={{ fontSize: 11, color: "#EF4444", marginTop: 6 }}>
-                  Use a 6-digit hex like #EA580C
+                  {t("settingsTabs.branding.identity.accentColorInvalid")}
                 </div>
               )}
             </Field>
           </FieldRow>
 
           <div>
-            <FieldLabel>Color presets</FieldLabel>
+            <FieldLabel>{t("settingsTabs.branding.identity.colorPresets")}</FieldLabel>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {PRESET_COLORS.map((c) => {
                 const active = c.toLowerCase() === accentColor.trim().toLowerCase();
@@ -163,7 +164,7 @@ export function BrandingTab() {
                     key={c}
                     type="button"
                     onClick={() => setAccentColor(c)}
-                    aria-label={`Pick color ${c}`}
+                    aria-label={t("settingsTabs.branding.identity.pickColorAria", { color: c })}
                     style={{
                       width: 28,
                       height: 28,
@@ -186,10 +187,9 @@ export function BrandingTab() {
       </Card>
 
       <Card>
-        <CardTitle>Logo</CardTitle>
+        <CardTitle>{t("settingsTabs.branding.logo.heading")}</CardTitle>
         <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-          PNG, JPG, or SVG. Recommended: square or wide rectangle on transparent
-          background. Max 500 KB.
+          {t("settingsTabs.branding.logo.description")}
         </div>
 
         <div
@@ -218,7 +218,7 @@ export function BrandingTab() {
             {logoDataUrl ? (
               <img
                 src={logoDataUrl}
-                alt="Brand logo preview"
+                alt={t("settingsTabs.branding.logo.previewAlt")}
                 style={{
                   maxWidth: "100%",
                   maxHeight: "100%",
@@ -227,7 +227,7 @@ export function BrandingTab() {
               />
             ) : (
               <div style={{ fontSize: 11, color: "#6B6B6B", textAlign: "center" }}>
-                No logo uploaded
+                {t("settingsTabs.branding.logo.noLogo")}
               </div>
             )}
           </div>
@@ -273,7 +273,7 @@ export function BrandingTab() {
               }}
             >
               <Upload size={14} />
-              {logoDataUrl ? "Replace logo" : "Upload logo"}
+              {logoDataUrl ? t("settingsTabs.branding.logo.replace") : t("settingsTabs.branding.logo.upload")}
             </button>
             {logoDataUrl && (
               <button
@@ -294,7 +294,7 @@ export function BrandingTab() {
                 }}
               >
                 <Trash2 size={12} />
-                Remove logo
+                {t("settingsTabs.branding.logo.remove")}
               </button>
             )}
             {logoError && (
@@ -306,9 +306,9 @@ export function BrandingTab() {
 
       {/* Live PDF header preview */}
       <Card>
-        <CardTitle>PDF header preview</CardTitle>
+        <CardTitle>{t("settingsTabs.branding.preview.heading")}</CardTitle>
         <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>
-          This is how the top of every exported PDF report will look.
+          {t("settingsTabs.branding.preview.description")}
         </div>
         <div
           style={{
@@ -357,7 +357,7 @@ export function BrandingTab() {
                 marginTop: 2,
               }}
             >
-              Competitor Behavior Patterns
+              {t("settingsTabs.branding.preview.sampleTitle")}
             </div>
             <div
               style={{
@@ -366,14 +366,14 @@ export function BrandingTab() {
                 marginTop: 2,
               }}
             >
-              Intelligence report
+              {t("settingsTabs.branding.preview.sampleSubtitle")}
             </div>
           </div>
         </div>
       </Card>
 
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <PrimaryButton onClick={onSave}>Save branding</PrimaryButton>
+        <PrimaryButton onClick={onSave}>{t("settingsTabs.branding.save")}</PrimaryButton>
         <button
           type="button"
           onClick={onReset}
@@ -387,7 +387,7 @@ export function BrandingTab() {
             padding: "10px 8px",
           }}
         >
-          Reset to PrizeSkout default
+          {t("settingsTabs.branding.reset")}
         </button>
         {savedAt !== null && (
           <span
@@ -401,7 +401,7 @@ export function BrandingTab() {
             }}
           >
             <Check size={14} />
-            Saved
+            {t("settingsTabs.branding.saved")}
           </span>
         )}
       </div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Pencil, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { Trans, useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
   Card,
   CardSubtitle,
@@ -32,12 +34,9 @@ type Member = {
 
 // ── Role display ──────────────────────────────────────────────────────────────
 
-const ROLE_LABEL: Record<LicenseeRole, string> = {
-  owner: "Owner",
-  admin: "Admin",
-  developer: "Developer",
-  viewer: "Viewer",
-};
+function roleLabel(t: TFunction, role: LicenseeRole): string {
+  return t(`settingsTabs.team.roles.${role}`);
+}
 
 const ROLE_STYLES: Record<LicenseeRole, { bg: string; color: string }> = {
   owner: { bg: "rgba(234, 88, 12, 0.08)", color: "#EA580C" },
@@ -47,6 +46,7 @@ const ROLE_STYLES: Record<LicenseeRole, { bg: string; color: string }> = {
 };
 
 function RoleBadge({ role }: { role: LicenseeRole }) {
+  const { t } = useTranslation();
   const s = ROLE_STYLES[role];
   return (
     <span
@@ -60,7 +60,7 @@ function RoleBadge({ role }: { role: LicenseeRole }) {
         whiteSpace: "nowrap",
       }}
     >
-      {ROLE_LABEL[role]}
+      {roleLabel(t, role)}
     </span>
   );
 }
@@ -78,15 +78,15 @@ const AVATAR_COLORS: Record<LicenseeRole, string> = {
   viewer: "#9A9A9A",
 };
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: TFunction): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMin = Math.floor(diffMs / 60_000);
-  if (diffMin < 1) return "Just now";
-  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffMin < 1) return t("settingsTabs.team.justNow");
+  if (diffMin < 60) return t("settingsTabs.team.minutesAgo", { count: diffMin });
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} hr ago`;
+  if (diffHr < 24) return t("settingsTabs.team.hoursAgo", { count: diffHr });
   const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+  return t("settingsTabs.team.daysAgo", { count: diffDay });
 }
 
 // ── Invite modal ───────────────────────────────────────────────────────────────
@@ -104,11 +104,18 @@ function InviteModal({
   onClose: () => void;
   onInvited: () => void;
 }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<string>("developer");
   const [saving, setSaving] = useState(false);
 
   const canSave = email.trim().includes("@");
+
+  const inviteRoleLabels: Record<string, string> = {
+    admin: roleLabel(t, "admin"),
+    developer: roleLabel(t, "developer"),
+    viewer: roleLabel(t, "viewer"),
+  };
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -120,7 +127,7 @@ function InviteModal({
       );
       if (rpcErr) throw rpcErr;
       if (!foundUserId) {
-        toast.error("No PrizeSkout account found with that email address");
+        toast.error(t("settingsTabs.team.toasts.noAccount"));
         return;
       }
       const { error: insertErr } = await supabase.from("licensee_members").insert({
@@ -132,17 +139,17 @@ function InviteModal({
       });
       if (insertErr) {
         if (insertErr.message.includes("duplicate") || insertErr.code === "23505") {
-          toast.error("This person is already a team member");
+          toast.error(t("settingsTabs.team.toasts.alreadyMember"));
         } else {
           throw insertErr;
         }
         return;
       }
-      toast.success(`${email.trim()} added to the team`);
+      toast.success(t("settingsTabs.team.toasts.addedToTeam", { email: email.trim() }));
       onInvited();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to invite member");
+      toast.error(err instanceof Error ? err.message : t("settingsTabs.team.toasts.inviteFailed"));
     } finally {
       setSaving(false);
     }
@@ -183,10 +190,10 @@ function InviteModal({
             borderBottom: "1px solid #E5E2DB",
           }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Invite team member</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.team.inviteModal.title")}</div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("settingsTabs.team.close")}
             onClick={onClose}
             style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}
           >
@@ -195,31 +202,34 @@ function InviteModal({
         </div>
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ fontSize: 12, color: "#6B6B6B", lineHeight: 1.5 }}>
-            The person must already have a PrizeSkout account. Enter their email address to add them to your team.
+            {t("settingsTabs.team.inviteModal.description")}
           </div>
           <FieldRow>
-            <Field label="Email address">
+            <Field label={t("settingsTabs.team.inviteModal.email")}>
               <TextField
                 value={email}
                 onChange={setEmail}
                 type="email"
-                placeholder="colleague@company.com"
+                placeholder={t("settingsTabs.team.inviteModal.emailPlaceholder")}
               />
             </Field>
           </FieldRow>
           <FieldRow>
-            <Field label="Role">
+            <Field label={t("settingsTabs.team.inviteModal.role")}>
               <SelectField
                 value={role}
                 onChange={setRole}
                 options={INVITE_ROLES}
+                labels={inviteRoleLabels}
               />
             </Field>
           </FieldRow>
           <div style={{ fontSize: 11, color: "#9A9A9A", lineHeight: 1.5 }}>
-            <strong>Developer</strong> — API access and dashboard read. &nbsp;
-            <strong>Admin</strong> — full management except billing. &nbsp;
-            <strong>Viewer</strong> — read-only dashboard.
+            <Trans i18nKey="settingsTabs.team.roleHelp.developer" components={{ b: <strong /> }} />
+            {"  "}
+            <Trans i18nKey="settingsTabs.team.roleHelp.admin" components={{ b: <strong /> }} />
+            {"  "}
+            <Trans i18nKey="settingsTabs.team.roleHelp.viewer" components={{ b: <strong /> }} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
             <button
@@ -236,11 +246,11 @@ function InviteModal({
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {t("settingsTabs.team.cancel")}
             </button>
             <div style={{ opacity: canSave ? 1 : 0.5, pointerEvents: canSave ? "auto" : "none" }}>
               <PrimaryButton onClick={handleSave}>
-                {saving ? "Adding…" : "Add to team"}
+                {saving ? t("settingsTabs.team.inviteModal.adding") : t("settingsTabs.team.inviteModal.addToTeam")}
               </PrimaryButton>
             </div>
           </div>
@@ -263,8 +273,15 @@ function EditRoleModal({
   onClose: () => void;
   onSaved: (updated: Member) => void;
 }) {
+  const { t } = useTranslation();
   const [role, setRole] = useState<string>(member.role);
   const [saving, setSaving] = useState(false);
+
+  const editableRoleLabels: Record<string, string> = {
+    admin: roleLabel(t, "admin"),
+    developer: roleLabel(t, "developer"),
+    viewer: roleLabel(t, "viewer"),
+  };
 
   const handleSave = async () => {
     if (role === member.role) { onClose(); return; }
@@ -275,11 +292,14 @@ function EditRoleModal({
         .update({ role })
         .eq("id", member.id);
       if (error) throw error;
-      toast.success(`${member.displayName}'s role updated to ${ROLE_LABEL[role as LicenseeRole]}`);
+      toast.success(t("settingsTabs.team.toasts.roleUpdated", {
+        name: member.displayName,
+        role: roleLabel(t, role as LicenseeRole),
+      }));
       onSaved({ ...member, role: role as LicenseeRole });
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role");
+      toast.error(err instanceof Error ? err.message : t("settingsTabs.team.toasts.roleUpdateFailed"));
     } finally {
       setSaving(false);
     }
@@ -320,10 +340,10 @@ function EditRoleModal({
             borderBottom: "1px solid #E5E2DB",
           }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>Edit role</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.team.editRoleModal.title")}</div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("settingsTabs.team.close")}
             onClick={onClose}
             style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "inline-flex" }}
           >
@@ -332,21 +352,28 @@ function EditRoleModal({
         </div>
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ fontSize: 13, color: "#6B6B6B" }}>
-            Changing role for <strong>{member.displayName}</strong>
+            <Trans
+              i18nKey="settingsTabs.team.editRoleModal.changingRoleFor"
+              values={{ name: member.displayName }}
+              components={{ b: <strong /> }}
+            />
           </div>
           <FieldRow>
-            <Field label="Role">
+            <Field label={t("settingsTabs.team.editRoleModal.role")}>
               <SelectField
                 value={role}
                 onChange={setRole}
                 options={EDITABLE_ROLES}
+                labels={editableRoleLabels}
               />
             </Field>
           </FieldRow>
           <div style={{ fontSize: 11, color: "#9A9A9A", lineHeight: 1.5 }}>
-            <strong>Developer</strong> — API access and dashboard read. &nbsp;
-            <strong>Admin</strong> — full management except billing. &nbsp;
-            <strong>Viewer</strong> — read-only dashboard.
+            <Trans i18nKey="settingsTabs.team.roleHelp.developer" components={{ b: <strong /> }} />
+            {"  "}
+            <Trans i18nKey="settingsTabs.team.roleHelp.admin" components={{ b: <strong /> }} />
+            {"  "}
+            <Trans i18nKey="settingsTabs.team.roleHelp.viewer" components={{ b: <strong /> }} />
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
             <button
@@ -363,10 +390,10 @@ function EditRoleModal({
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {t("settingsTabs.team.cancel")}
             </button>
             <PrimaryButton onClick={handleSave}>
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("settingsTabs.team.editRoleModal.saving") : t("settingsTabs.team.editRoleModal.save")}
             </PrimaryButton>
           </div>
         </div>
@@ -378,6 +405,7 @@ function EditRoleModal({
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function TeamTab() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [licenseeId, setLicenseeId] = useState<string | null>(null);
@@ -451,8 +479,8 @@ export function TeamTab() {
   if (loading) {
     return (
       <Card>
-        <CardTitle>Team members</CardTitle>
-        <div style={{ marginTop: 16, fontSize: 12, color: "#9A9A9A" }}>Loading…</div>
+        <CardTitle>{t("settingsTabs.team.heading")}</CardTitle>
+        <div style={{ marginTop: 16, fontSize: 12, color: "#9A9A9A" }}>{t("settingsTabs.team.loading")}</div>
       </Card>
     );
   }
@@ -460,9 +488,9 @@ export function TeamTab() {
   if (!licenseeId) {
     return (
       <Card>
-        <CardTitle>Team members</CardTitle>
+        <CardTitle>{t("settingsTabs.team.heading")}</CardTitle>
         <div style={{ marginTop: 16, fontSize: 13, color: "#6B6B6B" }}>
-          Complete your account setup to manage your team.
+          {t("settingsTabs.team.completeSetup")}
         </div>
       </Card>
     );
@@ -481,21 +509,21 @@ export function TeamTab() {
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <CardTitle>Team members</CardTitle>
-            <CardSubtitle>Manage who has access to PrizeSkout</CardSubtitle>
+            <CardTitle>{t("settingsTabs.team.heading")}</CardTitle>
+            <CardSubtitle>{t("settingsTabs.team.description")}</CardSubtitle>
           </div>
           <OutlineAddButton
             icon={<UserPlus size={14} strokeWidth={2} />}
             onClick={() => setInviteOpen(true)}
           >
-            Invite member
+            {t("settingsTabs.team.inviteMember")}
           </OutlineAddButton>
         </div>
 
         <div style={{ marginTop: 8 }}>
           {members.length === 0 && (
             <div style={{ padding: "32px 0", textAlign: "center", fontSize: 13, color: "#9A9A9A" }}>
-              No team members yet. Invite a colleague to get started.
+              {t("settingsTabs.team.empty")}
             </div>
           )}
           {members.map((m, i) => {
@@ -503,10 +531,10 @@ export function TeamTab() {
             const initials = getInitials(m.displayName);
             const avatarBg = AVATAR_COLORS[m.role];
             const lastSeen = m.acceptedAt
-              ? timeAgo(m.acceptedAt)
+              ? timeAgo(m.acceptedAt, t)
               : m.invitedAt
-              ? `Invited ${timeAgo(m.invitedAt)}`
-              : "Pending";
+              ? t("settingsTabs.team.invitedAgo", { time: timeAgo(m.invitedAt, t) })
+              : t("settingsTabs.team.pending");
             return (
               <div
                 key={m.id}
@@ -550,7 +578,7 @@ export function TeamTab() {
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "#1A1A18" }}>{m.displayName}</div>
                     {!m.acceptedAt && m.invitedAt && (
-                      <div style={{ fontSize: 11, color: "#F59E0B", marginTop: 2 }}>Invite pending</div>
+                      <div style={{ fontSize: 11, color: "#F59E0B", marginTop: 2 }}>{t("settingsTabs.team.invitePending")}</div>
                     )}
                   </div>
                 </div>
@@ -562,7 +590,7 @@ export function TeamTab() {
                   </div>
                   {m.role !== "owner" && (
                     <IconAction
-                      ariaLabel={`Edit ${m.displayName}`}
+                      ariaLabel={t("settingsTabs.team.editAria", { name: m.displayName })}
                       icon={<Pencil size={14} color="#6B6B6B" />}
                       onClick={() => setEditMember(m)}
                     />

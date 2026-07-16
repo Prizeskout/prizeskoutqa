@@ -4,7 +4,7 @@ import { ContactSupportModal } from "@/components/ContactSupportModal";
 
 type Tab = "analytics" | "rules" | "vault" | "settings";
 type Theme = "light" | "dark";
-type Lang = "en" | "ar";
+type Lang = "en" | "ar" | "fr";
 
 interface FeedRow { tag: string; tagColor: string; text: string; time: string; }
 interface Rule { name: string; desc: string; floor: number; active: boolean; }
@@ -132,6 +132,27 @@ const T = {
     activeLabel:"✓ enforcing · <2ms eval",
     pausedLabel:"Paused. Not currently enforced.",
     floorWarn:"⚠ Floor is below 15% cost basis. The guardrail will reject all executions at this level.",
+    settingsLabel:"Settings", backToSite:"Back to site", myAccount:"My Account",
+    settingsSub:"Store access, channels, margin rules, outlets and notifications.",
+    supportLabel:"Support",
+    inboundTitle:"Inbound Connections",
+    inboundDesc:"POS and e-commerce platforms that feed orders and catalog data into PrizeSkout.",
+    outboundTitle:"Outbound Connections",
+    outboundDesc:"Delivery aggregators that PrizeSkout pushes margin-safe prices to in real time.",
+    inboundConnectedMsg:"connected · data syncing",
+    inboundAuthorizeMsg:"not connected · click to authorize",
+    inboundComingSoonMsg:"integration coming soon",
+    connectPrefix:"Connect",
+    setupBadge:"SETUP", soonBadge:"SOON",
+    storeConnectedSyncing:"Store connected · prices syncing",
+    tapSetupMsg:"Tap SETUP to connect your store",
+    awaitingBuildMsg:"Awaiting integration build",
+    newDiscrepancy:"New Discrepancy",
+    partnerLabel:"Partner", orderIdLabel:"Order ID", branchLocationLabel:"Branch / Location",
+    contractedRateLabel:"Contracted rate (%)",
+    orderValueLabel:"Order value", chargedByPartnerLabel:"Charged by partner",
+    additionalNotesLabel:"Additional notes (optional)",
+    logDiscrepancyBtn:"+ Log Discrepancy", cancelBtn:"− Cancel",
   },
   ar: {
     cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
@@ -174,6 +195,90 @@ const T = {
     activeLabel:"✓ مفعّل · تقييم <2ms",
     pausedLabel:"متوقف. غير مفعّل حالياً.",
     floorWarn:"⚠ الحد أقل من 15% تكلفة أساسية. سيرفض الحارس جميع التنفيذات عند هذا المستوى.",
+    settingsLabel:"الإعدادات", backToSite:"العودة إلى الموقع", myAccount:"حسابي",
+    settingsSub:"الوصول إلى المتجر، القنوات، قواعد الهامش، الفروع، والإشعارات.",
+    supportLabel:"الدعم",
+    inboundTitle:"الاتصالات الواردة",
+    inboundDesc:"أنظمة نقاط البيع والتجارة الإلكترونية التي تغذي برايز سكاوت بالطلبات وبيانات الكتالوج.",
+    outboundTitle:"الاتصالات الصادرة",
+    outboundDesc:"منصات التوصيل التي يرسل إليها برايز سكاوت الأسعار الآمنة للهامش لحظياً.",
+    inboundConnectedMsg:"متصل · جارٍ مزامنة البيانات",
+    inboundAuthorizeMsg:"غير متصل · انقر للتفويض",
+    inboundComingSoonMsg:"التكامل قريباً",
+    connectPrefix:"اتصال",
+    setupBadge:"الإعداد", soonBadge:"قريباً",
+    storeConnectedSyncing:"المتجر متصل · جارٍ مزامنة الأسعار",
+    tapSetupMsg:"اضغط على الإعداد لربط متجرك",
+    awaitingBuildMsg:"التكامل قيد الإنشاء",
+    newDiscrepancy:"تناقض جديد",
+    partnerLabel:"الشريك", orderIdLabel:"رقم الطلب", branchLocationLabel:"الفرع / الموقع",
+    contractedRateLabel:"النسبة المتعاقد عليها (%)",
+    orderValueLabel:"قيمة الطلب", chargedByPartnerLabel:"المبلغ المحصل من الشريك",
+    additionalNotesLabel:"ملاحظات إضافية (اختياري)",
+    logDiscrepancyBtn:"+ تسجيل تناقض", cancelBtn:"− إلغاء",
+  },
+  fr: {
+    cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"Boucle de défense active", defendS:"4 nœuds périphériques · opérationnels",
+    navA:"Centre de protection des revenus", navAs:"Analytique",
+    navR:"Moteur de politique de marge",      navRs:"Livre des règles",
+    navV:"Coffre d'intégrations",             navVs:"Connexions",
+    subA:"Optimisation active des prix et prévention des pertes",
+    subR:"Règles de tarification en langage naturel et garde-fous de marge",
+    subV:"Connexions caisse, agrégateurs et cache",
+    stream:"Flux d'exécution en direct", streamS:"Flux d'événements en temps réel",
+    profLabel:"Profits protégés · Ce mois-ci",
+    copilotTitle:"Copilote CFO",    copilotSub:"Moteur de règles en langage naturel",
+    copilotDesc:"Posez une question sur la stratégie de prix, ou décrivez une règle pour la compiler dans une configuration moteur active.",
+    copilotLive:"🟢 Copilote actif",
+    compile:"Envoyer ↗",
+    try:"Essayez :", guardrails:"Garde-fous actifs",
+    agentTitle:"Agent autonome d'audit des litiges", agentActive:"Agent actif",
+    discLog:"Journal des écarts · Versements caisse vs contrats",
+    genVoucher:"Générer un bon de litige",
+    downloadCsv:"Télécharger le journal d'audit (CSV)",
+    exportProofs:"Exporter les preuves de litige",
+    fileBtn0:"Déposer automatiquement la réclamation sur le portail partenaire",
+    fileBtn1:"Dépôt de la réclamation…",
+    fileBtn3:"✓ Réclamation soumise · ID 8841-B",
+    fileMsg1:"Compilation des preuves…",
+    fileMsg2:"Téléversement via API…",
+    fileMsg3:"✓ Réclamation soumise avec succès ! (ID : 8841-B)",
+    claimEn:"CLAIM DRAFT · ENGLISH",
+    claimAr:"مسودة المطالبة · العربية",
+    bilingualTitle:"Dossier de litige bilingue ·",
+    verified:"SHA-256", verifiedS:"· VÉRIFIÉ ✓",
+    autoCompiled:"compilé automatiquement par l'agent de litiges",
+    close:"✕",
+    intentLabel:"Intention métier · Source",
+    intent:"intention :", confidence:"confiance :", ambiguity:"ambiguïté :",
+    intentResolved:"résolue ✓",
+    applyLabel0:"Appliquer la configuration à la boucle principale",
+    applyLabel1:"✓ Déployé vers la boucle principale · Redis 340ms",
+    rulesEnforced:"règles · appliquées en périphérie",
+    activeLabel:"✓ appliquée · éval <2ms",
+    pausedLabel:"En pause. Non appliquée actuellement.",
+    floorWarn:"⚠ Le seuil est inférieur à 15 % du coût de revient. Le garde-fou rejettera toutes les exécutions à ce niveau.",
+    settingsLabel:"Paramètres", backToSite:"Retour au site", myAccount:"Mon compte",
+    settingsSub:"Accès à la boutique, canaux, règles de marge, points de vente et notifications.",
+    supportLabel:"Support",
+    inboundTitle:"Connexions entrantes",
+    inboundDesc:"Plateformes de caisse et e-commerce qui alimentent PrizeSkout en commandes et données catalogue.",
+    outboundTitle:"Connexions sortantes",
+    outboundDesc:"Agrégateurs de livraison vers lesquels PrizeSkout pousse des prix protégeant la marge en temps réel.",
+    inboundConnectedMsg:"connecté · synchronisation des données",
+    inboundAuthorizeMsg:"non connecté · cliquez pour autoriser",
+    inboundComingSoonMsg:"intégration à venir",
+    connectPrefix:"Connecter",
+    setupBadge:"CONFIG", soonBadge:"BIENTÔT",
+    storeConnectedSyncing:"Boutique connectée · synchronisation des prix",
+    tapSetupMsg:"Appuyez sur CONFIG pour connecter votre boutique",
+    awaitingBuildMsg:"Intégration en cours de développement",
+    newDiscrepancy:"Nouvel écart",
+    partnerLabel:"Partenaire", orderIdLabel:"N° de commande", branchLocationLabel:"Filiale / Emplacement",
+    contractedRateLabel:"Taux contractuel (%)",
+    orderValueLabel:"Valeur de la commande", chargedByPartnerLabel:"Facturé par le partenaire",
+    additionalNotesLabel:"Notes complémentaires (facultatif)",
+    logDiscrepancyBtn:"+ Signaler un écart", cancelBtn:"− Annuler",
   },
 };
 
@@ -382,8 +487,8 @@ export function PrizeSkoutDashboard() {
     { id:"vault"     as Tab, label:t.navV, sub:t.navVs },
   ];
 
-  const headerSub = tab === "analytics" ? t.subA : tab === "rules" ? t.subR : tab === "settings" ? "Store access, channels, margin rules, outlets and notifications." : t.subV;
-  const headerTitle = tab === "analytics" ? t.navA : tab === "rules" ? t.navR : tab === "settings" ? "Settings" : t.navV;
+  const headerSub = tab === "analytics" ? t.subA : tab === "rules" ? t.subR : tab === "settings" ? t.settingsSub : t.subV;
+  const headerTitle = tab === "analytics" ? t.navA : tab === "rules" ? t.navR : tab === "settings" ? t.settingsLabel : t.navV;
 
   const md = modal != null ? disputes[modal] : null;
 
@@ -440,7 +545,7 @@ export function PrizeSkoutDashboard() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
-              <span style={{ fontSize:13, fontWeight:500 }}>Settings</span>
+              <span style={{ fontSize:13, fontWeight:500 }}>{t.settingsLabel}</span>
             </div>
             {/* Back to site */}
             <a href="/" style={{
@@ -454,7 +559,7 @@ export function PrizeSkoutDashboard() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6"/>
               </svg>
-              <span style={{ fontSize:13, fontWeight:500 }}>Back to site</span>
+              <span style={{ fontSize:13, fontWeight:500 }}>{t.backToSite}</span>
             </a>
             <div style={{ height:1, background:"var(--border)", marginBottom:8 }} />
             <div style={{ border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
@@ -470,7 +575,7 @@ export function PrizeSkoutDashboard() {
               <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                 border:"1px solid var(--border)", display:"grid", placeItems:"center",
                 fontSize:11.5, fontWeight:700, fontFamily:MONO }}>M</span>
-              <span style={{ fontSize:14, fontWeight:600 }}>My Account</span>
+              <span style={{ fontSize:14, fontWeight:600 }}>{t.myAccount}</span>
             </div>
           </div>
         </aside>
@@ -527,7 +632,7 @@ export function PrizeSkoutDashboard() {
                 border:`1px solid ${tab==="settings" ? `color-mix(in srgb,${OG} 40%,transparent)` : "var(--border)"}`,
                 background: tab==="settings" ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
                 color: tab==="settings" ? "var(--text)" : "var(--muted)", fontSize:13, fontWeight:700, fontFamily:"inherit", flexShrink:0,
-              }}>Settings</button>
+              }}>{t.settingsLabel}</button>
             </div>
           </div>
         )}
@@ -575,7 +680,7 @@ export function PrizeSkoutDashboard() {
             {/* Lang */}
             <div style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:10, padding:3, gap:2 }}>
-              {([["en","EN"],["ar","عربية"]] as [Lang,string][]).map(([id,label]) => (
+              {([["en","EN"],["ar","عربية"],["fr","FR"]] as [Lang,string][]).map(([id,label]) => (
                 <button key={id} onClick={()=>setLang(id)} style={{
                   cursor:"pointer", border:"none", borderRadius:8, padding:"10px 13px",
                   fontSize:13, fontWeight:700, fontFamily:"inherit",
@@ -603,7 +708,7 @@ export function PrizeSkoutDashboard() {
               <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
               <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
             </svg>
-            Support
+            {t.supportLabel}
           </button>
         </header>
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
@@ -778,18 +883,18 @@ export function PrizeSkoutDashboard() {
                       color: showDisputeForm ? OG : "var(--text)",
                       background:"transparent", border:`1.5px solid ${showDisputeForm ? OG : "var(--border)"}`,
                       borderRadius:10, padding:"10px 15px", fontFamily:"inherit", transition:"border-color .2s,color .2s" }}>
-                    {showDisputeForm ? "− Cancel" : "+ Log Discrepancy"}
+                    {showDisputeForm ? t.cancelBtn : t.logDiscrepancyBtn}
                   </button>
 
                   {showDisputeForm && (
                     <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                       borderRadius:14, padding:"20px 22px", display:"flex", flexDirection:"column", gap:14,
                       animation:"pk-in .2s ease" }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:"var(--text)" }}>New Discrepancy</div>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--text)" }}>{t.newDiscrepancy}</div>
                       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:10 }}>
                         {/* Partner */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Partner</label>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.partnerLabel}</label>
                           <select value={disputePartner} onChange={e=>setDisputePartner(e.target.value)}
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
                               background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit" }}>
@@ -800,35 +905,35 @@ export function PrizeSkoutDashboard() {
                         </div>
                         {/* Order ID */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Order ID</label>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.orderIdLabel}</label>
                           <input value={disputeOrderId} onChange={e=>setDisputeOrderId(e.target.value)} placeholder="e.g. #84201-A"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
                               background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Location */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Branch / Location</label>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.branchLocationLabel}</label>
                           <input value={disputePlace} onChange={e=>setDisputePlace(e.target.value)} placeholder="e.g. Doha Mall branch"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
                               background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Contracted rate */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Contracted rate (%)</label>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.contractedRateLabel}</label>
                           <input type="number" min="1" max="40" value={disputeRate} onChange={e=>setDisputeRate(e.target.value)} placeholder="18"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
                               background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Order value */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Order value ({currency})</label>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.orderValueLabel} ({currency})</label>
                           <input type="number" min="0" value={disputeOurPrice} onChange={e=>setDisputeOurPrice(e.target.value)} placeholder="120.00"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
                               background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Charged amount */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Charged by partner ({currency})</label>
+                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.chargedByPartnerLabel} ({currency})</label>
                           <input type="number" min="0" value={disputeCharged} onChange={e=>setDisputeCharged(e.target.value)} placeholder="30.00"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
                               background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
@@ -836,7 +941,7 @@ export function PrizeSkoutDashboard() {
                       </div>
                       {/* Notes */}
                       <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                        <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>Additional notes (optional)</label>
+                        <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.additionalNotesLabel}</label>
                         <textarea value={disputeNotes} onChange={e=>setDisputeNotes(e.target.value)} rows={2}
                           placeholder="Any context about the discrepancy..."
                           style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px", resize:"vertical",
@@ -1064,8 +1169,8 @@ export function PrizeSkoutDashboard() {
             {/* Inbound */}
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>Inbound Connections</h2>
-                <span style={{ fontSize:14, color:"var(--muted)" }}>POS and e-commerce platforms that feed orders and catalog data into PrizeSkout.</span>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.inboundTitle}</h2>
+                <span style={{ fontSize:14, color:"var(--muted)" }}>{t.inboundDesc}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))", gap:16 }}>
                 {INBOUND_INTEGRATIONS.map(ig => {
@@ -1090,7 +1195,7 @@ export function PrizeSkoutDashboard() {
                         animation: isConnected ? "pk-pulse 2.2s infinite" : "none" }} />
                     </div>
                     <div style={{ fontSize:12, color:"var(--muted)" }}>
-                      {isConnected ? "connected · data syncing" : canConnect ? "not connected · click to authorize" : "integration coming soon"}
+                      {isConnected ? t.inboundConnectedMsg : canConnect ? t.inboundAuthorizeMsg : t.inboundComingSoonMsg}
                     </div>
                     {isConnected && (
                       <div dir="ltr" style={{ fontFamily:MONO, fontSize:12, color:GN,
@@ -1112,7 +1217,7 @@ export function PrizeSkoutDashboard() {
                         style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:12.5, fontWeight:700,
                           color:"#fff", background:OG, border:`1.5px solid ${OG}`,
                           borderRadius:10, padding:"9px 14px", fontFamily:"inherit", transition:"border-color .2s,color .2s,background .2s" }}>
-                        Connect {ig.name}
+                        {t.connectPrefix} {ig.name}
                       </button>
                     )}
                   </div>
@@ -1124,8 +1229,8 @@ export function PrizeSkoutDashboard() {
             {/* Outbound */}
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>Outbound Connections</h2>
-                <span style={{ fontSize:14, color:"var(--muted)" }}>Delivery aggregators that PrizeSkout pushes margin-safe prices to in real time.</span>
+                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.outboundTitle}</h2>
+                <span style={{ fontSize:14, color:"var(--muted)" }}>{t.outboundDesc}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:14 }}>
                 {OUTBOUND_INTEGRATIONS.map(o => {
@@ -1140,7 +1245,7 @@ export function PrizeSkoutDashboard() {
                         <span style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
                           background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
                           color:GN, border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
-                          borderRadius:6, padding:"3px 8px" }}>LIVE</span>
+                          borderRadius:6, padding:"3px 8px" }}>{t.live}</span>
                       ) : o.byok ? (
                         <button
                           type="button"
@@ -1148,11 +1253,11 @@ export function PrizeSkoutDashboard() {
                           style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
                             background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
                             color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
-                            borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>SETUP</button>
+                            borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.setupBadge}</button>
                       ) : (
                         <span style={{ fontSize:9.5, fontWeight:600, letterSpacing:"0.6px",
                           color:"var(--muted)", border:"1px solid var(--border)",
-                          borderRadius:6, padding:"3px 8px" }}>SOON</span>
+                          borderRadius:6, padding:"3px 8px" }}>{t.soonBadge}</span>
                       )}
                     </div>
                     <div style={{ fontSize:11.5, color:"var(--muted)" }}>{o.region}</div>
@@ -1161,7 +1266,7 @@ export function PrizeSkoutDashboard() {
                       <span style={{ width:7,height:7,borderRadius:"50%",
                         background: connected ? GN : OG,flexShrink:0,
                         animation: connected ? "pk-pulse 2s ease infinite" : "none" }} />
-                      {connected ? "Store connected · prices syncing" : o.byok ? "Tap SETUP to connect your store" : "Awaiting integration build"}
+                      {connected ? t.storeConnectedSyncing : o.byok ? t.tapSetupMsg : t.awaitingBuildMsg}
                     </div>
                   </div>
                   );
@@ -1317,7 +1422,7 @@ export function PrizeSkoutDashboard() {
               {/* Lang */}
               <div style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border)",
                 borderRadius:10, padding:3, gap:2, marginBottom:8 }}>
-                {([["en","EN"],["ar","عربية"]] as [Lang,string][]).map(([id,label]) => (
+                {([["en","EN"],["ar","عربية"],["fr","FR"]] as [Lang,string][]).map(([id,label]) => (
                   <button key={id} onClick={()=>setLang(id)} style={{
                     cursor:"pointer", border:"none", borderRadius:8, padding:"10px 0", flex:1,
                     fontSize:12, fontWeight:700, fontFamily:"inherit",
@@ -1336,7 +1441,7 @@ export function PrizeSkoutDashboard() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
-                <span style={{ fontSize:13, fontWeight:500 }}>Settings</span>
+                <span style={{ fontSize:13, fontWeight:500 }}>{t.settingsLabel}</span>
               </div>
               {/* Back to site */}
               <a href="/" style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 10px",
@@ -1344,7 +1449,7 @@ export function PrizeSkoutDashboard() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6"/>
                 </svg>
-                <span style={{ fontSize:13, fontWeight:500 }}>Back to site</span>
+                <span style={{ fontSize:13, fontWeight:500 }}>{t.backToSite}</span>
               </a>
               <div style={{ height:1, background:"var(--border)", marginBottom:8 }} />
               {/* Defend Loop */}
@@ -1362,7 +1467,7 @@ export function PrizeSkoutDashboard() {
                 <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                   border:"1px solid var(--border)", display:"grid", placeItems:"center",
                   fontSize:11.5, fontWeight:700, fontFamily:MONO }}>M</span>
-                <span style={{ fontSize:14, fontWeight:600 }}>My Account</span>
+                <span style={{ fontSize:14, fontWeight:600 }}>{t.myAccount}</span>
               </div>
             </div>
           </div>

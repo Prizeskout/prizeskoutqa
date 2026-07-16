@@ -291,53 +291,169 @@
   },
   "landing": {
     "langSwitcher": "Langue",
+    "hero": {
+      "h1Line1": "Chaque commande, sur chaque plateforme.",
+      "h1Line2": "Votre marge, défendue.",
+      "subtitlePre": "PrizeSkout recalcule des",
+      "subtitleStrong": "prix protégeant la marge",
+      "subtitlePost": "et les publie en direct sur Talabat, Jahez, Noon, Careem et d'autres, en moins de deux secondes, sur chaque menu, automatiquement.",
+      "ctaPrimary": "Obtenir l'accès",
+      "ctaSecondary": "Lire la doc SDK"
+    },
+    "demo": {
+      "eyebrow": "DÉMONSTRATION DU PRODUIT",
+      "heading": "Regardez PrizeSkout défendre une marge en temps réel",
+      "iframeTitle": "Démonstration du produit PrizeSkout"
+    },
+    "faq": {
+      "heading": "Tout ce qu'il faut savoir",
+      "items": [
+        {
+          "q": "Qu'est-ce que PrizeSkout ?",
+          "a": "PrizeSkout est une infrastructure de tarification en temps réel pour les restaurants qui vendent sur les plateformes de livraison du Golfe. Nous surveillons vos prix, frais et commissions sur chaque canal, y compris Talabat, Snoonu, Jahez, Noon Food et Careem, et défendons votre marge automatiquement pour que chaque commande reste rentable."
+        },
+        {
+          "q": "À qui s'adresse PrizeSkout ?",
+          "a": "Aux restaurateurs, cuisines fantômes et groupes de restauration qui opèrent sur une ou plusieurs plateformes de livraison du Golfe. Que vous gériez un seul point de vente à Doha ou cinquante à travers le Qatar, l'Arabie Saoudite et les Émirats, si les commissions des plateformes rognent votre marge, PrizeSkout est conçu pour vous."
+        },
+        {
+          "q": "Quel problème résout-il concrètement ?",
+          "a": "La plupart des restaurants fixent leurs prix sur les plateformes une seule fois, puis n'y touchent plus, pendant que commissions, frais de livraison, promotions et frais de plateforme rongent silencieusement la marge à chaque commande. PrizeSkout vous donne une vue en direct de votre marge réelle par canal et ajuste les prix selon les règles que vous définissez, pour que vous ne découvriez plus les pertes en fin de mois."
+        },
+        {
+          "q": "Comment ça marche ?",
+          "a": "Quatre étapes, en continu. Sync se connecte à vos canaux de livraison et à votre caisse, et récupère en direct menus, prix, frais et structures de commission. Décider calcule votre marge réelle par article et par canal, en tenant compte des commissions, de l'emballage et des frais de livraison. Défendre recommande ou applique des ajustements de prix dans les limites que vous contrôlez dès que la marge passe sous votre seuil. Gouverner enregistre chaque changement pour qu'il soit auditable et réversible. Vous gardez le contrôle : rien ne bouge sans l'accord de vos règles."
+        },
+        {
+          "q": "PrizeSkout va-t-il changer mes prix sans me demander ?",
+          "a": "Seulement si vous le lui demandez. Vous choisissez le mode : mode Révision, où chaque recommandation attend votre validation, ou Pilote automatique, où les changements s'exécutent automatiquement dans les limites min et max que vous définissez. La plupart des opérateurs démarrent en mode Révision puis activent le pilote automatique une fois qu'ils font confiance au moteur."
+        },
+        {
+          "q": "Qu'est-ce que Margin by PrizeSkout ?",
+          "a": "Margin est notre outil de récupération de marge par canal, le moyen le plus rapide de voir exactement ce que chaque plateforme vous coûte, point de vente par point de vente, article par article. Conçu mobile-first, sa mise en place prend quelques minutes, et il est facturé en abonnement unique qui évolue avec vous."
+        },
+        {
+          "q": "Quelles plateformes de livraison prenez-vous en charge ?",
+          "a": "Talabat, Snoonu, Jahez, Noon Food et Careem, avec d'autres plateformes du Golfe prévues sur la feuille de route."
+        },
+        {
+          "q": "Fonctionne-t-il avec ma caisse ?",
+          "a": "PrizeSkout s'intègre aux principales plateformes de caisse et de gestion de restaurant du Golfe, dont Foodics, Salla et Zid."
+        },
+        {
+          "q": "Je gère une marketplace, un agrégateur ou une plateforme de caisse. Puis-je proposer ceci sous ma propre marque ?",
+          "a": "Oui. PrizeSkout est conçu pour être en marque blanche. Les plateformes peuvent intégrer notre infrastructure de tarification et de marge sous leur propre marque via API. Contactez-nous pour discuter des conditions de partenariat."
+        },
+        {
+          "q": "Mes données sont-elles en sécurité ?",
+          "a": "Oui. Vos données de menu, de tarification et de ventes sont chiffrées en transit et au repos, et ne sont jamais partagées avec d'autres restaurants ou des tiers. Nous opérons sous le Qatar Financial Centre (QFC n° 04412) et respectons la loi qatarie de protection des données personnelles (loi n° 13 de 2016), la loi PDPL saoudienne et le décret-loi fédéral émirati n° 45 de 2021."
+        },
+        {
+          "q": "Mes concurrents peuvent-ils voir mes prix ou mes marges ?",
+          "a": "Non. Vos données vous appartiennent. PrizeSkout n'expose jamais les prix, coûts ou données de marge d'un client à un autre."
+        },
+        {
+          "q": "Où PrizeSkout est-il basé ?",
+          "a": "Nous sommes basés à Doha, au Qatar, constitués sous le Qatar Financial Centre, et soutenus par le Qatar Science and Technology Park (QSTP). Nous sommes nativement golfiens, conçus dès le départ pour les plateformes, devises et réglementations de cette région."
+        },
+        {
+          "q": "Ai-je besoin d'un développeur pour l'utiliser ?",
+          "a": "Non. Margin et le tableau de bord PrizeSkout sont conçus pour les opérateurs, pas pour les ingénieurs. L'API et le SDK existent pour les plateformes et équipes qui veulent une intégration plus poussée, mais vous n'aurez jamais besoin d'y toucher pour défendre votre marge."
+        }
+      ]
+    },
     "infra": {
-      "nav": { "infrastructure": "Infrastructure", "loop": "Boucle", "latency": "Latence", "docs": "Docs", "signIn": "Se connecter", "generateKeys": "Générer des clés", "support": "Support" },
+      "nav": {
+        "infrastructure": "Infrastructure",
+        "loop": "Boucle",
+        "latency": "Latence",
+        "docs": "Docs",
+        "signIn": "Se connecter",
+        "generateKeys": "Générer des clés",
+        "support": "Support"
+      },
       "hero": {
         "eyebrow": "PRIZESKOUT // INFRASTRUCTURE TARIFAIRE",
         "title": "La couche d'infrastructure tarifaire pour le commerce GCC.",
         "subtitle": "Arrêtez de gérer l'enfer des API et les dépendances de scraping. Déployez un middleware événementiel sans serveur qui synchronise, calcule et défend les marges marchandes sur toutes les plateformes régionales — instantanément.",
         "tagline": "Boucle de retarification < 2s · Licencié QFC · Qatar · EAU · Arabie Saoudite",
-        "cta1": "Générer des clés API →", "cta2": "Lire la doc SDK",
-        "stat1Label": "budget aller-retour", "stat2Label": "SLA de livraison", "stat3Label": "surfaces API"
+        "cta1": "Générer des clés API →",
+        "cta2": "Lire la doc SDK",
+        "stat1Label": "budget aller-retour",
+        "stat2Label": "SLA de livraison",
+        "stat3Label": "surfaces API"
       },
       "backedBy": "Soutenu par",
       "surface": {
-        "sectionLabel": "QUATRE SURFACES API", "title": "La matrice des surfaces d'infrastructure",
+        "sectionLabel": "QUATRE SURFACES API",
+        "title": "La matrice des surfaces d'infrastructure",
         "subtitle": "Un contrat. Quatre primitives. Chaque décision de marge acheminée via la même colonne événementielle.",
-        "syncName": "Sync", "syncBadge": "INGESTION EN TEMPS RÉEL", "syncDesc": "Normalisez les charges SAP S/4HANA et Salla en un seul événement de tarification canonique à la périphérie.",
-        "decideName": "Décider", "decideBadge": "MOTEUR DE MARGE", "decideDesc": "L'évaluation JSON en ligne résout la commission de la plateforme régionale contre votre seuil de marge nette en mémoire.",
-        "defendName": "Défendre", "defendBadge": "BOUCLE AUTOMATISÉE", "defendDesc": "Une baisse de prix d'un concurrent déclenche une mise à jour automatique sur les marchés Talabat et Jahez.",
-        "governName": "Gouverner", "governBadge": "AUDIT SOUVERAIN", "governDesc": "Un journal de conformité cryptographique bilingue cartographie le routage transfrontalier sous QFC et KSA PDPL."
+        "syncName": "Sync",
+        "syncBadge": "INGESTION EN TEMPS RÉEL",
+        "syncDesc": "Normalisez les charges SAP S/4HANA et Salla en un seul événement de tarification canonique à la périphérie.",
+        "decideName": "Décider",
+        "decideBadge": "MOTEUR DE MARGE",
+        "decideDesc": "L'évaluation JSON en ligne résout la commission de la plateforme régionale contre votre seuil de marge nette en mémoire.",
+        "defendName": "Défendre",
+        "defendBadge": "BOUCLE AUTOMATISÉE",
+        "defendDesc": "Une baisse de prix d'un concurrent déclenche une mise à jour automatique sur les marchés Talabat et Jahez.",
+        "governName": "Gouverner",
+        "governBadge": "AUDIT SOUVERAIN",
+        "governDesc": "Un journal de conformité cryptographique bilingue cartographie le routage transfrontalier sous QFC et KSA PDPL."
       },
       "loop": {
-        "sectionLabel": "TRANSIT DE MESSAGES ASYNCHRONE", "title": "La boucle de retarification en moins de 2 secondes",
-        "eventLabel": "CYCLE DE VIE DE L'ÉVÉNEMENT", "inFlight": "en vol",
-        "node1Name": "Périphérie d'ingestion", "node1Sub": "Webhook Salla / Foodics",
-        "node2Name": "Courtier de flux", "node2Sub": "Partition Kafka / Redpanda",
-        "node3Name": "Moteur de règles", "node3Sub": "Calcul de marge Redis en mémoire",
-        "node4Name": "Routage réseau", "node4Sub": "Sortie Talabat / Jahez",
-        "complete": "TERMINÉ", "processing": "TRAITEMENT", "idle": "INACTIF"
+        "sectionLabel": "TRANSIT DE MESSAGES ASYNCHRONE",
+        "title": "La boucle de retarification en moins de 2 secondes",
+        "eventLabel": "CYCLE DE VIE DE L'ÉVÉNEMENT",
+        "inFlight": "en vol",
+        "node1Name": "Périphérie d'ingestion",
+        "node1Sub": "Webhook Salla / Foodics",
+        "node2Name": "Courtier de flux",
+        "node2Sub": "Partition Kafka / Redpanda",
+        "node3Name": "Moteur de règles",
+        "node3Sub": "Calcul de marge Redis en mémoire",
+        "node4Name": "Routage réseau",
+        "node4Sub": "Sortie Talabat / Jahez",
+        "complete": "TERMINÉ",
+        "processing": "TRAITEMENT",
+        "idle": "INACTIF"
       },
       "latency": {
-        "sectionLabel": "BUDGET DE LATENCE", "title": "Matrice d'assurance des performances", "p99": "P99 · SLA verrouillé",
-        "colNode": "NŒUD DE ROUTAGE", "colOp": "OPÉRATION", "colMax": "ALLOC MAX",
-        "r1Node": "Capture Hook d'ingestion", "r1Detail": "Réception Webhook + auth signature",
-        "r2Node": "Transit flux", "r2Detail": "Enqueue courtier + assignation partition",
-        "r3Node": "Normalisation charge", "r3Detail": "Mapping schéma canonique",
-        "r4Node": "Exécution règle de marge", "r4Detail": "Résolution commission en mémoire",
-        "r5Node": "Routage réseau en vol", "r5Detail": "Sortie API agrégateur",
-        "r6Node": "Tampon retry / ack", "r6Detail": "Fenêtre de confirmation idempotente",
+        "sectionLabel": "BUDGET DE LATENCE",
+        "title": "Matrice d'assurance des performances",
+        "p99": "P99 · SLA verrouillé",
+        "colNode": "NŒUD DE ROUTAGE",
+        "colOp": "OPÉRATION",
+        "colMax": "ALLOC MAX",
+        "r1Node": "Capture Hook d'ingestion",
+        "r1Detail": "Réception Webhook + auth signature",
+        "r2Node": "Transit flux",
+        "r2Detail": "Enqueue courtier + assignation partition",
+        "r3Node": "Normalisation charge",
+        "r3Detail": "Mapping schéma canonique",
+        "r4Node": "Exécution règle de marge",
+        "r4Detail": "Résolution commission en mémoire",
+        "r5Node": "Routage réseau en vol",
+        "r5Detail": "Sortie API agrégateur",
+        "r6Node": "Tampon retry / ack",
+        "r6Detail": "Fenêtre de confirmation idempotente",
         "totalLabel": "Budget total aller-retour · verrouillé"
       },
       "deploy": {
-        "sectionLabel": "DÉPLOIEMENT", "title": "Livrez la couche tarifaire en une commande.",
+        "sectionLabel": "DÉPLOIEMENT",
+        "title": "Livrez la couche tarifaire en une commande.",
         "subtitle": "Sans serveur, souverain régionalement et idempotent par défaut. Pas de scrapers. Pas d'enfer API.",
-        "copy": "COPIER", "copied": "COPIÉ ✓", "cta1": "Générer des clés API →", "cta2": "Lire la doc SDK",
+        "copy": "COPIER",
+        "copied": "COPIÉ ✓",
+        "cta1": "Générer des clés API →",
+        "cta2": "Lire la doc SDK",
         "footerDesc": "Infrastructure tarifaire en temps réel pour le commerce numérique GCC. Middleware événementiel, souverain par conception.",
         "footerLicense": "LICENCIÉ QFC · Doha · Qatar",
-        "col1": "ARCHITECTURE", "col2": "DÉVELOPPEURS", "col3": "LÉGAL & CONFORMITÉ",
-        "copyright": "© 2026 PrizeSkout LLC, Qatar", "tagline": "Conçu pour la périphérie GCC · <2s"
+        "col1": "ARCHITECTURE",
+        "col2": "DÉVELOPPEURS",
+        "col3": "LÉGAL & CONFORMITÉ",
+        "copyright": "© 2026 PrizeSkout LLC, Qatar",
+        "tagline": "Conçu pour la périphérie GCC · <2s"
       }
     },
     "home": {
@@ -495,7 +611,502 @@
       "enterpriseF3": "Opération en marque blanche",
       "enterpriseF4": "Résidence données GCC · SLA 99,95%",
       "enterpriseF5": "CSM dédié · webhooks signés",
-      "enterpriseCta": "Nous contacter"
+      "enterpriseCta": "Nous contacter",
+      "tiers": {
+        "core": {
+          "name": "Core",
+          "features": [
+            "1 canal entrant",
+            "1 500 synchronisations / mois",
+            "Moteur de marge",
+            "Support par e-mail"
+          ],
+          "cta": "Démarrer l'essai Core"
+        },
+        "growth": {
+          "name": "Growth",
+          "features": [
+            "Canaux illimités",
+            "Garantie de latence sous 2 secondes",
+            "15 000 synchronisations / mois",
+            "Veille concurrentielle",
+            "Support Slack prioritaire"
+          ],
+          "cta": "Choisir le plan Growth"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "badge": "ACV sur mesure",
+          "features": [
+            "Connecteurs SAP / Oracle ERP",
+            "Résidence de base de données dédiée",
+            "SLA 99,99%",
+            "CSM dédié",
+            "Synchronisations illimitées / mois",
+            "Support 24/7"
+          ],
+          "cta": "Contacter les ventes"
+        }
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Infrastructure de marge en temps réel pour le commerce GCC. Des agents autonomes qui défendent, auditent et récupèrent votre marge pendant que vous gérez votre activité.",
+    "social": {
+      "x": "X (Twitter)",
+      "linkedin": "LinkedIn"
+    },
+    "columns": {
+      "platform": "Plateforme",
+      "agents": "Agents",
+      "developers": "Développeurs",
+      "company": "Entreprise"
+    },
+    "layerTags": {
+      "infrastructure": "COUCHE INFRASTRUCTURE",
+      "intelligence": "COUCHE INTELLIGENCE"
+    },
+    "links": {
+      "sync": "Sync",
+      "decide": "Décider",
+      "defend": "Défendre",
+      "govern": "Gouverner",
+      "marginByPrizeskout": "Marge par PrizeSkout",
+      "agentCfo": "Agent CFO",
+      "disputeAuditAgent": "Agent d'audit des litiges",
+      "new": "NOUVEAU",
+      "sdkDocs": "Documentation SDK",
+      "authentication": "Authentification",
+      "webhooks": "Webhooks",
+      "status": "Statut",
+      "marginCalculator": "Calculateur de marge",
+      "about": "À propos",
+      "enterprise": "Enterprise",
+      "contactSales": "Contacter les ventes",
+      "support": "Support",
+      "privacyTerms": "Politique de confidentialité et conditions"
+    },
+    "bottomBar": {
+      "copyright": "© 2026 PrizeSkout · Sous licence QFC, Doha, Qatar",
+      "qfcNumber": "N° QFC 04412",
+      "allSystemsOperational": "Tous les systèmes sont opérationnels",
+      "uptime": "Disponibilité de 99,95 %",
+      "dataResidency": "Résidence des données GCC"
+    }
+  },
+  "settingsTabs": {
+    "tabLabels": {
+      "storeAccess": "Accès boutique",
+      "channels": "Canaux",
+      "marginRules": "Règles de marge",
+      "locations": "Emplacements",
+      "notifications": "Notifications"
+    },
+    "channels": {
+      "heading": "Canaux connectés",
+      "description": "Connectez vos agrégateurs de livraison et vos systèmes de caisse (POS). PrizeSkout synchronise les menus en direct, les commissions et les frais de chaque canal pour calculer votre marge réelle par commande.",
+      "sections": {
+        "aggregators": "AGRÉGATEURS DE LIVRAISON",
+        "pos": "POS ET PLATEFORMES RESTAURANT"
+      },
+      "status": {
+        "connected": "Connecté",
+        "pending": "En attente",
+        "error": "Erreur",
+        "notConnected": "Non connecté"
+      },
+      "actions": {
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "disconnecting": "Déconnexion…",
+        "comingSoon": "Bientôt disponible"
+      },
+      "alerts": {
+        "noMerchantSession": "Aucune session marchand trouvée. Veuillez d'abord terminer l'intégration."
+      },
+      "confirm": {
+        "disconnect": "Déconnecter {{name}} ? Cela supprimera le canal et ses identifiants de votre compte."
+      },
+      "errors": {
+        "connectionFailed": "Échec de la connexion. Vérifiez vos identifiants et réessayez.",
+        "network": "Erreur réseau. Veuillez réessayer."
+      },
+      "modal": {
+        "title": "Connecter {{name}}",
+        "description": "Collez vos identifiants depuis le portail partenaire {{name}}. PrizeSkout les utilise pour pousser des prix qui préservent votre marge vers votre menu en ligne.",
+        "close": "Fermer",
+        "connecting": "Connexion…",
+        "connected": "Connecté",
+        "connectCta": "Connecter {{name}}",
+        "successMessage": "Boutique connectée avec succès"
+      },
+      "byok": {
+        "talabat": {
+          "clientId": {
+            "label": "ID client",
+            "hint": "Portail partenaires Talabat → Paramètres → Identifiants API"
+          },
+          "clientSecret": {
+            "label": "Secret client"
+          },
+          "vendorId": {
+            "label": "ID vendeur",
+            "hint": "L'ID vendeur de votre boutique depuis le portail Talabat"
+          },
+          "chainId": {
+            "label": "ID de la chaîne"
+          },
+          "portalHint": "Retrouvez vos identifiants sur partner.talabat.com"
+        },
+        "jahez": {
+          "apiKey": {
+            "label": "Clé API",
+            "hint": "À demander auprès de integration@jahez.net"
+          },
+          "secretCode": {
+            "label": "Code secret"
+          },
+          "branchId": {
+            "label": "ID de la succursale",
+            "hint": "L'ID de votre succursale depuis le tableau de bord partenaires Jahez"
+          },
+          "portalHint": "Contactez integration@jahez.net pour recevoir vos identifiants API"
+        }
+      }
+    },
+    "marginRules": {
+      "heading": "Règles de marge",
+      "description": "Définissez la marge nette minimale que PrizeSkout défendra pour chaque catégorie. Lorsque la marge réelle d'un canal (après commission, emballage et frais de livraison) passe sous votre seuil, le moteur recommandera ou appliquera un ajustement de prix.",
+      "globalFloor": {
+        "label": "Seuil global",
+        "hint": "S'applique à toutes les catégories, sauf modification ci-dessous"
+      },
+      "categoryOverrides": "SEUILS PAR CATÉGORIE",
+      "categories": {
+        "mains": "Plats principaux",
+        "beverages": "Boissons",
+        "desserts": "Desserts",
+        "starters": "Entrées",
+        "sides": "Accompagnements",
+        "mealDeals": "Menus combinés"
+      },
+      "belowFloor": "Sous le seuil global — le seuil global s'appliquera",
+      "save": "Enregistrer les règles de marge",
+      "saved": "Enregistré ✓"
+    },
+    "locations": {
+      "heading": "Emplacements des points de vente",
+      "description": "Ajoutez chaque point de vente que vous exploitez. PrizeSkout suit la marge par point de vente et dirige les ajustements de prix vers le bon canal pour cet emplacement.",
+      "status": {
+        "active": "Actif",
+        "inactive": "Inactif"
+      },
+      "addOutlet": "Ajouter un point de vente",
+      "cancel": "Annuler",
+      "namePlaceholder": "Nom du point de vente (ex. Succursale Mall of Qatar)",
+      "selectCity": "Sélectionner une ville"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "description": "Choisissez les événements qui déclenchent une alerte. Les notifications sont livrées dans le tableau de bord et via le webhook configuré dans Canaux.",
+      "alerts": {
+        "marginBreach": {
+          "name": "Dépassement de marge",
+          "desc": "Alerte lorsque la marge réelle d'un canal descend sous votre seuil sur un article"
+        },
+        "repriceApplied": {
+          "name": "Ajustement de prix appliqué",
+          "desc": "Notifie à chaque fois que PrizeSkout applique un ajustement de prix automatique"
+        },
+        "channelDown": {
+          "name": "Échec de synchronisation du canal",
+          "desc": "Alerte si un agrégateur de livraison ou une connexion POS cesse de se synchroniser"
+        },
+        "competitorDrop": {
+          "name": "Baisse de prix concurrent",
+          "desc": "Notifie lorsqu'un concurrent suivi baisse son prix sur un article commun"
+        },
+        "promoOverlap": {
+          "name": "Conflit de promotion",
+          "desc": "Alerte lorsqu'une promotion active sur la plateforme risque de compromettre votre seuil de marge"
+        },
+        "weeklyDigest": {
+          "name": "Résumé hebdomadaire de marge",
+          "desc": "Résumé des performances de marge sur tous les canaux, chaque lundi"
+        }
+      }
+    },
+    "integrations": {
+      "heading": "API et intégrations",
+      "description": "Connectez PrizeSkout à vos systèmes existants",
+      "loading": "Chargement…",
+      "apiKey": {
+        "heading": "Votre clé API",
+        "description": "Utilisez cette clé pour extraire les données PrizeSkout vers vos propres systèmes",
+        "copy": "Copier",
+        "copied": "Copié",
+        "manageKeys": "Gérer les clés",
+        "noKey": "Aucune clé API active.",
+        "createOne": "Créer une clé →",
+        "copyFailed": "Échec de la copie — veuillez copier manuellement"
+      },
+      "webhooks": {
+        "heading": "Points de terminaison webhook",
+        "description": "Recevez des notifications d'événements en temps réel dans vos systèmes",
+        "addWebhook": "Ajouter un webhook",
+        "empty": "Aucun point de terminaison webhook configuré pour le moment.",
+        "eventsLabel": "Événements : {{events}}",
+        "allEvents": "Tous les événements",
+        "status": {
+          "disabled": "Désactivé",
+          "deliveryFailed": "Échec de livraison",
+          "active": "Actif"
+        },
+        "editAria": "Modifier le webhook",
+        "removeAria": "Supprimer le webhook",
+        "toasts": {
+          "added": "Point de terminaison webhook ajouté",
+          "addFailed": "Échec de l'ajout du webhook",
+          "updated": "Webhook mis à jour",
+          "updateFailed": "Échec de la mise à jour du webhook",
+          "removed": "Point de terminaison webhook supprimé",
+          "removeFailed": "Impossible de supprimer le webhook",
+          "toggleFailed": "Impossible de mettre à jour le webhook"
+        }
+      },
+      "events": {
+        "priceChanged": "Prix modifié",
+        "stockAlert": "Alerte de stock",
+        "competitorUpdate": "Mise à jour concurrent",
+        "promotionDetected": "Promotion détectée"
+      },
+      "addModal": {
+        "title": "Ajouter un point de terminaison webhook",
+        "close": "Fermer",
+        "endpointUrl": "URL du point de terminaison",
+        "endpointUrlPlaceholder": "https://your-domain.com/webhooks/prizeskout",
+        "description": "Description (facultatif)",
+        "descriptionPlaceholder": "Ce que reçoit ce point de terminaison",
+        "eventsToSubscribe": "Événements auxquels s'abonner",
+        "cancel": "Annuler",
+        "adding": "Ajout en cours…",
+        "addEndpoint": "Ajouter le point de terminaison"
+      },
+      "editModal": {
+        "title": "Modifier le point de terminaison webhook",
+        "close": "Fermer",
+        "endpointUrl": "URL du point de terminaison",
+        "endpointUrlPlaceholder": "https://...",
+        "description": "Description (facultatif)",
+        "descriptionPlaceholder": "Ce que reçoit ce point de terminaison",
+        "events": "Événements",
+        "cancel": "Annuler",
+        "saving": "Enregistrement…",
+        "saveChanges": "Enregistrer les modifications"
+      },
+      "erp": {
+        "heading": "Intégrations ERP et systèmes",
+        "connected": "Connecté",
+        "notConnected": "Non connecté",
+        "configure": "Configurer",
+        "cards": {
+          "erp": {
+            "name": "Système ERP",
+            "desc": "Synchronisez le catalogue produits, les marges et les stocks"
+          },
+          "pos": {
+            "name": "Système de caisse (POS)",
+            "desc": "Données de ventes et de tarification en temps réel en magasin"
+          },
+          "ecommerce": {
+            "name": "Plateforme e-commerce",
+            "desc": "Synchronisez le catalogue en ligne et les données de commandes"
+          }
+        }
+      },
+      "dataConnections": {
+        "heading": "Connexions de données",
+        "description": "Connectez vos systèmes internes pour que PrizeSkout combine vos données avec l'intelligence de marché",
+        "options": {
+          "csvUpload": "Import CSV",
+          "apiSync": "Synchronisation API",
+          "erpSync": "Synchronisation ERP",
+          "manualEntry": "Saisie manuelle"
+        },
+        "productCatalog": {
+          "title": "Synchronisation du catalogue produits",
+          "description": "Importez votre catalogue produits pour que nous puissions les faire correspondre à ceux de vos concurrents",
+          "status": "Connecté via API",
+          "cta": "Configurer"
+        },
+        "salesMargin": {
+          "title": "Données de ventes et de marge",
+          "description": "Partagez vos volumes de ventes et objectifs de marge pour des recommandations de prix personnalisées",
+          "status": "Non connecté",
+          "cta": "Configurer"
+        },
+        "storeLocations": {
+          "title": "Emplacements des magasins",
+          "description": "Ajoutez vos points de vente physiques pour le suivi concurrentiel en magasin et le renseignement terrain",
+          "status": "Configuré dans l'onglet Emplacements",
+          "cta": "Gérer"
+        }
+      }
+    },
+    "competitors": {
+      "heading": "Concurrents suivis",
+      "description": "Gérez les concurrents que vous surveillez sur les canaux en ligne et physiques",
+      "addCompetitor": "Ajouter un concurrent",
+      "loading": "Chargement…",
+      "empty": "Aucun concurrent suivi pour le moment. Ajoutez-en un pour commencer à surveiller les prix.",
+      "productsTracked_one": "{{count}} produit suivi",
+      "productsTracked_other": "{{count}} produits suivis",
+      "channels": {
+        "online": "En ligne",
+        "inStore": "En magasin"
+      },
+      "status": {
+        "active": "Actif",
+        "partial": "Partiel"
+      },
+      "editAria": "Modifier {{name}}",
+      "removeAria": "Supprimer {{name}}",
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "toasts": {
+        "addedToTracking": "{{name}} ajouté au suivi",
+        "addFailed": "Échec de l'ajout du concurrent",
+        "removed": "{{name}} supprimé",
+        "removeFailed": "Échec de la suppression du concurrent",
+        "urlAddFailed": "Échec de l'ajout de l'URL",
+        "urlRemoveFailed": "Échec de la suppression de l'URL"
+      },
+      "addModal": {
+        "title": "Ajouter un concurrent",
+        "competitorName": "Nom du concurrent",
+        "competitorNamePlaceholder": "ex. Carrefour Qatar",
+        "productToTrack": "Produit à suivre",
+        "productPlaceholder": "ex. Sony WH-1000XM5",
+        "productUrl": "URL du produit",
+        "urlPlaceholder": "https://...",
+        "category": "Catégorie (facultatif)",
+        "categoryPlaceholder": "ex. Électronique",
+        "adding": "Ajout en cours…",
+        "addCompetitor": "Ajouter le concurrent"
+      },
+      "confirmDelete": {
+        "title": "Supprimer le concurrent",
+        "body": "Supprimer <strong>{{name}}</strong> et arrêter de suivre tous ses produits ? Cette action est irréversible.",
+        "removing": "Suppression…",
+        "remove": "Supprimer"
+      },
+      "editModal": {
+        "title": "Modifier — {{name}}",
+        "trackedUrls": "URL de produits suivies",
+        "loading": "Chargement…",
+        "noUrls": "Aucune URL pour le moment. Ajoutez-en une ci-dessous.",
+        "removeUrlAria": "Supprimer l'URL",
+        "addProductUrl": "Ajouter une URL de produit",
+        "productName": "Nom du produit",
+        "productNamePlaceholder": "ex. Sony WH-1000XM5",
+        "url": "URL",
+        "urlPlaceholder": "https://...",
+        "category": "Catégorie (facultatif)",
+        "categoryPlaceholder": "ex. Électronique",
+        "adding": "Ajout en cours…",
+        "addUrl": "Ajouter l'URL",
+        "done": "Terminé"
+      }
+    },
+    "team": {
+      "heading": "Membres de l'équipe",
+      "description": "Gérez qui a accès à PrizeSkout",
+      "inviteMember": "Inviter un membre",
+      "loading": "Chargement…",
+      "completeSetup": "Terminez la configuration de votre compte pour gérer votre équipe.",
+      "empty": "Aucun membre d'équipe pour le moment. Invitez un collègue pour commencer.",
+      "invitePending": "Invitation en attente",
+      "pending": "En attente",
+      "invitedAgo": "Invité {{time}}",
+      "justNow": "À l'instant",
+      "minutesAgo": "il y a {{count}} min",
+      "hoursAgo": "il y a {{count}} h",
+      "daysAgo_one": "il y a {{count}} jour",
+      "daysAgo_other": "il y a {{count}} jours",
+      "editAria": "Modifier {{name}}",
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "roles": {
+        "owner": "Propriétaire",
+        "admin": "Administrateur",
+        "developer": "Développeur",
+        "viewer": "Lecteur"
+      },
+      "roleHelp": {
+        "developer": "<b>Développeur</b> — accès API et lecture du tableau de bord.",
+        "admin": "<b>Administrateur</b> — gestion complète, sauf la facturation.",
+        "viewer": "<b>Lecteur</b> — tableau de bord en lecture seule."
+      },
+      "toasts": {
+        "noAccount": "Aucun compte PrizeSkout trouvé avec cette adresse e-mail",
+        "alreadyMember": "Cette personne est déjà membre de l'équipe",
+        "addedToTeam": "{{email}} ajouté à l'équipe",
+        "inviteFailed": "Échec de l'invitation du membre",
+        "roleUpdated": "Le rôle de {{name}} a été mis à jour : {{role}}",
+        "roleUpdateFailed": "Échec de la mise à jour du rôle"
+      },
+      "inviteModal": {
+        "title": "Inviter un membre de l'équipe",
+        "description": "La personne doit déjà avoir un compte PrizeSkout. Saisissez son adresse e-mail pour l'ajouter à votre équipe.",
+        "email": "Adresse e-mail",
+        "emailPlaceholder": "collegue@entreprise.com",
+        "role": "Rôle",
+        "adding": "Ajout en cours…",
+        "addToTeam": "Ajouter à l'équipe"
+      },
+      "editRoleModal": {
+        "title": "Modifier le rôle",
+        "changingRoleFor": "Modification du rôle de <b>{{name}}</b>",
+        "role": "Rôle",
+        "saving": "Enregistrement…",
+        "save": "Enregistrer"
+      }
+    },
+    "branding": {
+      "identity": {
+        "heading": "Identité de marque",
+        "description": "Ces informations sont utilisées dans les rapports PDF exportés depuis PrizeSkout. Votre logo et votre couleur d'accent apparaissent dans l'en-tête du rapport.",
+        "brandName": "Nom de marque",
+        "brandNamePlaceholderDefault": "Votre entreprise",
+        "accentColor": "Couleur d'accent (hex)",
+        "accentColorInvalid": "Utilisez un code hexadécimal à 6 chiffres comme #EA580C",
+        "colorPresets": "Couleurs prédéfinies",
+        "pickColorAria": "Choisir la couleur {{color}}"
+      },
+      "logo": {
+        "heading": "Logo",
+        "description": "PNG, JPG ou SVG. Recommandé : format carré ou rectangle large sur fond transparent. Maximum 500 Ko.",
+        "noLogo": "Aucun logo importé",
+        "upload": "Importer un logo",
+        "replace": "Remplacer le logo",
+        "remove": "Supprimer le logo",
+        "errors": {
+          "invalidType": "Veuillez choisir une image PNG, JPG ou SVG.",
+          "tooLarge": "Le logo doit faire moins de 500 Ko.",
+          "readError": "Impossible de lire ce fichier."
+        },
+        "previewAlt": "Aperçu du logo de marque"
+      },
+      "preview": {
+        "heading": "Aperçu de l'en-tête PDF",
+        "description": "Voici à quoi ressemblera le haut de chaque rapport PDF exporté.",
+        "sampleTitle": "Comportements concurrentiels",
+        "sampleSubtitle": "Rapport d'analyse"
+      },
+      "save": "Enregistrer la marque",
+      "reset": "Réinitialiser aux paramètres PrizeSkout par défaut",
+      "saved": "Enregistré"
     }
   }
 }

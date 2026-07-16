@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const OG  = "#EF681A";
 const GN  = "#10B981";
@@ -29,45 +30,45 @@ const CHANNELS: Channel[] = [
 const OAUTH_PLATFORMS = new Set(["salla", "zid"]);
 
 // Platforms that support BYOK (Bring Your Own Key) credential entry
-type ByokField = { key: string; label: string; hint?: string };
-const BYOK_PLATFORMS: Record<string, { fields: ByokField[]; portalHint?: string }> = {
+type ByokField = { key: string; labelKey: string; hintKey?: string };
+const BYOK_PLATFORMS: Record<string, { fields: ByokField[]; portalHintKey?: string }> = {
   talabat: {
     fields: [
-      { key: "client_id",     label: "Client ID",     hint: "Talabat Partner Portal → Settings → API Credentials" },
-      { key: "client_secret", label: "Client Secret" },
-      { key: "vendor_id",     label: "Vendor ID",     hint: "Your store's vendor ID from the Talabat portal" },
-      { key: "chain_id",      label: "Chain ID" },
+      { key: "client_id",     labelKey: "settingsTabs.channels.byok.talabat.clientId.label",     hintKey: "settingsTabs.channels.byok.talabat.clientId.hint" },
+      { key: "client_secret", labelKey: "settingsTabs.channels.byok.talabat.clientSecret.label" },
+      { key: "vendor_id",     labelKey: "settingsTabs.channels.byok.talabat.vendorId.label",      hintKey: "settingsTabs.channels.byok.talabat.vendorId.hint" },
+      { key: "chain_id",      labelKey: "settingsTabs.channels.byok.talabat.chainId.label" },
     ],
-    portalHint: "Find your credentials at partner.talabat.com",
+    portalHintKey: "settingsTabs.channels.byok.talabat.portalHint",
   },
   jahez: {
     fields: [
-      { key: "api_key",     label: "API Key",     hint: "Request from integration@jahez.net" },
-      { key: "secret_code", label: "Secret Code" },
-      { key: "branch_id",   label: "Branch ID",   hint: "Your branch ID from the Jahez partner dashboard" },
+      { key: "api_key",     labelKey: "settingsTabs.channels.byok.jahez.apiKey.label",     hintKey: "settingsTabs.channels.byok.jahez.apiKey.hint" },
+      { key: "secret_code", labelKey: "settingsTabs.channels.byok.jahez.secretCode.label" },
+      { key: "branch_id",   labelKey: "settingsTabs.channels.byok.jahez.branchId.label",   hintKey: "settingsTabs.channels.byok.jahez.branchId.hint" },
     ],
-    portalHint: "Contact integration@jahez.net to receive your API credentials",
+    portalHintKey: "settingsTabs.channels.byok.jahez.portalHint",
   },
 };
 
-function StatusBadge({ status }: { status: ChannelStatus }) {
-  const map: Record<ChannelStatus, { label: string; color: string; bg: string }> = {
-    connected:     { label: "Connected",     color: GN,       bg: "rgba(16,185,129,0.08)" },
-    pending:       { label: "Pending",       color: "#F59E0B", bg: "rgba(245,158,11,0.08)" },
-    error:         { label: "Error",         color: "#EF4444", bg: "rgba(239,68,68,0.08)" },
-    not_connected: { label: "Not connected", color: "#9CA3AF", bg: "transparent" },
+function StatusBadge({ status, t }: { status: ChannelStatus; t: (key: string) => string }) {
+  const map: Record<ChannelStatus, { labelKey: string; color: string; bg: string }> = {
+    connected:     { labelKey: "settingsTabs.channels.status.connected",    color: GN,       bg: "rgba(16,185,129,0.08)" },
+    pending:       { labelKey: "settingsTabs.channels.status.pending",      color: "#F59E0B", bg: "rgba(245,158,11,0.08)" },
+    error:         { labelKey: "settingsTabs.channels.status.error",        color: "#EF4444", bg: "rgba(239,68,68,0.08)" },
+    not_connected: { labelKey: "settingsTabs.channels.status.notConnected", color: "#9CA3AF", bg: "transparent" },
   };
-  const { label, color, bg } = map[status];
+  const { labelKey, color, bg } = map[status];
   return (
     <span style={{
       fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "0.06em",
       color, background: bg, border: `1px solid ${color}30`,
       borderRadius: 6, padding: "3px 9px",
-    }}>{label}</span>
+    }}>{t(labelKey)}</span>
   );
 }
 
-function ConnectButton({ platform, onConnect }: { platform: string; onConnect: (p: string) => void }) {
+function ConnectButton({ platform, onConnect, t }: { platform: string; onConnect: (p: string) => void; t: (key: string) => string }) {
   return (
     <button
       type="button"
@@ -79,11 +80,12 @@ function ConnectButton({ platform, onConnect }: { platform: string; onConnect: (
       }}
       onMouseEnter={e => { e.currentTarget.style.background = `${OG}10`; }}
       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-    >Connect</button>
+    >{t("settingsTabs.channels.actions.connect")}</button>
   );
 }
 
 export function ChannelsTab() {
+  const { t } = useTranslation();
   const [statuses, setStatuses]         = useState<Record<string, ChannelStatus>>({});
   const [loading, setLoading]           = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export function ChannelsTab() {
       ? (localStorage.getItem("ps_merchant_id") ?? "")
       : "";
     if (!merchantId) {
-      alert("No merchant session found. Please complete onboarding first.");
+      alert(t("settingsTabs.channels.alerts.noMerchantSession"));
       return;
     }
     if (OAUTH_PLATFORMS.has(platform)) {
@@ -129,7 +131,7 @@ export function ChannelsTab() {
 
   async function handleDisconnect(platform: string) {
     const name = CHANNELS.find(c => c.platform === platform)?.name ?? platform;
-    if (!confirm(`Disconnect ${name}? This will remove the channel and its credentials from your account.`)) return;
+    if (!confirm(t("settingsTabs.channels.confirm.disconnect", { name }))) return;
 
     const mid        = typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
     const accessCode = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "")  : "";
@@ -153,7 +155,7 @@ export function ChannelsTab() {
     const p = byokPlatform as string;
     const mid = typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
     const accessCode = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "") : "";
-    if (!mid) { setByokError("No merchant session found. Please complete onboarding first."); return; }
+    if (!mid) { setByokError(t("settingsTabs.channels.alerts.noMerchantSession")); return; }
     setByokStatus("loading"); setByokError(null);
     try {
       const res = await fetch("/api/channels/connect", {
@@ -168,11 +170,11 @@ export function ChannelsTab() {
         setTimeout(() => { setByokPlatform(null); setByokStatus("idle"); setByokError(null); setByokFields({}); }, 1200);
       } else {
         setByokStatus("err");
-        setByokError(data.error ?? "Connection failed. Check your credentials and try again.");
+        setByokError(data.error ?? t("settingsTabs.channels.errors.connectionFailed"));
       }
     } catch {
       setByokStatus("err");
-      setByokError("Network error. Please try again.");
+      setByokError(t("settingsTabs.channels.errors.network"));
     }
   }
 
@@ -202,9 +204,9 @@ export function ChannelsTab() {
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <StatusBadge status={loading ? "not_connected" : status} />
+                  <StatusBadge status={loading ? "not_connected" : status} t={t} />
                   {!loading && status === "not_connected" && OAUTH_PLATFORMS.has(ch.platform) && (
-                    <ConnectButton platform={ch.platform} onConnect={handleConnect} />
+                    <ConnectButton platform={ch.platform} onConnect={handleConnect} t={t} />
                   )}
                   {!loading && status === "connected" && OAUTH_PLATFORMS.has(ch.platform) && (
                     <>
@@ -224,7 +226,7 @@ export function ChannelsTab() {
                         onMouseEnter={e => { if (disconnecting !== ch.platform) e.currentTarget.style.background = "rgba(239,68,68,0.06)"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
                       >
-                        {disconnecting === ch.platform ? "Disconnecting…" : "Disconnect"}
+                        {disconnecting === ch.platform ? t("settingsTabs.channels.actions.disconnecting") : t("settingsTabs.channels.actions.disconnect")}
                       </button>
                       <button
                         type="button"
@@ -236,11 +238,11 @@ export function ChannelsTab() {
                         }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor = "#9CA3AF"; }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = "#E5E2DB"; }}
-                      >Reconnect</button>
+                      >{t("settingsTabs.channels.actions.reconnect")}</button>
                     </>
                   )}
                   {!loading && status === "not_connected" && !OAUTH_PLATFORMS.has(ch.platform) && ch.platform in BYOK_PLATFORMS && (
-                    <ConnectButton platform={ch.platform} onConnect={handleConnect} />
+                    <ConnectButton platform={ch.platform} onConnect={handleConnect} t={t} />
                   )}
                   {!loading && status === "not_connected" && !OAUTH_PLATFORMS.has(ch.platform) && !(ch.platform in BYOK_PLATFORMS) && (
                     <button
@@ -251,7 +253,7 @@ export function ChannelsTab() {
                         border: "1px solid #E5E2DB", borderRadius: 7, padding: "10px 16px",
                         cursor: "default", fontFamily: "inherit", minHeight: 44,
                       }}
-                    >Coming soon</button>
+                    >{t("settingsTabs.channels.actions.comingSoon")}</button>
                   )}
                 </div>
               </div>
@@ -268,13 +270,12 @@ export function ChannelsTab() {
   return (
     <>
       <div style={{ maxWidth: 640 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>Connected Channels</h3>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>{t("settingsTabs.channels.heading")}</h3>
         <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.7 }}>
-          Connect your delivery aggregators and POS systems. PrizeSkout syncs live menus,
-          commissions, and fees from each channel to calculate your true per-order margin.
+          {t("settingsTabs.channels.description")}
         </p>
-        <Section title="DELIVERY AGGREGATORS" items={aggregators} />
-        <Section title="POS & RESTAURANT PLATFORMS" items={pos} />
+        <Section title={t("settingsTabs.channels.sections.aggregators")} items={aggregators} />
+        <Section title={t("settingsTabs.channels.sections.pos")} items={pos} />
       </div>
 
       {/* BYOK credential modal */}
@@ -293,16 +294,16 @@ export function ChannelsTab() {
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.3px", color: "#111827" }}>
-                  Connect {byokName}
+                  {t("settingsTabs.channels.modal.title", { name: byokName })}
                 </h3>
                 <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6B7280", lineHeight: 1.6 }}>
-                  Paste your credentials from your {byokName} partner portal. PrizeSkout uses them to push margin-safe prices to your live menu.
+                  {t("settingsTabs.channels.modal.description", { name: byokName })}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => { setByokPlatform(null); setByokStatus("idle"); setByokError(null); setByokFields({}); }}
-                aria-label="Close"
+                aria-label={t("settingsTabs.channels.modal.close")}
                 style={{ cursor: "pointer", flexShrink: 0, width: 34, height: 34,
                   borderRadius: 10, border: "1px solid #E5E2DB", background: "#fff",
                   color: "#6B7280", fontSize: 15, fontWeight: 700 }}>✕</button>
@@ -313,10 +314,10 @@ export function ChannelsTab() {
                 <div key={f.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <label htmlFor={`ct-byok-${f.key}`}
                     style={{ fontSize: 12.5, fontWeight: 600, color: "#111827" }}>
-                    {f.label}
+                    {t(f.labelKey)}
                   </label>
-                  {f.hint && (
-                    <span style={{ fontSize: 11.5, color: "#9CA3AF", marginTop: -3 }}>{f.hint}</span>
+                  {f.hintKey && (
+                    <span style={{ fontSize: 11.5, color: "#9CA3AF", marginTop: -3 }}>{t(f.hintKey)}</span>
                   )}
                   <input
                     id={`ct-byok-${f.key}`}
@@ -335,11 +336,11 @@ export function ChannelsTab() {
                 </div>
               ))}
 
-              {byokCfg.portalHint && (
+              {byokCfg.portalHintKey && (
                 <p style={{ margin: 0, fontSize: 12, color: "#6B7280", lineHeight: 1.6,
                   padding: "10px 14px", background: "#FAFAF9",
                   borderRadius: 9, border: "1px solid #E5E2DB" }}>
-                  {byokCfg.portalHint}
+                  {t(byokCfg.portalHintKey)}
                 </p>
               )}
 
@@ -355,7 +356,7 @@ export function ChannelsTab() {
                 <p style={{ margin: 0, fontSize: 13, color: GN, fontWeight: 600,
                   padding: "10px 14px", background: "rgba(16,185,129,.08)",
                   borderRadius: 9, border: "1px solid rgba(16,185,129,.25)" }}>
-                  Store connected successfully
+                  {t("settingsTabs.channels.modal.successMessage")}
                 </p>
               )}
 
@@ -368,7 +369,7 @@ export function ChannelsTab() {
                   fontSize: 14, fontWeight: 700, fontFamily: "inherit",
                   opacity: byokStatus === "loading" ? 0.75 : 1,
                   transition: "opacity .2s,background .2s" }}>
-                {byokStatus === "loading" ? "Connecting…" : byokStatus === "ok" ? "Connected" : `Connect ${byokName}`}
+                {byokStatus === "loading" ? t("settingsTabs.channels.modal.connecting") : byokStatus === "ok" ? t("settingsTabs.channels.modal.connected") : t("settingsTabs.channels.modal.connectCta", { name: byokName })}
               </button>
             </form>
           </div>
