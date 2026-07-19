@@ -688,20 +688,26 @@ function OnboardingPage() {
     localStorage.setItem("ps_access_code", code);
     localStorage.setItem("ps_connected", "true");
 
-    // Persist code mapping in the background — don't block navigation
+    // Persist code mapping in the background — don't block navigation. Email
+    // is stored alongside the code so the "Access your dashboard -> Email"
+    // login path can later verify a real onboarded merchant owns it, rather
+    // than trusting whatever's cached in the browser's localStorage.
     fetch("/api/register-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ merchant_id: mid, code }),
+      body: JSON.stringify({ merchant_id: mid, code, email: email.trim().toLowerCase() || undefined }),
     }).catch(() => {});
 
-    // Create Supabase account in the background so the merchant can use
+    // Create the Supabase account in the background so the merchant can use
     // email access immediately after onboarding without needing the code.
+    // intent:"signup" is what allows email-bridge to create a brand-new
+    // Supabase user here — the login path (access.tsx) uses intent:"login"
+    // and is not allowed to create accounts.
     if (email.trim()) {
       fetch("/api/auth/email-bridge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), store_name: storeName.trim() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), store_name: storeName.trim(), intent: "signup" }),
       }).catch(() => {});
     }
 

@@ -4028,16 +4028,19 @@ export type Database = {
           code: string
           merchant_id: string
           created_at: string
+          email: string | null
         }
         Insert: {
           code: string
           merchant_id: string
           created_at?: string
+          email?: string | null
         }
         Update: {
           code?: string
           merchant_id?: string
           created_at?: string
+          email?: string | null
         }
         Relationships: []
       }

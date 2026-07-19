@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Mail, Store, KeyRound } from "lucide-react";
+import { Mail, KeyRound, MailCheck } from "lucide-react";
 import {
   AuthShell,
   IconInput,
@@ -8,6 +8,7 @@ import {
   PrimaryAuthButton,
   LegalFooter,
 } from "@/components/auth/AuthShared";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/access")({
   head: () => ({
@@ -29,7 +30,7 @@ function AccessPage() {
 
   // email mode
   const [email, setEmail] = useState("");
-  const [storeName, setStoreName] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
 
   // code mode
   const [code, setCode] = useState("");
@@ -41,12 +42,13 @@ function AccessPage() {
   function switchMode(m: "email" | "code") {
     setMode(m);
     setError(null);
+    setEmailSent(false);
   }
 
   const handleEmailSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    const trimmed = email.trim();
+    const trimmed = email.trim().toLowerCase();
     if (!trimmed) {
       setError("Enter your email address.");
       return;
@@ -54,21 +56,38 @@ function AccessPage() {
     setSubmitting(true);
 
     try {
+      // Confirm this email actually belongs to an onboarded merchant before
+      // asking Supabase to email anything — this endpoint never creates an
+      // account or hands back anything usable on its own.
       const res = await fetch("/api/auth/email-bridge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed, store_name: storeName.trim() || undefined }),
+        body: JSON.stringify({ email: trimmed, intent: "login" }),
       });
       const json = await res.json();
-      if (!res.ok || !json.action_link) {
+      if (!res.ok || !json.ok) {
         setError(json.error ?? "Could not verify access. Please try again.");
         setSubmitting(false);
         return;
       }
-      // Redirect the browser directly to the magic link — same mechanism as
-      // clicking the link in an email, guaranteed to work regardless of
-      // Supabase project auth settings.
-      window.location.href = json.action_link;
+
+      // Real magic link, sent by Supabase to the merchant's actual inbox —
+      // shouldCreateUser:false is a second guarantee (on top of the check
+      // above) that this can never provision a new account. The merchant
+      // has to open the email and click the link; nothing here grants
+      // access on its own.
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (otpError) {
+        setError("Could not send sign-in link. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      setEmailSent(true);
+      setSubmitting(false);
     } catch {
       setError("Something went wrong. Please try again.");
       setSubmitting(false);
@@ -125,7 +144,9 @@ function AccessPage() {
       </h1>
       <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6, margin: "6px 0 0 0" }}>
         {mode === "email"
-          ? "Enter your store email and you are in. No password needed."
+          ? emailSent
+            ? "Check your inbox for a sign-in link."
+            : "Enter your store email — we'll send you a sign-in link. No password needed."
           : "Enter the access code you received when you first connected."}
       </p>
 
@@ -165,36 +186,43 @@ function AccessPage() {
       </div>
 
       {mode === "email" ? (
-        <form onSubmit={handleEmailSubmit} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <FormLabel>Email address</FormLabel>
-            <IconInput
-              leftIcon={<Mail size={16} />}
-              value={email}
-              onChange={setEmail}
-              placeholder="you@company.com"
-              type="email"
-            />
+        emailSent ? (
+          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}>
+            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(239,104,26,0.12)",
+              display: "grid", placeItems: "center" }}>
+              <MailCheck size={20} color={OG} />
+            </div>
+            <p style={{ fontSize: 13, color: "#9CA3AF", lineHeight: 1.6, margin: 0 }}>
+              Sent to <strong style={{ color: "#E7E8EA" }}>{email.trim()}</strong>. Click the link there to sign in — this page can be closed.
+            </p>
+            <button
+              type="button"
+              onClick={() => setEmailSent(false)}
+              style={{ background: "transparent", border: "none", color: "#6B7280", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", padding: "8px 0" }}
+            >
+              Use a different email
+            </button>
           </div>
-          <div>
-            <FormLabel>
-              Store name{" "}
-              <span style={{ color: "#52555C", fontWeight: 400 }}>(optional)</span>
-            </FormLabel>
-            <IconInput
-              leftIcon={<Store size={16} />}
-              value={storeName}
-              onChange={setStoreName}
-              placeholder="e.g. Al Meera, Carrefour Qatar"
-            />
-          </div>
-          {error && <ErrorBox message={error} />}
-          <div style={{ marginTop: 4 }}>
-            <PrimaryAuthButton type="submit" disabled={submitting}>
-              {submitting ? "Connecting…" : "Access dashboard"}
-            </PrimaryAuthButton>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={handleEmailSubmit} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <FormLabel>Email address</FormLabel>
+              <IconInput
+                leftIcon={<Mail size={16} />}
+                value={email}
+                onChange={setEmail}
+                placeholder="you@company.com"
+                type="email"
+              />
+            </div>
+            {error && <ErrorBox message={error} />}
+            <div style={{ marginTop: 4 }}>
+              <PrimaryAuthButton type="submit" disabled={submitting}>
+                {submitting ? "Sending…" : "Send sign-in link"}
+              </PrimaryAuthButton>
+            </div>
+          </form>
+        )
       ) : (
         <form onSubmit={handleCodeSubmit} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
           <div>

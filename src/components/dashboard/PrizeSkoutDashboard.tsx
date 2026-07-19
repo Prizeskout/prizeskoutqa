@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
+import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
 
 type Tab = "analytics" | "rules" | "vault" | "settings";
 type Theme = "light" | "dark";
@@ -163,6 +164,23 @@ const T = {
     keetaShopIdPrompt:"Enter the Shop ID for your Keeta store to finish connecting. PrizeSkout needs this to push margin-safe prices to your Keeta menu.",
     keetaShopIdSaved:"Keeta Shop ID saved · prices syncing",
     keetaShopIdPending:"Shop ID needed to sync prices",
+    tourReplayLabel:"Take a tour",
+    tourStartBtn:"Start tour", tourNextBtn:"Next", tourBackBtn:"Back", tourFinishBtn:"Got it — let's connect",
+    tourSkipLabel:"Skip tour",
+    tourWelcomeTitle:"Welcome to your control plane",
+    tourWelcomeBody:"A two-minute walkthrough of where PrizeSkout tracks margin, compiles pricing rules, and pushes protected prices to your delivery apps.",
+    tourHeroTitle:"Revenue Protection Hub",
+    tourHeroBody:"Profits protected, price updates, and margin saved — tracked here in real time, alongside a live feed of every price change PrizeSkout makes on your behalf.",
+    tourCopilotTitle:"Describe a rule, get an engine config",
+    tourCopilotBody:"Type a pricing rule in plain English — \"Lock bakery margins at 25%\" — and Copilot compiles it into a guardrail enforced at the edge in under 2ms.",
+    tourGuardrailsTitle:"Your margin floors, always enforced",
+    tourGuardrailsBody:"Every rule you apply lives here. Adjust a floor and it takes effect immediately — no redeploy, no waiting on engineering.",
+    tourSupportTitle:"Stuck on anything? We're one click away",
+    tourSupportBody:"Integration issues, dispute questions, or anything else — reach the PrizeSkout team directly from here.",
+    tourInboundTitle:"Feed PrizeSkout your real data",
+    tourInboundBody:"Connect your POS or e-commerce platform so PrizeSkout can see real orders, costs, and catalog — the foundation everything else runs on.",
+    tourOutboundTitle:"This is where the defense happens",
+    tourOutboundBody:"Connect Talabat, Jahez, or any delivery aggregator and PrizeSkout starts pushing margin-safe prices automatically — no more silent margin leaks.",
   },
   ar: {
     cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
@@ -231,6 +249,23 @@ const T = {
     keetaShopIdPrompt:"أدخل رقم متجر كيتا (Shop ID) لإكمال الربط. يحتاج برايز سكاوت إلى هذا الرقم لإرسال الأسعار الآمنة للهامش إلى قائمة كيتا الخاصة بك.",
     keetaShopIdSaved:"تم حفظ رقم متجر كيتا · جارٍ مزامنة الأسعار",
     keetaShopIdPending:"رقم المتجر مطلوب لمزامنة الأسعار",
+    tourReplayLabel:"جولة تعريفية",
+    tourStartBtn:"بدء الجولة", tourNextBtn:"التالي", tourBackBtn:"رجوع", tourFinishBtn:"فهمت — لنربط المتجر",
+    tourSkipLabel:"تخطي الجولة",
+    tourWelcomeTitle:"مرحباً بك في لوحة التحكم الخاصة بك",
+    tourWelcomeBody:"جولة سريعة مدتها دقيقتان توضح أين يتتبع PrizeSkout الهامش، ويحوّل قواعد التسعير، ويرسل الأسعار الآمنة إلى تطبيقات التوصيل الخاصة بك.",
+    tourHeroTitle:"مركز حماية الإيرادات",
+    tourHeroBody:"الأرباح المحمية، وتحديثات الأسعار، والهامش الموفر — كلها تُعرض هنا لحظياً، إلى جانب بث مباشر لكل تغيير سعر ينفذه PrizeSkout نيابة عنك.",
+    tourCopilotTitle:"صِف قاعدة، واحصل على تهيئة جاهزة",
+    tourCopilotBody:"اكتب قاعدة تسعير بلغة طبيعية — مثل \"ثبّت هامش المخبوزات عند 25%\" — ليقوم Copilot بتحويلها إلى حارس مفعّل عند الحافة في أقل من 2 مللي ثانية.",
+    tourGuardrailsTitle:"حدود الهامش، مفعّلة دائماً",
+    tourGuardrailsBody:"كل قاعدة تطبّقها تظهر هنا. عدّل الحد الأدنى وسيُطبَّق فوراً — دون إعادة نشر أو انتظار فريق التطوير.",
+    tourSupportTitle:"عالق في شيء؟ نحن على بُعد نقرة واحدة",
+    tourSupportBody:"مشاكل الربط، استفسارات النزاعات، أو أي شيء آخر — تواصل مع فريق PrizeSkout مباشرة من هنا.",
+    tourInboundTitle:"زوّد PrizeSkout ببياناتك الحقيقية",
+    tourInboundBody:"اربط نظام نقطة البيع أو منصة التجارة الإلكترونية الخاصة بك ليتمكن PrizeSkout من رؤية الطلبات والتكاليف والكتالوج الفعلي — الأساس الذي يقوم عليه كل شيء آخر.",
+    tourOutboundTitle:"هنا يحدث الدفاع الفعلي",
+    tourOutboundBody:"اربط طلبات، جاهز، أو أي مجمّع توصيل آخر، وسيبدأ PrizeSkout بإرسال أسعار آمنة للهامش تلقائياً — لا مزيد من تسرب الهامش الصامت.",
   },
   fr: {
     cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"Boucle de défense active", defendS:"4 nœuds périphériques · opérationnels",
@@ -299,6 +334,23 @@ const T = {
     keetaShopIdPrompt:"Saisissez le Shop ID de votre boutique Keeta pour terminer la connexion. PrizeSkout en a besoin pour envoyer les prix protégeant la marge à votre menu Keeta.",
     keetaShopIdSaved:"Shop ID Keeta enregistré · synchronisation des prix",
     keetaShopIdPending:"Shop ID requis pour synchroniser les prix",
+    tourReplayLabel:"Visite guidée",
+    tourStartBtn:"Commencer la visite", tourNextBtn:"Suivant", tourBackBtn:"Retour", tourFinishBtn:"Compris — connectons ma boutique",
+    tourSkipLabel:"Ignorer la visite",
+    tourWelcomeTitle:"Bienvenue dans votre centre de contrôle",
+    tourWelcomeBody:"Une visite de deux minutes : où PrizeSkout suit votre marge, compile vos règles de tarification, et transmet les prix protégés à vos applications de livraison.",
+    tourHeroTitle:"Centre de protection des revenus",
+    tourHeroBody:"Profits protégés, mises à jour de prix et marge économisée — suivis ici en temps réel, avec un flux en direct de chaque changement de prix effectué par PrizeSkout en votre nom.",
+    tourCopilotTitle:"Décrivez une règle, obtenez une configuration",
+    tourCopilotBody:"Tapez une règle de tarification en langage naturel — « Verrouiller la marge boulangerie à 25 % » — et Copilote la compile en un garde-fou appliqué en périphérie en moins de 2 ms.",
+    tourGuardrailsTitle:"Vos seuils de marge, toujours appliqués",
+    tourGuardrailsBody:"Chaque règle appliquée apparaît ici. Ajustez un seuil et il prend effet immédiatement — sans redéploiement, sans attendre l'équipe technique.",
+    tourSupportTitle:"Un problème ? Nous sommes à un clic",
+    tourSupportBody:"Problèmes d'intégration, questions sur un litige, ou autre chose — contactez l'équipe PrizeSkout directement depuis ici.",
+    tourInboundTitle:"Alimentez PrizeSkout avec vos données réelles",
+    tourInboundBody:"Connectez votre caisse ou votre plateforme e-commerce pour que PrizeSkout puisse voir vos commandes, coûts et catalogue réels — la base sur laquelle tout le reste fonctionne.",
+    tourOutboundTitle:"C'est ici que la défense entre en jeu",
+    tourOutboundBody:"Connectez Talabat, Jahez, ou tout autre agrégateur de livraison, et PrizeSkout commence à transmettre automatiquement des prix qui protègent votre marge — plus de fuite silencieuse de marge.",
   },
 };
 
@@ -344,6 +396,24 @@ function fmtMoney(n: number, currency: string): string {
   return Math.round(n * (rate[currency] ?? 1)).toLocaleString("en-US");
 }
 
+// Tour sequence walks: orient (hub) → configure intelligence (copilot,
+// guardrails) → know where help is (support) → take action (connect in,
+// push out). `tab` tells the caller which tab to switch to before the
+// step's target exists in the DOM; ProductTour itself doesn't know tabs.
+type TourStepDef = TourStep & { tab?: Tab };
+
+function buildTourSteps(t: typeof T["en"]): TourStepDef[] {
+  return [
+    { id:"welcome",    title:t.tourWelcomeTitle,    body:t.tourWelcomeBody },
+    { id:"hero",       tab:"analytics", target:'[data-tour="hero"]',       title:t.tourHeroTitle,       body:t.tourHeroBody },
+    { id:"copilot",    tab:"rules",     target:'[data-tour="copilot"]',    title:t.tourCopilotTitle,    body:t.tourCopilotBody },
+    { id:"guardrails", tab:"rules",     target:'[data-tour="guardrails"]', title:t.tourGuardrailsTitle, body:t.tourGuardrailsBody },
+    { id:"support",                     target:'[data-tour="support"]',   title:t.tourSupportTitle,    body:t.tourSupportBody },
+    { id:"inbound",    tab:"vault",     target:'[data-tour="inbound"]',    title:t.tourInboundTitle,    body:t.tourInboundBody },
+    { id:"outbound",   tab:"vault",     target:'[data-tour="outbound"]',   title:t.tourOutboundTitle,   body:t.tourOutboundBody },
+  ];
+}
+
 export function PrizeSkoutDashboard() {
   const [tab, setTab] = useState<Tab>("analytics");
   const [theme, setTheme] = useState<Theme>("light");
@@ -375,6 +445,8 @@ export function PrizeSkoutDashboard() {
   const [channelStatuses, setChannelStatuses] = useState<Record<string,string>>({});
   const [keetaNeedsShopId, setKeetaNeedsShopId] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
+  const [tourStep, setTourStep]     = useState(0);
   // Dispute form state
   const [showDisputeForm, setShowDisputeForm]       = useState(false);
   const [disputePartner, setDisputePartner]         = useState("Talabat");
@@ -420,6 +492,15 @@ export function PrizeSkoutDashboard() {
   }, []);
 
   useEffect(() => () => { laterRefs.current.forEach(clearTimeout); }, []);
+
+  // First-time product tour — browser-local, not account-level: a merchant
+  // on a new device sees it once more, which is the right tradeoff for a
+  // lightweight client-side check over a backend "is this account new" flag.
+  useEffect(() => {
+    if (localStorage.getItem("ps_tour_v1_done")) return;
+    const timer = setTimeout(() => setTourActive(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (tab !== "vault") return;
@@ -509,6 +590,17 @@ export function PrizeSkoutDashboard() {
   const t = T[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
 
+  const tourSteps = buildTourSteps(t);
+  const goToTourStep = (i: number) => {
+    const step = tourSteps[i];
+    if (step?.tab && step.tab !== tab) setTab(step.tab);
+    setTourStep(i);
+  };
+  const closeTour = () => {
+    setTourActive(false);
+    localStorage.setItem("ps_tour_v1_done", "1");
+  };
+
   const navDefs = [
     { id:"analytics" as Tab, label:t.navA, sub:t.navAs },
     { id:"rules"     as Tab, label:t.navR, sub:t.navRs },
@@ -531,10 +623,10 @@ export function PrizeSkoutDashboard() {
         <aside style={{ width:264, flex:"0 0 264px", borderInlineEnd:"1px solid var(--border)",
           background:"var(--surface2)", display:"flex", flexDirection:"column",
           padding:"28px 20px", boxSizing:"border-box", position:"sticky", top:0, height:"100vh" }}>
-          <div style={{ fontSize:27, fontWeight:800, letterSpacing:"-0.6px", paddingInline:6 }}>
+          <div style={{ fontSize:28.5, fontWeight:800, letterSpacing:"-0.6px", paddingInline:6 }}>
             Prize<span style={{ color:OG }}>skout</span>
           </div>
-          <div style={{ fontSize:11, fontWeight:700, letterSpacing:"1.6px", color:"var(--muted)", margin:"30px 6px 12px" }}>
+          <div style={{ fontSize:12.5, fontWeight:700, letterSpacing:"1.6px", color:"var(--muted)", margin:"30px 6px 12px" }}>
             {t.cp}
           </div>
           <nav style={{ display:"flex", flexDirection:"column", gap:8 }}>
@@ -551,8 +643,8 @@ export function PrizeSkoutDashboard() {
                   <span style={{ width:7, height:7, borderRadius:"50%", flex:"0 0 7px",
                     background: on ? OG : "color-mix(in srgb,var(--muted) 45%,transparent)" }} />
                   <span style={{ display:"flex", flexDirection:"column", gap:2 }}>
-                    <span style={{ fontSize:14.5, fontWeight:700, color:"var(--text)" }}>{n.label}</span>
-                    <span style={{ fontSize:12, color: on ? OG : "var(--muted)" }}>{n.sub}</span>
+                    <span style={{ fontSize:16, fontWeight:700, color:"var(--text)" }}>{n.label}</span>
+                    <span style={{ fontSize:13.5, color: on ? OG : "var(--muted)" }}>{n.sub}</span>
                   </span>
                 </div>
               );
@@ -573,7 +665,7 @@ export function PrizeSkoutDashboard() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
-              <span style={{ fontSize:13, fontWeight:500 }}>{t.settingsLabel}</span>
+              <span style={{ fontSize:14.5, fontWeight:500 }}>{t.settingsLabel}</span>
             </div>
             {/* Back to site */}
             <a href="/" style={{
@@ -587,7 +679,7 @@ export function PrizeSkoutDashboard() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6"/>
               </svg>
-              <span style={{ fontSize:13, fontWeight:500 }}>{t.backToSite}</span>
+              <span style={{ fontSize:14.5, fontWeight:500 }}>{t.backToSite}</span>
             </a>
             <div style={{ height:1, background:"var(--border)", marginBottom:8 }} />
             <div style={{ border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
@@ -595,15 +687,15 @@ export function PrizeSkoutDashboard() {
               borderRadius:12, padding:"13px 14px", display:"flex", gap:11, alignItems:"flex-start" }}>
               <span style={{ width:8, height:8, borderRadius:"50%", background:GN, marginTop:5, animation:"pk-pulse 2s infinite" }} />
               <span style={{ display:"flex", flexDirection:"column", gap:3 }}>
-                <span style={{ fontSize:13.5, fontWeight:700, color:GN }}>{t.defend}</span>
-                <span style={{ fontSize:12, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
+                <span style={{ fontSize:15, fontWeight:700, color:GN }}>{t.defend}</span>
+                <span style={{ fontSize:13.5, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
               </span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4 }}>
               <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                 border:"1px solid var(--border)", display:"grid", placeItems:"center",
-                fontSize:11.5, fontWeight:700, fontFamily:MONO }}>M</span>
-              <span style={{ fontSize:14, fontWeight:600 }}>{t.myAccount}</span>
+                fontSize:13, fontWeight:700, fontFamily:MONO }}>M</span>
+              <span style={{ fontSize:15.5, fontWeight:600 }}>{t.myAccount}</span>
             </div>
           </div>
         </aside>
@@ -626,18 +718,18 @@ export function PrizeSkoutDashboard() {
                   <span style={{ width:18, height:2, borderRadius:1, background:"var(--text)", display:"block" }} />
                   <span style={{ width:12, height:2, borderRadius:1, background:"var(--text)", display:"block", marginInlineEnd:6 }} />
                 </button>
-                <div style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.5px" }}>
+                <div style={{ fontSize:23.5, fontWeight:800, letterSpacing:"-0.5px" }}>
                   Prize<span style={{ color:OG }}>skout</span>
                 </div>
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, color:GN, fontWeight:700, fontFamily:MONO }}>
+                <span style={{ display:"flex", alignItems:"center", gap:5, fontSize:13.5, color:GN, fontWeight:700, fontFamily:MONO }}>
                   <span style={{ width:7, height:7, borderRadius:"50%", background:GN, animation:"pk-pulse 2s infinite" }} />
                   LIVE
                 </span>
                 <button onClick={()=>setTheme(v=>v==="light"?"dark":"light")} aria-label="Toggle theme"
                   style={{ cursor:"pointer", width:44, height:44, borderRadius:10, border:"1px solid var(--border)",
-                    background:"var(--surface)", display:"grid", placeItems:"center", padding:0, fontSize:16 }}>
+                    background:"var(--surface)", display:"grid", placeItems:"center", padding:0, fontSize:17.5 }}>
                   {theme==="dark"?"☾":"☀"}
                 </button>
               </div>
@@ -651,7 +743,7 @@ export function PrizeSkoutDashboard() {
                     cursor:"pointer", whiteSpace:"nowrap", padding:"10px 14px", borderRadius:999,
                     border:`1px solid ${on ? `color-mix(in srgb,${OG} 40%,transparent)` : "var(--border)"}`,
                     background: on ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
-                    color: on ? "var(--text)" : "var(--muted)", fontSize:13, fontWeight:700, fontFamily:"inherit", flexShrink:0,
+                    color: on ? "var(--text)" : "var(--muted)", fontSize:14.5, fontWeight:700, fontFamily:"inherit", flexShrink:0,
                   }}>{n.sub}</button>
                 );
               })}
@@ -659,7 +751,7 @@ export function PrizeSkoutDashboard() {
                 cursor:"pointer", whiteSpace:"nowrap", padding:"10px 14px", borderRadius:999,
                 border:`1px solid ${tab==="settings" ? `color-mix(in srgb,${OG} 40%,transparent)` : "var(--border)"}`,
                 background: tab==="settings" ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
-                color: tab==="settings" ? "var(--text)" : "var(--muted)", fontSize:13, fontWeight:700, fontFamily:"inherit", flexShrink:0,
+                color: tab==="settings" ? "var(--text)" : "var(--muted)", fontSize:14.5, fontWeight:700, fontFamily:"inherit", flexShrink:0,
               }}>{t.settingsLabel}</button>
             </div>
           </div>
@@ -670,13 +762,13 @@ export function PrizeSkoutDashboard() {
           display:"flex", flexWrap:"wrap", gap:16, alignItems:"flex-start", justifyContent:"space-between" }}>
           <div style={{ display:"flex", flexDirection:"column", gap:6, minWidth:200, flex:1 }}>
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <h1 className="ps-db-h1" style={{ margin:0, fontSize:24, fontWeight:800, letterSpacing:"-0.4px" }}>{headerTitle}</h1>
-              <span style={{ fontSize:11, fontWeight:700, letterSpacing:".8px", color:GN,
+              <h1 className="ps-db-h1" style={{ margin:0, fontSize:26, fontWeight:800, letterSpacing:"-0.4px" }}>{headerTitle}</h1>
+              <span style={{ fontSize:12.5, fontWeight:700, letterSpacing:".8px", color:GN,
                 background:`color-mix(in srgb,${GN} 12%,var(--surface))`,
                 border:`1px solid color-mix(in srgb,${GN} 28%,transparent)`,
                 borderRadius:7, padding:"3px 9px", fontFamily:MONO }}>{t.live}</span>
             </div>
-            <div style={{ fontSize:14, color:"var(--muted)" }}>{headerSub}</div>
+            <div style={{ fontSize:15.5, color:"var(--muted)" }}>{headerSub}</div>
           </div>
           {/* Desktop-only controls — hidden on mobile via .ps-db-controls CSS class */}
           <div className="ps-db-controls" style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", flexShrink:0 }}>
@@ -689,7 +781,7 @@ export function PrizeSkoutDashboard() {
                 width:22, height:22, borderRadius:"50%",
                 background: theme==="dark" ? "#232B38" : "#fff",
                 border:"1px solid var(--border)", transition:"inset-inline-start .25s,background .25s",
-                display:"grid", placeItems:"center", fontSize:11 }}>
+                display:"grid", placeItems:"center", fontSize:12.5 }}>
                 {theme==="dark"?"☾":"☀"}
               </span>
             </button>
@@ -699,7 +791,7 @@ export function PrizeSkoutDashboard() {
               {["QAR","SAR","AED"].map(code => (
                 <button key={code} onClick={()=>setCurrency(code)} style={{
                   cursor:"pointer", border:"none", borderRadius:8, padding:"10px 13px",
-                  fontSize:13, fontWeight:700, fontFamily:MONO,
+                  fontSize:14.5, fontWeight:700, fontFamily:MONO,
                   background: currency===code ? OG : "transparent",
                   color: currency===code ? "#fff" : "var(--muted)",
                 }}>{code}</button>
@@ -711,33 +803,52 @@ export function PrizeSkoutDashboard() {
               {([["en","EN"],["ar","عربية"],["fr","FR"]] as [Lang,string][]).map(([id,label]) => (
                 <button key={id} onClick={()=>setLang(id)} style={{
                   cursor:"pointer", border:"none", borderRadius:8, padding:"10px 13px",
-                  fontSize:13, fontWeight:700, fontFamily:"inherit",
+                  fontSize:14.5, fontWeight:700, fontFamily:"inherit",
                   background: lang===id ? "var(--text)" : "transparent",
                   color: lang===id ? "var(--bg)" : "var(--muted)",
                 }}>{label}</button>
               ))}
             </div>
           </div>
-          {/* Support — kept outside .ps-db-controls so it stays visible on mobile too */}
-          <button
-            type="button"
-            onClick={() => setSupportOpen(true)}
-            title="Contact support"
-            aria-label="Contact support"
-            style={{
-              display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
-              height: 40, padding: "0 14px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
-              border: "1px solid var(--border)", background: "var(--surface)", color: "var(--muted)",
-              fontSize: 13, fontWeight: 600, fontFamily: "inherit",
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
-              <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
-              <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
-            </svg>
-            {t.supportLabel}
-          </button>
+          {/* Support + tour replay — kept outside .ps-db-controls so they stay visible on mobile too */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => { setTourStep(0); setTourActive(true); }}
+              title={t.tourReplayLabel}
+              aria-label={t.tourReplayLabel}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 40, height: 40, borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                border: "1px solid var(--border)", background: "var(--surface)", color: "var(--muted)",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              data-tour="support"
+              onClick={() => setSupportOpen(true)}
+              title="Contact support"
+              aria-label="Contact support"
+              style={{
+                display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
+                height: 40, padding: "0 14px", borderRadius: 10, cursor: "pointer", flexShrink: 0,
+                border: "1px solid var(--border)", background: "var(--surface)", color: "var(--muted)",
+                fontSize: 14.5, fontWeight: 600, fontFamily: "inherit",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+                <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+                <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+              </svg>
+              {t.supportLabel}
+            </button>
+          </div>
         </header>
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
 
@@ -747,22 +858,22 @@ export function PrizeSkoutDashboard() {
 
             {/* Hero + stat grid */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:18 }}>
-              <div style={{ gridColumn:"span 2", minWidth:"min(100%,560px)", position:"relative",
+              <div data-tour="hero" style={{ gridColumn:"span 2", minWidth:"min(100%,560px)", position:"relative",
                 background:"var(--surface)",
                 border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                 padding:"26px 28px", display:"flex", flexDirection:"column", gap:18 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:9, fontSize:11, fontWeight:500,
+                <div style={{ display:"flex", alignItems:"center", gap:9, fontSize:12.5, fontWeight:500,
                   letterSpacing:"0.06em", color:"var(--muted)", textTransform:"uppercase" as const }}>
                   <span style={{ width:8, height:8, borderRadius:"50%", background:GN }} />
                   {t.profLabel}
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:18, flexWrap:"wrap" }}>
                   <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
-                    <span style={{ fontFamily:DISPLAY, fontSize:17, fontWeight:500, color:"var(--muted)" }}>{currency}</span>
+                    <span style={{ fontFamily:DISPLAY, fontSize:18.5, fontWeight:500, color:"var(--muted)" }}>{currency}</span>
                     <span style={{ fontFamily:DISPLAY, fontSize:62, fontWeight:700, lineHeight:1, color:"var(--muted)", fontVariantNumeric:"tabular-nums" }}>—</span>
                   </div>
                 </div>
-                <div style={{ fontSize:13.5, color:"var(--muted)" }}>No activity yet · connect a store to begin tracking</div>
+                <div style={{ fontSize:15, color:"var(--muted)" }}>No activity yet · connect a store to begin tracking</div>
                 {/* Empty chart placeholder */}
                 <div style={{ display:"flex", alignItems:"flex-end", gap:4, height:70, marginTop:6, opacity:.18 }}>
                   {Array.from({length:33}).map((_,i) => (
@@ -784,9 +895,9 @@ export function PrizeSkoutDashboard() {
                   <div key={s.label} style={{ background:"var(--surface)",
                     border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                     padding:"20px 22px", display:"flex", flexDirection:"column", gap:12, justifyContent:"space-between" }}>
-                    <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>{s.label}</div>
-                    <div style={{ fontFamily:DISPLAY, fontSize:34, fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>{s.value}</div>
-                    <div style={{ fontSize:12.5, color:s.footColor }}>{s.foot}</div>
+                    <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>{s.label}</div>
+                    <div style={{ fontFamily:DISPLAY, fontSize:36.5, fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>{s.value}</div>
+                    <div style={{ fontSize:14, color:s.footColor }}>{s.foot}</div>
                   </div>
                 ))}
               </div>
@@ -796,17 +907,17 @@ export function PrizeSkoutDashboard() {
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                  <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.stream}</h2>
-                  <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.streamS}</span>
+                  <h2 style={{ margin:0, fontSize:19.5, fontWeight:800, letterSpacing:"-0.2px" }}>{t.stream}</h2>
+                  <span style={{ fontSize:14, color:"var(--muted)" }}>{t.streamS}</span>
                 </div>
                 <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                  <button onClick={downloadCsv} style={{ cursor:"pointer", fontFamily:"inherit", fontSize:13,
+                  <button onClick={downloadCsv} style={{ cursor:"pointer", fontFamily:"inherit", fontSize:14.5,
                     fontWeight:600, color:"var(--text)", background:"var(--surface)",
                     border:"1px solid var(--border)", borderRadius:10, padding:"11px 16px" }}>
                     {t.downloadCsv}
                   </button>
                   <button onClick={()=>showToast("🟢 Dispute proof bundle exported · 2 claims · hash-verified")}
-                    style={{ cursor:"pointer", fontFamily:"inherit", fontSize:13, fontWeight:700, color:OG,
+                    style={{ cursor:"pointer", fontFamily:"inherit", fontSize:14.5, fontWeight:700, color:OG,
                       background:`color-mix(in srgb,${OG} 7%,var(--surface))`,
                       border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                       borderRadius:10, padding:"11px 16px" }}>
@@ -824,19 +935,19 @@ export function PrizeSkoutDashboard() {
                     <span style={{ width:10,height:10,borderRadius:"50%",background:"#FF5F57" }} />
                     <span style={{ width:10,height:10,borderRadius:"50%",background:"#FEBC2E" }} />
                     <span style={{ width:10,height:10,borderRadius:"50%",background:"#28C840" }} />
-                    <span style={{ fontFamily:MONO, fontSize:11.5, color:"#5A6472", marginInlineStart:8 }}>
+                    <span style={{ fontFamily:MONO, fontSize:13, color:"#5A6472", marginInlineStart:8 }}>
                       defend-loop · edge-doha-01
                     </span>
                   </div>
                   {feed.length === 0 ? (
                     <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-                      gap:10, color:"#5A6472", fontFamily:MONO, fontSize:12.5, textAlign:"center" }}>
-                      <span style={{ fontSize:22, opacity:.4 }}>◉</span>
+                      gap:10, color:"#5A6472", fontFamily:MONO, fontSize:14, textAlign:"center" }}>
+                      <span style={{ fontSize:23.5, opacity:.4 }}>◉</span>
                       <span>No events yet · connect a store to start</span>
                     </div>
                   ) : feed.map((f,i) => (
                     <div key={i} style={{ display:"flex", gap:10, alignItems:"baseline",
-                      fontFamily:MONO, fontSize:12.5, lineHeight:1.9, animation:"pk-in .3s ease" }}>
+                      fontFamily:MONO, fontSize:14, lineHeight:1.9, animation:"pk-in .3s ease" }}>
                       <span style={{ color:"#5A6472", flex:"0 0 auto" }}>{f.time}</span>
                       <span style={{ color:f.tagColor, fontWeight:700, flex:"0 0 auto" }}>{f.tag}</span>
                       <span style={{ color:"var(--term-text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{f.text}</span>
@@ -849,8 +960,8 @@ export function PrizeSkoutDashboard() {
                   borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
                   display:"flex", flexDirection:"column", gap:18 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
-                    <h3 style={{ margin:0, fontSize:16.5, fontWeight:800, letterSpacing:"-0.2px" }}>{t.agentTitle}</h3>
-                    <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:12, fontWeight:700, color:GN,
+                    <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.agentTitle}</h3>
+                    <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:13.5, fontWeight:700, color:GN,
                       background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
                       border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
                       borderRadius:999, padding:"5px 12px" }}>
@@ -866,36 +977,36 @@ export function PrizeSkoutDashboard() {
                     ].map(m => (
                       <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                         borderRadius:12, padding:"13px 14px", display:"flex", flexDirection:"column", gap:5 }}>
-                        <span style={{ fontFamily:DISPLAY, fontSize:19, fontWeight:700, color:m.color, fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
-                        <span style={{ fontSize:11, color:"var(--muted)", fontWeight:600, lineHeight:1.35 }}>{m.label}</span>
+                        <span style={{ fontFamily:DISPLAY, fontSize:20.5, fontWeight:700, color:m.color, fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
+                        <span style={{ fontSize:12.5, color:"var(--muted)", fontWeight:600, lineHeight:1.35 }}>{m.label}</span>
                       </div>
                     ))}
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                    <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>
+                    <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>
                       {t.discLog}
                     </div>
                     {disputes.length === 0 ? (
                       <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                         borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
                         <span style={{ width:9, height:9, borderRadius:"50%", background:GN, flexShrink:0, animation:"pk-pulse 2.4s infinite" }} />
-                        <span style={{ fontSize:13.5, color:"var(--muted)" }}>No discrepancies logged · audit agent monitoring payouts in real time</span>
+                        <span style={{ fontSize:15, color:"var(--muted)" }}>No discrepancies logged · audit agent monitoring payouts in real time</span>
                       </div>
                     ) : disputes.map((d,i) => (
                       <div key={i} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                         borderRadius:12, padding:"14px 16px", display:"flex", flexWrap:"wrap",
                         gap:12, alignItems:"center", justifyContent:"space-between" }}>
                         <div style={{ display:"flex", flexDirection:"column", gap:6, minWidth:0, flex:1 }}>
-                          <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:15.5, fontWeight:700 }}>
                             ⚠ {d.title}
-                            <span style={{ fontSize:12, color:"var(--muted)", fontWeight:400 }}>(Order {d.order})</span>
+                            <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:400 }}>(Order {d.order})</span>
                           </div>
-                          <div style={{ fontSize:12, color:"var(--muted)" }}>
+                          <div style={{ fontSize:13.5, color:"var(--muted)" }}>
                             {d.place} · Contract: {d.contract} · Charged: <span style={{ color:OG,fontWeight:700 }}>{d.charged}</span> · Leak: <span style={{ color:OG,fontWeight:700 }}>{d.leak}</span>
                           </div>
                         </div>
                         <button onClick={()=>{setModal(i);setFileStep(0);}} className="ps-ig-btn"
-                          style={{ cursor:"pointer", fontSize:12.5, fontWeight:700, color:"var(--text)",
+                          style={{ cursor:"pointer", fontSize:14, fontWeight:700, color:"var(--text)",
                             background:"transparent", border:"1.5px solid var(--border)",
                             borderRadius:10, padding:"10px 15px", fontFamily:"inherit", transition:"border-color .2s,color .2s" }}>
                           {t.genVoucher}
@@ -907,7 +1018,7 @@ export function PrizeSkoutDashboard() {
                   {/* Log Discrepancy button + form */}
                   <button
                     onClick={()=>setShowDisputeForm(v=>!v)}
-                    style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:12.5, fontWeight:700,
+                    style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:14, fontWeight:700,
                       color: showDisputeForm ? OG : "var(--text)",
                       background:"transparent", border:`1.5px solid ${showDisputeForm ? OG : "var(--border)"}`,
                       borderRadius:10, padding:"10px 15px", fontFamily:"inherit", transition:"border-color .2s,color .2s" }}>
@@ -918,14 +1029,14 @@ export function PrizeSkoutDashboard() {
                     <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                       borderRadius:14, padding:"20px 22px", display:"flex", flexDirection:"column", gap:14,
                       animation:"pk-in .2s ease" }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:"var(--text)" }}>{t.newDiscrepancy}</div>
+                      <div style={{ fontSize:14.5, fontWeight:700, color:"var(--text)" }}>{t.newDiscrepancy}</div>
                       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:10 }}>
                         {/* Partner */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.partnerLabel}</label>
+                          <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.partnerLabel}</label>
                           <select value={disputePartner} onChange={e=>setDisputePartner(e.target.value)}
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
-                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit" }}>
+                              background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit" }}>
                             {["Talabat","Jahez","Noon","Amazon","Careem"].map(p=>(
                               <option key={p}>{p}</option>
                             ))}
@@ -933,47 +1044,47 @@ export function PrizeSkoutDashboard() {
                         </div>
                         {/* Order ID */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.orderIdLabel}</label>
+                          <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.orderIdLabel}</label>
                           <input value={disputeOrderId} onChange={e=>setDisputeOrderId(e.target.value)} placeholder="e.g. #84201-A"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
-                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                              background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Location */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.branchLocationLabel}</label>
+                          <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.branchLocationLabel}</label>
                           <input value={disputePlace} onChange={e=>setDisputePlace(e.target.value)} placeholder="e.g. Doha Mall branch"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
-                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                              background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Contracted rate */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.contractedRateLabel}</label>
+                          <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.contractedRateLabel}</label>
                           <input type="number" min="1" max="40" value={disputeRate} onChange={e=>setDisputeRate(e.target.value)} placeholder="18"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
-                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                              background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Order value */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.orderValueLabel} ({currency})</label>
+                          <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.orderValueLabel} ({currency})</label>
                           <input type="number" min="0" value={disputeOurPrice} onChange={e=>setDisputeOurPrice(e.target.value)} placeholder="120.00"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
-                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                              background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit", outline:"none" }} />
                         </div>
                         {/* Charged amount */}
                         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                          <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.chargedByPartnerLabel} ({currency})</label>
+                          <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.chargedByPartnerLabel} ({currency})</label>
                           <input type="number" min="0" value={disputeCharged} onChange={e=>setDisputeCharged(e.target.value)} placeholder="30.00"
                             style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px",
-                              background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                              background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit", outline:"none" }} />
                         </div>
                       </div>
                       {/* Notes */}
                       <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                        <label style={{ fontSize:11, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.additionalNotesLabel}</label>
+                        <label style={{ fontSize:12.5, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>{t.additionalNotesLabel}</label>
                         <textarea value={disputeNotes} onChange={e=>setDisputeNotes(e.target.value)} rows={2}
                           placeholder="Any context about the discrepancy..."
                           style={{ border:"1px solid var(--border)", borderRadius:8, padding:"8px 10px", resize:"vertical",
-                            background:"var(--surface)", color:"var(--text)", fontSize:13, fontFamily:"inherit", outline:"none" }} />
+                            background:"var(--surface)", color:"var(--text)", fontSize:14.5, fontFamily:"inherit", outline:"none" }} />
                       </div>
                       <button
                         disabled={disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice}
@@ -1005,7 +1116,7 @@ export function PrizeSkoutDashboard() {
                           finally { setDisputeLoading(false); }
                         }}
                         style={{ cursor: disputeLoading||!disputeOrderId||!disputeCharged||!disputeOurPrice ? "not-allowed" : "pointer",
-                          alignSelf:"flex-start", fontSize:13, fontWeight:700, color:"#fff", background: disputeLoading ? "#9A9A9A" : OG,
+                          alignSelf:"flex-start", fontSize:14.5, fontWeight:700, color:"#fff", background: disputeLoading ? "#9A9A9A" : OG,
                           border:"none", borderRadius:10, padding:"11px 20px", fontFamily:"inherit",
                           opacity: disputeLoading||!disputeOrderId||!disputeCharged||!disputeOurPrice ? 0.6 : 1,
                           transition:"background .2s,opacity .2s" }}>
@@ -1028,35 +1139,35 @@ export function PrizeSkoutDashboard() {
               display:"flex", flexDirection:"column", gap:18 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                  <h2 style={{ margin:0, fontSize:19, fontWeight:800, letterSpacing:"-0.3px" }}>
-                    {t.copilotTitle} <span style={{ color:"var(--muted)", fontWeight:600, fontSize:15 }}>· {t.copilotSub}</span>
+                  <h2 style={{ margin:0, fontSize:20.5, fontWeight:800, letterSpacing:"-0.3px" }}>
+                    {t.copilotTitle} <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· {t.copilotSub}</span>
                   </h2>
-                  <span style={{ fontSize:13.5, color:"var(--muted)" }}>{t.copilotDesc}</span>
+                  <span style={{ fontSize:15, color:"var(--muted)" }}>{t.copilotDesc}</span>
                 </div>
-                <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:12.5, fontWeight:700, color:OG,
+                <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700, color:OG,
                   background:`color-mix(in srgb,${OG} 9%,var(--surface))`,
                   border:`1px solid color-mix(in srgb,${OG} 32%,transparent)`,
                   borderRadius:999, padding:"6px 14px" }}>
                   {t.copilotLive}
                 </span>
               </div>
-              <div style={{ display:"flex", gap:10, alignItems:"center", background:"var(--surface)",
+              <div data-tour="copilot" style={{ display:"flex", gap:10, alignItems:"center", background:"var(--surface)",
                 border:"1.5px solid var(--border)", borderRadius:14, padding:"6px 8px 6px 18px",
                 boxShadow:"var(--shadow)" }}>
-                <span style={{ fontSize:16, opacity:.55 }}>✦</span>
+                <span style={{ fontSize:17.5, opacity:.55 }}>✦</span>
                 <input value={cpInput} onChange={e=>setCpInput(e.target.value)}
                   onKeyDown={e=>{ if(e.key==="Enter") runCopilot(cpInput); }}
                   placeholder={lang==="ar" ? "اسأل أي شيء أو اكتب قاعدة تسعير..." : "Ask anything or describe a rule (e.g., 'Lock bakery margins at 25% during rain storms...')"}
                   style={{ flex:1, minWidth:0, border:"none", outline:"none", background:"transparent",
-                    color:"var(--text)", fontSize:14.5, fontFamily:"inherit", padding:"10px 0" }} />
+                    color:"var(--text)", fontSize:16, fontFamily:"inherit", padding:"10px 0" }} />
                 <button onClick={()=>runCopilot(cpInput)} style={{ cursor:"pointer", flex:"0 0 auto",
                   border:"none", borderRadius:10, background:OG, color:"#fff",
-                  fontSize:13, fontWeight:700, padding:"11px 18px", fontFamily:"inherit" }}>
+                  fontSize:14.5, fontWeight:700, padding:"11px 18px", fontFamily:"inherit" }}>
                   {t.compile}
                 </button>
               </div>
               <div style={{ display:"flex", gap:9, flexWrap:"wrap", alignItems:"center" }}>
-                <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
+                <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
                 {[
                   "Lock bakery margins at 25%",
                   "Match Jahez sourdough prices down to 18%",
@@ -1064,7 +1175,7 @@ export function PrizeSkoutDashboard() {
                 ].map(label => (
                   <button key={label} className="ps-pill-btn"
                     onClick={()=>{ setCpInput(label); runCopilot(label); }}
-                    style={{ cursor:"pointer", fontSize:12.5, fontWeight:600, color:"var(--text)",
+                    style={{ cursor:"pointer", fontSize:14, fontWeight:600, color:"var(--text)",
                       background:"var(--surface)", border:"1px solid var(--border)",
                       borderRadius:999, padding:"8px 14px", fontFamily:"inherit", transition:"border-color .2s,color .2s" }}>
                     {label}
@@ -1076,13 +1187,13 @@ export function PrizeSkoutDashboard() {
                   <span style={{ width:22,height:22,borderRadius:"50%",
                     border:`3px solid color-mix(in srgb,${OG} 18%,transparent)`,
                     borderTopColor:OG, animation:"pk-spin .75s linear infinite", flex:"0 0 22px" }} />
-                  <span style={{ fontSize:13, color:"var(--muted)", animation:"pk-pulse 1.4s infinite" }}>
+                  <span style={{ fontSize:14.5, color:"var(--muted)", animation:"pk-pulse 1.4s infinite" }}>
                     Thinking...
                   </span>
                 </div>
               )}
               {cpError && cpPhase === "idle" && (
-                <div style={{ fontSize:12.5, color:"#DC2626", padding:"8px 12px",
+                <div style={{ fontSize:14, color:"#DC2626", padding:"8px 12px",
                   background:"color-mix(in srgb,#DC2626 8%,var(--surface))",
                   border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
                   borderRadius:9, animation:"pk-in .2s ease" }}>
@@ -1091,16 +1202,16 @@ export function PrizeSkoutDashboard() {
               )}
               {cpPhase === "result" && cpChatMessage && (
                 <div style={{ animation:"pk-in .35s ease", display:"flex", flexDirection:"column", gap:10 }}>
-                  <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.06em", color:OG, textTransform:"uppercase" as const, paddingLeft:2 }}>
+                  <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.06em", color:OG, textTransform:"uppercase" as const, paddingLeft:2 }}>
                     CFO Copilot
                   </div>
                   <div style={{ background:`color-mix(in srgb,${OG} 6%,var(--surface))`,
                     border:`1px solid color-mix(in srgb,${OG} 22%,transparent)`,
-                    borderRadius:14, padding:"18px 20px", fontSize:14.5, lineHeight:1.7,
+                    borderRadius:14, padding:"18px 20px", fontSize:16, lineHeight:1.7,
                     color:"var(--fg)", whiteSpace:"pre-wrap" as const }}>
                     {cpChatMessage}
                   </div>
-                  <div style={{ fontSize:12, color:"var(--muted)", paddingLeft:2 }}>
+                  <div style={{ fontSize:13.5, color:"var(--muted)", paddingLeft:2 }}>
                     Describe a pricing rule to compile it into an engine config →
                   </div>
                 </div>
@@ -1110,11 +1221,11 @@ export function PrizeSkoutDashboard() {
                   <div style={{ background:`color-mix(in srgb,${OG} 6%,var(--surface))`,
                     border:`1px solid color-mix(in srgb,${OG} 24%,transparent)`,
                     borderRadius:14, padding:"20px 22px", display:"flex", flexDirection:"column", gap:12 }}>
-                    <div style={{ fontSize:11, fontWeight:500, letterSpacing:"0.04em", color:OG, textTransform:"uppercase" as const }}>
+                    <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.04em", color:OG, textTransform:"uppercase" as const }}>
                       {t.intentLabel}
                     </div>
-                    <div style={{ fontSize:16.5, lineHeight:1.55, fontWeight:600 }}>"{cpPrompt}"</div>
-                    <div style={{ marginTop:"auto", display:"flex", gap:14, fontSize:11.5, color:"var(--muted)", flexWrap:"wrap" }}>
+                    <div style={{ fontSize:18, lineHeight:1.55, fontWeight:600 }}>"{cpPrompt}"</div>
+                    <div style={{ marginTop:"auto", display:"flex", gap:14, fontSize:13, color:"var(--muted)", flexWrap:"wrap" }}>
                       <span>{t.intent} <span style={{ color:GN }}>{t.intentResolved}</span></span>
                       <span>{t.confidence} <span style={{ color:GN }}>0.97</span></span>
                       <span>{t.ambiguity} none</span>
@@ -1123,14 +1234,14 @@ export function PrizeSkoutDashboard() {
                   <div dir="ltr" style={{ background:"var(--term)", border:"1px solid var(--term-border)",
                     borderRadius:14, padding:"18px 20px", display:"flex", flexDirection:"column", gap:12 }}>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                      <span style={{ fontFamily:MONO, fontSize:11.5, color:"#5A6472" }}>compiled.rule.json</span>
-                      <span style={{ fontFamily:MONO, fontSize:11, color:GN }}>✓ schema v3 · 1.2s</span>
+                      <span style={{ fontFamily:MONO, fontSize:13, color:"#5A6472" }}>compiled.rule.json</span>
+                      <span style={{ fontFamily:MONO, fontSize:12.5, color:GN }}>✓ schema v3 · 1.2s</span>
                     </div>
-                    <div style={{ whiteSpace:"pre", overflowX:"auto", fontFamily:MONO, fontSize:13, lineHeight:1.7 }}>
+                    <div style={{ whiteSpace:"pre", overflowX:"auto", fontFamily:MONO, fontSize:14.5, lineHeight:1.7 }}>
                       {tokenizeJson(cpObj).map((tk,i) => <span key={i} style={{ color:tk.c }}>{tk.t}</span>)}
                     </div>
                     <button onClick={applyConfig} style={{ cursor:"pointer", marginTop:4, border:"none",
-                      borderRadius:11, padding:"14px 18px", fontSize:14, fontWeight:800, fontFamily:"inherit",
+                      borderRadius:11, padding:"14px 18px", fontSize:15.5, fontWeight:800, fontFamily:"inherit",
                       color:"#fff", background: applied ? GN : OG,
                       transition:"background .3s" }}>
                       {applied ? t.applyLabel1 : t.applyLabel0}
@@ -1141,10 +1252,10 @@ export function PrizeSkoutDashboard() {
             </div>
 
             {/* Active guardrails */}
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div data-tour="guardrails" style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.guardrails}</h2>
-                <span style={{ fontSize:12.5, color:"var(--muted)" }}>{rules.length} {t.rulesEnforced}</span>
+                <h2 style={{ margin:0, fontSize:19.5, fontWeight:800, letterSpacing:"-0.2px" }}>{t.guardrails}</h2>
+                <span style={{ fontSize:14, color:"var(--muted)" }}>{rules.length} {t.rulesEnforced}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))", gap:16 }}>
                 {rules.map((r,i) => (
@@ -1153,8 +1264,8 @@ export function PrizeSkoutDashboard() {
                     display:"flex", flexDirection:"column", gap:14 }}>
                     <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
                       <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                        <span style={{ fontSize:15, fontWeight:700 }}>{r.name}</span>
-                        <span style={{ fontSize:11.5, color:"var(--muted)" }}>{r.desc}</span>
+                        <span style={{ fontSize:16.5, fontWeight:700 }}>{r.name}</span>
+                        <span style={{ fontSize:13, color:"var(--muted)" }}>{r.desc}</span>
                       </div>
                       <button onClick={()=>setRules(prev=>prev.map((x,j)=>j===i?{...x,active:!x.active}:x))}
                         aria-label="Toggle rule"
@@ -1171,16 +1282,16 @@ export function PrizeSkoutDashboard() {
                       <input type="range" min={5} max={60} step={1} value={r.floor}
                         onChange={e=>setRules(prev=>prev.map((x,j)=>j===i?{...x,floor:+e.target.value}:x))}
                         style={{ flex:1 }} />
-                      <span style={{ fontFamily:DISPLAY, fontSize:17, fontWeight:700, fontVariantNumeric:"tabular-nums",
+                      <span style={{ fontFamily:DISPLAY, fontSize:18.5, fontWeight:700, fontVariantNumeric:"tabular-nums",
                         color: r.floor < 15 ? "#DC2626" : OG, minWidth:52, textAlign:"end" }}>{r.floor}%</span>
                     </div>
                     {r.floor < 15 && r.active && (
-                      <div style={{ fontSize:12, fontWeight:600, color:"#DC2626",
+                      <div style={{ fontSize:13.5, fontWeight:600, color:"#DC2626",
                         background:"color-mix(in srgb,#DC2626 8%,var(--surface))",
                         border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
                         borderRadius:9, padding:"8px 12px" }}>{t.floorWarn}</div>
                     )}
-                    <div style={{ fontSize:11.5, color: r.active ? GN : "var(--muted)" }}>
+                    <div style={{ fontSize:13, color: r.active ? GN : "var(--muted)" }}>
                       {r.active ? t.activeLabel : t.pausedLabel}
                     </div>
                   </div>
@@ -1195,10 +1306,10 @@ export function PrizeSkoutDashboard() {
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:32, animation:"pk-in .3s ease" }}>
 
             {/* Inbound */}
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div data-tour="inbound" style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.inboundTitle}</h2>
-                <span style={{ fontSize:14, color:"var(--muted)" }}>{t.inboundDesc}</span>
+                <h2 style={{ margin:0, fontSize:19.5, fontWeight:800, letterSpacing:"-0.2px" }}>{t.inboundTitle}</h2>
+                <span style={{ fontSize:15.5, color:"var(--muted)" }}>{t.inboundDesc}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))", gap:16 }}>
                 {INBOUND_INTEGRATIONS.map(ig => {
@@ -1212,21 +1323,21 @@ export function PrizeSkoutDashboard() {
                       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                         <span style={{ width:38, height:38, borderRadius:10, background:`color-mix(in srgb,${OG} 10%,var(--surface2))`,
                           border:`1px solid color-mix(in srgb,${OG} 22%,var(--border))`,
-                          display:"grid", placeItems:"center", fontSize:15, fontWeight:700, color:OG, flexShrink:0 }}>{ig.glyph}</span>
+                          display:"grid", placeItems:"center", fontSize:16.5, fontWeight:700, color:OG, flexShrink:0 }}>{ig.glyph}</span>
                         <div>
-                          <div style={{ fontSize:15, fontWeight:800 }}>{ig.name}</div>
-                          <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:2 }}>{ig.kind}</div>
+                          <div style={{ fontSize:16.5, fontWeight:800 }}>{ig.name}</div>
+                          <div style={{ fontSize:13, color:"var(--muted)", marginTop:2 }}>{ig.kind}</div>
                         </div>
                       </div>
                       <span style={{ width:9,height:9,borderRadius:"50%", flexShrink:0,
                         background: isConnected ? GN : "#F59E0B",
                         animation: isConnected ? "pk-pulse 2.2s infinite" : "none" }} />
                     </div>
-                    <div style={{ fontSize:12, color:"var(--muted)" }}>
+                    <div style={{ fontSize:13.5, color:"var(--muted)" }}>
                       {isConnected ? t.inboundConnectedMsg : canConnect ? t.inboundAuthorizeMsg : t.inboundComingSoonMsg}
                     </div>
                     {isConnected && (
-                      <div dir="ltr" style={{ fontFamily:MONO, fontSize:12, color:GN,
+                      <div dir="ltr" style={{ fontFamily:MONO, fontSize:13.5, color:GN,
                         background:`color-mix(in srgb,${GN} 8%,var(--surface2))`,
                         border:`1px solid color-mix(in srgb,${GN} 22%,transparent)`,
                         borderRadius:9, padding:"9px 12px" }}>
@@ -1242,7 +1353,7 @@ export function PrizeSkoutDashboard() {
                           showToast("Please complete onboarding first.");
                         }
                       }} className="ps-ig-btn"
-                        style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:12.5, fontWeight:700,
+                        style={{ cursor:"pointer", alignSelf:"flex-start", fontSize:14, fontWeight:700,
                           color:"#fff", background:OG, border:`1.5px solid ${OG}`,
                           borderRadius:10, padding:"9px 14px", fontFamily:"inherit", transition:"border-color .2s,color .2s,background .2s" }}>
                         {t.connectPrefix} {ig.name}
@@ -1255,10 +1366,10 @@ export function PrizeSkoutDashboard() {
             </div>
 
             {/* Outbound */}
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            <div data-tour="outbound" style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                <h2 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.outboundTitle}</h2>
-                <span style={{ fontSize:14, color:"var(--muted)" }}>{t.outboundDesc}</span>
+                <h2 style={{ margin:0, fontSize:19.5, fontWeight:800, letterSpacing:"-0.2px" }}>{t.outboundTitle}</h2>
+                <span style={{ fontSize:15.5, color:"var(--muted)" }}>{t.outboundDesc}</span>
               </div>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:14 }}>
                 {OUTBOUND_INTEGRATIONS.map(o => {
@@ -1269,17 +1380,17 @@ export function PrizeSkoutDashboard() {
                     borderRadius:14, boxShadow:"var(--shadow)", padding:"18px 20px",
                     display:"flex", flexDirection:"column", gap:10 }}>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-                      <span style={{ fontSize:15, fontWeight:800 }}>{o.name}</span>
+                      <span style={{ fontSize:16.5, fontWeight:800 }}>{o.name}</span>
                       {needsShopId ? (
                         <button
                           type="button"
                           onClick={() => { setByokPlatform("keeta_shop_id"); setByokFields({}); setByokStatus("idle"); setByokError(null); }}
-                          style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                          style={{ fontSize:11, fontWeight:700, letterSpacing:"0.8px",
                             background:"color-mix(in srgb,#F59E0B 12%,var(--surface))",
                             color:"#F59E0B", border:"1px solid color-mix(in srgb,#F59E0B 32%,transparent)",
                             borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.finishSetupBadge}</button>
                       ) : connected ? (
-                        <span style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                        <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.8px",
                           background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
                           color:GN, border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
                           borderRadius:6, padding:"3px 8px" }}>{t.live}</span>
@@ -1287,7 +1398,7 @@ export function PrizeSkoutDashboard() {
                         <button
                           type="button"
                           onClick={() => { setByokPlatform(o.platform); setByokFields({}); setByokStatus("idle"); setByokError(null); }}
-                          style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                          style={{ fontSize:11, fontWeight:700, letterSpacing:"0.8px",
                             background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
                             color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                             borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.setupBadge}</button>
@@ -1299,19 +1410,19 @@ export function PrizeSkoutDashboard() {
                             if (mid) window.location.href = `${o.oauthPath}?merchant_id=${encodeURIComponent(mid)}`;
                             else showToast("Please complete onboarding first.");
                           }}
-                          style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                          style={{ fontSize:11, fontWeight:700, letterSpacing:"0.8px",
                             background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
                             color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                             borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.connectPrefix}</button>
                       ) : (
-                        <span style={{ fontSize:9.5, fontWeight:600, letterSpacing:"0.6px",
+                        <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.6px",
                           color:"var(--muted)", border:"1px solid var(--border)",
                           borderRadius:6, padding:"3px 8px" }}>{t.soonBadge}</span>
                       )}
                     </div>
-                    <div style={{ fontSize:11.5, color:"var(--muted)" }}>{o.region}</div>
+                    <div style={{ fontSize:13, color:"var(--muted)" }}>{o.region}</div>
                     <div style={{ display:"flex", alignItems:"center", gap:7, paddingTop:10,
-                      borderTop:"1px solid var(--border)", fontSize:11.5, color:"var(--muted)" }}>
+                      borderTop:"1px solid var(--border)", fontSize:13, color:"var(--muted)" }}>
                       <span style={{ width:7,height:7,borderRadius:"50%",
                         background: needsShopId ? "#F59E0B" : connected ? GN : OG, flexShrink:0,
                         animation: connected ? "pk-pulse 2s ease infinite" : "none" }} />
@@ -1347,39 +1458,39 @@ export function PrizeSkoutDashboard() {
               display:"flex", flexDirection:"column", gap:20 }}>
             <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:14 }}>
               <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                <h3 style={{ margin:0, fontSize:19, fontWeight:800, letterSpacing:"-0.3px" }}>
+                <h3 style={{ margin:0, fontSize:20.5, fontWeight:800, letterSpacing:"-0.3px" }}>
                   {t.bilingualTitle} {md.partner}
                 </h3>
                 <div style={{ display:"flex", alignItems:"center", gap:9, flexWrap:"wrap" }}>
-                  <span dir="ltr" style={{ fontFamily:MONO, fontSize:11.5, color:GN,
+                  <span dir="ltr" style={{ fontFamily:MONO, fontSize:13, color:GN,
                     background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
                     border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
                     borderRadius:7, padding:"5px 10px" }}>
                     {t.verified} {md.hash} {t.verifiedS}
                   </span>
-                  <span style={{ fontSize:11.5, color:"var(--muted)" }}>{t.autoCompiled}</span>
+                  <span style={{ fontSize:13, color:"var(--muted)" }}>{t.autoCompiled}</span>
                 </div>
               </div>
               <button onClick={()=>setModal(null)} aria-label="Close"
                 style={{ cursor:"pointer", flex:"0 0 auto", width:34, height:34,
                   borderRadius:10, border:"1px solid var(--border)", background:"var(--surface)",
-                  color:"var(--muted)", fontSize:15, fontWeight:700 }}>{t.close}</button>
+                  color:"var(--muted)", fontSize:16.5, fontWeight:700 }}>{t.close}</button>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))", gap:14 }}>
               <div dir="ltr" style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                 borderRadius:14, padding:"18px 20px", display:"flex", flexDirection:"column", gap:10 }}>
-                <div style={{ fontSize:11, fontWeight:700, letterSpacing:"1.3px", color:"var(--muted)", fontFamily:MONO }}>{t.claimEn}</div>
-                <div style={{ fontSize:13.5, lineHeight:1.7, whiteSpace:"pre-line" }}>{md.en}</div>
+                <div style={{ fontSize:12.5, fontWeight:700, letterSpacing:"1.3px", color:"var(--muted)", fontFamily:MONO }}>{t.claimEn}</div>
+                <div style={{ fontSize:15, lineHeight:1.7, whiteSpace:"pre-line" }}>{md.en}</div>
               </div>
               <div dir="rtl" style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                 borderRadius:14, padding:"18px 20px", display:"flex", flexDirection:"column", gap:10 }}>
-                <div style={{ fontSize:11, fontWeight:700, letterSpacing:"1.3px", color:"var(--muted)", fontFamily:MONO, textAlign:"start" }}>{t.claimAr}</div>
-                <div style={{ fontSize:14.5, lineHeight:1.9, whiteSpace:"pre-line", textAlign:"start" }}>{md.ar}</div>
+                <div style={{ fontSize:12.5, fontWeight:700, letterSpacing:"1.3px", color:"var(--muted)", fontFamily:MONO, textAlign:"start" }}>{t.claimAr}</div>
+                <div style={{ fontSize:16, lineHeight:1.9, whiteSpace:"pre-line", textAlign:"start" }}>{md.ar}</div>
               </div>
             </div>
             <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
               {[`payout_${md.order.slice(1)}.csv`, "contract_excerpt.pdf", "pos_ledger.json"].map(name => (
-                <span key={name} dir="ltr" style={{ fontFamily:MONO, fontSize:11.5, color:"var(--muted)",
+                <span key={name} dir="ltr" style={{ fontFamily:MONO, fontSize:13, color:"var(--muted)",
                   background:"var(--surface2)", border:"1px solid var(--border)",
                   borderRadius:999, padding:"6px 12px" }}>📄 {name}</span>
               ))}
@@ -1392,13 +1503,13 @@ export function PrizeSkoutDashboard() {
                     width: fileStep===1?"34%":fileStep===2?"72%":"100%",
                     transition:"width .8s ease" }} />
                 </div>
-                <div style={{ fontFamily:MONO, fontSize:12.5, color: fileStep===3 ? GN : "var(--muted)" }}>
+                <div style={{ fontFamily:MONO, fontSize:14, color: fileStep===3 ? GN : "var(--muted)" }}>
                   {fileStep===1?t.fileMsg1:fileStep===2?t.fileMsg2:t.fileMsg3}
                 </div>
               </div>
             )}
             <button onClick={fileClaim} style={{ cursor:"pointer", border:"none", borderRadius:12,
-              padding:"15px 20px", fontSize:14.5, fontWeight:800, fontFamily:"inherit", color:"#fff",
+              padding:"15px 20px", fontSize:16, fontWeight:800, fontFamily:"inherit", color:"#fff",
               background: fileStep===3 ? GN : fileStep>0 ? `color-mix(in srgb,${OG} 55%,var(--muted))` : OG,
               transition:"background .3s" }}>
               {fileStep===3 ? t.fileBtn3 : fileStep>0 ? t.fileBtn1 : t.fileBtn0}
@@ -1418,17 +1529,17 @@ export function PrizeSkoutDashboard() {
             overflowY:"auto", animation:`${dir==="rtl"?"pk-drawer-rtl":"pk-drawer-ltr"} .22s ease` }}>
             {/* Header */}
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
-              <div style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.5px" }}>
+              <div style={{ fontSize:23.5, fontWeight:800, letterSpacing:"-0.5px" }}>
                 Prize<span style={{ color:OG }}>skout</span>
               </div>
               <button onClick={()=>setSidebarOpen(false)} aria-label="Close menu"
                 style={{ cursor:"pointer", width:36, height:36, borderRadius:9, border:"1px solid var(--border)",
-                  background:"transparent", color:"var(--muted)", fontSize:15, fontWeight:700, display:"grid", placeItems:"center" }}>
+                  background:"transparent", color:"var(--muted)", fontSize:16.5, fontWeight:700, display:"grid", placeItems:"center" }}>
                 ✕
               </button>
             </div>
             {/* CONTROL PLANE label */}
-            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"1.6px", color:"var(--muted)",
+            <div style={{ fontSize:12.5, fontWeight:700, letterSpacing:"1.6px", color:"var(--muted)",
               marginBottom:10, paddingInline:4, fontFamily:MONO }}>
               {t.cp}
             </div>
@@ -1447,8 +1558,8 @@ export function PrizeSkoutDashboard() {
                     <span style={{ width:7, height:7, borderRadius:"50%", flex:"0 0 7px",
                       background: on ? OG : "color-mix(in srgb,var(--muted) 45%,transparent)" }} />
                     <span style={{ display:"flex", flexDirection:"column", gap:2 }}>
-                      <span style={{ fontSize:14.5, fontWeight:700, color:"var(--text)" }}>{n.label}</span>
-                      <span style={{ fontSize:12, color: on ? OG : "var(--muted)" }}>{n.sub}</span>
+                      <span style={{ fontSize:16, fontWeight:700, color:"var(--text)" }}>{n.label}</span>
+                      <span style={{ fontSize:13.5, color: on ? OG : "var(--muted)" }}>{n.sub}</span>
                     </span>
                   </div>
                 );
@@ -1462,7 +1573,7 @@ export function PrizeSkoutDashboard() {
                 {["QAR","SAR","AED"].map(code => (
                   <button key={code} onClick={()=>setCurrency(code)} style={{
                     cursor:"pointer", border:"none", borderRadius:8, padding:"10px 0", flex:1,
-                    fontSize:12, fontWeight:700, fontFamily:MONO,
+                    fontSize:13.5, fontWeight:700, fontFamily:MONO,
                     background: currency===code ? OG : "transparent",
                     color: currency===code ? "#fff" : "var(--muted)",
                   }}>{code}</button>
@@ -1474,7 +1585,7 @@ export function PrizeSkoutDashboard() {
                 {([["en","EN"],["ar","عربية"],["fr","FR"]] as [Lang,string][]).map(([id,label]) => (
                   <button key={id} onClick={()=>setLang(id)} style={{
                     cursor:"pointer", border:"none", borderRadius:8, padding:"10px 0", flex:1,
-                    fontSize:12, fontWeight:700, fontFamily:"inherit",
+                    fontSize:13.5, fontWeight:700, fontFamily:"inherit",
                     background: lang===id ? "var(--text)" : "transparent",
                     color: lang===id ? "var(--bg)" : "var(--muted)",
                   }}>{label}</button>
@@ -1490,7 +1601,7 @@ export function PrizeSkoutDashboard() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
-                <span style={{ fontSize:13, fontWeight:500 }}>{t.settingsLabel}</span>
+                <span style={{ fontSize:14.5, fontWeight:500 }}>{t.settingsLabel}</span>
               </div>
               {/* Back to site */}
               <a href="/" style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 10px",
@@ -1498,7 +1609,7 @@ export function PrizeSkoutDashboard() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6"/>
                 </svg>
-                <span style={{ fontSize:13, fontWeight:500 }}>{t.backToSite}</span>
+                <span style={{ fontSize:14.5, fontWeight:500 }}>{t.backToSite}</span>
               </a>
               <div style={{ height:1, background:"var(--border)", marginBottom:8 }} />
               {/* Defend Loop */}
@@ -1507,16 +1618,16 @@ export function PrizeSkoutDashboard() {
                 borderRadius:12, padding:"13px 14px", display:"flex", gap:11, alignItems:"flex-start" }}>
                 <span style={{ width:8, height:8, borderRadius:"50%", background:GN, marginTop:5, animation:"pk-pulse 2s infinite" }} />
                 <span style={{ display:"flex", flexDirection:"column", gap:3 }}>
-                  <span style={{ fontSize:13.5, fontWeight:700, color:GN }}>{t.defend}</span>
-                  <span style={{ fontSize:12, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
+                  <span style={{ fontSize:15, fontWeight:700, color:GN }}>{t.defend}</span>
+                  <span style={{ fontSize:13.5, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
                 </span>
               </div>
               {/* Account */}
               <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4, paddingTop:4 }}>
                 <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                   border:"1px solid var(--border)", display:"grid", placeItems:"center",
-                  fontSize:11.5, fontWeight:700, fontFamily:MONO }}>M</span>
-                <span style={{ fontSize:14, fontWeight:600 }}>{t.myAccount}</span>
+                  fontSize:13, fontWeight:700, fontFamily:MONO }}>M</span>
+                <span style={{ fontSize:15.5, fontWeight:600 }}>{t.myAccount}</span>
               </div>
             </div>
           </div>
@@ -1574,10 +1685,10 @@ export function PrizeSkoutDashboard() {
               {/* Header */}
               <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
                 <div>
-                  <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.3px" }}>
+                  <h3 style={{ margin:0, fontSize:19.5, fontWeight:800, letterSpacing:"-0.3px" }}>
                     {p === "keeta_shop_id" ? `${t.finishSetupBadge} · Keeta` : `${t.connectPrefix} ${platformName}`}
                   </h3>
-                  <p style={{ margin:"6px 0 0", fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
+                  <p style={{ margin:"6px 0 0", fontSize:14.5, color:"var(--muted)", lineHeight:1.6 }}>
                     {p === "keeta_shop_id"
                       ? t.keetaShopIdPrompt
                       : `Paste your credentials from your ${platformName} partner portal. PrizeSkout uses them to push margin-safe prices to your live menu.`}
@@ -1586,7 +1697,7 @@ export function PrizeSkoutDashboard() {
                 <button onClick={closeByok} aria-label="Close"
                   style={{ cursor:"pointer", flexShrink:0, width:34, height:34,
                     borderRadius:10, border:"1px solid var(--border)", background:"var(--surface)",
-                    color:"var(--muted)", fontSize:15, fontWeight:700 }}>✕</button>
+                    color:"var(--muted)", fontSize:16.5, fontWeight:700 }}>✕</button>
               </div>
 
               {cfg ? (
@@ -1594,11 +1705,11 @@ export function PrizeSkoutDashboard() {
                   {cfg.fields.map(f => (
                     <div key={f.key} style={{ display:"flex", flexDirection:"column", gap:6 }}>
                       <label htmlFor={`byok-${f.key}`}
-                        style={{ fontSize:12.5, fontWeight:600, color:"var(--text)" }}>
+                        style={{ fontSize:14, fontWeight:600, color:"var(--text)" }}>
                         {f.label}
                       </label>
                       {f.hint && (
-                        <span style={{ fontSize:11.5, color:"var(--muted)", marginTop:-3 }}>{f.hint}</span>
+                        <span style={{ fontSize:13, color:"var(--muted)", marginTop:-3 }}>{f.hint}</span>
                       )}
                       <input
                         id={`byok-${f.key}`}
@@ -1609,7 +1720,7 @@ export function PrizeSkoutDashboard() {
                         onChange={e => setByokFields(prev => ({ ...prev, [f.key]: e.target.value }))}
                         style={{ height:44, borderRadius:9, border:"1px solid var(--border)",
                           background:"var(--surface)", color:"var(--text)", padding:"0 13px",
-                          fontSize:14, fontFamily:"inherit", outline:"none",
+                          fontSize:15.5, fontFamily:"inherit", outline:"none",
                           transition:"border-color .15s" }}
                         onFocus={e => { e.currentTarget.style.borderColor = OG; }}
                         onBlur={e => { e.currentTarget.style.borderColor = "var(--border)"; }}
@@ -1618,7 +1729,7 @@ export function PrizeSkoutDashboard() {
                   ))}
 
                   {cfg.portalHint && (
-                    <p style={{ margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6,
+                    <p style={{ margin:0, fontSize:13.5, color:"var(--muted)", lineHeight:1.6,
                       padding:"10px 14px", background:"var(--surface2)",
                       borderRadius:9, border:"1px solid var(--border)" }}>
                       {cfg.portalHint}
@@ -1626,7 +1737,7 @@ export function PrizeSkoutDashboard() {
                   )}
 
                   {byokError && (
-                    <p style={{ margin:0, fontSize:13, color:"#EF4444", fontWeight:500,
+                    <p style={{ margin:0, fontSize:14.5, color:"#EF4444", fontWeight:500,
                       padding:"10px 14px", background:"rgba(239,68,68,.07)",
                       borderRadius:9, border:"1px solid rgba(239,68,68,.2)" }}>
                       {byokError}
@@ -1634,7 +1745,7 @@ export function PrizeSkoutDashboard() {
                   )}
 
                   {byokStatus === "ok" && (
-                    <p style={{ margin:0, fontSize:13, color:GN, fontWeight:600,
+                    <p style={{ margin:0, fontSize:14.5, color:GN, fontWeight:600,
                       padding:"10px 14px", background:`color-mix(in srgb,${GN} 8%,var(--surface))`,
                       borderRadius:9, border:`1px solid color-mix(in srgb,${GN} 25%,transparent)` }}>
                       Store connected successfully
@@ -1646,7 +1757,7 @@ export function PrizeSkoutDashboard() {
                     disabled={byokStatus === "loading" || byokStatus === "ok"}
                     style={{ height:46, borderRadius:10, border:"none", cursor: byokStatus === "loading" || byokStatus === "ok" ? "default" : "pointer",
                       background: byokStatus === "ok" ? GN : OG, color:"#fff",
-                      fontSize:14, fontWeight:700, fontFamily:"inherit",
+                      fontSize:15.5, fontWeight:700, fontFamily:"inherit",
                       opacity: byokStatus === "loading" ? .75 : 1,
                       transition:"opacity .2s,background .2s" }}>
                     {p === "keeta_shop_id"
@@ -1656,7 +1767,7 @@ export function PrizeSkoutDashboard() {
                 </form>
               ) : (
                 <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-                  <p style={{ margin:0, fontSize:13.5, color:"var(--text)", lineHeight:1.7,
+                  <p style={{ margin:0, fontSize:15, color:"var(--text)", lineHeight:1.7,
                     padding:"16px 18px", background:"var(--surface2)",
                     borderRadius:10, border:"1px solid var(--border)" }}>
                     {platformName} integration is coming soon. We are working with their partner team to get API access. To be notified when it is ready, email us at <strong>hello@prizeskout.qa</strong>.
@@ -1664,7 +1775,7 @@ export function PrizeSkoutDashboard() {
                   <button onClick={closeByok}
                     style={{ height:44, borderRadius:10, border:`1px solid var(--border)`,
                       background:"var(--surface)", color:"var(--muted)",
-                      fontSize:14, fontWeight:600, fontFamily:"inherit", cursor:"pointer" }}>
+                      fontSize:15.5, fontWeight:600, fontFamily:"inherit", cursor:"pointer" }}>
                     Close
                   </button>
                 </div>
@@ -1675,12 +1786,25 @@ export function PrizeSkoutDashboard() {
         );
       })()}
 
+      {/* PRODUCT TOUR */}
+      {tourActive && (
+        <ProductTour
+          steps={tourSteps}
+          stepIndex={tourStep}
+          onStepChange={goToTourStep}
+          onClose={closeTour}
+          onFinish={closeTour}
+          dir={dir}
+          labels={{ back:t.tourBackBtn, next:t.tourNextBtn, finish:t.tourFinishBtn, skip:t.tourSkipLabel, start:t.tourStartBtn }}
+        />
+      )}
+
       {/* TOAST */}
       {toast && (
         <div style={{ position:"fixed", bottom:24, insetInlineEnd:24, zIndex:80,
           background:"var(--surface)", border:`1px solid color-mix(in srgb,${GN} 35%,var(--border))`,
           borderRadius:13, boxShadow:"var(--shadow-lg)", padding:"14px 18px",
-          fontSize:13.5, fontWeight:600, maxWidth:"min(420px,86vw)",
+          fontSize:15, fontWeight:600, maxWidth:"min(420px,86vw)",
           animation:"pk-toast .3s ease", display:"flex", gap:10, alignItems:"center" }}>
           {toast}
         </div>

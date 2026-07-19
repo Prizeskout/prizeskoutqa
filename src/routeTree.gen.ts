@@ -44,6 +44,7 @@ import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
@@ -68,6 +69,7 @@ import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/co
 import { Route as ApiChannelsByokRouteImport } from './routes/api/channels/byok'
 import { Route as ApiAuthZidRouteImport } from './routes/api/auth/zid'
 import { Route as ApiAuthSallaRouteImport } from './routes/api/auth/salla'
+import { Route as ApiAuthResolveMerchantRouteImport } from './routes/api/auth/resolve-merchant'
 import { Route as ApiAuthKeetaRouteImport } from './routes/api/auth/keeta'
 import { Route as ApiAuthEmailBridgeRouteImport } from './routes/api/auth/email-bridge'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
@@ -258,6 +260,11 @@ const DashboardPricingRoute = DashboardPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => DashboardRoute,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRestoreRoute = ApiRestoreRouteImport.update({
   id: '/api/restore',
   path: '/api/restore',
@@ -379,6 +386,11 @@ const ApiAuthSallaRoute = ApiAuthSallaRouteImport.update({
   path: '/api/auth/salla',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthResolveMerchantRoute = ApiAuthResolveMerchantRouteImport.update({
+  id: '/api/auth/resolve-merchant',
+  path: '/api/auth/resolve-merchant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthKeetaRoute = ApiAuthKeetaRouteImport.update({
   id: '/api/auth/keeta',
   path: '/api/auth/keeta',
@@ -481,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/docs/changelog': typeof DocsChangelogRoute
@@ -502,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/keeta': typeof ApiAuthKeetaRouteWithChildren
+  '/api/auth/resolve-merchant': typeof ApiAuthResolveMerchantRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
   '/api/channels/byok': typeof ApiChannelsByokRoute
@@ -553,6 +567,7 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/docs/changelog': typeof DocsChangelogRoute
@@ -574,6 +589,7 @@ export interface FileRoutesByTo {
   '/margin-dashboard': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/keeta': typeof ApiAuthKeetaRouteWithChildren
+  '/api/auth/resolve-merchant': typeof ApiAuthResolveMerchantRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
   '/api/channels/byok': typeof ApiChannelsByokRoute
@@ -629,6 +645,7 @@ export interface FileRoutesById {
   '/admin/system': typeof AdminSystemRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/docs/changelog': typeof DocsChangelogRoute
@@ -650,6 +667,7 @@ export interface FileRoutesById {
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
   '/api/auth/keeta': typeof ApiAuthKeetaRouteWithChildren
+  '/api/auth/resolve-merchant': typeof ApiAuthResolveMerchantRoute
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
   '/api/channels/byok': typeof ApiChannelsByokRoute
@@ -706,6 +724,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
+    | '/auth/callback'
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/docs/changelog'
@@ -727,6 +746,7 @@ export interface FileRouteTypes {
     | '/margin-dashboard/'
     | '/api/auth/email-bridge'
     | '/api/auth/keeta'
+    | '/api/auth/resolve-merchant'
     | '/api/auth/salla'
     | '/api/auth/zid'
     | '/api/channels/byok'
@@ -778,6 +798,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
+    | '/auth/callback'
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/docs/changelog'
@@ -799,6 +820,7 @@ export interface FileRouteTypes {
     | '/margin-dashboard'
     | '/api/auth/email-bridge'
     | '/api/auth/keeta'
+    | '/api/auth/resolve-merchant'
     | '/api/auth/salla'
     | '/api/auth/zid'
     | '/api/channels/byok'
@@ -853,6 +875,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/api/register-code'
     | '/api/restore'
+    | '/auth/callback'
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/docs/changelog'
@@ -874,6 +897,7 @@ export interface FileRouteTypes {
     | '/margin-dashboard/'
     | '/api/auth/email-bridge'
     | '/api/auth/keeta'
+    | '/api/auth/resolve-merchant'
     | '/api/auth/salla'
     | '/api/auth/zid'
     | '/api/channels/byok'
@@ -923,6 +947,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiRegisterCodeRoute: typeof ApiRegisterCodeRoute
   ApiRestoreRoute: typeof ApiRestoreRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   EmbedWidgetRoute: typeof EmbedWidgetRoute
   ProductsCompetitorsRoute: typeof ProductsCompetitorsRoute
   ProductsFieldIntelRoute: typeof ProductsFieldIntelRoute
@@ -932,6 +957,7 @@ export interface RootRouteChildren {
   StoreSlugRoute: typeof StoreSlugRoute
   ApiAuthEmailBridgeRoute: typeof ApiAuthEmailBridgeRoute
   ApiAuthKeetaRoute: typeof ApiAuthKeetaRouteWithChildren
+  ApiAuthResolveMerchantRoute: typeof ApiAuthResolveMerchantRoute
   ApiAuthSallaRoute: typeof ApiAuthSallaRouteWithChildren
   ApiAuthZidRoute: typeof ApiAuthZidRouteWithChildren
   ApiChannelsByokRoute: typeof ApiChannelsByokRoute
@@ -1201,6 +1227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPricingRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/restore': {
       id: '/api/restore'
       path: '/api/restore'
@@ -1367,6 +1400,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/salla'
       fullPath: '/api/auth/salla'
       preLoaderRoute: typeof ApiAuthSallaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/resolve-merchant': {
+      id: '/api/auth/resolve-merchant'
+      path: '/api/auth/resolve-merchant'
+      fullPath: '/api/auth/resolve-merchant'
+      preLoaderRoute: typeof ApiAuthResolveMerchantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/keeta': {
@@ -1617,6 +1657,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiRegisterCodeRoute: ApiRegisterCodeRoute,
   ApiRestoreRoute: ApiRestoreRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   EmbedWidgetRoute: EmbedWidgetRoute,
   ProductsCompetitorsRoute: ProductsCompetitorsRoute,
   ProductsFieldIntelRoute: ProductsFieldIntelRoute,
@@ -1626,6 +1667,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreSlugRoute: StoreSlugRoute,
   ApiAuthEmailBridgeRoute: ApiAuthEmailBridgeRoute,
   ApiAuthKeetaRoute: ApiAuthKeetaRouteWithChildren,
+  ApiAuthResolveMerchantRoute: ApiAuthResolveMerchantRoute,
   ApiAuthSallaRoute: ApiAuthSallaRouteWithChildren,
   ApiAuthZidRoute: ApiAuthZidRouteWithChildren,
   ApiChannelsByokRoute: ApiChannelsByokRoute,
