@@ -4,15 +4,17 @@
 // No API key required — uses merchant_id only. Read-only; returns no credentials.
 //
 // Response:
-//   { channels: [{ platform, status, connected_at }] }
+//   { channels: [{ platform, status, connected_at, needs_shop_id? }] }
 //   status values: "connected" | "pending" | "error" | "not_connected"
+//   needs_shop_id (keeta only): true once OAuth-connected but before the
+//   post-connect Shop ID has been entered (Keeta's OAuth flow doesn't return one)
 
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ALL_PLATFORMS = [
   "salla", "foodics", "zid",
-  "talabat", "jahez", "snoonu", "deliveroo",
+  "talabat", "jahez", "snoonu", "deliveroo", "keeta",
 ] as const;
 
 export const Route = createFileRoute("/api/channels/status")({
@@ -31,7 +33,7 @@ export const Route = createFileRoute("/api/channels/status")({
 
         const { data, error } = await supabaseAdmin
           .from("ps_merchant_channels")
-          .select("platform, status, connected_at")
+          .select("platform, status, connected_at, metadata")
           .eq("account_id", merchantId)
           .neq("status", "revoked");
 
@@ -42,16 +44,27 @@ export const Route = createFileRoute("/api/channels/status")({
           );
         }
 
-        const statusMap: Record<string, { status: string; connected_at: string | null }> = {};
+        const statusMap: Record<string, { status: string; connected_at: string | null; metadata: Record<string, unknown> | null }> = {};
         for (const row of data ?? []) {
-          statusMap[row.platform] = { status: row.status, connected_at: row.connected_at };
+          statusMap[row.platform] = { status: row.status, connected_at: row.connected_at, metadata: row.metadata as Record<string, unknown> | null };
         }
 
-        const channels = ALL_PLATFORMS.map((p) => ({
-          platform:     p,
-          status:       statusMap[p]?.status ?? "not_connected",
-          connected_at: statusMap[p]?.connected_at ?? null,
-        }));
+        // metadata (which holds refresh_token for OAuth channels) is
+        // intentionally never spread into the response below — this endpoint
+        // takes no API key, only merchant_id.
+        const channels = ALL_PLATFORMS.map((p) => {
+          const row = statusMap[p];
+          const base = {
+            platform:     p,
+            status:       row?.status ?? "not_connected",
+            connected_at: row?.connected_at ?? null,
+          };
+          if (p === "keeta") {
+            const needsShopId = row?.status === "connected" && !row?.metadata?.shop_id;
+            return { ...base, needs_shop_id: needsShopId };
+          }
+          return base;
+        });
 
         return new Response(JSON.stringify({ channels }), {
           status: 200,

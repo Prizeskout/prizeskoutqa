@@ -23,6 +23,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   jahez:    "Jahez API",
   snoonu:   "Snoonu API",
   deliveroo:"Deliveroo API",
+  keeta:    "Keeta API",
   salla:    "Salla API",
   foodics:  "Foodics API",
   zid:      "Zid API",

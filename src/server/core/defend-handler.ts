@@ -1,7 +1,7 @@
 // =============================================================================
 // Defend — Outbound Reprice Dispatch with Circuit Breaker
 //
-// Aggregator targets: Talabat, Jahez, Snoonu, Deliveroo
+// Aggregator targets: Talabat, Jahez, Snoonu, Deliveroo, Keeta
 //
 // Circuit breaker states:
 //   Closed   → normal; trip to Open if error_count > 15% in 30s window
@@ -18,10 +18,12 @@ import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { writeAuditLog, dispatchSummary } from "./govern";
 import { CIRCUIT_OPEN_BACKOFF_SECONDS } from "./decide-engine";
 import { pushPriceToSourcePlatform } from "./platform-sync";
+import { keetaApiCall, getValidKeetaAccessToken } from "./keeta-client";
+import { getValidTalabatAccessToken, updateTalabatPrice } from "./talabat-client";
 
 const SOURCE_PLATFORMS = ["salla", "foodics", "zid"] as const;
 
-const VALID_CHANNELS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
+const VALID_CHANNELS = ["talabat", "jahez", "snoonu", "deliveroo", "keeta"] as const;
 type DispatchChannel = (typeof VALID_CHANNELS)[number];
 
 const OPEN_ERROR_THRESHOLD = 5;
@@ -125,7 +127,12 @@ async function recordDispatchSuccess(accountId: string, channel: string): Promis
 // ---------------------------------------------------------------------------
 // Real aggregator call (per-platform logic)
 // ---------------------------------------------------------------------------
-type ChannelCreds = { bearer_token?: string | null; manager_token?: string | null };
+type ChannelCreds = {
+  bearer_token?: string | null;
+  manager_token?: string | null;
+  id?: string;
+  metadata?: Record<string, unknown> | null;
+};
 
 async function getChannelCreds(accountId: string, merchantId: string, channel: string): Promise<ChannelCreds | null> {
   const { data } = await supabaseAdmin
@@ -149,6 +156,104 @@ async function callAggregatorApi(
 ): Promise<{ success: boolean; httpStatus: number; message?: string; durationMs: number }> {
   const start = Date.now();
 
+  // Keeta doesn't fit the shared fetch() pattern below — different base URL,
+  // signed-request auth (not a Bearer header), and a heavy product-replace
+  // payload rather than a price-only PATCH — so it returns early via the
+  // keeta-client.ts signing wrapper instead of falling through.
+  if (channel === "keeta") {
+    const shopId = (creds.metadata as Record<string, unknown> | null)?.shop_id;
+    if (!shopId) {
+      return {
+        success: false, httpStatus: 422,
+        message: "ERR_KEETA_SHOP_ID_MISSING: merchant has not entered their Keeta Shop ID yet.",
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const token: { accessToken: string | null; error?: string } = creds.id
+      ? await getValidKeetaAccessToken({ id: creds.id, bearer_token: creds.bearer_token ?? null, metadata: creds.metadata ?? null })
+      : { accessToken: creds.bearer_token ?? null };
+    if (!token.accessToken) {
+      return {
+        success: false, httpStatus: 401,
+        message: `ERR_KEETA_NO_VALID_TOKEN${token.error ? `: ${token.error}` : ""}`,
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const result = await keetaApiCall("/product/spu/batchupdate", { shopId: Number(shopId) }, {
+      accessToken: token.accessToken,
+      complexFields: {
+        spuList: [{
+          // Full-catalog metadata (name, categories, availability, fulfillment
+          // modes) isn't cached anywhere in PrizeSkout today — the fields below
+          // are the best available data plus documented minimal placeholders.
+          // See the "Product-catalog cache" gap noted in the Keeta build plan.
+          name: sku,
+          status: 1, // assumed "on shelf" — unverified enum value, first thing to confirm against Keeta's Test Store Account
+          openItemCode: sku,
+          isSpecialty: 0,
+          sourceLanguageType: "en",
+          shopCategoryOpenItemCodeList: [],
+          availableTime: { code: 1, values: [] },
+          userGetModeList: ["delivery"],
+          skuList: [{
+            openItemCode: sku,
+            price: String(newPrice),
+            pickPrice: String(newPrice),
+            canteenPrice: String(newPrice),
+            currency,
+          }],
+        }],
+      },
+    });
+
+    return {
+      success: result.ok,
+      httpStatus: result.httpStatus,
+      message: result.message,
+      durationMs: result.durationMs,
+    };
+  }
+
+  // Talabat, like Keeta, doesn't fit the shared fetch() pattern below —
+  // requires a live OAuth2 client_credentials token exchange (the merchant's
+  // raw client_secret is never usable directly as a Bearer token), a
+  // different host, and chain_id/vendor_id as URL path segments rather than
+  // a plain SKU path. See talabat-client.ts, verified against Talabat's real
+  // Partner API docs.
+  if (channel === "talabat") {
+    const metadata = (creds.metadata as Record<string, unknown> | null) ?? {};
+    const chainId = metadata.chain_id;
+    const vendorId = metadata.vendor_id;
+    if (typeof chainId !== "string" || typeof vendorId !== "string" || !chainId || !vendorId) {
+      return {
+        success: false, httpStatus: 422,
+        message: "ERR_TALABAT_CHAIN_VENDOR_MISSING: merchant connected without a chain_id/vendor_id.",
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const token = creds.id
+      ? await getValidTalabatAccessToken({ id: creds.id, manager_token: creds.manager_token ?? null, bearer_token: creds.bearer_token ?? null, metadata: creds.metadata ?? null })
+      : { accessToken: null as string | null, error: "No channel row id" };
+    if (!token.accessToken) {
+      return {
+        success: false, httpStatus: 401,
+        message: `ERR_TALABAT_NO_VALID_TOKEN${token.error ? `: ${token.error}` : ""}`,
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const result = await updateTalabatPrice({ chainId, vendorId, sku, newPrice, accessToken: token.accessToken });
+    return {
+      success: result.ok,
+      httpStatus: result.httpStatus,
+      message: result.message,
+      durationMs: result.durationMs,
+    };
+  }
+
   // Build request per platform spec
   let url = "";
   let body: Record<string, unknown> = {};
@@ -157,12 +262,7 @@ async function callAggregatorApi(
     Accept: "application/json",
   };
 
-  if (channel === "talabat") {
-    // Talabat: PATCH /menu/items/{sku}/price
-    url = `https://api.talabat.com/merchant/v1/menu/items/${encodeURIComponent(sku)}/price`;
-    headers["Authorization"] = `Bearer ${creds.bearer_token ?? ""}`;
-    body = { price: newPrice, currency };
-  } else if (channel === "jahez") {
+  if (channel === "jahez") {
     // Jahez: POST /branch/{locationId}/items/update
     url = `https://merchant-api.jahez.net/v2/branch/${locationId ?? "default"}/items/update`;
     headers["Authorization"] = `Bearer ${creds.bearer_token ?? ""}`;
@@ -184,7 +284,7 @@ async function callAggregatorApi(
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     const resp = await fetch(url, {
-      method: channel === "talabat" || channel === "snoonu" || channel === "deliveroo" ? "PATCH" : "POST",
+      method: channel === "snoonu" || channel === "deliveroo" ? "PATCH" : "POST",
       headers,
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -224,7 +324,7 @@ export async function dispatchToAggregators(
   // Find which channels this merchant has connected
   const { data: channels } = await supabaseAdmin
     .from("ps_merchant_channels")
-    .select("platform, bearer_token, manager_token")
+    .select("id, platform, bearer_token, manager_token, metadata")
     .eq("account_id", accountId)
     .eq("merchant_id", merchantId)
     .eq("status", "connected")
@@ -294,7 +394,7 @@ export async function dispatchToAggregators(
     // ------------------------------------------------------------------
     // Attempt dispatch
     // ------------------------------------------------------------------
-    const creds = { bearer_token: ch.bearer_token, manager_token: ch.manager_token };
+    const creds = { bearer_token: ch.bearer_token, manager_token: ch.manager_token, id: ch.id, metadata: ch.metadata as Record<string, unknown> | null };
     const callResult = await callAggregatorApi(channel, creds, sku, locationId, newPrice, currency);
 
     let dispatchStatus: string;

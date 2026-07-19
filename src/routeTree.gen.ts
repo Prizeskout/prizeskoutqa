@@ -68,6 +68,7 @@ import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/co
 import { Route as ApiChannelsByokRouteImport } from './routes/api/channels/byok'
 import { Route as ApiAuthZidRouteImport } from './routes/api/auth/zid'
 import { Route as ApiAuthSallaRouteImport } from './routes/api/auth/salla'
+import { Route as ApiAuthKeetaRouteImport } from './routes/api/auth/keeta'
 import { Route as ApiAuthEmailBridgeRouteImport } from './routes/api/auth/email-bridge'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
@@ -79,6 +80,7 @@ import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
+import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
 import { Route as ApiPublicV1WebhooksTestSignatureRouteImport } from './routes/api/public/v1/webhooks.test-signature'
 
 const SignupRoute = SignupRouteImport.update({
@@ -377,6 +379,11 @@ const ApiAuthSallaRoute = ApiAuthSallaRouteImport.update({
   path: '/api/auth/salla',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthKeetaRoute = ApiAuthKeetaRouteImport.update({
+  id: '/api/auth/keeta',
+  path: '/api/auth/keeta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthEmailBridgeRoute = ApiAuthEmailBridgeRouteImport.update({
   id: '/api/auth/email-bridge',
   path: '/api/auth/email-bridge',
@@ -437,6 +444,11 @@ const ApiAuthSallaCallbackRoute = ApiAuthSallaCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => ApiAuthSallaRoute,
 } as any)
+const ApiAuthKeetaCallbackRoute = ApiAuthKeetaCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => ApiAuthKeetaRoute,
+} as any)
 const ApiPublicV1WebhooksTestSignatureRoute =
   ApiPublicV1WebhooksTestSignatureRouteImport.update({
     id: '/api/public/v1/webhooks/test-signature',
@@ -489,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
+  '/api/auth/keeta': typeof ApiAuthKeetaRouteWithChildren
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
   '/api/channels/byok': typeof ApiChannelsByokRoute
@@ -505,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
+  '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -559,6 +573,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardIndexRoute
   '/margin-dashboard': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
+  '/api/auth/keeta': typeof ApiAuthKeetaRouteWithChildren
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
   '/api/channels/byok': typeof ApiChannelsByokRoute
@@ -575,6 +590,7 @@ export interface FileRoutesByTo {
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
+  '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -633,6 +649,7 @@ export interface FileRoutesById {
   '/dashboard/': typeof DashboardIndexRoute
   '/margin-dashboard/': typeof MarginDashboardIndexRoute
   '/api/auth/email-bridge': typeof ApiAuthEmailBridgeRoute
+  '/api/auth/keeta': typeof ApiAuthKeetaRouteWithChildren
   '/api/auth/salla': typeof ApiAuthSallaRouteWithChildren
   '/api/auth/zid': typeof ApiAuthZidRouteWithChildren
   '/api/channels/byok': typeof ApiChannelsByokRoute
@@ -649,6 +666,7 @@ export interface FileRoutesById {
   '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
   '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
   '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
+  '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -708,6 +726,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/margin-dashboard/'
     | '/api/auth/email-bridge'
+    | '/api/auth/keeta'
     | '/api/auth/salla'
     | '/api/auth/zid'
     | '/api/channels/byok'
@@ -724,6 +743,7 @@ export interface FileRouteTypes {
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
+    | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
@@ -778,6 +798,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/margin-dashboard'
     | '/api/auth/email-bridge'
+    | '/api/auth/keeta'
     | '/api/auth/salla'
     | '/api/auth/zid'
     | '/api/channels/byok'
@@ -794,6 +815,7 @@ export interface FileRouteTypes {
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
+    | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
@@ -851,6 +873,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/margin-dashboard/'
     | '/api/auth/email-bridge'
+    | '/api/auth/keeta'
     | '/api/auth/salla'
     | '/api/auth/zid'
     | '/api/channels/byok'
@@ -867,6 +890,7 @@ export interface FileRouteTypes {
     | '/docs/guides/quickstart'
     | '/docs/guides/sdk-quickstart'
     | '/docs/guides/webhooks'
+    | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
     | '/api/public/hooks/flash-end'
@@ -907,6 +931,7 @@ export interface RootRouteChildren {
   ProductsPromotionsRoute: typeof ProductsPromotionsRoute
   StoreSlugRoute: typeof StoreSlugRoute
   ApiAuthEmailBridgeRoute: typeof ApiAuthEmailBridgeRoute
+  ApiAuthKeetaRoute: typeof ApiAuthKeetaRouteWithChildren
   ApiAuthSallaRoute: typeof ApiAuthSallaRouteWithChildren
   ApiAuthZidRoute: typeof ApiAuthZidRouteWithChildren
   ApiChannelsByokRoute: typeof ApiChannelsByokRoute
@@ -1344,6 +1369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSallaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/keeta': {
+      id: '/api/auth/keeta'
+      path: '/api/auth/keeta'
+      fullPath: '/api/auth/keeta'
+      preLoaderRoute: typeof ApiAuthKeetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/email-bridge': {
       id: '/api/auth/email-bridge'
       path: '/api/auth/email-bridge'
@@ -1420,6 +1452,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/salla/callback'
       preLoaderRoute: typeof ApiAuthSallaCallbackRouteImport
       parentRoute: typeof ApiAuthSallaRoute
+    }
+    '/api/auth/keeta/callback': {
+      id: '/api/auth/keeta/callback'
+      path: '/callback'
+      fullPath: '/api/auth/keeta/callback'
+      preLoaderRoute: typeof ApiAuthKeetaCallbackRouteImport
+      parentRoute: typeof ApiAuthKeetaRoute
     }
     '/api/public/v1/webhooks/test-signature': {
       id: '/api/public/v1/webhooks/test-signature'
@@ -1523,6 +1562,18 @@ const MarginDashboardRouteWithChildren = MarginDashboardRoute._addFileChildren(
   MarginDashboardRouteChildren,
 )
 
+interface ApiAuthKeetaRouteChildren {
+  ApiAuthKeetaCallbackRoute: typeof ApiAuthKeetaCallbackRoute
+}
+
+const ApiAuthKeetaRouteChildren: ApiAuthKeetaRouteChildren = {
+  ApiAuthKeetaCallbackRoute: ApiAuthKeetaCallbackRoute,
+}
+
+const ApiAuthKeetaRouteWithChildren = ApiAuthKeetaRoute._addFileChildren(
+  ApiAuthKeetaRouteChildren,
+)
+
 interface ApiAuthSallaRouteChildren {
   ApiAuthSallaCallbackRoute: typeof ApiAuthSallaCallbackRoute
 }
@@ -1574,6 +1625,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsPromotionsRoute: ProductsPromotionsRoute,
   StoreSlugRoute: StoreSlugRoute,
   ApiAuthEmailBridgeRoute: ApiAuthEmailBridgeRoute,
+  ApiAuthKeetaRoute: ApiAuthKeetaRouteWithChildren,
   ApiAuthSallaRoute: ApiAuthSallaRouteWithChildren,
   ApiAuthZidRoute: ApiAuthZidRouteWithChildren,
   ApiChannelsByokRoute: ApiChannelsByokRoute,

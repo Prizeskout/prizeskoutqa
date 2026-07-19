@@ -1,24 +1,26 @@
-// Unauthenticated inbound webhook receiver for Salla, Foodics, and Zid.
+// Unauthenticated inbound webhook receiver for Salla, Foodics, Zid, and Keeta.
 //
-// URL: POST /api/webhooks/{platform}   (platform = salla | foodics | zid)
+// URL: POST /api/webhooks/{platform}   (platform = salla | foodics | zid | keeta)
 //
 // These endpoints are called by the platforms themselves, not by API-key
 // callers, so they bypass the /api/public/v1 auth layer entirely.
-// Authentication is done inside each handler via HMAC-SHA-256 signature
-// verification against the per-channel webhook_secret stored in Supabase.
+// Authentication is done inside each handler (HMAC-SHA-256 for Salla/Foodics,
+// Basic Auth for Zid, app-level request signing for Keeta — see
+// src/server/core/platform-webhooks.ts for each).
 
 import { createFileRoute } from "@tanstack/react-router";
 import {
   handleSallaWebhook,
   handleFoodicsWebhook,
   handleZidWebhook,
+  handleKeetaWebhook,
 } from "@/server/core/platform-webhooks";
 
-const SUPPORTED = new Set(["salla", "foodics", "zid"]);
+const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta"]);
 
 function notFound(platform: string): Response {
   return new Response(
-    JSON.stringify({ error: `Unknown platform: ${platform}. Supported: salla, foodics, zid.` }),
+    JSON.stringify({ error: `Unknown platform: ${platform}. Supported: salla, foodics, zid, keeta.` }),
     { status: 404, headers: { "Content-Type": "application/json" } },
   );
 }
@@ -36,6 +38,7 @@ async function handle(request: Request, platform: string): Promise<Response> {
   if (platform === "salla")   return handleSallaWebhook(request);
   if (platform === "foodics") return handleFoodicsWebhook(request);
   if (platform === "zid")     return handleZidWebhook(request);
+  if (platform === "keeta")   return handleKeetaWebhook(request);
 
   return notFound(platform);
 }

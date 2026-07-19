@@ -11,7 +11,7 @@ export const Route = createFileRoute("/admin/channels")({
 
 type Channel = { account_id: string; platform: string; status: string; connected_at: string | null };
 
-const ALL_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo", "salla", "foodics", "zid"];
+const ALL_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo", "keeta", "salla", "foodics", "zid"];
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   connected:     { bg: "#DCFCE7", fg: "#166534" },

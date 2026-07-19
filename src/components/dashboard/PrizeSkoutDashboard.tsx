@@ -62,21 +62,21 @@ const INBOUND_INTEGRATIONS = [
 ];
 
 const OUTBOUND_INTEGRATIONS = [
-  { name:"Talabat",   platform:"talabat",   region:"QA · KSA · UAE",     byok:true },
-  { name:"Snoonu",    platform:"snoonu",    region:"QA",                  byok:false },
-  { name:"Keeta",     platform:"keeta",     region:"QA · KSA",            byok:false },
-  { name:"Jahez",     platform:"jahez",     region:"KSA · hyperlocal",    byok:true },
-  { name:"Deliveroo", platform:"deliveroo", region:"UAE · QA",            byok:false },
+  { name:"Talabat",   platform:"talabat",   region:"QA · KSA · UAE",     byok:true,  oauthPath:null as string|null },
+  { name:"Snoonu",    platform:"snoonu",    region:"QA",                  byok:false, oauthPath:null as string|null },
+  { name:"Keeta",     platform:"keeta",     region:"QA · KSA",            byok:false, oauthPath:"/api/auth/keeta" as string|null },
+  { name:"Jahez",     platform:"jahez",     region:"KSA · hyperlocal",    byok:true,  oauthPath:null as string|null },
+  { name:"Deliveroo", platform:"deliveroo", region:"UAE · QA",            byok:false, oauthPath:null as string|null },
 ];
 
-type ByokField = { key:string; label:string; hint?:string };
+type ByokField = { key:string; label:string; hint?:string; type?:"password"|"text" };
 const BYOK_CONFIG: Record<string, { fields:ByokField[]; portalHint?:string }> = {
   talabat: {
     fields:[
       { key:"client_id",     label:"Client ID",     hint:"Talabat Partner Portal → Settings → API Credentials" },
       { key:"client_secret", label:"Client Secret" },
       { key:"vendor_id",     label:"Vendor ID",     hint:"Your store's vendor ID from the Talabat portal" },
-      { key:"chain_id",      label:"Chain ID" },
+      { key:"chain_id",      label:"Chain ID",      hint:"UUID format, e.g. 12345678-1234-1234-1234-123456789012 — from partner.talabat.com" },
     ],
     portalHint:"Find your credentials at partner.talabat.com",
   },
@@ -87,6 +87,11 @@ const BYOK_CONFIG: Record<string, { fields:ByokField[]; portalHint?:string }> = 
       { key:"branch_id",   label:"Branch ID",   hint:"Your branch ID from the Jahez partner dashboard" },
     ],
     portalHint:"Contact integration@jahez.net to receive your API credentials",
+  },
+  keeta_shop_id: {
+    fields:[
+      { key:"shop_id", label:"Keeta Shop ID", type:"text", hint:"Appears in any inbound Keeta order webhook payload, or ask your Keeta account manager." },
+    ],
   },
 };
 
@@ -153,6 +158,11 @@ const T = {
     orderValueLabel:"Order value", chargedByPartnerLabel:"Charged by partner",
     additionalNotesLabel:"Additional notes (optional)",
     logDiscrepancyBtn:"+ Log Discrepancy", cancelBtn:"− Cancel",
+    finishSetupBadge:"Finish Setup",
+    keetaConnectedMsg:"Keeta connected · finish setup by entering your Shop ID",
+    keetaShopIdPrompt:"Enter the Shop ID for your Keeta store to finish connecting. PrizeSkout needs this to push margin-safe prices to your Keeta menu.",
+    keetaShopIdSaved:"Keeta Shop ID saved · prices syncing",
+    keetaShopIdPending:"Shop ID needed to sync prices",
   },
   ar: {
     cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
@@ -216,6 +226,11 @@ const T = {
     orderValueLabel:"قيمة الطلب", chargedByPartnerLabel:"المبلغ المحصل من الشريك",
     additionalNotesLabel:"ملاحظات إضافية (اختياري)",
     logDiscrepancyBtn:"+ تسجيل تناقض", cancelBtn:"− إلغاء",
+    finishSetupBadge:"أكمل الإعداد",
+    keetaConnectedMsg:"تم ربط كيتا · أكمل الإعداد بإدخال رقم المتجر",
+    keetaShopIdPrompt:"أدخل رقم متجر كيتا (Shop ID) لإكمال الربط. يحتاج برايز سكاوت إلى هذا الرقم لإرسال الأسعار الآمنة للهامش إلى قائمة كيتا الخاصة بك.",
+    keetaShopIdSaved:"تم حفظ رقم متجر كيتا · جارٍ مزامنة الأسعار",
+    keetaShopIdPending:"رقم المتجر مطلوب لمزامنة الأسعار",
   },
   fr: {
     cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"Boucle de défense active", defendS:"4 nœuds périphériques · opérationnels",
@@ -279,6 +294,11 @@ const T = {
     orderValueLabel:"Valeur de la commande", chargedByPartnerLabel:"Facturé par le partenaire",
     additionalNotesLabel:"Notes complémentaires (facultatif)",
     logDiscrepancyBtn:"+ Signaler un écart", cancelBtn:"− Annuler",
+    finishSetupBadge:"Terminer la configuration",
+    keetaConnectedMsg:"Keeta connecté · terminez la configuration en saisissant votre Shop ID",
+    keetaShopIdPrompt:"Saisissez le Shop ID de votre boutique Keeta pour terminer la connexion. PrizeSkout en a besoin pour envoyer les prix protégeant la marge à votre menu Keeta.",
+    keetaShopIdSaved:"Shop ID Keeta enregistré · synchronisation des prix",
+    keetaShopIdPending:"Shop ID requis pour synchroniser les prix",
   },
 };
 
@@ -353,6 +373,7 @@ export function PrizeSkoutDashboard() {
   const [byokStatus, setByokStatus]     = useState<"idle"|"loading"|"ok"|"err">("idle");
   const [byokError, setByokError]       = useState<string|null>(null);
   const [channelStatuses, setChannelStatuses] = useState<Record<string,string>>({});
+  const [keetaNeedsShopId, setKeetaNeedsShopId] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   // Dispute form state
   const [showDisputeForm, setShowDisputeForm]       = useState(false);
@@ -389,6 +410,12 @@ export function PrizeSkoutDashboard() {
       window.history.replaceState({}, "", window.location.pathname);
       showToast("Salla connected · product catalog syncing");
     }
+    if (params.get("keeta_connected") === "1") {
+      setChannelStatuses(prev => ({ ...prev, keeta: "connected" }));
+      setKeetaNeedsShopId(true);
+      window.history.replaceState({}, "", window.location.pathname);
+      showToast(t.keetaConnectedMsg);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -400,11 +427,12 @@ export function PrizeSkoutDashboard() {
     if (!mid) return;
     fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
       .then(r => r.ok ? r.json() : null)
-      .then((d: { channels?: { platform:string; status:string }[] } | null) => {
+      .then((d: { channels?: { platform:string; status:string; needs_shop_id?:boolean }[] } | null) => {
         if (!d?.channels) return;
         const m: Record<string,string> = {};
         for (const ch of d.channels) m[ch.platform] = ch.status;
         setChannelStatuses(m);
+        setKeetaNeedsShopId(d.channels.find(c => c.platform === "keeta")?.needs_shop_id ?? false);
       })
       .catch(() => {});
   }, [tab]);
@@ -1235,13 +1263,22 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,200px),1fr))", gap:14 }}>
                 {OUTBOUND_INTEGRATIONS.map(o => {
                   const connected = channelStatuses[o.platform] === "connected";
+                  const needsShopId = connected && o.platform === "keeta" && keetaNeedsShopId;
                   return (
                   <div key={o.name} style={{ background:"var(--surface)", border:"1px solid var(--border)",
                     borderRadius:14, boxShadow:"var(--shadow)", padding:"18px 20px",
                     display:"flex", flexDirection:"column", gap:10 }}>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
                       <span style={{ fontSize:15, fontWeight:800 }}>{o.name}</span>
-                      {connected ? (
+                      {needsShopId ? (
+                        <button
+                          type="button"
+                          onClick={() => { setByokPlatform("keeta_shop_id"); setByokFields({}); setByokStatus("idle"); setByokError(null); }}
+                          style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                            background:"color-mix(in srgb,#F59E0B 12%,var(--surface))",
+                            color:"#F59E0B", border:"1px solid color-mix(in srgb,#F59E0B 32%,transparent)",
+                            borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.finishSetupBadge}</button>
+                      ) : connected ? (
                         <span style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
                           background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
                           color:GN, border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
@@ -1254,6 +1291,18 @@ export function PrizeSkoutDashboard() {
                             background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
                             color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                             borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.setupBadge}</button>
+                      ) : o.oauthPath ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const mid = localStorage.getItem("ps_merchant_id");
+                            if (mid) window.location.href = `${o.oauthPath}?merchant_id=${encodeURIComponent(mid)}`;
+                            else showToast("Please complete onboarding first.");
+                          }}
+                          style={{ fontSize:9.5, fontWeight:700, letterSpacing:"0.8px",
+                            background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
+                            color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
+                            borderRadius:6, padding:"3px 8px", cursor:"pointer", fontFamily:"inherit" }}>{t.connectPrefix}</button>
                       ) : (
                         <span style={{ fontSize:9.5, fontWeight:600, letterSpacing:"0.6px",
                           color:"var(--muted)", border:"1px solid var(--border)",
@@ -1264,9 +1313,9 @@ export function PrizeSkoutDashboard() {
                     <div style={{ display:"flex", alignItems:"center", gap:7, paddingTop:10,
                       borderTop:"1px solid var(--border)", fontSize:11.5, color:"var(--muted)" }}>
                       <span style={{ width:7,height:7,borderRadius:"50%",
-                        background: connected ? GN : OG,flexShrink:0,
+                        background: needsShopId ? "#F59E0B" : connected ? GN : OG, flexShrink:0,
                         animation: connected ? "pk-pulse 2s ease infinite" : "none" }} />
-                      {connected ? t.storeConnectedSyncing : o.byok ? t.tapSetupMsg : t.awaitingBuildMsg}
+                      {needsShopId ? t.keetaShopIdPending : connected ? t.storeConnectedSyncing : o.byok || o.oauthPath ? t.tapSetupMsg : t.awaitingBuildMsg}
                     </div>
                   </div>
                   );
@@ -1478,7 +1527,7 @@ export function PrizeSkoutDashboard() {
       {byokPlatform && (() => {
         const p = byokPlatform as string;
         const cfg = BYOK_CONFIG[p];
-        const platformName = OUTBOUND_INTEGRATIONS.find(o => o.platform === p)?.name ?? p;
+        const platformName = p === "keeta_shop_id" ? "Keeta" : OUTBOUND_INTEGRATIONS.find(o => o.platform === p)?.name ?? p;
         function closeByok() { setByokPlatform(null); setByokStatus("idle"); setByokError(null); setByokFields({}); }
         async function submitByok(e: React.FormEvent) {
           e.preventDefault();
@@ -1495,8 +1544,13 @@ export function PrizeSkoutDashboard() {
             const data = await res.json() as { ok?:boolean; error?:string };
             if (data.ok) {
               setByokStatus("ok");
-              setChannelStatuses(prev => ({ ...prev, [p]: "connected" }));
-              setTimeout(() => { closeByok(); showToast(`${platformName} store connected · prices syncing`); }, 1200);
+              if (p === "keeta_shop_id") {
+                setKeetaNeedsShopId(false);
+                setTimeout(() => { closeByok(); showToast(t.keetaShopIdSaved); }, 1200);
+              } else {
+                setChannelStatuses(prev => ({ ...prev, [p]: "connected" }));
+                setTimeout(() => { closeByok(); showToast(`${platformName} store connected · prices syncing`); }, 1200);
+              }
             } else {
               setByokStatus("err");
               setByokError(data.error ?? "Connection failed. Check your credentials and try again.");
@@ -1521,10 +1575,12 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
                 <div>
                   <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.3px" }}>
-                    Connect {platformName}
+                    {p === "keeta_shop_id" ? `${t.finishSetupBadge} · Keeta` : `${t.connectPrefix} ${platformName}`}
                   </h3>
                   <p style={{ margin:"6px 0 0", fontSize:13, color:"var(--muted)", lineHeight:1.6 }}>
-                    Paste your credentials from your {platformName} partner portal. PrizeSkout uses them to push margin-safe prices to your live menu.
+                    {p === "keeta_shop_id"
+                      ? t.keetaShopIdPrompt
+                      : `Paste your credentials from your ${platformName} partner portal. PrizeSkout uses them to push margin-safe prices to your live menu.`}
                   </p>
                 </div>
                 <button onClick={closeByok} aria-label="Close"
@@ -1546,7 +1602,7 @@ export function PrizeSkoutDashboard() {
                       )}
                       <input
                         id={`byok-${f.key}`}
-                        type="password"
+                        type={f.type ?? "password"}
                         autoComplete="off"
                         required
                         value={byokFields[f.key] ?? ""}
@@ -1593,7 +1649,9 @@ export function PrizeSkoutDashboard() {
                       fontSize:14, fontWeight:700, fontFamily:"inherit",
                       opacity: byokStatus === "loading" ? .75 : 1,
                       transition:"opacity .2s,background .2s" }}>
-                    {byokStatus === "loading" ? "Connecting…" : byokStatus === "ok" ? "Connected" : `Connect ${platformName}`}
+                    {p === "keeta_shop_id"
+                      ? (byokStatus === "loading" ? "Saving…" : byokStatus === "ok" ? "Saved" : "Save Shop ID")
+                      : (byokStatus === "loading" ? "Connecting…" : byokStatus === "ok" ? "Connected" : `Connect ${platformName}`)}
                   </button>
                 </form>
               ) : (

@@ -1,9 +1,11 @@
 // =============================================================================
-// Platform Webhook Receivers — Salla, Foodics, Zid
+// Platform Webhook Receivers — Salla, Foodics, Zid, Keeta
 //
 // Called by the platforms themselves (not by API-key callers).
-// Auth: HMAC-SHA-256 over the raw request body, key stored per-channel
-//       in ps_merchant_channels.webhook_secret.
+// Auth: Salla/Foodics use HMAC-SHA-256 over the raw request body (key stored
+//       per-channel in ps_merchant_channels.webhook_secret); Zid uses Basic
+//       Auth; Keeta uses the same app-level SHA-256 request-signing scheme
+//       as its outbound API calls (see keeta-client.ts / verifyKeetaSig).
 //
 // Flow per request:
 //   1. Read raw body (must preserve bytes for HMAC)
@@ -22,6 +24,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide, VALID_REGIONS, DEFAULT_MARGIN_FLOOR } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
+import { signRequest } from "./keeta-client";
 
 // ---------------------------------------------------------------------------
 // Event allow-lists — only pricing-relevant events trigger the pipeline
@@ -83,6 +86,32 @@ async function verifyHmac(rawBody: string, secret: string, header: string | null
 }
 
 // ---------------------------------------------------------------------------
+// Keeta signature verification — same sig scheme as outbound calls, computed
+// over the flat webhook payload (see keeta-client.ts for the algorithm).
+// ---------------------------------------------------------------------------
+async function verifyKeetaSig(payload: Record<string, unknown>, webhookUrl: string): Promise<boolean> {
+  const appSecret = process.env.KEETA_APP_SECRET;
+  const received = payload.sig;
+  if (!appSecret || typeof received !== "string") return false;
+
+  const params: Record<string, string | number | boolean> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (key === "sig") continue;
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      params[key] = value;
+    }
+  }
+  const expected = await signRequest(webhookUrl, params, appSecret);
+
+  if (received.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < received.length; i++) {
+    diff |= received.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+// ---------------------------------------------------------------------------
 // Channel lookup by platform-native store identifier stored in metadata
 // ---------------------------------------------------------------------------
 type Channel = {
@@ -94,8 +123,9 @@ type Channel = {
 };
 
 async function findChannel(platform: string, platformStoreId: string): Promise<Channel | null> {
-  // Salla & Zid use metadata->store_id; Foodics uses metadata->business_id
-  const metaKey = platform === "foodics" ? "business_id" : "store_id";
+  // Salla & Zid use metadata->store_id; Foodics uses metadata->business_id;
+  // Keeta's webhook payload carries shopId directly, mapped to metadata->shop_id
+  const metaKey = platform === "foodics" ? "business_id" : platform === "keeta" ? "shop_id" : "store_id";
 
   const { data } = await supabaseAdmin
     .from("ps_merchant_channels")
@@ -431,6 +461,40 @@ export async function handleZidWebhook(request: Request): Promise<Response> {
     region: "SA",
     rawPayload: payload,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Keeta webhook handler
+// POST /api/webhooks/keeta
+// Auth: same app-level `sig` scheme as outbound calls (see verifyKeetaSig)
+// Payload: { sig, eventId, appId, messageId, shopId, message (JSON string), timestamp }
+//
+// v1 scope is deliberately minimal: verify + acknowledge only, no pipeline
+// run. Keeta's registered event (1001, order placement) isn't a product/
+// price-update event and carries no margin/cost data PrizeSkout caches
+// anywhere — there's nothing correct to compute from it yet. None of
+// Keeta's true siblings (Talabat/Jahez/Snoonu/Deliveroo — the other
+// outbound-only channels) have any inbound pipeline either; this preserves
+// that boundary rather than inventing a one-off exception. Real per-order
+// margin reconciliation is a documented fast-follow, not attempted here.
+// ---------------------------------------------------------------------------
+export async function handleKeetaWebhook(request: Request): Promise<Response> {
+  const rawBody = await request.text();
+  let payload: Record<string, unknown>;
+  try { payload = JSON.parse(rawBody); } catch { return err("Invalid JSON", 400); }
+
+  const shopId = payload.shopId;
+  if (shopId === undefined || shopId === null) return err("Missing shopId", 400);
+
+  const channel = await findChannel("keeta", String(shopId));
+  if (!channel) return ok({ received: true, processed: false, reason: "merchant_not_connected" });
+
+  const webhookUrl = `${new URL(request.url).origin}/api/webhooks/keeta`;
+  if (!await verifyKeetaSig(payload, webhookUrl)) {
+    return err("Invalid signature", 401);
+  }
+
+  return ok({ received: true, event_id: payload.eventId ?? null, processed: false, reason: "order_events_not_yet_wired_to_pipeline" });
 }
 
 // ---------------------------------------------------------------------------

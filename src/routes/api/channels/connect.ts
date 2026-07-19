@@ -1,9 +1,11 @@
 // POST /api/channels/connect
 // Dashboard-facing endpoint — no API key required, uses merchant_id from body.
-// Supports: talabat (OAuth BYOK), jahez (secret key BYOK)
+// Supports: talabat (OAuth BYOK), jahez (secret key BYOK),
+//           keeta_shop_id (post-OAuth shop-ID capture for an already-
+//           connected Keeta channel — Keeta itself connects via /api/auth/keeta)
 
 import { createFileRoute } from "@tanstack/react-router";
-import { connectTalabat, connectJahez, verifyMerchantAccess } from "@/server/core/byok-connect";
+import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
 
 type Body = Record<string, string>;
 
@@ -50,7 +52,20 @@ export const Route = createFileRoute("/api/channels/connect")({
               : resp({ ok: false, error: result.message }, 200);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez.` }, 400);
+          if (platform === "keeta_shop_id") {
+            // Synthetic platform key, deliberately not "keeta" — Keeta itself
+            // can only ever be connected via OAuth (/api/auth/keeta), never
+            // through a credential-paste flow. This branch only finishes an
+            // already-connected Keeta channel by capturing its Shop ID.
+            const { shop_id } = body;
+            if (!shop_id) return resp({ error: "Keeta requires shop_id." }, 400);
+            const result = await setKeetaShopId(merchant_id, shop_id);
+            return result.ok
+              ? resp({ ok: true, platform }, 200)
+              : resp({ ok: false, error: result.message }, 200);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);

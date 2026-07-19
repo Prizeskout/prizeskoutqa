@@ -120,7 +120,7 @@ function KpiCard({
   );
 }
 
-const PLATFORM_ORDER = ["talabat", "jahez", "snoonu", "deliveroo", "salla", "foodics", "zid"];
+const PLATFORM_ORDER = ["talabat", "jahez", "snoonu", "deliveroo", "keeta", "salla", "foodics", "zid"];
 
 function AdminOverview() {
   const fetchStats = useServerFn(getAdminStats);

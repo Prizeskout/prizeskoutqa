@@ -108,6 +108,11 @@ async function registerPlatformWebhook(
 
 const SOURCE_PLATFORMS = ["salla", "foodics", "zid"] as const;
 
+// Keeta is deliberately absent here. This endpoint's contract is "paste a
+// bearer token, we probe it" — incompatible with Keeta's signed-request
+// model, where there's no static token a caller could paste (every call,
+// including the token exchange itself, needs a live per-request signature).
+// Keeta only ever connects via the OAuth flow in src/routes/api/auth/keeta*.
 const VALID_PLATFORMS = ["salla", "foodics", "zid", "talabat", "jahez", "snoonu", "deliveroo"] as const;
 type Platform = (typeof VALID_PLATFORMS)[number];
 

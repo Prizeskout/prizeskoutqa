@@ -324,7 +324,6 @@ function Step2({
   sallaConnected, zidConnected,
   talabatToken, setTalabatToken,
   snoonuToken, setSnoonuToken,
-  keetaToken, setKeetaToken,
   jahezToken, setJahezToken,
   onNext, onBack,
 }: {
@@ -333,7 +332,6 @@ function Step2({
   zidConnected: boolean;
   talabatToken: string; setTalabatToken: (v: string) => void;
   snoonuToken: string; setSnoonuToken: (v: string) => void;
-  keetaToken: string; setKeetaToken: (v: string) => void;
   jahezToken: string; setJahezToken: (v: string) => void;
   onNext: () => void; onBack: () => void;
 }) {
@@ -377,10 +375,6 @@ function Step2({
           <div>
             <FieldLabel>Snoonu API Token</FieldLabel>
             <FocusInput value={snoonuToken} onChange={setSnoonuToken} placeholder="snu_live_xxxxxxxxxxxx" type="password" />
-          </div>
-          <div>
-            <FieldLabel>Keeta API Token</FieldLabel>
-            <FocusInput value={keetaToken} onChange={setKeetaToken} placeholder="kta_live_xxxxxxxxxxxx" type="password" />
           </div>
           <div>
             <FieldLabel>Jahez API Token</FieldLabel>
@@ -643,7 +637,6 @@ function OnboardingPage() {
   // Step 2 aggregator tokens
   const [talabatToken, setTalabatToken] = useState("");
   const [snoonuToken,  setSnoonuToken]  = useState("");
-  const [keetaToken,   setKeetaToken]   = useState("");
   const [jahezToken,   setJahezToken]   = useState("");
 
   // Step 3
@@ -765,7 +758,6 @@ function OnboardingPage() {
             zidConnected={zidConnected}
             talabatToken={talabatToken} setTalabatToken={setTalabatToken}
             snoonuToken={snoonuToken}   setSnoonuToken={setSnoonuToken}
-            keetaToken={keetaToken}     setKeetaToken={setKeetaToken}
             jahezToken={jahezToken}     setJahezToken={setJahezToken}
             onNext={() => setStep(2)}
             onBack={() => setStep(0)}
