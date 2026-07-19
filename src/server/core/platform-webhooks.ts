@@ -21,10 +21,11 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { decide, VALID_REGIONS, DEFAULT_MARGIN_FLOOR } from "./decide-engine";
+import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
 import { signRequest } from "./keeta-client";
+import { getMerchantMarginFloor } from "./merchant-pricing-config";
 
 // ---------------------------------------------------------------------------
 // Event allow-lists — only pricing-relevant events trigger the pipeline
@@ -203,11 +204,12 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
   if (insertErr || !ingestRow) return err("Failed to persist ingest event", 500);
 
   // 2. Decide
+  const marginFloorPct = await getMerchantMarginFloor(p.channel.account_id);
   const decideOutput = decide({
     region,
     baseCost: p.baseCost,
     currentRetailPrice: p.price,
-    marginFloorPct: DEFAULT_MARGIN_FLOOR,
+    marginFloorPct,
   });
 
   const { data: decideRow } = await supabaseAdmin

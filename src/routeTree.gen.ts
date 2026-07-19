@@ -61,6 +61,7 @@ import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.s
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/catalog'
 import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
+import { Route as ApiPricingMarginFloorRouteImport } from './routes/api/pricing/margin-floor'
 import { Route as ApiDisputeVoucherRouteImport } from './routes/api/dispute/voucher'
 import { Route as ApiCopilotCompileRouteImport } from './routes/api/copilot/compile'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
@@ -346,6 +347,11 @@ const ApiRepricingApplyRoute = ApiRepricingApplyRouteImport.update({
   path: '/api/repricing/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPricingMarginFloorRoute = ApiPricingMarginFloorRouteImport.update({
+  id: '/api/pricing/margin-floor',
+  path: '/api/pricing/margin-floor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDisputeVoucherRoute = ApiDisputeVoucherRouteImport.update({
   id: '/api/dispute/voucher',
   path: '/api/dispute/voucher',
@@ -524,6 +530,7 @@ export interface FileRoutesByFullPath {
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
+  '/api/pricing/margin-floor': typeof ApiPricingMarginFloorRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -598,6 +605,7 @@ export interface FileRoutesByTo {
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
+  '/api/pricing/margin-floor': typeof ApiPricingMarginFloorRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -676,6 +684,7 @@ export interface FileRoutesById {
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
+  '/api/pricing/margin-floor': typeof ApiPricingMarginFloorRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -755,6 +764,7 @@ export interface FileRouteTypes {
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
+    | '/api/pricing/margin-floor'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -829,6 +839,7 @@ export interface FileRouteTypes {
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
+    | '/api/pricing/margin-floor'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -906,6 +917,7 @@ export interface FileRouteTypes {
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
+    | '/api/pricing/margin-floor'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -966,6 +978,7 @@ export interface RootRouteChildren {
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
   ApiCopilotCompileRoute: typeof ApiCopilotCompileRoute
   ApiDisputeVoucherRoute: typeof ApiDisputeVoucherRoute
+  ApiPricingMarginFloorRoute: typeof ApiPricingMarginFloorRoute
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
@@ -1346,6 +1359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRepricingApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/pricing/margin-floor': {
+      id: '/api/pricing/margin-floor'
+      path: '/api/pricing/margin-floor'
+      fullPath: '/api/pricing/margin-floor'
+      preLoaderRoute: typeof ApiPricingMarginFloorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dispute/voucher': {
       id: '/api/dispute/voucher'
       path: '/api/dispute/voucher'
@@ -1676,6 +1696,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
   ApiCopilotCompileRoute: ApiCopilotCompileRoute,
   ApiDisputeVoucherRoute: ApiDisputeVoucherRoute,
+  ApiPricingMarginFloorRoute: ApiPricingMarginFloorRoute,
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,

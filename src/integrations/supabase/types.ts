@@ -4023,6 +4023,24 @@ export type Database = {
           },
         ]
       }
+      ps_merchant_pricing_config: {
+        Row: {
+          account_id: string
+          margin_floor_pct: number
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          margin_floor_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          margin_floor_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ps_access_codes: {
         Row: {
           code: string

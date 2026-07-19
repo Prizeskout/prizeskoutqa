@@ -10,7 +10,8 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { decide, REGIONAL_COMMISSION, REGIONAL_VAT, DEFAULT_MARGIN_FLOOR } from "./decide-engine";
+import { decide, REGIONAL_COMMISSION, REGIONAL_VAT } from "./decide-engine";
+import { getMerchantMarginFloor } from "./merchant-pricing-config";
 
 type PlatformCreds = {
   bearer_token: string;
@@ -279,6 +280,7 @@ export async function syncPlatformCatalog(params: {
 
   const commissionRate = REGIONAL_COMMISSION[region] ?? 0.22;
   const vatRate = REGIONAL_VAT[region] ?? 0;
+  const marginFloorPct = await getMerchantMarginFloor(accountId);
 
   let stored = 0;
   let belowFloor = 0;
@@ -346,7 +348,7 @@ export async function syncPlatformCatalog(params: {
       baseCost: product.cost ?? product.price * 0.6,
       currentRetailPrice: product.price,
       vatRate,
-      marginFloorPct: DEFAULT_MARGIN_FLOOR,
+      marginFloorPct,
     });
 
     await supabaseAdmin.from("ps_decide_results").insert({
@@ -361,7 +363,7 @@ export async function syncPlatformCatalog(params: {
       commission_rate: commissionRate,
       vat_rate: vatRate,
       logistics_subsidy: 0,
-      margin_floor_pct: DEFAULT_MARGIN_FLOOR,
+      margin_floor_pct: marginFloorPct,
       net_margin: decideOutput.netMargin,
       net_margin_pct: decideOutput.netMarginPct,
       floor_breached: decideOutput.floorBreached,

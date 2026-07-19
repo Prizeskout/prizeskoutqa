@@ -13,9 +13,10 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type V1Context, type V1Result } from "@/server/v1-handlers";
-import { decide, VALID_REGIONS, DEFAULT_MARGIN_FLOOR } from "./decide-engine";
+import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
+import { getMerchantMarginFloor } from "./merchant-pricing-config";
 
 const VALID_PLATFORMS = ["foodics", "salla", "zid", "sap", "microsoft"] as const;
 
@@ -204,12 +205,13 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
   // ------------------------------------------------------------------
   // 5. Decide — run margin engine
   // ------------------------------------------------------------------
+  const marginFloorPct = await getMerchantMarginFloor(ctx.accountId);
   const decideOutput = decide({
     region,
     baseCost: fin.base_cost,
     currentRetailPrice: fin.current_retail_price,
     vatRate,
-    marginFloorPct: DEFAULT_MARGIN_FLOOR,
+    marginFloorPct,
   });
 
   const { data: decideRow } = await supabaseAdmin

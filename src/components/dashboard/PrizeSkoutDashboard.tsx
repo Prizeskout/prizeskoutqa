@@ -137,6 +137,7 @@ const T = {
     rulesEnforced:"rules · enforced at edge",
     activeLabel:"✓ enforcing · <2ms eval",
     pausedLabel:"Paused. Not currently enforced.",
+    previewLabel:"Preview only · category rules not yet enforced",
     floorWarn:"⚠ Floor is below 15% cost basis. The guardrail will reject all executions at this level.",
     settingsLabel:"Settings", backToSite:"Back to site", myAccount:"My Account",
     settingsSub:"Store access, channels, margin rules, outlets and notifications.",
@@ -222,6 +223,7 @@ const T = {
     rulesEnforced:"قواعد · مفعّلة على الحافة",
     activeLabel:"✓ مفعّل · تقييم <2ms",
     pausedLabel:"متوقف. غير مفعّل حالياً.",
+    previewLabel:"معاينة فقط · قواعد الفئات غير مفعّلة بعد",
     floorWarn:"⚠ الحد أقل من 15% تكلفة أساسية. سيرفض الحارس جميع التنفيذات عند هذا المستوى.",
     settingsLabel:"الإعدادات", backToSite:"العودة إلى الموقع", myAccount:"حسابي",
     settingsSub:"الوصول إلى المتجر، القنوات، قواعد الهامش، الفروع، والإشعارات.",
@@ -307,6 +309,7 @@ const T = {
     rulesEnforced:"règles · appliquées en périphérie",
     activeLabel:"✓ appliquée · éval <2ms",
     pausedLabel:"En pause. Non appliquée actuellement.",
+    previewLabel:"Aperçu uniquement · règles par catégorie pas encore appliquées",
     floorWarn:"⚠ Le seuil est inférieur à 15 % du coût de revient. Le garde-fou rejettera toutes les exécutions à ce niveau.",
     settingsLabel:"Paramètres", backToSite:"Retour au site", myAccount:"Mon compte",
     settingsSub:"Accès à la boutique, canaux, règles de marge, points de vente et notifications.",
@@ -501,6 +504,53 @@ export function PrizeSkoutDashboard() {
     const timer = setTimeout(() => setTourActive(true), 800);
     return () => clearTimeout(timer);
   }, []);
+
+  // Global margin floor is the one rule actually enforced by the real
+  // decide engine (see merchant-pricing-config.ts) — load the merchant's
+  // real persisted value on mount, defaulting to the 18% seed if they've
+  // never set one.
+  const marginFloorLoadedRef = useRef(false);
+  const suppressNextFloorSaveRef = useRef(false);
+
+  useEffect(() => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) { marginFloorLoadedRef.current = true; return; }
+    fetch(`/api/pricing/margin-floor?merchant_id=${encodeURIComponent(mid)}&access_code=${encodeURIComponent(ac)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { margin_floor_pct?: number } | null) => {
+        if (typeof d?.margin_floor_pct !== "number") return;
+        const pct = Math.round(d.margin_floor_pct * 100);
+        suppressNextFloorSaveRef.current = true;
+        setRules(prev => prev.map(r => r.name === "Global margin floor" ? { ...r, floor: pct } : r));
+      })
+      .catch(() => {})
+      .finally(() => { marginFloorLoadedRef.current = true; });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const globalFloor = rules.find(r => r.name === "Global margin floor")?.floor;
+
+  useEffect(() => {
+    if (!marginFloorLoadedRef.current || globalFloor == null) return;
+    if (suppressNextFloorSaveRef.current) { suppressNextFloorSaveRef.current = false; return; }
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return;
+    const timer = setTimeout(() => {
+      fetch("/api/pricing/margin-floor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, margin_floor_pct: globalFloor / 100 }),
+      })
+        .then(r => r.ok
+          ? showToast(`🟢 Global margin floor set to ${globalFloor}% · now enforced on real orders`)
+          : showToast("⚠ Could not save margin floor — try again."))
+        .catch(() => showToast("⚠ Could not save margin floor — try again."));
+    }, 600);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalFloor]);
 
   useEffect(() => {
     if (tab !== "vault") return;
@@ -1291,8 +1341,8 @@ export function PrizeSkoutDashboard() {
                         border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
                         borderRadius:9, padding:"8px 12px" }}>{t.floorWarn}</div>
                     )}
-                    <div style={{ fontSize:13, color: r.active ? GN : "var(--muted)" }}>
-                      {r.active ? t.activeLabel : t.pausedLabel}
+                    <div style={{ fontSize:13, color: r.name === "Global margin floor" ? (r.active ? GN : "var(--muted)") : "var(--muted)" }}>
+                      {r.name === "Global margin floor" ? (r.active ? t.activeLabel : t.pausedLabel) : t.previewLabel}
                     </div>
                   </div>
                 ))}
