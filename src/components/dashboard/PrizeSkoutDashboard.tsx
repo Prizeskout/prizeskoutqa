@@ -210,6 +210,7 @@ const T = {
     payoutCheckBtn:"Check Last 30 Days", payoutCheckBtnLoading:"Pulling your orders…",
     payoutCheckLiveOnlyNote:"Talabat only, for now — other platforms coming soon.",
     payoutCheckOrders:"Orders Checked", payoutCheckSubtotal:"Food Sales (excl. delivery fee)", payoutCheckRate:"Your Commission Rate",
+    payoutCheckCommissionLabel:"Platform Commission",
     payoutCheckExpectedLabel:"You Should Have Received", payoutCheckHint:"Compare this to your bank deposit for the same period.",
     payoutCheckNotConnected:"Connect Talabat first to run this check.",
     payoutCheckUploadBtn:"Upload a Statement",
@@ -327,6 +328,7 @@ const T = {
     payoutCheckBtn:"فحص آخر 30 يوماً", payoutCheckBtnLoading:"جارٍ سحب طلباتك…",
     payoutCheckLiveOnlyNote:"طلبات فقط حالياً — منصات أخرى قريباً.",
     payoutCheckOrders:"الطلبات المفحوصة", payoutCheckSubtotal:"مبيعات الطعام (بدون رسوم التوصيل)", payoutCheckRate:"نسبة عمولتك",
+    payoutCheckCommissionLabel:"عمولة المنصة",
     payoutCheckExpectedLabel:"المفترض أن تحصل عليه", payoutCheckHint:"قارن هذا بإيداعك البنكي لنفس الفترة.",
     payoutCheckNotConnected:"اربط طلبات أولاً لتشغيل هذا الفحص.",
     payoutCheckUploadBtn:"رفع كشف حساب",
@@ -444,6 +446,7 @@ const T = {
     payoutCheckBtn:"Vérifier les 30 derniers jours", payoutCheckBtnLoading:"Récupération de vos commandes…",
     payoutCheckLiveOnlyNote:"Talabat uniquement pour l'instant — autres plateformes à venir.",
     payoutCheckOrders:"Commandes vérifiées", payoutCheckSubtotal:"Ventes nourriture (hors frais de livraison)", payoutCheckRate:"Votre taux de commission",
+    payoutCheckCommissionLabel:"Commission de la plateforme",
     payoutCheckExpectedLabel:"Vous auriez dû recevoir", payoutCheckHint:"Comparez ce montant à votre dépôt bancaire pour la même période.",
     payoutCheckNotConnected:"Connectez d'abord Talabat pour lancer cette vérification.",
     payoutCheckUploadBtn:"Importer un relevé",
@@ -1509,10 +1512,11 @@ export function PrizeSkoutDashboard() {
                         { value:String(payoutData.order_count), label:t.payoutCheckOrders },
                         { value:`${currency} ${fmtMoney(payoutData.sub_total_sum, currency)}`, label: payoutData.source === "upload" ? t.payoutCheckSalesLabel : t.payoutCheckSubtotal },
                         { value:`${payoutData.commission_rate_pct}%`, label:t.payoutCheckRate },
+                        { value:`${currency} ${fmtMoney(payoutData.sub_total_sum - payoutData.expected_payout, currency)}`, label:t.payoutCheckCommissionLabel, accent:true },
                       ].map(m => (
                         <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                           borderRadius:12, padding:"13px 14px", display:"flex", flexDirection:"column", gap:5 }}>
-                          <span style={{ fontFamily:DISPLAY, fontSize:19, fontWeight:700, color:"var(--text)", fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
+                          <span style={{ fontFamily:DISPLAY, fontSize:19, fontWeight:700, color: m.accent ? OG : "var(--text)", fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
                           <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600, lineHeight:1.3 }}>{m.label}</span>
                         </div>
                       ))}
@@ -1934,6 +1938,7 @@ export function PrizeSkoutDashboard() {
                         <div style={{ padding:"0 16px 16px 38px", display:"flex", flexDirection:"column", gap:6,
                           fontSize:13, color:"var(--muted)", animation:"pk-in .2s ease" }}>
                           <div>{t.payoutCheckSalesLabel}: <span style={{ color:"var(--text)", fontWeight:600 }}>{currency} {fmtMoney(row.sub_total_sum, currency)}</span></div>
+                          <div>{t.payoutCheckCommissionLabel}: <span style={{ color:OG, fontWeight:600 }}>{currency} {fmtMoney(row.sub_total_sum - row.expected_payout, currency)}</span></div>
                           {(row.period_start || row.period_end) && (
                             <div>{t.historyDetailPeriod}: <span style={{ color:"var(--text)", fontWeight:600 }}>{row.period_start}{row.period_end && row.period_end !== row.period_start ? ` – ${row.period_end}` : ""}</span></div>
                           )}
