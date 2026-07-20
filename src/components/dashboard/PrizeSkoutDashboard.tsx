@@ -128,6 +128,8 @@ const T = {
     historyColExpected:"Expected Payout", historyColChannel:"Channel", historyColSku:"SKU",
     historyColPrice:"Price Change", historyColStatus:"Status",
     historyDetailPeriod:"Period", historyDetailSales:"Sales used", historyDetailRows:"Rows used",
+    historyDetailItem:"Item", historyDetailRule:"Trigger", historyDetailMargin:"Margin (before → after)",
+    historyDetailDuration:"Duration", historyDetailCompleted:"Completed",
     stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
@@ -253,6 +255,8 @@ const T = {
     historyColExpected:"المدفوعات المتوقعة", historyColChannel:"القناة", historyColSku:"رمز المنتج",
     historyColPrice:"تغيير السعر", historyColStatus:"الحالة",
     historyDetailPeriod:"الفترة", historyDetailSales:"المبيعات المستخدمة", historyDetailRows:"الصفوف المستخدمة",
+    historyDetailItem:"الصنف", historyDetailRule:"سبب التفعيل", historyDetailMargin:"الهامش (قبل ← بعد)",
+    historyDetailDuration:"المدة", historyDetailCompleted:"اكتمل في",
     stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
     copilotTitle:"مساعد المدير المالي", copilotSub:"محرك القواعد باللغة الطبيعية",
@@ -378,6 +382,8 @@ const T = {
     historyColExpected:"Paiement attendu", historyColChannel:"Canal", historyColSku:"SKU",
     historyColPrice:"Changement de prix", historyColStatus:"Statut",
     historyDetailPeriod:"Période", historyDetailSales:"Ventes utilisées", historyDetailRows:"Lignes utilisées",
+    historyDetailItem:"Article", historyDetailRule:"Déclencheur", historyDetailMargin:"Marge (avant → après)",
+    historyDetailDuration:"Durée", historyDetailCompleted:"Terminé le",
     stream:"Flux d'exécution en direct", streamS:"Flux d'événements en temps réel",
     profLabel:"Profits protégés · Ce mois-ci",
     copilotTitle:"Copilote CFO",    copilotSub:"Moteur de règles en langage naturel",
@@ -734,11 +740,12 @@ export function PrizeSkoutDashboard() {
   // dispatch-history.ts via the same /api/channels/connect multiplex point
   // (see connect.ts's "history" branch). Fetched once per tab visit.
   type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; commission_amount:number|null; additional_charges:number|null; additional_income:number|null; effective_commission_pct:number|null; brand:string|null; cancelled_gmv:number|null; cancelled_orders:number|null; created_at:string };
-  type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; created_at:string };
+  type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; http_status:number|null; retry_count:number|null; duration_ms:number|null; audit_snapshot:Record<string,unknown>|null; created_at:string; completed_at:string|null };
   const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
   const [historyLoading, setHistoryLoading]           = useState(false);
   const [expandedPayoutCheckId, setExpandedPayoutCheckId] = useState<string|null>(null);
+  const [expandedRepricingId, setExpandedRepricingId] = useState<string|null>(null);
 
   useEffect(() => {
     if (tab !== "history") return;
@@ -2071,27 +2078,64 @@ export function PrizeSkoutDashboard() {
                       : row.status === "failed" || row.status === "schema_mismatch" || row.status === "circuit_open" ? "#DC2626"
                       : row.status === "rate_limited" || row.status === "timeout" ? "#B45309"
                       : "var(--muted)";
+                    const open = expandedRepricingId === row.id;
+                    const snap = row.audit_snapshot ?? {};
+                    const itemName = typeof snap.item_name === "string" ? snap.item_name : null;
+                    const rule = typeof snap.rule === "string" ? snap.rule : null;
+                    const marginBefore = typeof snap.margin_before_pct === "number" ? snap.margin_before_pct : null;
+                    const marginAfter = typeof snap.margin_after_pct === "number" ? snap.margin_after_pct : null;
                     return (
                       <div key={row.id} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
-                        borderRadius:12, padding:"13px 16px", display:"flex", flexWrap:"wrap",
-                        gap:12, alignItems:"center", justifyContent:"space-between" }}>
-                        <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
-                          <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700 }}>
-                            {row.target_channel ?? "—"}
-                            {row.sku && <span style={{ fontWeight:400, color:"var(--muted)", fontFamily:MONO, fontSize:13 }}>· {row.sku}</span>}
+                        borderRadius:12, overflow:"hidden" }}>
+                        <div onClick={()=>setExpandedRepricingId(open ? null : row.id)}
+                          style={{ cursor:"pointer", padding:"13px 16px", display:"flex", flexWrap:"wrap",
+                            gap:12, alignItems:"center", justifyContent:"space-between" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0, flex:1 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                              strokeLinecap="round" strokeLinejoin="round"
+                              style={{ flexShrink:0, color:"var(--muted)", transition:"transform .18s", transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                            <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
+                              <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700 }}>
+                                {row.target_channel ?? "—"}
+                                {row.sku && <span style={{ fontWeight:400, color:"var(--muted)", fontFamily:MONO, fontSize:13 }}>· {row.sku}</span>}
+                              </div>
+                              <div style={{ fontSize:13, color:"var(--muted)" }}>
+                                {new Date(row.created_at).toLocaleString()}
+                                {row.old_price != null ? ` · ${row.old_price} → ${row.new_price} ${row.currency}` : ` · ${row.new_price} ${row.currency}`}
+                                {row.upstream_message ? ` · ${row.upstream_message}` : ""}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ fontSize:13, color:"var(--muted)" }}>
-                            {new Date(row.created_at).toLocaleString()}
-                            {row.old_price != null ? ` · ${row.old_price} → ${row.new_price} ${row.currency}` : ` · ${row.new_price} ${row.currency}`}
-                            {row.upstream_message ? ` · ${row.upstream_message}` : ""}
-                          </div>
+                          <span style={{ fontSize:11.5, fontWeight:700, color: statusColor,
+                            background:`color-mix(in srgb,${statusColor} 10%,var(--surface))`,
+                            border:`1px solid color-mix(in srgb,${statusColor} 28%,transparent)`,
+                            borderRadius:999, padding:"4px 10px", textTransform:"uppercase" as const, letterSpacing:"0.03em", flexShrink:0 }}>
+                            {row.status.replace(/_/g," ")}
+                          </span>
                         </div>
-                        <span style={{ fontSize:11.5, fontWeight:700, color: statusColor,
-                          background:`color-mix(in srgb,${statusColor} 10%,var(--surface))`,
-                          border:`1px solid color-mix(in srgb,${statusColor} 28%,transparent)`,
-                          borderRadius:999, padding:"4px 10px", textTransform:"uppercase" as const, letterSpacing:"0.03em", flexShrink:0 }}>
-                          {row.status.replace(/_/g," ")}
-                        </span>
+                        {open && (
+                          <div style={{ padding:"0 16px 18px 38px", display:"flex", flexDirection:"column", gap:6,
+                            fontSize:13, color:"var(--muted)", animation:"pk-in .2s ease",
+                            borderTop:"1px solid var(--border)", marginTop:2, paddingTop:14 }}>
+                            {itemName && (
+                              <div>{t.historyDetailItem}: <span style={{ color:"var(--text)", fontWeight:600 }}>{itemName}</span></div>
+                            )}
+                            {rule && (
+                              <div>{t.historyDetailRule}: <span style={{ color:"var(--text)", fontWeight:600 }}>{rule}</span></div>
+                            )}
+                            {marginBefore != null && marginAfter != null && (
+                              <div>{t.historyDetailMargin}: <span style={{ color:"var(--text)", fontWeight:600 }}>{marginBefore.toFixed(1)}% → {marginAfter.toFixed(1)}%</span></div>
+                            )}
+                            {row.duration_ms != null && (
+                              <div>{t.historyDetailDuration}: <span style={{ color:"var(--text)", fontWeight:600 }}>{row.duration_ms} ms</span></div>
+                            )}
+                            {row.completed_at && (
+                              <div>{t.historyDetailCompleted}: <span style={{ color:"var(--text)", fontWeight:600 }}>{new Date(row.completed_at).toLocaleString()}</span></div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
