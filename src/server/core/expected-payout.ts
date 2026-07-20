@@ -29,6 +29,7 @@ export type ExpectedPayoutResult = {
   // "Sales" figure as-is. Not the same precision; the UI must label them
   // differently rather than imply both are equally exact.
   source?: "live" | "upload";
+  platform?: string;
 };
 
 export async function getTalabatExpectedPayout(
@@ -101,6 +102,7 @@ export async function getTalabatExpectedPayout(
   return {
     ok: true,
     source: "live",
+    platform: "talabat",
     order_count: orderCount,
     sub_total_sum: Math.round(subTotalSum * 100) / 100,
     commission_rate_pct: commissionRatePct,

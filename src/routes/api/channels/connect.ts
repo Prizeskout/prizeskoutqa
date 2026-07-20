@@ -8,7 +8,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
 import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
-import { parseTalabatDailyCsv } from "@/server/core/payout-csv-parser";
+import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
+
+const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
 type Body = Record<string, string>;
 
@@ -92,16 +94,20 @@ export const Route = createFileRoute("/api/channels/connect")({
           if (platform === "talabat_expected_payout") {
             // Also multiplexed here, same reason as margin_floor above.
             if (body.action === "upload") {
-              // Demo/no-live-connection path — parses a daily-totals export
-              // the merchant can already download themselves. Not the real
-              // product mechanism (see payout-csv-parser.ts header comment);
-              // doesn't require Talabat to be connected at all.
-              const { csv_text, commission_rate_pct } = body;
+              // Demo/no-live-connection path — parses a daily-totals CSV the
+              // merchant can already download themselves, for any connected
+              // or not-yet-connected platform. Not the real product
+              // mechanism (see payout-csv-parser.ts header comment); doesn't
+              // require that platform to be connected at all.
+              const { csv_text, commission_rate_pct, upload_platform } = body;
               const rate = Number(commission_rate_pct);
+              const platformName = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(upload_platform ?? "")
+                ? upload_platform
+                : "talabat";
               if (!csv_text || !Number.isFinite(rate)) {
                 return resp({ error: "csv_text and commission_rate_pct are required for an upload check." }, 400);
               }
-              const result = parseTalabatDailyCsv(csv_text, rate);
+              const result = parseAggregatorDailyCsv(csv_text, rate, platformName);
               return result.ok
                 ? resp({ ...result, ok: true }, 200)
                 : resp({ ok: false, error: result.error }, 400);

@@ -1,22 +1,42 @@
-// Parses the daily-orders CSV export merchants can already pull from their
-// own Talabat dashboard (no API access needed) — used only for demos and
-// one-off checks when a merchant isn't live-connected yet. Not the real
-// product mechanism: the live path (expected-payout.ts) pulls real orders
-// via API and separates food value from delivery fee per order. This file
-// only has a daily "Sales" total with no such split, so unlike the live
-// path, commission here is applied to that total as-is — this is a known,
-// disclosed precision gap, not something to confuse with the real feature.
+// Parses the daily-orders CSV export a merchant can already pull from their
+// own aggregator dashboard — no API access needed. Used for demos and for
+// merchants not yet live-connected. Not the real product mechanism: the
+// live path (expected-payout.ts) pulls real orders via API and separates
+// food value from delivery fee per order. A daily CSV only has a single
+// "Sales"-style total with no such split, so commission here is applied to
+// that total as-is — a known, disclosed precision gap, not something to
+// confuse with the live check's per-order accuracy.
+//
+// Column matching is exact-first, then fuzzy: this keeps Talabat's
+// confirmed-working format (Date/Orders/Sales, verified against a real
+// export) matching exactly as before, while giving other platforms' exports
+// a real chance without hardcoding formats I've never actually seen. If a
+// file doesn't match, it fails with a clear error rather than guessing.
 import type { ExpectedPayoutResult } from "./expected-payout";
 
 function parseCsvLine(line: string): string[] {
-  // Talabat's export has no quoted/escaped commas in practice — a plain
-  // split is correct here and avoids pulling in a CSV library for one format.
+  // No quoted/escaped commas observed in any real export seen so far — a
+  // plain split is correct and avoids pulling in a CSV library for this.
   return line.split(",").map(cell => cell.trim());
 }
 
-export function parseTalabatDailyCsv(
+function findColumn(header: string[], exact: string[], fuzzy: string[], exclude: string[] = []): number {
+  const lower = header.map(h => h.toLowerCase());
+  for (const name of exact) {
+    const idx = lower.indexOf(name.toLowerCase());
+    if (idx !== -1) return idx;
+  }
+  for (let i = 0; i < lower.length; i++) {
+    if (exclude.some(x => lower[i].includes(x))) continue;
+    if (fuzzy.some(f => lower[i].includes(f))) return i;
+  }
+  return -1;
+}
+
+export function parseAggregatorDailyCsv(
   csvText: string,
   commissionRatePct: number,
+  platform: string,
 ): ExpectedPayoutResult {
   if (!(commissionRatePct > 0 && commissionRatePct < 100)) {
     return { ok: false, error: "Commission rate must be between 0 and 100." };
@@ -30,12 +50,12 @@ export function parseTalabatDailyCsv(
   }
 
   const header = parseCsvLine(lines[0]);
-  const dateIdx   = header.indexOf("Date");
-  const ordersIdx = header.indexOf("Orders");
-  const salesIdx  = header.indexOf("Sales");
+  const dateIdx   = findColumn(header, ["Date"], ["date"]);
+  const ordersIdx = findColumn(header, ["Orders"], ["order"], ["cancel"]);
+  const salesIdx  = findColumn(header, ["Sales", "GMV", "Revenue", "Total Sales"], ["sales", "gmv", "revenue"], ["cancel"]);
 
   if (dateIdx === -1 || ordersIdx === -1 || salesIdx === -1) {
-    return { ok: false, error: "Couldn't find Date, Orders, and Sales columns in that file — is this a Talabat daily orders export?" };
+    return { ok: false, error: "Couldn't find date, orders, and sales/GMV columns in that file. CSV only for now — if this is a real export and it's not matching, the column names may differ from what we expect." };
   }
 
   let salesSum = 0;
@@ -65,6 +85,7 @@ export function parseTalabatDailyCsv(
   return {
     ok: true,
     source: "upload",
+    platform,
     order_count: orderCount,
     sub_total_sum: Math.round(salesSum * 100) / 100,
     commission_rate_pct: commissionRatePct,
