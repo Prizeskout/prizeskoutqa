@@ -650,7 +650,7 @@ function OnboardingPage() {
   // localStorage — set once on mount, before any clearing/regenerating so
   // the "already set up" prompt below can offer a real choice instead of
   // silently reusing (or silently wiping) whatever's cached.
-  const [existingSetup] = useState(() => localStorage.getItem("ps_connected") === "true");
+  const [existingSetup, setExistingSetup] = useState(() => localStorage.getItem("ps_connected") === "true");
 
   // handleStep1Next/handleFinish only generate a fresh merchant_id when
   // localStorage has none at all — by design, so refreshing mid-onboarding
@@ -671,6 +671,7 @@ function OnboardingPage() {
     setMerchantId(""); setStoreName(""); setEmail(""); setRegion(""); setCurrency("");
     setSallaConnected(false); setZidConnected(false);
     setRestoreMode(false); setStep(0);
+    setExistingSetup(false);
   }
 
   // Handle return from OAuth (Salla/Zid redirect back here with ?salla_connected=1 etc.)
