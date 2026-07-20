@@ -42,6 +42,15 @@ export type ExpectedPayoutResult = {
   brand?: string;
   cancelled_gmv?: number;
   cancelled_orders?: number;
+  // Real Talabat payout statement path only (see payout-statement-parser.ts)
+  // — expected_payout here is Talabat's own stated Total Payout, not a
+  // recomputed estimate. These are the line items behind it, plus the
+  // actual effective commission rate so it can be compared against
+  // commission_rate_pct (what the merchant agreed to, if they entered one).
+  commission_amount?: number;
+  additional_charges?: number;
+  additional_income?: number;
+  effective_commission_pct?: number;
 };
 
 export async function getTalabatExpectedPayout(

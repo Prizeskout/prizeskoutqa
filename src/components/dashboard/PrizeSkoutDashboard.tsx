@@ -211,6 +211,11 @@ const T = {
     payoutCheckLiveOnlyNote:"Talabat only, for now — other platforms coming soon.",
     payoutCheckOrders:"Orders Checked", payoutCheckSubtotal:"Food Sales (excl. delivery fee)", payoutCheckRate:"Your Commission Rate",
     payoutCheckCommissionLabel:"Platform Commission",
+    payoutBreakdownTitle:"Payout Breakdown", payoutBreakdownCommission:"Commission Charge",
+    payoutBreakdownCharges:"Additional Charges", payoutBreakdownIncome:"Additional Income & Vouchers",
+    payoutBreakdownTotal:"Total Payout (Talabat's statement)",
+    payoutCheckAgreedVsEffective:"Agreed rate → actual effective rate",
+    payoutCheckStatementNote:"This is Talabat's own stated payout for this period, read directly from your payout statement — not an estimate. The breakdown above shows exactly what moved between your gross sales and this number.",
     payoutCheckExpectedLabel:"You Should Have Received", payoutCheckHint:"Compare this to your bank deposit for the same period.",
     payoutCheckNotConnected:"Connect Talabat first to run this check.",
     payoutCheckUploadBtn:"Upload a Statement",
@@ -221,6 +226,8 @@ const T = {
     payoutCheckPdfPreviewTitle:"Parsed from your PDF — check this against the report",
     payoutCheckPdfCancelled:"Cancelled GMV",
     payoutCheckCsvOrPdfSnoonu:"CSV, or Snoonu's monthly Brand Performance Report PDF.",
+    payoutCheckTalabatHint:"Upload Talabat's Payout Statement CSV (Finance → Payouts → Download report), not a general sales export.",
+    payoutCheckLiveEstimateNote:"This is an estimate from your order history and commission rate — it doesn't include additional charges or platform-funded vouchers Talabat's own payout statement would show. For the exact number, upload your Payout Statement CSV instead.",
     payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
@@ -329,6 +336,11 @@ const T = {
     payoutCheckLiveOnlyNote:"طلبات فقط حالياً — منصات أخرى قريباً.",
     payoutCheckOrders:"الطلبات المفحوصة", payoutCheckSubtotal:"مبيعات الطعام (بدون رسوم التوصيل)", payoutCheckRate:"نسبة عمولتك",
     payoutCheckCommissionLabel:"عمولة المنصة",
+    payoutBreakdownTitle:"تفصيل المدفوعات", payoutBreakdownCommission:"رسوم العمولة",
+    payoutBreakdownCharges:"رسوم إضافية", payoutBreakdownIncome:"دخل إضافي وقسائم",
+    payoutBreakdownTotal:"إجمالي المدفوعات (بيان طلبات)",
+    payoutCheckAgreedVsEffective:"النسبة المتفق عليها ← النسبة الفعلية",
+    payoutCheckStatementNote:"هذا هو المبلغ الذي أعلنته طلبات فعلياً لهذه الفترة، مأخوذ مباشرة من بيان المدفوعات الخاص بك — وليس تقديراً. يوضح التفصيل أعلاه بالضبط ما تغيّر بين إجمالي مبيعاتك وهذا الرقم.",
     payoutCheckExpectedLabel:"المفترض أن تحصل عليه", payoutCheckHint:"قارن هذا بإيداعك البنكي لنفس الفترة.",
     payoutCheckNotConnected:"اربط طلبات أولاً لتشغيل هذا الفحص.",
     payoutCheckUploadBtn:"رفع كشف حساب",
@@ -339,6 +351,8 @@ const T = {
     payoutCheckPdfPreviewTitle:"تم استخراجه من ملف PDF — تحقق منه مقابل التقرير",
     payoutCheckPdfCancelled:"المبيعات الملغاة (GMV)",
     payoutCheckCsvOrPdfSnoonu:"CSV، أو تقرير أداء العلامة الشهري من سنونو بصيغة PDF.",
+    payoutCheckTalabatHint:"ارفع ملف CSV الخاص ببيان مدفوعات طلبات (المالية ← المدفوعات ← تنزيل التقرير)، وليس تصدير مبيعات عام.",
+    payoutCheckLiveEstimateNote:"هذا تقدير مبني على سجل طلباتك ونسبة عمولتك — ولا يشمل الرسوم الإضافية أو القسائم الممولة من المنصة التي قد يظهرها بيان مدفوعات طلبات نفسه. للحصول على الرقم الدقيق، ارفع ملف CSV الخاص ببيان المدفوعات بدلاً من ذلك.",
     payoutCheckLiveTab:"فحص مباشر", payoutCheckUploadTab:"رفع ملف",
     payoutCheckUploadPlatformLabel:"المنصة", payoutCheckCsvOnly:"ملفات CSV فقط حالياً.",
     payoutCheckSourceLive:"فحص مباشر", payoutCheckSourceUpload:"ملف مرفوع", payoutCheckShowing:"يعرض",
@@ -447,6 +461,11 @@ const T = {
     payoutCheckLiveOnlyNote:"Talabat uniquement pour l'instant — autres plateformes à venir.",
     payoutCheckOrders:"Commandes vérifiées", payoutCheckSubtotal:"Ventes nourriture (hors frais de livraison)", payoutCheckRate:"Votre taux de commission",
     payoutCheckCommissionLabel:"Commission de la plateforme",
+    payoutBreakdownTitle:"Détail du paiement", payoutBreakdownCommission:"Frais de commission",
+    payoutBreakdownCharges:"Frais supplémentaires", payoutBreakdownIncome:"Revenus supplémentaires et bons",
+    payoutBreakdownTotal:"Paiement total (relevé Talabat)",
+    payoutCheckAgreedVsEffective:"Taux convenu → taux effectif réel",
+    payoutCheckStatementNote:"Il s'agit du paiement réellement déclaré par Talabat pour cette période, lu directement depuis votre relevé de paiement — pas une estimation. Le détail ci-dessus montre exactement ce qui a évolué entre vos ventes brutes et ce montant.",
     payoutCheckExpectedLabel:"Vous auriez dû recevoir", payoutCheckHint:"Comparez ce montant à votre dépôt bancaire pour la même période.",
     payoutCheckNotConnected:"Connectez d'abord Talabat pour lancer cette vérification.",
     payoutCheckUploadBtn:"Importer un relevé",
@@ -457,6 +476,8 @@ const T = {
     payoutCheckPdfPreviewTitle:"Extrait de votre PDF — à vérifier avec le rapport",
     payoutCheckPdfCancelled:"GMV annulé",
     payoutCheckCsvOrPdfSnoonu:"CSV, ou le rapport de performance de marque mensuel PDF de Snoonu.",
+    payoutCheckTalabatHint:"Importez le CSV du relevé de paiement Talabat (Finance → Paiements → Télécharger le rapport), pas un export de ventes général.",
+    payoutCheckLiveEstimateNote:"Il s'agit d'une estimation basée sur votre historique de commandes et votre taux de commission — elle n'inclut pas les frais supplémentaires ni les bons financés par la plateforme que le relevé de paiement Talabat afficherait. Pour le montant exact, importez plutôt votre relevé de paiement CSV.",
     payoutCheckLiveTab:"Vérification en direct", payoutCheckUploadTab:"Importer un fichier",
     payoutCheckUploadPlatformLabel:"Plateforme", payoutCheckCsvOnly:"Fichiers CSV uniquement pour le moment.",
     payoutCheckSourceLive:"Vérification en direct", payoutCheckSourceUpload:"Fichier importé", payoutCheckShowing:"Affichage",
@@ -572,7 +593,7 @@ export function PrizeSkoutDashboard() {
   // merchant should have received (see expected-payout.ts). Never fetches
   // their actual payout; the merchant compares it against their own bank
   // deposit themselves.
-  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number };
+  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number; commission_amount?:number; additional_charges?:number; additional_income?:number; effective_commission_pct?:number };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
@@ -1492,7 +1513,9 @@ export function PrizeSkoutDashboard() {
                         </button>
                       </div>
                       <span style={{ fontSize:11.5, color:"var(--muted)" }}>
-                        {payoutUploadPlatform === "snoonu" ? t.payoutCheckCsvOrPdfSnoonu : t.payoutCheckCsvOnly}
+                        {payoutUploadPlatform === "snoonu" ? t.payoutCheckCsvOrPdfSnoonu
+                          : payoutUploadPlatform === "talabat" ? t.payoutCheckTalabatHint
+                          : t.payoutCheckCsvOnly}
                       </span>
                     </div>
                   )}
@@ -1512,7 +1535,7 @@ export function PrizeSkoutDashboard() {
                         { value:String(payoutData.order_count), label:t.payoutCheckOrders },
                         { value:`${currency} ${fmtMoney(payoutData.sub_total_sum, currency)}`, label: payoutData.source === "upload" ? t.payoutCheckSalesLabel : t.payoutCheckSubtotal },
                         { value:`${payoutData.commission_rate_pct}%`, label:t.payoutCheckRate },
-                        { value:`${currency} ${fmtMoney(payoutData.sub_total_sum - payoutData.expected_payout, currency)}`, label:t.payoutCheckCommissionLabel, accent:true },
+                        { value:`${currency} ${fmtMoney(payoutData.commission_amount ?? (payoutData.sub_total_sum - payoutData.expected_payout), currency)}`, label:t.payoutCheckCommissionLabel, accent:true },
                       ].map(m => (
                         <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
                           borderRadius:12, padding:"13px 14px", display:"flex", flexDirection:"column", gap:5 }}>
@@ -1542,6 +1565,41 @@ export function PrizeSkoutDashboard() {
                     </div>
                   )}
 
+                  {payoutData?.effective_commission_pct != null && (
+                    <div style={{ background:"var(--surface2)", border:"1px solid var(--border)",
+                      borderRadius:12, padding:"16px 18px", display:"flex", flexDirection:"column", gap:9,
+                      animation:"pk-in .3s ease" }}>
+                      <span style={{ fontSize:12, fontWeight:700, color:"var(--text)", textTransform:"uppercase" as const, letterSpacing:"0.04em" }}>
+                        {t.payoutBreakdownTitle}
+                      </span>
+                      {[
+                        { label: t.payoutCheckSubtotal, value: payoutData.sub_total_sum },
+                        { label: t.payoutBreakdownCommission, value: -(payoutData.commission_amount ?? 0) },
+                        { label: t.payoutBreakdownCharges, value: -(payoutData.additional_charges ?? 0) },
+                        { label: t.payoutBreakdownIncome, value: payoutData.additional_income ?? 0 },
+                      ].map(li => (
+                        <div key={li.label} style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:13.5 }}>
+                          <span style={{ color:"var(--muted)" }}>{li.label}</span>
+                          <span style={{ fontWeight:600, color: li.value < 0 ? "#DC2626" : "var(--text)", fontVariantNumeric:"tabular-nums" }}>
+                            {li.value < 0 ? "−" : ""}{currency} {fmtMoney(Math.abs(li.value), currency)}
+                          </span>
+                        </div>
+                      ))}
+                      <div style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:14, fontWeight:800,
+                        borderTop:"1px solid var(--border)", paddingTop:9 }}>
+                        <span>{t.payoutBreakdownTotal}</span>
+                        <span style={{ fontVariantNumeric:"tabular-nums" }}>{currency} {fmtMoney(payoutData.expected_payout, currency)}</span>
+                      </div>
+                      {payoutData.commission_rate_pct != null && (
+                        <div style={{ fontSize:12.5, color:"var(--muted)", paddingTop:2 }}>
+                          {t.payoutCheckAgreedVsEffective}: <span style={{ fontWeight:700, color:"var(--text)" }}>{payoutData.commission_rate_pct}%</span>
+                          {" → "}
+                          <span style={{ fontWeight:700, color:OG }}>{payoutData.effective_commission_pct}%</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {payoutData && (
                     <div style={{ background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
                       border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
@@ -1561,7 +1619,17 @@ export function PrizeSkoutDashboard() {
                     <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
                       background:"var(--surface2)", border:"1px solid var(--border)",
                       borderRadius:9, padding:"10px 14px" }}>
-                      {payoutData.brand ? t.payoutCheckPdfNote : t.payoutCheckUploadNote}
+                      {payoutData.brand ? t.payoutCheckPdfNote
+                        : payoutData.effective_commission_pct != null ? t.payoutCheckStatementNote
+                        : t.payoutCheckUploadNote}
+                    </div>
+                  )}
+
+                  {payoutData?.source === "live" && (
+                    <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
+                      background:"var(--surface2)", border:"1px solid var(--border)",
+                      borderRadius:9, padding:"10px 14px" }}>
+                      {t.payoutCheckLiveEstimateNote}
                     </div>
                   )}
                 </div>

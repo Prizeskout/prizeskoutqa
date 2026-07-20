@@ -9,6 +9,7 @@ import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } fr
 import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
+import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-parser";
 import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
 import { savePayoutCheck, getPayoutCheckHistory } from "@/server/core/payout-history";
 import { getRepricingHistory } from "@/server/core/dispatch-history";
@@ -131,7 +132,15 @@ export const Route = createFileRoute("/api/channels/connect")({
               if (!csv_text) {
                 return resp({ error: "csv_text is required for an upload check." }, 400);
               }
-              const result = parseAggregatorDailyCsv(csv_text, rate, platformName);
+
+              // Talabat's real payout export ("Payout Metadata" CSV) states
+              // its own Total Payout directly — see payout-statement-parser.ts
+              // header comment for why a flat commission% estimate is wrong
+              // for Talabat specifically. Every other platform still uses the
+              // generic daily-totals parser (no real export sample yet).
+              const result = platformName === "talabat"
+                ? parseTalabatPayoutStatementCsv(csv_text, rate)
+                : parseAggregatorDailyCsv(csv_text, rate, platformName);
               if (result.ok) await savePayoutCheck(merchant_id, result);
               return result.ok
                 ? resp({ ...result, ok: true }, 200)
