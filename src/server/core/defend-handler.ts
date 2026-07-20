@@ -20,6 +20,7 @@ import { CIRCUIT_OPEN_BACKOFF_SECONDS } from "./decide-engine";
 import { pushPriceToSourcePlatform } from "./platform-sync";
 import { keetaApiCall, getValidKeetaAccessToken } from "./keeta-client";
 import { getValidTalabatAccessToken, updateTalabatPrice } from "./talabat-client";
+import { getValidDeliverooAccessToken, updateDeliverooPrice } from "./deliveroo-client";
 
 const SOURCE_PLATFORMS = ["salla", "foodics", "zid"] as const;
 
@@ -254,6 +255,46 @@ async function callAggregatorApi(
     };
   }
 
+  // Deliveroo also requires OAuth2 client_credentials token exchange, not a
+  // raw stored credential as a Bearer token — same defect class as Talabat's
+  // original bug, found and fixed the same way. See deliveroo-client.ts for
+  // exactly what's verified vs best-effort guess (the price payload's exact
+  // item schema couldn't be confirmed). Not reachable by any merchant today
+  // — Deliveroo isn't BYOK-connectable in the dashboard yet — so this is
+  // fixed ahead of it being turned on, not in response to a live failure.
+  if (channel === "deliveroo") {
+    const metadata = (creds.metadata as Record<string, unknown> | null) ?? {};
+    const brandId = metadata.brand_id;
+    const catalogueId = metadata.catalogue_id;
+    const siteId = metadata.site_id;
+    if (typeof brandId !== "string" || typeof catalogueId !== "string" || typeof siteId !== "string" || !brandId || !catalogueId || !siteId) {
+      return {
+        success: false, httpStatus: 422,
+        message: "ERR_DELIVEROO_BRAND_CATALOGUE_SITE_MISSING: merchant connected without brand_id/catalogue_id/site_id.",
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const token = creds.id
+      ? await getValidDeliverooAccessToken({ id: creds.id, manager_token: creds.manager_token ?? null, bearer_token: creds.bearer_token ?? null, metadata: creds.metadata ?? null })
+      : { accessToken: null as string | null, error: "No channel row id" };
+    if (!token.accessToken) {
+      return {
+        success: false, httpStatus: 401,
+        message: `ERR_DELIVEROO_NO_VALID_TOKEN${token.error ? `: ${token.error}` : ""}`,
+        durationMs: Date.now() - start,
+      };
+    }
+
+    const result = await updateDeliverooPrice({ brandId, catalogueId, siteId, sku, newPrice, accessToken: token.accessToken });
+    return {
+      success: result.ok,
+      httpStatus: result.httpStatus,
+      message: result.message,
+      durationMs: result.durationMs,
+    };
+  }
+
   // Build request per platform spec
   let url = "";
   let body: Record<string, unknown> = {};
@@ -263,20 +304,32 @@ async function callAggregatorApi(
   };
 
   if (channel === "jahez") {
-    // Jahez: POST /branch/{locationId}/items/update
-    url = `https://merchant-api.jahez.net/v2/branch/${locationId ?? "default"}/items/update`;
+    // merchant-api.jahez.net (the old host here) does not exist — confirmed by
+    // DNS failure, not just an assumption. integration-api.jahez.net is the
+    // real, live host (confirmed: real AWS API Gateway responses, matches the
+    // JAHEZ_BASE constant already sitting unused in byok-connect.ts). The
+    // exact path below and the "raw secret_code as Bearer token" auth model
+    // are UNVERIFIED — Jahez publishes no public API docs, and every path
+    // guessed against the real host returned API Gateway's generic
+    // "no route matched" error, which doesn't confirm or rule anything out.
+    // This needs a real merchant's credentials to actually confirm; treat
+    // dispatch failures for Jahez as unproven until then.
+    url = `https://integration-api.jahez.net/v2/branch/${locationId ?? "default"}/items/update`;
     headers["Authorization"] = `Bearer ${creds.bearer_token ?? ""}`;
     body = { item_code: sku, new_price: newPrice, currency };
   } else if (channel === "snoonu") {
-    // Snoonu: PATCH /v1/menu-items/{sku}
+    // CONFIRMED BROKEN, NOT YET FIXED: partner-api.snoonu.com does not
+    // exist (DNS failure, verified directly) — same defect class as the
+    // old Talabat/Jahez hosts. Unlike those, no real host could be found:
+    // Snoonu publishes no public partner API docs, and reasonable domain
+    // guesses (api/vendor/partner/merchant/business.snoonu.com, etc.) all
+    // fail to resolve. Not urgent today — Snoonu is not yet BYOK-connectable
+    // in the dashboard (OUTBOUND_INTEGRATIONS still shows byok:false), so no
+    // merchant can hit this. Needs Snoonu's real docs or a connected
+    // merchant's partner-portal access before this can be fixed for real.
     url = `https://partner-api.snoonu.com/v1/menu-items/${encodeURIComponent(sku)}`;
     headers["Authorization"] = `Bearer ${creds.bearer_token ?? ""}`;
     body = { price: newPrice, currency };
-  } else if (channel === "deliveroo") {
-    // Deliveroo: PATCH /v1/sites/{locationId}/menu/items/{sku}/price
-    url = `https://api.developers.deliveroo.com/v1/sites/${locationId ?? "default"}/menu/items/${encodeURIComponent(sku)}/price`;
-    headers["Authorization"] = `Bearer ${creds.bearer_token ?? ""}`;
-    body = { price: newPrice };
   }
 
   try {
@@ -284,7 +337,7 @@ async function callAggregatorApi(
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     const resp = await fetch(url, {
-      method: channel === "snoonu" || channel === "deliveroo" ? "PATCH" : "POST",
+      method: channel === "snoonu" ? "PATCH" : "POST",
       headers,
       body: JSON.stringify(body),
       signal: controller.signal,

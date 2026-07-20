@@ -78,6 +78,7 @@ const BYOK_CONFIG: Record<string, { fields:ByokField[]; portalHint?:string }> = 
       { key:"client_secret", label:"Client Secret" },
       { key:"vendor_id",     label:"Vendor ID",     hint:"Your store's vendor ID from the Talabat portal" },
       { key:"chain_id",      label:"Chain ID",      hint:"UUID format, e.g. 12345678-1234-1234-1234-123456789012 — from partner.talabat.com" },
+      { key:"commission_rate_pct", label:"Commission Rate (%)", type:"text", hint:"The rate you agreed with Talabat, e.g. 19 — powers your expected-payout check" },
     ],
     portalHint:"Find your credentials at partner.talabat.com",
   },
@@ -182,6 +183,16 @@ const T = {
     tourInboundBody:"Connect your POS or e-commerce platform so PrizeSkout can see real orders, costs, and catalog — the foundation everything else runs on.",
     tourOutboundTitle:"This is where the defense happens",
     tourOutboundBody:"Connect Talabat, Jahez, or any delivery aggregator and PrizeSkout starts pushing margin-safe prices automatically — no more silent margin leaks.",
+    payoutCheckTitle:"Expected Payout Check", payoutCheckBadge:"Talabat",
+    payoutCheckDesc:"We pull your real Talabat orders and calculate what you should have been paid, using the commission rate you agreed to. Compare it to what actually landed in your bank account.",
+    payoutCheckBtn:"Check Last 30 Days", payoutCheckBtnLoading:"Pulling your orders…",
+    payoutCheckOrders:"Orders Checked", payoutCheckSubtotal:"Food Sales (excl. delivery fee)", payoutCheckRate:"Your Commission Rate",
+    payoutCheckExpectedLabel:"You Should Have Received", payoutCheckHint:"Compare this to your bank deposit for the same period.",
+    payoutCheckNotConnected:"Connect Talabat first to run this check.",
+    payoutCheckOr:"or", payoutCheckUploadBtn:"Upload a Statement",
+    payoutCheckUploadRateLabel:"Commission rate for this file (%)",
+    payoutCheckSalesLabel:"Total Sales (from file)",
+    payoutCheckUploadNote:"This estimate uses the file's daily sales total, which may include delivery fees. The live check above reads each order separately and is more precise.",
   },
   ar: {
     cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
@@ -268,6 +279,16 @@ const T = {
     tourInboundBody:"اربط نظام نقطة البيع أو منصة التجارة الإلكترونية الخاصة بك ليتمكن PrizeSkout من رؤية الطلبات والتكاليف والكتالوج الفعلي — الأساس الذي يقوم عليه كل شيء آخر.",
     tourOutboundTitle:"هنا يحدث الدفاع الفعلي",
     tourOutboundBody:"اربط طلبات، جاهز، أو أي مجمّع توصيل آخر، وسيبدأ PrizeSkout بإرسال أسعار آمنة للهامش تلقائياً — لا مزيد من تسرب الهامش الصامت.",
+    payoutCheckTitle:"فحص المدفوعات المتوقعة", payoutCheckBadge:"طلبات",
+    payoutCheckDesc:"نسحب طلبات طلبات الحقيقية الخاصة بك ونحسب ما كان يجب أن تحصل عليه، بناءً على نسبة العمولة التي اتفقت عليها. قارن هذا بما وصل فعلياً إلى حسابك البنكي.",
+    payoutCheckBtn:"فحص آخر 30 يوماً", payoutCheckBtnLoading:"جارٍ سحب طلباتك…",
+    payoutCheckOrders:"الطلبات المفحوصة", payoutCheckSubtotal:"مبيعات الطعام (بدون رسوم التوصيل)", payoutCheckRate:"نسبة عمولتك",
+    payoutCheckExpectedLabel:"المفترض أن تحصل عليه", payoutCheckHint:"قارن هذا بإيداعك البنكي لنفس الفترة.",
+    payoutCheckNotConnected:"اربط طلبات أولاً لتشغيل هذا الفحص.",
+    payoutCheckOr:"أو", payoutCheckUploadBtn:"رفع كشف حساب",
+    payoutCheckUploadRateLabel:"نسبة العمولة لهذا الملف (%)",
+    payoutCheckSalesLabel:"إجمالي المبيعات (من الملف)",
+    payoutCheckUploadNote:"يستخدم هذا التقدير إجمالي المبيعات اليومية من الملف، والذي قد يشمل رسوم التوصيل. الفحص المباشر أعلاه يقرأ كل طلب على حدة وهو أكثر دقة.",
   },
   fr: {
     cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"Boucle de défense active", defendS:"4 nœuds périphériques · opérationnels",
@@ -354,6 +375,16 @@ const T = {
     tourInboundBody:"Connectez votre caisse ou votre plateforme e-commerce pour que PrizeSkout puisse voir vos commandes, coûts et catalogue réels — la base sur laquelle tout le reste fonctionne.",
     tourOutboundTitle:"C'est ici que la défense entre en jeu",
     tourOutboundBody:"Connectez Talabat, Jahez, ou tout autre agrégateur de livraison, et PrizeSkout commence à transmettre automatiquement des prix qui protègent votre marge — plus de fuite silencieuse de marge.",
+    payoutCheckTitle:"Vérification du paiement attendu", payoutCheckBadge:"Talabat",
+    payoutCheckDesc:"Nous récupérons vos commandes Talabat réelles et calculons ce que vous auriez dû recevoir, selon le taux de commission convenu. Comparez ce montant à votre dépôt bancaire.",
+    payoutCheckBtn:"Vérifier les 30 derniers jours", payoutCheckBtnLoading:"Récupération de vos commandes…",
+    payoutCheckOrders:"Commandes vérifiées", payoutCheckSubtotal:"Ventes nourriture (hors frais de livraison)", payoutCheckRate:"Votre taux de commission",
+    payoutCheckExpectedLabel:"Vous auriez dû recevoir", payoutCheckHint:"Comparez ce montant à votre dépôt bancaire pour la même période.",
+    payoutCheckNotConnected:"Connectez d'abord Talabat pour lancer cette vérification.",
+    payoutCheckOr:"ou", payoutCheckUploadBtn:"Importer un relevé",
+    payoutCheckUploadRateLabel:"Taux de commission pour ce fichier (%)",
+    payoutCheckSalesLabel:"Ventes totales (depuis le fichier)",
+    payoutCheckUploadNote:"Cette estimation utilise le total des ventes quotidiennes du fichier, qui peut inclure les frais de livraison. La vérification en direct ci-dessus lit chaque commande séparément et est plus précise.",
   },
 };
 
@@ -461,6 +492,16 @@ export function PrizeSkoutDashboard() {
   const [disputeNotes, setDisputeNotes]             = useState("");
   const [disputeLoading, setDisputeLoading]         = useState(false);
   const [cpError, setCpError]                       = useState<string|null>(null);
+  // Expected Payout Check — pulls real Talabat orders, computes what the
+  // merchant should have received (see expected-payout.ts). Never fetches
+  // their actual payout; the merchant compares it against their own bank
+  // deposit themselves.
+  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload" };
+  const [payoutLoading, setPayoutLoading]     = useState(false);
+  const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
+  const [payoutError, setPayoutError]         = useState<string|null>(null);
+  const [payoutUploadRate, setPayoutUploadRate] = useState("");
+  const payoutFileInputRef = useRef<HTMLInputElement>(null);
 
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
   const laterRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -639,6 +680,64 @@ export function PrizeSkoutDashboard() {
     a.href=url; a.download="prizeskout-audit-log.csv"; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
     showToast(`🟢 Audit log exported (${feed.length} events)`);
+  };
+
+  const runPayoutCheck = async () => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) { showToast("Please connect your store first."); return; }
+    setPayoutLoading(true); setPayoutError(null);
+    try {
+      const res = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", window_days: 30 }),
+      });
+      const data = await res.json() as (PayoutCheckData & { ok?: boolean; error?: string });
+      if (!res.ok || !data.ok) {
+        setPayoutError(data.error ?? "Could not run the check. Please try again.");
+        setPayoutData(null);
+        return;
+      }
+      setPayoutData(data);
+    } catch {
+      setPayoutError("Network error — try again.");
+      setPayoutData(null);
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
+  const runPayoutUpload = async (file: File) => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) { showToast("Please connect your store first."); return; }
+    const rate = Number(payoutUploadRate);
+    if (!(rate > 0 && rate < 100)) {
+      setPayoutError("Enter a valid commission rate (e.g. 19) before uploading.");
+      return;
+    }
+    setPayoutLoading(true); setPayoutError(null);
+    try {
+      const csvText = await file.text();
+      const res = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "upload", csv_text: csvText, commission_rate_pct: rate }),
+      });
+      const data = await res.json() as (PayoutCheckData & { ok?: boolean; error?: string });
+      if (!res.ok || !data.ok) {
+        setPayoutError(data.error ?? "Could not read that file.");
+        setPayoutData(null);
+        return;
+      }
+      setPayoutData(data);
+    } catch {
+      setPayoutError("Could not read that file.");
+      setPayoutData(null);
+    } finally {
+      setPayoutLoading(false);
+    }
   };
 
   const t = T[lang];
@@ -1178,6 +1277,100 @@ export function PrizeSkoutDashboard() {
                       </button>
                     </div>
                   )}
+                </div>
+
+                {/* Expected Payout Check */}
+                <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+                  borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
+                  display:"flex", flexDirection:"column", gap:18 }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
+                    <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.payoutCheckTitle}</h3>
+                    <span style={{ fontSize:12, fontWeight:700, color:OG,
+                      background:`color-mix(in srgb,${OG} 10%,var(--surface))`,
+                      border:`1px solid color-mix(in srgb,${OG} 28%,transparent)`,
+                      borderRadius:999, padding:"5px 12px" }}>{t.payoutCheckBadge}</span>
+                  </div>
+                  <div style={{ fontSize:13.5, color:"var(--muted)", lineHeight:1.6 }}>{t.payoutCheckDesc}</div>
+
+                  {payoutData && (
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:10, animation:"pk-in .3s ease" }}>
+                      {[
+                        { value:String(payoutData.order_count), label:t.payoutCheckOrders },
+                        { value:`${currency} ${fmtMoney(payoutData.sub_total_sum, currency)}`, label: payoutData.source === "upload" ? t.payoutCheckSalesLabel : t.payoutCheckSubtotal },
+                        { value:`${payoutData.commission_rate_pct}%`, label:t.payoutCheckRate },
+                      ].map(m => (
+                        <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
+                          borderRadius:12, padding:"13px 14px", display:"flex", flexDirection:"column", gap:5 }}>
+                          <span style={{ fontFamily:DISPLAY, fontSize:19, fontWeight:700, color:"var(--text)", fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
+                          <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600, lineHeight:1.3 }}>{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {payoutData && (
+                    <div style={{ background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
+                      border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
+                      borderRadius:14, padding:"18px 20px", display:"flex", flexDirection:"column", gap:6,
+                      animation:"pk-in .3s ease" }}>
+                      <span style={{ fontSize:12, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>
+                        {t.payoutCheckExpectedLabel}
+                      </span>
+                      <span style={{ fontFamily:DISPLAY, fontSize:32, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
+                        {currency} {fmtMoney(payoutData.expected_payout, currency)}
+                      </span>
+                      <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.payoutCheckHint}</span>
+                    </div>
+                  )}
+
+                  {payoutData?.source === "upload" && (
+                    <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
+                      background:"var(--surface2)", border:"1px solid var(--border)",
+                      borderRadius:9, padding:"10px 14px" }}>
+                      {t.payoutCheckUploadNote}
+                    </div>
+                  )}
+
+                  {payoutError && (
+                    <div style={{ fontSize:13, fontWeight:600, color:"#DC2626",
+                      background:"color-mix(in srgb,#DC2626 8%,var(--surface))",
+                      border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
+                      borderRadius:9, padding:"10px 14px" }}>
+                      {payoutError}
+                    </div>
+                  )}
+
+                  <button onClick={runPayoutCheck} disabled={payoutLoading}
+                    style={{ cursor: payoutLoading ? "not-allowed" : "pointer", alignSelf:"flex-start",
+                      fontSize:14, fontWeight:700, color:"#fff", background: payoutLoading ? "#9A9A9A" : OG,
+                      border:"none", borderRadius:10, padding:"11px 20px", fontFamily:"inherit",
+                      opacity: payoutLoading ? 0.7 : 1, transition:"background .2s,opacity .2s" }}>
+                    {payoutLoading ? t.payoutCheckBtnLoading : (payoutData ? `↻ ${t.payoutCheckBtn}` : t.payoutCheckBtn)}
+                  </button>
+
+                  <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+                    <span style={{ fontSize:12, color:"var(--muted)", fontWeight:600 }}>{t.payoutCheckOr}</span>
+                    <input
+                      type="number" min="0" max="99" step="0.1"
+                      value={payoutUploadRate}
+                      onChange={e=>setPayoutUploadRate(e.target.value)}
+                      placeholder={t.payoutCheckUploadRateLabel}
+                      style={{ width:170, height:38, border:"1px solid var(--border)", borderRadius:9,
+                        background:"var(--surface)", color:"var(--text)", padding:"0 11px",
+                        fontSize:13, fontFamily:"inherit", outline:"none" }}
+                    />
+                    <input ref={payoutFileInputRef} type="file" accept=".csv,text/csv" style={{ display:"none" }}
+                      onChange={e=>{ const f = e.target.files?.[0]; if (f) runPayoutUpload(f); e.target.value=""; }} />
+                    <button
+                      type="button"
+                      disabled={payoutLoading}
+                      onClick={()=>payoutFileInputRef.current?.click()}
+                      style={{ cursor: payoutLoading ? "not-allowed" : "pointer", fontSize:13, fontWeight:700,
+                        color:"var(--text)", background:"transparent", border:"1.5px solid var(--border)",
+                        borderRadius:9, padding:"9px 16px", fontFamily:"inherit", opacity: payoutLoading ? 0.6 : 1 }}>
+                      {t.payoutCheckUploadBtn}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

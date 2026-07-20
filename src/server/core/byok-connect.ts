@@ -37,9 +37,18 @@ export async function connectTalabat(params: {
   clientSecret: string;
   vendorId: string;
   chainId: string;
+  commissionRatePct: string;
 }): Promise<{ ok: boolean; message?: string }> {
-  const { merchantId, clientId, clientSecret, vendorId, chainId } = params;
+  const { merchantId, clientId, clientSecret, vendorId, chainId, commissionRatePct } = params;
   const now = new Date().toISOString();
+
+  // Powers the expected-payout check (merchant-facing "here's what you
+  // should have received" number) — the rate they tell us they agreed to
+  // with Talabat, not something any API exposes anywhere.
+  const commissionRate = Number(commissionRatePct);
+  if (!Number.isFinite(commissionRate) || commissionRate <= 0 || commissionRate >= 100) {
+    return { ok: false, message: "Commission rate must be a number between 0 and 100 (e.g. 19 for 19%)." };
+  }
 
   // Confirmed live against Talabat's real catalog endpoint: chain_id is
   // validated server-side as a strict UUID *before* auth is even checked
@@ -96,6 +105,7 @@ export async function connectTalabat(params: {
           chain_id: chainId,
           access_token: tokenResult.data.access_token,
           token_expires_at: new Date(Date.now() + tokenResult.data.expires_in * 1000).toISOString(),
+          commission_rate_pct: commissionRate,
         },
       },
       { onConflict: "account_id,merchant_id,platform" },

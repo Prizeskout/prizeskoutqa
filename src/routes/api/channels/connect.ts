@@ -7,6 +7,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
 import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
+import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
+import { parseTalabatDailyCsv } from "@/server/core/payout-csv-parser";
 
 type Body = Record<string, string>;
 
@@ -32,11 +34,11 @@ export const Route = createFileRoute("/api/channels/connect")({
 
         try {
           if (platform === "talabat") {
-            const { client_id, client_secret, vendor_id, chain_id } = body;
-            if (!client_id || !client_secret || !vendor_id || !chain_id) {
-              return resp({ error: "Talabat requires client_id, client_secret, vendor_id, and chain_id." }, 400);
+            const { client_id, client_secret, vendor_id, chain_id, commission_rate_pct } = body;
+            if (!client_id || !client_secret || !vendor_id || !chain_id || !commission_rate_pct) {
+              return resp({ error: "Talabat requires client_id, client_secret, vendor_id, chain_id, and commission_rate_pct." }, 400);
             }
-            const result = await connectTalabat({ merchantId: merchant_id, clientId: client_id, clientSecret: client_secret, vendorId: vendor_id, chainId: chain_id });
+            const result = await connectTalabat({ merchantId: merchant_id, clientId: client_id, clientSecret: client_secret, vendorId: vendor_id, chainId: chain_id, commissionRatePct: commission_rate_pct });
             return result.ok
               ? resp({ ok: true, platform }, 200)
               : resp({ ok: false, error: result.message }, 200);
@@ -87,7 +89,35 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ ok: true, margin_floor_pct: pct }, 200);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor.` }, 400);
+          if (platform === "talabat_expected_payout") {
+            // Also multiplexed here, same reason as margin_floor above.
+            if (body.action === "upload") {
+              // Demo/no-live-connection path — parses a daily-totals export
+              // the merchant can already download themselves. Not the real
+              // product mechanism (see payout-csv-parser.ts header comment);
+              // doesn't require Talabat to be connected at all.
+              const { csv_text, commission_rate_pct } = body;
+              const rate = Number(commission_rate_pct);
+              if (!csv_text || !Number.isFinite(rate)) {
+                return resp({ error: "csv_text and commission_rate_pct are required for an upload check." }, 400);
+              }
+              const result = parseTalabatDailyCsv(csv_text, rate);
+              return result.ok
+                ? resp({ ...result, ok: true }, 200)
+                : resp({ ok: false, error: result.error }, 400);
+            }
+
+            // Live path — pulls the merchant's real Talabat order history
+            // and computes what they should have been paid, see
+            // expected-payout.ts.
+            const windowDays = Number(body.window_days);
+            const result = await getTalabatExpectedPayout(merchant_id, Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 30);
+            return result.ok
+              ? resp({ ...result, ok: true }, 200)
+              : resp({ ok: false, error: result.error }, 400);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);

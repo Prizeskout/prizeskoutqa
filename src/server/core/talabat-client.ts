@@ -18,6 +18,17 @@
 //                       Talabat queues the update; there is no synchronous
 //                       confirmation the price is live, and no job-status
 //                       polling is implemented here)
+//   Order history:   GET /chains/{chain_id}/vendors/{vendor_id}/orders
+//                     Authorization: Bearer <access_token>
+//                     query: start_time, end_time (ISO 8601, max 60 days back),
+//                            page (default 1), page_size (1-500, default 20)
+//                     → { orders: [...], page_number, page_size, total_pages }
+//                     Each order's payment object separates sub_total (food
+//                     value) from delivery_fee and order_total — confirmed
+//                     from Talabat's own docs, not assumed. This is what
+//                     powers the expected-payout calculation: commission
+//                     applies to sub_total, never to delivery_fee or the
+//                     combined total.
 //
 // access_token is a short-lived JWT — cache and reuse until it expires
 // (Talabat's own guidance), not re-exchanged on every dispatch.
@@ -155,6 +166,82 @@ export async function updateTalabatPrice(params: {
       return { ok: false, httpStatus: resp.status, message: text.slice(0, 400) || `HTTP ${resp.status}`, durationMs };
     }
     return { ok: true, httpStatus: resp.status, durationMs };
+  } catch (e) {
+    const durationMs = Date.now() - start;
+    const isTimeout = e instanceof Error && e.name === "AbortError";
+    return { ok: false, httpStatus: isTimeout ? 504 : 500, message: isTimeout ? "ERR_TALABAT_TIMEOUT" : String(e), durationMs };
+  }
+}
+
+export type TalabatOrder = {
+  order_id?: string;
+  order_code?: string;
+  payment?: {
+    sub_total?: number;
+    delivery_fee?: number;
+    order_total?: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
+type TalabatOrdersPage = {
+  orders: TalabatOrder[];
+  page_number: number;
+  page_size: number;
+  total_pages: number;
+};
+
+const ORDERS_PAGE_SIZE = 500; // Talabat's documented max per page
+const ORDERS_MAX_PAGES = 20;  // safety cap — 10,000 orders is far beyond any real period this feature checks
+
+// Pulls a vendor's real order history for reconciliation — this is the data
+// source for the expected-payout feature. start/end must not span more than
+// 60 days (Talabat's own limit); callers pick the window (e.g. current month).
+export async function getTalabatOrders(params: {
+  chainId: string;
+  vendorId: string;
+  accessToken: string;
+  startTime: string; // ISO 8601
+  endTime: string;   // ISO 8601
+}): Promise<TalabatCallResult<TalabatOrder[]>> {
+  const { chainId, vendorId, accessToken, startTime, endTime } = params;
+  const start = Date.now();
+  const allOrders: TalabatOrder[] = [];
+
+  try {
+    for (let page = 1; page <= ORDERS_MAX_PAGES; page++) {
+      const url = new URL(`${TALABAT_BASE}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/orders`);
+      url.searchParams.set("start_time", startTime);
+      url.searchParams.set("end_time", endTime);
+      url.searchParams.set("page", String(page));
+      url.searchParams.set("page_size", String(ORDERS_PAGE_SIZE));
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      const resp = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        return { ok: false, httpStatus: resp.status, message: text.slice(0, 400) || `HTTP ${resp.status}`, durationMs: Date.now() - start };
+      }
+
+      const json = await resp.json().catch(() => null) as TalabatOrdersPage | null;
+      if (!json?.orders) {
+        return { ok: false, httpStatus: resp.status, message: "Talabat did not return an orders array.", durationMs: Date.now() - start };
+      }
+
+      allOrders.push(...json.orders);
+      if (page >= json.total_pages) break;
+    }
+
+    return { ok: true, httpStatus: 200, data: allOrders, durationMs: Date.now() - start };
   } catch (e) {
     const durationMs = Date.now() - start;
     const isTimeout = e instanceof Error && e.name === "AbortError";
