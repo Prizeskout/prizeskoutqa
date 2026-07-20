@@ -2116,24 +2116,25 @@ export function PrizeSkoutDashboard() {
                           </span>
                         </div>
                         {open && (
-                          <div style={{ padding:"0 16px 18px 38px", display:"flex", flexDirection:"column", gap:6,
-                            fontSize:13, color:"var(--muted)", animation:"pk-in .2s ease",
-                            borderTop:"1px solid var(--border)", marginTop:2, paddingTop:14 }}>
-                            {itemName && (
-                              <div>{t.historyDetailItem}: <span style={{ color:"var(--text)", fontWeight:600 }}>{itemName}</span></div>
-                            )}
-                            {rule && (
-                              <div>{t.historyDetailRule}: <span style={{ color:"var(--text)", fontWeight:600 }}>{rule}</span></div>
-                            )}
-                            {marginBefore != null && marginAfter != null && (
-                              <div>{t.historyDetailMargin}: <span style={{ color:"var(--text)", fontWeight:600 }}>{marginBefore.toFixed(1)}% → {marginAfter.toFixed(1)}%</span></div>
-                            )}
-                            {row.duration_ms != null && (
-                              <div>{t.historyDetailDuration}: <span style={{ color:"var(--text)", fontWeight:600 }}>{row.duration_ms} ms</span></div>
-                            )}
-                            {row.completed_at && (
-                              <div>{t.historyDetailCompleted}: <span style={{ color:"var(--text)", fontWeight:600 }}>{new Date(row.completed_at).toLocaleString()}</span></div>
-                            )}
+                          <div style={{ padding:"16px 16px 18px 38px", animation:"pk-in .2s ease",
+                            borderTop:"1px solid var(--border)", marginTop:2 }}>
+                            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:10 }}>
+                              {[
+                                ...(itemName ? [{ label: t.historyDetailItem, value: itemName }] : []),
+                                ...(rule ? [{ label: t.historyDetailRule, value: rule }] : []),
+                                ...(marginBefore != null && marginAfter != null
+                                  ? [{ label: t.historyDetailMargin, value: `${marginBefore.toFixed(1)}% → ${marginAfter.toFixed(1)}%` }]
+                                  : []),
+                                ...(row.duration_ms != null ? [{ label: t.historyDetailDuration, value: `${row.duration_ms} ms` }] : []),
+                                ...(row.completed_at ? [{ label: t.historyDetailCompleted, value: new Date(row.completed_at).toLocaleString() }] : []),
+                              ].map(f => (
+                                <div key={f.label} style={{ background:"var(--surface)", border:"1px solid var(--border)",
+                                  borderRadius:10, padding:"11px 13px", display:"flex", flexDirection:"column", gap:4 }}>
+                                  <span style={{ fontSize:11, color:"var(--muted)", fontWeight:600, textTransform:"uppercase" as const, letterSpacing:"0.04em" }}>{f.label}</span>
+                                  <span style={{ fontSize:14, color:"var(--text)", fontWeight:700 }}>{f.value}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
