@@ -6,6 +6,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
+import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
 
 type Body = Record<string, string>;
 
@@ -65,7 +66,28 @@ export const Route = createFileRoute("/api/channels/connect")({
               : resp({ ok: false, error: result.message }, 200);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id.` }, 400);
+          if (platform === "margin_floor") {
+            // Not a real "channel" — multiplexed onto this endpoint because
+            // PipeOps' production routing (separate from the Cloudflare
+            // Worker deploy) blocks any brand-new URL path outright, even
+            // under an already-working prefix. Reusing this proven path
+            // until that's resolved on PipeOps' side. See merchant-pricing-
+            // config.ts for what actually enforces this value.
+            if (body.action === "set") {
+              const pct = Number(body.margin_floor_pct);
+              if (!(pct > 0 && pct < 1)) {
+                return resp({ error: "margin_floor_pct must be between 0 and 1 (exclusive)." }, 400);
+              }
+              const result = await setMerchantMarginFloor(merchant_id, pct);
+              return result.ok
+                ? resp({ ok: true, margin_floor_pct: pct }, 200)
+                : resp({ ok: false, error: result.error }, 400);
+            }
+            const pct = await getMerchantMarginFloor(merchant_id);
+            return resp({ ok: true, margin_floor_pct: pct }, 200);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);

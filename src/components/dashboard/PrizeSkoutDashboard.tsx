@@ -516,7 +516,11 @@ export function PrizeSkoutDashboard() {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) { marginFloorLoadedRef.current = true; return; }
-    fetch(`/api/channels/margin-floor?merchant_id=${encodeURIComponent(mid)}&access_code=${encodeURIComponent(ac)}`)
+    fetch("/api/channels/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "margin_floor", action: "get" }),
+    })
       .then(r => r.ok ? r.json() : null)
       .then((d: { margin_floor_pct?: number } | null) => {
         if (typeof d?.margin_floor_pct !== "number") return;
@@ -538,10 +542,10 @@ export function PrizeSkoutDashboard() {
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) return;
     const timer = setTimeout(() => {
-      fetch("/api/channels/margin-floor", {
+      fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: mid, access_code: ac, margin_floor_pct: globalFloor / 100 }),
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "margin_floor", action: "set", margin_floor_pct: globalFloor / 100 }),
       })
         .then(r => r.ok
           ? showToast(`🟢 Global margin floor set to ${globalFloor}% · now enforced on real orders`)

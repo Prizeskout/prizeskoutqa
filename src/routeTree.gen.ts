@@ -64,7 +64,6 @@ import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/ap
 import { Route as ApiDisputeVoucherRouteImport } from './routes/api/dispute/voucher'
 import { Route as ApiCopilotCompileRouteImport } from './routes/api/copilot/compile'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
-import { Route as ApiChannelsMarginFloorRouteImport } from './routes/api/channels/margin-floor'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
 import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/connect'
 import { Route as ApiChannelsByokRouteImport } from './routes/api/channels/byok'
@@ -362,11 +361,6 @@ const ApiChannelsStatusRoute = ApiChannelsStatusRouteImport.update({
   path: '/api/channels/status',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChannelsMarginFloorRoute = ApiChannelsMarginFloorRouteImport.update({
-  id: '/api/channels/margin-floor',
-  path: '/api/channels/margin-floor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiChannelsDisconnectRoute = ApiChannelsDisconnectRouteImport.update({
   id: '/api/channels/disconnect',
   path: '/api/channels/disconnect',
@@ -527,7 +521,6 @@ export interface FileRoutesByFullPath {
   '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
-  '/api/channels/margin-floor': typeof ApiChannelsMarginFloorRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
@@ -602,7 +595,6 @@ export interface FileRoutesByTo {
   '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
-  '/api/channels/margin-floor': typeof ApiChannelsMarginFloorRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
@@ -681,7 +673,6 @@ export interface FileRoutesById {
   '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
-  '/api/channels/margin-floor': typeof ApiChannelsMarginFloorRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
@@ -761,7 +752,6 @@ export interface FileRouteTypes {
     | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
-    | '/api/channels/margin-floor'
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
@@ -836,7 +826,6 @@ export interface FileRouteTypes {
     | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
-    | '/api/channels/margin-floor'
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
@@ -914,7 +903,6 @@ export interface FileRouteTypes {
     | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
-    | '/api/channels/margin-floor'
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
@@ -975,7 +963,6 @@ export interface RootRouteChildren {
   ApiChannelsByokRoute: typeof ApiChannelsByokRoute
   ApiChannelsConnectRoute: typeof ApiChannelsConnectRoute
   ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
-  ApiChannelsMarginFloorRoute: typeof ApiChannelsMarginFloorRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
   ApiCopilotCompileRoute: typeof ApiCopilotCompileRoute
   ApiDisputeVoucherRoute: typeof ApiDisputeVoucherRoute
@@ -1380,13 +1367,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChannelsStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/channels/margin-floor': {
-      id: '/api/channels/margin-floor'
-      path: '/api/channels/margin-floor'
-      fullPath: '/api/channels/margin-floor'
-      preLoaderRoute: typeof ApiChannelsMarginFloorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/channels/disconnect': {
       id: '/api/channels/disconnect'
       path: '/api/channels/disconnect'
@@ -1693,7 +1673,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChannelsByokRoute: ApiChannelsByokRoute,
   ApiChannelsConnectRoute: ApiChannelsConnectRoute,
   ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
-  ApiChannelsMarginFloorRoute: ApiChannelsMarginFloorRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
   ApiCopilotCompileRoute: ApiCopilotCompileRoute,
   ApiDisputeVoucherRoute: ApiDisputeVoucherRoute,
