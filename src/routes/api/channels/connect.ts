@@ -9,6 +9,8 @@ import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } fr
 import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
+import { savePayoutCheck, getPayoutCheckHistory } from "@/server/core/payout-history";
+import { getRepricingHistory } from "@/server/core/dispatch-history";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -108,6 +110,7 @@ export const Route = createFileRoute("/api/channels/connect")({
                 return resp({ error: "csv_text and commission_rate_pct are required for an upload check." }, 400);
               }
               const result = parseAggregatorDailyCsv(csv_text, rate, platformName);
+              if (result.ok) await savePayoutCheck(merchant_id, result);
               return result.ok
                 ? resp({ ...result, ok: true }, 200)
                 : resp({ ok: false, error: result.error }, 400);
@@ -118,12 +121,25 @@ export const Route = createFileRoute("/api/channels/connect")({
             // expected-payout.ts.
             const windowDays = Number(body.window_days);
             const result = await getTalabatExpectedPayout(merchant_id, Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 30);
+            if (result.ok) await savePayoutCheck(merchant_id, result);
             return result.ok
               ? resp({ ...result, ok: true }, 200)
               : resp({ ok: false, error: result.error }, 400);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout.` }, 400);
+          if (platform === "history") {
+            // Also multiplexed here, same PipeOps-routing reason as
+            // margin_floor/talabat_expected_payout above. Read-only: lists
+            // what already happened, nothing here writes.
+            const limitRaw = Number(body.limit);
+            const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 30;
+            const items = body.action === "repricings"
+              ? await getRepricingHistory(merchant_id, limit)
+              : await getPayoutCheckHistory(merchant_id, limit);
+            return resp({ ok: true, items }, 200);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout, history.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);

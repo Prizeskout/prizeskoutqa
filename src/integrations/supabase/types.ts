@@ -4062,6 +4062,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ps_payout_checks: {
+        Row: {
+          id: string
+          account_id: string
+          source: string
+          platform: string
+          order_count: number
+          sub_total_sum: number
+          commission_rate_pct: number
+          expected_payout: number
+          period_start: string | null
+          period_end: string | null
+          rows_skipped: number | null
+          rows_total: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          source: string
+          platform: string
+          order_count: number
+          sub_total_sum: number
+          commission_rate_pct: number
+          expected_payout: number
+          period_start?: string | null
+          period_end?: string | null
+          rows_skipped?: number | null
+          rows_total?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          source?: string
+          platform?: string
+          order_count?: number
+          sub_total_sum?: number
+          commission_rate_pct?: number
+          expected_payout?: number
+          period_start?: string | null
+          period_end?: string | null
+          rows_skipped?: number | null
+          rows_total?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_url_due_status: {

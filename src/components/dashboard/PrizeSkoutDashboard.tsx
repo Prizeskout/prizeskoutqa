@@ -3,7 +3,7 @@ import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
 
-type Tab = "analytics" | "rules" | "vault" | "settings";
+type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
@@ -113,9 +113,20 @@ const T = {
     navA:"Revenue Protection Hub", navAs:"Analytics",
     navR:"Margin Policy Engine",   navRs:"Rule Book",
     navV:"Integration Vault",      navVs:"Connections",
+    navH:"Payout & Repricing History", navHs:"History",
     subA:"Active price optimization and loss prevention",
     subR:"Natural-language pricing rules and margin guardrails",
     subV:"POS, aggregator and cache connections",
+    subH:"Every payout check and automated price change, in one place",
+    historyViewLink:"View history →",
+    historyPayoutTitle:"Payout Check History", historyPayoutDesc:"Every Expected Payout Check you've run — live or uploaded.",
+    historyPayoutEmpty:"No payout checks yet. Run one from the Revenue Hub.",
+    historyRepricingTitle:"Repricing History", historyRepricingDesc:"Automated price changes PrizeSkout has made on your behalf.",
+    historyRepricingEmpty:"No automated price changes yet.",
+    historyLoading:"Loading…",
+    historyColDate:"Date", historyColSource:"Source", historyColPlatform:"Platform", historyColOrders:"Orders",
+    historyColExpected:"Expected Payout", historyColChannel:"Channel", historyColSku:"SKU",
+    historyColPrice:"Price Change", historyColStatus:"Status",
     stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
@@ -214,9 +225,20 @@ const T = {
     navA:"مركز حماية الإيرادات", navAs:"التحليلات",
     navR:"محرك سياسة الهوامش",   navRs:"دفتر القواعد",
     navV:"خزنة التكاملات",        navVs:"الاتصالات",
+    navH:"سجل المدفوعات وإعادة التسعير", navHs:"السجل",
     subA:"تحسين الأسعار الفعال ومنع الخسائر",
     subR:"قواعد تسعير بلغة طبيعية وحدود حماية الهوامش",
     subV:"اتصالات نقاط البيع والمجمعات والذاكرة المؤقتة",
+    subH:"كل فحص مدفوعات وكل تغيير سعر تلقائي، في مكان واحد",
+    historyViewLink:"عرض السجل ←",
+    historyPayoutTitle:"سجل فحوصات المدفوعات", historyPayoutDesc:"كل فحص مدفوعات متوقع قمت بتشغيله — مباشر أو مرفوع.",
+    historyPayoutEmpty:"لا توجد فحوصات مدفوعات بعد. شغّل واحداً من مركز الإيرادات.",
+    historyRepricingTitle:"سجل إعادة التسعير", historyRepricingDesc:"تغييرات الأسعار التلقائية التي أجرتها Prizeskout نيابة عنك.",
+    historyRepricingEmpty:"لا توجد تغييرات أسعار تلقائية بعد.",
+    historyLoading:"جارٍ التحميل…",
+    historyColDate:"التاريخ", historyColSource:"المصدر", historyColPlatform:"المنصة", historyColOrders:"الطلبات",
+    historyColExpected:"المدفوعات المتوقعة", historyColChannel:"القناة", historyColSku:"رمز المنتج",
+    historyColPrice:"تغيير السعر", historyColStatus:"الحالة",
     stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
     copilotTitle:"مساعد المدير المالي", copilotSub:"محرك القواعد باللغة الطبيعية",
@@ -315,9 +337,20 @@ const T = {
     navA:"Centre de protection des revenus", navAs:"Analytique",
     navR:"Moteur de politique de marge",      navRs:"Livre des règles",
     navV:"Coffre d'intégrations",             navVs:"Connexions",
+    navH:"Historique des paiements et prix", navHs:"Historique",
     subA:"Optimisation active des prix et prévention des pertes",
     subR:"Règles de tarification en langage naturel et garde-fous de marge",
     subV:"Connexions caisse, agrégateurs et cache",
+    subH:"Chaque vérification de paiement et chaque changement de prix automatique, au même endroit",
+    historyViewLink:"Voir l'historique →",
+    historyPayoutTitle:"Historique des vérifications de paiement", historyPayoutDesc:"Chaque vérification de paiement attendu que vous avez lancée — en direct ou importée.",
+    historyPayoutEmpty:"Aucune vérification de paiement pour l'instant. Lancez-en une depuis le centre des revenus.",
+    historyRepricingTitle:"Historique de réajustement des prix", historyRepricingDesc:"Changements de prix automatiques effectués par PrizeSkout en votre nom.",
+    historyRepricingEmpty:"Aucun changement de prix automatique pour l'instant.",
+    historyLoading:"Chargement…",
+    historyColDate:"Date", historyColSource:"Source", historyColPlatform:"Plateforme", historyColOrders:"Commandes",
+    historyColExpected:"Paiement attendu", historyColChannel:"Canal", historyColSku:"SKU",
+    historyColPrice:"Changement de prix", historyColStatus:"Statut",
     stream:"Flux d'exécution en direct", streamS:"Flux d'événements en temps réel",
     profLabel:"Profits protégés · Ce mois-ci",
     copilotTitle:"Copilote CFO",    copilotSub:"Moteur de règles en langage naturel",
@@ -529,6 +562,35 @@ export function PrizeSkoutDashboard() {
   const [payoutUploadRate, setPayoutUploadRate] = useState("");
   const [payoutUploadPlatform, setPayoutUploadPlatform] = useState("talabat");
   const payoutFileInputRef = useRef<HTMLInputElement>(null);
+
+  // History tab — read-only lists pulled from payout-history.ts /
+  // dispatch-history.ts via the same /api/channels/connect multiplex point
+  // (see connect.ts's "history" branch). Fetched once per tab visit.
+  type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; created_at:string };
+  type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; created_at:string };
+  const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
+  const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
+  const [historyLoading, setHistoryLoading]           = useState(false);
+
+  useEffect(() => {
+    if (tab !== "history") return;
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return;
+    setHistoryLoading(true);
+    const call = (action: string) => fetch("/api/channels/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "history", action, limit: 30 }),
+    }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+    Promise.all([call("payout_checks"), call("repricings")])
+      .then(([payoutRes, repriceRes]) => {
+        setHistoryPayoutChecks((payoutRes?.items ?? []) as PayoutCheckHistoryRow[]);
+        setHistoryRepricings((repriceRes?.items ?? []) as RepricingHistoryRow[]);
+      })
+      .finally(() => setHistoryLoading(false));
+  }, [tab]);
 
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
   const laterRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -785,10 +847,11 @@ export function PrizeSkoutDashboard() {
     { id:"analytics" as Tab, label:t.navA, sub:t.navAs },
     { id:"rules"     as Tab, label:t.navR, sub:t.navRs },
     { id:"vault"     as Tab, label:t.navV, sub:t.navVs },
+    { id:"history"   as Tab, label:t.navH, sub:t.navHs },
   ];
 
-  const headerSub = tab === "analytics" ? t.subA : tab === "rules" ? t.subR : tab === "settings" ? t.settingsSub : t.subV;
-  const headerTitle = tab === "analytics" ? t.navA : tab === "rules" ? t.navR : tab === "settings" ? t.settingsLabel : t.navV;
+  const headerSub = tab === "analytics" ? t.subA : tab === "rules" ? t.subR : tab === "settings" ? t.settingsSub : tab === "history" ? t.subH : t.subV;
+  const headerTitle = tab === "analytics" ? t.navA : tab === "rules" ? t.navR : tab === "settings" ? t.settingsLabel : tab === "history" ? t.navH : t.navV;
 
   const md = modal != null ? disputes[modal] : null;
 
@@ -1111,13 +1174,20 @@ export function PrizeSkoutDashboard() {
                 <div dir="ltr" style={{ background:"var(--term)", border:"1px solid var(--term-border)",
                   borderRadius:16, padding:"18px 20px", display:"flex", flexDirection:"column", gap:4,
                   minHeight:340, maxHeight:420, overflow:"hidden" }}>
-                  <div style={{ display:"flex", gap:7, marginBottom:12, alignItems:"center" }}>
-                    <span style={{ width:10,height:10,borderRadius:"50%",background:"#FF5F57" }} />
-                    <span style={{ width:10,height:10,borderRadius:"50%",background:"#FEBC2E" }} />
-                    <span style={{ width:10,height:10,borderRadius:"50%",background:"#28C840" }} />
-                    <span style={{ fontFamily:MONO, fontSize:13, color:"#5A6472", marginInlineStart:8 }}>
-                      defend-loop · edge-doha-01
-                    </span>
+                  <div style={{ display:"flex", gap:7, marginBottom:12, alignItems:"center", justifyContent:"space-between" }}>
+                    <div style={{ display:"flex", gap:7, alignItems:"center" }}>
+                      <span style={{ width:10,height:10,borderRadius:"50%",background:"#FF5F57" }} />
+                      <span style={{ width:10,height:10,borderRadius:"50%",background:"#FEBC2E" }} />
+                      <span style={{ width:10,height:10,borderRadius:"50%",background:"#28C840" }} />
+                      <span style={{ fontFamily:MONO, fontSize:13, color:"#5A6472", marginInlineStart:8 }}>
+                        defend-loop · edge-doha-01
+                      </span>
+                    </div>
+                    <button type="button" onClick={()=>setTab("history")}
+                      style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:"#5A6472",
+                        background:"transparent", border:"none", padding:0, fontFamily:MONO }}>
+                      {t.historyViewLink}
+                    </button>
                   </div>
                   {feed.length === 0 ? (
                     <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
@@ -1311,7 +1381,14 @@ export function PrizeSkoutDashboard() {
                   borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
                   display:"flex", flexDirection:"column", gap:18 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
-                    <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.payoutCheckTitle}</h3>
+                    <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+                      <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.payoutCheckTitle}</h3>
+                      <button type="button" onClick={()=>setTab("history")}
+                        style={{ cursor:"pointer", fontSize:12.5, fontWeight:700, color:OG,
+                          background:"transparent", border:"none", padding:0, fontFamily:"inherit" }}>
+                        {t.historyViewLink}
+                      </button>
+                    </div>
                     {payoutData && (
                       <span style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, fontWeight:700,
                         color: payoutData.source === "upload" ? "#B45309" : GN,
@@ -1750,6 +1827,111 @@ export function PrizeSkoutDashboard() {
                   );
                 })}
               </div>
+            </div>
+
+          </section>
+        )}
+
+        {/* ===== TAB: HISTORY ===== */}
+        {tab === "history" && (
+          <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:24, animation:"pk-in .3s ease" }}>
+
+            {/* Payout Check History */}
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+              borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
+              display:"flex", flexDirection:"column", gap:16 }}>
+              <div>
+                <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.historyPayoutTitle}</h3>
+                <div style={{ fontSize:13.5, color:"var(--muted)", marginTop:4 }}>{t.historyPayoutDesc}</div>
+              </div>
+              {historyLoading ? (
+                <div style={{ fontSize:14, color:"var(--muted)" }}>{t.historyLoading}</div>
+              ) : historyPayoutChecks.length === 0 ? (
+                <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
+                  borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
+                  <span style={{ width:9, height:9, borderRadius:"50%", background:"var(--muted)", flexShrink:0 }} />
+                  <span style={{ fontSize:15, color:"var(--muted)" }}>{t.historyPayoutEmpty}</span>
+                </div>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {historyPayoutChecks.map(row => (
+                    <div key={row.id} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
+                      borderRadius:12, padding:"13px 16px", display:"flex", flexWrap:"wrap",
+                      gap:12, alignItems:"center", justifyContent:"space-between" }}>
+                      <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700, flexWrap:"wrap" }}>
+                          <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11.5, fontWeight:700,
+                            color: row.source === "upload" ? "#B45309" : GN,
+                            background: row.source === "upload" ? "color-mix(in srgb,#B45309 10%,var(--surface))" : `color-mix(in srgb,${GN} 10%,var(--surface))`,
+                            border: `1px solid ${row.source === "upload" ? "color-mix(in srgb,#B45309 28%,transparent)" : `color-mix(in srgb,${GN} 28%,transparent)`}`,
+                            borderRadius:999, padding:"3px 9px" }}>
+                            <span style={{ width:6,height:6,borderRadius:"50%", background: row.source === "upload" ? "#B45309" : GN }} />
+                            {row.source === "upload" ? t.payoutCheckSourceUpload : t.payoutCheckSourceLive}
+                          </span>
+                          {PAYOUT_UPLOAD_PLATFORMS.find(p => p.value === row.platform)?.label ?? row.platform}
+                        </div>
+                        <div style={{ fontSize:13, color:"var(--muted)" }}>
+                          {new Date(row.created_at).toLocaleString()} · {row.order_count} {t.historyColOrders} · {row.commission_rate_pct}%
+                        </div>
+                      </div>
+                      <div style={{ fontFamily:DISPLAY, fontSize:18, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
+                        {currency} {fmtMoney(row.expected_payout, currency)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Repricing History */}
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+              borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
+              display:"flex", flexDirection:"column", gap:16 }}>
+              <div>
+                <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.historyRepricingTitle}</h3>
+                <div style={{ fontSize:13.5, color:"var(--muted)", marginTop:4 }}>{t.historyRepricingDesc}</div>
+              </div>
+              {historyLoading ? (
+                <div style={{ fontSize:14, color:"var(--muted)" }}>{t.historyLoading}</div>
+              ) : historyRepricings.length === 0 ? (
+                <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
+                  borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
+                  <span style={{ width:9, height:9, borderRadius:"50%", background:"var(--muted)", flexShrink:0 }} />
+                  <span style={{ fontSize:15, color:"var(--muted)" }}>{t.historyRepricingEmpty}</span>
+                </div>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {historyRepricings.map(row => {
+                    const statusColor = row.status === "success" ? GN
+                      : row.status === "failed" || row.status === "schema_mismatch" || row.status === "circuit_open" ? "#DC2626"
+                      : row.status === "rate_limited" || row.status === "timeout" ? "#B45309"
+                      : "var(--muted)";
+                    return (
+                      <div key={row.id} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
+                        borderRadius:12, padding:"13px 16px", display:"flex", flexWrap:"wrap",
+                        gap:12, alignItems:"center", justifyContent:"space-between" }}>
+                        <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700 }}>
+                            {row.target_channel ?? "—"}
+                            {row.sku && <span style={{ fontWeight:400, color:"var(--muted)", fontFamily:MONO, fontSize:13 }}>· {row.sku}</span>}
+                          </div>
+                          <div style={{ fontSize:13, color:"var(--muted)" }}>
+                            {new Date(row.created_at).toLocaleString()}
+                            {row.old_price != null ? ` · ${row.old_price} → ${row.new_price} ${row.currency}` : ` · ${row.new_price} ${row.currency}`}
+                            {row.upstream_message ? ` · ${row.upstream_message}` : ""}
+                          </div>
+                        </div>
+                        <span style={{ fontSize:11.5, fontWeight:700, color: statusColor,
+                          background:`color-mix(in srgb,${statusColor} 10%,var(--surface))`,
+                          border:`1px solid color-mix(in srgb,${statusColor} 28%,transparent)`,
+                          borderRadius:999, padding:"4px 10px", textTransform:"uppercase" as const, letterSpacing:"0.03em", flexShrink:0 }}>
+                          {row.status.replace(/_/g," ")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
           </section>
