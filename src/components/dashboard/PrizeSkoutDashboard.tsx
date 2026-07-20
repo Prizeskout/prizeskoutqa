@@ -527,6 +527,134 @@ function fmtMoney(n: number, currency: string): string {
   return Math.round(n * (rate[currency] ?? 1)).toLocaleString("en-US");
 }
 
+// Shared between the live "just ran a check" result and a History tab row's
+// expanded detail — same comprehensive breakdown either way, not an
+// abridged summary in one place and the full picture in the other.
+type PayoutResultLike = {
+  order_count: number;
+  sub_total_sum: number;
+  commission_rate_pct?: number | null;
+  expected_payout: number;
+  source?: string | null;
+  platform?: string | null;
+  rows_skipped?: number | null;
+  rows_total?: number | null;
+  brand?: string | null;
+  cancelled_gmv?: number | null;
+  cancelled_orders?: number | null;
+  commission_amount?: number | null;
+  additional_charges?: number | null;
+  additional_income?: number | null;
+  effective_commission_pct?: number | null;
+  period_start?: string | null;
+};
+
+function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
+  return (
+    <>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, animation:"pk-in .3s ease" }}>
+        {[
+          { value:String(data.order_count), label:t.payoutCheckOrders },
+          { value:`${currency} ${fmtMoney(data.sub_total_sum, currency)}`, label: data.source === "upload" ? t.payoutCheckSalesLabel : t.payoutCheckSubtotal },
+          { value:`${data.commission_rate_pct}%`, label:t.payoutCheckRate },
+          { value:`${currency} ${fmtMoney(data.commission_amount ?? (data.sub_total_sum - data.expected_payout), currency)}`, label:t.payoutCheckCommissionLabel, accent:true },
+        ].map(m => (
+          <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
+            borderRadius:12, padding:"16px 18px", display:"flex", flexDirection:"column", gap:6 }}>
+            <span style={{ fontFamily:DISPLAY, fontSize:23, fontWeight:700, color: m.accent ? OG : "var(--text)", fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
+            <span style={{ fontSize:12.5, color:"var(--muted)", fontWeight:600, lineHeight:1.3 }}>{m.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {data.source === "upload" && !!data.rows_skipped && (
+        <span style={{ fontSize:12, fontWeight:600, color:"#B45309" }}>
+          {data.rows_skipped} / {data.rows_total} {t.payoutCheckRowsSkipped}
+        </span>
+      )}
+
+      {data.brand && (
+        <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.6,
+          background:"var(--surface2)", border:"1px solid var(--border)",
+          borderRadius:9, padding:"10px 14px", display:"flex", flexDirection:"column", gap:3,
+          animation:"pk-in .3s ease" }}>
+          <span style={{ fontWeight:700, color:"var(--text)" }}>{t.payoutCheckPdfPreviewTitle}</span>
+          <span>{data.brand} · {data.period_start}</span>
+          {data.cancelled_orders != null && (
+            <span>{t.payoutCheckPdfCancelled}: {currency} {fmtMoney(data.cancelled_gmv ?? 0, currency)} ({data.cancelled_orders})</span>
+          )}
+        </div>
+      )}
+
+      {data.effective_commission_pct != null && (
+        <div style={{ background:"var(--surface2)", border:"1px solid var(--border)",
+          borderRadius:12, padding:"18px 22px", display:"flex", flexDirection:"column", gap:9,
+          animation:"pk-in .3s ease", maxWidth:480 }}>
+          <span style={{ fontSize:12, fontWeight:700, color:"var(--text)", textTransform:"uppercase" as const, letterSpacing:"0.04em" }}>
+            {t.payoutBreakdownTitle}
+          </span>
+          {[
+            { label: t.payoutCheckSubtotal, value: data.sub_total_sum },
+            { label: t.payoutBreakdownCommission, value: -(data.commission_amount ?? 0) },
+            { label: t.payoutBreakdownCharges, value: -(data.additional_charges ?? 0) },
+            { label: t.payoutBreakdownIncome, value: data.additional_income ?? 0 },
+          ].map(li => (
+            <div key={li.label} style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:13.5 }}>
+              <span style={{ color:"var(--muted)" }}>{li.label}</span>
+              <span style={{ fontWeight:600, color: li.value < 0 ? "#DC2626" : "var(--text)", fontVariantNumeric:"tabular-nums" }}>
+                {li.value < 0 ? "−" : ""}{currency} {fmtMoney(Math.abs(li.value), currency)}
+              </span>
+            </div>
+          ))}
+          <div style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:14, fontWeight:800,
+            borderTop:"1px solid var(--border)", paddingTop:9 }}>
+            <span>{t.payoutBreakdownTotal}</span>
+            <span style={{ fontVariantNumeric:"tabular-nums" }}>{currency} {fmtMoney(data.expected_payout, currency)}</span>
+          </div>
+          {data.commission_rate_pct != null && (
+            <div style={{ fontSize:12.5, color:"var(--muted)", paddingTop:2 }}>
+              {t.payoutCheckAgreedVsEffective}: <span style={{ fontWeight:700, color:"var(--text)" }}>{data.commission_rate_pct}%</span>
+              {" → "}
+              <span style={{ fontWeight:700, color:OG }}>{data.effective_commission_pct}%</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
+        border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
+        borderRadius:14, padding:"22px 26px", display:"flex", flexDirection:"column", gap:6,
+        animation:"pk-in .3s ease", maxWidth:480 }}>
+        <span style={{ fontSize:12, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>
+          {t.payoutCheckExpectedLabel}
+        </span>
+        <span style={{ fontFamily:DISPLAY, fontSize:38, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
+          {currency} {fmtMoney(data.expected_payout, currency)}
+        </span>
+        <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.payoutCheckHint}</span>
+      </div>
+
+      {data.source === "upload" && (
+        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
+          background:"var(--surface2)", border:"1px solid var(--border)",
+          borderRadius:9, padding:"10px 14px" }}>
+          {data.brand ? t.payoutCheckPdfNote
+            : data.effective_commission_pct != null ? t.payoutCheckStatementNote
+            : t.payoutCheckUploadNote}
+        </div>
+      )}
+
+      {data.source === "live" && (
+        <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
+          background:"var(--surface2)", border:"1px solid var(--border)",
+          borderRadius:9, padding:"10px 14px" }}>
+          {t.payoutCheckLiveEstimateNote}
+        </div>
+      )}
+    </>
+  );
+}
+
 // Tour sequence walks: orient (hub) → configure intelligence (copilot,
 // guardrails) → know where help is (support) → take action (connect in,
 // push out). `tab` tells the caller which tab to switch to before the
@@ -605,7 +733,7 @@ export function PrizeSkoutDashboard() {
   // History tab — read-only lists pulled from payout-history.ts /
   // dispatch-history.ts via the same /api/channels/connect multiplex point
   // (see connect.ts's "history" branch). Fetched once per tab visit.
-  type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; created_at:string };
+  type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; commission_amount:number|null; additional_charges:number|null; additional_income:number|null; effective_commission_pct:number|null; brand:string|null; cancelled_gmv:number|null; cancelled_orders:number|null; created_at:string };
   type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; created_at:string };
   const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
@@ -1301,109 +1429,7 @@ export function PrizeSkoutDashboard() {
                 </div>
               )}
 
-              {payoutData && (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, animation:"pk-in .3s ease" }}>
-                  {[
-                    { value:String(payoutData.order_count), label:t.payoutCheckOrders },
-                    { value:`${currency} ${fmtMoney(payoutData.sub_total_sum, currency)}`, label: payoutData.source === "upload" ? t.payoutCheckSalesLabel : t.payoutCheckSubtotal },
-                    { value:`${payoutData.commission_rate_pct}%`, label:t.payoutCheckRate },
-                    { value:`${currency} ${fmtMoney(payoutData.commission_amount ?? (payoutData.sub_total_sum - payoutData.expected_payout), currency)}`, label:t.payoutCheckCommissionLabel, accent:true },
-                  ].map(m => (
-                    <div key={m.label} style={{ background:"var(--surface2)", border:"1px solid var(--border)",
-                      borderRadius:12, padding:"16px 18px", display:"flex", flexDirection:"column", gap:6 }}>
-                      <span style={{ fontFamily:DISPLAY, fontSize:23, fontWeight:700, color: m.accent ? OG : "var(--text)", fontVariantNumeric:"tabular-nums" }}>{m.value}</span>
-                      <span style={{ fontSize:12.5, color:"var(--muted)", fontWeight:600, lineHeight:1.3 }}>{m.label}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {payoutData?.source === "upload" && !!payoutData.rows_skipped && (
-                <span style={{ fontSize:12, fontWeight:600, color:"#B45309" }}>
-                  {payoutData.rows_skipped} / {payoutData.rows_total} {t.payoutCheckRowsSkipped}
-                </span>
-              )}
-
-              {payoutData?.brand && (
-                <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.6,
-                  background:"var(--surface2)", border:"1px solid var(--border)",
-                  borderRadius:9, padding:"10px 14px", display:"flex", flexDirection:"column", gap:3,
-                  animation:"pk-in .3s ease" }}>
-                  <span style={{ fontWeight:700, color:"var(--text)" }}>{t.payoutCheckPdfPreviewTitle}</span>
-                  <span>{payoutData.brand} · {payoutData.period_start}</span>
-                  {payoutData.cancelled_orders != null && (
-                    <span>{t.payoutCheckPdfCancelled}: {currency} {fmtMoney(payoutData.cancelled_gmv ?? 0, currency)} ({payoutData.cancelled_orders})</span>
-                  )}
-                </div>
-              )}
-
-              {payoutData?.effective_commission_pct != null && (
-                <div style={{ background:"var(--surface2)", border:"1px solid var(--border)",
-                  borderRadius:12, padding:"18px 22px", display:"flex", flexDirection:"column", gap:9,
-                  animation:"pk-in .3s ease", maxWidth:480 }}>
-                  <span style={{ fontSize:12, fontWeight:700, color:"var(--text)", textTransform:"uppercase" as const, letterSpacing:"0.04em" }}>
-                    {t.payoutBreakdownTitle}
-                  </span>
-                  {[
-                    { label: t.payoutCheckSubtotal, value: payoutData.sub_total_sum },
-                    { label: t.payoutBreakdownCommission, value: -(payoutData.commission_amount ?? 0) },
-                    { label: t.payoutBreakdownCharges, value: -(payoutData.additional_charges ?? 0) },
-                    { label: t.payoutBreakdownIncome, value: payoutData.additional_income ?? 0 },
-                  ].map(li => (
-                    <div key={li.label} style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:13.5 }}>
-                      <span style={{ color:"var(--muted)" }}>{li.label}</span>
-                      <span style={{ fontWeight:600, color: li.value < 0 ? "#DC2626" : "var(--text)", fontVariantNumeric:"tabular-nums" }}>
-                        {li.value < 0 ? "−" : ""}{currency} {fmtMoney(Math.abs(li.value), currency)}
-                      </span>
-                    </div>
-                  ))}
-                  <div style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:14, fontWeight:800,
-                    borderTop:"1px solid var(--border)", paddingTop:9 }}>
-                    <span>{t.payoutBreakdownTotal}</span>
-                    <span style={{ fontVariantNumeric:"tabular-nums" }}>{currency} {fmtMoney(payoutData.expected_payout, currency)}</span>
-                  </div>
-                  {payoutData.commission_rate_pct != null && (
-                    <div style={{ fontSize:12.5, color:"var(--muted)", paddingTop:2 }}>
-                      {t.payoutCheckAgreedVsEffective}: <span style={{ fontWeight:700, color:"var(--text)" }}>{payoutData.commission_rate_pct}%</span>
-                      {" → "}
-                      <span style={{ fontWeight:700, color:OG }}>{payoutData.effective_commission_pct}%</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {payoutData && (
-                <div style={{ background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
-                  border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
-                  borderRadius:14, padding:"22px 26px", display:"flex", flexDirection:"column", gap:6,
-                  animation:"pk-in .3s ease", maxWidth:480 }}>
-                  <span style={{ fontSize:12, fontWeight:600, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.05em" }}>
-                    {t.payoutCheckExpectedLabel}
-                  </span>
-                  <span style={{ fontFamily:DISPLAY, fontSize:38, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
-                    {currency} {fmtMoney(payoutData.expected_payout, currency)}
-                  </span>
-                  <span style={{ fontSize:12.5, color:"var(--muted)" }}>{t.payoutCheckHint}</span>
-                </div>
-              )}
-
-              {payoutData?.source === "upload" && (
-                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
-                  background:"var(--surface2)", border:"1px solid var(--border)",
-                  borderRadius:9, padding:"10px 14px" }}>
-                  {payoutData.brand ? t.payoutCheckPdfNote
-                    : payoutData.effective_commission_pct != null ? t.payoutCheckStatementNote
-                    : t.payoutCheckUploadNote}
-                </div>
-              )}
-
-              {payoutData?.source === "live" && (
-                <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
-                  background:"var(--surface2)", border:"1px solid var(--border)",
-                  borderRadius:9, padding:"10px 14px" }}>
-                  {t.payoutCheckLiveEstimateNote}
-                </div>
-              )}
+              {payoutData && <PayoutResultDetail data={payoutData} currency={currency} t={t} />}
             </div>
 
             {/* Stream + Dispute agent */}
@@ -2005,16 +2031,14 @@ export function PrizeSkoutDashboard() {
                         </div>
                       </div>
                       {open && (
-                        <div style={{ padding:"0 16px 16px 38px", display:"flex", flexDirection:"column", gap:6,
-                          fontSize:13, color:"var(--muted)", animation:"pk-in .2s ease" }}>
-                          <div>{t.payoutCheckSalesLabel}: <span style={{ color:"var(--text)", fontWeight:600 }}>{currency} {fmtMoney(row.sub_total_sum, currency)}</span></div>
-                          <div>{t.payoutCheckCommissionLabel}: <span style={{ color:OG, fontWeight:600 }}>{currency} {fmtMoney(row.sub_total_sum - row.expected_payout, currency)}</span></div>
+                        <div style={{ padding:"0 16px 18px 16px", animation:"pk-in .2s ease",
+                          display:"flex", flexDirection:"column", gap:14, borderTop:"1px solid var(--border)", marginTop:2, paddingTop:16 }}>
                           {(row.period_start || row.period_end) && (
-                            <div>{t.historyDetailPeriod}: <span style={{ color:"var(--text)", fontWeight:600 }}>{row.period_start}{row.period_end && row.period_end !== row.period_start ? ` – ${row.period_end}` : ""}</span></div>
+                            <div style={{ fontSize:13, color:"var(--muted)" }}>
+                              {t.historyDetailPeriod}: <span style={{ color:"var(--text)", fontWeight:600 }}>{row.period_start}{row.period_end && row.period_end !== row.period_start ? ` – ${row.period_end}` : ""}</span>
+                            </div>
                           )}
-                          {row.rows_total != null && (
-                            <div>{t.historyDetailRows}: <span style={{ color:"var(--text)", fontWeight:600 }}>{(row.rows_total ?? 0) - (row.rows_skipped ?? 0)} / {row.rows_total}</span></div>
-                          )}
+                          <PayoutResultDetail data={row} currency={currency} t={t} />
                         </div>
                       )}
                     </div>

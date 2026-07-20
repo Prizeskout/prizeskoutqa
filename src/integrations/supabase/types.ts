@@ -4076,6 +4076,13 @@ export type Database = {
           period_end: string | null
           rows_skipped: number | null
           rows_total: number | null
+          commission_amount: number | null
+          additional_charges: number | null
+          additional_income: number | null
+          effective_commission_pct: number | null
+          brand: string | null
+          cancelled_gmv: number | null
+          cancelled_orders: number | null
           created_at: string
         }
         Insert: {
@@ -4091,6 +4098,13 @@ export type Database = {
           period_end?: string | null
           rows_skipped?: number | null
           rows_total?: number | null
+          commission_amount?: number | null
+          additional_charges?: number | null
+          additional_income?: number | null
+          effective_commission_pct?: number | null
+          brand?: string | null
+          cancelled_gmv?: number | null
+          cancelled_orders?: number | null
           created_at?: string
         }
         Update: {
@@ -4106,6 +4120,13 @@ export type Database = {
           period_end?: string | null
           rows_skipped?: number | null
           rows_total?: number | null
+          commission_amount?: number | null
+          additional_charges?: number | null
+          additional_income?: number | null
+          effective_commission_pct?: number | null
+          brand?: string | null
+          cancelled_gmv?: number | null
+          cancelled_orders?: number | null
           created_at?: string
         }
         Relationships: []
