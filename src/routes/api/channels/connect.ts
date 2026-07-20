@@ -9,6 +9,7 @@ import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } fr
 import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
+import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
 import { savePayoutCheck, getPayoutCheckHistory } from "@/server/core/payout-history";
 import { getRepricingHistory } from "@/server/core/dispatch-history";
 
@@ -101,13 +102,34 @@ export const Route = createFileRoute("/api/channels/connect")({
               // or not-yet-connected platform. Not the real product
               // mechanism (see payout-csv-parser.ts header comment); doesn't
               // require that platform to be connected at all.
-              const { csv_text, commission_rate_pct, upload_platform } = body;
+              const { csv_text, pdf_text, commission_rate_pct, upload_platform, file_kind } = body;
               const rate = Number(commission_rate_pct);
+              if (!Number.isFinite(rate)) {
+                return resp({ error: "commission_rate_pct is required for an upload check." }, 400);
+              }
+
+              if (file_kind === "pdf") {
+                // Only verified against Snoonu's Brand Performance Report —
+                // see payout-pdf-parser.ts header comment for why this isn't
+                // opened up to other platforms yet.
+                if (upload_platform !== "snoonu") {
+                  return resp({ error: "PDF upload is only supported for Snoonu's Brand Performance Report right now." }, 400);
+                }
+                if (!pdf_text) {
+                  return resp({ error: "pdf_text is required for a PDF upload check." }, 400);
+                }
+                const result = parseSnoonuBrandReportPdf(pdf_text, rate);
+                if (result.ok) await savePayoutCheck(merchant_id, result);
+                return result.ok
+                  ? resp({ ...result, ok: true }, 200)
+                  : resp({ ok: false, error: result.error }, 400);
+              }
+
               const platformName = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(upload_platform ?? "")
                 ? upload_platform
                 : "talabat";
-              if (!csv_text || !Number.isFinite(rate)) {
-                return resp({ error: "csv_text and commission_rate_pct are required for an upload check." }, 400);
+              if (!csv_text) {
+                return resp({ error: "csv_text is required for an upload check." }, 400);
               }
               const result = parseAggregatorDailyCsv(csv_text, rate, platformName);
               if (result.ok) await savePayoutCheck(merchant_id, result);

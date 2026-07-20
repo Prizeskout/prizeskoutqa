@@ -35,6 +35,13 @@ export type ExpectedPayoutResult = {
   // partial data instead of presenting a total as if it covered everything.
   rows_skipped?: number;
   rows_total?: number;
+  // PDF upload path only (see payout-pdf-parser.ts) — extra fields the
+  // report itself carries but that don't feed the payout math, surfaced so
+  // the merchant can eyeball the parse against their own PDF rather than
+  // trust it blindly.
+  brand?: string;
+  cancelled_gmv?: number;
+  cancelled_orders?: number;
 };
 
 export async function getTalabatExpectedPayout(

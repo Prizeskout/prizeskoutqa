@@ -215,6 +215,10 @@ const T = {
     payoutCheckUploadRateLabel:"Commission rate for this file (%)",
     payoutCheckSalesLabel:"Total Sales (from file)",
     payoutCheckUploadNote:"This estimate uses the file's daily sales total, which may include delivery fees. A live check reads each order separately and is more precise.",
+    payoutCheckPdfNote:"This estimate covers one calendar month from Snoonu's report (GMV), not a custom date range. It won't match exactly if Snoonu's payout math differs from a flat GMV × (1 − commission) calculation.",
+    payoutCheckPdfPreviewTitle:"Parsed from your PDF — check this against the report",
+    payoutCheckPdfCancelled:"Cancelled GMV",
+    payoutCheckCsvOrPdfSnoonu:"CSV, or Snoonu's monthly Brand Performance Report PDF.",
     payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
@@ -327,6 +331,10 @@ const T = {
     payoutCheckUploadRateLabel:"نسبة العمولة لهذا الملف (%)",
     payoutCheckSalesLabel:"إجمالي المبيعات (من الملف)",
     payoutCheckUploadNote:"يستخدم هذا التقدير إجمالي المبيعات اليومية من الملف، والذي قد يشمل رسوم التوصيل. الفحص المباشر يقرأ كل طلب على حدة وهو أكثر دقة.",
+    payoutCheckPdfNote:"يغطي هذا التقدير شهراً تقويمياً واحداً من تقرير سنونو (GMV)، وليس نطاق تاريخ مخصص. قد لا يتطابق تماماً إذا اختلفت طريقة سنونو في حساب المدفوعات عن حساب GMV × (1 − العمولة) البسيط.",
+    payoutCheckPdfPreviewTitle:"تم استخراجه من ملف PDF — تحقق منه مقابل التقرير",
+    payoutCheckPdfCancelled:"المبيعات الملغاة (GMV)",
+    payoutCheckCsvOrPdfSnoonu:"CSV، أو تقرير أداء العلامة الشهري من سنونو بصيغة PDF.",
     payoutCheckLiveTab:"فحص مباشر", payoutCheckUploadTab:"رفع ملف",
     payoutCheckUploadPlatformLabel:"المنصة", payoutCheckCsvOnly:"ملفات CSV فقط حالياً.",
     payoutCheckSourceLive:"فحص مباشر", payoutCheckSourceUpload:"ملف مرفوع", payoutCheckShowing:"يعرض",
@@ -439,6 +447,10 @@ const T = {
     payoutCheckUploadRateLabel:"Taux de commission pour ce fichier (%)",
     payoutCheckSalesLabel:"Ventes totales (depuis le fichier)",
     payoutCheckUploadNote:"Cette estimation utilise le total des ventes quotidiennes du fichier, qui peut inclure les frais de livraison. Une vérification en direct lit chaque commande séparément et est plus précise.",
+    payoutCheckPdfNote:"Cette estimation couvre un mois calendaire du rapport Snoonu (GMV), pas une plage de dates personnalisée. Elle peut différer si le calcul réel de Snoonu n'est pas un simple GMV × (1 − commission).",
+    payoutCheckPdfPreviewTitle:"Extrait de votre PDF — à vérifier avec le rapport",
+    payoutCheckPdfCancelled:"GMV annulé",
+    payoutCheckCsvOrPdfSnoonu:"CSV, ou le rapport de performance de marque mensuel PDF de Snoonu.",
     payoutCheckLiveTab:"Vérification en direct", payoutCheckUploadTab:"Importer un fichier",
     payoutCheckUploadPlatformLabel:"Plateforme", payoutCheckCsvOnly:"Fichiers CSV uniquement pour le moment.",
     payoutCheckSourceLive:"Vérification en direct", payoutCheckSourceUpload:"Fichier importé", payoutCheckShowing:"Affichage",
@@ -554,7 +566,7 @@ export function PrizeSkoutDashboard() {
   // merchant should have received (see expected-payout.ts). Never fetches
   // their actual payout; the merchant compares it against their own bank
   // deposit themselves.
-  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number };
+  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
@@ -808,11 +820,19 @@ export function PrizeSkoutDashboard() {
     }
     setPayoutLoading(true); setPayoutError(null);
     try {
-      const csvText = await file.text();
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      const body: Record<string, unknown> = { merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "upload", commission_rate_pct: rate, upload_platform: payoutUploadPlatform };
+      if (isPdf) {
+        const { extractPdfText } = await import("@/lib/pdf-text");
+        body.file_kind = "pdf";
+        body.pdf_text = await extractPdfText(file);
+      } else {
+        body.csv_text = await file.text();
+      }
       const res = await fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "upload", csv_text: csvText, commission_rate_pct: rate, upload_platform: payoutUploadPlatform }),
+        body: JSON.stringify(body),
       });
       const data = await res.json() as (PayoutCheckData & { ok?: boolean; error?: string });
       if (!res.ok || !data.ok) {
@@ -1449,7 +1469,9 @@ export function PrizeSkoutDashboard() {
                             background:"var(--surface)", color:"var(--text)", padding:"0 11px",
                             fontSize:13, fontFamily:"inherit", outline:"none" }}
                         />
-                        <input ref={payoutFileInputRef} type="file" accept=".csv,text/csv" style={{ display:"none" }}
+                        <input ref={payoutFileInputRef} type="file"
+                          accept={payoutUploadPlatform === "snoonu" ? ".csv,text/csv,.pdf,application/pdf" : ".csv,text/csv"}
+                          style={{ display:"none" }}
                           onChange={e=>{ const f = e.target.files?.[0]; if (f) runPayoutUpload(f); e.target.value=""; }} />
                         <button
                           type="button"
@@ -1462,7 +1484,9 @@ export function PrizeSkoutDashboard() {
                           {payoutLoading ? t.payoutCheckBtnLoading : t.payoutCheckUploadBtn}
                         </button>
                       </div>
-                      <span style={{ fontSize:11.5, color:"var(--muted)" }}>{t.payoutCheckCsvOnly}</span>
+                      <span style={{ fontSize:11.5, color:"var(--muted)" }}>
+                        {payoutUploadPlatform === "snoonu" ? t.payoutCheckCsvOrPdfSnoonu : t.payoutCheckCsvOnly}
+                      </span>
                     </div>
                   )}
 
@@ -1497,6 +1521,19 @@ export function PrizeSkoutDashboard() {
                     </span>
                   )}
 
+                  {payoutData?.brand && (
+                    <div style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.6,
+                      background:"var(--surface2)", border:"1px solid var(--border)",
+                      borderRadius:9, padding:"10px 14px", display:"flex", flexDirection:"column", gap:3,
+                      animation:"pk-in .3s ease" }}>
+                      <span style={{ fontWeight:700, color:"var(--text)" }}>{t.payoutCheckPdfPreviewTitle}</span>
+                      <span>{payoutData.brand} · {payoutData.period_start}</span>
+                      {payoutData.cancelled_orders != null && (
+                        <span>{t.payoutCheckPdfCancelled}: {currency} {fmtMoney(payoutData.cancelled_gmv ?? 0, currency)} ({payoutData.cancelled_orders})</span>
+                      )}
+                    </div>
+                  )}
+
                   {payoutData && (
                     <div style={{ background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
                       border:`1px solid color-mix(in srgb,${GN} 26%,transparent)`,
@@ -1516,7 +1553,7 @@ export function PrizeSkoutDashboard() {
                     <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6,
                       background:"var(--surface2)", border:"1px solid var(--border)",
                       borderRadius:9, padding:"10px 14px" }}>
-                      {t.payoutCheckUploadNote}
+                      {payoutData.brand ? t.payoutCheckPdfNote : t.payoutCheckUploadNote}
                     </div>
                   )}
                 </div>
