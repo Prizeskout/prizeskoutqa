@@ -132,6 +132,9 @@ const T = {
     historyDetailDuration:"Duration", historyDetailCompleted:"Completed",
     stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
+    profNoActivity:"No activity yet · connect a store to begin tracking",
+    profDefensesLabel:"price defenses this month",
+    profTrackedFoot:"across your channels", profMarginFoot:"vs. margin floor",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
     copilotDesc:"Ask anything about pricing strategy, or describe a rule to compile it into a live engine config.",
     copilotLive:"🟢 Copilot Live",
@@ -259,6 +262,9 @@ const T = {
     historyDetailDuration:"المدة", historyDetailCompleted:"اكتمل في",
     stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
+    profNoActivity:"لا يوجد نشاط بعد · اربط متجراً لبدء التتبع",
+    profDefensesLabel:"دفاعات سعرية هذا الشهر",
+    profTrackedFoot:"عبر قنواتك", profMarginFoot:"مقابل حد الهامش",
     copilotTitle:"مساعد المدير المالي", copilotSub:"محرك القواعد باللغة الطبيعية",
     copilotDesc:"اسأل عن أي شيء يخص التسعير، أو صف قاعدة لتحويلها إلى تهيئة محرك مباشرة.",
     copilotLive:"🟢 المساعد نشط",
@@ -386,6 +392,9 @@ const T = {
     historyDetailDuration:"Durée", historyDetailCompleted:"Terminé le",
     stream:"Flux d'exécution en direct", streamS:"Flux d'événements en temps réel",
     profLabel:"Profits protégés · Ce mois-ci",
+    profNoActivity:"Aucune activité pour l'instant · connectez une boutique pour commencer le suivi",
+    profDefensesLabel:"défenses de prix ce mois-ci",
+    profTrackedFoot:"sur vos canaux", profMarginFoot:"vs. seuil de marge",
     copilotTitle:"Copilote CFO",    copilotSub:"Moteur de règles en langage naturel",
     copilotDesc:"Posez une question sur la stratégie de prix, ou décrivez une règle pour la compiler dans une configuration moteur active.",
     copilotLive:"🟢 Copilote actif",
@@ -686,7 +695,8 @@ export function PrizeSkoutDashboard() {
   const [lang, setLang] = useState<Lang>("en");
   const [isDesktop, setIsDesktop] = useState(true);
   const [feed, setFeed] = useState<FeedRow[]>([]);
-  const [updatesToday, setUpdatesToday] = useState(0);
+  type HeroStats = { has_activity:boolean; profits_protected_this_month:number; price_updates_this_month:number; price_updates_today:number; avg_margin_saved_pct:number|null; tracked_products:number; daily_series:number[] };
+  const [heroStats, setHeroStats] = useState<HeroStats|null>(null);
   const [cpPhase, setCpPhase] = useState<"idle"|"loading"|"result">("idle");
   const [cpInput, setCpInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
@@ -765,6 +775,21 @@ export function PrizeSkoutDashboard() {
         setHistoryRepricings((repriceRes?.items ?? []) as RepricingHistoryRow[]);
       })
       .finally(() => setHistoryLoading(false));
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "analytics") return;
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return;
+    fetch("/api/channels/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "dashboard_stats" }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.ok) setHeroStats(d as HeroStats); })
+      .catch(() => {});
   }, [tab]);
 
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -1295,17 +1320,27 @@ export function PrizeSkoutDashboard() {
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:18, flexWrap:"wrap" }}>
                   <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
-                    <span style={{ fontFamily:DISPLAY, fontSize:18.5, fontWeight:500, color:"var(--muted)" }}>{currency}</span>
-                    <span style={{ fontFamily:DISPLAY, fontSize:62, fontWeight:700, lineHeight:1, color:"var(--muted)", fontVariantNumeric:"tabular-nums" }}>—</span>
+                    <span style={{ fontFamily:DISPLAY, fontSize:18.5, fontWeight:500, color: heroStats?.has_activity ? "var(--text)" : "var(--muted)" }}>{currency}</span>
+                    <span style={{ fontFamily:DISPLAY, fontSize:62, fontWeight:700, lineHeight:1, color: heroStats?.has_activity ? GN : "var(--muted)", fontVariantNumeric:"tabular-nums" }}>
+                      {heroStats?.has_activity ? fmtMoney(heroStats.profits_protected_this_month, currency) : "—"}
+                    </span>
                   </div>
                 </div>
-                <div style={{ fontSize:15, color:"var(--muted)" }}>No activity yet · connect a store to begin tracking</div>
-                {/* Empty chart placeholder */}
-                <div style={{ display:"flex", alignItems:"flex-end", gap:4, height:70, marginTop:6, opacity:.18 }}>
-                  {Array.from({length:33}).map((_,i) => (
-                    <span key={i} style={{ flex:1, borderRadius:"3px 3px 0 0", height:8,
-                      background:`color-mix(in srgb,${OG} 40%,var(--surface))` }} />
-                  ))}
+                <div style={{ fontSize:15, color:"var(--muted)" }}>
+                  {heroStats?.has_activity
+                    ? `${heroStats.price_updates_this_month} ${t.profDefensesLabel}`
+                    : t.profNoActivity}
+                </div>
+                {/* Sparkline: real daily-bucketed profit-protected totals when
+                    available, a flat dim placeholder otherwise. */}
+                <div style={{ display:"flex", alignItems:"flex-end", gap:4, height:70, marginTop:6, opacity: heroStats?.has_activity ? 1 : .18 }}>
+                  {(heroStats?.daily_series ?? Array.from({length:33}).map(()=>0)).map((v,i) => {
+                    const max = Math.max(1, ...(heroStats?.daily_series ?? [1]));
+                    return (
+                      <span key={i} style={{ flex:1, borderRadius:"3px 3px 0 0", height: Math.max(4, (v / max) * 70),
+                        background:`color-mix(in srgb,${OG} ${v > 0 ? 85 : 40}%,var(--surface))` }} />
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1313,9 +1348,15 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
                 gap:18, gridColumn:"span 2", minWidth:"min(100%,420px)", alignContent:"stretch" }}>
                 {[
-                  { label:"Tracked Products",   value:"—",                                     foot:"connect a store",  footColor:"var(--muted)" },
-                  { label:"Price Updates Today",value:String(updatesToday),                    foot:"avg latency <2s",  footColor:"var(--muted)" },
-                  { label:"Avg. Margin Saved",  value:"—",                                     foot:"no data yet",      footColor:"var(--muted)" },
+                  { label:"Tracked Products",
+                    value: heroStats?.has_activity ? String(heroStats.tracked_products) : "—",
+                    foot: heroStats?.has_activity ? t.profTrackedFoot : "connect a store", footColor:"var(--muted)" },
+                  { label:"Price Updates Today",
+                    value: String(heroStats?.price_updates_today ?? 0),
+                    foot:"avg latency <2s", footColor:"var(--muted)" },
+                  { label:"Avg. Margin Saved",
+                    value: heroStats?.avg_margin_saved_pct != null ? `+${heroStats.avg_margin_saved_pct.toFixed(1)}pp` : "—",
+                    foot: heroStats?.avg_margin_saved_pct != null ? t.profMarginFoot : "no data yet", footColor:"var(--muted)" },
                   { label:"Active Rules",       value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)" },
                 ].map(s => (
                   <div key={s.label} style={{ background:"var(--surface)",

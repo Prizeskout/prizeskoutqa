@@ -13,6 +13,7 @@ import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-p
 import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
 import { savePayoutCheck, getPayoutCheckHistory } from "@/server/core/payout-history";
 import { getRepricingHistory } from "@/server/core/dispatch-history";
+import { getDashboardStats } from "@/server/core/dashboard-stats";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -170,7 +171,15 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ ok: true, items }, 200);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout, history.` }, 400);
+          if (platform === "dashboard_stats") {
+            // Also multiplexed here, same PipeOps-routing reason as above.
+            // Read-only aggregation over ps_aggregator_dispatch_log for the
+            // Revenue Hub hero + stat tiles — see dashboard-stats.ts.
+            const stats = await getDashboardStats(merchant_id);
+            return resp({ ok: true, ...stats }, 200);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout, history, dashboard_stats.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);
