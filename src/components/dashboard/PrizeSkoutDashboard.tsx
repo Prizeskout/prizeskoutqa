@@ -207,6 +207,7 @@ const T = {
     payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
+    payoutCheckRowsSkipped:"rows skipped — date or number format didn't match, so they weren't counted.",
   },
   ar: {
     cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
@@ -307,6 +308,7 @@ const T = {
     payoutCheckLiveTab:"فحص مباشر", payoutCheckUploadTab:"رفع ملف",
     payoutCheckUploadPlatformLabel:"المنصة", payoutCheckCsvOnly:"ملفات CSV فقط حالياً.",
     payoutCheckSourceLive:"فحص مباشر", payoutCheckSourceUpload:"ملف مرفوع", payoutCheckShowing:"يعرض",
+    payoutCheckRowsSkipped:"صفوف تم تجاهلها — لم تتطابق صيغة التاريخ أو الرقم، لذا لم تُحتسب.",
   },
   fr: {
     cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"Boucle de défense active", defendS:"4 nœuds périphériques · opérationnels",
@@ -407,6 +409,7 @@ const T = {
     payoutCheckLiveTab:"Vérification en direct", payoutCheckUploadTab:"Importer un fichier",
     payoutCheckUploadPlatformLabel:"Plateforme", payoutCheckCsvOnly:"Fichiers CSV uniquement pour le moment.",
     payoutCheckSourceLive:"Vérification en direct", payoutCheckSourceUpload:"Fichier importé", payoutCheckShowing:"Affichage",
+    payoutCheckRowsSkipped:"lignes ignorées — le format de date ou de nombre ne correspondait pas, donc elles n'ont pas été comptées.",
   },
 };
 
@@ -518,7 +521,7 @@ export function PrizeSkoutDashboard() {
   // merchant should have received (see expected-payout.ts). Never fetches
   // their actual payout; the merchant compares it against their own bank
   // deposit themselves.
-  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string };
+  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
@@ -1409,6 +1412,12 @@ export function PrizeSkoutDashboard() {
                         </div>
                       ))}
                     </div>
+                  )}
+
+                  {payoutData?.source === "upload" && !!payoutData.rows_skipped && (
+                    <span style={{ fontSize:12, fontWeight:600, color:"#B45309" }}>
+                      {payoutData.rows_skipped} / {payoutData.rows_total} {t.payoutCheckRowsSkipped}
+                    </span>
                   )}
 
                   {payoutData && (

@@ -30,6 +30,11 @@ export type ExpectedPayoutResult = {
   // differently rather than imply both are equally exact.
   source?: "live" | "upload";
   platform?: string;
+  // Upload path only — how many data rows were dropped for not parsing
+  // (bad date/number format) vs. the total seen, so the UI can disclose
+  // partial data instead of presenting a total as if it covered everything.
+  rows_skipped?: number;
+  rows_total?: number;
 };
 
 export async function getTalabatExpectedPayout(
