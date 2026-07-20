@@ -194,8 +194,9 @@ const T = {
     tourOutboundTitle:"This is where the defense happens",
     tourOutboundBody:"Connect Talabat, Jahez, or any delivery aggregator and PrizeSkout starts pushing margin-safe prices automatically — no more silent margin leaks.",
     payoutCheckTitle:"Expected Payout Check",
-    payoutCheckDesc:"We calculate what you should have been paid, using the commission rate you agreed to — live from Talabat's real order history, or from a statement you upload for any platform. Compare it to what actually landed in your bank account.",
+    payoutCheckDesc:"We calculate what you should have been paid, using the commission rate you agreed to. Compare it to what actually landed in your bank account.",
     payoutCheckBtn:"Check Last 30 Days", payoutCheckBtnLoading:"Pulling your orders…",
+    payoutCheckLiveOnlyNote:"Talabat only, for now — other platforms coming soon.",
     payoutCheckOrders:"Orders Checked", payoutCheckSubtotal:"Food Sales (excl. delivery fee)", payoutCheckRate:"Your Commission Rate",
     payoutCheckExpectedLabel:"You Should Have Received", payoutCheckHint:"Compare this to your bank deposit for the same period.",
     payoutCheckNotConnected:"Connect Talabat first to run this check.",
@@ -293,8 +294,9 @@ const T = {
     tourOutboundTitle:"هنا يحدث الدفاع الفعلي",
     tourOutboundBody:"اربط طلبات، جاهز، أو أي مجمّع توصيل آخر، وسيبدأ PrizeSkout بإرسال أسعار آمنة للهامش تلقائياً — لا مزيد من تسرب الهامش الصامت.",
     payoutCheckTitle:"فحص المدفوعات المتوقعة",
-    payoutCheckDesc:"نحسب ما كان يجب أن تحصل عليه، بناءً على نسبة العمولة التي اتفقت عليها — مباشرة من سجل طلبات طلبات الحقيقي، أو من كشف حساب ترفعه لأي منصة. قارن هذا بما وصل فعلياً إلى حسابك البنكي.",
+    payoutCheckDesc:"نحسب ما كان يجب أن تحصل عليه، بناءً على نسبة العمولة التي اتفقت عليها. قارن هذا بما وصل فعلياً إلى حسابك البنكي.",
     payoutCheckBtn:"فحص آخر 30 يوماً", payoutCheckBtnLoading:"جارٍ سحب طلباتك…",
+    payoutCheckLiveOnlyNote:"طلبات فقط حالياً — منصات أخرى قريباً.",
     payoutCheckOrders:"الطلبات المفحوصة", payoutCheckSubtotal:"مبيعات الطعام (بدون رسوم التوصيل)", payoutCheckRate:"نسبة عمولتك",
     payoutCheckExpectedLabel:"المفترض أن تحصل عليه", payoutCheckHint:"قارن هذا بإيداعك البنكي لنفس الفترة.",
     payoutCheckNotConnected:"اربط طلبات أولاً لتشغيل هذا الفحص.",
@@ -392,8 +394,9 @@ const T = {
     tourOutboundTitle:"C'est ici que la défense entre en jeu",
     tourOutboundBody:"Connectez Talabat, Jahez, ou tout autre agrégateur de livraison, et PrizeSkout commence à transmettre automatiquement des prix qui protègent votre marge — plus de fuite silencieuse de marge.",
     payoutCheckTitle:"Vérification du paiement attendu",
-    payoutCheckDesc:"Nous calculons ce que vous auriez dû recevoir, selon le taux de commission convenu — en direct depuis l'historique réel de vos commandes Talabat, ou depuis un relevé que vous importez pour n'importe quelle plateforme. Comparez ce montant à votre dépôt bancaire.",
+    payoutCheckDesc:"Nous calculons ce que vous auriez dû recevoir, selon le taux de commission convenu. Comparez ce montant à votre dépôt bancaire.",
     payoutCheckBtn:"Vérifier les 30 derniers jours", payoutCheckBtnLoading:"Récupération de vos commandes…",
+    payoutCheckLiveOnlyNote:"Talabat uniquement pour l'instant — autres plateformes à venir.",
     payoutCheckOrders:"Commandes vérifiées", payoutCheckSubtotal:"Ventes nourriture (hors frais de livraison)", payoutCheckRate:"Votre taux de commission",
     payoutCheckExpectedLabel:"Vous auriez dû recevoir", payoutCheckHint:"Comparez ce montant à votre dépôt bancaire pour la même période.",
     payoutCheckNotConnected:"Connectez d'abord Talabat pour lancer cette vérification.",
@@ -1337,13 +1340,16 @@ export function PrizeSkoutDashboard() {
                   </div>
 
                   {payoutTab === "live" ? (
-                    <button onClick={runPayoutCheck} disabled={payoutLoading}
-                      style={{ cursor: payoutLoading ? "not-allowed" : "pointer", alignSelf:"flex-start",
-                        fontSize:14, fontWeight:700, color:"#fff", background: payoutLoading ? "#9A9A9A" : OG,
-                        border:"none", borderRadius:10, padding:"11px 20px", fontFamily:"inherit",
-                        opacity: payoutLoading ? 0.7 : 1, transition:"background .2s,opacity .2s" }}>
-                      {payoutLoading ? t.payoutCheckBtnLoading : t.payoutCheckBtn}
-                    </button>
+                    <div style={{ display:"flex", flexDirection:"column", gap:8, alignItems:"flex-start" }}>
+                      <button onClick={runPayoutCheck} disabled={payoutLoading}
+                        style={{ cursor: payoutLoading ? "not-allowed" : "pointer",
+                          fontSize:14, fontWeight:700, color:"#fff", background: payoutLoading ? "#9A9A9A" : OG,
+                          border:"none", borderRadius:10, padding:"11px 20px", fontFamily:"inherit",
+                          opacity: payoutLoading ? 0.7 : 1, transition:"background .2s,opacity .2s" }}>
+                        {payoutLoading ? t.payoutCheckBtnLoading : t.payoutCheckBtn}
+                      </button>
+                      <span style={{ fontSize:11.5, color:"var(--muted)" }}>{t.payoutCheckLiveOnlyNote}</span>
+                    </div>
                   ) : (
                     <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                       <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>

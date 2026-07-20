@@ -646,6 +646,33 @@ function OnboardingPage() {
     setCategoryFloors(prev => ({ ...prev, [cat]: v }));
   }
 
+  // Whether this browser already has a fully-completed onboarding sitting in
+  // localStorage — set once on mount, before any clearing/regenerating so
+  // the "already set up" prompt below can offer a real choice instead of
+  // silently reusing (or silently wiping) whatever's cached.
+  const [existingSetup] = useState(() => localStorage.getItem("ps_connected") === "true");
+
+  // handleStep1Next/handleFinish only generate a fresh merchant_id when
+  // localStorage has none at all — by design, so refreshing mid-onboarding
+  // (or an OAuth redirect away and back) doesn't lose progress. But that
+  // means visiting /onboarding again on a browser that already completed
+  // one, intending to set up a *different* store, silently continues under
+  // the old identity instead — old connections and all. This is the only
+  // place that actually starts over: clears every ps_* key and resets state.
+  function startFreshOnboarding() {
+    localStorage.removeItem("ps_merchant_id");
+    localStorage.removeItem("ps_access_code");
+    localStorage.removeItem("ps_connected");
+    localStorage.removeItem("ps_tour_v1_done"); // so the product tour runs for the new store too
+    sessionStorage.removeItem("ps_ob_storeName");
+    sessionStorage.removeItem("ps_ob_email");
+    sessionStorage.removeItem("ps_ob_region");
+    sessionStorage.removeItem("ps_ob_currency");
+    setMerchantId(""); setStoreName(""); setEmail(""); setRegion(""); setCurrency("");
+    setSallaConnected(false); setZidConnected(false);
+    setRestoreMode(false); setStep(0);
+  }
+
   // Handle return from OAuth (Salla/Zid redirect back here with ?salla_connected=1 etc.)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -748,7 +775,24 @@ function OnboardingPage() {
         border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "28px 20px",
       }}>
         {restoreMode ? (
-          <RestoreForm onCancel={() => setRestoreMode(false)} />
+          <RestoreForm onCancel={startFreshOnboarding} />
+        ) : existingSetup && step === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: "0 0 8px" }}>This browser already has a store set up</h2>
+              <p style={{ fontSize: 13, color: "#9CA3AF", margin: 0, lineHeight: 1.7 }}>
+                Continuing will take you to that dashboard. If you meant to set up a different store, start fresh below — that clears this browser's saved store, so choose carefully if this device is shared.
+              </p>
+            </div>
+            <PrimaryBtn onClick={() => navigate({ to: "/dashboard/revenue-hub" })}>Continue to my dashboard →</PrimaryBtn>
+            <button
+              type="button"
+              onClick={startFreshOnboarding}
+              style={{ background: "transparent", border: "none", color: "#52555C", fontSize: 13, cursor: "pointer", fontFamily: MONO, padding: "8px 0", textAlign: "center" }}
+            >
+              Set up a different store instead
+            </button>
+          </div>
         ) : step === 0 ? (
           <Step1
             storeName={storeName} setStoreName={setStoreName}
