@@ -127,6 +127,7 @@ const T = {
     historyColDate:"Date", historyColSource:"Source", historyColPlatform:"Platform", historyColOrders:"Orders",
     historyColExpected:"Expected Payout", historyColChannel:"Channel", historyColSku:"SKU",
     historyColPrice:"Price Change", historyColStatus:"Status",
+    historyDetailPeriod:"Period", historyDetailSales:"Sales used", historyDetailRows:"Rows used",
     stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
@@ -243,6 +244,7 @@ const T = {
     historyColDate:"التاريخ", historyColSource:"المصدر", historyColPlatform:"المنصة", historyColOrders:"الطلبات",
     historyColExpected:"المدفوعات المتوقعة", historyColChannel:"القناة", historyColSku:"رمز المنتج",
     historyColPrice:"تغيير السعر", historyColStatus:"الحالة",
+    historyDetailPeriod:"الفترة", historyDetailSales:"المبيعات المستخدمة", historyDetailRows:"الصفوف المستخدمة",
     stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
     copilotTitle:"مساعد المدير المالي", copilotSub:"محرك القواعد باللغة الطبيعية",
@@ -359,6 +361,7 @@ const T = {
     historyColDate:"Date", historyColSource:"Source", historyColPlatform:"Plateforme", historyColOrders:"Commandes",
     historyColExpected:"Paiement attendu", historyColChannel:"Canal", historyColSku:"SKU",
     historyColPrice:"Changement de prix", historyColStatus:"Statut",
+    historyDetailPeriod:"Période", historyDetailSales:"Ventes utilisées", historyDetailRows:"Lignes utilisées",
     stream:"Flux d'exécution en direct", streamS:"Flux d'événements en temps réel",
     profLabel:"Profits protégés · Ce mois-ci",
     copilotTitle:"Copilote CFO",    copilotSub:"Moteur de règles en langage naturel",
@@ -583,6 +586,7 @@ export function PrizeSkoutDashboard() {
   const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
   const [historyLoading, setHistoryLoading]           = useState(false);
+  const [expandedPayoutCheckId, setExpandedPayoutCheckId] = useState<string|null>(null);
 
   useEffect(() => {
     if (tab !== "history") return;
@@ -1891,31 +1895,56 @@ export function PrizeSkoutDashboard() {
                 </div>
               ) : (
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {historyPayoutChecks.map(row => (
+                  {historyPayoutChecks.map(row => {
+                    const open = expandedPayoutCheckId === row.id;
+                    return (
                     <div key={row.id} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
-                      borderRadius:12, padding:"13px 16px", display:"flex", flexWrap:"wrap",
-                      gap:12, alignItems:"center", justifyContent:"space-between" }}>
-                      <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700, flexWrap:"wrap" }}>
-                          <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11.5, fontWeight:700,
-                            color: row.source === "upload" ? "#B45309" : GN,
-                            background: row.source === "upload" ? "color-mix(in srgb,#B45309 10%,var(--surface))" : `color-mix(in srgb,${GN} 10%,var(--surface))`,
-                            border: `1px solid ${row.source === "upload" ? "color-mix(in srgb,#B45309 28%,transparent)" : `color-mix(in srgb,${GN} 28%,transparent)`}`,
-                            borderRadius:999, padding:"3px 9px" }}>
-                            <span style={{ width:6,height:6,borderRadius:"50%", background: row.source === "upload" ? "#B45309" : GN }} />
-                            {row.source === "upload" ? t.payoutCheckSourceUpload : t.payoutCheckSourceLive}
-                          </span>
-                          {PAYOUT_UPLOAD_PLATFORMS.find(p => p.value === row.platform)?.label ?? row.platform}
+                      borderRadius:12, overflow:"hidden" }}>
+                      <div onClick={()=>setExpandedPayoutCheckId(open ? null : row.id)}
+                        style={{ cursor:"pointer", padding:"13px 16px", display:"flex", flexWrap:"wrap",
+                          gap:12, alignItems:"center", justifyContent:"space-between" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0, flex:1 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                            strokeLinecap="round" strokeLinejoin="round"
+                            style={{ flexShrink:0, color:"var(--muted)", transition:"transform .18s", transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                          <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700, flexWrap:"wrap" }}>
+                              <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11.5, fontWeight:700,
+                                color: row.source === "upload" ? "#B45309" : GN,
+                                background: row.source === "upload" ? "color-mix(in srgb,#B45309 10%,var(--surface))" : `color-mix(in srgb,${GN} 10%,var(--surface))`,
+                                border: `1px solid ${row.source === "upload" ? "color-mix(in srgb,#B45309 28%,transparent)" : `color-mix(in srgb,${GN} 28%,transparent)`}`,
+                                borderRadius:999, padding:"3px 9px" }}>
+                                <span style={{ width:6,height:6,borderRadius:"50%", background: row.source === "upload" ? "#B45309" : GN }} />
+                                {row.source === "upload" ? t.payoutCheckSourceUpload : t.payoutCheckSourceLive}
+                              </span>
+                              {PAYOUT_UPLOAD_PLATFORMS.find(p => p.value === row.platform)?.label ?? row.platform}
+                            </div>
+                            <div style={{ fontSize:13, color:"var(--muted)" }}>
+                              {new Date(row.created_at).toLocaleString()} · {row.order_count} {t.historyColOrders} · {row.commission_rate_pct}%
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ fontSize:13, color:"var(--muted)" }}>
-                          {new Date(row.created_at).toLocaleString()} · {row.order_count} {t.historyColOrders} · {row.commission_rate_pct}%
+                        <div style={{ fontFamily:DISPLAY, fontSize:18, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
+                          {currency} {fmtMoney(row.expected_payout, currency)}
                         </div>
                       </div>
-                      <div style={{ fontFamily:DISPLAY, fontSize:18, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
-                        {currency} {fmtMoney(row.expected_payout, currency)}
-                      </div>
+                      {open && (
+                        <div style={{ padding:"0 16px 16px 38px", display:"flex", flexDirection:"column", gap:6,
+                          fontSize:13, color:"var(--muted)", animation:"pk-in .2s ease" }}>
+                          <div>{t.payoutCheckSalesLabel}: <span style={{ color:"var(--text)", fontWeight:600 }}>{currency} {fmtMoney(row.sub_total_sum, currency)}</span></div>
+                          {(row.period_start || row.period_end) && (
+                            <div>{t.historyDetailPeriod}: <span style={{ color:"var(--text)", fontWeight:600 }}>{row.period_start}{row.period_end && row.period_end !== row.period_start ? ` – ${row.period_end}` : ""}</span></div>
+                          )}
+                          {row.rows_total != null && (
+                            <div>{t.historyDetailRows}: <span style={{ color:"var(--text)", fontWeight:600 }}>{(row.rows_total ?? 0) - (row.rows_skipped ?? 0)} / {row.rows_total}</span></div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
