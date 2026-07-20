@@ -1,8 +1,14 @@
-// GET/POST /api/pricing/margin-floor — read or set a merchant's global margin
+// GET/POST /api/channels/margin-floor — read or set a merchant's global margin
 // floor. Backs the "Global margin floor" slider in the dashboard's Active
 // Guardrails panel; the value set here is what decide-engine.ts actually
 // enforces on every real order (see merchant-pricing-config.ts), not just
 // what's shown on screen.
+//
+// Lives under /api/channels/ rather than a dedicated /api/pricing/ prefix —
+// PipeOps' production routing (separate from the Cloudflare Worker deploy)
+// silently 404s brand-new top-level API path prefixes; every existing prefix
+// (/api/auth/*, /api/channels/*, /api/restore) works fine. Filed with PipeOps
+// support; this is the working placement until that's resolved.
 //
 // Auth: same pattern as /api/repricing/catalog — ps_access_codes (merchant_id
 // + access_code) validation, no session cookie required.
@@ -28,7 +34,7 @@ async function verifyAccess(merchantId: string, accessCode: string): Promise<boo
   return data?.merchant_id === merchantId;
 }
 
-export const Route = createFileRoute("/api/pricing/margin-floor")({
+export const Route = createFileRoute("/api/channels/margin-floor")({
   server: {
     handlers: {
       GET: async ({ request }) => {

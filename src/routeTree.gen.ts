@@ -61,10 +61,10 @@ import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.s
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/catalog'
 import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
-import { Route as ApiPricingMarginFloorRouteImport } from './routes/api/pricing/margin-floor'
 import { Route as ApiDisputeVoucherRouteImport } from './routes/api/dispute/voucher'
 import { Route as ApiCopilotCompileRouteImport } from './routes/api/copilot/compile'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
+import { Route as ApiChannelsMarginFloorRouteImport } from './routes/api/channels/margin-floor'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
 import { Route as ApiChannelsConnectRouteImport } from './routes/api/channels/connect'
 import { Route as ApiChannelsByokRouteImport } from './routes/api/channels/byok'
@@ -347,11 +347,6 @@ const ApiRepricingApplyRoute = ApiRepricingApplyRouteImport.update({
   path: '/api/repricing/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPricingMarginFloorRoute = ApiPricingMarginFloorRouteImport.update({
-  id: '/api/pricing/margin-floor',
-  path: '/api/pricing/margin-floor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiDisputeVoucherRoute = ApiDisputeVoucherRouteImport.update({
   id: '/api/dispute/voucher',
   path: '/api/dispute/voucher',
@@ -365,6 +360,11 @@ const ApiCopilotCompileRoute = ApiCopilotCompileRouteImport.update({
 const ApiChannelsStatusRoute = ApiChannelsStatusRouteImport.update({
   id: '/api/channels/status',
   path: '/api/channels/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChannelsMarginFloorRoute = ApiChannelsMarginFloorRouteImport.update({
+  id: '/api/channels/margin-floor',
+  path: '/api/channels/margin-floor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChannelsDisconnectRoute = ApiChannelsDisconnectRouteImport.update({
@@ -527,10 +527,10 @@ export interface FileRoutesByFullPath {
   '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
+  '/api/channels/margin-floor': typeof ApiChannelsMarginFloorRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
-  '/api/pricing/margin-floor': typeof ApiPricingMarginFloorRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -602,10 +602,10 @@ export interface FileRoutesByTo {
   '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
+  '/api/channels/margin-floor': typeof ApiChannelsMarginFloorRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
-  '/api/pricing/margin-floor': typeof ApiPricingMarginFloorRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -681,10 +681,10 @@ export interface FileRoutesById {
   '/api/channels/byok': typeof ApiChannelsByokRoute
   '/api/channels/connect': typeof ApiChannelsConnectRoute
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
+  '/api/channels/margin-floor': typeof ApiChannelsMarginFloorRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
-  '/api/pricing/margin-floor': typeof ApiPricingMarginFloorRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -761,10 +761,10 @@ export interface FileRouteTypes {
     | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
+    | '/api/channels/margin-floor'
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
-    | '/api/pricing/margin-floor'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -836,10 +836,10 @@ export interface FileRouteTypes {
     | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
+    | '/api/channels/margin-floor'
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
-    | '/api/pricing/margin-floor'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -914,10 +914,10 @@ export interface FileRouteTypes {
     | '/api/channels/byok'
     | '/api/channels/connect'
     | '/api/channels/disconnect'
+    | '/api/channels/margin-floor'
     | '/api/channels/status'
     | '/api/copilot/compile'
     | '/api/dispute/voucher'
-    | '/api/pricing/margin-floor'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -975,10 +975,10 @@ export interface RootRouteChildren {
   ApiChannelsByokRoute: typeof ApiChannelsByokRoute
   ApiChannelsConnectRoute: typeof ApiChannelsConnectRoute
   ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
+  ApiChannelsMarginFloorRoute: typeof ApiChannelsMarginFloorRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
   ApiCopilotCompileRoute: typeof ApiCopilotCompileRoute
   ApiDisputeVoucherRoute: typeof ApiDisputeVoucherRoute
-  ApiPricingMarginFloorRoute: typeof ApiPricingMarginFloorRoute
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
@@ -1359,13 +1359,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRepricingApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/pricing/margin-floor': {
-      id: '/api/pricing/margin-floor'
-      path: '/api/pricing/margin-floor'
-      fullPath: '/api/pricing/margin-floor'
-      preLoaderRoute: typeof ApiPricingMarginFloorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/dispute/voucher': {
       id: '/api/dispute/voucher'
       path: '/api/dispute/voucher'
@@ -1385,6 +1378,13 @@ declare module '@tanstack/react-router' {
       path: '/api/channels/status'
       fullPath: '/api/channels/status'
       preLoaderRoute: typeof ApiChannelsStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/channels/margin-floor': {
+      id: '/api/channels/margin-floor'
+      path: '/api/channels/margin-floor'
+      fullPath: '/api/channels/margin-floor'
+      preLoaderRoute: typeof ApiChannelsMarginFloorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/channels/disconnect': {
@@ -1693,10 +1693,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChannelsByokRoute: ApiChannelsByokRoute,
   ApiChannelsConnectRoute: ApiChannelsConnectRoute,
   ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
+  ApiChannelsMarginFloorRoute: ApiChannelsMarginFloorRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
   ApiCopilotCompileRoute: ApiCopilotCompileRoute,
   ApiDisputeVoucherRoute: ApiDisputeVoucherRoute,
-  ApiPricingMarginFloorRoute: ApiPricingMarginFloorRoute,
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
