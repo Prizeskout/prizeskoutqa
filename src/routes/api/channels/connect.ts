@@ -14,6 +14,7 @@ import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
 import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/server/core/payout-history";
 import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
 import { getDashboardStats } from "@/server/core/dashboard-stats";
+import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -134,12 +135,16 @@ export const Route = createFileRoute("/api/channels/connect")({
                 return resp({ error: "csv_text is required for an upload check." }, 400);
               }
 
-              // Talabat's real payout export ("Payout Metadata" CSV) states
-              // its own Total Payout directly — see payout-statement-parser.ts
-              // header comment for why a flat commission% estimate is wrong
-              // for Talabat specifically. Every other platform still uses the
-              // generic daily-totals parser (no real export sample yet).
-              const result = platformName === "talabat"
+              // Route by the file's actual content, not the selected
+              // platform — a merchant can select "Talabat" and still upload
+              // either Talabat's real payout statement ("Payout Metadata"
+              // CSV, states its own Total Payout directly — see payout-
+              // statement-parser.ts) or a plain daily orders-per-day export.
+              // Keying this off `platformName` alone previously meant a
+              // Talabat daily-log upload was force-routed to the statement
+              // parser and hard-failed for missing statement columns.
+              const looksLikeStatement = /earnings range/i.test(csv_text) && /total payout/i.test(csv_text);
+              const result = looksLikeStatement
                 ? parseTalabatPayoutStatementCsv(csv_text, rate)
                 : parseAggregatorDailyCsv(csv_text, rate, platformName);
               if (result.ok) await savePayoutCheck(merchant_id, result);
@@ -162,12 +167,40 @@ export const Route = createFileRoute("/api/channels/connect")({
           if (platform === "history") {
             // Also multiplexed here, same PipeOps-routing reason as
             // margin_floor/talabat_expected_payout above.
-            if (body.action === "delete_payout_check" || body.action === "delete_repricing") {
+            if (body.action === "save_payout_audit") {
+              // Only a persist — the audit itself (findings/ledger) was
+              // already computed client-side by src/lib/commission-audit.ts;
+              // this endpoint doesn't recompute anything, just stores what's
+              // handed to it. Cast needed: these fields are structured JSON,
+              // not the flat strings the rest of this route's Body assumes.
+              const raw = body as unknown as Record<string, unknown>;
+              const rate = Number(raw.commission_rate_pct);
+              if (!Number.isFinite(rate)) {
+                return resp({ error: "commission_rate_pct is required to save an audit." }, 400);
+              }
+              const input: SavePayoutAuditInput = {
+                commission_rate_pct: rate,
+                documents: (raw.documents as SavePayoutAuditInput["documents"]) ?? [],
+                findings: (raw.findings as SavePayoutAuditInput["findings"]) ?? [],
+                ledger: (raw.ledger as SavePayoutAuditInput["ledger"]) ?? [],
+                ledger_totals: (raw.ledger_totals as SavePayoutAuditInput["ledger_totals"]) ?? null,
+                period_start: (raw.period_start as string) ?? null,
+                period_end: (raw.period_end as string) ?? null,
+              };
+              const result = await savePayoutAudit(merchant_id, input);
+              return result.ok
+                ? resp({ ok: true }, 200)
+                : resp({ ok: false, error: result.error }, 400);
+            }
+
+            if (body.action === "delete_payout_check" || body.action === "delete_repricing" || body.action === "delete_payout_audit") {
               const id = body.id;
               if (!id) return resp({ error: "id is required to delete a record." }, 400);
               const result = body.action === "delete_payout_check"
                 ? await deletePayoutCheck(merchant_id, id)
-                : await deleteRepricingEvent(merchant_id, id);
+                : body.action === "delete_repricing"
+                ? await deleteRepricingEvent(merchant_id, id)
+                : await deletePayoutAudit(merchant_id, id);
               return result.ok
                 ? resp({ ok: true }, 200)
                 : resp({ ok: false, error: result.error }, 400);
@@ -177,6 +210,8 @@ export const Route = createFileRoute("/api/channels/connect")({
             const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 30;
             const items = body.action === "repricings"
               ? await getRepricingHistory(merchant_id, limit)
+              : body.action === "payout_audits"
+              ? await getAuditHistory(merchant_id, limit)
               : await getPayoutCheckHistory(merchant_id, limit);
             return resp({ ok: true, items }, 200);
           }

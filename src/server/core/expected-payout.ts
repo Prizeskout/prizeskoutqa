@@ -59,6 +59,13 @@ export type ExpectedPayoutResult = {
   // every column that could itemize it is zero — flags a charge Talabat's
   // own export doesn't explain, worth escalating directly.
   unexplained_charge?: { label: string; amount: number } | null;
+  // Daily-totals CSV upload path only (see payout-csv-parser.ts) — the raw
+  // per-day breakdown behind sub_total_sum/order_count, so a merchant can see
+  // exactly how each day tallies against the agreed commission rate instead
+  // of just the period's grand total. Also feeds the commission-audit
+  // engine's per-day ledger (src/lib/commission-audit.ts).
+  daily_rows?: { date: string; orders: number; sales: number; cancelled?: number }[];
+  cancelled_orders_total?: number;
 };
 
 export async function getTalabatExpectedPayout(

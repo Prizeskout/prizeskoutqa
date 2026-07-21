@@ -105,9 +105,10 @@ export function parseAggregatorDailyCsv(
   }
 
   const header = parseCsvLine(lines[0]);
-  const dateIdx   = findColumn(header, ["Date"], ["date"]);
-  const ordersIdx = findColumn(header, ["Orders"], ["order"], ["cancel"]);
-  const salesIdx  = findColumn(header, ["Sales", "GMV", "Revenue", "Total Sales"], ["sales", "gmv", "revenue"], ["cancel"]);
+  const dateIdx      = findColumn(header, ["Date"], ["date"]);
+  const ordersIdx    = findColumn(header, ["Orders"], ["order"], ["cancel"]);
+  const salesIdx     = findColumn(header, ["Sales", "GMV", "Revenue", "Total Sales"], ["sales", "gmv", "revenue"], ["cancel"]);
+  const cancelledIdx = findColumn(header, ["Cancelled"], ["cancel"]);
 
   if (dateIdx === -1 || ordersIdx === -1 || salesIdx === -1) {
     return { ok: false, error: "Couldn't find date, orders, and sales/GMV columns in that file. CSV only for now — if this is a real export and it's not matching, the column names may differ from what we expect." };
@@ -115,16 +116,22 @@ export function parseAggregatorDailyCsv(
 
   let salesSum = 0;
   let orderCount = 0;
+  let cancelledSum = 0;
   let firstDate: string | null = null;
   let lastDate: string | null = null;
   let rowsSkipped = 0;
   const rowsTotal = lines.length - 1;
+  // Keyed by date so multiple rows for the same day (or the same file
+  // parsed twice within a batch) sum rather than overwrite — the audit
+  // engine merges several of these per-day maps across files the same way.
+  const byDate = new Map<string, { orders: number; sales: number; cancelled: number }>();
 
   for (let i = 1; i < lines.length; i++) {
     const cells = parseCsvLine(lines[i]);
     const date = cells[dateIdx];
     const orders = parseLocaleNumber(cells[ordersIdx]);
     const sales = parseLocaleNumber(cells[salesIdx]);
+    const cancelled = cancelledIdx !== -1 ? parseLocaleNumber(cells[cancelledIdx]) : 0;
     if (!date || !Number.isFinite(orders) || !Number.isFinite(sales)) {
       rowsSkipped++;
       continue;
@@ -132,8 +139,15 @@ export function parseAggregatorDailyCsv(
 
     salesSum += sales;
     orderCount += orders;
+    if (Number.isFinite(cancelled)) cancelledSum += cancelled;
     if (!firstDate || date < firstDate) firstDate = date;
     if (!lastDate || date > lastDate) lastDate = date;
+
+    const existing = byDate.get(date) ?? { orders: 0, sales: 0, cancelled: 0 };
+    existing.orders += orders;
+    existing.sales += sales;
+    if (Number.isFinite(cancelled)) existing.cancelled += cancelled;
+    byDate.set(date, existing);
   }
 
   if (orderCount === 0) {
@@ -149,6 +163,15 @@ export function parseAggregatorDailyCsv(
 
   const expectedPayout = salesSum * (1 - commissionRatePct / 100);
 
+  const daily_rows = [...byDate.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([date, v]) => ({
+      date,
+      orders: v.orders,
+      sales: Math.round(v.sales * 100) / 100,
+      ...(cancelledIdx !== -1 ? { cancelled: v.cancelled } : {}),
+    }));
+
   return {
     ok: true,
     source: "upload",
@@ -161,5 +184,7 @@ export function parseAggregatorDailyCsv(
     period_end: lastDate ?? undefined,
     rows_skipped: rowsSkipped,
     rows_total: rowsTotal,
+    daily_rows,
+    ...(cancelledIdx !== -1 ? { cancelled_orders_total: cancelledSum } : {}),
   };
 }

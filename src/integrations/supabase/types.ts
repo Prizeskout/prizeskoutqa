@@ -4140,6 +4140,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ps_payout_audits: {
+        Row: {
+          id: string
+          account_id: string
+          commission_rate_pct: number
+          document_count: number
+          documents: Json
+          findings: Json
+          ledger: Json | null
+          ledger_totals: Json | null
+          period_start: string | null
+          period_end: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          commission_rate_pct: number
+          document_count: number
+          documents: Json
+          findings: Json
+          ledger?: Json | null
+          ledger_totals?: Json | null
+          period_start?: string | null
+          period_end?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          commission_rate_pct?: number
+          document_count?: number
+          documents?: Json
+          findings?: Json
+          ledger?: Json | null
+          ledger_totals?: Json | null
+          period_start?: string | null
+          period_end?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_url_due_status: {

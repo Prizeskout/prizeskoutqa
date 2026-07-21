@@ -184,8 +184,14 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
   return boxTop + boxH + 8;
 }
 
-function drawUnexplainedWarning(doc: jsPDF, charge: { label: string; amount: number }, currency: string, startY: number): number {
-  const text = `${fmt(charge.amount, currency)} in ${charge.label} has no itemized breakdown anywhere in this statement — worth asking the platform to explain it.`;
+function drawUnexplainedWarning(doc: jsPDF, charge: { label: string; amount: number }, currency: string, startY: number, orderCount?: number): number {
+  let text = `${fmt(charge.amount, currency)} in ${charge.label} has no itemized breakdown anywhere in this statement — worth asking the platform to explain it.`;
+  // Traced as a per-order rate — a plausible clue to take back to the
+  // platform even though the statement itself has no itemized column for it.
+  if (orderCount) {
+    const perOrder = charge.amount / orderCount;
+    text += ` Traced as a rate: approximately ${currency} ${perOrder.toFixed(2)} per order across ${orderCount} orders.`;
+  }
   const lines = doc.splitTextToSize(text, CONTENT_W - 22);
   const boxH = Math.max(16, 8 + lines.length * 4.6);
   let y = ensureSpace(doc, startY, boxH + 8);
@@ -299,7 +305,7 @@ export async function exportPayoutCheckPdf(data: PayoutCheckPdfData, currency: s
     y = drawBreakdown(doc, data, currency, y, accent);
   }
   if (data.unexplained_charge) {
-    y = drawUnexplainedWarning(doc, data.unexplained_charge, currency, y);
+    y = drawUnexplainedWarning(doc, data.unexplained_charge, currency, y, data.order_count);
   }
   y = drawTotalCallout(doc, data, currency, y);
 
