@@ -130,6 +130,7 @@ const T = {
     historyDetailPeriod:"Period", historyDetailSales:"Sales used", historyDetailRows:"Rows used",
     historyDetailItem:"Item", historyDetailRule:"Trigger", historyDetailMargin:"Margin (before → after)",
     historyDetailDuration:"Duration", historyDetailCompleted:"Completed",
+    historyDeleteConfirm:"Delete this record?", historyDeleteYes:"Delete", historyDeleteCancel:"Cancel",
     stream:"Live Execution Stream", streamS:"Real-time event feed",
     profLabel:"Profits Protected · This Month",
     profNoActivity:"No activity yet · connect a store to begin tracking",
@@ -271,6 +272,7 @@ const T = {
     historyDetailPeriod:"الفترة", historyDetailSales:"المبيعات المستخدمة", historyDetailRows:"الصفوف المستخدمة",
     historyDetailItem:"الصنف", historyDetailRule:"سبب التفعيل", historyDetailMargin:"الهامش (قبل ← بعد)",
     historyDetailDuration:"المدة", historyDetailCompleted:"اكتمل في",
+    historyDeleteConfirm:"هل تريد حذف هذا السجل؟", historyDeleteYes:"حذف", historyDeleteCancel:"إلغاء",
     stream:"بث التنفيذ المباشر", streamS:"بث الأحداث في الوقت الفعلي",
     profLabel:"الأرباح المحمية · هذا الشهر",
     profNoActivity:"لا يوجد نشاط بعد · اربط متجراً لبدء التتبع",
@@ -412,6 +414,7 @@ const T = {
     historyDetailPeriod:"Période", historyDetailSales:"Ventes utilisées", historyDetailRows:"Lignes utilisées",
     historyDetailItem:"Article", historyDetailRule:"Déclencheur", historyDetailMargin:"Marge (avant → après)",
     historyDetailDuration:"Durée", historyDetailCompleted:"Terminé le",
+    historyDeleteConfirm:"Supprimer cet enregistrement ?", historyDeleteYes:"Supprimer", historyDeleteCancel:"Annuler",
     stream:"Flux d'exécution en direct", streamS:"Flux d'événements en temps réel",
     profLabel:"Profits protégés · Ce mois-ci",
     profNoActivity:"Aucune activité pour l'instant · connectez une boutique pour commencer le suivi",
@@ -855,6 +858,46 @@ export function PrizeSkoutDashboard() {
   const [historyLoading, setHistoryLoading]           = useState(false);
   const [expandedPayoutCheckId, setExpandedPayoutCheckId] = useState<string|null>(null);
   const [expandedRepricingId, setExpandedRepricingId] = useState<string|null>(null);
+  const [confirmDeletePayoutId, setConfirmDeletePayoutId] = useState<string|null>(null);
+  const [deletingPayoutId, setDeletingPayoutId]           = useState<string|null>(null);
+  const [confirmDeleteRepricingId, setConfirmDeleteRepricingId] = useState<string|null>(null);
+  const [deletingRepricingId, setDeletingRepricingId]           = useState<string|null>(null);
+
+  const deleteHistoryRecord = async (action: "delete_payout_check" | "delete_repricing", id: string): Promise<boolean> => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return false;
+    try {
+      const res = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "history", action, id }),
+      });
+      const data = await res.json() as { ok?: boolean };
+      return res.ok && !!data.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleDeletePayoutCheck = async (id: string) => {
+    setConfirmDeletePayoutId(null);
+    setDeletingPayoutId(id);
+    const ok = await deleteHistoryRecord("delete_payout_check", id);
+    if (ok) setHistoryPayoutChecks(prev => prev.filter(r => r.id !== id));
+    else showToast("Could not delete that record. Please try again.");
+    setDeletingPayoutId(null);
+  };
+
+  const handleDeleteRepricing = async (id: string) => {
+    setConfirmDeleteRepricingId(null);
+    setDeletingRepricingId(id);
+    const ok = await deleteHistoryRecord("delete_repricing", id);
+    if (ok) setHistoryRepricings(prev => prev.filter(r => r.id !== id));
+    else showToast("Could not delete that record. Please try again.");
+    setDeletingRepricingId(null);
+  };
+
   const [downloadingHistoryPdf, setDownloadingHistoryPdf] = useState(false);
   const handleDownloadHistoryPdf = async () => {
     if (downloadingHistoryPdf) return;
@@ -2264,8 +2307,39 @@ export function PrizeSkoutDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div style={{ fontFamily:DISPLAY, fontSize:18, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
-                          {currency} {fmtMoney(rowShowDelta ? rowExpectedAtAgreed : row.expected_payout, currency)}
+                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                          <div style={{ fontFamily:DISPLAY, fontSize:18, fontWeight:700, color:GN, fontVariantNumeric:"tabular-nums" }}>
+                            {currency} {fmtMoney(rowShowDelta ? rowExpectedAtAgreed : row.expected_payout, currency)}
+                          </div>
+                          {confirmDeletePayoutId === row.id ? (
+                            <div onClick={e=>e.stopPropagation()} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                              <span style={{ fontSize:12, color:"var(--muted)" }}>{t.historyDeleteConfirm}</span>
+                              <button type="button" onClick={()=>handleDeletePayoutCheck(row.id)}
+                                disabled={deletingPayoutId===row.id}
+                                style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:"#fff",
+                                  background:"#DC2626", border:"none", borderRadius:7, padding:"5px 10px", fontFamily:"inherit" }}>
+                                {deletingPayoutId===row.id ? "…" : t.historyDeleteYes}
+                              </button>
+                              <button type="button" onClick={()=>setConfirmDeletePayoutId(null)}
+                                style={{ cursor:"pointer", fontSize:12, fontWeight:600, color:"var(--text)",
+                                  background:"transparent", border:"1px solid var(--border)", borderRadius:7, padding:"5px 10px", fontFamily:"inherit" }}>
+                                {t.historyDeleteCancel}
+                              </button>
+                            </div>
+                          ) : (
+                            <button type="button" aria-label="Delete"
+                              onClick={e=>{ e.stopPropagation(); setConfirmDeletePayoutId(row.id); }}
+                              style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"flex",
+                                color:"var(--muted)", flexShrink:0 }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       </div>
                       {open && (
@@ -2339,12 +2413,43 @@ export function PrizeSkoutDashboard() {
                               </div>
                             </div>
                           </div>
-                          <span style={{ fontSize:11.5, fontWeight:700, color: statusColor,
-                            background:`color-mix(in srgb,${statusColor} 10%,var(--surface))`,
-                            border:`1px solid color-mix(in srgb,${statusColor} 28%,transparent)`,
-                            borderRadius:999, padding:"4px 10px", textTransform:"uppercase" as const, letterSpacing:"0.03em", flexShrink:0 }}>
-                            {row.status.replace(/_/g," ")}
-                          </span>
+                          <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
+                            <span style={{ fontSize:11.5, fontWeight:700, color: statusColor,
+                              background:`color-mix(in srgb,${statusColor} 10%,var(--surface))`,
+                              border:`1px solid color-mix(in srgb,${statusColor} 28%,transparent)`,
+                              borderRadius:999, padding:"4px 10px", textTransform:"uppercase" as const, letterSpacing:"0.03em" }}>
+                              {row.status.replace(/_/g," ")}
+                            </span>
+                            {confirmDeleteRepricingId === row.id ? (
+                              <div onClick={e=>e.stopPropagation()} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                                <span style={{ fontSize:12, color:"var(--muted)" }}>{t.historyDeleteConfirm}</span>
+                                <button type="button" onClick={()=>handleDeleteRepricing(row.id)}
+                                  disabled={deletingRepricingId===row.id}
+                                  style={{ cursor:"pointer", fontSize:12, fontWeight:700, color:"#fff",
+                                    background:"#DC2626", border:"none", borderRadius:7, padding:"5px 10px", fontFamily:"inherit" }}>
+                                  {deletingRepricingId===row.id ? "…" : t.historyDeleteYes}
+                                </button>
+                                <button type="button" onClick={()=>setConfirmDeleteRepricingId(null)}
+                                  style={{ cursor:"pointer", fontSize:12, fontWeight:600, color:"var(--text)",
+                                    background:"transparent", border:"1px solid var(--border)", borderRadius:7, padding:"5px 10px", fontFamily:"inherit" }}>
+                                  {t.historyDeleteCancel}
+                                </button>
+                              </div>
+                            ) : (
+                              <button type="button" aria-label="Delete"
+                                onClick={e=>{ e.stopPropagation(); setConfirmDeleteRepricingId(row.id); }}
+                                style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"flex",
+                                  color:"var(--muted)", flexShrink:0 }}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                  strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  <line x1="10" y1="11" x2="10" y2="17" />
+                                  <line x1="14" y1="11" x2="14" y2="17" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {open && (
                           <div style={{ padding:"16px 16px 18px 38px", animation:"pk-in .2s ease",

@@ -11,8 +11,8 @@ import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
 import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-parser";
 import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
-import { savePayoutCheck, getPayoutCheckHistory } from "@/server/core/payout-history";
-import { getRepricingHistory } from "@/server/core/dispatch-history";
+import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/server/core/payout-history";
+import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
 import { getDashboardStats } from "@/server/core/dashboard-stats";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
@@ -161,8 +161,18 @@ export const Route = createFileRoute("/api/channels/connect")({
 
           if (platform === "history") {
             // Also multiplexed here, same PipeOps-routing reason as
-            // margin_floor/talabat_expected_payout above. Read-only: lists
-            // what already happened, nothing here writes.
+            // margin_floor/talabat_expected_payout above.
+            if (body.action === "delete_payout_check" || body.action === "delete_repricing") {
+              const id = body.id;
+              if (!id) return resp({ error: "id is required to delete a record." }, 400);
+              const result = body.action === "delete_payout_check"
+                ? await deletePayoutCheck(merchant_id, id)
+                : await deleteRepricingEvent(merchant_id, id);
+              return result.ok
+                ? resp({ ok: true }, 200)
+                : resp({ ok: false, error: result.error }, 400);
+            }
+
             const limitRaw = Number(body.limit);
             const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 30;
             const items = body.action === "repricings"

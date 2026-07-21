@@ -1,7 +1,7 @@
-// Read-only history of automated repricing dispatches for a merchant.
-// defend-handler.ts is the only writer of ps_aggregator_dispatch_log (one
-// row per aggregator per dispatch attempt, success or failure) — this just
-// reads it back out, scoped to the merchant, for display in the dashboard.
+// History of automated repricing dispatches for a merchant. defend-handler.ts
+// is the only writer of new dispatch attempts (one row per aggregator per
+// attempt, success or failure) — this reads it back out for the dashboard,
+// plus lets a merchant delete individual log entries (e.g. test/demo rows).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type RepricingRecord = {
@@ -30,4 +30,14 @@ export async function getRepricingHistory(accountId: string, limit = 30): Promis
     .limit(limit);
   if (error || !data) return [];
   return data as RepricingRecord[];
+}
+
+export async function deleteRepricingEvent(accountId: string, id: string): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabaseAdmin
+    .from("ps_aggregator_dispatch_log")
+    .delete()
+    .eq("account_id", accountId)
+    .eq("id", id);
+  if (error) return { ok: false, error: "Could not delete that record." };
+  return { ok: true };
 }

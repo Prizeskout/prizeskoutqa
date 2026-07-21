@@ -76,3 +76,16 @@ export async function getPayoutCheckHistory(accountId: string, limit = 30): Prom
   if (error || !data) return [];
   return data as PayoutCheckRecord[];
 }
+
+// Scoped by account_id (not just id) so a merchant can only ever delete
+// their own records, even though this is only ever called through the
+// already-authenticated dashboard flow.
+export async function deletePayoutCheck(accountId: string, id: string): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabaseAdmin
+    .from("ps_payout_checks")
+    .delete()
+    .eq("account_id", accountId)
+    .eq("id", id);
+  if (error) return { ok: false, error: "Could not delete that record." };
+  return { ok: true };
+}
