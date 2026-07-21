@@ -33,6 +33,7 @@ export type PayoutResultLike = {
   unexplained_charge?: { label: string; amount: number } | null;
   daily_rows?: { date: string; orders: number; sales: number; cancelled?: number }[] | null;
   cancelled_orders_total?: number | null;
+  charge_explainers?: { label: string; value: number }[] | null;
 };
 
 export type DocumentType = "daily_log" | "statement" | "summary_pdf";
@@ -43,6 +44,14 @@ export type Finding = {
   title: string;
   detail: string;
   amount?: number;
+  // Structured version of what the detail sentence already says in prose —
+  // lets the UI/PDF show the actual investigation (columns checked, rates
+  // derived) instead of just the summary sentence.
+  trace?: {
+    checkedColumns?: { label: string; value: number }[];
+    perOrder?: { rate: number; count: number };
+    perCancelled?: { rate: number; count: number };
+  };
 };
 
 export type LedgerRow = {
@@ -139,6 +148,11 @@ function computeUnexplainedChargeFinding(doc: ClassifiedDocument, dailyDocs: Cla
     title: `Unexplained charge in ${doc.file_name}`,
     detail: `${uc.label} of ${uc.amount.toFixed(2)} has no itemized explanation anywhere else in this statement.${traceNote}`,
     amount: uc.amount,
+    trace: {
+      checkedColumns: doc.result.charge_explainers ?? undefined,
+      perOrder: perOrder != null ? { rate: round2(perOrder), count: orderCount } : undefined,
+      perCancelled: perCancelled != null ? { rate: round2(perCancelled), count: cancelledInWindow } : undefined,
+    },
   };
 }
 
@@ -164,13 +178,16 @@ function computeDuplicateDateFinding(dateCollisions: string[]): Finding | null {
   };
 }
 
+export type CrossCheckWindow = { start: string; end: string; label: string; matched: boolean };
+
 function computePeriodFindings(
   coverage: { start: string; end: string } | null,
   ledgerRows: LedgerRow[],
   statementDocs: ClassifiedDocument[],
-): Finding[] {
-  if (!coverage) return [];
+): { findings: Finding[]; windows: CrossCheckWindow[] } {
+  if (!coverage) return { findings: [], windows: [] };
   const findings: Finding[] = [];
+  const windows: CrossCheckWindow[] = [];
 
   for (const doc of statementDocs) {
     const stmtStart = doc.result.period_start;
@@ -205,6 +222,7 @@ function computePeriodFindings(
         detail: `Daily order log sums to ${overlapSum.toFixed(2)} in sales for ${stmtStart} to ${stmtEnd}; ${doc.file_name} states Gross Sales of ${statementGross.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
         amount: round2(Math.abs(diff)),
       });
+      windows.push({ start: stmtStart, end: stmtEnd, label: doc.file_name, matched: withinTolerance });
       continue;
     }
 
@@ -216,9 +234,10 @@ function computePeriodFindings(
       title: `Daily log only partially covers ${doc.file_name}'s period`,
       detail: `Daily order log covers ${coverage.start} to ${coverage.end}; ${doc.file_name} covers ${stmtStart} to ${stmtEnd}. Only ${overlapStart} to ${overlapEnd} overlaps — a full total comparison isn't reliable across a partial window, so no dollar cross-check was attempted.`,
     });
+    windows.push({ start: overlapStart, end: overlapEnd, label: doc.file_name, matched: false });
   }
 
-  return findings;
+  return { findings, windows };
 }
 
 export function reconcile(
@@ -229,6 +248,7 @@ export function reconcile(
   ledgerTotals: LedgerRow | null;
   findings: Finding[];
   coverage: { start: string; end: string } | null;
+  crossCheckWindows: CrossCheckWindow[];
 } {
   const dailyDocs = docs.filter(d => d.document_type === "daily_log" && (d.result.daily_rows?.length ?? 0) > 0);
   const statementDocs = docs.filter(d => d.document_type === "statement");
@@ -294,11 +314,83 @@ export function reconcile(
 
   // Cross-document period comparisons only make sense once there's more than
   // one document AND at least one of each type to actually compare.
+  let crossCheckWindows: CrossCheckWindow[] = [];
   if (docs.length >= 2 && dailyDocs.length > 0 && statementDocs.length > 0) {
-    findings.push(...computePeriodFindings(coverage, ledger, statementDocs));
+    const periodResult = computePeriodFindings(coverage, ledger, statementDocs);
+    findings.push(...periodResult.findings);
+    crossCheckWindows = periodResult.windows;
   }
 
-  return { ledger, ledgerTotals, findings, coverage };
+  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows };
 }
 
 export const SEVERITY_ORDER: Record<Finding["severity"], number> = { critical: 0, warning: 1, info: 2 };
+
+export type AuditSummary = {
+  documentCount: number;
+  daysCovered: number;
+  totalOrders: number;
+  totalSales: number;
+  totalCommissionAtAgreed: number;
+  totalExpectedNet: number;
+  // Total commission-at-agreed-rate divided by total orders across the
+  // ledger — the per-order commission metric a merchant should be able to
+  // see at a glance, not have to derive by dividing two other numbers.
+  commissionPerOrder: number | null;
+  criticalCount: number;
+  warningCount: number;
+  infoCount: number;
+  // Sum of every finding's amount — a "total dollars flagged" figure, not a
+  // claim that all of it is independently collectible (a rate-deviation
+  // amount and an unexplained-charge amount are different kinds of gaps).
+  totalFlaggedAmount: number;
+  topFinding: Finding | null;
+  headline: string;
+};
+
+export function summarizeAudit(
+  result: { ledger: LedgerRow[]; ledgerTotals: LedgerRow | null; findings: Finding[]; coverage: { start: string; end: string } | null },
+  documentCount: number,
+): AuditSummary {
+  const critical = result.findings.filter(f => f.severity === "critical");
+  const warning = result.findings.filter(f => f.severity === "warning");
+  const info = result.findings.filter(f => f.severity === "info");
+  const totalFlaggedAmount = round2(result.findings.reduce((s, f) => s + (f.amount ?? 0), 0));
+  const topFinding = [...result.findings].sort((a, b) =>
+    SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || (b.amount ?? 0) - (a.amount ?? 0),
+  )[0] ?? null;
+
+  const totalOrders = result.ledgerTotals?.orders ?? 0;
+  const totalSales = result.ledgerTotals?.sales ?? 0;
+  const totalCommissionAtAgreed = result.ledgerTotals?.commission_at_agreed_rate ?? 0;
+  const totalExpectedNet = result.ledgerTotals?.expected_net ?? 0;
+  const commissionPerOrder = totalOrders > 0 ? round2(totalCommissionAtAgreed / totalOrders) : null;
+  const docsLabel = `${documentCount} document${documentCount === 1 ? "" : "s"}`;
+
+  let headline: string;
+  if (critical.length > 0) {
+    headline = `${critical.length} critical finding${critical.length === 1 ? "" : "s"} across ${docsLabel} — approximately ${totalFlaggedAmount.toFixed(2)} flagged, worth resolving before trusting this payout.`;
+  } else if (warning.length > 0) {
+    headline = `${warning.length} item${warning.length === 1 ? "" : "s"} worth reviewing across ${docsLabel} — approximately ${totalFlaggedAmount.toFixed(2)} flagged, nothing that blocks trusting the payout outright.`;
+  } else if (result.findings.length > 0) {
+    headline = `No critical or warning issues — ${info.length} informational note${info.length === 1 ? "" : "s"} across ${docsLabel}.`;
+  } else {
+    headline = `No discrepancies found across ${docsLabel}.`;
+  }
+
+  return {
+    documentCount,
+    daysCovered: result.ledger.length,
+    totalOrders,
+    totalSales,
+    totalCommissionAtAgreed,
+    totalExpectedNet,
+    commissionPerOrder,
+    criticalCount: critical.length,
+    warningCount: warning.length,
+    infoCount: info.length,
+    totalFlaggedAmount,
+    topFinding,
+    headline,
+  };
+}

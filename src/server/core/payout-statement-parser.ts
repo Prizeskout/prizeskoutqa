@@ -136,6 +136,14 @@ export function parseTalabatPayoutStatementCsv(
     ...CHARGE_EXPLAINER_KEYS.map(k => idx(k)),
     ...(customerFeeIdx !== -1 ? [customerFeeIdx] : []),
   ].filter(i => i !== -1);
+  // Same columns as explainerIdxs, but labeled and tracked individually so
+  // a merchant can see exactly what was checked (usually all zero) instead
+  // of just being told "we found nothing."
+  const explainerColumns = [
+    ...EXTRA_ITEM_COLUMNS.filter(c => CHARGE_EXPLAINER_KEYS.includes(c.key)).map(c => ({ ...c, colIdx: idx(c.key) })),
+    ...(customerFeeIdx !== -1 ? [{ key: "customer_fee_total", label: "Customer Fee Total", colIdx: customerFeeIdx }] : []),
+  ].filter(c => c.colIdx !== -1);
+  const explainerSums = new Map<string, number>(explainerColumns.map(c => [c.label, 0]));
 
   let orderCount = 0;
   let grossSales = 0;
@@ -171,6 +179,9 @@ export function parseTalabatPayoutStatementCsv(
       extraSums.set(c.label, (extraSums.get(c.label) ?? 0) + num(cells[c.colIdx]));
     }
     explainerSum += explainerIdxs.reduce((acc, colIdx) => acc + num(cells[colIdx]), 0);
+    for (const c of explainerColumns) {
+      explainerSums.set(c.label, (explainerSums.get(c.label) ?? 0) + num(cells[c.colIdx]));
+    }
 
     const sumCheck = lineItemIdxs.reduce((acc, colIdx) => acc + num(cells[colIdx]), 0);
     if (Math.abs(sumCheck - stated) > 0.05) {
@@ -197,6 +208,13 @@ export function parseTalabatPayoutStatementCsv(
     ? { label: "Additional Charges", amount: Math.round(additionalCharges * 100) / 100 }
     : null;
 
+  // The actual checked values behind unexplained_charge — surfaced so the
+  // audit can show its work ("checked Tax Charge, Cash Collection, ... —
+  // all zero") rather than just asserting a conclusion.
+  const charge_explainers = additionalCharges !== 0
+    ? explainerColumns.map(c => ({ label: c.label, value: Math.round((explainerSums.get(c.label) ?? 0) * 100) / 100 }))
+    : undefined;
+
   return {
     ok: true,
     source: "upload",
@@ -213,5 +231,6 @@ export function parseTalabatPayoutStatementCsv(
     period_end: lastPeriod ?? undefined,
     extra_line_items: extra_line_items.length > 0 ? extra_line_items : undefined,
     unexplained_charge,
+    charge_explainers,
   };
 }

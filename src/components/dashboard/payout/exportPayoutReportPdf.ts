@@ -46,6 +46,7 @@ export type PayoutCheckPdfData = {
   effective_commission_pct?: number | null;
   extra_line_items?: { label: string; value: number }[] | null;
   unexplained_charge?: { label: string; amount: number } | null;
+  charge_explainers?: { label: string; value: number }[] | null;
   created_at?: string;
 };
 
@@ -184,13 +185,26 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
   return boxTop + boxH + 8;
 }
 
-function drawUnexplainedWarning(doc: jsPDF, charge: { label: string; amount: number }, currency: string, startY: number, orderCount?: number): number {
+function drawUnexplainedWarning(
+  doc: jsPDF,
+  charge: { label: string; amount: number },
+  currency: string,
+  startY: number,
+  orderCount?: number,
+  checkedColumns?: { label: string; value: number }[] | null,
+): number {
   let text = `${fmt(charge.amount, currency)} in ${charge.label} has no itemized breakdown anywhere in this statement — worth asking the platform to explain it.`;
   // Traced as a per-order rate — a plausible clue to take back to the
   // platform even though the statement itself has no itemized column for it.
   if (orderCount) {
     const perOrder = charge.amount / orderCount;
     text += ` Traced as a rate: approximately ${currency} ${perOrder.toFixed(2)} per order across ${orderCount} orders.`;
+  }
+  // Shows the actual investigation, not just the conclusion — every column
+  // that could explain this charge, checked and confirmed at zero.
+  if (checkedColumns && checkedColumns.length > 0) {
+    const checkedText = checkedColumns.map(c => `${c.label} (${fmt(c.value, currency)})`).join(", ");
+    text += ` Checked: ${checkedText} — all read zero.`;
   }
   const lines = doc.splitTextToSize(text, CONTENT_W - 22);
   const boxH = Math.max(16, 8 + lines.length * 4.6);
@@ -305,7 +319,7 @@ export async function exportPayoutCheckPdf(data: PayoutCheckPdfData, currency: s
     y = drawBreakdown(doc, data, currency, y, accent);
   }
   if (data.unexplained_charge) {
-    y = drawUnexplainedWarning(doc, data.unexplained_charge, currency, y, data.order_count);
+    y = drawUnexplainedWarning(doc, data.unexplained_charge, currency, y, data.order_count, data.charge_explainers);
   }
   y = drawTotalCallout(doc, data, currency, y);
 

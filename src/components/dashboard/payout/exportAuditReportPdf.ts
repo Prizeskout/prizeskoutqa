@@ -27,7 +27,7 @@ import {
   resolveBrandTheme,
   slugifyBrand,
 } from "@/lib/pdfBranding";
-import type { Finding, LedgerRow } from "@/lib/commission-audit";
+import { summarizeAudit, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 export type CommissionAuditPdfData = {
   ledger: LedgerRow[];
@@ -59,7 +59,13 @@ const SEVERITY_LABEL: Record<Finding["severity"], string> = {
 function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: number): number {
   const color = SEVERITY_COLOR[f.severity];
   const detailLines = doc.splitTextToSize(f.detail, CONTENT_W - 16);
-  const boxH = 13 + detailLines.length * 4.4;
+  // Shows the actual investigation, not just the conclusion — every column
+  // that could explain the charge, checked and confirmed at its real value.
+  const checkedText = f.trace?.checkedColumns?.length
+    ? `Checked: ${f.trace.checkedColumns.map(c => `${c.label} (${fmt(c.value, currency)})`).join(", ")} — all read zero.`
+    : null;
+  const checkedLines = checkedText ? doc.splitTextToSize(checkedText, CONTENT_W - 16) : [];
+  const boxH = 13 + detailLines.length * 4.4 + checkedLines.length * 4.2 + (checkedLines.length ? 1.5 : 0);
   let y = ensureSpace(doc, startY, boxH + 5);
 
   doc.setFillColor(255, 255, 255);
@@ -93,55 +99,69 @@ function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: numbe
   doc.setTextColor(...MUTED);
   doc.text(detailLines, MARGIN_X + 7, y + 16.5);
 
+  if (checkedLines.length) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7.8);
+    doc.setTextColor(...FAINT);
+    doc.text(checkedLines, MARGIN_X + 7, y + 16.5 + detailLines.length * 4.4 + 1.5);
+  }
+
   return y + boxH + 5;
 }
 
-export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, currency: string): Promise<void> {
+export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, currency: string, documentCount = 1): Promise<void> {
   const theme = resolveBrandTheme();
   const { branding, accent } = theme;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const summary = summarizeAudit(data, documentCount);
 
   const coverageLabel = data.coverage ? `${data.coverage.start} to ${data.coverage.end}` : "";
   const subtitle = `Commission reconciliation${coverageLabel ? `  |  ${coverageLabel}` : ""}  |  ${todayLabel()}`;
   let y = await drawBrandedHeader(doc, theme, "Commission Audit Report", subtitle);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...MUTED);
-  const intro = "A per-day reconciliation against your agreed commission rate, with every discrepancy across the uploaded documents surfaced below. See the in-app chart for the full Sales vs. Commission trend.";
-  const introLines = doc.splitTextToSize(intro, CONTENT_W);
-  doc.text(introLines, MARGIN_X, y);
-  y += introLines.length * 4.6 + 8;
+  // Executive summary — the one-sentence takeaway, before any numbers.
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...INK);
+  const headlineLines = doc.splitTextToSize(summary.headline, CONTENT_W);
+  doc.text(headlineLines, MARGIN_X, y);
+  y += headlineLines.length * 5.4 + 8;
 
-  // Summary strip
-  const criticalCount = data.findings.filter(f => f.severity === "critical").length;
-  const warningCount = data.findings.filter(f => f.severity === "warning").length;
+  // Summary strip — 2 rows of 3 (not 6-across) so each card is wide enough
+  // that "QAR 12,663"-style values never wrap inside a fixed-height card.
   const blocks: { label: string; value: string; color: RGB }[] = [
-    { label: "Days Covered", value: String(data.ledger.length), color: INK },
-    { label: "Total Sales", value: data.ledgerTotals ? fmt(data.ledgerTotals.sales, currency) : "—", color: INK },
-    { label: "Expected Net", value: data.ledgerTotals ? fmt(data.ledgerTotals.expected_net, currency) : "—", color: accent },
-    { label: "Findings", value: `${criticalCount} critical, ${warningCount} to review`, color: criticalCount > 0 ? RED : INK },
+    { label: "Documents", value: String(summary.documentCount), color: INK },
+    { label: "Days Covered", value: String(summary.daysCovered), color: INK },
+    { label: "Total Sales", value: fmt(summary.totalSales, currency), color: INK },
+    { label: "Commission / Order", value: summary.commissionPerOrder != null ? `${currency} ${summary.commissionPerOrder.toFixed(2)}` : "—", color: INK },
+    { label: "Expected Net", value: fmt(summary.totalExpectedNet, currency), color: accent },
+    { label: "Findings", value: `${summary.criticalCount} critical, ${summary.warningCount} to review`, color: summary.criticalCount > 0 ? RED : INK },
   ];
-  const gap = 5;
-  const bw = (CONTENT_W - gap * (blocks.length - 1)) / blocks.length;
+  const cols = 3;
+  const gap = 4.5;
+  const bw = (CONTENT_W - gap * (cols - 1)) / cols;
   const cardH = 22;
   blocks.forEach((b, i) => {
-    const x = MARGIN_X + i * (bw + gap);
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = MARGIN_X + col * (bw + gap);
+    const cardY = y + row * (cardH + gap);
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(...BORDER);
     doc.setLineWidth(0.3);
-    doc.roundedRect(x, y, bw, cardH, 2, 2, "FD");
+    doc.roundedRect(x, cardY, bw, cardH, 2, 2, "FD");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.8);
     doc.setTextColor(...FAINT);
-    doc.text(b.label.toUpperCase(), x + 4.5, y + 7.5);
+    doc.text(b.label.toUpperCase(), x + 5, cardY + 7.5);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(b.label === "Findings" ? 9.5 : 13);
     doc.setTextColor(...b.color);
-    const valLines = doc.splitTextToSize(b.value, bw - 9);
-    doc.text(valLines, x + 4.5, y + 16.5);
+    const valLines = doc.splitTextToSize(b.value, bw - 10);
+    doc.text(valLines, x + 5, cardY + 16.5);
   });
-  y += cardH + 10;
+  const rows = Math.ceil(blocks.length / cols);
+  y += rows * cardH + (rows - 1) * gap + 10;
 
   // Findings
   y = ensureSpace(doc, y, 14);

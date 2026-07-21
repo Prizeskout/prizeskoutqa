@@ -242,6 +242,7 @@ const T = {
     payoutUnexplainedCharge1:"There's", payoutUnexplainedCharge2:"in",
     payoutUnexplainedCharge3:"with no itemized breakdown anywhere in this statement — worth asking the platform to explain it.",
     payoutUnexplainedChargeRateNote:"per order — worth asking the platform whether this matches a flat per-order fee.",
+    payoutUnexplainedChargeChecked:"Checked", payoutUnexplainedChargeAllZero:"all read zero.",
     commissionTrendTitle:"Commission Pattern", commissionTrendRateLabel:"Avg. agreed → effective rate",
     commissionTrendAcross:"across", commissionTrendStatements:"statements",
     commissionTrendExcessLabel:"Extra commission paid beyond agreed rate",
@@ -390,6 +391,7 @@ const T = {
     payoutUnexplainedCharge1:"هناك", payoutUnexplainedCharge2:"ضمن",
     payoutUnexplainedCharge3:"بدون أي تفصيل في هذا البيان — يستحق سؤال المنصة لتوضيحه.",
     payoutUnexplainedChargeRateNote:"لكل طلب — يستحق سؤال المنصة عمّا إذا كان هذا يطابق رسماً ثابتاً لكل طلب.",
+    payoutUnexplainedChargeChecked:"تم فحص", payoutUnexplainedChargeAllZero:"وكلها بقيمة صفر.",
     commissionTrendTitle:"نمط العمولة", commissionTrendRateLabel:"متوسط النسبة المتفق عليها ← الفعلية",
     commissionTrendAcross:"عبر", commissionTrendStatements:"بيانات",
     commissionTrendExcessLabel:"عمولة إضافية مدفوعة فوق النسبة المتفق عليها",
@@ -538,6 +540,7 @@ const T = {
     payoutUnexplainedCharge1:"Il y a", payoutUnexplainedCharge2:"dans",
     payoutUnexplainedCharge3:"sans aucun détail dans ce relevé — vaut la peine de demander à la plateforme de l'expliquer.",
     payoutUnexplainedChargeRateNote:"par commande — vaut la peine de demander à la plateforme si cela correspond à des frais fixes par commande.",
+    payoutUnexplainedChargeChecked:"Vérifié", payoutUnexplainedChargeAllZero:"tous à zéro.",
     commissionTrendTitle:"Tendance de commission", commissionTrendRateLabel:"Taux moyen convenu → effectif",
     commissionTrendAcross:"sur", commissionTrendStatements:"relevés",
     commissionTrendExcessLabel:"Commission supplémentaire payée au-delà du taux convenu",
@@ -620,6 +623,7 @@ type PayoutResultLike = {
   period_start?: string | null;
   extra_line_items?: { label:string; value:number }[] | null;
   unexplained_charge?: { label:string; amount:number } | null;
+  charge_explainers?: { label:string; value:number }[] | null;
 };
 
 function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
@@ -754,6 +758,11 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
                 ≈ {currency} {(data.unexplained_charge.amount / data.order_count).toFixed(2)} {t.payoutUnexplainedChargeRateNote}
               </span>
             )}
+            {!!data.charge_explainers?.length && (
+              <span style={{ fontSize:11.5, opacity:0.85 }}>
+                {t.payoutUnexplainedChargeChecked}: {data.charge_explainers.map(c => `${c.label} (${currency} ${fmtMoney(c.value, currency)})`).join(", ")} — {t.payoutUnexplainedChargeAllZero}
+              </span>
+            )}
           </span>
         </div>
       )}
@@ -866,7 +875,7 @@ export function PrizeSkoutDashboard() {
   // merchant should have received (see expected-payout.ts). Never fetches
   // their actual payout; the merchant compares it against their own bank
   // deposit themselves.
-  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number; commission_amount?:number; additional_charges?:number; additional_income?:number; effective_commission_pct?:number; extra_line_items?:{label:string;value:number}[]; unexplained_charge?:{label:string;amount:number}|null; daily_rows?:{date:string;orders:number;sales:number;cancelled?:number}[]; cancelled_orders_total?:number };
+  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number; commission_amount?:number; additional_charges?:number; additional_income?:number; effective_commission_pct?:number; extra_line_items?:{label:string;value:number}[]; unexplained_charge?:{label:string;amount:number}|null; daily_rows?:{date:string;orders:number;sales:number;cancelled?:number}[]; cancelled_orders_total?:number; charge_explainers?:{label:string;value:number}[] };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
@@ -1823,7 +1832,7 @@ export function PrizeSkoutDashboard() {
 
               {auditResult && (auditResult.ledger.length > 0 || auditResult.findings.length > 0) && (
                 <>
-                  <CommissionAuditPanel result={auditResult} currency={currency} />
+                  <CommissionAuditPanel result={auditResult} currency={currency} documentCount={payoutDocuments.length} />
                   <div>
                     <button type="button" onClick={handleSaveAudit} disabled={savingAudit || auditSaved}
                       style={{ cursor: savingAudit || auditSaved ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:12.5,
@@ -2775,6 +2784,7 @@ export function PrizeSkoutDashboard() {
                             <CommissionAuditPanel
                               result={{ ledger: row.ledger ?? [], ledgerTotals: row.ledger_totals, findings: row.findings, coverage: row.period_start ? { start: row.period_start, end: row.period_end ?? row.period_start } : null }}
                               currency={currency}
+                              documentCount={row.document_count}
                             />
                           </div>
                         )}
