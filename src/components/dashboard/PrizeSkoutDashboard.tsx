@@ -220,6 +220,9 @@ const T = {
     payoutBreakdownCharges:"Additional Charges", payoutBreakdownIncome:"Additional Income & Vouchers",
     payoutBreakdownTotal:"Total Payout (Talabat's statement)",
     payoutCheckAgreedVsEffective:"Agreed rate → actual effective rate",
+    payoutExpectedAtAgreedLabel:"At your agreed rate, you should have received",
+    payoutShortfallSuffix:"less than you should have received",
+    payoutSurplusSuffix:"more than your agreed rate alone would have produced",
     payoutCheckStatementNote:"This is Talabat's own stated payout for this period, read directly from your payout statement — not an estimate. The breakdown above shows exactly what moved between your gross sales and this number.",
     payoutCheckExpectedLabel:"You Should Have Received", payoutCheckHint:"Compare this to your bank deposit for the same period.",
     payoutCheckNotConnected:"Connect Talabat first to run this check.",
@@ -358,6 +361,9 @@ const T = {
     payoutBreakdownCharges:"رسوم إضافية", payoutBreakdownIncome:"دخل إضافي وقسائم",
     payoutBreakdownTotal:"إجمالي المدفوعات (بيان طلبات)",
     payoutCheckAgreedVsEffective:"النسبة المتفق عليها ← النسبة الفعلية",
+    payoutExpectedAtAgreedLabel:"وفق النسبة المتفق عليها، كان يجب أن تحصل على",
+    payoutShortfallSuffix:"أقل مما كان يجب أن تحصل عليه",
+    payoutSurplusSuffix:"أكثر مما كانت ستنتجه نسبتك المتفق عليها وحدها",
     payoutCheckStatementNote:"هذا هو المبلغ الذي أعلنته طلبات فعلياً لهذه الفترة، مأخوذ مباشرة من بيان المدفوعات الخاص بك — وليس تقديراً. يوضح التفصيل أعلاه بالضبط ما تغيّر بين إجمالي مبيعاتك وهذا الرقم.",
     payoutCheckExpectedLabel:"المفترض أن تحصل عليه", payoutCheckHint:"قارن هذا بإيداعك البنكي لنفس الفترة.",
     payoutCheckNotConnected:"اربط طلبات أولاً لتشغيل هذا الفحص.",
@@ -496,6 +502,9 @@ const T = {
     payoutBreakdownCharges:"Frais supplémentaires", payoutBreakdownIncome:"Revenus supplémentaires et bons",
     payoutBreakdownTotal:"Paiement total (relevé Talabat)",
     payoutCheckAgreedVsEffective:"Taux convenu → taux effectif réel",
+    payoutExpectedAtAgreedLabel:"Selon votre taux convenu, vous auriez dû recevoir",
+    payoutShortfallSuffix:"de moins que ce que vous auriez dû recevoir",
+    payoutSurplusSuffix:"de plus que ce que votre taux convenu seul aurait produit",
     payoutCheckStatementNote:"Il s'agit du paiement réellement déclaré par Talabat pour cette période, lu directement depuis votre relevé de paiement — pas une estimation. Le détail ci-dessus montre exactement ce qui a évolué entre vos ventes brutes et ce montant.",
     payoutCheckExpectedLabel:"Vous auriez dû recevoir", payoutCheckHint:"Comparez ce montant à votre dépôt bancaire pour la même période.",
     payoutCheckNotConnected:"Connectez d'abord Talabat pour lancer cette vérification.",
@@ -689,6 +698,25 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
               <span style={{ fontWeight:700, color:OG }}>{data.effective_commission_pct}%</span>
             </div>
           )}
+          {data.commission_rate_pct != null && data.effective_commission_pct != null && (() => {
+            // What Total Payout would have been if commission had actually
+            // been charged at the agreed rate — not just the rate gap in
+            // isolation, but the real QAR figure it should have produced.
+            const expectedAtAgreed = data.expected_payout + ((data.commission_amount ?? 0) - data.sub_total_sum * data.commission_rate_pct / 100);
+            const delta = expectedAtAgreed - data.expected_payout;
+            if (Math.abs(delta) < 0.01) return null;
+            return (
+              <div style={{ marginTop:2, paddingTop:9, borderTop:"1px dashed var(--border)", display:"flex", flexDirection:"column", gap:4 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:13.5 }}>
+                  <span style={{ color:"var(--muted)" }}>{t.payoutExpectedAtAgreedLabel}</span>
+                  <span style={{ fontWeight:700, color:"var(--text)" }}>{currency} {fmtMoney(expectedAtAgreed, currency)}</span>
+                </div>
+                <div style={{ fontSize:12.5, fontWeight:600, color: delta > 0 ? "#DC2626" : GN }}>
+                  {currency} {fmtMoney(Math.abs(delta), currency)} {delta > 0 ? t.payoutShortfallSuffix : t.payoutSurplusSuffix}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 

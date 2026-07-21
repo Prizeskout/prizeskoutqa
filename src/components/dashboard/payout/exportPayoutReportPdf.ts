@@ -84,7 +84,15 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
     ...(d.extra_line_items ?? []),
   ];
   const rowH = 6.2;
-  const boxH = 10 + lines.length * rowH + 10 + (d.commission_rate_pct != null ? 6 : 0);
+  const hasRates = d.commission_rate_pct != null && d.effective_commission_pct != null;
+  // What Total Payout would have been if commission had actually been
+  // charged at the agreed rate, not just the rate gap in isolation.
+  const expectedAtAgreed = hasRates
+    ? d.expected_payout + ((d.commission_amount ?? 0) - d.sub_total_sum * (d.commission_rate_pct ?? 0) / 100)
+    : d.expected_payout;
+  const delta = expectedAtAgreed - d.expected_payout;
+  const showDelta = hasRates && Math.abs(delta) > 0.01;
+  const boxH = 10 + lines.length * rowH + 10 + (hasRates ? 6 : 0) + (showDelta ? 12 : 0);
   let y = ensureSpace(doc, startY, boxH + 6);
   const boxTop = y;
 
@@ -116,15 +124,32 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
   doc.text("Total Payout", MARGIN_X + 6, y);
   doc.text(fmt(d.expected_payout, currency), MARGIN_X + CONTENT_W - 6, y, { align: "right" });
 
-  if (d.commission_rate_pct != null && d.effective_commission_pct != null) {
+  if (hasRates) {
     y += 6;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...MUTED);
     doc.text(
-      `Agreed rate ${d.commission_rate_pct}%  ->  actual effective rate ${d.effective_commission_pct.toFixed(2)}%`,
+      `Agreed rate ${d.commission_rate_pct}%  ->  actual effective rate ${(d.effective_commission_pct ?? 0).toFixed(2)}%`,
       MARGIN_X + 6, y,
     );
+  }
+
+  if (showDelta) {
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text("At your agreed rate, you should have received", MARGIN_X + 6, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...INK);
+    doc.text(fmt(expectedAtAgreed, currency), MARGIN_X + CONTENT_W - 6, y, { align: "right" });
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...(delta > 0 ? RED : GREEN));
+    const suffix = delta > 0 ? "less than you should have received" : "more than your agreed rate alone would have produced";
+    doc.text(`${fmt(Math.abs(delta), currency)} ${suffix}`, MARGIN_X + 6, y);
   }
 
   return boxTop + boxH + 6;
