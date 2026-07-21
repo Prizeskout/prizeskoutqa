@@ -233,6 +233,8 @@ const T = {
     payoutCheckCsvOrPdfSnoonu:"CSV, or Snoonu's monthly Brand Performance Report PDF.",
     payoutCheckTalabatHint:"Upload Talabat's Payout Statement CSV (Finance → Payouts → Download report), not a general sales export.",
     payoutCheckLiveEstimateNote:"This is an estimate from your order history and commission rate — it doesn't include additional charges or platform-funded vouchers Talabat's own payout statement would show. For the exact number, upload your Payout Statement CSV instead.",
+    payoutUnexplainedCharge1:"There's", payoutUnexplainedCharge2:"in",
+    payoutUnexplainedCharge3:"with no itemized breakdown anywhere in this statement — worth asking the platform to explain it.",
     payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
@@ -363,6 +365,8 @@ const T = {
     payoutCheckCsvOrPdfSnoonu:"CSV، أو تقرير أداء العلامة الشهري من سنونو بصيغة PDF.",
     payoutCheckTalabatHint:"ارفع ملف CSV الخاص ببيان مدفوعات طلبات (المالية ← المدفوعات ← تنزيل التقرير)، وليس تصدير مبيعات عام.",
     payoutCheckLiveEstimateNote:"هذا تقدير مبني على سجل طلباتك ونسبة عمولتك — ولا يشمل الرسوم الإضافية أو القسائم الممولة من المنصة التي قد يظهرها بيان مدفوعات طلبات نفسه. للحصول على الرقم الدقيق، ارفع ملف CSV الخاص ببيان المدفوعات بدلاً من ذلك.",
+    payoutUnexplainedCharge1:"هناك", payoutUnexplainedCharge2:"ضمن",
+    payoutUnexplainedCharge3:"بدون أي تفصيل في هذا البيان — يستحق سؤال المنصة لتوضيحه.",
     payoutCheckLiveTab:"فحص مباشر", payoutCheckUploadTab:"رفع ملف",
     payoutCheckUploadPlatformLabel:"المنصة", payoutCheckCsvOnly:"ملفات CSV فقط حالياً.",
     payoutCheckSourceLive:"فحص مباشر", payoutCheckSourceUpload:"ملف مرفوع", payoutCheckShowing:"يعرض",
@@ -493,6 +497,8 @@ const T = {
     payoutCheckCsvOrPdfSnoonu:"CSV, ou le rapport de performance de marque mensuel PDF de Snoonu.",
     payoutCheckTalabatHint:"Importez le CSV du relevé de paiement Talabat (Finance → Paiements → Télécharger le rapport), pas un export de ventes général.",
     payoutCheckLiveEstimateNote:"Il s'agit d'une estimation basée sur votre historique de commandes et votre taux de commission — elle n'inclut pas les frais supplémentaires ni les bons financés par la plateforme que le relevé de paiement Talabat afficherait. Pour le montant exact, importez plutôt votre relevé de paiement CSV.",
+    payoutUnexplainedCharge1:"Il y a", payoutUnexplainedCharge2:"dans",
+    payoutUnexplainedCharge3:"sans aucun détail dans ce relevé — vaut la peine de demander à la plateforme de l'expliquer.",
     payoutCheckLiveTab:"Vérification en direct", payoutCheckUploadTab:"Importer un fichier",
     payoutCheckUploadPlatformLabel:"Plateforme", payoutCheckCsvOnly:"Fichiers CSV uniquement pour le moment.",
     payoutCheckSourceLive:"Vérification en direct", payoutCheckSourceUpload:"Fichier importé", payoutCheckShowing:"Affichage",
@@ -562,6 +568,8 @@ type PayoutResultLike = {
   additional_income?: number | null;
   effective_commission_pct?: number | null;
   period_start?: string | null;
+  extra_line_items?: { label:string; value:number }[] | null;
+  unexplained_charge?: { label:string; amount:number } | null;
 };
 
 function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
@@ -613,6 +621,7 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
             { label: t.payoutBreakdownCommission, value: -(data.commission_amount ?? 0) },
             { label: t.payoutBreakdownCharges, value: -(data.additional_charges ?? 0) },
             { label: t.payoutBreakdownIncome, value: data.additional_income ?? 0 },
+            ...(data.extra_line_items ?? []),
           ].map(li => (
             <div key={li.label} style={{ display:"flex", justifyContent:"space-between", gap:10, fontSize:13.5 }}>
               <span style={{ color:"var(--muted)" }}>{li.label}</span>
@@ -633,6 +642,19 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
               <span style={{ fontWeight:700, color:OG }}>{data.effective_commission_pct}%</span>
             </div>
           )}
+        </div>
+      )}
+
+      {data.unexplained_charge && (
+        <div style={{ fontSize:12.5, color:"#B45309", lineHeight:1.6,
+          background:"color-mix(in srgb,#B45309 8%,var(--surface))",
+          border:"1px solid color-mix(in srgb,#B45309 28%,transparent)",
+          borderRadius:9, padding:"10px 14px", display:"flex", alignItems:"flex-start", gap:8,
+          animation:"pk-in .3s ease", maxWidth:480 }}>
+          <span>⚠</span>
+          <span>
+            {t.payoutUnexplainedCharge1} <strong>{currency} {fmtMoney(data.unexplained_charge.amount, currency)}</strong> {t.payoutUnexplainedCharge2} <strong>{data.unexplained_charge.label}</strong> {t.payoutUnexplainedCharge3}
+          </span>
         </div>
       )}
 
@@ -749,7 +771,7 @@ export function PrizeSkoutDashboard() {
   // History tab — read-only lists pulled from payout-history.ts /
   // dispatch-history.ts via the same /api/channels/connect multiplex point
   // (see connect.ts's "history" branch). Fetched once per tab visit.
-  type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; commission_amount:number|null; additional_charges:number|null; additional_income:number|null; effective_commission_pct:number|null; brand:string|null; cancelled_gmv:number|null; cancelled_orders:number|null; created_at:string };
+  type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; commission_amount:number|null; additional_charges:number|null; additional_income:number|null; effective_commission_pct:number|null; brand:string|null; cancelled_gmv:number|null; cancelled_orders:number|null; extra_line_items:{label:string;value:number}[]|null; unexplained_charge:{label:string;amount:number}|null; created_at:string };
   type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; http_status:number|null; retry_count:number|null; duration_ms:number|null; audit_snapshot:Record<string,unknown>|null; created_at:string; completed_at:string|null };
   const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);

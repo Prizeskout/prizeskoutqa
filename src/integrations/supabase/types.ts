@@ -4083,6 +4083,8 @@ export type Database = {
           brand: string | null
           cancelled_gmv: number | null
           cancelled_orders: number | null
+          extra_line_items: Json | null
+          unexplained_charge: Json | null
           created_at: string
         }
         Insert: {
@@ -4105,6 +4107,8 @@ export type Database = {
           brand?: string | null
           cancelled_gmv?: number | null
           cancelled_orders?: number | null
+          extra_line_items?: Json | null
+          unexplained_charge?: Json | null
           created_at?: string
         }
         Update: {
@@ -4127,6 +4131,8 @@ export type Database = {
           brand?: string | null
           cancelled_gmv?: number | null
           cancelled_orders?: number | null
+          extra_line_items?: Json | null
+          unexplained_charge?: Json | null
           created_at?: string
         }
         Relationships: []

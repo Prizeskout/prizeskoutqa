@@ -28,6 +28,8 @@ export type PayoutCheckRecord = {
   brand: string | null;
   cancelled_gmv: number | null;
   cancelled_orders: number | null;
+  extra_line_items: { label: string; value: number }[] | null;
+  unexplained_charge: { label: string; amount: number } | null;
   created_at: string;
 };
 
@@ -53,6 +55,8 @@ export async function savePayoutCheck(accountId: string, result: ExpectedPayoutR
       brand: result.brand ?? null,
       cancelled_gmv: result.cancelled_gmv ?? null,
       cancelled_orders: result.cancelled_orders ?? null,
+      extra_line_items: result.extra_line_items ?? null,
+      unexplained_charge: result.unexplained_charge ?? null,
     });
   } catch (err) {
     // History is a convenience log, not the source of truth for the check
@@ -65,7 +69,7 @@ export async function savePayoutCheck(accountId: string, result: ExpectedPayoutR
 export async function getPayoutCheckHistory(accountId: string, limit = 30): Promise<PayoutCheckRecord[]> {
   const { data, error } = await supabaseAdmin
     .from("ps_payout_checks")
-    .select("id, source, platform, order_count, sub_total_sum, commission_rate_pct, expected_payout, period_start, period_end, rows_skipped, rows_total, commission_amount, additional_charges, additional_income, effective_commission_pct, brand, cancelled_gmv, cancelled_orders, created_at")
+    .select("id, source, platform, order_count, sub_total_sum, commission_rate_pct, expected_payout, period_start, period_end, rows_skipped, rows_total, commission_amount, additional_charges, additional_income, effective_commission_pct, brand, cancelled_gmv, cancelled_orders, extra_line_items, unexplained_charge, created_at")
     .eq("account_id", accountId)
     .order("created_at", { ascending: false })
     .limit(limit);

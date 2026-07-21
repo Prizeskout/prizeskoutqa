@@ -51,6 +51,14 @@ export type ExpectedPayoutResult = {
   additional_charges?: number;
   additional_income?: number;
   effective_commission_pct?: number;
+  // Every nonzero line item beyond the 4 headline buckets above (Delivery
+  // Fee, Marketing Charges, etc.) — most real exports have these all at
+  // zero, but if one is ever populated it would otherwise be invisible.
+  extra_line_items?: { label: string; value: number }[];
+  // Set when a deduction (currently just Additional Charges) is nonzero but
+  // every column that could itemize it is zero — flags a charge Talabat's
+  // own export doesn't explain, worth escalating directly.
+  unexplained_charge?: { label: string; amount: number } | null;
 };
 
 export async function getTalabatExpectedPayout(
