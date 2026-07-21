@@ -26,6 +26,13 @@ import type { ExpectedPayoutResult } from "./expected-payout";
 // outright instead of returning a total computed from the rows that did work.
 const MAX_SKIP_RATIO = 0.2;
 
+// Many daily-export files append a trailing summary row ("Total"/"Grand
+// Total") whose Date cell isn't a real date at all. Left in, it parses as
+// an extra "day" that repeats the file's own grand total — silently
+// doubling every sum and adding a fake final data point that wrecks the
+// per-day ledger/chart (confirmed against a real Orders Per Day export).
+const TOTAL_ROW_LABELS = new Set(["total", "totals", "grand total", "sub total", "subtotal", "sum", "summary"]);
+
 function parseCsvLine(line: string): string[] {
   // Handles quoted cells (commas/quotes inside "...") per RFC 4180's common
   // case — a real export can legitimately have a comma inside a store-name
@@ -114,20 +121,27 @@ export function parseAggregatorDailyCsv(
     return { ok: false, error: "Couldn't find date, orders, and sales/GMV columns in that file. CSV only for now — if this is a real export and it's not matching, the column names may differ from what we expect." };
   }
 
+  // Drop a trailing totals row before it ever reaches the sums below — see
+  // TOTAL_ROW_LABELS comment. Parsed once here rather than filtering raw
+  // strings, so the loop below doesn't re-parse each line a second time.
+  const dataCells = lines.slice(1).map(parseCsvLine).filter(cells => {
+    const label = (cells[dateIdx] ?? "").trim().toLowerCase();
+    return !TOTAL_ROW_LABELS.has(label);
+  });
+
   let salesSum = 0;
   let orderCount = 0;
   let cancelledSum = 0;
   let firstDate: string | null = null;
   let lastDate: string | null = null;
   let rowsSkipped = 0;
-  const rowsTotal = lines.length - 1;
+  const rowsTotal = dataCells.length;
   // Keyed by date so multiple rows for the same day (or the same file
   // parsed twice within a batch) sum rather than overwrite — the audit
   // engine merges several of these per-day maps across files the same way.
   const byDate = new Map<string, { orders: number; sales: number; cancelled: number }>();
 
-  for (let i = 1; i < lines.length; i++) {
-    const cells = parseCsvLine(lines[i]);
+  for (const cells of dataCells) {
     const date = cells[dateIdx];
     const orders = parseLocaleNumber(cells[ordersIdx]);
     const sales = parseLocaleNumber(cells[salesIdx]);
