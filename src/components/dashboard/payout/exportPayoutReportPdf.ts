@@ -75,6 +75,20 @@ function periodLabel(d: Pick<PayoutCheckPdfData, "period_start" | "period_end">)
 
 /** Draws the itemized breakdown box used by both the single-check and full
  * history reports. Returns the new y-cursor. */
+/** What Total Payout should have been if commission had actually been
+ * charged at the agreed rate — not just the rate gap in isolation. This is
+ * the figure that belongs in the headline "you should have received" spot,
+ * not the platform's own (already rate-inflated) stated total. */
+function computeAgreedRateCorrection(d: PayoutCheckPdfData) {
+  const hasRates = d.commission_rate_pct != null && d.effective_commission_pct != null;
+  const expectedAtAgreed = hasRates
+    ? d.expected_payout + ((d.commission_amount ?? 0) - d.sub_total_sum * (d.commission_rate_pct ?? 0) / 100)
+    : d.expected_payout;
+  const delta = expectedAtAgreed - d.expected_payout;
+  const showDelta = hasRates && Math.abs(delta) > 0.01;
+  return { hasRates, expectedAtAgreed, delta, showDelta };
+}
+
 function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, startY: number, accent: RGB): number {
   const lines: { label: string; value: number }[] = [
     { label: "Gross Sales", value: d.sub_total_sum },
@@ -85,14 +99,7 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
   ];
   const rowH = 6.2;
   const hasRates = d.commission_rate_pct != null && d.effective_commission_pct != null;
-  // What Total Payout would have been if commission had actually been
-  // charged at the agreed rate, not just the rate gap in isolation.
-  const expectedAtAgreed = hasRates
-    ? d.expected_payout + ((d.commission_amount ?? 0) - d.sub_total_sum * (d.commission_rate_pct ?? 0) / 100)
-    : d.expected_payout;
-  const delta = expectedAtAgreed - d.expected_payout;
-  const showDelta = hasRates && Math.abs(delta) > 0.01;
-  const boxH = 10 + lines.length * rowH + 10 + (hasRates ? 6 : 0) + (showDelta ? 12 : 0);
+  const boxH = 10 + lines.length * rowH + 10 + (hasRates ? 6 : 0);
   let y = ensureSpace(doc, startY, boxH + 6);
   const boxTop = y;
 
@@ -121,7 +128,7 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(...INK);
-  doc.text("Total Payout", MARGIN_X + 6, y);
+  doc.text("Total Payout (platform's statement)", MARGIN_X + 6, y);
   doc.text(fmt(d.expected_payout, currency), MARGIN_X + CONTENT_W - 6, y, { align: "right" });
 
   if (hasRates) {
@@ -133,23 +140,6 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
       `Agreed rate ${d.commission_rate_pct}%  ->  actual effective rate ${(d.effective_commission_pct ?? 0).toFixed(2)}%`,
       MARGIN_X + 6, y,
     );
-  }
-
-  if (showDelta) {
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
-    doc.text("At your agreed rate, you should have received", MARGIN_X + 6, y);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...INK);
-    doc.text(fmt(expectedAtAgreed, currency), MARGIN_X + CONTENT_W - 6, y, { align: "right" });
-    y += 5;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...(delta > 0 ? RED : GREEN));
-    const suffix = delta > 0 ? "less than you should have received" : "more than your agreed rate alone would have produced";
-    doc.text(`${fmt(Math.abs(delta), currency)} ${suffix}`, MARGIN_X + 6, y);
   }
 
   return boxTop + boxH + 6;
@@ -172,7 +162,9 @@ function drawUnexplainedWarning(doc: jsPDF, charge: { label: string; amount: num
 }
 
 function drawTotalCallout(doc: jsPDF, d: PayoutCheckPdfData, currency: string, startY: number): number {
-  const boxH = 26;
+  const { expectedAtAgreed, delta, showDelta } = computeAgreedRateCorrection(d);
+  const headline = showDelta ? expectedAtAgreed : d.expected_payout;
+  const boxH = showDelta ? 32 : 26;
   let y = ensureSpace(doc, startY, boxH + 6);
   doc.setFillColor(...tint(GREEN, 0.92));
   doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2.5, 2.5, "F");
@@ -185,7 +177,16 @@ function drawTotalCallout(doc: jsPDF, d: PayoutCheckPdfData, currency: string, s
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(...GREEN);
-  doc.text(fmt(d.expected_payout, currency), MARGIN_X + 8, y + 19);
+  doc.text(fmt(headline, currency), MARGIN_X + 8, y + 19);
+  if (showDelta) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...RED);
+    const suffix = delta > 0 ? "less than you should have received" : "more than your agreed rate alone would have produced";
+    const note = `Corrected for your agreed rate - platform's own statement said ${fmt(d.expected_payout, currency)} - ${fmt(Math.abs(delta), currency)} ${suffix}`;
+    const noteLines = doc.splitTextToSize(note, CONTENT_W - 12);
+    doc.text(noteLines, MARGIN_X + 8, y + 26);
+  }
   return y + boxH + 6;
 }
 
@@ -330,7 +331,8 @@ export async function exportPayoutHistoryPdf(
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(...GREEN);
-      doc.text(fmt(chk.expected_payout, currency), MARGIN_X + CONTENT_W - 5, y + 9, { align: "right" });
+      const { expectedAtAgreed: chkExpectedAtAgreed, showDelta: chkShowDelta } = computeAgreedRateCorrection(chk);
+      doc.text(fmt(chkShowDelta ? chkExpectedAtAgreed : chk.expected_payout, currency), MARGIN_X + CONTENT_W - 5, y + 9, { align: "right" });
       if (chk.unexplained_charge) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7.5);
