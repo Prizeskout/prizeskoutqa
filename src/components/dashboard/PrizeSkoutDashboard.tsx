@@ -235,6 +235,10 @@ const T = {
     payoutCheckLiveEstimateNote:"This is an estimate from your order history and commission rate — it doesn't include additional charges or platform-funded vouchers Talabat's own payout statement would show. For the exact number, upload your Payout Statement CSV instead.",
     payoutUnexplainedCharge1:"There's", payoutUnexplainedCharge2:"in",
     payoutUnexplainedCharge3:"with no itemized breakdown anywhere in this statement — worth asking the platform to explain it.",
+    commissionTrendTitle:"Commission Pattern", commissionTrendRateLabel:"Avg. agreed → effective rate",
+    commissionTrendAcross:"across", commissionTrendStatements:"statements",
+    commissionTrendExcessLabel:"Extra commission paid beyond agreed rate",
+    commissionTrendUnexplainedLabel:"Unexplained Additional Charges",
     payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
@@ -367,6 +371,10 @@ const T = {
     payoutCheckLiveEstimateNote:"هذا تقدير مبني على سجل طلباتك ونسبة عمولتك — ولا يشمل الرسوم الإضافية أو القسائم الممولة من المنصة التي قد يظهرها بيان مدفوعات طلبات نفسه. للحصول على الرقم الدقيق، ارفع ملف CSV الخاص ببيان المدفوعات بدلاً من ذلك.",
     payoutUnexplainedCharge1:"هناك", payoutUnexplainedCharge2:"ضمن",
     payoutUnexplainedCharge3:"بدون أي تفصيل في هذا البيان — يستحق سؤال المنصة لتوضيحه.",
+    commissionTrendTitle:"نمط العمولة", commissionTrendRateLabel:"متوسط النسبة المتفق عليها ← الفعلية",
+    commissionTrendAcross:"عبر", commissionTrendStatements:"بيانات",
+    commissionTrendExcessLabel:"عمولة إضافية مدفوعة فوق النسبة المتفق عليها",
+    commissionTrendUnexplainedLabel:"رسوم إضافية غير مفسّرة",
     payoutCheckLiveTab:"فحص مباشر", payoutCheckUploadTab:"رفع ملف",
     payoutCheckUploadPlatformLabel:"المنصة", payoutCheckCsvOnly:"ملفات CSV فقط حالياً.",
     payoutCheckSourceLive:"فحص مباشر", payoutCheckSourceUpload:"ملف مرفوع", payoutCheckShowing:"يعرض",
@@ -499,6 +507,10 @@ const T = {
     payoutCheckLiveEstimateNote:"Il s'agit d'une estimation basée sur votre historique de commandes et votre taux de commission — elle n'inclut pas les frais supplémentaires ni les bons financés par la plateforme que le relevé de paiement Talabat afficherait. Pour le montant exact, importez plutôt votre relevé de paiement CSV.",
     payoutUnexplainedCharge1:"Il y a", payoutUnexplainedCharge2:"dans",
     payoutUnexplainedCharge3:"sans aucun détail dans ce relevé — vaut la peine de demander à la plateforme de l'expliquer.",
+    commissionTrendTitle:"Tendance de commission", commissionTrendRateLabel:"Taux moyen convenu → effectif",
+    commissionTrendAcross:"sur", commissionTrendStatements:"relevés",
+    commissionTrendExcessLabel:"Commission supplémentaire payée au-delà du taux convenu",
+    commissionTrendUnexplainedLabel:"Frais supplémentaires inexpliqués",
     payoutCheckLiveTab:"Vérification en direct", payoutCheckUploadTab:"Importer un fichier",
     payoutCheckUploadPlatformLabel:"Plateforme", payoutCheckCsvOnly:"Fichiers CSV uniquement pour le moment.",
     payoutCheckSourceLive:"Vérification en direct", payoutCheckSourceUpload:"Fichier importé", payoutCheckShowing:"Affichage",
@@ -2055,6 +2067,52 @@ export function PrizeSkoutDashboard() {
                 <h3 style={{ margin:0, fontSize:18, fontWeight:800, letterSpacing:"-0.2px" }}>{t.historyPayoutTitle}</h3>
                 <div style={{ fontSize:13.5, color:"var(--muted)", marginTop:4 }}>{t.historyPayoutDesc}</div>
               </div>
+
+              {(() => {
+                // A single statement can only say "commission was 19.62%" —
+                // it can't say "that's higher than your usual." This is the
+                // one thing History has that no single Talabat statement can:
+                // a pattern across multiple months. Needs 2+ real Talabat
+                // statement checks (effective_commission_pct is only ever
+                // set by that parser) to be meaningful.
+                const rows = historyPayoutChecks.filter(r => r.effective_commission_pct != null && r.commission_rate_pct != null);
+                if (rows.length < 2) return null;
+                const avgAgreed = rows.reduce((s,r) => s + r.commission_rate_pct, 0) / rows.length;
+                const avgEffective = rows.reduce((s,r) => s + (r.effective_commission_pct as number), 0) / rows.length;
+                const excessTotal = rows.reduce((s,r) => s + r.sub_total_sum * ((r.effective_commission_pct as number) - r.commission_rate_pct) / 100, 0);
+                const unexplainedRows = rows.filter(r => r.unexplained_charge != null);
+                const unexplainedTotal = unexplainedRows.reduce((s,r) => s + (r.unexplained_charge?.amount ?? 0), 0);
+                return (
+                  <div style={{ background:`color-mix(in srgb,${OG} 6%,var(--surface))`,
+                    border:`1px solid color-mix(in srgb,${OG} 25%,transparent)`,
+                    borderRadius:12, padding:"16px 18px", display:"flex", flexDirection:"column", gap:7,
+                    animation:"pk-in .3s ease" }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:"var(--text)", textTransform:"uppercase" as const, letterSpacing:"0.04em" }}>
+                      {t.commissionTrendTitle}
+                    </span>
+                    <div style={{ fontSize:13.5, color:"var(--muted)" }}>
+                      {t.commissionTrendRateLabel} ({t.commissionTrendAcross} {rows.length} {t.commissionTrendStatements}):{" "}
+                      <strong style={{ color:"var(--text)" }}>{avgAgreed.toFixed(1)}%</strong>{" → "}
+                      <strong style={{ color:OG }}>{avgEffective.toFixed(2)}%</strong>
+                    </div>
+                    {Math.abs(excessTotal) > 0.01 && (
+                      <div style={{ fontSize:13.5, color:"var(--muted)" }}>
+                        {t.commissionTrendExcessLabel}:{" "}
+                        <strong style={{ color: excessTotal > 0 ? "#DC2626" : GN }}>
+                          {excessTotal < 0 ? "−" : ""}{currency} {fmtMoney(Math.abs(excessTotal), currency)}
+                        </strong>
+                      </div>
+                    )}
+                    {unexplainedRows.length > 0 && (
+                      <div style={{ fontSize:13.5, color:"var(--muted)" }}>
+                        {t.commissionTrendUnexplainedLabel}:{" "}
+                        <strong style={{ color:"#B45309" }}>{unexplainedRows.length}/{rows.length} · {currency} {fmtMoney(unexplainedTotal, currency)}</strong>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               {historyLoading ? (
                 <div style={{ fontSize:14, color:"var(--muted)" }}>{t.historyLoading}</div>
               ) : historyPayoutChecks.length === 0 ? (
