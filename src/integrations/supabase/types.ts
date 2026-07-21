@@ -4047,18 +4047,21 @@ export type Database = {
           merchant_id: string
           created_at: string
           email: string | null
+          store_name: string | null
         }
         Insert: {
           code: string
           merchant_id: string
           created_at?: string
           email?: string | null
+          store_name?: string | null
         }
         Update: {
           code?: string
           merchant_id?: string
           created_at?: string
           email?: string | null
+          store_name?: string | null
         }
         Relationships: []
       }

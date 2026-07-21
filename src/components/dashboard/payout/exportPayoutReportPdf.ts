@@ -1,7 +1,14 @@
 // Branded PDF export for Expected Payout Check results — reuses the same
 // pdfBranding.ts primitives as every other export in the app (pricing,
-// insights, field intel) so this looks like a PrizeSkout report, not a
-// generic document dump.
+// insights, field intel) so this looks like a PrizeSkout report.
+//
+// Deliberately varies visual treatment by content type instead of wrapping
+// every section in the same tinted-box-with-left-bar pattern: data (the
+// breakdown table, summary stats) reads as clean white/bordered content;
+// color is reserved for the one number that actually matters (the headline
+// payout) and the one thing that needs to alarm (the unexplained-charge
+// warning). A page where everything is equally loud reads as generated,
+// not designed.
 import { jsPDF } from "jspdf";
 import {
   AMBER,
@@ -73,8 +80,6 @@ function periodLabel(d: Pick<PayoutCheckPdfData, "period_start" | "period_end">)
   return d.period_end && d.period_end !== d.period_start ? `${d.period_start} – ${d.period_end}` : d.period_start;
 }
 
-/** Draws the itemized breakdown box used by both the single-check and full
- * history reports. Returns the new y-cursor. */
 /** What Total Payout should have been if commission had actually been
  * charged at the agreed rate — not just the rate gap in isolation. This is
  * the figure that belongs in the headline "you should have received" spot,
@@ -89,6 +94,20 @@ function computeAgreedRateCorrection(d: PayoutCheckPdfData) {
   return { hasRates, expectedAtAgreed, delta, showDelta };
 }
 
+/** A small triangular warning glyph built from vector primitives — not a
+ * font glyph, so it can't hit the Unicode/standard-font corruption that a
+ * "⚠" character does in jsPDF's Helvetica. */
+function drawWarningIcon(doc: jsPDF, cx: number, cy: number, size: number, color: RGB) {
+  const h = size * 0.9;
+  doc.setFillColor(...color);
+  doc.triangle(cx, cy - h / 2, cx - size / 2, cy + h / 2, cx + size / 2, cy + h / 2, "F");
+  doc.setFillColor(255, 255, 255);
+  doc.rect(cx - size * 0.05, cy - h * 0.12, size * 0.1, size * 0.32, "F");
+  doc.circle(cx, cy + h * 0.3, size * 0.06, "F");
+}
+
+/** Clean bordered table (white, not filled) for the itemized breakdown —
+ * reads like a real statement line item list, not a colored callout. */
 function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, startY: number, accent: RGB): number {
   const lines: { label: string; value: number }[] = [
     { label: "Gross Sales", value: d.sub_total_sum },
@@ -97,97 +116,135 @@ function drawBreakdown(doc: jsPDF, d: PayoutCheckPdfData, currency: string, star
     { label: "Additional Income & Vouchers", value: d.additional_income ?? 0 },
     ...(d.extra_line_items ?? []),
   ];
-  const rowH = 6.2;
+  const rowH = 7;
   const hasRates = d.commission_rate_pct != null && d.effective_commission_pct != null;
-  const boxH = 10 + lines.length * rowH + 10 + (hasRates ? 6 : 0);
-  let y = ensureSpace(doc, startY, boxH + 6);
+  const padTop = 6;
+  const padBottom = 8 + (hasRates ? 8 : 0);
+  const boxH = padTop + lines.length * rowH + 9 + padBottom;
+  let y = ensureSpace(doc, startY, boxH + 12);
+
+  y = drawLabel(doc, "PAYOUT BREAKDOWN", MARGIN_X, y);
+  y += 2;
   const boxTop = y;
 
-  doc.setFillColor(...tint(accent, 0.95));
-  doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2.5, 2.5, "F");
-  y += 8;
-  y = drawLabel(doc, "PAYOUT BREAKDOWN", MARGIN_X + 6, y);
-  y += 1;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2, 2, "FD");
+  y += padTop + 3;
 
-  for (const li of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const li = lines[i];
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(...MUTED);
-    doc.text(li.label, MARGIN_X + 6, y);
+    doc.text(li.label, MARGIN_X + 7, y);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...(li.value < 0 ? RED : INK));
     const valText = `${li.value < 0 ? "-" : ""}${fmt(Math.abs(li.value), currency)}`;
-    doc.text(valText, MARGIN_X + CONTENT_W - 6, y, { align: "right" });
+    doc.text(valText, MARGIN_X + CONTENT_W - 7, y, { align: "right" });
+    if (i < lines.length - 1) {
+      doc.setDrawColor(...tint(BORDER, 0.4));
+      doc.setLineWidth(0.15);
+      doc.line(MARGIN_X + 7, y + 2.6, MARGIN_X + CONTENT_W - 7, y + 2.6);
+    }
     y += rowH;
   }
 
-  doc.setDrawColor(...BORDER);
-  doc.setLineWidth(0.25);
-  doc.line(MARGIN_X + 6, y, MARGIN_X + CONTENT_W - 6, y);
-  y += 5.5;
+  // Double rule before the total — the accounting-statement convention.
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(0.4);
+  doc.line(MARGIN_X + 7, y, MARGIN_X + CONTENT_W - 7, y);
+  doc.line(MARGIN_X + 7, y + 1, MARGIN_X + CONTENT_W - 7, y + 1);
+  y += 6.5;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(10.5);
   doc.setTextColor(...INK);
-  doc.text("Total Payout (platform's statement)", MARGIN_X + 6, y);
-  doc.text(fmt(d.expected_payout, currency), MARGIN_X + CONTENT_W - 6, y, { align: "right" });
+  doc.text("Total Payout (platform's statement)", MARGIN_X + 7, y);
+  doc.text(fmt(d.expected_payout, currency), MARGIN_X + CONTENT_W - 7, y, { align: "right" });
 
   if (hasRates) {
-    y += 6;
+    y += 7;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...MUTED);
-    doc.text(
-      `Agreed rate ${d.commission_rate_pct}%  ->  actual effective rate ${(d.effective_commission_pct ?? 0).toFixed(2)}%`,
-      MARGIN_X + 6, y,
-    );
+    doc.text(`Agreed rate ${d.commission_rate_pct}%`, MARGIN_X + 7, y);
+
+    const badgeText = `effective ${(d.effective_commission_pct ?? 0).toFixed(2)}%`;
+    const badgeW = doc.getTextWidth(badgeText) + 6;
+    const badgeX = MARGIN_X + 7 + doc.getTextWidth(`Agreed rate ${d.commission_rate_pct}%   `);
+    doc.setFillColor(...tint(accent, 0.85));
+    doc.roundedRect(badgeX, y - 3.6, badgeW, 5, 1.5, 1.5, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...accent);
+    doc.text(badgeText, badgeX + 3, y - 0.2);
   }
 
-  return boxTop + boxH + 6;
+  return boxTop + boxH + 8;
 }
 
 function drawUnexplainedWarning(doc: jsPDF, charge: { label: string; amount: number }, currency: string, startY: number): number {
-  const text = `There's ${fmt(charge.amount, currency)} in ${charge.label} with no itemized breakdown anywhere in this statement — worth asking the platform to explain it.`;
-  const lines = doc.splitTextToSize(text, CONTENT_W - 14);
-  const boxH = 8 + lines.length * 4.6;
-  let y = ensureSpace(doc, startY, boxH + 6);
-  doc.setFillColor(...tint(AMBER, 0.9));
-  doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2.5, 2.5, "F");
-  doc.setFillColor(...AMBER);
-  doc.rect(MARGIN_X, y, 1.4, boxH, "F");
+  const text = `${fmt(charge.amount, currency)} in ${charge.label} has no itemized breakdown anywhere in this statement — worth asking the platform to explain it.`;
+  const lines = doc.splitTextToSize(text, CONTENT_W - 22);
+  const boxH = Math.max(16, 8 + lines.length * 4.6);
+  let y = ensureSpace(doc, startY, boxH + 8);
+  doc.setFillColor(...tint(AMBER, 0.94));
+  doc.setDrawColor(...tint(AMBER, 0.5));
+  doc.setLineWidth(0.4);
+  doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2, 2, "FD");
+  drawWarningIcon(doc, MARGIN_X + 9, y + boxH / 2, 6, AMBER);
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(150, 100, 10);
+  doc.text("UNEXPLAINED CHARGE", MARGIN_X + 18, y + 6.5);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(...AMBER);
-  doc.text(lines, MARGIN_X + 6, y + 6);
-  return y + boxH + 6;
+  doc.setTextColor(120, 78, 8);
+  doc.text(lines, MARGIN_X + 18, y + 11.5);
+  return y + boxH + 8;
 }
 
+/** The one element on the page allowed to be loud: a pale band with a solid
+ * top rule (not a filled box with a left bar, which reads as "callout" —
+ * this reads as a total line on a statement, scaled up). */
 function drawTotalCallout(doc: jsPDF, d: PayoutCheckPdfData, currency: string, startY: number): number {
   const { expectedAtAgreed, delta, showDelta } = computeAgreedRateCorrection(d);
   const headline = showDelta ? expectedAtAgreed : d.expected_payout;
-  const boxH = showDelta ? 32 : 26;
+  const boxH = showDelta ? 38 : 30;
   let y = ensureSpace(doc, startY, boxH + 6);
-  doc.setFillColor(...tint(GREEN, 0.92));
-  doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2.5, 2.5, "F");
+  doc.setFillColor(...tint(GREEN, 0.93));
+  doc.rect(MARGIN_X, y, CONTENT_W, boxH, "F");
   doc.setFillColor(...GREEN);
-  doc.rect(MARGIN_X, y, 1.6, boxH, "F");
+  doc.rect(MARGIN_X, y, CONTENT_W, 1.4, "F");
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(8.5);
   doc.setTextColor(...MUTED);
-  doc.text("YOU SHOULD HAVE RECEIVED", MARGIN_X + 8, y + 8);
+  doc.text("YOU SHOULD HAVE RECEIVED", MARGIN_X + 8, y + 11);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
+  doc.setFontSize(27);
   doc.setTextColor(...GREEN);
-  doc.text(fmt(headline, currency), MARGIN_X + 8, y + 19);
+  doc.text(fmt(headline, currency), MARGIN_X + 8, y + 24);
+
   if (showDelta) {
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(...RED);
+    doc.setTextColor(...MUTED);
     const suffix = delta > 0 ? "less than you should have received" : "more than your agreed rate alone would have produced";
-    const note = `Corrected for your agreed rate - platform's own statement said ${fmt(d.expected_payout, currency)} - ${fmt(Math.abs(delta), currency)} ${suffix}`;
-    const noteLines = doc.splitTextToSize(note, CONTENT_W - 12);
-    doc.text(noteLines, MARGIN_X + 8, y + 26);
+    const note = `Corrected for your agreed rate — the platform's own statement said ${fmt(d.expected_payout, currency)},`;
+    const note2 = `${fmt(Math.abs(delta), currency)} ${suffix}.`;
+    doc.text(note, MARGIN_X + 8, y + 31);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...RED);
+    doc.text(note2, MARGIN_X + 8, y + 35.2);
+  } else {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    doc.text("Compare this to your bank deposit for the same period.", MARGIN_X + 8, y + 31);
   }
-  return y + boxH + 6;
+  return y + boxH + 8;
 }
 
 /** Single Expected Payout Check, full detail — mirrors PayoutResultDetail. */
@@ -208,31 +265,35 @@ export async function exportPayoutCheckPdf(data: PayoutCheckPdfData, currency: s
     : "Estimated from order history and the commission rate on file. Compare against your bank deposit for the same period.";
   const introLines = doc.splitTextToSize(sourceNote, CONTENT_W);
   doc.text(introLines, MARGIN_X, y);
-  y += introLines.length * 4.6 + 6;
+  y += introLines.length * 4.6 + 8;
 
-  // Summary strip
+  // Summary strip — clean white stat cards, not filled. Only the one figure
+  // worth drawing the eye to (commission taken) carries the accent color.
   const blocks: { label: string; value: string; color: RGB }[] = [
     { label: "Orders Checked", value: String(data.order_count), color: INK },
     { label: "Total Sales", value: fmt(data.sub_total_sum, currency), color: INK },
     { label: "Commission Rate", value: data.commission_rate_pct != null ? `${data.commission_rate_pct}%` : "—", color: INK },
     { label: "Platform Commission", value: fmt(data.commission_amount ?? (data.sub_total_sum - data.expected_payout), currency), color: accent },
   ];
-  const gap = 4;
+  const gap = 5;
   const bw = (CONTENT_W - gap * (blocks.length - 1)) / blocks.length;
+  const cardH = 22;
   blocks.forEach((b, i) => {
     const x = MARGIN_X + i * (bw + gap);
-    doc.setFillColor(...tint(accent, 0.94));
-    doc.roundedRect(x, y, bw, 20, 2, 2, "F");
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, bw, cardH, 2, 2, "FD");
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(6.8);
     doc.setTextColor(...FAINT);
-    doc.text(b.label.toUpperCase(), x + 4, y + 6);
+    doc.text(b.label.toUpperCase(), x + 4.5, y + 7.5);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12.5);
+    doc.setFontSize(13);
     doc.setTextColor(...b.color);
-    doc.text(b.value, x + 4, y + 15);
+    doc.text(b.value, x + 4.5, y + 16.5);
   });
-  y += 26;
+  y += cardH + 10;
 
   if (data.effective_commission_pct != null) {
     y = drawBreakdown(doc, data, currency, y, accent);
@@ -255,7 +316,7 @@ export async function exportPayoutHistoryPdf(
   currency: string,
 ): Promise<void> {
   const theme = resolveBrandTheme();
-  const { branding, accent, accentTint } = theme;
+  const { branding, accent } = theme;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = await drawBrandedHeader(doc, theme, "Payout & Repricing History", `Full export  |  ${todayLabel()}`);
 
@@ -265,7 +326,7 @@ export async function exportPayoutHistoryPdf(
   const intro = "Every payout check you've run and every automated price change made on your behalf, in one document.";
   const introLines = doc.splitTextToSize(intro, CONTENT_W);
   doc.text(introLines, MARGIN_X, y);
-  y += introLines.length * 4.6 + 6;
+  y += introLines.length * 4.6 + 8;
 
   // Commission Pattern trend — same logic as the in-app History tab.
   const trendRows = payoutChecks.filter(r => r.effective_commission_pct != null && r.commission_rate_pct != null);
@@ -281,22 +342,26 @@ export async function exportPayoutHistoryPdf(
       ...(Math.abs(excessTotal) > 0.01 ? [`Extra commission paid beyond agreed rate: ${excessTotal < 0 ? "-" : ""}${fmt(Math.abs(excessTotal), currency)}`] : []),
       ...(unexplained.length > 0 ? [`Unexplained Additional Charges: ${unexplained.length}/${trendRows.length} statements, totaling ${fmt(unexplainedTotal, currency)}`] : []),
     ];
-    const boxH = 12 + trendLines.length * 5.5;
-    y = ensureSpace(doc, y, boxH + 8);
-    doc.setFillColor(...tint(accent, 0.94));
-    doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2.5, 2.5, "F");
+    const boxH = 13 + trendLines.length * 5.5;
+    y = ensureSpace(doc, y, boxH + 10);
+    y = drawLabel(doc, "COMMISSION PATTERN", MARGIN_X, y);
+    y += 2;
+    const boxTop = y;
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2, 2, "FD");
     doc.setFillColor(...accent);
-    doc.rect(MARGIN_X, y, 1.6, boxH, "F");
-    let ty = y + 8;
-    ty = drawLabel(doc, "COMMISSION PATTERN", MARGIN_X + 7, ty);
+    doc.rect(MARGIN_X, y, 1.4, boxH, "F");
+    let ty = y + 9;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...INK);
     for (const line of trendLines) {
-      doc.text(line, MARGIN_X + 7, ty + 2);
+      doc.text(line, MARGIN_X + 7, ty);
       ty += 5.5;
     }
-    y += boxH + 8;
+    y = boxTop + boxH + 9;
   }
 
   // Payout Check History
@@ -315,34 +380,36 @@ export async function exportPayoutHistoryPdf(
     y += 8;
   } else {
     for (const chk of payoutChecks) {
-      const cardH = chk.unexplained_charge ? 19 : 16;
+      const cardH = chk.unexplained_charge ? 20 : 16;
       y = ensureSpace(doc, y, cardH + 4);
-      doc.setFillColor(...(accentTint));
-      doc.roundedRect(MARGIN_X, y, CONTENT_W, cardH, 2, 2, "F");
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(MARGIN_X, y, CONTENT_W, cardH, 2, 2, "FD");
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9.5);
       doc.setTextColor(...INK);
       const dateStr = chk.created_at ? new Date(chk.created_at).toLocaleDateString("en-US") : "";
-      doc.text(`${platformName(chk.platform)}  ·  ${chk.source === "upload" ? "Uploaded file" : "Live check"}  ·  ${dateStr}`, MARGIN_X + 5, y + 6.5);
+      doc.text(`${platformName(chk.platform)}  ·  ${chk.source === "upload" ? "Uploaded file" : "Live check"}  ·  ${dateStr}`, MARGIN_X + 6, y + 7);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(...MUTED);
-      doc.text(`${chk.order_count} orders  ·  ${fmt(chk.sub_total_sum, currency)} sales`, MARGIN_X + 5, y + 12);
+      doc.text(`${chk.order_count} orders  ·  ${fmt(chk.sub_total_sum, currency)} sales`, MARGIN_X + 6, y + 12.5);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
+      doc.setFontSize(11.5);
       doc.setTextColor(...GREEN);
       const { expectedAtAgreed: chkExpectedAtAgreed, showDelta: chkShowDelta } = computeAgreedRateCorrection(chk);
-      doc.text(fmt(chkShowDelta ? chkExpectedAtAgreed : chk.expected_payout, currency), MARGIN_X + CONTENT_W - 5, y + 9, { align: "right" });
+      doc.text(fmt(chkShowDelta ? chkExpectedAtAgreed : chk.expected_payout, currency), MARGIN_X + CONTENT_W - 6, y + 9.5, { align: "right" });
       if (chk.unexplained_charge) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7.5);
-        doc.setTextColor(...AMBER);
-        doc.text("(!) unexplained charge", MARGIN_X + CONTENT_W - 5, y + 16.5, { align: "right" });
+        doc.setTextColor(150, 100, 10);
+        doc.text("(!) unexplained charge", MARGIN_X + CONTENT_W - 6, y + 16.5, { align: "right" });
       }
-      y += cardH + 3;
+      y += cardH + 4;
     }
   }
-  y += 4;
+  y += 3;
 
   // Repricing History
   y = ensureSpace(doc, y, 16);

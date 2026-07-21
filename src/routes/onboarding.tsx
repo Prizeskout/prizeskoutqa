@@ -723,7 +723,7 @@ function OnboardingPage() {
     fetch("/api/register-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ merchant_id: mid, code, email: email.trim().toLowerCase() || undefined }),
+      body: JSON.stringify({ merchant_id: mid, code, email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined }),
     }).catch(() => {});
 
     // Create the Supabase account in the background so the merchant can use

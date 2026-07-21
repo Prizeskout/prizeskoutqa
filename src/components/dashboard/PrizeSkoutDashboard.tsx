@@ -790,6 +790,7 @@ export function PrizeSkoutDashboard() {
   const [tab, setTab] = useState<Tab>("analytics");
   const [theme, setTheme] = useState<Theme>("light");
   const [currency, setCurrency] = useState("QAR");
+  const [storeName, setStoreName] = useState("");
   const [lang, setLang] = useState<Lang>("en");
   const [isDesktop, setIsDesktop] = useState(true);
   const [feed, setFeed] = useState<FeedRow[]>([]);
@@ -996,6 +997,17 @@ export function PrizeSkoutDashboard() {
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalFloor]);
+
+  useEffect(() => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    if (!mid) return;
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { store_name?: string | null } | null) => {
+        if (d?.store_name) setStoreName(d.store_name);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (tab !== "vault") return;
@@ -1256,8 +1268,8 @@ export function PrizeSkoutDashboard() {
             <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4 }}>
               <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                 border:"1px solid var(--border)", display:"grid", placeItems:"center",
-                fontSize:13, fontWeight:700, fontFamily:MONO }}>M</span>
-              <span style={{ fontSize:15.5, fontWeight:600 }}>{t.myAccount}</span>
+                fontSize:13, fontWeight:700, fontFamily:MONO }}>{(storeName || "M").charAt(0).toUpperCase()}</span>
+              <span style={{ fontSize:15.5, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{storeName || t.myAccount}</span>
             </div>
           </div>
         </aside>
@@ -2555,8 +2567,8 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4, paddingTop:4 }}>
                 <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--surface)",
                   border:"1px solid var(--border)", display:"grid", placeItems:"center",
-                  fontSize:13, fontWeight:700, fontFamily:MONO }}>M</span>
-                <span style={{ fontSize:15.5, fontWeight:600 }}>{t.myAccount}</span>
+                  fontSize:13, fontWeight:700, fontFamily:MONO }}>{(storeName || "M").charAt(0).toUpperCase()}</span>
+                <span style={{ fontSize:15.5, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{storeName || t.myAccount}</span>
               </div>
             </div>
           </div>

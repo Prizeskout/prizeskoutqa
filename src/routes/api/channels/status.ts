@@ -31,11 +31,18 @@ export const Route = createFileRoute("/api/channels/status")({
           );
         }
 
-        const { data, error } = await supabaseAdmin
-          .from("ps_merchant_channels")
-          .select("platform, status, connected_at, metadata")
-          .eq("account_id", merchantId)
-          .neq("status", "revoked");
+        const [{ data, error }, { data: accessCode }] = await Promise.all([
+          supabaseAdmin
+            .from("ps_merchant_channels")
+            .select("platform, status, connected_at, metadata")
+            .eq("account_id", merchantId)
+            .neq("status", "revoked"),
+          supabaseAdmin
+            .from("ps_access_codes")
+            .select("store_name")
+            .eq("merchant_id", merchantId)
+            .maybeSingle(),
+        ]);
 
         if (error) {
           return new Response(
@@ -66,7 +73,7 @@ export const Route = createFileRoute("/api/channels/status")({
           return base;
         });
 
-        return new Response(JSON.stringify({ channels }), {
+        return new Response(JSON.stringify({ channels, store_name: accessCode?.store_name ?? null }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         });
