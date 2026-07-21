@@ -239,6 +239,8 @@ const T = {
     commissionTrendAcross:"across", commissionTrendStatements:"statements",
     commissionTrendExcessLabel:"Extra commission paid beyond agreed rate",
     commissionTrendUnexplainedLabel:"Unexplained Additional Charges",
+    payoutDownloadPdf:"Download Report", payoutDownloadingPdf:"Generating…",
+    payoutDownloadFullReport:"Download Full Report",
     payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
@@ -375,6 +377,8 @@ const T = {
     commissionTrendAcross:"عبر", commissionTrendStatements:"بيانات",
     commissionTrendExcessLabel:"عمولة إضافية مدفوعة فوق النسبة المتفق عليها",
     commissionTrendUnexplainedLabel:"رسوم إضافية غير مفسّرة",
+    payoutDownloadPdf:"تنزيل التقرير", payoutDownloadingPdf:"جارٍ الإنشاء…",
+    payoutDownloadFullReport:"تنزيل التقرير الكامل",
     payoutCheckLiveTab:"فحص مباشر", payoutCheckUploadTab:"رفع ملف",
     payoutCheckUploadPlatformLabel:"المنصة", payoutCheckCsvOnly:"ملفات CSV فقط حالياً.",
     payoutCheckSourceLive:"فحص مباشر", payoutCheckSourceUpload:"ملف مرفوع", payoutCheckShowing:"يعرض",
@@ -511,6 +515,8 @@ const T = {
     commissionTrendAcross:"sur", commissionTrendStatements:"relevés",
     commissionTrendExcessLabel:"Commission supplémentaire payée au-delà du taux convenu",
     commissionTrendUnexplainedLabel:"Frais supplémentaires inexpliqués",
+    payoutDownloadPdf:"Télécharger le rapport", payoutDownloadingPdf:"Génération…",
+    payoutDownloadFullReport:"Télécharger le rapport complet",
     payoutCheckLiveTab:"Vérification en direct", payoutCheckUploadTab:"Importer un fichier",
     payoutCheckUploadPlatformLabel:"Plateforme", payoutCheckCsvOnly:"Fichiers CSV uniquement pour le moment.",
     payoutCheckSourceLive:"Vérification en direct", payoutCheckSourceUpload:"Fichier importé", payoutCheckShowing:"Affichage",
@@ -585,8 +591,37 @@ type PayoutResultLike = {
 };
 
 function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
+  const [downloading, setDownloading] = useState(false);
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const { exportPayoutCheckPdf } = await import("@/components/dashboard/payout/exportPayoutReportPdf");
+      await exportPayoutCheckPdf(data, currency);
+    } catch (err) {
+      console.error("Payout check PDF export failed:", err);
+    } finally {
+      setDownloading(false);
+    }
+  };
   return (
     <>
+      <div style={{ display:"flex", justifyContent:"flex-end" }}>
+        <button type="button" onClick={handleDownload} disabled={downloading}
+          style={{ cursor: downloading ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:12.5,
+            fontWeight:600, color:"var(--text)", background:"var(--surface)",
+            border:"1px solid var(--border)", borderRadius:8, padding:"7px 12px",
+            opacity: downloading ? 0.6 : 1, display:"flex", alignItems:"center", gap:6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          {downloading ? t.payoutDownloadingPdf : t.payoutDownloadPdf}
+        </button>
+      </div>
+
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, animation:"pk-in .3s ease" }}>
         {[
           { value:String(data.order_count), label:t.payoutCheckOrders },
@@ -790,6 +825,19 @@ export function PrizeSkoutDashboard() {
   const [historyLoading, setHistoryLoading]           = useState(false);
   const [expandedPayoutCheckId, setExpandedPayoutCheckId] = useState<string|null>(null);
   const [expandedRepricingId, setExpandedRepricingId] = useState<string|null>(null);
+  const [downloadingHistoryPdf, setDownloadingHistoryPdf] = useState(false);
+  const handleDownloadHistoryPdf = async () => {
+    if (downloadingHistoryPdf) return;
+    setDownloadingHistoryPdf(true);
+    try {
+      const { exportPayoutHistoryPdf } = await import("@/components/dashboard/payout/exportPayoutReportPdf");
+      await exportPayoutHistoryPdf(historyPayoutChecks, historyRepricings, currency);
+    } catch (err) {
+      console.error("Payout history PDF export failed:", err);
+    } finally {
+      setDownloadingHistoryPdf(false);
+    }
+  };
 
   useEffect(() => {
     if (tab !== "history") return;
@@ -2058,6 +2106,22 @@ export function PrizeSkoutDashboard() {
         {/* ===== TAB: HISTORY ===== */}
         {tab === "history" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:24, animation:"pk-in .3s ease" }}>
+
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button type="button" onClick={handleDownloadHistoryPdf} disabled={downloadingHistoryPdf}
+                style={{ cursor: downloadingHistoryPdf ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:13.5,
+                  fontWeight:600, color:"var(--text)", background:"var(--surface)",
+                  border:"1px solid var(--border)", borderRadius:10, padding:"9px 15px",
+                  opacity: downloadingHistoryPdf ? 0.6 : 1, display:"flex", alignItems:"center", gap:7 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                {downloadingHistoryPdf ? t.payoutDownloadingPdf : t.payoutDownloadFullReport}
+              </button>
+            </div>
 
             {/* Payout Check History */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
