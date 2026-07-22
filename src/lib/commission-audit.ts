@@ -168,15 +168,25 @@ function findMissingDateRanges(coveredDates: Set<string>, rangeStart: string, ra
 
 // A readable stand-in for a raw (often auto-generated, timestamp-laden)
 // filename in finding prose — prefers the merchant's own description, falls
-// back to a plain-English name for the document's role.
+// back to a plain-English name for the document's role. A description is
+// only used when it's actually label-length: merchants sometimes type
+// instructions or multi-sentence notes into the description box (useful
+// context for the LLM classifier, which sees it in full), and quoting one
+// of those verbatim mid-sentence in every finding title makes the whole
+// report unreadable — so anything longer than a short phrase falls back to
+// the plain-English role name instead of being truncated into a fragment.
+const LABEL_MAX_LEN = 60;
 function friendlyLabel(doc: ClassifiedDocument): string {
   const description = doc.description?.trim();
-  if (description) return `"${description}"`;
+  if (description && description.length <= LABEL_MAX_LEN) return `"${description}"`;
   switch (doc.document_type) {
-    case "daily_log": return "your daily order log";
-    case "statement": return "your payout statement";
-    case "summary_pdf": return "your brand performance report";
-    case "merchant_received": return "what you said you received";
+    // Capitalized so this reads correctly whether it opens a sentence or
+    // sits mid-sentence (findings compose these into prose in both
+    // positions) — treated like a defined term, not a plain noun phrase.
+    case "daily_log": return "Your daily order log";
+    case "statement": return "Your payout statement";
+    case "summary_pdf": return "Your brand performance report";
+    case "merchant_received": return "What you said you received";
     default: return doc.file_name;
   }
 }
@@ -292,10 +302,30 @@ function relatePeriods(aStart: string, aEnd: string, bStart: string, bEnd: strin
   return { kind: "partial", overlapStart, overlapEnd };
 }
 
+// Tests whether a daily log's Sales figures are pre-commission (gross) or
+// already post-commission (net) against an independent reference figure
+// (either the statement's own Gross Sales for a fully-covered period, or a
+// prorated estimate of it) — a merchant can reasonably read either way, and
+// this is the actual evidence-based way to settle it rather than assuming.
+// Grossing the reported Sales back up at the agreed rate and comparing both
+// readings' error against the reference figure; whichever reading is closer
+// is reported as the more likely basis, never asserted as certain.
+function describeSalesComposition(overlapSum: number, referenceGross: number, ratePct: number): string {
+  if (!(ratePct > 0 && ratePct < 100) || referenceGross <= 0) return "";
+  const grossPct = Math.abs(overlapSum - referenceGross) / referenceGross;
+  const netImpliedGross = overlapSum / (1 - ratePct / 100);
+  const netPct = Math.abs(netImpliedGross - referenceGross) / referenceGross;
+  if (grossPct <= netPct) {
+    return ` This also indicates your daily log's Sales figures are pre-commission (gross), not already net of commission: if Sales were already post-commission and grossed back up at ${ratePct}%, the implied gross (${netImpliedGross.toFixed(2)}) would be off by ${(netPct * 100).toFixed(1)}% instead of ${(grossPct * 100).toFixed(1)}%.`;
+  }
+  return ` Note: your daily log's Sales figures actually fit better as already net of commission — grossing them up at ${ratePct}% (implying ${netImpliedGross.toFixed(2)}) comes within ${(netPct * 100).toFixed(1)}% of the reference figure, versus ${(grossPct * 100).toFixed(1)}% if taken as gross directly. Worth confirming with the platform which basis their export uses.`;
+}
+
 function computePeriodFindings(
   coverage: { start: string; end: string } | null,
   ledgerRows: LedgerRow[],
   statementDocs: ClassifiedDocument[],
+  commissionRatePct: number,
 ): { findings: Finding[]; windows: CrossCheckWindow[] } {
   if (!coverage) return { findings: [], windows: [] };
   const findings: Finding[] = [];
@@ -358,7 +388,7 @@ function computePeriodFindings(
         title: withinTolerance
           ? `Daily log sales reconcile against ${stmtLabel}`
           : `Daily log sales don't match ${stmtLabel}`,
-        detail: `Your daily order log sums to ${overlapSum.toFixed(2)} in sales for ${formatDateRange(stmtStart, stmtEnd)}; ${stmtLabel} states Gross Sales of ${statementGross.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
+        detail: `Your daily order log sums to ${overlapSum.toFixed(2)} in sales for ${formatDateRange(stmtStart, stmtEnd)}; ${stmtLabel} states Gross Sales of ${statementGross.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.${describeSalesComposition(overlapSum, statementGross, commissionRatePct)}`,
         amount: round2(Math.abs(diff)),
       });
       windows.push({ start: stmtStart, end: stmtEnd, label: stmtLabel, matched: withinTolerance });
@@ -376,7 +406,7 @@ function computePeriodFindings(
         id: `period-estimate-${doc.id}`,
         severity: diffPct > 0.15 ? "warning" : "info",
         title: `Estimated check on the ${overlapDayCount} overlapping day(s): ${diffPct <= 0.15 ? "roughly consistent" : "worth a closer look"}`,
-        detail: `Approximate only, since your daily log doesn't cover ${stmtLabel}'s full period — spreading its ${statementGross.toFixed(2)} Gross Sales evenly across ${stmtTotalDays} days gives an expected ${proratedEstimate.toFixed(2)} for the ${overlapDayCount} day(s) your daily log actually covers here. Your daily log shows ${overlapSum.toFixed(2)} for those same days — a difference of ${diff.toFixed(2)} (${(diffPct * 100).toFixed(1)}%). Daily volume is rarely perfectly even, so treat this as a sanity check, not a verdict.`,
+        detail: `Approximate only, since your daily log doesn't cover ${stmtLabel}'s full period — spreading its ${statementGross.toFixed(2)} Gross Sales evenly across ${stmtTotalDays} days gives an expected ${proratedEstimate.toFixed(2)} for the ${overlapDayCount} day(s) your daily log actually covers here. Your daily log shows ${overlapSum.toFixed(2)} for those same days — a difference of ${diff.toFixed(2)} (${(diffPct * 100).toFixed(1)}%). Daily volume is rarely perfectly even, so treat this as a sanity check, not a verdict.${describeSalesComposition(overlapSum, proratedEstimate, commissionRatePct)}`,
       });
       windows.push({ start: coveredDatesSorted[0], end: coveredDatesSorted[coveredDatesSorted.length - 1], label: stmtLabel, matched: diffPct <= CROSS_CHECK_TOLERANCE_PCT });
     }
@@ -547,7 +577,7 @@ export function reconcile(
   // one of each relevant type to actually compare.
   const crossCheckWindows: CrossCheckWindow[] = [];
   if (dailyDocs.length > 0 && statementDocs.length > 0) {
-    const periodResult = computePeriodFindings(coverage, ledger, statementDocs);
+    const periodResult = computePeriodFindings(coverage, ledger, statementDocs, rate);
     findings.push(...periodResult.findings);
     crossCheckWindows.push(...periodResult.windows);
   }
