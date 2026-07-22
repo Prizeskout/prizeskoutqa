@@ -10,6 +10,8 @@ export type AuditDocumentSummary = {
   document_type: string;
   order_count: number | null;
   sub_total_sum: number | null;
+  description?: string | null;
+  received_amount?: number | null;
 };
 
 export type AuditFinding = {

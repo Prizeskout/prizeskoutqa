@@ -7,7 +7,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
 import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
-import { getTalabatExpectedPayout } from "@/server/core/expected-payout";
+import { getTalabatExpectedPayout, type ExpectedPayoutResult } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
 import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-parser";
 import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
@@ -15,6 +15,8 @@ import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/ser
 import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
 import { getDashboardStats } from "@/server/core/dashboard-stats";
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
+import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
+import { classifyResult } from "@/lib/commission-audit";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -105,11 +107,29 @@ export const Route = createFileRoute("/api/channels/connect")({
               // or not-yet-connected platform. Not the real product
               // mechanism (see payout-csv-parser.ts header comment); doesn't
               // require that platform to be connected at all.
-              const { csv_text, pdf_text, commission_rate_pct, upload_platform, file_kind } = body;
+              const { csv_text, pdf_text, commission_rate_pct, upload_platform, file_kind, description } = body;
               const rate = Number(commission_rate_pct);
               if (!Number.isFinite(rate)) {
                 return resp({ error: "commission_rate_pct is required for an upload check." }, 400);
               }
+
+              // Shared by both the PDF and CSV branches below: persists the
+              // check, then — only if the merchant typed a description —
+              // asks the LLM classifier to interpret it (see upload-
+              // classifier.ts). A classification failure never fails the
+              // upload itself; it's a soft-fail passenger on the response.
+              const respondWithClassification = async (result: ExpectedPayoutResult) => {
+                if (!result.ok) return resp({ ok: false, error: result.error }, 400);
+                await savePayoutCheck(merchant_id, result);
+                const trimmedDescription = (description ?? "").trim().slice(0, 500);
+                if (!trimmedDescription) return resp({ ...result, ok: true }, 200);
+                const classification = await classifyUpload({
+                  description: trimmedDescription,
+                  parsedSummary: buildParsedSummary(result),
+                  structuralHint: classifyResult(result),
+                });
+                return resp({ ...result, ok: true, classification }, 200);
+              };
 
               if (file_kind === "pdf") {
                 // Only verified against Snoonu's Brand Performance Report —
@@ -121,11 +141,7 @@ export const Route = createFileRoute("/api/channels/connect")({
                 if (!pdf_text) {
                   return resp({ error: "pdf_text is required for a PDF upload check." }, 400);
                 }
-                const result = parseSnoonuBrandReportPdf(pdf_text, rate);
-                if (result.ok) await savePayoutCheck(merchant_id, result);
-                return result.ok
-                  ? resp({ ...result, ok: true }, 200)
-                  : resp({ ok: false, error: result.error }, 400);
+                return await respondWithClassification(parseSnoonuBrandReportPdf(pdf_text, rate));
               }
 
               const platformName = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(upload_platform ?? "")
@@ -147,10 +163,61 @@ export const Route = createFileRoute("/api/channels/connect")({
               const result = looksLikeStatement
                 ? parseTalabatPayoutStatementCsv(csv_text, rate)
                 : parseAggregatorDailyCsv(csv_text, rate, platformName);
-              if (result.ok) await savePayoutCheck(merchant_id, result);
-              return result.ok
-                ? resp({ ...result, ok: true }, 200)
-                : resp({ ok: false, error: result.error }, 400);
+              return await respondWithClassification(result);
+            }
+
+            if (body.action === "manual_entry") {
+              // "What I actually received" — a merchant-typed record, never
+              // a parsed file (see commission-audit.ts's computeMerchant-
+              // ReceivedFindings for why: there's no reliable way to parse
+              // an arbitrary bank-export format the way Talabat's own
+              // consistent CSV exports are parsed, so this stays a plain
+              // amount + period rather than fabricating parsing confidence).
+              const description = (body.description ?? "").trim().slice(0, 500);
+              const amount = Number(body.amount);
+              const { period_start, period_end } = body;
+              if (!Number.isFinite(amount) || amount <= 0) {
+                return resp({ error: "A valid amount is required for a manual entry." }, 400);
+              }
+              if (!period_start || !period_end) {
+                return resp({ error: "period_start and period_end are required for a manual entry." }, 400);
+              }
+
+              const uploadPlatform = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(body.upload_platform ?? "")
+                ? body.upload_platform
+                : undefined;
+
+              let platformGuess: string | null = uploadPlatform ?? null;
+              let classification: unknown;
+              if (description) {
+                const outcome = await classifyUpload({
+                  description,
+                  parsedSummary: `Merchant-entered amount ${amount}, period ${period_start} to ${period_end}.`,
+                  structuralHint: "manual_entry",
+                });
+                // The classifier's `role` is intentionally discarded here —
+                // a manual entry is always merchant_received by
+                // construction; never let the LLM override something
+                // already known structurally. Only platform/restated are
+                // used, and only to fill in what wasn't already selected.
+                if (outcome.ok) {
+                  platformGuess = platformGuess ?? outcome.classification.platform;
+                  classification = { ok: true, restated: outcome.classification.restated, confidence: outcome.classification.confidence };
+                } else {
+                  classification = outcome;
+                }
+              }
+
+              return resp({
+                ok: true,
+                source: "manual",
+                role: "merchant_received",
+                received_amount: Math.round(amount * 100) / 100,
+                period_start,
+                period_end,
+                platform: platformGuess,
+                ...(classification ? { classification } : {}),
+              }, 200);
             }
 
             // Live path — pulls the merchant's real Talabat order history

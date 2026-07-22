@@ -3,7 +3,8 @@ import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
 import { CommissionAuditPanel } from "@/components/dashboard/payout/CommissionAuditPanel";
-import { classifyResult, reconcile, type ClassifiedDocument, type Finding, type LedgerRow } from "@/lib/commission-audit";
+import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } from "@/components/dashboard/payout/PayoutUploadStaging";
+import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
@@ -243,6 +244,7 @@ const T = {
     payoutUnexplainedCharge3:"with no itemized breakdown anywhere in this statement — worth asking the platform to explain it.",
     payoutUnexplainedChargeRateNote:"per order — worth asking the platform whether this matches a flat per-order fee.",
     payoutUnexplainedChargeChecked:"Checked", payoutUnexplainedChargeAllZero:"all read zero.",
+    payoutManualEntryLabel:"Manual entry",
     commissionTrendTitle:"Commission Pattern", commissionTrendRateLabel:"Avg. agreed → effective rate",
     commissionTrendAcross:"across", commissionTrendStatements:"statements",
     commissionTrendExcessLabel:"Extra commission paid beyond agreed rate",
@@ -392,6 +394,7 @@ const T = {
     payoutUnexplainedCharge3:"بدون أي تفصيل في هذا البيان — يستحق سؤال المنصة لتوضيحه.",
     payoutUnexplainedChargeRateNote:"لكل طلب — يستحق سؤال المنصة عمّا إذا كان هذا يطابق رسماً ثابتاً لكل طلب.",
     payoutUnexplainedChargeChecked:"تم فحص", payoutUnexplainedChargeAllZero:"وكلها بقيمة صفر.",
+    payoutManualEntryLabel:"إدخال يدوي",
     commissionTrendTitle:"نمط العمولة", commissionTrendRateLabel:"متوسط النسبة المتفق عليها ← الفعلية",
     commissionTrendAcross:"عبر", commissionTrendStatements:"بيانات",
     commissionTrendExcessLabel:"عمولة إضافية مدفوعة فوق النسبة المتفق عليها",
@@ -541,6 +544,7 @@ const T = {
     payoutUnexplainedCharge3:"sans aucun détail dans ce relevé — vaut la peine de demander à la plateforme de l'expliquer.",
     payoutUnexplainedChargeRateNote:"par commande — vaut la peine de demander à la plateforme si cela correspond à des frais fixes par commande.",
     payoutUnexplainedChargeChecked:"Vérifié", payoutUnexplainedChargeAllZero:"tous à zéro.",
+    payoutManualEntryLabel:"Saisie manuelle",
     commissionTrendTitle:"Tendance de commission", commissionTrendRateLabel:"Taux moyen convenu → effectif",
     commissionTrendAcross:"sur", commissionTrendStatements:"relevés",
     commissionTrendExcessLabel:"Commission supplémentaire payée au-delà du taux convenu",
@@ -875,14 +879,12 @@ export function PrizeSkoutDashboard() {
   // merchant should have received (see expected-payout.ts). Never fetches
   // their actual payout; the merchant compares it against their own bank
   // deposit themselves.
-  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number; commission_amount?:number; additional_charges?:number; additional_income?:number; effective_commission_pct?:number; extra_line_items?:{label:string;value:number}[]; unexplained_charge?:{label:string;amount:number}|null; daily_rows?:{date:string;orders:number;sales:number;cancelled?:number}[]; cancelled_orders_total?:number; charge_explainers?:{label:string;value:number}[] };
+  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number; commission_amount?:number; additional_charges?:number; additional_income?:number; effective_commission_pct?:number; extra_line_items?:{label:string;value:number}[]; unexplained_charge?:{label:string;amount:number}|null; daily_rows?:{date:string;orders:number;sales:number;cancelled?:number}[]; cancelled_orders_total?:number; charge_explainers?:{label:string;value:number}[]; classification?:PayoutCheckClassification };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
   const [payoutError, setPayoutError]         = useState<string|null>(null);
   const [payoutUploadRate, setPayoutUploadRate] = useState("");
-  const [payoutUploadPlatform, setPayoutUploadPlatform] = useState("talabat");
-  const payoutFileInputRef = useRef<HTMLInputElement>(null);
 
   // Commission Audit — populated whenever an upload batch includes at least
   // one daily-log document (even a batch of one, see commission-audit.ts).
@@ -891,17 +893,21 @@ export function PrizeSkoutDashboard() {
   // auditResult drives the new ledger/findings/chart panel underneath it.
   const [payoutDocuments, setPayoutDocuments] = useState<ClassifiedDocument[]>([]);
   const [auditResult, setAuditResult]         = useState<ReturnType<typeof reconcile>|null>(null);
-  const [batchProgress, setBatchProgress]     = useState<{done:number; total:number}|null>(null);
-  const [batchFileErrors, setBatchFileErrors] = useState<{file_name:string; error:string}[]>([]);
   const [savingAudit, setSavingAudit]         = useState(false);
   const [auditSaved, setAuditSaved]           = useState(false);
+
+  // Staged items — the incremental "add one at a time, describe it, then
+  // Run Audit" flow. Each item is added (uploaded/entered) independently;
+  // reconcile() only ever runs when the merchant explicitly hits Run Audit.
+  // See PayoutUploadStaging.tsx for the StagedItem type definition.
+  const [stagedItems, setStagedItems] = useState<StagedItem[]>([]);
 
   // History tab — read-only lists pulled from payout-history.ts /
   // dispatch-history.ts via the same /api/channels/connect multiplex point
   // (see connect.ts's "history" branch). Fetched once per tab visit.
   type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; commission_amount:number|null; additional_charges:number|null; additional_income:number|null; effective_commission_pct:number|null; brand:string|null; cancelled_gmv:number|null; cancelled_orders:number|null; extra_line_items:{label:string;value:number}[]|null; unexplained_charge:{label:string;amount:number}|null; created_at:string };
   type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; http_status:number|null; retry_count:number|null; duration_ms:number|null; audit_snapshot:Record<string,unknown>|null; created_at:string; completed_at:string|null };
-  type PayoutAuditHistoryRow = { id:string; commission_rate_pct:number; document_count:number; documents:{file_name:string;document_type:string;order_count:number|null;sub_total_sum:number|null}[]; findings:Finding[]; ledger:LedgerRow[]|null; ledger_totals:LedgerRow|null; period_start:string|null; period_end:string|null; created_at:string };
+  type PayoutAuditHistoryRow = { id:string; commission_rate_pct:number; document_count:number; documents:{file_name:string;document_type:string;order_count:number|null;sub_total_sum:number|null;description?:string|null;received_amount?:number|null}[]; findings:Finding[]; ledger:LedgerRow[]|null; ledger_totals:LedgerRow|null; period_start:string|null; period_end:string|null; created_at:string };
   const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
   const [historyPayoutAudits, setHistoryPayoutAudits] = useState<PayoutAuditHistoryRow[]>([]);
@@ -1205,7 +1211,7 @@ export function PrizeSkoutDashboard() {
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) { showToast("Please connect your store first."); return; }
     setPayoutLoading(true); setPayoutError(null);
-    setPayoutDocuments([]); setAuditResult(null); setBatchFileErrors([]); setAuditSaved(false);
+    setPayoutDocuments([]); setAuditResult(null); setStagedItems([]); setAuditSaved(false);
     try {
       const res = await fetch("/api/channels/connect", {
         method: "POST",
@@ -1228,11 +1234,12 @@ export function PrizeSkoutDashboard() {
   };
 
   // Parses one uploaded file into a PayoutCheckData without touching any
-  // component state — a pure fetch, so runPayoutUploadBatch can call it in a
-  // sequential loop (not Promise.all, so a "file N of M" progress indicator
-  // is possible and the server never gets a burst of concurrent uploads).
+  // component state — a pure fetch, so addFileItems can call it in a
+  // sequential loop (not Promise.all, so per-item status is possible and
+  // the server never gets a burst of concurrent uploads). `description`,
+  // when non-empty, is interpreted server-side by upload-classifier.ts.
   const uploadOneFile = async (
-    file: File, mid: string, ac: string, rate: number,
+    file: File, mid: string, ac: string, rate: number, platform: string, description: string,
   ): Promise<{ ok: true; result: PayoutCheckData } | { ok: false; error: string }> => {
     try {
       const lowerName = file.name.toLowerCase();
@@ -1240,7 +1247,8 @@ export function PrizeSkoutDashboard() {
       const isXlsx = lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")
         || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         || file.type === "application/vnd.ms-excel";
-      const body: Record<string, unknown> = { merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "upload", commission_rate_pct: rate, upload_platform: payoutUploadPlatform };
+      const body: Record<string, unknown> = { merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "upload", commission_rate_pct: rate, upload_platform: platform };
+      if (description.trim()) body.description = description.trim();
       if (isPdf) {
         const { extractPdfText } = await import("@/lib/pdf-text");
         body.file_kind = "pdf";
@@ -1266,56 +1274,111 @@ export function PrizeSkoutDashboard() {
     }
   };
 
-  // Handles 1..N files from a single file-picker selection. A lone
-  // non-daily-log file behaves exactly as before (PayoutResultDetail only) —
-  // the ledger/findings panel appears whenever at least one daily-log
-  // document is present, and cross-document findings only once 2+ documents
-  // are present (see reconcile() in commission-audit.ts for why those are
-  // gated separately).
-  const runPayoutUploadBatch = async (files: FileList) => {
+  // Adds 1..N files to the staged list, one at a time (sequential, not
+  // Promise.all — same reasoning as before: per-item status, no server
+  // burst). Each file's document_type is always set by the deterministic
+  // classifyResult() (structural, 100% reliable) — the LLM classification
+  // returned alongside is shown as a caption/mismatch flag only, never used
+  // to set the type. See commission-audit.ts / upload-classifier.ts.
+  const addFileItems = async (files: FileList, description: string, platform: string) => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) { showToast("Please connect your store first."); return; }
     const rate = Number(payoutUploadRate);
     if (!(rate > 0 && rate < 100)) {
-      setPayoutError("Enter a valid commission rate (e.g. 19) before uploading.");
+      setPayoutError("Enter a valid commission rate (e.g. 19) before adding a file.");
       return;
     }
-
-    const fileArr = Array.from(files);
-    setPayoutLoading(true);
     setPayoutError(null);
-    setPayoutData(null);
-    setPayoutDocuments([]);
-    setAuditResult(null);
-    setBatchFileErrors([]);
-    setAuditSaved(false);
-    setBatchProgress({ done: 0, total: fileArr.length });
 
-    const classified: ClassifiedDocument[] = [];
-    const errors: { file_name: string; error: string }[] = [];
-    for (let i = 0; i < fileArr.length; i++) {
-      const file = fileArr[i];
-      const outcome = await uploadOneFile(file, mid, ac, rate);
-      if (outcome.ok) {
-        classified.push({
-          id: `${Date.now()}-${i}`,
-          file_name: file.name,
-          document_type: classifyResult(outcome.result),
-          result: outcome.result,
-        });
-      } else {
-        errors.push({ file_name: file.name, error: outcome.error });
-      }
-      setBatchProgress({ done: i + 1, total: fileArr.length });
+    for (const file of Array.from(files)) {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      setStagedItems(prev => [...prev, { id, kind: "file", label: file.name, description, platform, status: "uploading" }]);
+      const outcome = await uploadOneFile(file, mid, ac, rate, platform, description);
+      setStagedItems(prev => prev.map(it => {
+        if (it.id !== id) return it;
+        if (!outcome.ok) return { ...it, status: "error", error: outcome.error };
+        const documentType = classifyResult(outcome.result);
+        return {
+          ...it,
+          status: "done",
+          classification: outcome.result.classification,
+          classifiedDoc: {
+            id, file_name: file.name, document_type: documentType, result: outcome.result,
+            description: description || undefined,
+            platform_guess: outcome.result.classification?.ok ? outcome.result.classification.classification.platform : null,
+          },
+        };
+      }));
     }
+  };
 
+  // Adds a manual "what I actually received" entry — never a parsed file
+  // (see commission-audit.ts header comment for why). document_type is
+  // always "merchant_received" here, set directly — never LLM-driven.
+  const addManualItem = async (description: string, amount: string, periodStart: string, periodEnd: string, platform: string) => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) { showToast("Please connect your store first."); return; }
+    if (!(Number(amount) > 0)) { setPayoutError("Enter a valid amount for the manual entry."); return; }
+    if (!periodStart || !periodEnd) { setPayoutError("Enter a start and end date for the manual entry."); return; }
+    setPayoutError(null);
+
+    const id = `${Date.now()}-manual`;
+    setStagedItems(prev => [...prev, { id, kind: "manual", label: `${t.payoutManualEntryLabel} — ${periodStart} to ${periodEnd}`, description, platform, status: "uploading" }]);
+    try {
+      const res = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "manual_entry",
+          description, amount, period_start: periodStart, period_end: periodEnd, upload_platform: platform,
+        }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string; received_amount?: number; period_start?: string; period_end?: string; platform?: string|null; classification?: PayoutCheckClassification };
+      if (!res.ok || !data.ok) {
+        setStagedItems(prev => prev.map(it => it.id !== id ? it : { ...it, status: "error", error: data.error ?? "Could not save that entry." }));
+        return;
+      }
+      setStagedItems(prev => prev.map(it => it.id !== id ? it : {
+        ...it, status: "done", classification: data.classification,
+        classifiedDoc: {
+          id, file_name: it.label, document_type: "merchant_received",
+          description: description || undefined, platform_guess: data.platform ?? null,
+          result: { received_amount: data.received_amount, period_start: data.period_start, period_end: data.period_end },
+        },
+      }));
+    } catch {
+      setStagedItems(prev => prev.map(it => it.id !== id ? it : { ...it, status: "error", error: "Network error — try again." }));
+    }
+  };
+
+  // Lets the merchant correct a misdetected type before running the audit —
+  // the safety net for whenever the structural/LLM classification disagrees
+  // with what the merchant actually meant.
+  const correctStagedDocumentType = (id: string, newType: DocumentType) =>
+    setStagedItems(prev => prev.map(it => it.id !== id || !it.classifiedDoc ? it : { ...it, classifiedDoc: { ...it.classifiedDoc, document_type: newType } }));
+
+  const removeStagedItem = (id: string) => setStagedItems(prev => prev.filter(it => it.id !== id));
+
+  // The only place reconcile() is now invoked — replaces the old
+  // auto-run-on-upload behavior. Preserves the existing single-item fast
+  // path (PayoutResultDetail only, unchanged) when exactly one non-
+  // merchant_received item is staged.
+  const runStagedAudit = () => {
+    const classified = stagedItems
+      .filter((it): it is StagedItem & { classifiedDoc: ClassifiedDocument } => it.status === "done" && !!it.classifiedDoc)
+      .map(it => it.classifiedDoc);
+    if (classified.length === 0) return;
+    const rate = Number(payoutUploadRate) || 0;
     setPayoutDocuments(classified);
-    setBatchFileErrors(errors);
-    if (classified.length === 1) setPayoutData(classified[0].result as PayoutCheckData);
-    if (classified.length > 0) setAuditResult(reconcile(classified, rate));
-    if (classified.length === 0 && errors.length > 0) setPayoutError(errors[0].error);
-    setPayoutLoading(false);
+    setAuditSaved(false);
+    if (classified.length === 1 && classified[0].document_type !== "merchant_received") {
+      setPayoutData(classified[0].result as PayoutCheckData);
+    } else {
+      setPayoutData(null);
+    }
+    setAuditResult(reconcile(classified, rate));
   };
 
   const handleSaveAudit = async () => {
@@ -1330,6 +1393,8 @@ export function PrizeSkoutDashboard() {
         document_type: d.document_type,
         order_count: d.result.order_count ?? null,
         sub_total_sum: d.result.sub_total_sum ?? null,
+        description: d.description ?? null,
+        received_amount: d.result.received_amount ?? null,
       }));
       const res = await fetch("/api/channels/connect", {
         method: "POST",
@@ -1743,54 +1808,17 @@ export function PrizeSkoutDashboard() {
                   <span style={{ fontSize:11.5, color:"var(--muted)" }}>{t.payoutCheckLiveOnlyNote}</span>
                 </div>
               ) : (
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
-                    <select value={payoutUploadPlatform} onChange={e=>setPayoutUploadPlatform(e.target.value)}
-                      aria-label={t.payoutCheckUploadPlatformLabel}
-                      style={{ height:38, border:"1px solid var(--border)", borderRadius:9,
-                        background:"var(--surface)", color:"var(--text)", padding:"0 11px",
-                        fontSize:13, fontFamily:"inherit", outline:"none" }}>
-                      {PAYOUT_UPLOAD_PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    </select>
-                    <input
-                      type="number" min="0" max="99" step="0.1"
-                      value={payoutUploadRate}
-                      onChange={e=>setPayoutUploadRate(e.target.value)}
-                      placeholder={t.payoutCheckUploadRateLabel}
-                      style={{ width:170, height:38, border:"1px solid var(--border)", borderRadius:9,
-                        background:"var(--surface)", color:"var(--text)", padding:"0 11px",
-                        fontSize:13, fontFamily:"inherit", outline:"none" }}
-                    />
-                    <input ref={payoutFileInputRef} type="file" multiple
-                      accept={payoutUploadPlatform === "snoonu"
-                        ? ".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.pdf,application/pdf"
-                        : ".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"}
-                      style={{ display:"none" }}
-                      onChange={e=>{ const files = e.target.files; if (files && files.length) runPayoutUploadBatch(files); e.target.value=""; }} />
-                    <button
-                      type="button"
-                      disabled={payoutLoading}
-                      onClick={()=>payoutFileInputRef.current?.click()}
-                      style={{ cursor: payoutLoading ? "not-allowed" : "pointer", fontSize:13, fontWeight:700,
-                        color:"#fff", background: payoutLoading ? "#9A9A9A" : OG,
-                        border:"none", borderRadius:9, padding:"10px 16px", fontFamily:"inherit",
-                        opacity: payoutLoading ? 0.7 : 1 }}>
-                      {payoutLoading ? t.payoutCheckBtnLoading : t.payoutCheckUploadBtn}
-                    </button>
-                  </div>
-                  <span style={{ fontSize:11.5, color:"var(--muted)" }}>
-                    {payoutUploadPlatform === "snoonu" ? t.payoutCheckCsvOrPdfSnoonu
-                      : payoutUploadPlatform === "talabat" ? t.payoutCheckTalabatHint
-                      : t.payoutCheckCsvOnly}
-                    {" "}{t.payoutCheckMultiFileHint}
-                  </span>
-                </div>
-              )}
-
-              {batchProgress && payoutLoading && batchProgress.total > 1 && (
-                <div style={{ fontSize:12.5, color:"var(--muted)", fontWeight:600 }}>
-                  {batchProgress.done} / {batchProgress.total} {t.payoutUploadingProgress}
-                </div>
+                <PayoutUploadStaging
+                  items={stagedItems}
+                  platforms={PAYOUT_UPLOAD_PLATFORMS}
+                  rate={payoutUploadRate}
+                  onRateChange={setPayoutUploadRate}
+                  onAddFile={addFileItems}
+                  onAddManual={addManualItem}
+                  onCorrectType={correctStagedDocumentType}
+                  onRemove={removeStagedItem}
+                  onRunAudit={runStagedAudit}
+                />
               )}
 
               {payoutError && (
@@ -1799,32 +1827,6 @@ export function PrizeSkoutDashboard() {
                   border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
                   borderRadius:9, padding:"10px 14px" }}>
                   {payoutError}
-                </div>
-              )}
-
-              {batchFileErrors.length > 0 && (
-                <div style={{ fontSize:12.5, fontWeight:600, color:"#B45309",
-                  background:"color-mix(in srgb,#B45309 8%,var(--surface))",
-                  border:"1px solid color-mix(in srgb,#B45309 25%,transparent)",
-                  borderRadius:9, padding:"10px 14px", display:"flex", flexDirection:"column", gap:4 }}>
-                  {batchFileErrors.map(e => (
-                    <span key={e.file_name}>{e.file_name}: {e.error}</span>
-                  ))}
-                </div>
-              )}
-
-              {payoutDocuments.length >= 2 && (
-                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
-                  {payoutDocuments.map(d => (
-                    <span key={d.id} style={{ fontSize:12, fontWeight:600, color:"var(--text)",
-                      background:"var(--surface2)", border:"1px solid var(--border)",
-                      borderRadius:999, padding:"5px 12px", display:"flex", alignItems:"center", gap:6 }}>
-                      {d.file_name}
-                      <span style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.03em" }}>
-                        {d.document_type === "daily_log" ? "Daily Log" : d.document_type === "statement" ? "Statement" : "Report"}
-                      </span>
-                    </span>
-                  ))}
                 </div>
               )}
 
@@ -2773,10 +2775,12 @@ export function PrizeSkoutDashboard() {
                               {row.documents.map(d => (
                                 <span key={d.file_name} style={{ fontSize:12, fontWeight:600, color:"var(--text)",
                                   background:"var(--surface)", border:"1px solid var(--border)",
-                                  borderRadius:999, padding:"5px 12px", display:"flex", alignItems:"center", gap:6 }}>
+                                  borderRadius:999, padding:"5px 12px", display:"flex", alignItems:"center", gap:6 }}
+                                  title={d.description ?? undefined}>
                                   {d.file_name}
                                   <span style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.03em" }}>
-                                    {d.document_type === "daily_log" ? "Daily Log" : d.document_type === "statement" ? "Statement" : "Report"}
+                                    {d.document_type === "daily_log" ? "Daily Log" : d.document_type === "statement" ? "Statement"
+                                      : d.document_type === "merchant_received" ? "What I Received" : "Report"}
                                   </span>
                                 </span>
                               ))}

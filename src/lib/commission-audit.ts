@@ -34,9 +34,19 @@ export type PayoutResultLike = {
   daily_rows?: { date: string; orders: number; sales: number; cancelled?: number }[] | null;
   cancelled_orders_total?: number | null;
   charge_explainers?: { label: string; value: number }[] | null;
+  // "merchant_received" documents only — what the merchant typed as the
+  // amount that actually landed in their bank. Deliberately a distinct
+  // field from expected_payout (which always means "a platform-computed or
+  // platform-stated figure") so the two are never confused downstream.
+  received_amount?: number | null;
 };
 
-export type DocumentType = "daily_log" | "statement" | "summary_pdf";
+// classifyResult() can only ever return one of these three — it infers the
+// type purely from which parser produced the result. "merchant_received" is
+// never structurally inferred; it's only ever assigned directly (manual
+// entry, or an explicit user correction of a file's detected type).
+export type StructuralDocumentType = "daily_log" | "statement" | "summary_pdf";
+export type DocumentType = StructuralDocumentType | "merchant_received";
 
 export type Finding = {
   id: string;
@@ -67,13 +77,18 @@ export type ClassifiedDocument = {
   file_name: string;
   document_type: DocumentType;
   result: PayoutResultLike;
+  // The merchant's own free-text note on what this document is, shown in
+  // findings/UI (e.g. "what Talabat compiled"). Optional — most documents
+  // still have none, classified purely by file structure as before.
+  description?: string;
+  platform_guess?: string | null;
 };
 
 // Talabat's real statement parser only ever sets effective_commission_pct;
 // the Snoonu PDF parser only ever sets brand; anything else that came back
 // ok:true from the upload path is the generic daily-totals CSV parser, which
 // always populates daily_rows.
-export function classifyResult(result: PayoutResultLike): DocumentType {
+export function classifyResult(result: PayoutResultLike): StructuralDocumentType {
   if (result.effective_commission_pct != null) return "statement";
   if (result.brand != null) return "summary_pdf";
   return "daily_log";
@@ -180,6 +195,24 @@ function computeDuplicateDateFinding(dateCollisions: string[]): Finding | null {
 
 export type CrossCheckWindow = { start: string; end: string; label: string; matched: boolean };
 
+type PeriodRelation =
+  | { kind: "disjoint" }
+  | { kind: "subset" }
+  | { kind: "partial"; overlapStart: string; overlapEnd: string };
+
+// Shared interval logic for every cross-document period comparison in this
+// engine — the one rule this whole module exists to enforce: never treat
+// two non-overlapping (or only partially-overlapping) periods as directly
+// comparable. Dates are plain ISO "YYYY-MM-DD" strings, so lexicographic
+// comparison is correct.
+function relatePeriods(aStart: string, aEnd: string, bStart: string, bEnd: string): PeriodRelation {
+  if (aEnd < bStart || aStart > bEnd) return { kind: "disjoint" };
+  if (aStart >= bStart && aEnd <= bEnd) return { kind: "subset" };
+  const overlapStart = aStart > bStart ? aStart : bStart;
+  const overlapEnd = aEnd < bEnd ? aEnd : bEnd;
+  return { kind: "partial", overlapStart, overlapEnd };
+}
+
 function computePeriodFindings(
   coverage: { start: string; end: string } | null,
   ledgerRows: LedgerRow[],
@@ -194,8 +227,9 @@ function computePeriodFindings(
     const stmtEnd = doc.result.period_end ?? stmtStart;
     if (!stmtStart || !stmtEnd) continue;
 
-    const disjoint = coverage.end < stmtStart || coverage.start > stmtEnd;
-    if (disjoint) {
+    const relation = relatePeriods(coverage.start, coverage.end, stmtStart, stmtEnd);
+
+    if (relation.kind === "disjoint") {
       findings.push({
         id: `period-disjoint-${doc.id}`,
         severity: "info",
@@ -205,8 +239,7 @@ function computePeriodFindings(
       continue;
     }
 
-    const fullySubset = coverage.start >= stmtStart && coverage.end <= stmtEnd;
-    if (fullySubset) {
+    if (relation.kind === "subset") {
       const overlapSum = ledgerRows
         .filter(r => r.date >= stmtStart && r.date <= stmtEnd)
         .reduce((s, r) => s + r.sales, 0);
@@ -226,15 +259,77 @@ function computePeriodFindings(
       continue;
     }
 
-    const overlapStart = coverage.start > stmtStart ? coverage.start : stmtStart;
-    const overlapEnd = coverage.end < stmtEnd ? coverage.end : stmtEnd;
     findings.push({
       id: `period-partial-${doc.id}`,
       severity: "warning",
       title: `Daily log only partially covers ${doc.file_name}'s period`,
-      detail: `Daily order log covers ${coverage.start} to ${coverage.end}; ${doc.file_name} covers ${stmtStart} to ${stmtEnd}. Only ${overlapStart} to ${overlapEnd} overlaps — a full total comparison isn't reliable across a partial window, so no dollar cross-check was attempted.`,
+      detail: `Daily order log covers ${coverage.start} to ${coverage.end}; ${doc.file_name} covers ${stmtStart} to ${stmtEnd}. Only ${relation.overlapStart} to ${relation.overlapEnd} overlaps — a full total comparison isn't reliable across a partial window, so no dollar cross-check was attempted.`,
     });
-    windows.push({ start: overlapStart, end: overlapEnd, label: doc.file_name, matched: false });
+    windows.push({ start: relation.overlapStart, end: relation.overlapEnd, label: doc.file_name, matched: false });
+  }
+
+  return { findings, windows };
+}
+
+// "What you said you actually received" vs "what the platform's statement
+// says it paid" — a real cross-check the daily-log/statement comparison
+// above can't do, since a daily order log has no payout figure at all.
+function computeMerchantReceivedFindings(
+  receivedDocs: ClassifiedDocument[],
+  statementDocs: ClassifiedDocument[],
+): { findings: Finding[]; windows: CrossCheckWindow[] } {
+  const findings: Finding[] = [];
+  const windows: CrossCheckWindow[] = [];
+
+  for (const recv of receivedDocs) {
+    const recvAmount = recv.result.received_amount;
+    const recvStart = recv.result.period_start;
+    const recvEnd = recv.result.period_end ?? recvStart;
+    if (recvAmount == null || !recvStart || !recvEnd) continue;
+    const label = recv.description?.trim() || recv.file_name;
+
+    for (const stmt of statementDocs) {
+      const stmtStart = stmt.result.period_start;
+      const stmtEnd = stmt.result.period_end ?? stmtStart;
+      const stmtAmount = stmt.result.expected_payout;
+      if (!stmtStart || !stmtEnd || stmtAmount == null) continue;
+
+      const relation = relatePeriods(recvStart, recvEnd, stmtStart, stmtEnd);
+
+      if (relation.kind === "disjoint") {
+        findings.push({
+          id: `received-vs-statement-disjoint-${recv.id}-${stmt.id}`,
+          severity: "info",
+          title: `"${label}" and ${stmt.file_name} cover different periods`,
+          detail: `You said you received ${recvAmount.toFixed(2)} for ${recvStart} to ${recvEnd}; ${stmt.file_name} covers ${stmtStart} to ${stmtEnd}. These don't overlap, so they weren't compared.`,
+        });
+        continue;
+      }
+
+      if (relation.kind === "partial") {
+        findings.push({
+          id: `received-vs-statement-partial-${recv.id}-${stmt.id}`,
+          severity: "warning",
+          title: `"${label}" only partially overlaps ${stmt.file_name}'s period`,
+          detail: `You said you received ${recvAmount.toFixed(2)} for ${recvStart} to ${recvEnd}; ${stmt.file_name} covers ${stmtStart} to ${stmtEnd}. Only ${relation.overlapStart} to ${relation.overlapEnd} overlaps — not a reliable comparison, so no dollar cross-check was attempted.`,
+        });
+        windows.push({ start: relation.overlapStart, end: relation.overlapEnd, label, matched: false });
+        continue;
+      }
+
+      const diff = recvAmount - stmtAmount;
+      const withinTolerance = stmtAmount > 0 && Math.abs(diff) / stmtAmount <= CROSS_CHECK_TOLERANCE_PCT;
+      findings.push({
+        id: `received-vs-statement-${recv.id}-${stmt.id}`,
+        severity: withinTolerance ? "info" : "critical",
+        title: withinTolerance
+          ? `What you received matches ${stmt.file_name}`
+          : `What you received doesn't match ${stmt.file_name}`,
+        detail: `You said you received ${recvAmount.toFixed(2)} for ${recvStart} to ${recvEnd}; ${stmt.file_name} states a Total Payout of ${stmtAmount.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
+        amount: round2(Math.abs(diff)),
+      });
+      windows.push({ start: recvStart, end: recvEnd, label, matched: withinTolerance });
+    }
   }
 
   return { findings, windows };
@@ -252,6 +347,7 @@ export function reconcile(
 } {
   const dailyDocs = docs.filter(d => d.document_type === "daily_log" && (d.result.daily_rows?.length ?? 0) > 0);
   const statementDocs = docs.filter(d => d.document_type === "statement");
+  const receivedDocs = docs.filter(d => d.document_type === "merchant_received");
 
   const byDate = new Map<string, { orders: number; sales: number }>();
   const sources = new Map<string, Set<string>>();
@@ -312,13 +408,18 @@ export function reconcile(
     if (cancelledFinding) findings.push(cancelledFinding);
   }
 
-  // Cross-document period comparisons only make sense once there's more than
-  // one document AND at least one of each type to actually compare.
-  let crossCheckWindows: CrossCheckWindow[] = [];
-  if (docs.length >= 2 && dailyDocs.length > 0 && statementDocs.length > 0) {
+  // Cross-document period comparisons only make sense once there's at least
+  // one of each relevant type to actually compare.
+  const crossCheckWindows: CrossCheckWindow[] = [];
+  if (dailyDocs.length > 0 && statementDocs.length > 0) {
     const periodResult = computePeriodFindings(coverage, ledger, statementDocs);
     findings.push(...periodResult.findings);
-    crossCheckWindows = periodResult.windows;
+    crossCheckWindows.push(...periodResult.windows);
+  }
+  if (receivedDocs.length > 0 && statementDocs.length > 0) {
+    const receivedResult = computeMerchantReceivedFindings(receivedDocs, statementDocs);
+    findings.push(...receivedResult.findings);
+    crossCheckWindows.push(...receivedResult.windows);
   }
 
   return { ledger, ledgerTotals, findings, coverage, crossCheckWindows };
