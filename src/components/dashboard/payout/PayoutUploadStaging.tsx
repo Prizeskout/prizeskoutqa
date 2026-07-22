@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { AlertTriangle } from "lucide-react";
 import type { ClassifiedDocument, DocumentType } from "@/lib/commission-audit";
 
 const OG = "#EF681A";
@@ -28,16 +27,6 @@ export type StagedItem = {
   classification?: PayoutCheckClassification;
 };
 
-// What role a structural document_type implies, for comparing against the
-// LLM's classification — a mismatch here is a flag to review, never
-// something this component resolves on its own.
-const EXPECTED_ROLE: Record<DocumentType, UploadRole> = {
-  daily_log: "daily_log",
-  statement: "platform_statement",
-  summary_pdf: "platform_statement",
-  merchant_received: "merchant_received",
-};
-
 const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   daily_log: "Daily Log",
   statement: "Statement",
@@ -53,20 +42,6 @@ const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
 // audit at all. See commission-audit.ts's header comment on why "merchant_
 // received" is manual-entry-only, never a file-parsing target.
 const FILE_CORRECTABLE_TYPES: DocumentType[] = ["daily_log", "statement", "summary_pdf"];
-
-// A short, concrete statement of what a file actually contains — used to
-// explain a mismatch warning with facts, not just "check this is right."
-function describeFileContents(structuralType: DocumentType, doc?: ClassifiedDocument): string {
-  const r = doc?.result;
-  if (structuralType === "daily_log") {
-    const days = r?.daily_rows?.length;
-    return days ? `daily order/sales figures across ${days} day(s), with no payout amount at all` : "daily order/sales figures, with no payout amount at all";
-  }
-  if (structuralType === "statement" || structuralType === "summary_pdf") {
-    return r?.expected_payout != null ? `a stated Total Payout of ${r.expected_payout}` : "a platform-stated payout figure";
-  }
-  return "data that doesn't match what you described";
-}
 
 const inputStyle = {
   height: 38, border: "1px solid var(--border)", borderRadius: 9,
@@ -185,8 +160,6 @@ export function PayoutUploadStaging({
           {items.map(it => {
             const cls = it.classification;
             const structuralType = it.classifiedDoc?.document_type;
-            const mismatch = cls?.ok && structuralType && cls.classification.role !== "unknown"
-              && cls.classification.role !== EXPECTED_ROLE[structuralType];
             return (
               <div key={it.id} style={{ border: "1px solid var(--border)", background: "var(--surface2)",
                 borderRadius: 10, padding: "10px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
@@ -223,15 +196,6 @@ export function PayoutUploadStaging({
                 )}
                 {cls && !cls.ok && (
                   <span style={{ fontSize: 11.5, color: "var(--muted)" }}>(Description not interpreted: {cls.error})</span>
-                )}
-                {mismatch && (
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12, color: "#B45309" }}>
-                    <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span>
-                      Your description doesn't quite match this file: it actually contains {describeFileContents(structuralType!, it.classifiedDoc)}.
-                      {" "}It's set to <strong>{DOCUMENT_TYPE_LABEL[structuralType!]}</strong> above — that's almost always correct for a file. If you meant to record what actually landed in your bank, use "{"Enter What I Received"}" instead of uploading a file for that.
-                    </span>
-                  </div>
                 )}
                 {it.status === "error" && (
                   <span style={{ fontSize: 12, color: "#DC2626" }}>{it.error}</span>
