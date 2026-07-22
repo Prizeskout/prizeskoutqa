@@ -45,6 +45,29 @@ const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   merchant_received: "What I Received",
 };
 
+// A file's type can only ever be corrected among these three — "merchant
+//_received" is deliberately excluded here. That role means "the amount the
+// merchant says landed in their bank," a number only Manual Entry actually
+// collects; a parsed file has no such field, so setting a file to this type
+// would silently produce a doc with no amount and no visible effect on the
+// audit at all. See commission-audit.ts's header comment on why "merchant_
+// received" is manual-entry-only, never a file-parsing target.
+const FILE_CORRECTABLE_TYPES: DocumentType[] = ["daily_log", "statement", "summary_pdf"];
+
+// A short, concrete statement of what a file actually contains — used to
+// explain a mismatch warning with facts, not just "check this is right."
+function describeFileContents(structuralType: DocumentType, doc?: ClassifiedDocument): string {
+  const r = doc?.result;
+  if (structuralType === "daily_log") {
+    const days = r?.daily_rows?.length;
+    return days ? `daily order/sales figures across ${days} day(s), with no payout amount at all` : "daily order/sales figures, with no payout amount at all";
+  }
+  if (structuralType === "statement" || structuralType === "summary_pdf") {
+    return r?.expected_payout != null ? `a stated Total Payout of ${r.expected_payout}` : "a platform-stated payout figure";
+  }
+  return "data that doesn't match what you described";
+}
+
 const inputStyle = {
   height: 38, border: "1px solid var(--border)", borderRadius: 9,
   background: "var(--surface)", color: "var(--text)", padding: "0 11px",
@@ -170,15 +193,21 @@ export function PayoutUploadStaging({
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{it.label}</span>
                   {it.status === "uploading" && <span style={{ fontSize: 12, color: "var(--muted)" }}>Uploading…</span>}
-                  {it.status === "done" && structuralType && (
+                  {it.status === "done" && structuralType && it.kind === "file" && (
                     <select value={structuralType} onChange={e => onCorrectType(it.id, e.target.value as DocumentType)}
                       style={{ height: 26, fontSize: 11.5, fontWeight: 700, color: "var(--text)",
                         background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6,
                         padding: "0 6px", fontFamily: "inherit" }}>
-                      {(Object.keys(DOCUMENT_TYPE_LABEL) as DocumentType[]).map(dt => (
+                      {FILE_CORRECTABLE_TYPES.map(dt => (
                         <option key={dt} value={dt}>{DOCUMENT_TYPE_LABEL[dt]}</option>
                       ))}
                     </select>
+                  )}
+                  {it.status === "done" && it.kind === "manual" && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.03em",
+                      background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
+                      {DOCUMENT_TYPE_LABEL.merchant_received}
+                    </span>
                   )}
                   <button type="button" aria-label="Remove" onClick={() => onRemove(it.id)}
                     style={{ cursor: "pointer", background: "transparent", border: "none", padding: 2,
@@ -198,7 +227,10 @@ export function PayoutUploadStaging({
                 {mismatch && (
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 12, color: "#B45309" }}>
                     <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span>This looks like a {DOCUMENT_TYPE_LABEL[structuralType!]} based on its contents, but your description sounds like something else — check the type above is right.</span>
+                    <span>
+                      Your description doesn't quite match this file: it actually contains {describeFileContents(structuralType!, it.classifiedDoc)}.
+                      {" "}It's set to <strong>{DOCUMENT_TYPE_LABEL[structuralType!]}</strong> above — that's almost always correct for a file. If you meant to record what actually landed in your bank, use "{"Enter What I Received"}" instead of uploading a file for that.
+                    </span>
                   </div>
                 )}
                 {it.status === "error" && (

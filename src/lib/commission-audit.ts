@@ -271,6 +271,22 @@ function computePeriodFindings(
   return { findings, windows };
 }
 
+// Defense in depth: "merchant_received" should only ever come from a
+// manual entry (which always sets received_amount/period), never from a
+// corrected file (a parsed file has no such field). If one somehow ends up
+// here without an amount, say so explicitly instead of silently producing
+// nothing — a "What I Received" item with no visible effect on the audit
+// is exactly the kind of confusing dead end this engine exists to avoid.
+function computeMissingAmountFinding(doc: ClassifiedDocument): Finding | null {
+  if (doc.result.received_amount != null && doc.result.period_start) return null;
+  return {
+    id: `received-missing-amount-${doc.id}`,
+    severity: "warning",
+    title: `"${doc.description?.trim() || doc.file_name}" has no amount recorded`,
+    detail: `This item is marked as what you received, but has no amount and/or period attached, so it can't be compared to anything. If this came from an uploaded file, correct its type back to what the file actually is — "What I Received" only applies to a manual entry.`,
+  };
+}
+
 // "What you said you actually received" vs "what the platform's statement
 // says it paid" — a real cross-check the daily-log/statement comparison
 // above can't do, since a daily order log has no payout figure at all.
@@ -406,6 +422,10 @@ export function reconcile(
   for (const doc of dailyDocs) {
     const cancelledFinding = computeCancelledOpenQuestion(doc);
     if (cancelledFinding) findings.push(cancelledFinding);
+  }
+  for (const doc of receivedDocs) {
+    const missingAmountFinding = computeMissingAmountFinding(doc);
+    if (missingAmountFinding) findings.push(missingAmountFinding);
   }
 
   // Cross-document period comparisons only make sense once there's at least
