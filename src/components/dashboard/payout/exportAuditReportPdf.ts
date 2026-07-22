@@ -27,7 +27,7 @@ import {
   resolveBrandTheme,
   slugifyBrand,
 } from "@/lib/pdfBranding";
-import { summarizeAudit, type Finding, type LedgerRow } from "@/lib/commission-audit";
+import { formatDateRange, summarizeAudit, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 export type CommissionAuditPdfData = {
   ledger: LedgerRow[];
@@ -115,7 +115,7 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const summary = summarizeAudit(data, documentCount);
 
-  const coverageLabel = data.coverage ? `${data.coverage.start} to ${data.coverage.end}` : "";
+  const coverageLabel = data.coverage ? formatDateRange(data.coverage.start, data.coverage.end) : "";
   const subtitle = `Commission reconciliation${coverageLabel ? `  |  ${coverageLabel}` : ""}  |  ${todayLabel()}`;
   let y = await drawBrandedHeader(doc, theme, "Commission Audit Report", subtitle);
 
@@ -229,7 +229,7 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...INK);
-      doc.text(row.date, colX.date, y);
+      doc.text(formatDateRange(row.date), colX.date, y);
       doc.text(String(row.orders), colX.orders, y, { align: "right" });
       doc.text(fmt(row.sales, currency), colX.sales, y, { align: "right" });
       doc.text(fmt(row.commission_at_agreed_rate, currency), colX.commission, y, { align: "right" });

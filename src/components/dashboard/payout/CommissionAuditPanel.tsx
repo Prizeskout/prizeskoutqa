@@ -47,6 +47,15 @@ function fmt(n: number, currency: string): string {
   return `${currency} ${Math.round(n).toLocaleString("en-US")}`;
 }
 
+// Compact "Jun 19" form (no year — the coverage sentence above already
+// states the full range with year) for the chart axis, ledger table, and
+// peak/lowest-day cards, so dates read like a calendar, not a raw ISO key.
+function shortDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
 const chip = {
   fontSize: 10.5,
   fontWeight: 600,
@@ -108,7 +117,7 @@ export function CommissionAuditPanel({
   };
 
   const chartData = result.ledger.map(r => ({
-    date: r.date,
+    date: shortDate(r.date),
     sales: r.sales,
     commission: r.commission_at_agreed_rate,
   }));
@@ -263,7 +272,7 @@ export function CommissionAuditPanel({
                 <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} width={48} />
                 <Tooltip contentStyle={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "var(--text)", fontWeight: 600 }} />
                 {(result.crossCheckWindows ?? []).map((w, i) => (
-                  <ReferenceArea key={i} x1={w.start} x2={w.end} fill={w.matched ? "#22C55E" : "#F59E0B"} fillOpacity={0.09} strokeOpacity={0} />
+                  <ReferenceArea key={i} x1={shortDate(w.start)} x2={shortDate(w.end)} fill={w.matched ? "#22C55E" : "#F59E0B"} fillOpacity={0.09} strokeOpacity={0} />
                 ))}
                 <Line type="monotone" dataKey="sales" name="Sales" stroke="#3B82F6" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="commission" name="Commission (agreed rate)" stroke="#EA580C" strokeWidth={2} dot={false} />
@@ -283,12 +292,12 @@ export function CommissionAuditPanel({
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10, marginBottom: 14 }}>
               <div style={statCard}>
                 <span style={{ fontSize: 10.5, fontWeight: 700, color: "#22C55E", textTransform: "uppercase" as const, letterSpacing: "0.03em" }}>Peak day</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{peakDay.date}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{shortDate(peakDay.date)}</span>
                 <span style={{ fontSize: 12.5, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{fmt(peakDay.sales, currency)} · {peakDay.orders} orders</span>
               </div>
               <div style={statCard}>
                 <span style={{ fontSize: 10.5, fontWeight: 700, color: "#B45309", textTransform: "uppercase" as const, letterSpacing: "0.03em" }}>Lowest day</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{lowestDay.date}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{shortDate(lowestDay.date)}</span>
                 <span style={{ fontSize: 12.5, color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{fmt(lowestDay.sales, currency)} · {lowestDay.orders} orders</span>
               </div>
               <div style={statCard}>
@@ -323,7 +332,7 @@ export function CommissionAuditPanel({
                   {result.ledger.map((r, i) => (
                     <tr key={r.date} style={{ background: i % 2 === 0 ? "transparent" : "var(--surface2)" }}>
                       <td style={tdStyle}>
-                        {r.date}
+                        {shortDate(r.date)}
                         {showOutliers && r.date === peakDay.date && <span style={{ ...chip, marginInlineStart: 8, color: "#22C55E", borderColor: "color-mix(in srgb,#22C55E 40%,transparent)" }}>Peak day</span>}
                         {showOutliers && r.date === lowestDay.date && <span style={{ ...chip, marginInlineStart: 8, color: "#B45309", borderColor: "color-mix(in srgb,#B45309 40%,transparent)" }}>Lowest day</span>}
                       </td>

@@ -102,6 +102,85 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+// ---- Date formatting & arithmetic. Dates throughout this module are plain
+// ISO "YYYY-MM-DD" strings; all arithmetic goes through UTC Date objects
+// (never local time) so day counts are never off by one across a DST
+// boundary or timezone.
+function parseISODate(d: string): Date {
+  return new Date(`${d}T00:00:00Z`);
+}
+function addDaysISO(dateISO: string, delta: number): string {
+  const d = parseISODate(dateISO);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+function daysBetweenInclusive(startISO: string, endISO: string): number {
+  const ms = parseISODate(endISO).getTime() - parseISODate(startISO).getTime();
+  return Math.round(ms / 86400000) + 1;
+}
+
+// "2026-06-19" -> "Jun 19, 2026". Falls back to the raw string if it isn't a
+// parseable date, so a malformed value never crashes the whole finding.
+function formatDate(dateISO: string): string {
+  const d = parseISODate(dateISO);
+  if (Number.isNaN(d.getTime())) return dateISO;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+}
+
+// "2026-06-19" + "2026-07-18" -> "Jun 19 - Jul 18, 2026"; collapses the
+// month/year when both ends share them ("Jun 19-30, 2026").
+export function formatDateRange(startISO: string, endISO?: string | null): string {
+  if (!endISO || endISO === startISO) return formatDate(startISO);
+  const s = parseISODate(startISO);
+  const e = parseISODate(endISO);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return `${startISO} - ${endISO}`;
+  const sMonth = s.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+  const eMonth = e.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+  const sYear = s.getUTCFullYear();
+  const eYear = e.getUTCFullYear();
+  const sDay = s.getUTCDate();
+  const eDay = e.getUTCDate();
+  if (sYear === eYear && sMonth === eMonth) return `${sMonth} ${sDay}-${eDay}, ${sYear}`;
+  if (sYear === eYear) return `${sMonth} ${sDay} - ${eMonth} ${eDay}, ${sYear}`;
+  return `${sMonth} ${sDay}, ${sYear} - ${eMonth} ${eDay}, ${eYear}`;
+}
+
+// Contiguous date ranges within [rangeStart, rangeEnd] that coveredDates has
+// no entry for — used to name exactly which days are missing from a daily
+// log relative to a statement's period, rather than just saying "partial."
+function findMissingDateRanges(coveredDates: Set<string>, rangeStart: string, rangeEnd: string): { start: string; end: string }[] {
+  const gaps: { start: string; end: string }[] = [];
+  let gapStart: string | null = null;
+  let cursor = rangeStart;
+  const totalDays = daysBetweenInclusive(rangeStart, rangeEnd);
+  for (let i = 0; i < totalDays; i++) {
+    const covered = coveredDates.has(cursor);
+    if (!covered && gapStart === null) gapStart = cursor;
+    if (covered && gapStart !== null) {
+      gaps.push({ start: gapStart, end: addDaysISO(cursor, -1) });
+      gapStart = null;
+    }
+    cursor = addDaysISO(cursor, 1);
+  }
+  if (gapStart !== null) gaps.push({ start: gapStart, end: rangeEnd });
+  return gaps;
+}
+
+// A readable stand-in for a raw (often auto-generated, timestamp-laden)
+// filename in finding prose — prefers the merchant's own description, falls
+// back to a plain-English name for the document's role.
+function friendlyLabel(doc: ClassifiedDocument): string {
+  const description = doc.description?.trim();
+  if (description) return `"${description}"`;
+  switch (doc.document_type) {
+    case "daily_log": return "your daily order log";
+    case "statement": return "your payout statement";
+    case "summary_pdf": return "your brand performance report";
+    case "merchant_received": return "what you said you received";
+    default: return doc.file_name;
+  }
+}
+
 function computeAgreedRateFinding(doc: ClassifiedDocument): Finding | null {
   const r = doc.result;
   if (r.commission_rate_pct == null || r.effective_commission_pct == null) return null;
@@ -115,9 +194,9 @@ function computeAgreedRateFinding(doc: ClassifiedDocument): Finding | null {
     id: `rate-deviation-${doc.id}`,
     severity: shortfall ? "warning" : "info",
     title: shortfall
-      ? `Commission charged above the agreed rate in ${doc.file_name}`
-      : `Commission charged below the agreed rate in ${doc.file_name}`,
-    detail: `Agreed ${r.commission_rate_pct}% vs. actual effective ${r.effective_commission_pct}% — ${shortfall ? "this cost" : "this saved"} approximately ${Math.abs(delta).toFixed(2)} relative to the agreed rate.`,
+      ? `Commission charged above the agreed rate in ${friendlyLabel(doc)}`
+      : `Commission charged below the agreed rate in ${friendlyLabel(doc)}`,
+    detail: `You agreed to ${r.commission_rate_pct}% commission; ${friendlyLabel(doc)} shows an effective rate of ${r.effective_commission_pct}% — about ${Math.abs(delta).toFixed(2)} ${shortfall ? "more than you agreed to" : "less than you agreed to"}.`,
     amount: round2(Math.abs(delta)),
   };
 }
@@ -153,15 +232,15 @@ function computeUnexplainedChargeFinding(doc: ClassifiedDocument, dailyDocs: Cla
   const perCancelled = cancelledInWindow > 0 ? uc.amount / cancelledInWindow : null;
 
   const clues: string[] = [];
-  if (perOrder != null) clues.push(`${perOrder.toFixed(2)} per order across ${orderCount} orders`);
-  if (perCancelled != null) clues.push(`${perCancelled.toFixed(2)} per cancelled order across ${cancelledInWindow} cancelled order(s) in this period`);
-  const traceNote = clues.length ? ` Traced as a rate: ${clues.join(", or ")} — worth asking the platform whether either matches a flat per-order or per-cancellation fee.` : "";
+  if (perOrder != null) clues.push(`about ${perOrder.toFixed(2)} per order (${orderCount} orders)`);
+  if (perCancelled != null) clues.push(`about ${perCancelled.toFixed(2)} per cancelled order (${cancelledInWindow} cancelled)`);
+  const traceNote = clues.length ? ` Spread evenly, that's ${clues.join(", or ")} — worth asking the platform which one it actually is.` : "";
 
   return {
     id: `unexplained-charge-${doc.id}`,
     severity: "warning",
-    title: `Unexplained charge in ${doc.file_name}`,
-    detail: `${uc.label} of ${uc.amount.toFixed(2)} has no itemized explanation anywhere else in this statement.${traceNote}`,
+    title: `Unexplained charge in ${friendlyLabel(doc)}`,
+    detail: `${friendlyLabel(doc)} shows ${uc.label} of ${uc.amount.toFixed(2)} with no breakdown anywhere else in the statement.${traceNote}`,
     amount: uc.amount,
     trace: {
       checkedColumns: doc.result.charge_explainers ?? undefined,
@@ -177,14 +256,14 @@ function computeCancelledOpenQuestion(doc: ClassifiedDocument): Finding | null {
   return {
     id: `cancelled-open-question-${doc.id}`,
     severity: "info",
-    title: `Cancelled orders reported in ${doc.file_name}`,
-    detail: `${total} cancelled order(s) appear in this file. It isn't possible to confirm from this file alone whether the Sales figures already exclude them — worth confirming directly with the platform, since it affects the ledger's accuracy.`,
+    title: `Cancelled orders reported in ${friendlyLabel(doc)}`,
+    detail: `${total} order(s) were cancelled in ${friendlyLabel(doc)}. It's unclear whether the Sales figures already exclude them — worth confirming with the platform, since it affects how accurate this ledger is.`,
   };
 }
 
 function computeDuplicateDateFinding(dateCollisions: string[]): Finding | null {
   if (!dateCollisions.length) return null;
-  const shown = dateCollisions.slice(0, 10).join(", ");
+  const shown = dateCollisions.slice(0, 10).map(d => formatDate(d)).join(", ");
   return {
     id: "duplicate-dates",
     severity: "info",
@@ -221,51 +300,86 @@ function computePeriodFindings(
   if (!coverage) return { findings: [], windows: [] };
   const findings: Finding[] = [];
   const windows: CrossCheckWindow[] = [];
+  const ledgerDates = new Set(ledgerRows.map(r => r.date));
+  const totalLedgerOrders = ledgerRows.reduce((s, r) => s + r.orders, 0);
 
   for (const doc of statementDocs) {
     const stmtStart = doc.result.period_start;
     const stmtEnd = doc.result.period_end ?? stmtStart;
     if (!stmtStart || !stmtEnd) continue;
+    const stmtLabel = friendlyLabel(doc);
 
-    const relation = relatePeriods(coverage.start, coverage.end, stmtStart, stmtEnd);
-
-    if (relation.kind === "disjoint") {
+    if (relatePeriods(coverage.start, coverage.end, stmtStart, stmtEnd).kind === "disjoint") {
       findings.push({
         id: `period-disjoint-${doc.id}`,
         severity: "info",
-        title: `Daily log and ${doc.file_name} cover different periods`,
-        detail: `Daily order log covers ${coverage.start} to ${coverage.end}; ${doc.file_name} covers ${stmtStart} to ${stmtEnd}. These don't overlap, so their totals aren't directly comparable and weren't cross-checked.`,
+        title: `Your daily log and ${stmtLabel} cover different periods`,
+        detail: `Your daily order log covers ${formatDateRange(coverage.start, coverage.end)}; ${stmtLabel} covers ${formatDateRange(stmtStart, stmtEnd)}. These don't overlap at all, so their totals can't be compared.`,
       });
       continue;
     }
 
-    if (relation.kind === "subset") {
-      const overlapSum = ledgerRows
-        .filter(r => r.date >= stmtStart && r.date <= stmtEnd)
-        .reduce((s, r) => s + r.sales, 0);
-      const statementGross = doc.result.sub_total_sum ?? 0;
+    // Exactly which days of the statement's period the daily log has no
+    // data for at all — not just "partial," but named, so the merchant
+    // knows precisely what to add. This is also what stops an order-count
+    // gap (e.g. 280 vs. 213) from ever reading as an anomaly: it's shown as
+    // two different date ranges, not a discrepancy.
+    const missingRanges = findMissingDateRanges(ledgerDates, stmtStart, stmtEnd);
+    const overlapRows = ledgerRows.filter(r => r.date >= stmtStart && r.date <= stmtEnd);
+    const overlapSum = overlapRows.reduce((s, r) => s + r.sales, 0);
+    const overlapOrders = overlapRows.reduce((s, r) => s + r.orders, 0);
+    const overlapDayCount = overlapRows.length;
+    const statementGross = doc.result.sub_total_sum;
+    const stmtTotalDays = daysBetweenInclusive(stmtStart, stmtEnd);
+
+    if (missingRanges.length > 0) {
+      const missingDayCount = missingRanges.reduce((s, g) => s + daysBetweenInclusive(g.start, g.end), 0);
+      const missingList = missingRanges.map(g => formatDateRange(g.start, g.end)).join(", ");
+      const orderNote = doc.result.order_count != null
+        ? ` ${stmtLabel} shows ${doc.result.order_count} orders for its full ${formatDateRange(stmtStart, stmtEnd)} period. Your daily log shows ${totalLedgerOrders} orders in total, but for ${formatDateRange(coverage.start, coverage.end)} — a different window that only overlaps ${stmtLabel}'s period for ${overlapDayCount} day(s), accounting for ${overlapOrders} of those orders. ${doc.result.order_count} vs. ${totalLedgerOrders} isn't a real mismatch; they're simply two different date ranges.`
+        : "";
+      findings.push({
+        id: `period-missing-days-${doc.id}`,
+        severity: "warning",
+        title: `${missingDayCount} day(s) of ${stmtLabel}'s period ${missingDayCount > 1 ? "are" : "is"} missing from your daily log`,
+        detail: `${stmtLabel} covers ${formatDateRange(stmtStart, stmtEnd)}, but your daily log has no data for ${missingList}.${orderNote} Add your daily log for ${missingRanges.length > 1 ? "those dates" : "that range"} to complete a full comparison.`,
+      });
+    }
+
+    if (overlapDayCount === 0 || statementGross == null) continue;
+
+    if (missingRanges.length === 0) {
+      // Fully covered, day for day — a real, exact cross-check.
       const diff = overlapSum - statementGross;
       const withinTolerance = statementGross > 0 && Math.abs(diff) / statementGross <= CROSS_CHECK_TOLERANCE_PCT;
       findings.push({
         id: `period-cross-check-${doc.id}`,
         severity: withinTolerance ? "info" : "critical",
         title: withinTolerance
-          ? `Daily log sales reconcile against ${doc.file_name}`
-          : `Daily log sales don't match ${doc.file_name}`,
-        detail: `Daily order log sums to ${overlapSum.toFixed(2)} in sales for ${stmtStart} to ${stmtEnd}; ${doc.file_name} states Gross Sales of ${statementGross.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
+          ? `Daily log sales reconcile against ${stmtLabel}`
+          : `Daily log sales don't match ${stmtLabel}`,
+        detail: `Your daily order log sums to ${overlapSum.toFixed(2)} in sales for ${formatDateRange(stmtStart, stmtEnd)}; ${stmtLabel} states Gross Sales of ${statementGross.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
         amount: round2(Math.abs(diff)),
       });
-      windows.push({ start: stmtStart, end: stmtEnd, label: doc.file_name, matched: withinTolerance });
-      continue;
+      windows.push({ start: stmtStart, end: stmtEnd, label: stmtLabel, matched: withinTolerance });
+    } else if (stmtTotalDays > 0) {
+      // Only some days are covered — never present this as a verdict.
+      // Spreading the statement's total evenly across its days is an
+      // approximation (real daily volume is visibly uneven), so it's
+      // capped at "warning," never "critical," and always labeled as an
+      // estimate in its own text.
+      const proratedEstimate = (statementGross / stmtTotalDays) * overlapDayCount;
+      const diff = overlapSum - proratedEstimate;
+      const diffPct = proratedEstimate > 0 ? Math.abs(diff) / proratedEstimate : 0;
+      const coveredDatesSorted = overlapRows.map(r => r.date).sort();
+      findings.push({
+        id: `period-estimate-${doc.id}`,
+        severity: diffPct > 0.15 ? "warning" : "info",
+        title: `Estimated check on the ${overlapDayCount} overlapping day(s): ${diffPct <= 0.15 ? "roughly consistent" : "worth a closer look"}`,
+        detail: `Approximate only, since your daily log doesn't cover ${stmtLabel}'s full period — spreading its ${statementGross.toFixed(2)} Gross Sales evenly across ${stmtTotalDays} days gives an expected ${proratedEstimate.toFixed(2)} for the ${overlapDayCount} day(s) your daily log actually covers here. Your daily log shows ${overlapSum.toFixed(2)} for those same days — a difference of ${diff.toFixed(2)} (${(diffPct * 100).toFixed(1)}%). Daily volume is rarely perfectly even, so treat this as a sanity check, not a verdict.`,
+      });
+      windows.push({ start: coveredDatesSorted[0], end: coveredDatesSorted[coveredDatesSorted.length - 1], label: stmtLabel, matched: diffPct <= CROSS_CHECK_TOLERANCE_PCT });
     }
-
-    findings.push({
-      id: `period-partial-${doc.id}`,
-      severity: "warning",
-      title: `Daily log only partially covers ${doc.file_name}'s period`,
-      detail: `Daily order log covers ${coverage.start} to ${coverage.end}; ${doc.file_name} covers ${stmtStart} to ${stmtEnd}. Only ${relation.overlapStart} to ${relation.overlapEnd} overlaps — a full total comparison isn't reliable across a partial window, so no dollar cross-check was attempted.`,
-    });
-    windows.push({ start: relation.overlapStart, end: relation.overlapEnd, label: doc.file_name, matched: false });
   }
 
   return { findings, windows };
@@ -282,7 +396,7 @@ function computeMissingAmountFinding(doc: ClassifiedDocument): Finding | null {
   return {
     id: `received-missing-amount-${doc.id}`,
     severity: "warning",
-    title: `"${doc.description?.trim() || doc.file_name}" has no amount recorded`,
+    title: `${friendlyLabel(doc)} has no amount recorded`,
     detail: `This item is marked as what you received, but has no amount and/or period attached, so it can't be compared to anything. If this came from an uploaded file, correct its type back to what the file actually is — "What I Received" only applies to a manual entry.`,
   };
 }
@@ -302,13 +416,14 @@ function computeMerchantReceivedFindings(
     const recvStart = recv.result.period_start;
     const recvEnd = recv.result.period_end ?? recvStart;
     if (recvAmount == null || !recvStart || !recvEnd) continue;
-    const label = recv.description?.trim() || recv.file_name;
+    const label = friendlyLabel(recv);
 
     for (const stmt of statementDocs) {
       const stmtStart = stmt.result.period_start;
       const stmtEnd = stmt.result.period_end ?? stmtStart;
       const stmtAmount = stmt.result.expected_payout;
       if (!stmtStart || !stmtEnd || stmtAmount == null) continue;
+      const stmtLabel = friendlyLabel(stmt);
 
       const relation = relatePeriods(recvStart, recvEnd, stmtStart, stmtEnd);
 
@@ -316,8 +431,8 @@ function computeMerchantReceivedFindings(
         findings.push({
           id: `received-vs-statement-disjoint-${recv.id}-${stmt.id}`,
           severity: "info",
-          title: `"${label}" and ${stmt.file_name} cover different periods`,
-          detail: `You said you received ${recvAmount.toFixed(2)} for ${recvStart} to ${recvEnd}; ${stmt.file_name} covers ${stmtStart} to ${stmtEnd}. These don't overlap, so they weren't compared.`,
+          title: `${label} and ${stmtLabel} cover different periods`,
+          detail: `You said you received ${recvAmount.toFixed(2)} for ${formatDateRange(recvStart, recvEnd)}; ${stmtLabel} covers ${formatDateRange(stmtStart, stmtEnd)}. These don't overlap, so they weren't compared.`,
         });
         continue;
       }
@@ -326,8 +441,8 @@ function computeMerchantReceivedFindings(
         findings.push({
           id: `received-vs-statement-partial-${recv.id}-${stmt.id}`,
           severity: "warning",
-          title: `"${label}" only partially overlaps ${stmt.file_name}'s period`,
-          detail: `You said you received ${recvAmount.toFixed(2)} for ${recvStart} to ${recvEnd}; ${stmt.file_name} covers ${stmtStart} to ${stmtEnd}. Only ${relation.overlapStart} to ${relation.overlapEnd} overlaps — not a reliable comparison, so no dollar cross-check was attempted.`,
+          title: `${label} only partially overlaps ${stmtLabel}'s period`,
+          detail: `You said you received ${recvAmount.toFixed(2)} for ${formatDateRange(recvStart, recvEnd)}; ${stmtLabel} covers ${formatDateRange(stmtStart, stmtEnd)}. Only ${formatDateRange(relation.overlapStart, relation.overlapEnd)} overlaps — not a reliable comparison, so no dollar cross-check was attempted.`,
         });
         windows.push({ start: relation.overlapStart, end: relation.overlapEnd, label, matched: false });
         continue;
@@ -339,9 +454,9 @@ function computeMerchantReceivedFindings(
         id: `received-vs-statement-${recv.id}-${stmt.id}`,
         severity: withinTolerance ? "info" : "critical",
         title: withinTolerance
-          ? `What you received matches ${stmt.file_name}`
-          : `What you received doesn't match ${stmt.file_name}`,
-        detail: `You said you received ${recvAmount.toFixed(2)} for ${recvStart} to ${recvEnd}; ${stmt.file_name} states a Total Payout of ${stmtAmount.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
+          ? `What you received matches ${stmtLabel}`
+          : `What you received doesn't match ${stmtLabel}`,
+        detail: `You said you received ${recvAmount.toFixed(2)} for ${formatDateRange(recvStart, recvEnd)}; ${stmtLabel} states a Total Payout of ${stmtAmount.toFixed(2)} for the same period — a difference of ${diff.toFixed(2)}.`,
         amount: round2(Math.abs(diff)),
       });
       windows.push({ start: recvStart, end: recvEnd, label, matched: withinTolerance });
