@@ -157,7 +157,7 @@ export function CommissionAuditPanel({
           borderRadius: 12, padding: "14px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
           <AlertTriangle size={18} color="#B45309" style={{ flexShrink: 0, marginTop: 1 }} />
           <span style={{ fontSize: 13, color: "#B45309", lineHeight: 1.6 }}>
-            <strong>You've marked {result.netSalesOverrideDocs.join(", ")} as already net of commission</strong> — no commission was deducted again for those days below. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise. Figures in this report follow your setting.
+            <strong>You've marked {result.netSalesOverrideDocs.join(", ")} as already net of commission.</strong> The Commission (Agreed) column below shows what the platform must have already taken to arrive at those figures — it's not deducted again; Expected Net still equals the Sales you reported. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise.
           </span>
         </div>
       )}

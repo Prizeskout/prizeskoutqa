@@ -125,7 +125,7 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
   // smaller note, since it changes the actual figures below away from what
   // this report's own cross-check found. Never silent.
   if (data.netSalesOverrideDocs?.length) {
-    const overrideText = `You've marked ${data.netSalesOverrideDocs.join(", ")} as already net of commission — no commission was deducted again for those days below. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise. Figures in this report follow your setting.`;
+    const overrideText = `You've marked ${data.netSalesOverrideDocs.join(", ")} as already net of commission. The Commission (Agreed) column below shows what the platform must have already taken to arrive at those figures — it's not deducted again; Expected Net still equals the Sales you reported. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise.`;
     const overrideLines = doc.splitTextToSize(overrideText, CONTENT_W - 10);
     const boxH = 6 + overrideLines.length * 4.2;
     y = ensureSpace(doc, y, boxH + 8);

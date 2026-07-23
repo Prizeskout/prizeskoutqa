@@ -600,12 +600,19 @@ export function reconcile(
   const ledger: LedgerRow[] = [...byDate.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([date, v]) => {
-      // A date covered by the "already net" override skips commission
-      // entirely — this is the merchant's disclosed choice, not something
-      // this engine verified; see netSalesOverrideDocs / the disclosure
-      // banner this powers.
+      // A date covered by the "already net" override treats this Sales
+      // figure as already post-commission — Expected Net stays equal to it
+      // (no further deduction on top). Commission (Agreed) is instead backed
+      // out via the reverse formula (net * rate / (100 - rate)) so the
+      // column still shows what the platform must have already taken to
+      // arrive at that net figure, rather than reading as "no commission was
+      // charged that day" — which isn't the merchant's claim. This is the
+      // merchant's disclosed choice, not something this engine verified; see
+      // netSalesOverrideDocs / the disclosure banner this powers.
       const isNet = netDates.has(date);
-      const commission = isNet ? 0 : round2((v.sales * rate) / 100);
+      const commission = isNet
+        ? (rate < 100 ? round2((v.sales * rate) / (100 - rate)) : 0)
+        : round2((v.sales * rate) / 100);
       return {
         date,
         orders: v.orders,
