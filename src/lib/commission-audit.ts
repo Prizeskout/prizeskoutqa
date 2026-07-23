@@ -61,6 +61,12 @@ export type Finding = {
     checkedColumns?: { label: string; value: number }[];
     perOrder?: { rate: number; count: number };
     perCancelled?: { rate: number; count: number };
+    // Structured version of the "spread evenly across days, as a % of each
+    // day's own sales" test in computeUnexplainedChargeFinding — kept
+    // alongside the prose in `detail` for the same reason perOrder/
+    // perCancelled are: a future structured renderer can use it without
+    // re-deriving it, even though nothing parses prose today.
+    dailySpread?: { avgPerDay: number; windowDays: number; worstDate: string; worstPct: number; bestDate: string; bestPct: number };
   };
 };
 
@@ -255,16 +261,59 @@ function computeUnexplainedChargeFinding(doc: ClassifiedDocument, dailyDocs: Cla
   if (perCancelled != null) clues.push(`about ${perCancelled.toFixed(2)} per cancelled order (${cancelledInWindow} cancelled)`);
   const traceNote = clues.length ? ` Spread evenly, that's ${clues.join(", or ")} — worth asking the platform which one it actually is.` : "";
 
+  // Spread the charge across the actual daily sales the merchant logged for
+  // this statement's period — not to "find" it in the data (nothing in the
+  // statement explains it), but to show how inconsistent a single flat
+  // charge is once measured against real day-to-day activity. A genuine
+  // per-order or per-incident fee scales with volume; if spreading it evenly
+  // across days means it swings between a trivial % of a busy day's sales
+  // and a huge % of a slow day's sales, that inconsistency is itself the red
+  // flag — the charge isn't tracking anything that actually happened.
+  const salesByDate = new Map<string, number>();
+  if (stmtStart && stmtEnd) {
+    for (const d of dailyDocs) {
+      for (const row of d.result.daily_rows ?? []) {
+        if (row.date >= stmtStart && row.date <= stmtEnd) {
+          salesByDate.set(row.date, (salesByDate.get(row.date) ?? 0) + row.sales);
+        }
+      }
+    }
+  }
+  let dailySpreadNote = "";
+  let dailySpread: { avgPerDay: number; windowDays: number; worstDate: string; worstPct: number; bestDate: string; bestPct: number } | undefined;
+  if (salesByDate.size > 0) {
+    const avgPerDay = uc.amount / salesByDate.size;
+    const withPct = [...salesByDate.entries()]
+      .filter(([, sales]) => sales > 0)
+      .map(([date, sales]) => ({ date, sales, pct: (avgPerDay / sales) * 100 }));
+    if (withPct.length > 0) {
+      const worst = withPct.reduce((a, b) => (b.pct > a.pct ? b : a));
+      const best = withPct.reduce((a, b) => (b.pct < a.pct ? b : a));
+      dailySpread = {
+        avgPerDay: round2(avgPerDay),
+        windowDays: salesByDate.size,
+        worstDate: worst.date,
+        worstPct: round2(worst.pct),
+        bestDate: best.date,
+        bestPct: round2(best.pct),
+      };
+      dailySpreadNote = worst.date === best.date
+        ? ` Spread evenly across the ${salesByDate.size} day this period actually shows in your daily log, that's about ${avgPerDay.toFixed(2)} a day — ${worst.pct.toFixed(1)}% of that entire day's sales. A real per-order or per-incident fee doesn't land as one flat, unexplained lump like this — this is a genuine red flag, not rounding noise.`
+        : ` Spread evenly across the ${salesByDate.size} days this period actually shows in your daily log, that's about ${avgPerDay.toFixed(2)} a day. That doesn't hold still, though: on ${formatDate(worst.date)}, your slowest day here, it would swallow ${worst.pct.toFixed(1)}% of that entire day's sales — but on ${formatDate(best.date)}, your busiest day, it's only ${best.pct.toFixed(1)}%. A genuine per-order or per-incident charge doesn't swing like that from day to day. The math doesn't reconcile with anything that actually happened — this is a huge red flag, and it's worth pushing back on hard rather than writing off.`;
+    }
+  }
+
   return {
     id: `unexplained-charge-${doc.id}`,
-    severity: "warning",
-    title: `Unexplained charge in ${friendlyLabel(doc)}`,
-    detail: `${friendlyLabel(doc)} shows ${uc.label} of ${uc.amount.toFixed(2)} with no breakdown anywhere else in the statement.${traceNote}`,
+    severity: "critical",
+    title: `Red flag: unexplained charge in ${friendlyLabel(doc)} doesn't add up`,
+    detail: `${friendlyLabel(doc)} shows ${uc.label} of ${uc.amount.toFixed(2)} with no breakdown anywhere else in the statement.${traceNote}${dailySpreadNote}`,
     amount: uc.amount,
     trace: {
       checkedColumns: doc.result.charge_explainers ?? undefined,
       perOrder: perOrder != null ? { rate: round2(perOrder), count: orderCount } : undefined,
       perCancelled: perCancelled != null ? { rate: round2(perCancelled), count: cancelledInWindow } : undefined,
+      dailySpread,
     },
   };
 }
