@@ -1359,6 +1359,13 @@ export function PrizeSkoutDashboard() {
   const correctStagedDocumentType = (id: string, newType: DocumentType) =>
     setStagedItems(prev => prev.map(it => it.id !== id || !it.classifiedDoc ? it : { ...it, classifiedDoc: { ...it.classifiedDoc, document_type: newType } }));
 
+  // Explicit, disclosed override: the merchant asserts a daily log's Sales
+  // is already net of commission, so the ledger should not deduct it again.
+  // See commission-audit.ts's reconcile() for how this is applied and
+  // surfaced — never silently, always with a visible disclosure.
+  const toggleNetSalesOverride = (id: string, value: boolean) =>
+    setStagedItems(prev => prev.map(it => it.id !== id || !it.classifiedDoc ? it : { ...it, classifiedDoc: { ...it.classifiedDoc, treat_sales_as_net: value } }));
+
   const removeStagedItem = (id: string) => setStagedItems(prev => prev.filter(it => it.id !== id));
 
   // The only place reconcile() is now invoked — replaces the old
@@ -1816,6 +1823,7 @@ export function PrizeSkoutDashboard() {
                   onAddFile={addFileItems}
                   onAddManual={addManualItem}
                   onCorrectType={correctStagedDocumentType}
+                  onToggleNetSales={toggleNetSalesOverride}
                   onRemove={removeStagedItem}
                   onRunAudit={runStagedAudit}
                 />

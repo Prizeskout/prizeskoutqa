@@ -26,6 +26,7 @@ import {
   ensureSpace,
   resolveBrandTheme,
   slugifyBrand,
+  tint,
 } from "@/lib/pdfBranding";
 import { formatDateRange, summarizeAudit, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
@@ -34,6 +35,7 @@ export type CommissionAuditPdfData = {
   ledgerTotals: LedgerRow | null;
   findings: Finding[];
   coverage: { start: string; end: string } | null;
+  netSalesOverrideDocs?: string[];
 };
 
 function fmt(n: number, currency: string): string {
@@ -118,6 +120,25 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
   const coverageLabel = data.coverage ? formatDateRange(data.coverage.start, data.coverage.end) : "";
   const subtitle = `Commission reconciliation${coverageLabel ? `  |  ${coverageLabel}` : ""}  |  ${todayLabel()}`;
   let y = await drawBrandedHeader(doc, theme, "Commission Audit Report", subtitle);
+
+  // Disclosed override — drawn first and unmissable, never folded into a
+  // smaller note, since it changes the actual figures below away from what
+  // this report's own cross-check found. Never silent.
+  if (data.netSalesOverrideDocs?.length) {
+    const overrideText = `You've marked ${data.netSalesOverrideDocs.join(", ")} as already net of commission — no commission was deducted again for those days below. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise. Figures in this report follow your setting.`;
+    const overrideLines = doc.splitTextToSize(overrideText, CONTENT_W - 10);
+    const boxH = 6 + overrideLines.length * 4.2;
+    y = ensureSpace(doc, y, boxH + 8);
+    doc.setFillColor(...tint(AMBER, 0.9));
+    doc.setDrawColor(...tint(AMBER, 0.4));
+    doc.setLineWidth(0.4);
+    doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2, 2, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.3);
+    doc.setTextColor(120, 78, 8);
+    doc.text(overrideLines, MARGIN_X + 5, y + 5);
+    y += boxH + 8;
+  }
 
   // Executive summary — the one-sentence takeaway, before any numbers.
   doc.setFont("helvetica", "bold");

@@ -50,7 +50,7 @@ const inputStyle = {
 };
 
 export function PayoutUploadStaging({
-  items, platforms, rate, onRateChange, onAddFile, onAddManual, onCorrectType, onRemove, onRunAudit,
+  items, platforms, rate, onRateChange, onAddFile, onAddManual, onCorrectType, onToggleNetSales, onRemove, onRunAudit,
 }: {
   items: StagedItem[];
   platforms: { value: string; label: string }[];
@@ -59,6 +59,7 @@ export function PayoutUploadStaging({
   onAddFile: (files: FileList, description: string, platform: string) => void;
   onAddManual: (description: string, amount: string, periodStart: string, periodEnd: string, platform: string) => void;
   onCorrectType: (id: string, newType: DocumentType) => void;
+  onToggleNetSales: (id: string, value: boolean) => void;
   onRemove: (id: string) => void;
   onRunAudit: () => void;
 }) {
@@ -196,6 +197,19 @@ export function PayoutUploadStaging({
                 )}
                 {cls && !cls.ok && (
                   <span style={{ fontSize: 11.5, color: "var(--muted)" }}>(Description not interpreted: {cls.error})</span>
+                )}
+                {it.status === "done" && structuralType === "daily_log" && (
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 7, fontSize: 12, color: "var(--muted)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={!!it.classifiedDoc?.treat_sales_as_net}
+                      onChange={e => onToggleNetSales(it.id, e.target.checked)}
+                      style={{ marginTop: 2, flexShrink: 0 }} />
+                    <span>
+                      Sales here already reflect the platform's deductions — don't recompute commission on top.
+                      {it.classifiedDoc?.treat_sales_as_net && (
+                        <strong style={{ color: "#B45309" }}> This overrides the audit's own cross-check (see Findings after you run the audit) — the report will disclose this clearly.</strong>
+                      )}
+                    </span>
+                  </label>
                 )}
                 {it.status === "error" && (
                   <span style={{ fontSize: 12, color: "#DC2626" }}>{it.error}</span>

@@ -83,6 +83,12 @@ export type CommissionAuditResult = {
   findings: Finding[];
   coverage: { start: string; end: string } | null;
   crossCheckWindows?: CrossCheckWindow[];
+  // Non-empty only when a merchant has explicitly marked a daily log's
+  // Sales as already net of commission (see PayoutUploadStaging.tsx's
+  // toggle and commission-audit.ts's reconcile()) — a disclosed override
+  // of their own choosing, not something this engine verified. Optional so
+  // audits saved to History before this existed still render fine.
+  netSalesOverrideDocs?: string[];
 };
 
 export function CommissionAuditPanel({
@@ -142,6 +148,20 @@ export function CommissionAuditPanel({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {/* Disclosed override — always shown first and unmissable when active,
+          never folded into a smaller note, since it changes the actual
+          numbers below away from what the audit's own cross-check found. */}
+      {!!result.netSalesOverrideDocs?.length && (
+        <div style={{ background: "color-mix(in srgb,#B45309 10%,var(--surface))",
+          border: "1px solid color-mix(in srgb,#B45309 35%,transparent)",
+          borderRadius: 12, padding: "14px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <AlertTriangle size={18} color="#B45309" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontSize: 13, color: "#B45309", lineHeight: 1.6 }}>
+            <strong>You've marked {result.netSalesOverrideDocs.join(", ")} as already net of commission</strong> — no commission was deducted again for those days below. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise. Figures in this report follow your setting.
+          </span>
+        </div>
+      )}
+
       {/* Executive summary hero */}
       <div style={{ background: heroBg, border: `1px solid ${heroBorder}`, borderRadius: 14, padding: "22px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>

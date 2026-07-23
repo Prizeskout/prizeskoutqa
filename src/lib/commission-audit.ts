@@ -82,6 +82,15 @@ export type ClassifiedDocument = {
   // still have none, classified purely by file structure as before.
   description?: string;
   platform_guess?: string | null;
+  // Explicit, merchant-set override — "daily_log" documents only. When
+  // true, this document's Sales figures are treated as already net of
+  // commission (no further deduction is applied to its ledger rows). This
+  // is a disclosed override of the merchant's own choosing, not a verified
+  // fact: the engine's own cross-check (see describeSalesComposition) keeps
+  // running and is surfaced regardless, precisely so a merchant who sets
+  // this can still see the evidence next to their chosen treatment rather
+  // than have it silently disappear.
+  treat_sales_as_net?: boolean;
 };
 
 // Talabat's real statement parser only ever sets effective_commission_pct;
@@ -505,6 +514,11 @@ export function reconcile(
   findings: Finding[];
   coverage: { start: string; end: string } | null;
   crossCheckWindows: CrossCheckWindow[];
+  // Labels of documents the merchant explicitly marked as "Sales already
+  // net of commission" — non-empty only when that override is in play, so
+  // the UI/PDF can render an unmissable disclosure rather than let the
+  // override change numbers silently.
+  netSalesOverrideDocs: string[];
 } {
   const dailyDocs = docs.filter(d => d.document_type === "daily_log" && (d.result.daily_rows?.length ?? 0) > 0);
   const statementDocs = docs.filter(d => d.document_type === "statement");
@@ -512,7 +526,15 @@ export function reconcile(
 
   const byDate = new Map<string, { orders: number; sales: number }>();
   const sources = new Map<string, Set<string>>();
+  // Dates contributed by a document the merchant explicitly marked as
+  // "Sales already net of commission" — see ClassifiedDocument.treat_sales_
+  // as_net. Tracked per-date (not just per-document) so a mix of overridden
+  // and normal daily-log documents in the same audit still computes each
+  // day correctly.
+  const netDates = new Set<string>();
+  const netSalesOverrideDocs: string[] = [];
   for (const doc of dailyDocs) {
+    if (doc.treat_sales_as_net) netSalesOverrideDocs.push(friendlyLabel(doc));
     for (const row of doc.result.daily_rows ?? []) {
       const existing = byDate.get(row.date) ?? { orders: 0, sales: 0 };
       existing.orders += row.orders;
@@ -521,6 +543,7 @@ export function reconcile(
       const srcSet = sources.get(row.date) ?? new Set<string>();
       srcSet.add(doc.id);
       sources.set(row.date, srcSet);
+      if (doc.treat_sales_as_net) netDates.add(row.date);
     }
   }
 
@@ -528,13 +551,18 @@ export function reconcile(
   const ledger: LedgerRow[] = [...byDate.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([date, v]) => {
-      const commission = round2((v.sales * rate) / 100);
+      // A date covered by the "already net" override skips commission
+      // entirely — this is the merchant's disclosed choice, not something
+      // this engine verified; see netSalesOverrideDocs / the disclosure
+      // banner this powers.
+      const isNet = netDates.has(date);
+      const commission = isNet ? 0 : round2((v.sales * rate) / 100);
       return {
         date,
         orders: v.orders,
         sales: round2(v.sales),
         commission_at_agreed_rate: commission,
-        expected_net: round2(v.sales - commission),
+        expected_net: isNet ? round2(v.sales) : round2(v.sales - commission),
       };
     });
 
@@ -587,7 +615,7 @@ export function reconcile(
     crossCheckWindows.push(...receivedResult.windows);
   }
 
-  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows };
+  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows, netSalesOverrideDocs };
 }
 
 export const SEVERITY_ORDER: Record<Finding["severity"], number> = { critical: 0, warning: 1, info: 2 };
