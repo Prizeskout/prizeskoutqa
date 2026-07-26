@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
@@ -855,6 +855,13 @@ export function PrizeSkoutDashboard() {
   const [heroStats, setHeroStats] = useState<HeroStats|null>(null);
   const [importedProducts, setImportedProducts] = useState<ImportedProduct[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+  const [productFilter, setProductFilter] = useState<"all"|"risk"|"healthy"|"repriced">("all");
+  const [productSort, setProductSort] = useState<"risk"|"name"|"price">("risk");
+  const [productPage, setProductPage] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<ImportedProduct|null>(null);
+  const [productPriceDraft, setProductPriceDraft] = useState("");
+  const [productPushStatus, setProductPushStatus] = useState<"idle"|"confirm"|"pushing"|"failed">("idle");
   const [cpPhase, setCpPhase] = useState<"idle"|"loading"|"result">("idle");
   const [cpInput, setCpInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
@@ -1164,6 +1171,83 @@ export function PrizeSkoutDashboard() {
     if (toastT.current) clearTimeout(toastT.current);
     setToast(msg);
     toastT.current = setTimeout(() => setToast(null), 4000);
+  };
+
+  const productPageSize = 8;
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase();
+    return importedProducts
+      .filter(product => {
+        if (query && !`${product.name_en} ${product.name_ar} ${product.sku} ${product.source_platform}`.toLowerCase().includes(query)) return false;
+        if (productFilter === "risk") return product.floor_breached;
+        if (productFilter === "healthy") return !product.floor_breached;
+        if (productFilter === "repriced") return product.status === "repriced";
+        return true;
+      })
+      .sort((a,b) => {
+        if (productSort === "name") return (a.name_en || a.sku).localeCompare(b.name_en || b.sku);
+        if (productSort === "price") return b.current_price - a.current_price;
+        return Number(b.floor_breached) - Number(a.floor_breached)
+          || Math.abs(b.recommended_price - b.current_price) - Math.abs(a.recommended_price - a.current_price);
+      });
+  }, [importedProducts, productFilter, productSearch, productSort]);
+  const productPageCount = Math.max(1, Math.ceil(filteredProducts.length / productPageSize));
+  const visibleProducts = filteredProducts.slice((productPage - 1) * productPageSize, productPage * productPageSize);
+
+  useEffect(() => setProductPage(1), [productFilter, productSearch, productSort]);
+  useEffect(() => {
+    if (productPage > productPageCount) setProductPage(productPageCount);
+  }, [productPage, productPageCount]);
+
+  const openProduct = (product: ImportedProduct) => {
+    setSelectedProduct(product);
+    setProductPriceDraft(String(product.recommended_price));
+    setProductPushStatus("idle");
+  };
+
+  const pushSelectedProductPrice = async () => {
+    if (!selectedProduct) return;
+    const targetPrice = Number(productPriceDraft);
+    if (!Number.isFinite(targetPrice) || targetPrice <= 0) {
+      showToast("Enter a valid price greater than zero.");
+      return;
+    }
+    if (productPushStatus !== "confirm") {
+      setProductPushStatus("confirm");
+      return;
+    }
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) {
+      showToast("Your session could not be found. Reopen PrizeSkout from Zid.");
+      return;
+    }
+    setProductPushStatus("pushing");
+    try {
+      const response = await fetch("/api/repricing/apply", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({
+          merchant_id:merchantId,
+          access_code:accessCode,
+          ingest_event_id:selectedProduct.ingest_event_id,
+          target_price:targetPrice,
+        }),
+      });
+      const result = await response.json() as { ok?:boolean; error?:string; message?:string };
+      if (!response.ok || !result.ok) throw new Error(result.error ?? result.message ?? "Price update failed");
+      setImportedProducts(products => products.map(product =>
+        product.ingest_event_id === selectedProduct.ingest_event_id
+          ? { ...product, current_price:targetPrice, status:"repriced" }
+          : product
+      ));
+      setSelectedProduct(product => product ? { ...product, current_price:targetPrice, status:"repriced" } : product);
+      setProductPushStatus("idle");
+      showToast(`Price updated successfully in ${selectedProduct.source_platform}.`);
+    } catch (error) {
+      setProductPushStatus("failed");
+      showToast(error instanceof Error ? error.message : "Price update failed.");
+    }
   };
 
   const runCopilot = async (text: string) => {
@@ -1713,6 +1797,91 @@ export function PrizeSkoutDashboard() {
           </div>
         </header>
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
+        {selectedProduct && (
+          <div role="presentation" onMouseDown={event=>{ if (event.target === event.currentTarget) setSelectedProduct(null); }}
+            style={{ position:"fixed", inset:0, zIndex:1200, background:"rgba(15,23,42,.48)",
+              backdropFilter:"blur(3px)", display:"flex", justifyContent:"flex-end" }}>
+            <section role="dialog" aria-modal="true" aria-label={`Product details for ${selectedProduct.name_en || selectedProduct.sku}`}
+              style={{ width:"min(560px,100%)", height:"100%", overflowY:"auto", background:"var(--surface)",
+                color:"var(--text)", boxShadow:"-18px 0 60px rgba(15,23,42,.22)", padding:"26px",
+                animation:"pk-in .2s ease" }}>
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:16 }}>
+                <div>
+                  <div style={{ color:OG, fontSize:11.5, fontWeight:800, textTransform:"uppercase", letterSpacing:".08em" }}>
+                    {selectedProduct.source_platform} product
+                  </div>
+                  <h2 style={{ margin:"8px 0 4px", fontSize:27, lineHeight:1.2 }}>
+                    {lang === "ar" && selectedProduct.name_ar ? selectedProduct.name_ar : selectedProduct.name_en || selectedProduct.sku}
+                  </h2>
+                  <div style={{ fontFamily:MONO, fontSize:12, color:"var(--muted)" }}>SKU {selectedProduct.sku}</div>
+                </div>
+                <button type="button" onClick={()=>setSelectedProduct(null)} aria-label="Close product details"
+                  style={{ width:38, height:38, borderRadius:10, border:"1px solid var(--border)",
+                    background:"var(--surface2)", color:"var(--text)", cursor:"pointer", fontSize:21 }}>×</button>
+              </div>
+
+              <div style={{ marginTop:24, padding:"16px", borderRadius:12,
+                border:`1px solid ${selectedProduct.floor_breached ? "color-mix(in srgb,#DC2626 35%,var(--border))" : "var(--border)"}`,
+                background:selectedProduct.floor_breached ? "color-mix(in srgb,#DC2626 5%,var(--surface))" : "var(--surface2)" }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                  <span style={{ color:selectedProduct.floor_breached ? "#DC2626" : GN, fontWeight:800 }}>
+                    {selectedProduct.floor_breached ? "Action recommended: below margin floor" : "Margin is currently healthy"}
+                  </span>
+                  <span style={{ color:"var(--muted)", fontSize:12, textTransform:"capitalize" }}>{selectedProduct.status.replace(/_/g," ")}</span>
+                </div>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:18 }}>
+                {[
+                  ["Current price",`${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`],
+                  ["Recommended price",`${selectedProduct.recommended_price.toLocaleString(undefined,{maximumFractionDigits:2})} ${selectedProduct.currency}`],
+                  ["Price change",selectedProduct.current_price ? `${((selectedProduct.recommended_price-selectedProduct.current_price)/selectedProduct.current_price*100).toFixed(1)}%` : "—"],
+                  ["Calculated net margin",selectedProduct.net_margin_pct == null ? "—" : `${(selectedProduct.net_margin_pct*100).toFixed(1)}%`],
+                ].map(([label,value])=>(
+                  <div key={label} style={{ border:"1px solid var(--border)", borderRadius:11, padding:"14px", background:"var(--surface2)" }}>
+                    <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>{label}</div>
+                    <div style={{ marginTop:5, fontSize:19, fontWeight:800 }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop:22, borderTop:"1px solid var(--border)", paddingTop:20 }}>
+                <h3 style={{ margin:"0 0 5px", fontSize:17 }}>Review price update</h3>
+                <p style={{ margin:"0 0 14px", color:"var(--muted)", fontSize:13.5, lineHeight:1.55 }}>
+                  The recommended price is prefilled. You can enter a different amount before sending it to {selectedProduct.source_platform}.
+                </p>
+                <label style={{ display:"block", fontSize:11.5, fontWeight:700, color:"var(--muted)", textTransform:"uppercase" }}>
+                  New price ({selectedProduct.currency})
+                </label>
+                <input type="number" min="0.01" step="0.01" value={productPriceDraft}
+                  onChange={event=>{ setProductPriceDraft(event.target.value); setProductPushStatus("idle"); }}
+                  style={{ width:"100%", marginTop:7, boxSizing:"border-box", border:"1px solid var(--border)",
+                    borderRadius:10, padding:"12px 13px", background:"var(--surface2)", color:"var(--text)",
+                    fontFamily:MONO, fontSize:18, fontWeight:700 }} />
+                {productPushStatus === "confirm" && (
+                  <div style={{ marginTop:12, color:"#B45309", background:"color-mix(in srgb,#F59E0B 10%,var(--surface))",
+                    border:"1px solid color-mix(in srgb,#F59E0B 30%,var(--border))", borderRadius:9, padding:"10px 12px", fontSize:12.5 }}>
+                    Confirm this live price change. Clicking the button again will update the product in {selectedProduct.source_platform}.
+                  </div>
+                )}
+                {productPushStatus === "failed" && (
+                  <div style={{ marginTop:12, color:"#DC2626", fontSize:12.5 }}>The update was not applied. Review the price and try again.</div>
+                )}
+                <div style={{ display:"flex", justifyContent:"flex-end", gap:10, marginTop:16 }}>
+                  <button type="button" onClick={()=>setSelectedProduct(null)}
+                    style={{ border:"1px solid var(--border)", background:"var(--surface)", color:"var(--text)",
+                      borderRadius:9, padding:"11px 15px", cursor:"pointer", fontFamily:"inherit", fontWeight:700 }}>Cancel</button>
+                  <button type="button" disabled={productPushStatus==="pushing"} onClick={pushSelectedProductPrice}
+                    style={{ border:"none", background:productPushStatus==="confirm" ? "#B45309" : OG, color:"#fff",
+                      borderRadius:9, padding:"11px 16px", cursor:productPushStatus==="pushing"?"wait":"pointer",
+                      fontFamily:"inherit", fontWeight:800 }}>
+                    {productPushStatus==="pushing" ? "Updating…" : productPushStatus==="confirm" ? `Confirm update in ${selectedProduct.source_platform}` : "Review price update"}
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
 
         {/* ===== TAB: REVENUE PROTECTION HUB ===== */}
         {tab === "analytics" && (
@@ -1795,18 +1964,53 @@ export function PrizeSkoutDashboard() {
                   Synced from connected stores
                 </span>
               </div>
+              <div style={{ padding:"14px 18px", display:"flex", gap:10, flexWrap:"wrap",
+                alignItems:"center", borderBottom:"1px solid var(--border)", background:"var(--surface2)" }}>
+                <input value={productSearch} onChange={event=>setProductSearch(event.target.value)}
+                  placeholder="Search product name, SKU, or channel…"
+                  aria-label="Search imported products"
+                  style={{ flex:"1 1 260px", minWidth:0, border:"1px solid var(--border)", borderRadius:9,
+                    background:"var(--surface)", color:"var(--text)", padding:"10px 12px", fontFamily:"inherit", fontSize:13.5 }} />
+                <select value={productFilter} onChange={event=>setProductFilter(event.target.value as typeof productFilter)}
+                  aria-label="Filter imported products"
+                  style={{ border:"1px solid var(--border)", borderRadius:9, background:"var(--surface)",
+                    color:"var(--text)", padding:"10px 12px", fontFamily:"inherit", fontSize:13 }}>
+                  <option value="all">All products ({importedProducts.length})</option>
+                  <option value="risk">Below margin floor</option>
+                  <option value="healthy">Margin healthy</option>
+                  <option value="repriced">Repriced</option>
+                </select>
+                <select value={productSort} onChange={event=>setProductSort(event.target.value as typeof productSort)}
+                  aria-label="Sort imported products"
+                  style={{ border:"1px solid var(--border)", borderRadius:9, background:"var(--surface)",
+                    color:"var(--text)", padding:"10px 12px", fontFamily:"inherit", fontSize:13 }}>
+                  <option value="risk">Priority first</option>
+                  <option value="name">Name A–Z</option>
+                  <option value="price">Highest price</option>
+                </select>
+              </div>
               {catalogLoading ? (
                 <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>Loading catalogue…</div>
-              ) : importedProducts.length === 0 ? (
-                <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>No products have been imported yet.</div>
+              ) : filteredProducts.length === 0 ? (
+                <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>
+                  {importedProducts.length === 0 ? "No products have been imported yet." : "No products match this search or filter."}
+                </div>
               ) : (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:14, padding:18 }}>
-                  {importedProducts.map(product => {
+                <>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,420px),1fr))", gap:14, padding:18 }}>
+                  {visibleProducts.map(product => {
                     const margin = product.net_margin_pct == null ? null : product.net_margin_pct * 100;
                     const displayName = lang === "ar" && product.name_ar ? product.name_ar : product.name_en || product.sku;
                     return (
-                      <div key={product.ingest_event_id} style={{ border:"1px solid var(--border)", borderRadius:13,
-                        padding:"18px 19px", background:"var(--surface2)", display:"flex", flexDirection:"column", gap:14 }}>
+                      <div key={product.ingest_event_id} role="button" tabIndex={0}
+                        aria-label={`Open details for ${displayName}`}
+                        onClick={()=>openProduct(product)}
+                        onKeyDown={event=>{ if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openProduct(product); } }}
+                        style={{ cursor:"pointer", border:"1px solid var(--border)", borderRadius:13,
+                        padding:"18px 19px", background:"var(--surface2)", display:"flex", flexDirection:"column", gap:14,
+                        transition:"transform .18s ease,border-color .18s ease,box-shadow .18s ease" }}
+                        onMouseEnter={event=>{ event.currentTarget.style.transform="translateY(-2px)"; event.currentTarget.style.borderColor=OG; event.currentTarget.style.boxShadow="var(--shadow)"; }}
+                        onMouseLeave={event=>{ event.currentTarget.style.transform="none"; event.currentTarget.style.borderColor="var(--border)"; event.currentTarget.style.boxShadow="none"; }}>
                         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
                           <div style={{ minWidth:0 }}>
                             <div style={{ fontSize:17, fontWeight:800, overflowWrap:"anywhere" }}>{displayName}</div>
@@ -1841,10 +2045,28 @@ export function PrizeSkoutDashboard() {
                             Recommendation: {product.decision_action.replace(/_/g, " ")} · {product.status.replace(/_/g, " ")}
                           </span>
                         </div>
+                        <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", color:OG,
+                          fontSize:12.5, fontWeight:800 }}>Open product details →</div>
                       </div>
                     );
                   })}
                 </div>
+                {productPageCount > 1 && (
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
+                    padding:"14px 18px", borderTop:"1px solid var(--border)", fontSize:12.5, color:"var(--muted)" }}>
+                    <span>Showing {(productPage-1)*productPageSize+1}–{Math.min(productPage*productPageSize,filteredProducts.length)} of {filteredProducts.length}</span>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <button type="button" disabled={productPage===1} onClick={()=>setProductPage(page=>Math.max(1,page-1))}
+                        style={{ border:"1px solid var(--border)", borderRadius:8, background:"var(--surface)",
+                          color:"var(--text)", padding:"8px 11px", cursor:productPage===1?"not-allowed":"pointer", fontFamily:"inherit" }}>Previous</button>
+                      <span>Page {productPage} of {productPageCount}</span>
+                      <button type="button" disabled={productPage===productPageCount} onClick={()=>setProductPage(page=>Math.min(productPageCount,page+1))}
+                        style={{ border:"1px solid var(--border)", borderRadius:8, background:"var(--surface)",
+                          color:"var(--text)", padding:"8px 11px", cursor:productPage===productPageCount?"not-allowed":"pointer", fontFamily:"inherit" }}>Next</button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </div>
 
