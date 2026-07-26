@@ -50,7 +50,7 @@ const navGroups: NavGroup[] = [
     label: "Intelligence",
     tKey: "nav.groups.intelligence",
     items: [
-      { to: "/dashboard/pricing", label: "Repricing", tKey: "nav.repricing", icon: TrendingUp },
+      { to: "/dashboard/revenue-hub", label: "Revenue Protection", tKey: "nav.repricing", icon: TrendingUp },
     ],
   },
   {

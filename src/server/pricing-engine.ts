@@ -761,7 +761,7 @@ export async function runPricingEngineForUser(
       severity: "info",
       title: `${written} new pricing recommendation${written === 1 ? "" : "s"}`,
       body: `Refreshed from latest competitor scrapes. Review and approve.`,
-      linkTo: "/dashboard/pricing",
+      linkTo: "/dashboard/revenue-hub",
       dedupeKey: `pricing:${new Date().toISOString().slice(0, 10)}`,
       dedupeWindowMinutes: 360,
       metadata: { written, seedsWiped },

@@ -13,7 +13,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 // icon slug or the link_text to the appropriate dashboard route.
 const ICON_ROUTE_FALLBACK: Record<string, string> = {
   crosshair: "/dashboard/competitors",
-  "trending-up": "/dashboard/pricing",
+  "trending-up": "/dashboard/revenue-hub",
   "map-pin": "/dashboard/field-intel",
   bell: "/dashboard/competitors",
 };

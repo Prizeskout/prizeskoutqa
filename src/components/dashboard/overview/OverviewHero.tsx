@@ -69,7 +69,7 @@ export function OverviewHero({
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           <Link
-            to="/dashboard/pricing"
+            to="/dashboard/revenue-hub"
             search={{ from: "overview" }}
             style={{
               display: "inline-flex",
