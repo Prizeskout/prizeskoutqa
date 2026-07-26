@@ -32,6 +32,7 @@ const SCOPES = "embedded_apps_tokens_write";
 
 type ZidTokenResponse = {
   access_token?:   string;
+  Authorization?:  string;   // Zid's documented response field (capital A)
   authorization?:  string;   // Zid sometimes returns this instead of access_token
   store_token?:    string;
   manager_token?:  string;   // alternate field name
@@ -175,11 +176,16 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         // Zid token response fields (per Zid docs):
         //   authorization → Bearer token (Authorization: Bearer header)
         //   access_token  → manager token (X-MANAGER-TOKEN header)
-        const bearerToken = tokens.authorization ?? tokens.access_token ?? "";
-        const storeToken  = tokens.access_token ?? tokens.store_token ?? tokens.manager_token ?? null;
+        // These are distinct credentials. Using access_token as Authorization
+        // causes Zid to return 401 "No such user".
+        const bearerToken = tokens.Authorization ?? tokens.authorization ?? "";
+        const storeToken  = tokens.access_token ?? tokens.store_token ?? tokens.manager_token ?? tokens.token ?? null;
 
         if (!bearerToken) {
-          return errorPage("Zid did not return an access token. Please try again.");
+          return errorPage("Zid did not return the Authorization token. Please reconnect the app.");
+        }
+        if (!storeToken) {
+          return errorPage("Zid did not return the store access token. Please reconnect the app.");
         }
 
         // 2. Probe store profile to get the native store ID
