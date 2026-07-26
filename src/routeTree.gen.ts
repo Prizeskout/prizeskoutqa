@@ -39,6 +39,7 @@ import { Route as MarginDashboardSettingsRouteImport } from './routes/margin-das
 import { Route as MarginDashboardItemsRouteImport } from './routes/margin-dashboard.items'
 import { Route as MarginDashboardDemoRouteImport } from './routes/margin-dashboard.demo'
 import { Route as MarginDashboardChannelsRouteImport } from './routes/margin-dashboard.channels'
+import { Route as EmbeddedZidRouteImport } from './routes/embedded/zid'
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
 import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
@@ -234,6 +235,11 @@ const MarginDashboardChannelsRoute = MarginDashboardChannelsRouteImport.update({
   id: '/channels',
   path: '/channels',
   getParentRoute: () => MarginDashboardRoute,
+} as any)
+const EmbeddedZidRoute = EmbeddedZidRouteImport.update({
+  id: '/embedded/zid',
+  path: '/embedded/zid',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmbedWidgetRoute = EmbedWidgetRouteImport.update({
   id: '/embed/widget',
@@ -499,6 +505,7 @@ export interface FileRoutesByFullPath {
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
+  '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
   '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
   '/margin-dashboard/items': typeof MarginDashboardItemsRoute
@@ -573,6 +580,7 @@ export interface FileRoutesByTo {
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
+  '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
   '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
   '/margin-dashboard/items': typeof MarginDashboardItemsRoute
@@ -651,6 +659,7 @@ export interface FileRoutesById {
   '/docs/changelog': typeof DocsChangelogRoute
   '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
+  '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
   '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
   '/margin-dashboard/items': typeof MarginDashboardItemsRoute
@@ -730,6 +739,7 @@ export interface FileRouteTypes {
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
+    | '/embedded/zid'
     | '/margin-dashboard/channels'
     | '/margin-dashboard/demo'
     | '/margin-dashboard/items'
@@ -804,6 +814,7 @@ export interface FileRouteTypes {
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
+    | '/embedded/zid'
     | '/margin-dashboard/channels'
     | '/margin-dashboard/demo'
     | '/margin-dashboard/items'
@@ -881,6 +892,7 @@ export interface FileRouteTypes {
     | '/docs/changelog'
     | '/docs/guides'
     | '/embed/widget'
+    | '/embedded/zid'
     | '/margin-dashboard/channels'
     | '/margin-dashboard/demo'
     | '/margin-dashboard/items'
@@ -949,6 +961,7 @@ export interface RootRouteChildren {
   ApiRestoreRoute: typeof ApiRestoreRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EmbedWidgetRoute: typeof EmbedWidgetRoute
+  EmbeddedZidRoute: typeof EmbeddedZidRoute
   ProductsCompetitorsRoute: typeof ProductsCompetitorsRoute
   ProductsFieldIntelRoute: typeof ProductsFieldIntelRoute
   ProductsMarketRoute: typeof ProductsMarketRoute
@@ -1191,6 +1204,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/margin-dashboard/channels'
       preLoaderRoute: typeof MarginDashboardChannelsRouteImport
       parentRoute: typeof MarginDashboardRoute
+    }
+    '/embedded/zid': {
+      id: '/embedded/zid'
+      path: '/embedded/zid'
+      fullPath: '/embedded/zid'
+      preLoaderRoute: typeof EmbeddedZidRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/embed/widget': {
       id: '/embed/widget'
@@ -1659,6 +1679,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRestoreRoute: ApiRestoreRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EmbedWidgetRoute: EmbedWidgetRoute,
+  EmbeddedZidRoute: EmbeddedZidRoute,
   ProductsCompetitorsRoute: ProductsCompetitorsRoute,
   ProductsFieldIntelRoute: ProductsFieldIntelRoute,
   ProductsMarketRoute: ProductsMarketRoute,

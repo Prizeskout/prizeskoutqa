@@ -24,8 +24,9 @@ import { backgroundTask } from "@/server/cf-ctx";
 
 const ZID_TOKEN_URL    = "https://oauth.zid.sa/oauth/token";
 const ZID_AUTH_URL     = "https://oauth.zid.sa/oauth/authorize";
-const ZID_PROFILE_URL  = "https://api.zid.sa/v1/profile/";
+const ZID_STORE_URL    = "https://api.zid.sa/v1/managers/account/store";
 const ZID_WEBHOOK_URL  = "https://api.zid.sa/v1/managers/webhooks";
+const ZID_EMBED_TOKEN_URL = "https://api.zid.sa/v1/managers/embedded-apps-token";
 
 // Zid determines granted scopes from the partner dashboard selection.
 const SCOPES = "embedded_apps_tokens_write";
@@ -192,12 +193,12 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         let storeId = "";
         try {
           const probeHeaders: Record<string, string> = {
-            Authorization: bearerToken,
+            Authorization: `Bearer ${bearerToken}`,
             Accept: "application/json",
           };
           if (storeToken) probeHeaders["X-MANAGER-TOKEN"] = storeToken;
 
-          const profileRes = await fetch(ZID_PROFILE_URL, { headers: probeHeaders });
+          const profileRes = await fetch(ZID_STORE_URL, { headers: probeHeaders });
           if (profileRes.ok) {
             const profile = await profileRes.json() as {
               store?: { id?: string | number };
@@ -206,6 +207,32 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
             storeId = String(profile.store?.id ?? profile.id ?? "");
           }
         } catch { /* non-fatal — store_id stored empty, webhook lookup still works */ }
+
+        if (!storeId) {
+          return errorPage("Zid did not return the store identity. Please reconnect the app.");
+        }
+
+        // Zid appends this registered UUID to the embedded Application URL.
+        const embeddedToken = crypto.randomUUID();
+        try {
+          const embeddedRes = await fetch(ZID_EMBED_TOKEN_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${bearerToken}`,
+              "X-MANAGER-TOKEN": storeToken,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ token: embeddedToken }),
+          });
+          if (!embeddedRes.ok) {
+            const detail = await embeddedRes.text().catch(() => "");
+            console.error("[zid-oauth] embedded token registration failed", embeddedRes.status, detail.slice(0, 300));
+            return errorPage("Failed to create the embedded Zid session. Please reconnect the app.");
+          }
+        } catch {
+          return errorPage("Failed to reach Zid while creating the embedded session.");
+        }
 
         // 3. Persist channel in ps_merchant_channels
         const webhookSecret = generateWebhookSecret();
@@ -229,11 +256,13 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
               connected_at:     now,
               last_verified_at: now,
               updated_at:       now,
+              error_message:    null,
               webhook_secret:   webhookSecret,
               metadata: {
                 store_id:      storeId,
                 expires_at:    expiresAt,
                 oauth:         true,
+                embedded_token: embeddedToken,
                 refresh_token: tokens.refresh_token ?? null,
               },
             },
@@ -253,7 +282,7 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           const whHeaders: Record<string, string> = {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: bearerToken,
+            Authorization: `Bearer ${bearerToken}`,
           };
           if (storeToken) whHeaders["X-MANAGER-TOKEN"] = storeToken;
 
@@ -298,8 +327,11 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         }));
 
         // 6. Redirect: honour return_to, else marketplace installs go to onboarding, user-initiated to dashboard
-        const defaultDest = cookieVal ? "/dashboard/revenue-hub" : "/onboarding";
+        const defaultDest = cookieVal
+          ? "/dashboard/revenue-hub"
+          : `https://dashboard.zid.sa/en-sa/stores/${encodeURIComponent(storeId)}/apps/${encodeURIComponent(clientId)}/embedded`;
         const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : defaultDest;
+        if (dest.startsWith("https://dashboard.zid.sa/")) return htmlRedirect(dest);
         const sep  = dest.includes("?") ? "&" : "?";
         return htmlRedirect(
           `${dest}${sep}zid_connected=1&merchant_id=${encodeURIComponent(merchantId)}`,

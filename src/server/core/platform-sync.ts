@@ -20,8 +20,11 @@ type PlatformCreds = {
 };
 
 function zidHeaders(creds: PlatformCreds): Record<string, string> {
+  const authorization = creds.bearer_token.startsWith("Bearer ")
+    ? creds.bearer_token
+    : `Bearer ${creds.bearer_token}`;
   const headers: Record<string, string> = {
-    Authorization: creds.bearer_token,
+    Authorization: authorization,
     Accept: "application/json",
     "Accept-Language": "en",
     Role: "Manager",
