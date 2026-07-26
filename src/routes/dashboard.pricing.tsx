@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   RefreshCw,
@@ -470,6 +470,9 @@ function PricingPage() {
 }
 
 export const Route = createFileRoute("/dashboard/pricing")({
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard/revenue-hub", replace: true });
+  },
   head: () => ({ meta: [{ title: "Repricing | PrizeSkout" }] }),
   component: PricingPage,
 });

@@ -1789,8 +1789,11 @@ export function PrizeSkoutDashboard() {
                   <h3 style={{ margin:0, fontSize:20, fontWeight:800 }}>Imported Products</h3>
                   <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)" }}>Live catalogue items synchronized from your connected stores.</div>
                 </div>
-                <a href="/dashboard/pricing" style={{ color:"#fff", background:OG, textDecoration:"none",
-                  borderRadius:9, padding:"10px 15px", fontSize:13, fontWeight:700 }}>Open repricing →</a>
+                <span style={{ color:GN, background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
+                  border:`1px solid color-mix(in srgb,${GN} 28%,transparent)`,
+                  borderRadius:999, padding:"7px 12px", fontSize:12, fontWeight:700 }}>
+                  Synced from connected stores
+                </span>
               </div>
               {catalogLoading ? (
                 <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>Loading catalogue…</div>
@@ -1813,10 +1816,16 @@ export function PrizeSkoutDashboard() {
                             color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                             borderRadius:999, padding:"4px 8px" }}>{product.source_platform}</span>
                         </div>
-                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))", gap:10 }}>
                           <div>
                             <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>Current price</div>
                             <div style={{ fontSize:20, fontWeight:800, marginTop:3 }}>{product.current_price.toLocaleString()} <span style={{ fontSize:11, color:"var(--muted)" }}>{product.currency}</span></div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>Recommended price</div>
+                            <div style={{ fontSize:20, fontWeight:800, marginTop:3, color:GN }}>
+                              {product.recommended_price.toLocaleString(undefined,{ maximumFractionDigits:2 })} <span style={{ fontSize:11, color:"var(--muted)" }}>{product.currency}</span>
+                            </div>
                           </div>
                           <div>
                             <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>Net margin</div>
@@ -1828,7 +1837,9 @@ export function PrizeSkoutDashboard() {
                         <div style={{ display:"flex", justifyContent:"space-between", gap:10, paddingTop:12,
                           borderTop:"1px solid var(--border)", fontSize:12 }}>
                           <span style={{ color:product.floor_breached ? "#DC2626" : GN, fontWeight:700 }}>{product.floor_breached ? "Below margin floor" : "Margin healthy"}</span>
-                          <span style={{ color:"var(--muted)", textTransform:"capitalize" }}>{product.status.replace(/_/g, " ")}</span>
+                          <span style={{ color:"var(--muted)", textTransform:"capitalize" }}>
+                            Recommendation: {product.decision_action.replace(/_/g, " ")} · {product.status.replace(/_/g, " ")}
+                          </span>
                         </div>
                       </div>
                     );
