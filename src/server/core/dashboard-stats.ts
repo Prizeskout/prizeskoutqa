@@ -24,16 +24,35 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
   seriesStart.setDate(seriesStart.getDate() - (SPARKLINE_DAYS - 1));
   seriesStart.setHours(0, 0, 0, 0);
 
-  const { data, error } = await supabaseAdmin
-    .from("ps_aggregator_dispatch_log")
-    .select("sku, old_price, new_price, created_at, audit_snapshot")
-    .eq("account_id", accountId)
-    .eq("status", "success")
-    .gte("created_at", seriesStart.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  const [
+    { data, error },
+    { data: catalogRows, error: catalogError },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("ps_aggregator_dispatch_log")
+      .select("sku, old_price, new_price, created_at, audit_snapshot")
+      .eq("account_id", accountId)
+      .eq("status", "success")
+      .gte("created_at", seriesStart.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1000),
+    // A product becomes tracked when it is imported, not only after its first
+    // outbound price update. Counting dispatch rows made successful catalogue
+    // syncs appear as "No activity yet" on the Revenue Hub.
+    supabaseAdmin
+      .from("ps_ingest_events")
+      .select("sku")
+      .eq("account_id", accountId)
+      .not("sku", "is", null)
+      .limit(5000),
+  ]);
 
   const rows = error || !data ? [] : data;
+  const catalogSkus = new Set(
+    (catalogError || !catalogRows ? [] : catalogRows)
+      .map((row) => row.sku)
+      .filter((sku): sku is string => Boolean(sku)),
+  );
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -63,14 +82,14 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
   }
 
   return {
-    has_activity: rows.length > 0,
     profits_protected_this_month: Math.round(profitsProtected * 100) / 100,
     price_updates_this_month: priceUpdatesThisMonth,
     price_updates_today: priceUpdatesToday,
     avg_margin_saved_pct: marginDeltas.length > 0
       ? Math.round((marginDeltas.reduce((a, b) => a + b, 0) / marginDeltas.length) * 100) / 100
       : null,
-    tracked_products: skus.size,
+    has_activity: rows.length > 0 || catalogSkus.size > 0,
+    tracked_products: catalogSkus.size,
     daily_series,
   };
 }
