@@ -71,6 +71,7 @@ import { Route as ApiAuthSallaRouteImport } from './routes/api/auth/salla'
 import { Route as ApiAuthResolveMerchantRouteImport } from './routes/api/auth/resolve-merchant'
 import { Route as ApiAuthKeetaRouteImport } from './routes/api/auth/keeta'
 import { Route as ApiAuthEmailBridgeRouteImport } from './routes/api/auth/email-bridge'
+import { Route as ApiWebhooksZidAppMarketRouteImport } from './routes/api/webhooks/zid/app-market'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
@@ -395,6 +396,11 @@ const ApiAuthEmailBridgeRoute = ApiAuthEmailBridgeRouteImport.update({
   path: '/api/auth/email-bridge',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksZidAppMarketRoute = ApiWebhooksZidAppMarketRouteImport.update({
+  id: '/api/webhooks/zid/app-market',
+  path: '/api/webhooks/zid/app-market',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   id: '/api/public/v1/$',
   path: '/api/public/v1/$',
@@ -536,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 export interface FileRoutesByTo {
@@ -609,6 +616,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 export interface FileRoutesById {
@@ -686,6 +694,7 @@ export interface FileRoutesById {
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
+  '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 export interface FileRouteTypes {
@@ -764,6 +773,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
+    | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -837,6 +847,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
+    | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
   id:
     | '__root__'
@@ -913,6 +924,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/v1/$'
+    | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
   fileRoutesById: FileRoutesById
 }
@@ -964,6 +976,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWebhookIntelligenceRetryRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
+  ApiWebhooksZidAppMarketRoute: typeof ApiWebhooksZidAppMarketRoute
   ApiPublicV1WebhooksTestSignatureRoute: typeof ApiPublicV1WebhooksTestSignatureRoute
 }
 
@@ -1403,6 +1416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthEmailBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/zid/app-market': {
+      id: '/api/webhooks/zid/app-market'
+      path: '/api/webhooks/zid/app-market'
+      fullPath: '/api/webhooks/zid/app-market'
+      preLoaderRoute: typeof ApiWebhooksZidAppMarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/$': {
       id: '/api/public/v1/$'
       path: '/api/public/v1/$'
@@ -1667,6 +1687,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksWebhookIntelligenceRetryRoute,
   ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
+  ApiWebhooksZidAppMarketRoute: ApiWebhooksZidAppMarketRoute,
   ApiPublicV1WebhooksTestSignatureRoute: ApiPublicV1WebhooksTestSignatureRoute,
 }
 export const routeTree = rootRouteImport

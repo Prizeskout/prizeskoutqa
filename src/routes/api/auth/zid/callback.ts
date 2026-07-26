@@ -20,6 +20,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getPublicOrigin } from "@/server/public-origin";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
+import { backgroundTask } from "@/server/cf-ctx";
 
 const ZID_TOKEN_URL    = "https://oauth.zid.sa/oauth/token";
 const ZID_AUTH_URL     = "https://oauth.zid.sa/oauth/authorize";
@@ -185,7 +186,7 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         let storeId = "";
         try {
           const probeHeaders: Record<string, string> = {
-            Authorization: `Bearer ${bearerToken}`,
+            Authorization: bearerToken,
             Accept: "application/json",
           };
           if (storeToken) probeHeaders["X-MANAGER-TOKEN"] = storeToken;
@@ -246,11 +247,11 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           const whHeaders: Record<string, string> = {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer ${bearerToken}`,
+            Authorization: bearerToken,
           };
           if (storeToken) whHeaders["X-MANAGER-TOKEN"] = storeToken;
 
-          await fetch(ZID_WEBHOOK_URL, {
+          const webhookRes = await fetch(ZID_WEBHOOK_URL, {
             method: "POST",
             headers: whHeaders,
             body: JSON.stringify({
@@ -262,27 +263,41 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
             }),
           });
 
-          await supabaseAdmin
-            .from("ps_merchant_channels")
-            .update({ webhook_registered_at: now })
-            .eq("id", row.id);
+          if (webhookRes.ok) {
+            await supabaseAdmin
+              .from("ps_merchant_channels")
+              .update({ webhook_registered_at: now })
+              .eq("id", row.id);
+          } else {
+            const webhookError = await webhookRes.text().catch(() => "");
+            console.error("[zid-oauth] webhook registration failed", webhookRes.status, webhookError.slice(0, 300));
+          }
         } catch { /* non-fatal */ }
 
         // 5. Kick off initial catalog sync in the background
-        syncPlatformCatalog({
+        backgroundTask(syncPlatformCatalog({
           platform:   "zid",
-          creds:      { bearer_token: bearerToken, manager_token: storeToken },
+          creds:      { bearer_token: bearerToken, manager_token: storeToken, store_id: storeId || null },
           accountId:  merchantId,
           licenseeId: merchantId,
           merchantId,
           region:     "SA",
-        }).catch(() => { /* background — don't block redirect */ });
+        }).catch(async (error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error("[zid-oauth] initial catalog sync failed", message);
+          await supabaseAdmin
+            .from("ps_merchant_channels")
+            .update({ error_message: `Initial catalog sync failed: ${message.slice(0, 400)}` })
+            .eq("id", row.id);
+        }));
 
         // 6. Redirect: honour return_to, else marketplace installs go to onboarding, user-initiated to dashboard
         const defaultDest = cookieVal ? "/dashboard/revenue-hub" : "/onboarding";
         const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : defaultDest;
         const sep  = dest.includes("?") ? "&" : "?";
-        return htmlRedirect(`${dest}${sep}zid_connected=1`);
+        return htmlRedirect(
+          `${dest}${sep}zid_connected=1&merchant_id=${encodeURIComponent(merchantId)}`,
+        );
       },
     },
   },

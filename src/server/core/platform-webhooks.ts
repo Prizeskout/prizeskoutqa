@@ -465,6 +465,91 @@ export async function handleZidWebhook(request: Request): Promise<Response> {
   });
 }
 
+const ZID_APP_MARKET_EVENTS = new Set([
+  "app.market.application.install",
+  "app.market.application.authorized",
+  "app.market.application.uninstall",
+]);
+
+async function secretsMatch(actual: string | null, expected: string): Promise<boolean> {
+  if (!actual) return false;
+  const encoder = new TextEncoder();
+  const [actualHash, expectedHash] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(actual)),
+    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
+  ]);
+  const a = new Uint8Array(actualHash);
+  const b = new Uint8Array(expectedHash);
+  if (a.length !== b.length) return false;
+  let difference = 0;
+  for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
+  return difference === 0;
+}
+
+function zidLifecycleStoreId(payload: Record<string, unknown>): string {
+  const data = payload.data && typeof payload.data === "object"
+    ? payload.data as Record<string, unknown>
+    : {};
+  const store = data.store && typeof data.store === "object"
+    ? data.store as Record<string, unknown>
+    : {};
+  return String(
+    payload.store_id ??
+    payload.storeId ??
+    data.store_id ??
+    data.storeId ??
+    store.id ??
+    "",
+  );
+}
+
+// Partner Dashboard application lifecycle events. These are distinct from
+// per-store product.update events registered after OAuth.
+export async function handleZidAppMarketWebhook(request: Request): Promise<Response> {
+  const expectedSecret = process.env.ZID_WEBHOOK_SECRET;
+  if (!expectedSecret) return err("Webhook receiver is not configured", 503);
+
+  const suppliedSecret = request.headers.get("x-prizeskout-webhook-token");
+  if (!(await secretsMatch(suppliedSecret, expectedSecret))) return err("Invalid credentials", 401);
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = await request.json() as Record<string, unknown>;
+  } catch {
+    return err("Invalid JSON", 400);
+  }
+
+  const event = String(payload.event ?? payload.name ?? payload.type ?? "");
+  if (!ZID_APP_MARKET_EVENTS.has(event)) {
+    return ok({ received: true, processed: false, reason: "event_not_subscribed" });
+  }
+
+  const storeId = zidLifecycleStoreId(payload);
+  if (event === "app.market.application.uninstall") {
+    if (!storeId) return err("Missing store identifier", 400);
+
+    const { error } = await supabaseAdmin
+      .from("ps_merchant_channels")
+      .update({
+        status: "revoked",
+        bearer_token: null,
+        manager_token: null,
+        error_message: "Zid application uninstalled by merchant",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("platform", "zid")
+      .contains("metadata", { store_id: storeId });
+
+    if (error) {
+      console.error("[zid-app-market] failed to revoke channel", error.message);
+      return err("Failed to process uninstall", 500);
+    }
+  }
+
+  console.info("[zid-app-market]", { event, store_id: storeId || null });
+  return ok({ received: true, processed: true });
+}
+
 // ---------------------------------------------------------------------------
 // Keeta webhook handler
 // POST /api/webhooks/keeta

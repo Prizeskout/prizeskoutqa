@@ -377,7 +377,7 @@ export async function handleChannelSync(
 
   const { data: channel } = await supabaseAdmin
     .from("ps_merchant_channels")
-    .select("bearer_token, manager_token, status")
+    .select("bearer_token, manager_token, status, metadata")
     .eq("account_id", ctx.accountId)
     .eq("merchant_id", merchant_id)
     .eq("platform", platform)
@@ -393,6 +393,7 @@ export async function handleChannelSync(
     creds: {
       bearer_token: channel.bearer_token ?? "",
       manager_token: channel.manager_token,
+      store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
     },
     accountId: ctx.accountId,
     licenseeId: ctx.licenseeId,

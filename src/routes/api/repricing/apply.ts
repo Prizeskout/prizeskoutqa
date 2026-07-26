@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/repricing/apply")({
         // 3. Get connected channel credentials for this platform
         const { data: channel } = await supabaseAdmin
           .from("ps_merchant_channels")
-          .select("bearer_token, manager_token, platform")
+          .select("bearer_token, manager_token, platform, metadata")
           .eq("account_id", accountId)
           .eq("platform", source_platform)
           .eq("status", "connected")
@@ -91,7 +91,11 @@ export const Route = createFileRoute("/api/repricing/apply")({
         // 4. Push the new price to the platform
         const result = await pushPriceToSourcePlatform(
           source_platform,
-          { bearer_token: channel.bearer_token, manager_token: channel.manager_token ?? null },
+          {
+            bearer_token: channel.bearer_token,
+            manager_token: channel.manager_token ?? null,
+            store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
+          },
           item_id,
           targetPrice,
           currency ?? "SAR",

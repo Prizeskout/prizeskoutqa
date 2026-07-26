@@ -16,7 +16,33 @@ import { getMerchantMarginFloor } from "./merchant-pricing-config";
 type PlatformCreds = {
   bearer_token: string;
   manager_token?: string | null;
+  store_id?: string | null;
 };
+
+function zidHeaders(creds: PlatformCreds): Record<string, string> {
+  const headers: Record<string, string> = {
+    Authorization: creds.bearer_token,
+    Accept: "application/json",
+    "Accept-Language": "en",
+    Role: "Manager",
+  };
+  if (creds.manager_token) {
+    headers["Access-Token"] = creds.manager_token;
+    headers["X-Manager-Token"] = creds.manager_token;
+  }
+  if (creds.store_id) headers["Store-Id"] = creds.store_id;
+  return headers;
+}
+
+class PlatformApiError extends Error {
+  constructor(
+    readonly platform: string,
+    readonly status: number,
+    readonly responseBody: string,
+  ) {
+    super(`${platform} API returned HTTP ${status}${responseBody ? `: ${responseBody.slice(0, 300)}` : ""}`);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Normalised product shape — what each platform returns, flattened to one type
@@ -137,47 +163,48 @@ async function fetchZidProducts(creds: PlatformCreds): Promise<PlatformProduct[]
 
   while (true) {
     const resp = await fetch(
-      `https://api.zid.sa/v1/products/?page=${page}&per_page=50`,
+      `https://api.zid.sa/v1/products/?page=${page}&page_size=50`,
       {
-        headers: {
-          Authorization: `Bearer ${creds.bearer_token}`,
-          ...(creds.manager_token ? { "X-MANAGER-TOKEN": creds.manager_token } : {}),
-          Accept: "application/json",
-        },
+        headers: zidHeaders(creds),
       },
     );
-    if (!resp.ok) break;
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => "");
+      throw new PlatformApiError("zid", resp.status, body);
+    }
 
     const json = await resp.json() as {
-      products?: Array<{
+      results?: Array<{
         id: string | number;
         sku?: string | null;
-        name?: string;
-        name_ar?: string;
+        name?: string | { en?: string | null; ar?: string | null };
         price?: number;
-        cost_price?: number;
+        sale_price?: number | null;
+        cost?: number;
         currency?: string;
         quantity?: number;
+        is_infinite?: boolean;
       }>;
-      pagination?: { total_pages?: number; current_page?: number };
+      next?: string | null;
     };
 
-    const items = json.products ?? [];
+    const items = json.results ?? [];
     for (const item of items) {
+      const nameEn = typeof item.name === "string" ? item.name : item.name?.en ?? item.name?.ar ?? "";
+      const nameAr = typeof item.name === "string" ? item.name : item.name?.ar ?? item.name?.en ?? "";
       products.push({
         external_id: String(item.id),
         sku: item.sku ?? String(item.id),
-        name_en: item.name ?? "",
-        name_ar: item.name_ar ?? item.name ?? "",
-        price: item.price ?? 0,
-        cost: item.cost_price ?? null,
+        name_en: nameEn,
+        name_ar: nameAr,
+        price: item.sale_price ?? item.price ?? 0,
+        cost: item.cost ?? null,
         currency: item.currency ?? "SAR",
-        in_stock: (item.quantity ?? 1) > 0,
+        in_stock: item.is_infinite === true || (item.quantity ?? 1) > 0,
       });
     }
 
-    const totalPages = json.pagination?.total_pages ?? 1;
-    if (page >= totalPages || items.length < 50) break;
+    if (!json.next) break;
     page++;
     if (page > 20) break;
   }
@@ -218,11 +245,11 @@ export async function pushPriceToSourcePlatform(
       url = `https://api-v2.foodics.com/v2.1/products/${externalId}`;
       body = { selling_price: newPrice };
     } else if (platform === "zid") {
-      // Zid: PATCH /v1/products/{id}
-      url = `https://api.zid.sa/v1/products/${externalId}`;
+      // Zid: PATCH /v1/products/{id}/
+      url = `https://api.zid.sa/v1/products/${externalId}/`;
       method = "PATCH";
-      if (creds.manager_token) headers["X-MANAGER-TOKEN"] = creds.manager_token;
-      body = { price: newPrice, currency };
+      Object.assign(headers, zidHeaders(creds));
+      body = { price: newPrice };
     } else {
       return { success: false, httpStatus: 400, message: `Unknown source platform: ${platform}` };
     }

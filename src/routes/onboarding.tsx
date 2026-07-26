@@ -699,6 +699,11 @@ function OnboardingPage() {
     const params = new URLSearchParams(window.location.search);
     const sc = params.get("salla_connected") === "1";
     const zc = params.get("zid_connected")   === "1";
+    const oauthMerchantId = params.get("merchant_id") ?? "";
+    if (zc && oauthMerchantId) {
+      localStorage.setItem("ps_merchant_id", oauthMerchantId);
+      setMerchantId(oauthMerchantId);
+    }
     if (sc) setSallaConnected(true);
     if (zc) setZidConnected(true);
     if (sc || zc) {
