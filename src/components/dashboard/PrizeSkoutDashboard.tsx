@@ -12,6 +12,20 @@ type Lang = "en" | "ar" | "fr";
 
 interface FeedRow { tag: string; tagColor: string; text: string; time: string; }
 interface Rule { name: string; desc: string; floor: number; active: boolean; }
+interface ImportedProduct {
+  ingest_event_id: string;
+  sku: string;
+  name_en: string;
+  name_ar: string;
+  source_platform: string;
+  current_price: number;
+  recommended_price: number;
+  net_margin_pct: number | null;
+  floor_breached: boolean;
+  decision_action: string;
+  currency: string;
+  status: string;
+}
 
 const OG = "#EF681A";
 const GN = "#10B981";
@@ -839,6 +853,8 @@ export function PrizeSkoutDashboard() {
   const [feed, setFeed] = useState<FeedRow[]>([]);
   type HeroStats = { has_activity:boolean; profits_protected_this_month:number; price_updates_this_month:number; price_updates_today:number; avg_margin_saved_pct:number|null; tracked_products:number; daily_series:number[] };
   const [heroStats, setHeroStats] = useState<HeroStats|null>(null);
+  const [importedProducts, setImportedProducts] = useState<ImportedProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [cpPhase, setCpPhase] = useState<"idle"|"loading"|"result">("idle");
   const [cpInput, setCpInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
@@ -1006,6 +1022,7 @@ export function PrizeSkoutDashboard() {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) return;
+    setCatalogLoading(true);
     fetch("/api/channels/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1014,6 +1031,12 @@ export function PrizeSkoutDashboard() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.ok) setHeroStats(d as HeroStats); })
       .catch(() => {});
+    const params = new URLSearchParams({ merchant_id: mid, access_code: ac });
+    fetch(`/api/repricing/catalog?${params}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setImportedProducts((d?.products ?? []) as ImportedProduct[]))
+      .catch(() => setImportedProducts([]))
+      .finally(() => setCatalogLoading(false));
   }, [tab]);
 
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -1756,6 +1779,62 @@ export function PrizeSkoutDashboard() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+              borderRadius:16, boxShadow:"var(--shadow)", overflow:"hidden" }}>
+              <div style={{ padding:"22px 26px", display:"flex", alignItems:"center",
+                justifyContent:"space-between", gap:14, flexWrap:"wrap", borderBottom:"1px solid var(--border)" }}>
+                <div>
+                  <h3 style={{ margin:0, fontSize:20, fontWeight:800 }}>Imported Products</h3>
+                  <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)" }}>Live catalogue items synchronized from your connected stores.</div>
+                </div>
+                <a href="/dashboard/pricing" style={{ color:"#fff", background:OG, textDecoration:"none",
+                  borderRadius:9, padding:"10px 15px", fontSize:13, fontWeight:700 }}>Open repricing →</a>
+              </div>
+              {catalogLoading ? (
+                <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>Loading catalogue…</div>
+              ) : importedProducts.length === 0 ? (
+                <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>No products have been imported yet.</div>
+              ) : (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:14, padding:18 }}>
+                  {importedProducts.map(product => {
+                    const margin = product.net_margin_pct == null ? null : product.net_margin_pct * 100;
+                    const displayName = lang === "ar" && product.name_ar ? product.name_ar : product.name_en || product.sku;
+                    return (
+                      <div key={product.ingest_event_id} style={{ border:"1px solid var(--border)", borderRadius:13,
+                        padding:"18px 19px", background:"var(--surface2)", display:"flex", flexDirection:"column", gap:14 }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
+                          <div style={{ minWidth:0 }}>
+                            <div style={{ fontSize:17, fontWeight:800, overflowWrap:"anywhere" }}>{displayName}</div>
+                            <div style={{ fontFamily:MONO, fontSize:11.5, color:"var(--muted)", marginTop:5 }}>SKU {product.sku}</div>
+                          </div>
+                          <span style={{ flexShrink:0, textTransform:"uppercase", fontSize:10.5, fontWeight:800,
+                            color:OG, border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
+                            borderRadius:999, padding:"4px 8px" }}>{product.source_platform}</span>
+                        </div>
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                          <div>
+                            <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>Current price</div>
+                            <div style={{ fontSize:20, fontWeight:800, marginTop:3 }}>{product.current_price.toLocaleString()} <span style={{ fontSize:11, color:"var(--muted)" }}>{product.currency}</span></div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>Net margin</div>
+                            <div style={{ fontSize:20, fontWeight:800, marginTop:3, color:product.floor_breached ? "#DC2626" : GN }}>
+                              {margin == null ? "—" : `${margin.toFixed(1)}%`}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display:"flex", justifyContent:"space-between", gap:10, paddingTop:12,
+                          borderTop:"1px solid var(--border)", fontSize:12 }}>
+                          <span style={{ color:product.floor_breached ? "#DC2626" : GN, fontWeight:700 }}>{product.floor_breached ? "Below margin floor" : "Margin healthy"}</span>
+                          <span style={{ color:"var(--muted)", textTransform:"capitalize" }}>{product.status.replace(/_/g, " ")}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Expected Payout Check — full-width, placed right after the
