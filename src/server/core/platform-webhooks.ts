@@ -471,6 +471,12 @@ const ZID_APP_MARKET_EVENTS = new Set([
   "app.market.application.uninstall",
 ]);
 
+// SHA-256 fingerprint of the Partner Dashboard webhook token. Keeping only the
+// fingerprint lets non-Cloudflare runtimes validate the shared token without
+// placing the recoverable secret in source control.
+const ZID_WEBHOOK_SECRET_SHA256 =
+  "112170efc55e8be5de7be51381d7669143bdda907f3d171154e2d11723a28923";
+
 async function secretsMatch(actual: string | null, expected: string): Promise<boolean> {
   if (!actual) return false;
   const encoder = new TextEncoder();
@@ -484,6 +490,15 @@ async function secretsMatch(actual: string | null, expected: string): Promise<bo
   let difference = 0;
   for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
   return difference === 0;
+}
+
+async function secretMatchesHash(actual: string | null, expectedHash: string): Promise<boolean> {
+  if (!actual) return false;
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(actual)),
+  );
+  const actualHash = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return secretsMatch(actualHash, expectedHash);
 }
 
 function zidLifecycleStoreId(payload: Record<string, unknown>): string {
@@ -507,10 +522,11 @@ function zidLifecycleStoreId(payload: Record<string, unknown>): string {
 // per-store product.update events registered after OAuth.
 export async function handleZidAppMarketWebhook(request: Request): Promise<Response> {
   const expectedSecret = process.env.ZID_WEBHOOK_SECRET;
-  if (!expectedSecret) return err("Webhook receiver is not configured", 503);
-
   const suppliedSecret = request.headers.get("x-prizeskout-webhook-token");
-  if (!(await secretsMatch(suppliedSecret, expectedSecret))) return err("Invalid credentials", 401);
+  const authenticated = expectedSecret
+    ? await secretsMatch(suppliedSecret, expectedSecret)
+    : await secretMatchesHash(suppliedSecret, ZID_WEBHOOK_SECRET_SHA256);
+  if (!authenticated) return err("Invalid credentials", 401);
 
   let payload: Record<string, unknown>;
   try {
