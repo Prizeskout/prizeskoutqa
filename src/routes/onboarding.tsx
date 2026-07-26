@@ -623,14 +623,20 @@ function OnboardingPage() {
   const [accessCode, setAccessCode]   = useState("");
   const navigate = useNavigate();
 
-  // Step 1
-  const [storeName, setStoreName] = useState(() => sessionStorage.getItem("ps_ob_storeName") ?? "");
-  const [email, setEmail]         = useState(() => sessionStorage.getItem("ps_ob_email")     ?? "");
-  const [region, setRegion]       = useState(() => sessionStorage.getItem("ps_ob_region")    ?? "");
-  const [currency, setCurrency]   = useState(() => sessionStorage.getItem("ps_ob_currency")  ?? "");
+  // Step 1 — storage-backed values start empty (matching what the server
+  // renders, since sessionStorage doesn't exist there) and are hydrated from
+  // sessionStorage in the mount effect below. Reading sessionStorage directly
+  // in a useState initializer throws during SSR, which was knocking this
+  // whole page into React's error-recovery client-render fallback on every
+  // load — a startup crash the merchant would never see, but the actual
+  // Zid/Salla marketplace install lands right here, so their reviewers would.
+  const [storeName, setStoreName] = useState("");
+  const [email, setEmail]         = useState("");
+  const [region, setRegion]       = useState("");
+  const [currency, setCurrency]   = useState("");
 
   // Step 2 — merchant_id generated when advancing from Step 1
-  const [merchantId,     setMerchantId]     = useState(() => localStorage.getItem("ps_merchant_id") ?? "");
+  const [merchantId,     setMerchantId]     = useState("");
   const [sallaConnected, setSallaConnected] = useState(false);
   const [zidConnected,   setZidConnected]   = useState(false);
 
@@ -647,10 +653,12 @@ function OnboardingPage() {
   }
 
   // Whether this browser already has a fully-completed onboarding sitting in
-  // localStorage — set once on mount, before any clearing/regenerating so
-  // the "already set up" prompt below can offer a real choice instead of
-  // silently reusing (or silently wiping) whatever's cached.
-  const [existingSetup, setExistingSetup] = useState(() => localStorage.getItem("ps_connected") === "true");
+  // localStorage — read in the mount effect below, before any clearing/
+  // regenerating, so the "already set up" prompt below can offer a real
+  // choice instead of silently reusing (or silently wiping) whatever's
+  // cached. Starts false so server and first client paint agree; flips true
+  // a tick after mount for a returning browser.
+  const [existingSetup, setExistingSetup] = useState(false);
 
   // handleStep1Next/handleFinish only generate a fresh merchant_id when
   // localStorage has none at all — by design, so refreshing mid-onboarding
@@ -673,6 +681,18 @@ function OnboardingPage() {
     setRestoreMode(false); setStep(0);
     setExistingSetup(false);
   }
+
+  // Restore anything a returning browser already has cached — see the
+  // "starts empty" comments on the state above for why this can't run in
+  // the initializers themselves.
+  useEffect(() => {
+    setStoreName(sessionStorage.getItem("ps_ob_storeName") ?? "");
+    setEmail(sessionStorage.getItem("ps_ob_email") ?? "");
+    setRegion(sessionStorage.getItem("ps_ob_region") ?? "");
+    setCurrency(sessionStorage.getItem("ps_ob_currency") ?? "");
+    setMerchantId(localStorage.getItem("ps_merchant_id") ?? "");
+    setExistingSetup(localStorage.getItem("ps_connected") === "true");
+  }, []);
 
   // Handle return from OAuth (Salla/Zid redirect back here with ?salla_connected=1 etc.)
   useEffect(() => {
