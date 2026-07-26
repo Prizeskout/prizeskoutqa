@@ -475,7 +475,7 @@ const ZID_APP_MARKET_EVENTS = new Set([
 // fingerprint lets non-Cloudflare runtimes validate the shared token without
 // placing the recoverable secret in source control.
 const ZID_WEBHOOK_SECRET_SHA256 =
-  "112170efc55e8be5de7be51381d7669143bdda907f3d171154e2d11723a28923";
+  "584f95985897592798b706b817e92688bc0b800ef8e29a2595689588a9225152";
 
 async function secretsMatch(actual: string | null, expected: string): Promise<boolean> {
   if (!actual) return false;
