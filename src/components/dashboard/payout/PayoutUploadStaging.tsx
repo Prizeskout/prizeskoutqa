@@ -10,7 +10,12 @@ const GN = "#10B981";
 export type UploadRole = "platform_statement" | "daily_log" | "merchant_received" | "unknown";
 
 export type PayoutCheckClassification =
-  | { ok: true; classification: { role: UploadRole; platform: string | null; confidence: number; restated: string } }
+  | { ok: true; classification: {
+      role: UploadRole; platform: string | null; confidence: number; restated: string;
+      accounting_basis: "gross_before_deductions" | "net_after_deductions" | "unclear";
+      suggested_document_type: DocumentType | "keep_detected";
+      audit_use: string; risks: string[]; blocking_question: string | null;
+    } }
   | { ok: false; error: string };
 
 export type StagedKind = "file" | "manual";
@@ -232,7 +237,33 @@ export function PayoutUploadStaging({
                   <span style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>"{it.description}"</span>
                 )}
                 {cls?.ok && cls.classification.restated && (
-                  <span style={{ fontSize: 12, color: "var(--muted)" }}>You said: {cls.classification.restated}</span>
+                  <div style={{ display:"flex", flexDirection:"column", gap:7, background:"var(--surface)", border:"1px solid var(--border)", borderRadius:9, padding:"10px 12px" }}>
+                    <div style={{ display:"flex", gap:7, flexWrap:"wrap", alignItems:"center" }}>
+                      <span style={{ fontSize:10.5, fontWeight:800, color:"#7C3AED", textTransform:"uppercase" }}>AI evidence context</span>
+                      <span style={{ fontSize:10.5, color:"var(--muted)" }}>{Math.round(cls.classification.confidence*100)}% confidence</span>
+                      <span style={{ fontSize:10.5, fontWeight:700, color:"var(--text)", background:"var(--surface2)", borderRadius:999, padding:"2px 7px" }}>{cls.classification.accounting_basis.replaceAll("_"," ")}</span>
+                    </div>
+                    <span style={{ fontSize:12, color:"var(--muted)" }}><strong style={{ color:"var(--text)" }}>Merchant assertion:</strong> {cls.classification.restated}</span>
+                    {cls.classification.audit_use && <span style={{ fontSize:12, color:"var(--muted)" }}><strong style={{ color:"var(--text)" }}>Useful for:</strong> {cls.classification.audit_use}</span>}
+                    {!!cls.classification.risks?.length && <div style={{ fontSize:11.5, color:"#B45309" }}><strong>Risks:</strong> {cls.classification.risks.join(" · ")}</div>}
+                    {cls.classification.blocking_question && <div style={{ fontSize:12, fontWeight:700, color:"var(--text)" }}>Question before audit: {cls.classification.blocking_question}</div>}
+                    {it.kind === "file" && (
+                      <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                        {cls.classification.suggested_document_type !== "keep_detected" && cls.classification.suggested_document_type !== structuralType && cls.classification.suggested_document_type !== "merchant_received" && (
+                          <button type="button" onClick={()=>onCorrectType(it.id, cls.classification.suggested_document_type as DocumentType)}
+                            style={{ cursor:"pointer", border:"1px solid var(--border)", borderRadius:7, background:"var(--surface2)", color:"var(--text)", padding:"6px 9px", fontSize:11.5, fontWeight:700 }}>
+                            Apply suggested type: {DOCUMENT_TYPE_LABEL[cls.classification.suggested_document_type as DocumentType]}
+                          </button>
+                        )}
+                        {structuralType === "daily_log" && cls.classification.accounting_basis === "net_after_deductions" && !it.classifiedDoc?.treat_sales_as_net && (
+                          <button type="button" onClick={()=>onToggleNetSales(it.id,true)}
+                            style={{ cursor:"pointer", border:"1px solid #B45309", borderRadius:7, background:"transparent", color:"#B45309", padding:"6px 9px", fontSize:11.5, fontWeight:700 }}>
+                            Confirm sales are net after deductions
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
                 {cls && !cls.ok && (
                   <span style={{ fontSize: 11.5, color: "var(--muted)" }}>(Description not interpreted: {cls.error})</span>
