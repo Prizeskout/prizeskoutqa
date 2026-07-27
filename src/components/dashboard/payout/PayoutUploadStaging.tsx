@@ -31,7 +31,7 @@ const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   daily_log: "Daily Log",
   statement: "Statement",
   summary_pdf: "Report",
-  merchant_received: "What I Received",
+  merchant_received: "Bank Settlement",
 };
 
 // A file's type can only ever be corrected among these three — "merchant
@@ -57,7 +57,9 @@ export function PayoutUploadStaging({
   rate: string;
   onRateChange: (v: string) => void;
   onAddFile: (files: FileList, description: string, platform: string) => void;
-  onAddManual: (description: string, amount: string, periodStart: string, periodEnd: string, platform: string) => void;
+  onAddManual: (description: string, amount: string, periodStart: string, periodEnd: string, platform: string, evidence: {
+    transactionDate: string; bankReference: string; depositType: string; currency: string; fileName?: string; sha256?: string;
+  }) => void;
   onCorrectType: (id: string, newType: DocumentType) => void;
   onToggleNetSales: (id: string, value: boolean) => void;
   onRemove: (id: string) => void;
@@ -69,6 +71,11 @@ export function PayoutUploadStaging({
   const [manualAmount, setManualAmount] = useState("");
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
+  const [transactionDate, setTransactionDate] = useState("");
+  const [bankReference, setBankReference] = useState("");
+  const [depositType, setDepositType] = useState("regular_payout");
+  const [manualCurrency, setManualCurrency] = useState("QAR");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canAddFile = platform === "snoonu"
@@ -82,9 +89,17 @@ export function PayoutUploadStaging({
     e.target.value = "";
     setDescription("");
   };
-  const handleAddManual = () => {
-    onAddManual(description, manualAmount, manualStart, manualEnd, platform);
+  const handleAddManual = async () => {
+    let sha256: string | undefined;
+    if (evidenceFile) {
+      const digest = await crypto.subtle.digest("SHA-256", await evidenceFile.arrayBuffer());
+      sha256 = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+    onAddManual(description, manualAmount, manualStart, manualEnd, platform, {
+      transactionDate, bankReference, depositType, currency: manualCurrency, fileName: evidenceFile?.name, sha256,
+    });
     setDescription(""); setManualAmount(""); setManualStart(""); setManualEnd("");
+    setTransactionDate(""); setBankReference(""); setEvidenceFile(null);
   };
 
   const doneCount = items.filter(it => it.status === "done").length;
@@ -93,7 +108,7 @@ export function PayoutUploadStaging({
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", background: "var(--surface2)", border: "1px solid var(--border)",
         borderRadius: 10, padding: 3, gap: 2, alignSelf: "flex-start" }}>
-        {([["file", "Upload a File"], ["manual", "Enter What I Received"]] as [StagedKind, string][]).map(([id, label]) => (
+        {([["file", "Platform Statements"], ["manual", "Bank Settlement Evidence"]] as [StagedKind, string][]).map(([id, label]) => (
           <button key={id} type="button" onClick={() => setMode(id)}
             style={{ cursor: "pointer", border: "none", borderRadius: 8, padding: "9px 15px",
               fontSize: 13, fontWeight: 700, fontFamily: "inherit",
@@ -109,7 +124,7 @@ export function PayoutUploadStaging({
           onChange={e => setDescription(e.target.value)}
           placeholder={mode === "file"
             ? 'Describe this file, e.g. "what Talabat paid me" or "what they compiled" (optional)'
-            : 'Describe this, e.g. "what actually hit our bank in June" (optional)'}
+            : "Optional note about this deposit or adjustment"}
           rows={2}
           style={{ resize: "vertical", border: "1px solid var(--border)", borderRadius: 9,
             background: "var(--surface)", color: "var(--text)", padding: "9px 11px",
@@ -137,14 +152,32 @@ export function PayoutUploadStaging({
             <>
               <input type="number" min="0" step="0.01" value={manualAmount} onChange={e => setManualAmount(e.target.value)}
                 placeholder="Amount received" style={{ ...inputStyle, width: 140 }} />
+              <select value={manualCurrency} onChange={e => setManualCurrency(e.target.value)} aria-label="Currency" style={{ ...inputStyle, width: 90 }}>
+                <option>QAR</option><option>SAR</option><option>AED</option>
+              </select>
+              <input type="date" value={transactionDate} onChange={e => setTransactionDate(e.target.value)}
+                aria-label="Bank transaction date" title="Bank transaction date" style={{ ...inputStyle, width: 155 }} />
+              <input value={bankReference} onChange={e => setBankReference(e.target.value)}
+                placeholder="Bank reference" style={{ ...inputStyle, width: 150 }} />
+              <select value={depositType} onChange={e => setDepositType(e.target.value)} aria-label="Deposit type" style={{ ...inputStyle, width: 165 }}>
+                <option value="regular_payout">Regular payout</option>
+                <option value="adjustment">Adjustment</option>
+                <option value="refund">Refund / reversal</option>
+                <option value="recovery">Recovery payment</option>
+                <option value="combined_payout">Combined payout</option>
+              </select>
               <input type="date" value={manualStart} onChange={e => setManualStart(e.target.value)}
-                aria-label="Period start" style={{ ...inputStyle, width: 150 }} />
+                aria-label="Settlement period start" title="Settlement period start" style={{ ...inputStyle, width: 155 }} />
               <input type="date" value={manualEnd} onChange={e => setManualEnd(e.target.value)}
-                aria-label="Period end" style={{ ...inputStyle, width: 150 }} />
+                aria-label="Settlement period end" title="Settlement period end" style={{ ...inputStyle, width: 155 }} />
+              <label style={{ ...inputStyle, height:"auto", minHeight:38, display:"flex", alignItems:"center", cursor:"pointer", maxWidth:230 }}>
+                <input type="file" accept=".pdf,.csv,.xlsx,.xls,image/*" onChange={e=>setEvidenceFile(e.target.files?.[0] ?? null)} style={{ display:"none" }} />
+                {evidenceFile ? `${evidenceFile.name} · fingerprint locally` : "Select evidence to fingerprint"}
+              </label>
               <button type="button" onClick={handleAddManual}
                 style={{ cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#fff", background: OG,
                   border: "none", borderRadius: 9, padding: "10px 16px", fontFamily: "inherit" }}>
-                + Add Entry
+                + Add Bank Deposit
               </button>
             </>
           )}
@@ -152,7 +185,7 @@ export function PayoutUploadStaging({
         <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
           {mode === "file"
             ? "CSV, XLSX, or PDF (Snoonu only). Add each document one at a time — describe it if you like, then Run Audit when you're done."
-            : "For comparing against a platform's payout statement — not a parsed file, just the amount and period you believe is correct."}
+            : "No bank connection is requested or supported. A selected evidence file stays on this device; PrizeSkout records only its SHA-256 fingerprint. Without one, the deposit remains manually asserted."}
         </span>
       </div>
 
@@ -178,10 +211,16 @@ export function PayoutUploadStaging({
                     </select>
                   )}
                   {it.status === "done" && it.kind === "manual" && (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.03em",
-                      background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
-                      {DOCUMENT_TYPE_LABEL.merchant_received}
-                    </span>
+                    <>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.03em",
+                        background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px" }}>
+                        {DOCUMENT_TYPE_LABEL.merchant_received}
+                      </span>
+                      <span style={{ fontSize:11, fontWeight:700, color:it.classifiedDoc?.result.evidence_level === "document_supported" ? "#B45309" : "#DC2626",
+                        background:"var(--surface)", border:"1px solid currentColor", borderRadius:6, padding:"3px 8px" }}>
+                        {it.classifiedDoc?.result.evidence_level === "document_supported" ? "Evidence fingerprint recorded · review required" : "Manually asserted · unverified"}
+                      </span>
+                    </>
                   )}
                   <button type="button" aria-label="Remove" onClick={() => onRemove(it.id)}
                     style={{ cursor: "pointer", background: "transparent", border: "none", padding: 2,

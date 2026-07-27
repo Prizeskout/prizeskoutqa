@@ -39,6 +39,13 @@ export type PayoutResultLike = {
   // field from expected_payout (which always means "a platform-computed or
   // platform-stated figure") so the two are never confused downstream.
   received_amount?: number | null;
+  bank_transaction_date?: string | null;
+  bank_reference?: string | null;
+  deposit_type?: string | null;
+  currency?: string | null;
+  evidence_file_name?: string | null;
+  evidence_sha256?: string | null;
+  evidence_level?: "manual_assertion" | "document_supported" | null;
 };
 
 // classifyResult() can only ever return one of these three — it infers the
@@ -222,7 +229,7 @@ function friendlyLabel(doc: ClassifiedDocument): string {
     case "daily_log": return "Your daily order log";
     case "statement": return "Your payout statement";
     case "summary_pdf": return "Your brand performance report";
-    case "merchant_received": return "What you said you received";
+    case "merchant_received": return "Bank settlement evidence";
     default: return doc.file_name;
   }
 }
@@ -561,6 +568,9 @@ function computeMerchantReceivedFindings(
       const withinTolerance = stmtAmount > 0 && Math.abs(diff) / stmtAmount <= CROSS_CHECK_TOLERANCE_PCT;
       findings.push({
         id: `received-vs-statement-${recv.id}-${stmt.id}`,
+        evidence_level: recv.result.evidence_level === "document_supported" ? "single_source" : "merchant_asserted",
+        recoverability: "estimated",
+        assertion: "settlement",
         severity: withinTolerance ? "info" : "critical",
         title: withinTolerance
           ? `What you received matches ${stmtLabel}`
@@ -714,7 +724,7 @@ export function reconcile(
     { id: "cutoff", label: "Cut-off", status: exactPeriodCheck ? "passed" : coverage ? "partial" : "missing", detail: exactPeriodCheck ? "At least one like-for-like period was compared." : "No complete like-for-like settlement period was proven." },
     { id: "authorization", label: "Contract terms", status: "missing", detail: "The agreed commission rate is merchant-entered; no signed contract or versioned rate card is attached." },
     { id: "occurrence", label: "Occurrence", status: dailyDocs.length ? "partial" : "missing", detail: dailyDocs.length ? "Aggregated activity exists, but individual orders and cancellations are not vouched." : "No underlying transaction evidence supplied." },
-    { id: "settlement", label: "Bank settlement", status: receivedDocs.length ? "partial" : "missing", detail: receivedDocs.length ? "Receipt is merchant-entered, not independently matched to a bank statement." : "No bank receipt evidence supplied." },
+    { id: "settlement", label: "Bank settlement", status: receivedDocs.some(d => d.result.evidence_level === "document_supported") ? "partial" : "missing", detail: receivedDocs.some(d => d.result.evidence_level === "document_supported") ? "The bank-issued evidence fingerprint is recorded; the file remains with the merchant and its contents still require review." : receivedDocs.length ? "Deposit is manually asserted and has no evidence fingerprint." : "No bank settlement evidence supplied." },
   ];
   const evidenceScore = Math.round(assertions.reduce((n, a) => n + (a.status === "passed" ? 1 : a.status === "partial" ? 0.5 : 0), 0) / assertions.length * 100);
   const claimsReadyAmount = round2(findings.filter(f => f.recoverability === "claims_ready").reduce((n, f) => n + (f.amount ?? 0), 0));

@@ -187,6 +187,10 @@ export const Route = createFileRoute("/api/channels/connect")({
               if (!period_start || !period_end) {
                 return resp({ error: "period_start and period_end are required for a manual entry." }, 400);
               }
+              if (!body.bank_transaction_date) {
+                return resp({ error: "bank_transaction_date is required for a bank settlement entry." }, 400);
+              }
+              const hasDocumentEvidence = !!body.evidence_file_name && /^[a-f0-9]{64}$/i.test(body.evidence_sha256 ?? "");
 
               const uploadPlatform = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(body.upload_platform ?? "")
                 ? body.upload_platform
@@ -221,6 +225,13 @@ export const Route = createFileRoute("/api/channels/connect")({
                 period_start,
                 period_end,
                 platform: platformGuess,
+                bank_transaction_date: body.bank_transaction_date,
+                bank_reference: (body.bank_reference ?? "").trim().slice(0, 120),
+                deposit_type: body.deposit_type ?? "regular_payout",
+                currency: body.currency ?? "QAR",
+                evidence_file_name: hasDocumentEvidence ? body.evidence_file_name.slice(0, 200) : undefined,
+                evidence_sha256: hasDocumentEvidence ? body.evidence_sha256 : undefined,
+                evidence_level: hasDocumentEvidence ? "document_supported" : "manual_assertion",
                 ...(classification ? { classification } : {}),
               }, 200);
             }

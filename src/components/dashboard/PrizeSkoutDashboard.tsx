@@ -1554,12 +1554,15 @@ export function PrizeSkoutDashboard() {
   // Adds a manual "what I actually received" entry — never a parsed file
   // (see commission-audit.ts header comment for why). document_type is
   // always "merchant_received" here, set directly — never LLM-driven.
-  const addManualItem = async (description: string, amount: string, periodStart: string, periodEnd: string, platform: string) => {
+  const addManualItem = async (description: string, amount: string, periodStart: string, periodEnd: string, platform: string, evidence: {
+    transactionDate:string; bankReference:string; depositType:string; currency:string; fileName?:string; sha256?:string;
+  }) => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) { showToast("Please connect your store first."); return; }
     if (!(Number(amount) > 0)) { setPayoutError("Enter a valid amount for the manual entry."); return; }
     if (!periodStart || !periodEnd) { setPayoutError("Enter a start and end date for the manual entry."); return; }
+    if (!evidence.transactionDate) { setPayoutError("Enter the date the deposit appeared on the bank statement."); return; }
     setPayoutError(null);
 
     const id = `${Date.now()}-manual`;
@@ -1571,9 +1574,12 @@ export function PrizeSkoutDashboard() {
         body: JSON.stringify({
           merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", action: "manual_entry",
           description, amount, period_start: periodStart, period_end: periodEnd, upload_platform: platform,
+          bank_transaction_date: evidence.transactionDate, bank_reference: evidence.bankReference,
+          deposit_type: evidence.depositType, currency: evidence.currency,
+          evidence_file_name: evidence.fileName, evidence_sha256: evidence.sha256,
         }),
       });
-      const data = await res.json() as { ok?: boolean; error?: string; received_amount?: number; period_start?: string; period_end?: string; platform?: string|null; classification?: PayoutCheckClassification };
+      const data = await res.json() as { ok?: boolean; error?: string; received_amount?: number; period_start?: string; period_end?: string; platform?: string|null; classification?: PayoutCheckClassification; bank_transaction_date?:string; bank_reference?:string; deposit_type?:string; currency?:string; evidence_file_name?:string; evidence_sha256?:string; evidence_level?:"manual_assertion"|"document_supported" };
       if (!res.ok || !data.ok) {
         setStagedItems(prev => prev.map(it => it.id !== id ? it : { ...it, status: "error", error: data.error ?? "Could not save that entry." }));
         return;
@@ -1583,7 +1589,12 @@ export function PrizeSkoutDashboard() {
         classifiedDoc: {
           id, file_name: it.label, document_type: "merchant_received",
           description: description || undefined, platform_guess: data.platform ?? null,
-          result: { received_amount: data.received_amount, period_start: data.period_start, period_end: data.period_end },
+          result: {
+            received_amount: data.received_amount, period_start: data.period_start, period_end: data.period_end,
+            bank_transaction_date:data.bank_transaction_date, bank_reference:data.bank_reference,
+            deposit_type:data.deposit_type, currency:data.currency, evidence_file_name:data.evidence_file_name,
+            evidence_sha256:data.evidence_sha256, evidence_level:data.evidence_level,
+          },
         },
       }));
     } catch {
