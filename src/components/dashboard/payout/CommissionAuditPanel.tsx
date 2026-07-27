@@ -5,6 +5,7 @@ import type {
 } from "@/lib/commission-audit";
 import { SEVERITY_ORDER, formatDateRange, summarizeAudit } from "@/lib/commission-audit";
 import type { ContractTerm } from "./ContractIntelligenceVault";
+import { runContractCompliance } from "@/lib/contract-compliance";
 
 const NAVY = "#14213D";
 const GREEN = "#087F5B";
@@ -22,11 +23,12 @@ export type CommissionAuditResult = {
   fourWay?: FourWayReconciliation;
 };
 
-type Tab = "summary" | "reconciliation" | "exceptions" | "transactions" | "evidence" | "methodology" | "signoff";
+type Tab = "summary" | "reconciliation" | "compliance" | "exceptions" | "transactions" | "evidence" | "methodology" | "signoff";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "summary", label: "Executive Summary" },
   { id: "reconciliation", label: "Reconciliation" },
+  { id: "compliance", label: "Contract Compliance" },
   { id: "exceptions", label: "Exceptions" },
   { id: "transactions", label: "Transactions" },
   { id: "evidence", label: "Evidence" },
@@ -100,6 +102,11 @@ export function CommissionAuditPanel({
       ? { ...assertion, status:"passed" as const, detail:`Reviewed ${approvedContract?.contract_name} covers the audit period; ${approvedContract?.commission_rate_pct}% commission was approved by ${approvedContract?.reviewed_by}.` }
       : assertion
   );
+  const complianceTests = useMemo(() => runContractCompliance(
+    documents,
+    contractCoversAudit ? approvedContract : null,
+    result.fourWay,
+  ), [documents, contractCoversAudit, approvedContract, result.fourWay]);
   const sortedFindings = [...result.findings].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || (b.amount ?? 0) - (a.amount ?? 0));
   const totalExpected = result.ledgerTotals?.expected_net ?? 0;
   const overallMateriality = totalExpected * ((Number(materialityPct) || 0) / 100);
@@ -188,6 +195,20 @@ export function CommissionAuditPanel({
     </div>
 
     <div style={{ padding: "22px", display: "flex", flexDirection: "column", gap: 18 }}>
+      {activeTab==="compliance"&&<section style={{...panel,padding:18}}>
+        <SectionTitle number="4" title="Contract compliance workpaper" note={`${complianceTests.filter(test=>test.status==="failed").length} failed · ${complianceTests.filter(test=>test.status==="not_testable").length} not testable`}/>
+        <div style={{fontSize:11.5,color:"var(--muted)",marginBottom:12}}>Tests are deterministic and evidence-gated. “Not testable” means the engine refused to infer a conclusion from missing or insufficient data.</div>
+        <div className="table-scroll"><table style={{width:"100%",borderCollapse:"collapse",minWidth:1050}}>
+          <thead><tr>{["Test","Category","Result","Contractual basis","Observed","Evidence","Potential amount","Conclusion"].map(label=><th key={label} style={th}>{label}</th>)}</tr></thead>
+          <tbody>{complianceTests.map(test=><tr key={test.id}>
+            <td style={{...td,fontWeight:900}}>{test.title}</td><td style={td}>{test.category}</td>
+            <td style={td}><Badge color={test.status==="passed"?GREEN:test.status==="failed"?RED:AMBER}>{test.status.replaceAll("_"," ").toUpperCase()}</Badge></td>
+            <td style={td}>{test.contractualBasis}</td><td style={td}>{test.observed}</td><td style={{...td,color:"var(--muted)"}}>{test.evidence}</td>
+            <td style={{...td,textAlign:"end",fontWeight:800}}>{test.amount==null?"—":money(test.amount,currency)}</td><td style={{...td,color:"var(--muted)"}}>{test.explanation}</td>
+          </tr>)}</tbody>
+        </table></div>
+        <div style={{marginTop:12,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:8,fontSize:11.5,color:"var(--muted)"}}>A failed test is a compliance exception requiring review. It becomes claims-ready only after affected transactions, the governing clause, and platform evidence are corroborated.</div>
+      </section>}
       {activeTab === "summary" && <>
         <section style={{ ...panel, padding: 18 }}><SectionTitle number="1" title="Engagement cover" note="Identifiable · reproducible · versioned" /><div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 0 }}>{coverFields.map(([label, value]) => <div key={label} style={{ borderTop: "1px solid var(--border)", padding: "9px 10px" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 800, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 2 }}>{value}</div></div>)}</div></section>
 
