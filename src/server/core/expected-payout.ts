@@ -70,6 +70,36 @@ export type ExpectedPayoutResult = {
   // engine's per-day ledger (src/lib/commission-audit.ts).
   daily_rows?: { date: string; orders: number; sales: number; cancelled?: number }[];
   cancelled_orders_total?: number;
+  deduction_breakdown?: {
+    gross_sales: number;
+    commission: number;
+    vat_on_fees: number;
+    payment_fees: number;
+    fixed_order_fees: number;
+    delivery_contribution: number;
+    expected_net: number;
+  };
+  commercial_terms?: {
+    commission_rate_pct: number;
+    vat_on_fees_pct: number;
+    payment_fee_pct: number;
+    fixed_order_fee: number;
+    delivery_contribution: number;
+    source: string;
+  };
+  sale_lines?: {
+    order_id: string;
+    product_name: string;
+    sku: string | null;
+    quantity: number;
+    gross_sale: number;
+    commission: number;
+    vat_on_fees: number;
+    payment_fee: number;
+    fixed_order_fee: number;
+    delivery_contribution: number;
+    expected_net: number;
+  }[];
 };
 
 export async function getTalabatExpectedPayout(
@@ -93,6 +123,10 @@ export async function getTalabatExpectedPayout(
   const chainId = metadata.chain_id;
   const vendorId = metadata.vendor_id;
   const commissionRatePct = metadata.commission_rate_pct;
+  const vatOnFeesPct = typeof metadata.vat_on_fees_pct === "number" ? metadata.vat_on_fees_pct : 0;
+  const paymentFeePct = typeof metadata.payment_fee_pct === "number" ? metadata.payment_fee_pct : 0;
+  const fixedOrderFee = typeof metadata.fixed_order_fee === "number" ? metadata.fixed_order_fee : 0;
+  const deliveryContribution = typeof metadata.delivery_contribution === "number" ? metadata.delivery_contribution : 0;
 
   if (typeof chainId !== "string" || typeof vendorId !== "string" || !chainId || !vendorId) {
     return { ok: false, error: "Talabat connection is missing chain_id/vendor_id." };
@@ -129,15 +163,58 @@ export async function getTalabatExpectedPayout(
 
   let subTotalSum = 0;
   let orderCount = 0;
+  const saleLines: NonNullable<ExpectedPayoutResult["sale_lines"]> = [];
+  let commissionTotal = 0, vatTotal = 0, paymentFeeTotal = 0, fixedFeeTotal = 0, deliveryTotal = 0;
+  const round = (n: number) => Math.round(n * 100) / 100;
   for (const order of ordersResult.data) {
     const subTotal = order.payment?.sub_total;
     if (typeof subTotal === "number") {
       subTotalSum += subTotal;
       orderCount++;
+      const commission = subTotal * commissionRatePct / 100;
+      const vat = commission * vatOnFeesPct / 100;
+      const paymentFee = subTotal * paymentFeePct / 100;
+      commissionTotal += commission;
+      vatTotal += vat;
+      paymentFeeTotal += paymentFee;
+      fixedFeeTotal += fixedOrderFee;
+      deliveryTotal += deliveryContribution;
+
+      const items = order.products ?? order.items ?? [];
+      const normalizedItems = items.length ? items : [{ name: "Order total", quantity: 1, total_price: subTotal }];
+      const itemGrosses = normalizedItems.map(item => {
+        const quantity = typeof item.quantity === "number" && item.quantity > 0 ? item.quantity : 1;
+        const gross = typeof item.total_price === "number" ? item.total_price
+          : (typeof item.unit_price === "number" ? item.unit_price : typeof item.price === "number" ? item.price : 0) * quantity;
+        return { item, quantity, gross };
+      });
+      const knownGross = itemGrosses.reduce((n, item) => n + item.gross, 0);
+      itemGrosses.forEach((entry, index) => {
+        const share = knownGross > 0 ? entry.gross / knownGross : 1 / itemGrosses.length;
+        const grossSale = knownGross > 0 ? entry.gross : subTotal * share;
+        const lineCommission = commission * share;
+        const lineVat = vat * share;
+        const linePayment = paymentFee * share;
+        const lineFixed = fixedOrderFee * share;
+        const lineDelivery = deliveryContribution * share;
+        saleLines.push({
+          order_id: order.order_id ?? order.order_code ?? `order-${orderCount}`,
+          product_name: entry.item.name ?? `Item ${index + 1}`,
+          sku: entry.item.sku ?? entry.item.id ?? null,
+          quantity: entry.quantity,
+          gross_sale: round(grossSale),
+          commission: round(lineCommission),
+          vat_on_fees: round(lineVat),
+          payment_fee: round(linePayment),
+          fixed_order_fee: round(lineFixed),
+          delivery_contribution: round(lineDelivery),
+          expected_net: round(grossSale - lineCommission - lineVat - linePayment - lineFixed - lineDelivery),
+        });
+      });
     }
   }
 
-  const expectedPayout = subTotalSum * (1 - commissionRatePct / 100);
+  const expectedPayout = subTotalSum - commissionTotal - vatTotal - paymentFeeTotal - fixedFeeTotal - deliveryTotal;
 
   return {
     ok: true,
@@ -147,6 +224,19 @@ export async function getTalabatExpectedPayout(
     sub_total_sum: Math.round(subTotalSum * 100) / 100,
     commission_rate_pct: commissionRatePct,
     expected_payout: Math.round(expectedPayout * 100) / 100,
+    commission_amount: round(commissionTotal),
+    deduction_breakdown: {
+      gross_sales: round(subTotalSum), commission: round(commissionTotal), vat_on_fees: round(vatTotal),
+      payment_fees: round(paymentFeeTotal), fixed_order_fees: round(fixedFeeTotal),
+      delivery_contribution: round(deliveryTotal), expected_net: round(expectedPayout),
+    },
+    commercial_terms: {
+      commission_rate_pct: commissionRatePct, vat_on_fees_pct: vatOnFeesPct,
+      payment_fee_pct: paymentFeePct, fixed_order_fee: fixedOrderFee,
+      delivery_contribution: deliveryContribution,
+      source: typeof metadata.commercial_terms_source === "string" ? metadata.commercial_terms_source : "merchant_contract",
+    },
+    sale_lines: saleLines,
     period_start: startTime.toISOString(),
     period_end: endTime.toISOString(),
   };

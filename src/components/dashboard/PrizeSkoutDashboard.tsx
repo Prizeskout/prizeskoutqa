@@ -119,7 +119,11 @@ const BYOK_CONFIG: Record<string, { fields:ByokField[]; portalHint?:string }> = 
       { key:"client_secret", label:"Client Secret" },
       { key:"vendor_id",     label:"Vendor ID",     hint:"Your store's vendor ID from the Talabat portal" },
       { key:"chain_id",      label:"Chain ID",      hint:"UUID format, e.g. 12345678-1234-1234-1234-123456789012 — from partner.talabat.com" },
-      { key:"commission_rate_pct", label:"Commission Rate (%)", type:"text", hint:"The rate you agreed with Talabat, e.g. 19 — powers your expected-payout check" },
+      { key:"commission_rate_pct", label:"Commission Rate (%)", type:"text", hint:"The rate in your Talabat contract, commonly around 19% but specific to your agreement" },
+      { key:"vat_on_fees_pct", label:"VAT on Talabat Fees (%)", type:"text", hint:"VAT charged on Talabat's fees. Enter 0 if none." },
+      { key:"payment_fee_pct", label:"Payment Fee (%)", type:"text", hint:"Payment processing percentage in your commercial terms. Enter 0 if none." },
+      { key:"fixed_order_fee", label:"Fixed Fee per Order", type:"text", hint:"Fixed deduction per order in your store currency. Enter 0 if none." },
+      { key:"delivery_contribution", label:"Delivery Contribution per Order", type:"text", hint:"Restaurant-funded delivery amount per order. Enter 0 if none." },
     ],
     portalHint:"Find your credentials at partner.talabat.com",
   },
@@ -656,6 +660,9 @@ type PayoutResultLike = {
   extra_line_items?: { label:string; value:number }[] | null;
   unexplained_charge?: { label:string; amount:number } | null;
   charge_explainers?: { label:string; value:number }[] | null;
+  deduction_breakdown?: { gross_sales:number; commission:number; vat_on_fees:number; payment_fees:number; fixed_order_fees:number; delivery_contribution:number; expected_net:number } | null;
+  commercial_terms?: { commission_rate_pct:number; vat_on_fees_pct:number; payment_fee_pct:number; fixed_order_fee:number; delivery_contribution:number; source:string } | null;
+  sale_lines?: { order_id:string; product_name:string; sku:string|null; quantity:number; gross_sale:number; commission:number; vat_on_fees:number; payment_fee:number; fixed_order_fee:number; delivery_contribution:number; expected_net:number }[] | null;
 };
 
 function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
@@ -718,6 +725,43 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
           </div>
         ))}
       </div>
+
+      {data.source === "live" && data.deduction_breakdown && (
+        <div style={{ background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:12, padding:"18px 20px", display:"flex", flexDirection:"column", gap:9 }}>
+          <div style={{ fontSize:14, fontWeight:800 }}>Automated contractual payout waterfall</div>
+          <div style={{ fontSize:11.5, color:"var(--muted)", marginBottom:4 }}>Live Talabat sales × your saved commercial terms. These expectations update whenever you run the live check.</div>
+          {[
+            ["Gross product sales",data.deduction_breakdown.gross_sales,false],
+            [`Talabat commission (${data.commercial_terms?.commission_rate_pct ?? data.commission_rate_pct}%)`,data.deduction_breakdown.commission,true],
+            [`VAT on platform fees (${data.commercial_terms?.vat_on_fees_pct ?? 0}%)`,data.deduction_breakdown.vat_on_fees,true],
+            [`Payment fees (${data.commercial_terms?.payment_fee_pct ?? 0}%)`,data.deduction_breakdown.payment_fees,true],
+            ["Fixed order fees",data.deduction_breakdown.fixed_order_fees,true],
+            ["Restaurant delivery contribution",data.deduction_breakdown.delivery_contribution,true],
+          ].map(([label,value,deduction])=>(
+            <div key={String(label)} style={{ display:"flex", justifyContent:"space-between", gap:12, fontSize:13 }}>
+              <span style={{ color:"var(--muted)" }}>{label}</span>
+              <span style={{ fontWeight:700, color:deduction && Number(value)>0?"#DC2626":"var(--text)" }}>{deduction && Number(value)>0?"−":""}{currency} {fmtMoney(Number(value),currency)}</span>
+            </div>
+          ))}
+          <div style={{ display:"flex", justifyContent:"space-between", borderTop:"1px solid var(--border)", paddingTop:10, fontSize:15, fontWeight:900 }}>
+            <span>Expected restaurant payout</span><span style={{ color:GN }}>{currency} {fmtMoney(data.deduction_breakdown.expected_net,currency)}</span>
+          </div>
+        </div>
+      )}
+
+      {data.source === "live" && !!data.sale_lines?.length && (
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"18px 20px" }}>
+          <div style={{ fontSize:14, fontWeight:800 }}>Expected payout by product sale</div>
+          <div style={{ fontSize:11.5, color:"var(--muted)", margin:"3px 0 12px" }}>Order deductions are allocated proportionally to each product. If Talabat omits item details, the row is truthfully labelled “Order total.”</div>
+          <div className="table-scroll"><table style={{ width:"100%", borderCollapse:"collapse", minWidth:820 }}>
+            <thead><tr>{["Product / order","Qty","Gross","Commission","VAT + payment","Other","Expected net"].map((h,i)=><th key={h} style={{ padding:"9px", textAlign:i?"end":"start", fontSize:10.5, color:"var(--muted)", borderBottom:"1px solid var(--border)", textTransform:"uppercase" }}>{h}</th>)}</tr></thead>
+            <tbody>{data.sale_lines.map((line,i)=><tr key={`${line.order_id}-${line.sku ?? line.product_name}-${i}`}>
+              <td style={{ padding:"10px 9px", borderBottom:"1px solid var(--border)" }}><div style={{ fontSize:12.5,fontWeight:700 }}>{line.product_name}</div><div style={{ fontSize:10.5,color:"var(--muted)" }}>{line.sku?`${line.sku} · `:""}{line.order_id}</div></td>
+              {[line.quantity,line.gross_sale,line.commission,line.vat_on_fees+line.payment_fee,line.fixed_order_fee+line.delivery_contribution,line.expected_net].map((v,j)=><td key={j} style={{ padding:"10px 9px", textAlign:"end", borderBottom:"1px solid var(--border)", fontSize:12.5, fontWeight:j===5?800:500, color:j===5?GN:"var(--text)" }}>{j===0?v:`${currency} ${fmtMoney(v,currency)}`}</td>)}
+            </tr>)}</tbody>
+          </table></div>
+        </div>
+      )}
 
       {data.source === "upload" && !!data.rows_skipped && (
         <span style={{ fontSize:12, fontWeight:600, color:"#B45309" }}>

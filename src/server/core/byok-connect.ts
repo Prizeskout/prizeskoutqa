@@ -38,6 +38,10 @@ export async function connectTalabat(params: {
   vendorId: string;
   chainId: string;
   commissionRatePct: string;
+  vatOnFeesPct?: string;
+  paymentFeePct?: string;
+  fixedOrderFee?: string;
+  deliveryContribution?: string;
 }): Promise<{ ok: boolean; message?: string }> {
   const { merchantId, clientId, clientSecret, vendorId, chainId, commissionRatePct } = params;
   const now = new Date().toISOString();
@@ -48,6 +52,25 @@ export async function connectTalabat(params: {
   const commissionRate = Number(commissionRatePct);
   if (!Number.isFinite(commissionRate) || commissionRate <= 0 || commissionRate >= 100) {
     return { ok: false, message: "Commission rate must be a number between 0 and 100 (e.g. 19 for 19%)." };
+  }
+  const optionalRate = (value: string | undefined, label: string) => {
+    const parsed = value?.trim() ? Number(value) : 0;
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed >= 100) throw new Error(`${label} must be between 0 and 100.`);
+    return parsed;
+  };
+  const optionalAmount = (value: string | undefined, label: string) => {
+    const parsed = value?.trim() ? Number(value) : 0;
+    if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${label} cannot be negative.`);
+    return parsed;
+  };
+  let vatOnFeesPct: number, paymentFeePct: number, fixedOrderFee: number, deliveryContribution: number;
+  try {
+    vatOnFeesPct = optionalRate(params.vatOnFeesPct, "VAT on platform fees");
+    paymentFeePct = optionalRate(params.paymentFeePct, "Payment fee");
+    fixedOrderFee = optionalAmount(params.fixedOrderFee, "Fixed order fee");
+    deliveryContribution = optionalAmount(params.deliveryContribution, "Delivery contribution");
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Invalid commercial terms." };
   }
 
   // Confirmed live against Talabat's real catalog endpoint: chain_id is
@@ -106,6 +129,12 @@ export async function connectTalabat(params: {
           access_token: tokenResult.data.access_token,
           token_expires_at: new Date(Date.now() + tokenResult.data.expires_in * 1000).toISOString(),
           commission_rate_pct: commissionRate,
+          vat_on_fees_pct: vatOnFeesPct,
+          payment_fee_pct: paymentFeePct,
+          fixed_order_fee: fixedOrderFee,
+          delivery_contribution: deliveryContribution,
+          commercial_terms_source: "merchant_contract",
+          commercial_terms_updated_at: now,
         },
       },
       { onConflict: "account_id,merchant_id,platform" },

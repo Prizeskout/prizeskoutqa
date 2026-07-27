@@ -182,6 +182,19 @@ export type TalabatOrder = {
     order_total?: number;
     [key: string]: unknown;
   };
+  products?: TalabatOrderItem[];
+  items?: TalabatOrderItem[];
+  [key: string]: unknown;
+};
+
+export type TalabatOrderItem = {
+  id?: string;
+  sku?: string;
+  name?: string;
+  quantity?: number;
+  price?: number;
+  unit_price?: number;
+  total_price?: number;
   [key: string]: unknown;
 };
 
