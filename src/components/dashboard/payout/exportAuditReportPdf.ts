@@ -5,8 +5,9 @@
 //
 // Mirrors CommissionAuditPanel.tsx's tabs as closely as a static PDF
 // reasonably can: engagement cover, independent conclusion, assertion
-// matrix, four-way evidence chain, contract compliance, findings, daily
-// ledger, and evidence/lineage. Deliberately excluded: Materiality
+// matrix, four-way evidence chain, financial reconciliation bridge,
+// contract compliance, findings, daily ledger, and evidence/lineage.
+// Deliberately excluded: Materiality
 // framework, Recovery Cases, Month-End Close and Sign-off — those are live
 // workflow controls (editable inputs, separately-persisted case/close
 // registers) rather than computed report content, so a static export of
@@ -116,6 +117,15 @@ function drawSectionHeading(doc: jsPDF, y: number, title: string, note?: string)
 
 function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: number): number {
   const color = SEVERITY_COLOR[f.severity];
+  // Description-derived finding titles can run well past a single line (see
+  // friendlyLabel() in commission-audit.ts, which quotes any merchant
+  // description up to 60 chars verbatim) — must wrap and draw every title
+  // line, not just the first, or the title silently gets cut mid-sentence.
+  const titleMaxW = f.amount != null ? CONTENT_W - 55 : CONTENT_W - 14;
+  const titleLines = doc.splitTextToSize(f.title, titleMaxW);
+  const titleExtra = (titleLines.length - 1) * 4.2;
+  const detailStartY = 16.5 + titleExtra;
+
   const detailLines = doc.splitTextToSize(f.detail, CONTENT_W - 16);
   // Shows the actual investigation, not just the conclusion — every column
   // that could explain the charge, checked and confirmed at its real value.
@@ -123,7 +133,7 @@ function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: numbe
     ? `Checked: ${f.trace.checkedColumns.map(c => `${c.label} (${fmt(c.value, currency)})`).join(", ")} — all read zero.`
     : null;
   const checkedLines = checkedText ? doc.splitTextToSize(checkedText, CONTENT_W - 16) : [];
-  const boxH = 13 + detailLines.length * 4.4 + checkedLines.length * 4.2 + (checkedLines.length ? 1.5 : 0);
+  const boxH = 13 + titleExtra + detailLines.length * 4.4 + checkedLines.length * 4.2 + (checkedLines.length ? 1.5 : 0);
   let y = ensureSpace(doc, startY, boxH + 5);
 
   doc.setFillColor(255, 255, 255);
@@ -141,9 +151,7 @@ function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: numbe
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...INK);
-  const titleMaxW = f.amount != null ? CONTENT_W - 55 : CONTENT_W - 14;
-  const titleLines = doc.splitTextToSize(f.title, titleMaxW);
-  doc.text(titleLines[0], MARGIN_X + 7, y + 11);
+  doc.text(titleLines, MARGIN_X + 7, y + 11);
 
   if (f.amount != null) {
     doc.setFont("helvetica", "bold");
@@ -155,13 +163,13 @@ function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: numbe
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.3);
   doc.setTextColor(...MUTED);
-  doc.text(detailLines, MARGIN_X + 7, y + 16.5);
+  doc.text(detailLines, MARGIN_X + 7, y + detailStartY);
 
   if (checkedLines.length) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(7.8);
     doc.setTextColor(...FAINT);
-    doc.text(checkedLines, MARGIN_X + 7, y + 16.5 + detailLines.length * 4.4 + 1.5);
+    doc.text(checkedLines, MARGIN_X + 7, y + detailStartY + detailLines.length * 4.4 + 1.5);
   }
 
   return y + boxH + 5;
@@ -208,7 +216,7 @@ function drawStatGrid(
 function drawTable(
   doc: jsPDF, startY: number,
   columns: { header: string; x: number; w: number; align?: "left" | "right" }[],
-  rows: { cells: string[]; color?: RGB }[],
+  rows: { cells: string[]; color?: RGB; bold?: boolean }[],
   wrapColIndex: number,
 ): number {
   const drawHeader = (hy: number): number => {
@@ -232,7 +240,7 @@ function drawTable(
     y = ensureSpace(doc, y, rowH + 2);
     if (doc.getNumberOfPages() !== pagesBefore) y = drawHeader(y);
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", row.bold ? "bold" : "normal");
     doc.setFontSize(7.6);
     columns.forEach((c, i) => {
       doc.setTextColor(...(i === 1 && row.color ? row.color : INK));
@@ -456,6 +464,41 @@ export async function exportCommissionAuditPdf(
       y += lines.length * 4 + 4;
     }
     y += 3;
+  }
+
+  // ---- Financial reconciliation bridge --------------------------------------
+  {
+    const bank = documents.find(d => d.document_type === "merchant_received");
+    const statementAmount = statement?.result.expected_payout ?? null;
+    const bankAmount = bank?.result.received_amount ?? null;
+    const promotions = statement?.result.additional_income ?? 0;
+    const additionalCharges = statement?.result.additional_charges ?? 0;
+    const gross = data.ledgerTotals?.sales ?? statement?.result.sub_total_sum ?? 0;
+    const commissionAmt = data.ledgerTotals?.commission_at_agreed_rate ?? 0;
+    const totalExpected = data.ledgerTotals?.expected_net ?? 0;
+    const unresolved = bankAmount != null ? bankAmount - totalExpected : statementAmount != null ? statementAmount - totalExpected : 0;
+    const money = (n: number, deduction: boolean) => (deduction && n !== 0 ? `(${fmt(n, currency)})` : fmt(n, currency));
+    const bridgeRows: { label: string; value: number | null; source: string; deduction?: boolean; unavailable?: boolean; total?: boolean }[] = [
+      { label: "Gross eligible product sales", value: gross, source: "Activity ledger" },
+      { label: "Less cancellations and refunds", value: 0, source: "Not monetarily evidenced", deduction: true, unavailable: true },
+      { label: "Less contractual commission", value: commissionAmt, source: "Agreed rate x eligible sales", deduction: true },
+      { label: "Less VAT on fees", value: 0, source: "Not separately evidenced", deduction: true, unavailable: true },
+      { label: "Less payment and delivery fees", value: additionalCharges, source: statement ? "Platform statement" : "Not evidenced", deduction: true, unavailable: !statement },
+      { label: "Add platform-funded promotions", value: promotions, source: statement ? "Platform statement" : "Not evidenced" },
+      { label: "Expected settlement", value: totalExpected, source: "Deterministic ledger", total: true },
+      { label: "Platform-reported settlement", value: statementAmount, source: statement?.file_name ?? "No statement supplied" },
+      { label: "Bank-supported receipt", value: bankAmount, source: bank?.result.evidence_level === "document_supported" ? "Fingerprint recorded; review pending" : bank ? "Manual assertion" : "No bank evidence" },
+      { label: "Unresolved variance", value: unresolved, source: bankAmount != null ? "Bank receipt less expected settlement" : statementAmount != null ? "Statement less expected settlement" : "Cannot calculate", total: true },
+    ];
+    y = drawSectionHeading(doc, y, "Financial Reconciliation Bridge");
+    y = drawTable(doc, y, [
+      { header: "Reconciliation stage", x: MARGIN_X, w: 58 },
+      { header: "Amount", x: MARGIN_X + 78, w: 26, align: "right" },
+      { header: "Evidence / basis", x: MARGIN_X + 96, w: CONTENT_W - 96 },
+    ], bridgeRows.map(r => ({
+      cells: [r.label, r.value == null || r.unavailable ? "Not evidenced" : money(r.value, !!r.deduction), r.source],
+      bold: r.total,
+    })), 2);
   }
 
   // ---- Contract compliance -------------------------------------------------
