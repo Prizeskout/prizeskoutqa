@@ -7,6 +7,7 @@ import { SEVERITY_ORDER, formatDateRange, summarizeAudit } from "@/lib/commissio
 import type { ContractTerm } from "./ContractIntelligenceVault";
 import { runContractCompliance } from "@/lib/contract-compliance";
 import { RecoveryWorkspace } from "./RecoveryWorkspace";
+import { MonthEndCloseWorkspace } from "./MonthEndCloseWorkspace";
 
 const NAVY = "#14213D";
 const GREEN = "#087F5B";
@@ -24,7 +25,7 @@ export type CommissionAuditResult = {
   fourWay?: FourWayReconciliation;
 };
 
-type Tab = "summary" | "reconciliation" | "compliance" | "exceptions" | "recovery" | "transactions" | "evidence" | "methodology" | "signoff";
+type Tab = "summary" | "reconciliation" | "compliance" | "exceptions" | "recovery" | "close" | "transactions" | "evidence" | "methodology" | "signoff";
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "summary", label: "Executive Summary" },
@@ -32,6 +33,7 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "compliance", label: "Contract Compliance" },
   { id: "exceptions", label: "Exceptions" },
   { id: "recovery", label: "Recovery Cases" },
+  { id: "close", label: "Month-End Close" },
   { id: "transactions", label: "Transactions" },
   { id: "evidence", label: "Evidence" },
   { id: "methodology", label: "Methodology" },
@@ -198,6 +200,7 @@ export function CommissionAuditPanel({
 
     <div style={{ padding: "22px", display: "flex", flexDirection: "column", gap: 18 }}>
       {activeTab==="recovery"&&<RecoveryWorkspace findings={sortedFindings} contract={contractCoversAudit?approvedContract:null} currency={currency} orderCount={result.ledgerTotals?.orders??0}/>}
+      {activeTab==="close"&&<MonthEndCloseWorkspace totals={result.ledgerTotals} documents={documents} currency={currency} coverage={result.coverage}/>}
       {activeTab==="compliance"&&<section style={{...panel,padding:18}}>
         <SectionTitle number="4" title="Contract compliance workpaper" note={`${complianceTests.filter(test=>test.status==="failed").length} failed · ${complianceTests.filter(test=>test.status==="not_testable").length} not testable`}/>
         <div style={{fontSize:11.5,color:"var(--muted)",marginBottom:12}}>Tests are deterministic and evidence-gated. “Not testable” means the engine refused to infer a conclusion from missing or insufficient data.</div>

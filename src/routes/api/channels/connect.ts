@@ -26,6 +26,7 @@ import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/ser
 import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan } from "@/server/core/channel-price-plans";
 import { approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
+import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -583,6 +584,24 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ok:true,group:await approveGroupControls(merchant_id,body.approval_role as "finance"|"operations",body.reviewer.trim().slice(0,160))},200);
             }
             return resp({error:"Unsupported group-controls action."},400);
+          }
+
+          if(platform==="month_end_close"){
+            if(body.action==="list")return resp({ok:true,closes:await listMonthEndCloses(merchant_id)},200);
+            const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="save"){
+              if(!body.currency||!Array.isArray(raw.schedules)||!Array.isArray(raw.journals)||!Array.isArray(raw.limitations))return resp({error:"Currency, schedules, journals, and limitations are required."},400);
+              return resp({ok:true,close:await saveMonthEndClose(merchant_id,{
+                period_start:body.period_start||null,period_end:body.period_end||null,currency:body.currency.slice(0,8),
+                status:"draft",schedules:(raw.schedules as unknown[]).slice(0,100),journals:(raw.journals as unknown[]).slice(0,250),
+                limitations:(raw.limitations as unknown[]).slice(0,100),prepared_by:body.prepared_by?.trim().slice(0,160)||"PrizeSkout close engine",
+              })},200);
+            }
+            if(body.action==="advance"){
+              if(!body.id||!["reviewed","approved","locked"].includes(body.close_status)||!body.reviewer?.trim())return resp({error:"Close id, valid status, and reviewer are required."},400);
+              return resp({ok:true,close:await advanceMonthEndClose(merchant_id,body.id,body.close_status as "reviewed"|"approved"|"locked",body.reviewer.trim().slice(0,160))},200);
+            }
+            return resp({error:"Unsupported month-end-close action."},400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
