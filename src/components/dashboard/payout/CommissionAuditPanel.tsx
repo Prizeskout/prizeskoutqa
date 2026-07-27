@@ -146,7 +146,10 @@ export function CommissionAuditPanel({
     setDownloading(true);
     try {
       const { exportCommissionAuditPdf } = await import("./exportAuditReportPdf");
-      await exportCommissionAuditPdf(result, currency, documentCount);
+      await exportCommissionAuditPdf(result, currency, documentCount, {
+        documents, approvedContract: contractCoversAudit ? approvedContract : null,
+        preparedBy, reviewStatus: locked ? "Locked final" : reviewedBy ? "Review in progress" : "Unreviewed draft",
+      });
     } finally { setDownloading(false); }
   };
 

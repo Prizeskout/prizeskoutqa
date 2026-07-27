@@ -3,6 +3,16 @@
 // visual conventions already established by exportPayoutReportPdf.ts — clean
 // bordered cards for data, color reserved for severity/total figures.
 //
+// Mirrors CommissionAuditPanel.tsx's tabs as closely as a static PDF
+// reasonably can: engagement cover, independent conclusion, assertion
+// matrix, four-way evidence chain, contract compliance, findings, daily
+// ledger, and evidence/lineage. Deliberately excluded: Materiality
+// framework, Recovery Cases, Month-End Close and Sign-off — those are live
+// workflow controls (editable inputs, separately-persisted case/close
+// registers) rather than computed report content, so a static export of
+// them would either be misleading (unapproved inputs frozen mid-edit) or
+// redundant with their own dedicated records.
+//
 // Deliberately no chart here: jsPDF has no charting primitive worth trusting
 // for a 30+ point line series (the earlier hand-drawn warning icon was
 // simple vector shapes, not a data plot) — the findings and ledger tables
@@ -22,13 +32,18 @@ import {
   type RGB,
   drawBrandedFooters,
   drawBrandedHeader,
-  drawLabel,
   ensureSpace,
   resolveBrandTheme,
   slugifyBrand,
   tint,
 } from "@/lib/pdfBranding";
-import { formatDateRange, summarizeAudit, type Finding, type LedgerRow } from "@/lib/commission-audit";
+import {
+  formatDateRange, summarizeAudit,
+  type AuditAssertion, type AuditAssurance, type ClassifiedDocument, type Finding,
+  type FourWayReconciliation, type FourWayStage, type LedgerRow,
+} from "@/lib/commission-audit";
+import { runContractCompliance, type ComplianceTest } from "@/lib/contract-compliance";
+import type { ContractTerm } from "./ContractIntelligenceVault";
 
 export type CommissionAuditPdfData = {
   ledger: LedgerRow[];
@@ -36,6 +51,15 @@ export type CommissionAuditPdfData = {
   findings: Finding[];
   coverage: { start: string; end: string } | null;
   netSalesOverrideDocs?: string[];
+  assurance?: AuditAssurance;
+  fourWay?: FourWayReconciliation;
+};
+
+export type CommissionAuditPdfOptions = {
+  documents?: ClassifiedDocument[];
+  approvedContract?: ContractTerm | null;
+  preparedBy?: string;
+  reviewStatus?: string;
 };
 
 function fmt(n: number, currency: string): string {
@@ -44,6 +68,16 @@ function fmt(n: number, currency: string): string {
 
 function todayLabel(): string {
   return new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+// Same formula as CommissionAuditPanel.tsx's engagementId useMemo — kept in
+// sync deliberately so the ID printed on a PDF export always matches the ID
+// shown live for the same audit (same coverage/documentCount/orders seed).
+function engagementId(coverage: { start: string; end: string } | null, documentCount: number, orders: number): string {
+  const seed = `${coverage?.start ?? "open"}-${coverage?.end ?? "open"}-${documentCount}-${orders}`;
+  let hash = 2166136261;
+  for (const char of seed) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return `PS-AUD-${Math.abs(hash >>> 0).toString(16).toUpperCase().padStart(8, "0")}`;
 }
 
 const SEVERITY_COLOR: Record<Finding["severity"], RGB> = {
@@ -57,6 +91,28 @@ const SEVERITY_LABEL: Record<Finding["severity"], string> = {
   warning: "REVIEW",
   info: "INFO",
 };
+
+const STATUS_COLOR: Record<string, RGB> = {
+  passed: GREEN, matched: GREEN, verified: GREEN,
+  failed: RED, unmatched: RED, critical: RED,
+  partial: AMBER, review: AMBER, asserted: AMBER,
+  missing: RED, not_testable: FAINT,
+};
+
+function drawSectionHeading(doc: jsPDF, y: number, title: string, note?: string): number {
+  y = ensureSpace(doc, y, 14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12.5);
+  doc.setTextColor(...INK);
+  doc.text(title, MARGIN_X, y);
+  if (note) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...MUTED);
+    doc.text(note, MARGIN_X + CONTENT_W, y, { align: "right" });
+  }
+  return y + 7;
+}
 
 function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: number): number {
   const color = SEVERITY_COLOR[f.severity];
@@ -111,11 +167,156 @@ function drawFindingCard(doc: jsPDF, f: Finding, currency: string, startY: numbe
   return y + boxH + 5;
 }
 
-export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, currency: string, documentCount = 1): Promise<void> {
+// Generic bordered-card stat grid — used for the cover fields, the
+// evidence/materiality grid, and the key-figures strip. `cols` cards per
+// row, each sized to fit CONTENT_W evenly.
+function drawStatGrid(
+  doc: jsPDF, startY: number,
+  blocks: { label: string; value: string; color?: RGB }[],
+  cols: number, cardH: number,
+): number {
+  const gap = 4.5;
+  const bw = (CONTENT_W - gap * (cols - 1)) / cols;
+  let y = startY;
+  blocks.forEach((b, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    if (col === 0) y = ensureSpace(doc, y, cardH + gap);
+    const x = MARGIN_X + col * (bw + gap);
+    const cardY = y + row * (cardH + gap);
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, cardY, bw, cardH, 2, 2, "FD");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.8);
+    doc.setTextColor(...FAINT);
+    doc.text(b.label.toUpperCase(), x + 5, cardY + 7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...(b.color ?? INK));
+    const valLines = doc.splitTextToSize(b.value, bw - 10).slice(0, 3);
+    doc.text(valLines, x + 5, cardY + 15.5);
+  });
+  const rows = Math.ceil(blocks.length / cols);
+  return y + rows * cardH + (rows - 1) * gap + 9;
+}
+
+// Generic dynamic-row-height table: fixed-width columns plus one wrapped
+// column (usually the last). Used for the assertion matrix, contract
+// compliance and evidence lineage tables.
+function drawTable(
+  doc: jsPDF, startY: number,
+  columns: { header: string; x: number; w: number; align?: "left" | "right" }[],
+  rows: { cells: string[]; color?: RGB }[],
+  wrapColIndex: number,
+): number {
+  const drawHeader = (hy: number): number => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.8);
+    doc.setTextColor(...FAINT);
+    columns.forEach(c => doc.text(c.header.toUpperCase(), c.x, hy, c.align === "right" ? { align: "right" } : undefined));
+    doc.setDrawColor(...BORDER);
+    doc.line(MARGIN_X, hy + 2, MARGIN_X + CONTENT_W, hy + 2);
+    return hy + 6.5;
+  };
+
+  let y = ensureSpace(doc, startY, 10);
+  y = drawHeader(y);
+
+  for (const row of rows) {
+    const wrapCol = columns[wrapColIndex];
+    const wrapLines = doc.splitTextToSize(row.cells[wrapColIndex] || "—", wrapCol.w);
+    const rowH = Math.max(5.8, wrapLines.length * 4 + 2.5);
+    const pagesBefore = doc.getNumberOfPages();
+    y = ensureSpace(doc, y, rowH + 2);
+    if (doc.getNumberOfPages() !== pagesBefore) y = drawHeader(y);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.6);
+    columns.forEach((c, i) => {
+      doc.setTextColor(...(i === 1 && row.color ? row.color : INK));
+      if (i === wrapColIndex) {
+        doc.text(wrapLines, c.x, y, c.align === "right" ? { align: "right" } : undefined);
+      } else {
+        const lines = doc.splitTextToSize(row.cells[i] || "—", c.w);
+        doc.text(lines[0] ?? "", c.x, y, c.align === "right" ? { align: "right" } : undefined);
+      }
+    });
+    doc.setDrawColor(...tint(BORDER, 0.5));
+    doc.setLineWidth(0.15);
+    doc.line(MARGIN_X, y + rowH - 3.5, MARGIN_X + CONTENT_W, y + rowH - 3.5);
+    y += rowH;
+  }
+  return y + 4;
+}
+
+function assertionRows(assertions: AuditAssertion[]): { cells: string[]; color?: RGB }[] {
+  return assertions.map(a => ({
+    cells: [a.label, a.status.toUpperCase(), a.detail],
+    color: STATUS_COLOR[a.status] ?? INK,
+  }));
+}
+
+function complianceRows(tests: ComplianceTest[], currency: string): { cells: string[]; color?: RGB }[] {
+  return tests.map(t => ({
+    cells: [t.title, t.status.replaceAll("_", " ").toUpperCase(), t.amount == null ? "—" : fmt(t.amount, currency), t.explanation],
+    color: STATUS_COLOR[t.status] ?? INK,
+  }));
+}
+
+function drawStageCard(doc: jsPDF, stage: FourWayStage, index: number, currency: string, startY: number): number {
+  const basisLines = doc.splitTextToSize(stage.evidenceBasis, CONTENT_W - 60);
+  const boxH = Math.max(16, 8 + basisLines.length * 3.8);
+  let y = ensureSpace(doc, startY, boxH + 4);
+  const color = STATUS_COLOR[stage.status] ?? FAINT;
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(MARGIN_X, y, CONTENT_W, boxH, 2, 2, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.3);
+  doc.setTextColor(...INK);
+  doc.text(`${index + 1}. ${stage.label}`, MARGIN_X + 5, y + 6.5);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...color);
+  const coverageLabel = stage.coverage ? formatDateRange(stage.coverage.start, stage.coverage.end) : "Period not established";
+  doc.text(stage.status.toUpperCase(), MARGIN_X + CONTENT_W - 55, y + 6.5, { align: "right" });
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...INK);
+  doc.text(stage.amount == null ? "Not evidenced" : fmt(stage.amount, currency), MARGIN_X + CONTENT_W - 5, y + 6.5, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.4);
+  doc.setTextColor(...MUTED);
+  doc.text(basisLines, MARGIN_X + 5, y + 11.5);
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(6.8);
+  doc.setTextColor(...FAINT);
+  doc.text(`${coverageLabel} · ${stage.evidenceIds.length} source${stage.evidenceIds.length === 1 ? "" : "s"}`, MARGIN_X + 5, y + boxH - 2.5);
+
+  return y + boxH + 3.5;
+}
+
+export async function exportCommissionAuditPdf(
+  data: CommissionAuditPdfData,
+  currency: string,
+  documentCount = 1,
+  options: CommissionAuditPdfOptions = {},
+): Promise<void> {
+  const { documents = [], approvedContract = null, preparedBy = "PrizeSkout Revenue Assurance Engine", reviewStatus = "Unreviewed draft" } = options;
   const theme = resolveBrandTheme();
   const { branding, accent } = theme;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const summary = summarizeAudit(data, documentCount);
+  const assurance = data.assurance;
 
   const coverageLabel = data.coverage ? formatDateRange(data.coverage.start, data.coverage.end) : "";
   const subtitle = `Commission reconciliation${coverageLabel ? `  |  ${coverageLabel}` : ""}  |  ${todayLabel()}`;
@@ -140,58 +341,137 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
     y += boxH + 8;
   }
 
-  // Executive summary — the one-sentence takeaway, before any numbers.
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...INK);
-  const headlineLines = doc.splitTextToSize(summary.headline, CONTENT_W);
-  doc.text(headlineLines, MARGIN_X, y);
-  y += headlineLines.length * 5.4 + 8;
+  // ---- Engagement cover ------------------------------------------------
+  const statement = documents.find(d => d.document_type === "statement");
+  const contractCoversAudit = Boolean(approvedContract
+    && (!data.coverage?.start || approvedContract.effective_from <= data.coverage.start)
+    && (!approvedContract.effective_to || !data.coverage?.end || approvedContract.effective_to >= data.coverage.end));
+  y = drawSectionHeading(doc, y, "Engagement Cover");
+  y = drawStatGrid(doc, y, [
+    { label: "Platform / branch", value: `${statement?.platform_guess ?? documents[0]?.platform_guess ?? "Not established"}` },
+    { label: "Audit period", value: coverageLabel || "Open / not established" },
+    { label: "Currency", value: currency },
+    { label: "Engagement ID", value: engagementId(data.coverage, documentCount, data.ledgerTotals?.orders ?? 0) },
+    { label: "Engine version", value: assurance?.engineVersion ?? "legacy" },
+    { label: "Review status", value: reviewStatus },
+  ], 3, 16);
 
-  // Summary strip — 2 rows of 3 (not 6-across) so each card is wide enough
-  // that "QAR 12,663"-style values never wrap inside a fixed-height card.
-  const blocks: { label: string; value: string; color: RGB }[] = [
-    { label: "Documents", value: String(summary.documentCount), color: INK },
-    { label: "Days Covered", value: String(summary.daysCovered), color: INK },
-    { label: "Total Sales", value: fmt(summary.totalSales, currency), color: INK },
-    { label: "Commission / Order", value: summary.commissionPerOrder != null ? `${currency} ${summary.commissionPerOrder.toFixed(2)}` : "—", color: INK },
-    { label: "Expected Net", value: fmt(summary.totalExpectedNet, currency), color: accent },
-    { label: "Findings", value: `${summary.criticalCount} critical, ${summary.warningCount} to review`, color: summary.criticalCount > 0 ? RED : INK },
-  ];
-  const cols = 3;
-  const gap = 4.5;
-  const bw = (CONTENT_W - gap * (cols - 1)) / cols;
-  const cardH = 22;
-  blocks.forEach((b, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = MARGIN_X + col * (bw + gap);
-    const cardY = y + row * (cardH + gap);
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(...BORDER);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(x, cardY, bw, cardH, 2, 2, "FD");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.8);
-    doc.setTextColor(...FAINT);
-    doc.text(b.label.toUpperCase(), x + 5, cardY + 7.5);
+  // ---- Independent conclusion -------------------------------------------
+  const opinionColor = assurance?.opinion === "insufficient_evidence" ? AMBER : assurance?.opinion === "exceptions_found" ? RED : GREEN;
+  y = drawSectionHeading(doc, y, "Independent Conclusion");
+  y = ensureSpace(doc, y, 20);
+  doc.setFillColor(...tint(opinionColor, 0.94));
+  doc.setDrawColor(...tint(opinionColor, 0.5));
+  doc.setLineWidth(0.4);
+  const headlineLines = doc.splitTextToSize(summary.headline, CONTENT_W - 10);
+  const opinionBoxH = 16 + headlineLines.length * 4.4;
+  doc.roundedRect(MARGIN_X, y, CONTENT_W, opinionBoxH, 2, 2, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  doc.setTextColor(...opinionColor);
+  doc.text(assurance?.opinionLabel ?? "Legacy result — assurance not assessed", MARGIN_X + 5, y + 8);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.3);
+  doc.setTextColor(...INK);
+  doc.text(headlineLines, MARGIN_X + 5, y + 14.5);
+  y += opinionBoxH + 7;
+
+  const receivedLabels = documents.map(d => d.document_type);
+  const evidenceReceived = [
+    receivedLabels.includes("daily_log") && "activity log",
+    receivedLabels.includes("statement") && "platform statement",
+    receivedLabels.includes("merchant_received") && "bank settlement record",
+  ].filter(Boolean).join(", ") || "no structured evidence";
+  const effectiveAssertions: AuditAssertion[] = (assurance?.assertions ?? []).map(a =>
+    a.id === "authorization" && contractCoversAudit
+      ? { ...a, status: "passed" as const, detail: `Reviewed ${approvedContract?.contract_name} covers the audit period; ${approvedContract?.commission_rate_pct}% commission was approved by ${approvedContract?.reviewed_by}.` }
+      : a);
+  const missingEvidence = effectiveAssertions.filter(a => a.status === "missing").map(a => a.label).join(", ") || "none identified";
+  const evidenceReadinessPct = Math.round(effectiveAssertions.reduce((s, a) => s + (a.status === "passed" ? 100 : a.status === "partial" ? 50 : 0), 0) / Math.max(effectiveAssertions.length, 1));
+
+  y = drawStatGrid(doc, y, [
+    { label: "Evidence received", value: contractCoversAudit ? `${evidenceReceived}, reviewed contract` : evidenceReceived },
+    { label: "Evidence missing", value: missingEvidence },
+    { label: "Claims-ready", value: fmt(summary.claimsReadyAmount, currency), color: GREEN },
+    { label: "Estimated exceptions", value: fmt(summary.estimatedExposure, currency), color: AMBER },
+    { label: "Evidence readiness", value: `${evidenceReadinessPct}%` },
+    { label: "Documents · Days covered", value: `${documentCount} · ${summary.daysCovered}` },
+  ], 3, 18);
+
+  const requiredActions = effectiveAssertions.filter(a => a.status !== "passed").slice(0, 3).map(a => a.detail);
+  if (requiredActions.length) {
+    y = ensureSpace(doc, y, 8 + requiredActions.length * 8);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(b.label === "Findings" ? 9.5 : 13);
-    doc.setTextColor(...b.color);
-    const valLines = doc.splitTextToSize(b.value, bw - 10);
-    doc.text(valLines, x + 5, cardY + 16.5);
-  });
-  const rows = Math.ceil(blocks.length / cols);
-  y += rows * cardH + (rows - 1) * gap + 10;
+    doc.setFontSize(8.5);
+    doc.setTextColor(...INK);
+    doc.text("Required before a conclusion can be issued:", MARGIN_X, y);
+    y += 5.5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.8);
+    doc.setTextColor(...MUTED);
+    for (const action of requiredActions) {
+      const lines = doc.splitTextToSize(`•  ${action}`, CONTENT_W - 4);
+      y = ensureSpace(doc, y, lines.length * 4);
+      doc.text(lines, MARGIN_X + 2, y);
+      y += lines.length * 4 + 1.5;
+    }
+    y += 3;
+  }
 
-  // Findings
-  y = ensureSpace(doc, y, 14);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12.5);
-  doc.setTextColor(...INK);
-  doc.text("Findings", MARGIN_X, y);
-  y += 7;
+  // ---- Assertion matrix ---------------------------------------------------
+  if (effectiveAssertions.length) {
+    y = drawSectionHeading(doc, y, "Assertion Matrix", "Status reflects evidence, not appearance");
+    y = drawTable(doc, y, [
+      { header: "Assertion", x: MARGIN_X, w: 26 },
+      { header: "Status", x: MARGIN_X + 28, w: 20 },
+      { header: "Auditor note", x: MARGIN_X + 50, w: CONTENT_W - 50 },
+    ], assertionRows(effectiveAssertions), 2);
+  }
 
+  // ---- Four-way evidence chain ---------------------------------------------
+  if (data.fourWay?.stages.length) {
+    y = drawSectionHeading(doc, y, "Four-Way Evidence Chain", "Documentary evidence and assertions graded separately");
+    data.fourWay.stages.forEach((stage, i) => { y = drawStageCard(doc, stage, i, currency, y); });
+    y += 2;
+    if (data.fourWay.links.length) {
+      const stageLabel = (id: FourWayStage["id"]) => data.fourWay?.stages.find(s => s.id === id)?.label ?? id;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.6);
+      for (const link of data.fourWay.links) {
+        const text = `${stageLabel(link.from)} -> ${stageLabel(link.to)}: ${link.status.replaceAll("_", " ").toUpperCase()}${link.variance != null ? ` (${fmt(link.variance, currency)})` : ""} — ${link.explanation}`;
+        const lines = doc.splitTextToSize(text, CONTENT_W);
+        y = ensureSpace(doc, y, lines.length * 4 + 2);
+        doc.setTextColor(...(STATUS_COLOR[link.status] ?? INK));
+        doc.text(lines, MARGIN_X, y);
+        y += lines.length * 4 + 2;
+      }
+    }
+    if (data.fourWay.merchantAssertionOnly) {
+      y = ensureSpace(doc, y, 10);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.6);
+      doc.setTextColor(120, 78, 8);
+      const lines = doc.splitTextToSize("Merchant-entered receipt is an assertion, not documentary settlement evidence. It cannot support a claims-ready conclusion by itself.", CONTENT_W);
+      doc.text(lines, MARGIN_X, y);
+      y += lines.length * 4 + 4;
+    }
+    y += 3;
+  }
+
+  // ---- Contract compliance -------------------------------------------------
+  if (documents.length) {
+    const complianceTests = runContractCompliance(documents, contractCoversAudit ? approvedContract : null, data.fourWay);
+    y = drawSectionHeading(doc, y, "Contract Compliance", `${complianceTests.filter(t => t.status === "failed").length} failed`);
+    y = drawTable(doc, y, [
+      { header: "Test", x: MARGIN_X, w: 42 },
+      { header: "Result", x: MARGIN_X + 44, w: 20 },
+      { header: "Amount", x: MARGIN_X + 88, w: 20, align: "right" },
+      { header: "Explanation", x: MARGIN_X + 112, w: CONTENT_W - 112 },
+    ], complianceRows(complianceTests, currency), 3);
+  }
+
+  // ---- Findings -------------------------------------------------------------
+  y = drawSectionHeading(doc, y, "Findings");
   if (data.findings.length === 0) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9.5);
@@ -207,14 +487,9 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
   }
   y += 3;
 
-  // Daily ledger — compact table with header repeated across page breaks.
+  // ---- Daily ledger — compact table with header repeated across page breaks.
   if (data.ledger.length > 0) {
-    y = ensureSpace(doc, y, 16);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12.5);
-    doc.setTextColor(...INK);
-    doc.text("Daily Ledger", MARGIN_X, y);
-    y += 7;
+    y = drawSectionHeading(doc, y, "Daily Ledger");
 
     const colX = {
       date: MARGIN_X,
@@ -274,7 +549,48 @@ export async function exportCommissionAuditPdf(data: CommissionAuditPdfData, cur
       doc.text(fmt(data.ledgerTotals.commission_at_agreed_rate, currency), colX.commission, y, { align: "right" });
       doc.setTextColor(...GREEN);
       doc.text(fmt(data.ledgerTotals.expected_net, currency), colX.net, y, { align: "right" });
+      y += 9;
     }
+  }
+
+  // ---- Evidence & lineage ----------------------------------------------------
+  if (documents.length) {
+    y = drawSectionHeading(doc, y, "Evidence & Lineage", "Source provenance and processing disclosures");
+    y = drawTable(doc, y, [
+      { header: "Filename", x: MARGIN_X, w: 44 },
+      { header: "SHA-256", x: MARGIN_X + 46, w: 26 },
+      { header: "Platform", x: MARGIN_X + 74, w: 22 },
+      { header: "Period", x: MARGIN_X + 98, w: 36 },
+      { header: "Overrides", x: MARGIN_X + 136, w: CONTENT_W - 136 },
+    ], documents.map(d => ({
+      cells: [
+        d.file_name,
+        d.result.evidence_sha256 ? `${d.result.evidence_sha256.slice(0, 10)}…` : "Not recorded",
+        d.platform_guess ?? "Not established",
+        d.result.period_start ? formatDateRange(d.result.period_start, d.result.period_end) : "Not established",
+        d.treat_sales_as_net ? "Sales treated as net" : "None",
+      ],
+    })), 4);
+  }
+
+  // ---- Methodology & limitations ----------------------------------------------
+  y = drawSectionHeading(doc, y, "Methodology & Limitations");
+  const methodology = [
+    "Align periods before comparing totals; disjoint periods are never treated as exceptions.",
+    "Quarantine duplicate dates rather than summing potentially duplicated turnover.",
+    "Recompute expected commission using merchant-supplied commercial terms.",
+    "Separate merchant assertions, single-source estimates and corroborated evidence.",
+    "Do not present estimates as claims-ready recoveries.",
+    "Current limitations: no reviewed signed contract unless noted above, no order-level vouching where only aggregates exist, and no bank-file content review unless separately performed.",
+  ];
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.8);
+  doc.setTextColor(...MUTED);
+  for (const item of methodology) {
+    const lines = doc.splitTextToSize(`•  ${item}`, CONTENT_W - 4);
+    y = ensureSpace(doc, y, lines.length * 4 + 1.5);
+    doc.text(lines, MARGIN_X + 2, y);
+    y += lines.length * 4 + 1.5;
   }
 
   drawBrandedFooters(doc, theme);
