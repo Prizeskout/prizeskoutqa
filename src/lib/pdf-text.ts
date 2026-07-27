@@ -29,6 +29,21 @@ export async function extractPdfText(file: File): Promise<string> {
   return pages.join("\n");
 }
 
+/** Preserves page boundaries so contract-clause citations remain reviewable. */
+export async function extractPdfTextWithPages(file: File): Promise<string> {
+  const pdfjsLib = await import("pdfjs-dist");
+  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+  const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(`[PAGE ${i}]\n${reconstructReadingOrder(content.items)}`);
+  }
+  return pages.join("\n\n");
+}
+
 function reconstructReadingOrder(items: unknown[]): string {
   const Y_TOLERANCE = 1.5; // verified against a real report: separates
     // genuinely distinct rows ~2pt apart while still merging same-row items.

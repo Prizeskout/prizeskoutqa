@@ -18,10 +18,18 @@ export type ContractTerm = {
   reviewed_by: string | null;
   approved_at: string | null;
   created_at: string;
+  extraction_json: Record<string, unknown> | null;
+  extraction_model: string | null;
+  extraction_confidence: number | null;
+  extracted_at: string | null;
 };
 
 const table = () => (supabaseAdmin as any).from("ps_marketplace_contract_terms");
-const missingTable = (error: any) => error?.code === "42P01" || /ps_marketplace_contract_terms/i.test(error?.message ?? "");
+// Fall back while either migration is still waiting for deployment. 42P01 is
+// the base table; 42703 is an extraction-provenance column from phase two.
+const missingTable = (error: any) =>
+  error?.code === "42P01" || error?.code === "42703"
+  || /ps_marketplace_contract_terms/i.test(error?.message ?? "");
 
 async function fallbackTerms(accountId: string): Promise<ContractTerm[]> {
   const { data } = await supabaseAdmin
@@ -36,7 +44,7 @@ async function fallbackTerms(accountId: string): Promise<ContractTerm[]> {
 
 export async function listContractTerms(accountId: string): Promise<ContractTerm[]> {
   const { data, error } = await table()
-    .select("id, platform, contract_name, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, effective_from, effective_to, status, source_file_name, source_sha256, notes, reviewed_by, approved_at, created_at")
+    .select("id, platform, contract_name, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, effective_from, effective_to, status, source_file_name, source_sha256, notes, reviewed_by, approved_at, created_at, extraction_json, extraction_model, extraction_confidence, extracted_at")
     .eq("account_id", accountId)
     .order("effective_from", { ascending: false });
   if (missingTable(error)) return fallbackTerms(accountId);

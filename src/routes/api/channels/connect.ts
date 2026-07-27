@@ -21,6 +21,7 @@ import { approveContractTerm, listContractTerms, saveContractDraft } from "@/ser
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
+import { extractContractTerms } from "@/server/core/contract-extractor";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -353,6 +354,7 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ ok: true, terms: await listContractTerms(merchant_id) }, 200);
             }
             if (body.action === "save_draft") {
+              const raw = body as unknown as Record<string, unknown>;
               const commission = Number(body.commission_rate_pct);
               const vat = Number(body.vat_on_fees_pct || 0);
               const payment = Number(body.payment_fee_pct || 0);
@@ -377,8 +379,27 @@ export const Route = createFileRoute("/api/channels/connect")({
                 source_file_name: body.source_file_name?.trim().slice(0, 220) || null,
                 source_sha256: /^[a-f0-9]{64}$/i.test(body.source_sha256 || "") ? body.source_sha256.toLowerCase() : null,
                 notes: body.notes?.trim().slice(0, 1200) || null,
+                extraction_json: raw.extraction && typeof raw.extraction === "object"
+                  ? raw.extraction as Record<string, unknown>
+                  : null,
+                extraction_model: body.extraction_model?.trim().slice(0, 120) || null,
+                extraction_confidence: Number.isFinite(Number(body.extraction_confidence))
+                  ? Number(body.extraction_confidence)
+                  : null,
+                extracted_at: body.extracted_at || null,
               });
               return resp({ ok: true, term }, 200);
+            }
+            if (body.action === "extract") {
+              const raw = body as unknown as Record<string, unknown>;
+              const documentText = typeof raw.document_text === "string" ? raw.document_text : "";
+              if (documentText.length > 100_000) {
+                return resp({ error: "Agreement text is too large (maximum 100,000 characters)." }, 413);
+              }
+              const result = await extractContractTerms(documentText);
+              return result.ok
+                ? resp({ ok: true, extraction: result.extraction, model: result.model }, 200)
+                : resp({ ok: false, error: result.error }, 422);
             }
             if (body.action === "approve") {
               if (!body.id || !body.reviewed_by?.trim()) {
