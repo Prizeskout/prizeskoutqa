@@ -22,6 +22,7 @@ import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAud
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
+import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/server/core/recovery-cases";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -475,6 +476,44 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ ok: true, term }, 200);
             }
             return resp({ error: "Unsupported contract-terms action." }, 400);
+          }
+
+          if(platform==="recovery_cases"){
+            if(body.action==="list")return resp({ok:true,cases:await listRecoveryCases(merchant_id)},200);
+            const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="create"){
+              if(!body.exception_key||!body.title||!body.explanation_en||!body.explanation_ar)return resp({error:"Exception identity and bilingual explanations are required."},400);
+              const exceptionAmount=raw.exception_amount==null?null:Number(raw.exception_amount);
+              const claimsReady=Number(raw.claims_ready_amount??0);
+              const recovered=Number(raw.recovered_amount??0);
+              if((exceptionAmount!=null&&!Number.isFinite(exceptionAmount))||![claimsReady,recovered].every(Number.isFinite))return resp({error:"Recovery case contains an invalid amount."},400);
+              const item=await createRecoveryCase(merchant_id,{
+                platform:(body.source_platform||"talabat").toLowerCase(),exception_key:body.exception_key.slice(0,180),title:body.title.slice(0,240),
+                status:body.case_status==="ready"?"ready":"evidence_required",severity:body.severity||"warning",
+                exception_amount:exceptionAmount,claims_ready_amount:claimsReady,confidence:body.confidence||"low",
+                affected_orders:raw.affected_orders==null?null:Number(raw.affected_orders),
+                contract_term_id:body.contract_term_id||null,contract_clause:body.contract_clause?.slice(0,500)||null,
+                regulatory_reference:body.regulatory_reference?.slice(0,500)||null,
+                evidence_sources:Array.isArray(raw.evidence_sources)?raw.evidence_sources.filter(v=>typeof v==="string").slice(0,50) as string[]:[],
+                calculation:raw.calculation&&typeof raw.calculation==="object"?raw.calculation as Record<string,unknown>:{},
+                explanation_en:body.explanation_en.slice(0,3000),explanation_ar:body.explanation_ar.slice(0,3000),
+                submission_deadline:body.submission_deadline||null,owner:body.owner?.slice(0,160)||null,
+                platform_response:null,recovered_amount:recovered,
+              });
+              return resp({ok:true,case:item},200);
+            }
+            if(body.action==="update"){
+              if(!body.id)return resp({error:"Recovery case id is required."},400);
+              const allowed=["evidence_required","draft","ready","submitted_manually","platform_review","accepted","rejected","recovered","closed"];
+              const item=await updateRecoveryCase(merchant_id,body.id,{
+                status:allowed.includes(body.case_status)?body.case_status as any:undefined,
+                owner:body.owner?.slice(0,160)||null,submission_deadline:body.submission_deadline||null,
+                platform_response:body.platform_response?.slice(0,3000)||null,
+                recovered_amount:Number.isFinite(Number(raw.recovered_amount))?Number(raw.recovered_amount):0,
+              });
+              return resp({ok:true,case:item},200);
+            }
+            return resp({error:"Unsupported recovery-case action."},400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
