@@ -7,6 +7,7 @@ import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } 
 import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import { SettlementForecastPanel } from "@/components/dashboard/payout/SettlementForecastPanel";
 import { PromotionProfitabilityWorkspace } from "@/components/dashboard/promotions/PromotionProfitabilityWorkspace";
+import { ChannelPriceArchitecture } from "@/components/dashboard/pricing/ChannelPriceArchitecture";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
@@ -2398,6 +2399,19 @@ export function PrizeSkoutDashboard() {
                   current_price:product.current_price,
                   net_margin_pct:product.net_margin_pct,
                   source_platform:product.source_platform,
+                }))}
+                contract={approvedContract}
+                currency={currency}
+              />
+
+              <ChannelPriceArchitecture
+                products={importedProducts.map(product=>({
+                  sku:product.sku,
+                  name:product.name_en||product.name_ar||product.sku,
+                  current_price:product.current_price,
+                  net_margin_pct:product.net_margin_pct,
+                  source_platform:product.source_platform,
+                  ingest_event_id:product.ingest_event_id,
                 }))}
                 contract={approvedContract}
                 currency={currency}

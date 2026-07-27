@@ -24,6 +24,7 @@ import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
 import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/server/core/recovery-cases";
 import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
+import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan } from "@/server/core/channel-price-plans";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -546,6 +547,21 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ok:true,scenario:item},200);
             }
             return resp({error:"Unsupported promotion-scenario action."},400);
+          }
+
+          if(platform==="channel_price_plans"){
+            if(body.action==="list")return resp({ok:true,plans:await listChannelPricePlans(merchant_id)},200);
+            const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="create"){
+              if(!body.name?.trim()||!Array.isArray(raw.channel_config)||!Array.isArray(raw.rows))return resp({error:"Plan name, channel configuration, and price rows are required."},400);
+              if(raw.rows.length>5000)return resp({error:"A price plan can contain at most 5,000 rows."},400);
+              return resp({ok:true,plan:await saveChannelPricePlan(merchant_id,body.name.trim().slice(0,180),raw.channel_config,raw.rows)},200);
+            }
+            if(body.action==="approve"){
+              if(!body.id||!body.approved_by?.trim())return resp({error:"Plan id and approver name are required."},400);
+              return resp({ok:true,plan:await approveChannelPricePlan(merchant_id,body.id,body.approved_by.trim().slice(0,160))},200);
+            }
+            return resp({error:"Unsupported channel-price-plan action."},400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
