@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth-context";
 import { GeoSuggestionContext } from "@/lib/lang-suggestion";
 import { LangSuggestionPill } from "@/components/LangSuggestionPill";
@@ -249,6 +250,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const loaderData = Route.useLoaderData();
   const geo = loaderData?.geo ?? { suggestedLocale: null, country: null };
+
+  // Zid appends the registered embedded token to the configured Application
+  // URL. Keep the handoff global so an older/root/dashboard URL still enters
+  // through the secure embedded bootstrap instead of showing a login screen.
+  useEffect(() => {
+    if (window.location.pathname === "/embedded/zid") return;
+    const token = new URLSearchParams(window.location.search).get("token")?.trim() ?? "";
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)) return;
+    window.location.replace(`/embedded/zid?token=${encodeURIComponent(token)}`);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
