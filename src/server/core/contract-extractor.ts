@@ -32,6 +32,12 @@ export type ExtractContractResult =
   | { ok: true; extraction: ContractExtraction; model: string }
   | { ok: false; error: string };
 
+export type ContractDocumentImage = {
+  page: number;
+  media_type: "image/jpeg" | "image/png";
+  data: string;
+};
+
 const SYSTEM = `You extract commercial terms from marketplace and delivery-platform agreements for an independent payout-audit system.
 
 Rules:
@@ -101,11 +107,25 @@ const dateOrNull = (value: unknown) => {
   return text && /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null;
 };
 
-export async function extractContractTerms(documentText: string): Promise<ExtractContractResult> {
+export async function extractContractTerms(
+  documentText: string,
+  documentImages: ContractDocumentImage[] = [],
+): Promise<ExtractContractResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: "AI contract extraction is not configured." };
   const clean = documentText.replace(/\0/g, "").trim().slice(0, MAX_DOCUMENT_CHARS);
-  if (clean.length < 100) return { ok: false, error: "The agreement contains too little readable text to analyse." };
+  const images = documentImages.slice(0, 15).filter(image =>
+    Number.isInteger(image.page)
+    && ["image/jpeg", "image/png"].includes(image.media_type)
+    && /^[A-Za-z0-9+/=]+$/.test(image.data)
+    && image.data.length <= 2_800_000,
+  );
+  if (clean.length < 100 && images.length === 0) {
+    return { ok: false, error: "The agreement contains too little readable text to analyse." };
+  }
+  if (images.reduce((sum, image) => sum + image.data.length, 0) > 18_000_000) {
+    return { ok: false, error: "Scanned agreement images exceed the safe analysis limit." };
+  }
 
   try {
     const client = new Anthropic({ apiKey });
@@ -113,7 +133,28 @@ export async function extractContractTerms(documentText: string): Promise<Extrac
       model: MODEL,
       max_tokens: 2_500,
       system: SYSTEM,
-      messages: [{ role: "user", content: `Extract the commercial terms from this agreement:\n\n${clean}` }],
+      messages: [{
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: clean.length >= 100
+              ? `Extract the commercial terms from this agreement text:\n\n${clean}`
+              : "This is a scanned agreement. Extract only terms visibly supported by the supplied page images.",
+          },
+          ...images.flatMap(image => ([
+            { type: "text" as const, text: `[PAGE ${image.page}]` },
+            {
+              type: "image" as const,
+              source: {
+                type: "base64" as const,
+                media_type: image.media_type,
+                data: image.data,
+              },
+            },
+          ])),
+        ],
+      }],
       tools: [TOOL],
       tool_choice: { type: "tool", name: "record_contract_terms" },
     });
@@ -126,10 +167,15 @@ export async function extractContractTerms(documentText: string): Promise<Extrac
       const field = textOrNull(clause.field, 80);
       const value = textOrNull(clause.value, 160);
       const source_quote = textOrNull(clause.source_quote, 400);
-      if (!field || !value || !source_quote || !clean.includes(source_quote)) return [];
+      // Text contracts get an exact anti-hallucination quote check. For image
+      // contracts the quote originates from vision OCR, so it remains
+      // review-required and is anchored by the supplied page number instead.
+      if (!field || !value || !source_quote || (clean.length >= 100 && !clean.includes(source_quote))) return [];
+      const page = Number.isInteger(clause.page) ? clause.page as number : null;
+      if (clean.length < 100 && (!page || !images.some(image => image.page === page))) return [];
       return [{
         field, value, source_quote,
-        page: Number.isInteger(clause.page) ? clause.page as number : null,
+        page,
         confidence: Math.max(0, Math.min(1, finiteOrNull(clause.confidence) ?? 0)),
       }];
     }) : [];

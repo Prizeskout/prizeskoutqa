@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileKey2, Plus, ScanText, ShieldCheck } from "lucide-react";
-import { extractPdfTextWithPages } from "@/lib/pdf-text";
+import { extractPdfTextWithPages, renderPdfPagesForOcr, type OcrPageImage } from "@/lib/pdf-text";
 
 export type ContractTerm = {
   id:string; platform:string; contract_name:string; commission_rate_pct:number;
@@ -33,6 +33,7 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
   const [extraction,setExtraction]=useState<ContractExtraction|null>(null);
   const [extractionModel,setExtractionModel]=useState("");
   const [reviewId,setReviewId]=useState<string|null>(null);
+  const [scanNotice,setScanNotice]=useState<string|null>(null);
   const [form,setForm]=useState({
     contract_name:"", source_platform:"talabat", commission_rate_pct:"19", vat_on_fees_pct:"0",
     payment_fee_pct:"0", fixed_order_fee:"0", delivery_contribution:"0",
@@ -59,20 +60,36 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
 
   const chooseFile=async(file:File|undefined)=>{
     if(!file)return;
-    setExtracting(true);setError(null);setExtraction(null);
+    setExtracting(true);setError(null);setExtraction(null);setScanNotice(null);
     try{
       const bytes=await file.arrayBuffer();
       const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes))).map(v=>v.toString(16).padStart(2,"0")).join("");
       let documentText="";
+      let documentImages:OcrPageImage[]=[];
       if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){
         documentText=await extractPdfTextWithPages(file);
+        const substantiveText=documentText.replace(/\[PAGE \d+\]/g,"").replace(/\s/g,"");
+        if(substantiveText.length<100){
+          const rendered=await renderPdfPagesForOcr(file);
+          documentImages=rendered.pages;
+          setScanNotice(rendered.truncated
+            ? `Scanned PDF detected. OCR analysed the first ${rendered.pages.length} of ${rendered.totalPages} pages; split the agreement to review the remainder.`
+            : `Scanned PDF detected. OCR analysed ${rendered.pages.length} page${rendered.pages.length===1?"":"s"}.`);
+        }
+      }else if(file.type==="image/jpeg"||file.type==="image/png"||/\.(jpe?g|png)$/i.test(file.name)){
+        documentImages=[{
+          page:1,
+          media_type:file.type==="image/png"||file.name.toLowerCase().endsWith(".png")?"image/png":"image/jpeg",
+          data:btoa(Array.from(new Uint8Array(bytes),byte=>String.fromCharCode(byte)).join("")),
+        }];
+        setScanNotice("Agreement image detected. OCR analysed it as page 1.");
       }else if(file.type.startsWith("text/")||/\.(txt|md)$/i.test(file.name)){
         documentText=await file.text();
       }else{
-        throw new Error("Use a text-based PDF or TXT agreement. Scanned-image OCR is not available yet.");
+        throw new Error("Use a PDF, TXT, PNG, or JPEG agreement.");
       }
       setForm(current=>({...current,source_file_name:file.name,source_sha256:hash}));
-      const data=await call({action:"extract",document_text:documentText,source_file_name:file.name,source_sha256:hash});
+      const data=await call({action:"extract",document_text:documentText,document_images:documentImages,source_file_name:file.name,source_sha256:hash});
       const extracted=data.extraction as ContractExtraction;
       setExtraction(extracted);setExtractionModel(String(data.model??""));
       setForm(current=>({
@@ -141,8 +158,9 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
           <label style={{fontSize:11.5,fontWeight:800}}>Effective from<input type="date" style={inputStyle} value={form.effective_from} onChange={e=>setForm({...form,effective_from:e.target.value})}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Effective to (optional)<input type="date" style={inputStyle} value={form.effective_to} onChange={e=>setForm({...form,effective_to:e.target.value})}/></label>
         </div>
-        <label style={{display:"block",fontSize:11.5,fontWeight:800,marginTop:10}}>Source agreement<input type="file" accept=".pdf,.txt,.md" onChange={e=>chooseFile(e.target.files?.[0])} style={{...inputStyle,padding:8}}/></label>
+        <label style={{display:"block",fontSize:11.5,fontWeight:800,marginTop:10}}>Source agreement<input type="file" accept=".pdf,.txt,.md,.png,.jpg,.jpeg" onChange={e=>chooseFile(e.target.files?.[0])} style={{...inputStyle,padding:8}}/></label>
         {extracting&&<div style={{display:"flex",gap:8,alignItems:"center",fontSize:12.5,color:"#A16207",marginTop:8}}><ScanText size={15}/>Reading agreement and extracting evidence-backed clauses…</div>}
+        {scanNotice&&<div style={{display:"flex",gap:8,alignItems:"flex-start",fontSize:11.5,color:"#A16207",marginTop:8}}><AlertTriangle size={14} style={{flex:"0 0 auto"}}/>{scanNotice}</div>}
         {form.source_sha256&&<div style={{fontSize:10.5,color:"var(--muted)",fontFamily:"monospace",marginTop:5}}>SHA-256 {form.source_sha256}</div>}
         {extraction&&<div style={{marginTop:10,border:"1px solid var(--border)",borderRadius:10,overflow:"hidden"}}>
           <div style={{padding:"10px 12px",background:"var(--surface2)",display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>

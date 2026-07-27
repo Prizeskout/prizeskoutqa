@@ -21,7 +21,7 @@ import { approveContractTerm, listContractTerms, saveContractDraft } from "@/ser
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
-import { extractContractTerms } from "@/server/core/contract-extractor";
+import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -393,10 +393,14 @@ export const Route = createFileRoute("/api/channels/connect")({
             if (body.action === "extract") {
               const raw = body as unknown as Record<string, unknown>;
               const documentText = typeof raw.document_text === "string" ? raw.document_text : "";
+              const documentImages = Array.isArray(raw.document_images) ? raw.document_images : [];
               if (documentText.length > 100_000) {
                 return resp({ error: "Agreement text is too large (maximum 100,000 characters)." }, 413);
               }
-              const result = await extractContractTerms(documentText);
+              if (documentImages.length > 15) {
+                return resp({ error: "A maximum of 15 scanned pages can be analysed at once." }, 413);
+              }
+              const result = await extractContractTerms(documentText, documentImages as ContractDocumentImage[]);
               return result.ok
                 ? resp({ ok: true, extraction: result.extraction, model: result.model }, 200)
                 : resp({ ok: false, error: result.error }, 422);

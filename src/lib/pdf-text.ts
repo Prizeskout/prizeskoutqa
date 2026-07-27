@@ -44,6 +44,52 @@ export async function extractPdfTextWithPages(file: File): Promise<string> {
   return pages.join("\n\n");
 }
 
+export type OcrPageImage = {
+  page: number;
+  media_type: "image/jpeg" | "image/png";
+  data: string;
+};
+
+/**
+ * Renders image-only PDF pages for server-side vision extraction. Pages are
+ * deliberately downscaled and JPEG-compressed to bound request size.
+ */
+export async function renderPdfPagesForOcr(file: File, maxPages = 15): Promise<{
+  pages: OcrPageImage[];
+  totalPages: number;
+  truncated: boolean;
+}> {
+  const pdfjsLib = await import("pdfjs-dist");
+  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.mjs?url")).default;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+  const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pageCount = Math.min(doc.numPages, maxPages);
+  const pages: OcrPageImage[] = [];
+
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
+    const page = await doc.getPage(pageNumber);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const scale = Math.min(2, 1600 / Math.max(baseViewport.width, baseViewport.height));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error(`Could not prepare page ${pageNumber} for OCR.`);
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvas, canvasContext: context, viewport }).promise;
+    pages.push({
+      page: pageNumber,
+      media_type: "image/jpeg",
+      data: canvas.toDataURL("image/jpeg", 0.78).split(",", 2)[1] ?? "",
+    });
+    canvas.width = 1;
+    canvas.height = 1;
+  }
+  return { pages, totalPages: doc.numPages, truncated: doc.numPages > pageCount };
+}
+
 function reconstructReadingOrder(items: unknown[]): string {
   const Y_TOLERANCE = 1.5; // verified against a real report: separates
     // genuinely distinct rows ~2pt apart while still merging same-row items.
