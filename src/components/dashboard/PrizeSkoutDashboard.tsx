@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
+import { DemoModeOverlay } from "@/components/dashboard/DemoModeOverlay";
 import { CommissionAuditPanel, type CommissionAuditResult } from "@/components/dashboard/payout/CommissionAuditPanel";
 import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } from "@/components/dashboard/payout/PayoutUploadStaging";
 import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
@@ -910,6 +911,7 @@ function buildTourSteps(t: typeof T["en"]): TourStepDef[] {
 export function PrizeSkoutDashboard() {
   const [tab, setTab] = useState<Tab>("analytics");
   const [theme, setTheme] = useState<Theme>("light");
+  const [demoMode, setDemoMode] = useState(false);
   const [currency, setCurrency] = useState("QAR");
   const [storeName, setStoreName] = useState("");
   const [lang, setLang] = useState<Lang>("en");
@@ -1231,6 +1233,39 @@ export function PrizeSkoutDashboard() {
       .then(r => r.ok ? r.json() : null)
       .then((d: { store_name?: string | null } | null) => {
         if (d?.store_name) setStoreName(d.store_name);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Live Execution Stream terminal — same repricing-dispatch history the
+  // History tab shows, reformatted as a scrolling feed. Runs once on mount
+  // (the terminal lives on the default "analytics" tab, not gated behind
+  // a tab switch like the fuller History table is).
+  useEffect(() => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return;
+    fetch("/api/channels/connect", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "history", action: "repricings", limit: 14 }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { items?: { sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; created_at:string }[] } | null) => {
+        const items = d?.items ?? [];
+        if (!items.length) return;
+        setFeed(items.map(row => {
+          const ok = row.status === "success" || row.status === "completed";
+          const time = new Date(row.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          const priceMove = row.old_price != null
+            ? `${row.currency} ${row.old_price.toFixed(2)} → ${row.new_price.toFixed(2)}`
+            : `${row.currency} ${row.new_price.toFixed(2)}`;
+          return {
+            tag: ok ? "REPRICE" : "FAILED",
+            tagColor: ok ? GN : "#EF4444",
+            text: `${row.sku ?? "sku"} · ${row.target_channel ?? "channel"} · ${priceMove}`,
+            time,
+          };
+        }));
       })
       .catch(() => {});
   }, []);
@@ -1841,10 +1876,10 @@ export function PrizeSkoutDashboard() {
   };
 
   const navDefs = [
-    { id:"analytics" as Tab, label:t.navA, sub:t.navAs },
-    { id:"rules"     as Tab, label:t.navR, sub:t.navRs },
-    { id:"vault"     as Tab, label:t.navV, sub:t.navVs },
-    { id:"history"   as Tab, label:t.navH, sub:t.navHs },
+    { id:"analytics" as Tab, label:t.navA, sub:t.navAs, tip:"Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place." },
+    { id:"rules"     as Tab, label:t.navR, sub:t.navRs, tip:"Margin Policy Engine — the price guardrails PrizeSkout enforces automatically, like never going below a set margin on a category." },
+    { id:"vault"     as Tab, label:t.navV, sub:t.navVs, tip:"Integration Vault — where you connect delivery apps and POS systems (Talabat, Zid, Jahez, etc.) so PrizeSkout can read and adjust prices." },
+    { id:"history"   as Tab, label:t.navH, sub:t.navHs, tip:"Payout & Repricing History — every commission audit, price change, and payout check PrizeSkout has run for you, kept for the record." },
   ];
 
   const headerSub = tab === "analytics" ? t.subA : tab === "rules" ? t.subR : tab === "settings" ? t.settingsSub : tab === "history" ? t.subH : t.subV;
@@ -1857,6 +1892,7 @@ export function PrizeSkoutDashboard() {
       style={{ minHeight:"100vh", background:"var(--bg)", color:"var(--text)",
         display:"flex", alignItems:"stretch", overflowX:"hidden" }}>
       <style>{CSS}</style>
+      <DemoModeOverlay active={demoMode} />
 
       {/* SIDEBAR */}
       {isDesktop && (
@@ -1873,7 +1909,7 @@ export function PrizeSkoutDashboard() {
             {navDefs.map(n => {
               const on = tab === n.id;
               return (
-                <div key={n.id} onClick={()=>setTab(n.id)} style={{
+                <div key={n.id} onClick={()=>setTab(n.id)} data-demo-tip={n.tip} style={{
                   cursor:"pointer", display:"flex", alignItems:"center", gap:12,
                   padding:"13px 14px", borderRadius:12,
                   background: on ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
@@ -1892,7 +1928,9 @@ export function PrizeSkoutDashboard() {
           </nav>
           <div style={{ marginTop:"auto", display:"flex", flexDirection:"column", gap:4 }}>
             {/* Settings */}
-            <div onClick={()=>setTab("settings")} style={{
+            <div onClick={()=>setTab("settings")}
+              data-demo-tip="Settings — connect channels, set margin floors, manage outlet locations, and edit your business name."
+              style={{
               display:"flex", alignItems:"center", gap:10, padding:"10px 10px",
               borderRadius:10, cursor:"pointer",
               color: tab === "settings" ? "var(--text)" : "var(--muted)",
@@ -1973,6 +2011,15 @@ export function PrizeSkoutDashboard() {
                     background:"var(--surface)", display:"grid", placeItems:"center", padding:0, fontSize:17.5 }}>
                   {theme==="dark"?"☾":"☀"}
                 </button>
+                <button onClick={()=>setDemoMode(v=>!v)} aria-label="Toggle demo mode"
+                  title={demoMode ? "Demo mode on — click anything to see what it does. Click to turn off." : "Turn on demo mode — click anything to see what it does"}
+                  style={{ cursor:"pointer", width:44, height:44, borderRadius:10,
+                    border: demoMode ? `1px solid ${OG}` : "1px solid var(--border)",
+                    background: demoMode ? `color-mix(in srgb,${OG} 14%,var(--surface))` : "var(--surface)",
+                    color: demoMode ? OG : "var(--text)",
+                    display:"grid", placeItems:"center", padding:0, fontSize:17 }}>
+                  💬
+                </button>
               </div>
             </div>
             {/* Short-label pill nav */}
@@ -2026,8 +2073,18 @@ export function PrizeSkoutDashboard() {
                 {theme==="dark"?"☾":"☀"}
               </span>
             </button>
+            {/* Demo mode — click-to-explain callouts for screen recordings, off by default */}
+            <button onClick={()=>setDemoMode(v=>!v)} aria-label="Toggle demo mode"
+              title={demoMode ? "Demo mode on — click anything to see what it does. Click to turn off." : "Turn on demo mode — click anything to see what it does"}
+              style={{ cursor:"pointer", width:44, height:44, borderRadius:10,
+                border: demoMode ? `1px solid ${OG}` : "1px solid var(--border)",
+                background: demoMode ? `color-mix(in srgb,${OG} 14%,var(--surface))` : "var(--surface)",
+                display:"grid", placeItems:"center", padding:0, fontSize:17 }}>
+              💬
+            </button>
             {/* Currency */}
-            <div style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border)",
+            <div data-demo-tip="Display currency — recalculates every price shown on screen, doesn't touch what's actually charged on each channel."
+              style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:10, padding:3, gap:2 }}>
               {["QAR","SAR","AED"].map(code => (
                 <button key={code} onClick={()=>setCurrency(code)} style={{
@@ -2039,7 +2096,8 @@ export function PrizeSkoutDashboard() {
               ))}
             </div>
             {/* Lang */}
-            <div style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border)",
+            <div data-demo-tip="Full trilingual support (English, Arabic, French) — including right-to-left layout for Arabic, not just translated labels."
+              style={{ display:"flex", background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:10, padding:3, gap:2 }}>
               {([["en","EN"],["ar","عربية"],["fr","FR"]] as [Lang,string][]).map(([id,label]) => (
                 <button key={id} onClick={()=>setLang(id)} style={{
@@ -2184,7 +2242,7 @@ export function PrizeSkoutDashboard() {
 
             {/* Hero + stat grid */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:18 }}>
-              <div data-tour="hero" style={{ gridColumn:"span 2", minWidth:"min(100%,560px)", position:"relative",
+              <div data-tour="hero" data-demo-tip="Profits protected this month — real QAR value from every price PrizeSkout defended, not a projection." style={{ gridColumn:"span 2", minWidth:"min(100%,560px)", position:"relative",
                 background:"var(--surface)",
                 border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                 padding:"26px 28px", display:"flex", flexDirection:"column", gap:18 }}>
@@ -2225,16 +2283,20 @@ export function PrizeSkoutDashboard() {
                 {[
                   { label:"Tracked Products",
                     value: heroStats?.has_activity ? String(heroStats.tracked_products) : "—",
-                    foot: heroStats?.has_activity ? t.profTrackedFoot : "connect a store", footColor:"var(--muted)" },
+                    foot: heroStats?.has_activity ? t.profTrackedFoot : "connect a store", footColor:"var(--muted)",
+                    tip:"Every product PrizeSkout has pulled in from your connected stores and is actively pricing." },
                   { label:"Price Updates Today",
                     value: String(heroStats?.price_updates_today ?? 0),
-                    foot:"avg latency <2s", footColor:"var(--muted)" },
+                    foot:"avg latency <2s", footColor:"var(--muted)",
+                    tip:"Automatic price changes pushed live today — under 2 seconds from decision to the price actually updating on the channel." },
                   { label:"Avg. Margin Saved",
                     value: heroStats?.avg_margin_saved_pct != null ? `+${heroStats.avg_margin_saved_pct.toFixed(1)}pp` : "—",
-                    foot: heroStats?.avg_margin_saved_pct != null ? t.profMarginFoot : "no data yet", footColor:"var(--muted)" },
-                  { label:"Active Rules",       value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)" },
+                    foot: heroStats?.avg_margin_saved_pct != null ? t.profMarginFoot : "no data yet", footColor:"var(--muted)",
+                    tip:"Percentage points of margin recovered versus what you'd have made without PrizeSkout's price defenses." },
+                  { label:"Active Rules", value:String(rules.filter(r=>r.active).length), foot:"price guardrails", footColor:"var(--muted)",
+                    tip:"Margin policies currently enforced automatically — see Margin Policy Engine for the full rule book." },
                 ].map(s => (
-                  <div key={s.label} style={{ background:"var(--surface)",
+                  <div key={s.label} data-demo-tip={s.tip} style={{ background:"var(--surface)",
                     border:"1px solid var(--border)", borderRadius:16, boxShadow:"var(--shadow)",
                     padding:"20px 22px", display:"flex", flexDirection:"column", gap:12, justifyContent:"space-between" }}>
                     <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>{s.label}</div>
@@ -2247,7 +2309,7 @@ export function PrizeSkoutDashboard() {
 
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", overflow:"hidden" }}>
-              <div style={{ padding:"22px 26px", display:"flex", alignItems:"center",
+              <div data-demo-tip="These are real products pulled live from your connected store's API — not a mock catalogue. Each one gets a margin-floor price recommendation automatically." style={{ padding:"22px 26px", display:"flex", alignItems:"center",
                 justifyContent:"space-between", gap:14, flexWrap:"wrap", borderBottom:"1px solid var(--border)" }}>
                 <div>
                   <h3 style={{ margin:0, fontSize:20, fontWeight:800 }}>Imported Products</h3>
@@ -2395,41 +2457,49 @@ export function PrizeSkoutDashboard() {
               </div>
               <div style={{ fontSize:13.5, color:"var(--muted)", lineHeight:1.6 }}>{t.payoutCheckDesc}</div>
 
-              <ContractIntelligenceVault onApproved={term=>{
-                setApprovedContract(term);
-                setPayoutUploadRate(String(term.commission_rate_pct));
-              }} />
+              <div data-demo-tip="Contract Intelligence Vault — upload or paste your marketplace agreement and PrizeSkout extracts the commission rate, fees, and liability terms automatically, with page-level citations.">
+                <ContractIntelligenceVault onApproved={term=>{
+                  setApprovedContract(term);
+                  setPayoutUploadRate(String(term.commission_rate_pct));
+                }} />
+              </div>
 
-              <PromotionProfitabilityWorkspace
-                products={importedProducts.map(product=>({
-                  sku:product.sku,
-                  name:product.name_en||product.name_ar||product.sku,
-                  current_price:product.current_price,
-                  net_margin_pct:product.net_margin_pct,
-                  source_platform:product.source_platform,
-                }))}
-                contract={approvedContract}
-                currency={currency}
-              />
+              <div data-demo-tip="Promotion Profitability Control — simulate a discount campaign before running it, so you know if it actually makes money after commission and platform funding.">
+                <PromotionProfitabilityWorkspace
+                  products={importedProducts.map(product=>({
+                    sku:product.sku,
+                    name:product.name_en||product.name_ar||product.sku,
+                    current_price:product.current_price,
+                    net_margin_pct:product.net_margin_pct,
+                    source_platform:product.source_platform,
+                  }))}
+                  contract={approvedContract}
+                  currency={currency}
+                />
+              </div>
 
-              <ChannelPriceArchitecture
-                products={importedProducts.map(product=>({
-                  sku:product.sku,
-                  name:product.name_en||product.name_ar||product.sku,
-                  current_price:product.current_price,
-                  net_margin_pct:product.net_margin_pct,
-                  source_platform:product.source_platform,
-                  ingest_event_id:product.ingest_event_id,
-                }))}
-                contract={approvedContract}
-                currency={currency}
-              />
+              <div data-demo-tip="Channel Price Architecture — set different prices per channel (in-store, Talabat, Zid...) on purpose, without losing track of which price is live where.">
+                <ChannelPriceArchitecture
+                  products={importedProducts.map(product=>({
+                    sku:product.sku,
+                    name:product.name_en||product.name_ar||product.sku,
+                    current_price:product.current_price,
+                    net_margin_pct:product.net_margin_pct,
+                    source_platform:product.source_platform,
+                    ingest_event_id:product.ingest_event_id,
+                  }))}
+                  contract={approvedContract}
+                  currency={currency}
+                />
+              </div>
 
-              <GroupControlWorkspace
-                contract={approvedContract}
-                currency={currency}
-                productCount={importedProducts.length}
-              />
+              <div data-demo-tip="Group Control Centre — for multi-branch operators: track every legal entity, brand, and branch under one roof, with finance and operations sign-off before changes go live.">
+                <GroupControlWorkspace
+                  contract={approvedContract}
+                  currency={currency}
+                  productCount={importedProducts.length}
+                />
+              </div>
 
               {/* Tabs */}
               <div style={{ display:"flex", background:"var(--surface2)", border:"1px solid var(--border)",
@@ -2525,7 +2595,8 @@ export function PrizeSkoutDashboard() {
 
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,420px),1fr))", gap:18, alignItems:"stretch" }}>
                 {/* Terminal */}
-                <div dir="ltr" style={{ background:"var(--term)", border:"1px solid var(--term-border)",
+                <div dir="ltr" data-demo-tip="Every price PrizeSkout has pushed live, in real time — a raw audit trail you can hand to anyone who asks 'why did this price change?'"
+                  style={{ background:"var(--term)", border:"1px solid var(--term-border)",
                   borderRadius:16, padding:"18px 20px", display:"flex", flexDirection:"column", gap:4,
                   minHeight:340, maxHeight:420, overflow:"hidden" }}>
                   <div style={{ display:"flex", gap:7, marginBottom:12, alignItems:"center", justifyContent:"space-between" }}>
@@ -2560,7 +2631,8 @@ export function PrizeSkoutDashboard() {
                 </div>
 
                 {/* Dispute Audit Agent */}
-                <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+                <div data-demo-tip="Autonomous Dispute Audit Agent — reviews payout discrepancies and drafts the evidence package to dispute them with the platform, so you're not building a case from scratch."
+                  style={{ background:"var(--surface)", border:"1px solid var(--border)",
                   borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
                   display:"flex", flexDirection:"column", gap:18 }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
@@ -2738,7 +2810,8 @@ export function PrizeSkoutDashboard() {
         {tab === "rules" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:28, animation:"pk-in .3s ease" }}>
             {/* CFO Copilot */}
-            <div style={{ background:"var(--surface)",
+            <div data-demo-tip="CFO Copilot — type a plain-English request. It either runs a real catalogue/pricing action or compiles a margin policy into a live rule, whichever you asked for."
+              style={{ background:"var(--surface)",
               border:"1px solid var(--border)", borderRadius:18, boxShadow:"var(--shadow)", padding:"24px 26px",
               display:"flex", flexDirection:"column", gap:18 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
@@ -3271,7 +3344,8 @@ export function PrizeSkoutDashboard() {
             </div>
 
             {/* Payout Check History */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+            <div data-demo-tip="Every time PrizeSkout has checked what a platform actually paid against what your contract says it owed you — live-pulled or uploaded."
+              style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
               display:"flex", flexDirection:"column", gap:16 }}>
               <div>
@@ -3424,7 +3498,8 @@ export function PrizeSkoutDashboard() {
             </div>
 
             {/* Repricing History */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+            <div data-demo-tip="Full audit trail of automatic price changes — same data feeding the Live Execution Stream terminal, kept permanently here."
+              style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
               display:"flex", flexDirection:"column", gap:16 }}>
               <div>
@@ -3544,7 +3619,8 @@ export function PrizeSkoutDashboard() {
             </div>
 
             {/* Commission Audit History */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+            <div data-demo-tip="Every full commission audit — the workpaper with the assertion matrix, four-way evidence chain, and exceptions. Click one open to see the whole report again, exactly as first run."
+              style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
               display:"flex", flexDirection:"column", gap:16 }}>
               <div>

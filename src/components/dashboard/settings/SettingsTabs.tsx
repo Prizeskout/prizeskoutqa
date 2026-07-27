@@ -157,6 +157,14 @@ const TAB_LABEL_KEYS: Record<Tab, string> = {
   "Notifications": "notifications",
 };
 
+const TAB_TIPS: Record<Tab, string> = {
+  "Store Access": "Your business name and the code that restores your dashboard on any device — no password needed.",
+  "Channels": "Connect delivery apps and POS systems. This is what powers live catalogue sync and automatic price pushes.",
+  "Margin Rules": "The minimum margin PrizeSkout defends per category — the floor everything else respects.",
+  "Locations": "Every outlet you operate — PrizeSkout tracks margin and routes price defenses per location.",
+  "Notifications": "Choose which events alert you in-dashboard and via webhook.",
+};
+
 export function SettingsTabs() {
   const { t } = useTranslation();
   const [active, setActive] = useState<Tab>("Store Access");
@@ -172,6 +180,7 @@ export function SettingsTabs() {
               key={tab}
               type="button"
               onClick={() => setActive(tab)}
+              data-demo-tip={TAB_TIPS[tab]}
               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "var(--text)"; }}
               onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "var(--muted)"; }}
               style={{
