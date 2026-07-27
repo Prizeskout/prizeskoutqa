@@ -927,6 +927,9 @@ export function PrizeSkoutDashboard() {
   const [cpPrompt, setCpPrompt] = useState("");
   const [cpObj, setCpObj] = useState<Record<string,unknown>|null>(null);
   const [cpChatMessage, setCpChatMessage] = useState<string|null>(null);
+  const [cpOperationProducts, setCpOperationProducts] = useState<ImportedProduct[]>([]);
+  const [cpOperationStatus, setCpOperationStatus] = useState<"idle"|"running"|"ready"|"publishing"|"complete"|"failed">("idle");
+  const [cpOperationMessage, setCpOperationMessage] = useState<string|null>(null);
   const [applied, setApplied] = useState(false);
   const [rules, setRules] = useState<Rule[]>([
     { name:"Global margin floor", desc:"all products · all connected channels", floor:18, active:true, status:"active", scope:"global", maxChangePct:15, dailyChangePct:20, approvalAbovePct:10, cooldownHours:24, rollbackOnReject:true, stopOnStaleCost:true },
@@ -1385,21 +1388,27 @@ export function PrizeSkoutDashboard() {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return;
     setCpPhase("loading"); setCpPrompt(prompt); setApplied(false); setCpError(null);
-    setCpObj(null); setCpChatMessage(null);
+    setCpObj(null); setCpChatMessage(null); setCpOperationProducts([]); setCpOperationStatus("idle"); setCpOperationMessage(null);
     try {
       const res  = await fetch("/api/copilot/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
       });
-      let data: { type?: string; rule?: Record<string,unknown>; message?: string; error?: string } = {};
+      let data: { type?: string; rule?: Record<string,unknown>; operation?: Record<string,unknown>; message?: string; error?: string } = {};
       try { data = await res.json() as typeof data; } catch { /* non-JSON body */ }
       if (!res.ok) {
         setCpError(data.error ?? `Server error (${res.status}) — the route may still be deploying. Try again in a moment.`);
         setCpPhase("idle");
         return;
       }
-      if (data.type === "chat" && data.message) {
+      if (data.type === "operation" && data.operation) {
+        const operation = { ...data.operation, _type:"operation" };
+        setCpObj(operation);
+        setCpChatMessage(null);
+        setCpPhase("result");
+        await prepareCopilotOperation(operation);
+      } else if (data.type === "chat" && data.message) {
         setCpChatMessage(data.message);
         setCpObj(null);
         setCpPhase("result");
@@ -1415,6 +1424,97 @@ export function PrizeSkoutDashboard() {
       setCpError("Request failed — check your connection or try again.");
       setCpPhase("idle");
     }
+  };
+
+  const matchCopilotProducts = (operation: Record<string,unknown>, products = importedProducts) => {
+    const query = String(operation.query ?? operation.sku ?? "").trim().toLowerCase();
+    const platform = String(operation.platform ?? "all").toLowerCase();
+    const category = String(operation.category ?? "").trim().toLowerCase();
+    return products.filter(product => {
+      const platformMatch = platform === "all" || product.source_platform.toLowerCase() === platform;
+      const haystack = `${product.name_en} ${product.name_ar} ${product.sku} ${product.item_id}`.toLowerCase();
+      const queryMatch = !query || haystack.includes(query);
+      const categoryMatch = !category || haystack.includes(category);
+      return platformMatch && queryMatch && categoryMatch;
+    });
+  };
+
+  const fetchCopilotCatalog = async (): Promise<ImportedProduct[]> => {
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) throw new Error("Reopen PrizeSkout from Zid to restore your merchant session.");
+    const params = new URLSearchParams({ merchant_id:merchantId, access_code:accessCode });
+    const response = await fetch(`/api/repricing/catalog?${params}`);
+    const data = await response.json() as { products?:ImportedProduct[]; error?:string };
+    if (!response.ok) throw new Error(data.error ?? "Could not load the catalogue.");
+    const products = data.products ?? [];
+    setImportedProducts(products);
+    return products;
+  };
+
+  const prepareCopilotOperation = async (operation: Record<string,unknown>) => {
+    const op = String(operation.operation ?? "");
+    setCpOperationStatus("running");
+    try {
+      let products = importedProducts;
+      if (op === "sync_catalog") {
+        const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+        const accessCode = localStorage.getItem("ps_access_code") ?? "";
+        const platform = String(operation.platform ?? "zid").toLowerCase();
+        const response = await fetch("/api/channels/connect", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ merchant_id:merchantId, access_code:accessCode, platform:"copilot_operation", action:"sync_catalog", source_platform:platform === "all" ? "zid" : platform }),
+        });
+        const data = await response.json() as { ok?:boolean; error?:string; result?:{items_found:number;items_stored:number;items_below_floor:number;errors:number} };
+        if (!response.ok || !data.ok) throw new Error(data.error ?? "Catalogue sync failed.");
+        products = await fetchCopilotCatalog();
+        const r = data.result;
+        setCpOperationMessage(`Catalogue synchronized: ${r?.items_found ?? products.length} found, ${r?.items_stored ?? products.length} stored, ${r?.items_below_floor ?? 0} below the margin floor${r?.errors ? `, ${r.errors} errors` : ""}.`);
+      } else {
+        products = await fetchCopilotCatalog();
+        const matches = matchCopilotProducts(operation, products);
+        setCpOperationProducts(matches);
+        setCpOperationMessage(matches.length
+          ? `${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
+          : "No matching products were found. Try a product name, SKU, or a broader request.");
+      }
+      if (op === "sync_catalog") setCpOperationProducts(matchCopilotProducts(operation, products));
+      setCpOperationStatus("ready");
+    } catch (error) {
+      setCpOperationStatus("failed");
+      setCpOperationMessage(error instanceof Error ? error.message : "The operation could not be completed.");
+    }
+  };
+
+  const publishCopilotPrices = async () => {
+    if (!cpObj || cpOperationProducts.length === 0 || cpOperationStatus === "publishing") return;
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    setCpOperationStatus("publishing");
+    let succeeded = 0;
+    const failures:string[] = [];
+    for (const product of cpOperationProducts) {
+      const mode = String(cpObj.price_mode ?? "recommended");
+      const fixed = Number(cpObj.target_price);
+      const pct = Number(cpObj.percentage_change);
+      const targetPrice = mode === "fixed" && fixed > 0 ? fixed
+        : mode === "percentage_change" && Number.isFinite(pct) ? product.current_price * (1 + pct / 100)
+        : product.recommended_price;
+      try {
+        const response = await fetch("/api/repricing/apply", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ merchant_id:merchantId, access_code:accessCode, ingest_event_id:product.ingest_event_id, target_price:Math.round(targetPrice * 100) / 100 }),
+        });
+        const result = await response.json() as { ok?:boolean; error?:string; message?:string };
+        if (!response.ok || !result.ok) throw new Error(result.error ?? result.message ?? "Rejected");
+        succeeded++;
+      } catch (error) {
+        failures.push(`${product.name_en || product.sku}: ${error instanceof Error ? error.message : "failed"}`);
+      }
+    }
+    await fetchCopilotCatalog().catch(() => {});
+    setCpOperationStatus(failures.length ? "failed" : "complete");
+    setCpOperationMessage(`${succeeded} of ${cpOperationProducts.length} live price update${cpOperationProducts.length === 1 ? "" : "s"} succeeded.${failures.length ? ` ${failures.length} failed: ${failures.slice(0,2).join("; ")}` : ""}`);
   };
 
   const applyConfig = () => {
@@ -2578,9 +2678,9 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
                   <h2 style={{ margin:0, fontSize:20.5, fontWeight:800, letterSpacing:"-0.3px" }}>
-                    Policy Copilot <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· Rule drafting assistant</span>
+                    Commerce Copilot <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· Catalogue, pricing and policy operations</span>
                   </h2>
-                  <span style={{ fontSize:15, color:"var(--muted)" }}>Describe a policy in plain language. Copilot creates a reviewable draft—it never activates a rule automatically.</span>
+                  <span style={{ fontSize:15, color:"var(--muted)" }}>Ask Copilot to sync or search your catalogue, preview repricing, publish approved prices, or draft a margin policy.</span>
                 </div>
                 <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700, color:OG,
                   background:`color-mix(in srgb,${OG} 9%,var(--surface))`,
@@ -2595,7 +2695,7 @@ export function PrizeSkoutDashboard() {
                 <span style={{ fontSize:17.5, opacity:.55 }}>✦</span>
                 <input value={cpInput} onChange={e=>setCpInput(e.target.value)}
                   onKeyDown={e=>{ if(e.key==="Enter") runCopilot(cpInput); }}
-                  placeholder={lang==="ar" ? "اسأل أي شيء أو اكتب قاعدة تسعير..." : "Ask anything or describe a rule (e.g., 'Lock bakery margins at 25% during rain storms...')"}
+                  placeholder={lang==="ar" ? "اسأل أي شيء أو اكتب قاعدة تسعير..." : "Try: Pull my Zid catalogue, find Sony A7S III, or preview repricing all products"}
                   style={{ flex:1, minWidth:0, border:"none", outline:"none", background:"transparent",
                     color:"var(--text)", fontSize:16, fontFamily:"inherit", padding:"10px 0" }} />
                 <button onClick={()=>runCopilot(cpInput)} style={{ cursor:"pointer", flex:"0 0 auto",
@@ -2607,9 +2707,10 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", gap:9, flexWrap:"wrap", alignItems:"center" }}>
                 <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
                 {[
+                  "Pull my latest catalogue from Zid",
+                  "Find Sony A7S III and show its recommendation",
+                  "Preview repricing for all Zid products",
                   "Maintain at least 25% net margin for cameras sold through Zid",
-                  "Require approval when a price increase exceeds 10%",
-                  "Exclude products with stale cost data from automatic repricing",
                 ].map(label => (
                   <button key={label} className="ps-pill-btn"
                     onClick={()=>{ setCpInput(label); runCopilot(label); }}
@@ -2654,7 +2755,60 @@ export function PrizeSkoutDashboard() {
                   </div>
                 </div>
               )}
-              {cpPhase === "result" && cpObj && (
+              {cpPhase === "result" && cpObj?._type === "operation" && (
+                <div style={{ border:"1px solid var(--border)", borderRadius:14, overflow:"hidden", animation:"pk-in .35s ease" }}>
+                  <div style={{ padding:"17px 19px", background:"var(--surface2)", display:"flex", justifyContent:"space-between", gap:12, flexWrap:"wrap", alignItems:"center" }}>
+                    <div>
+                      <div style={{ fontSize:11, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".08em" }}>Operational plan</div>
+                      <div style={{ fontSize:17, fontWeight:800, marginTop:4 }}>{String(cpObj.summary ?? cpPrompt)}</div>
+                    </div>
+                    <span style={{ padding:"6px 11px", borderRadius:999, fontSize:12, fontWeight:800,
+                      color:cpOperationStatus==="failed"?"#DC2626":cpOperationStatus==="complete"?GN:OG, border:"1px solid currentColor" }}>
+                      {cpOperationStatus==="running"?"Running":cpOperationStatus==="publishing"?"Publishing":cpOperationStatus==="complete"?"Completed":cpOperationStatus==="failed"?"Needs attention":"Ready for review"}
+                    </span>
+                  </div>
+                  <div style={{ padding:"18px 19px", display:"flex", flexDirection:"column", gap:14 }}>
+                    {cpOperationMessage && <div style={{ fontSize:14.5, lineHeight:1.55 }}>{cpOperationMessage}</div>}
+                    {cpOperationProducts.length > 0 && (
+                      <>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))", gap:10 }}>
+                          {cpOperationProducts.slice(0,12).map(product => (
+                            <button key={product.ingest_event_id} onClick={()=>openProduct(product)}
+                              style={{ textAlign:"left", cursor:"pointer", fontFamily:"inherit", color:"var(--text)", background:"var(--surface)",
+                                border:"1px solid var(--border)", borderRadius:11, padding:"12px 13px" }}>
+                              <div style={{ display:"flex", justifyContent:"space-between", gap:8 }}>
+                                <strong>{product.name_en || product.sku}</strong>
+                                <span style={{ fontSize:10.5, color:OG, textTransform:"uppercase" }}>{product.source_platform}</span>
+                              </div>
+                              <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:3 }}>SKU {product.sku}</div>
+                              <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginTop:10, fontSize:12.5 }}>
+                                <span>{product.currency} {product.current_price.toLocaleString()}</span>
+                                <strong style={{ color:product.floor_breached?"#DC2626":GN }}>→ {product.currency} {product.recommended_price.toLocaleString()}</strong>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                        {cpOperationProducts.length > 12 && <div style={{ fontSize:12.5, color:"var(--muted)" }}>Showing 12 of {cpOperationProducts.length} matched products. All matched products are included.</div>}
+                      </>
+                    )}
+                    {String(cpObj.operation) === "publish_prices" && cpOperationProducts.length > 0 && (
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap",
+                        background:"color-mix(in srgb,#F59E0B 9%,var(--surface))", border:"1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",
+                        borderRadius:11, padding:"13px 14px" }}>
+                        <div style={{ maxWidth:720, fontSize:13.5 }}>
+                          <strong>Live change confirmation required.</strong> This will publish the displayed prices to {cpOperationProducts.length} connected-store product{cpOperationProducts.length===1?"":"s"}. Each result is recorded separately.
+                        </div>
+                        <button onClick={publishCopilotPrices} disabled={cpOperationStatus==="publishing" || cpOperationStatus==="complete"}
+                          style={{ border:"none", borderRadius:9, padding:"11px 15px", fontFamily:"inherit", fontWeight:800, color:"#fff",
+                            background:cpOperationStatus==="complete"?GN:OG, cursor:cpOperationStatus==="publishing"?"wait":"pointer" }}>
+                          {cpOperationStatus==="publishing"?"Publishing…":cpOperationStatus==="complete"?"Prices published":"Confirm and publish live"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {cpPhase === "result" && cpObj && cpObj._type !== "operation" && (
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,340px),1fr))", gap:16, animation:"pk-in .35s ease" }}>
                   <div style={{ background:`color-mix(in srgb,${OG} 6%,var(--surface))`,
                     border:`1px solid color-mix(in srgb,${OG} 24%,transparent)`,

@@ -139,6 +139,37 @@ function normaliseCompiledRule(prompt: string, modelRule: Record<string, unknown
   return rule;
 }
 
+const OPERATION_SYSTEM = `You are the operations planner for PrizeSkout, a commerce control platform.
+Convert the merchant's request into a safe executable operation plan. Output ONLY valid JSON.
+Schema:
+{
+  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices",
+  "platform": "zid" | "salla" | "foodics" | "all",
+  "query": string | null,
+  "category": string | null,
+  "sku": string | null,
+  "scope": "single" | "matching" | "all",
+  "price_mode": "recommended" | "fixed" | "percentage_change" | null,
+  "target_price": number | null,
+  "percentage_change": number | null,
+  "summary": string,
+  "requires_confirmation": boolean,
+  "warnings": string[]
+}
+Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products.
+Find/show a named product or SKU means find_products. Reprice/recommend/calculate without
+explicit live/push/apply language means preview_reprice. Push/apply/publish/go live means
+publish_prices and requires_confirmation=true. Never invent a price. A named product is
+scope=single; "all products" is scope=all. Live publishing always requires confirmation.`;
+
+function isOperationalRequest(text: string): boolean {
+  const product = /\b(product|products|catalog|catalogue|sku|item|items)\b/i;
+  const operation = /\b(pull|import|fetch|retrieve|sync|refresh|show|list|find|search|reprice|recommend|calculate|preview|push|publish|apply|live update|update)\b/i;
+  return (product.test(text) && operation.test(text))
+    || /\b(push|publish|apply|sync|refresh)\b.*\b(zid|salla|foodics)\b/i.test(text)
+    || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text);
+}
+
 // Detect conversational questions vs pricing rule intents.
 // Strategy: look for HARD RULE SIGNALS; anything without them is conversational.
 function isQuestion(text: string): boolean {
@@ -185,13 +216,14 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
         const client = new Anthropic({ apiKey });
         const t0 = Date.now();
-        const chatMode = isQuestion(prompt);
+        const operationMode = isOperationalRequest(prompt);
+        const chatMode = !operationMode && isQuestion(prompt);
 
         try {
           const message = await client.messages.create({
             model: "claude-haiku-4-5-20251001",
             max_tokens: chatMode ? 512 : 768,
-            system: chatMode ? CHAT_SYSTEM : RULE_SYSTEM,
+            system: operationMode ? OPERATION_SYSTEM : chatMode ? CHAT_SYSTEM : RULE_SYSTEM,
             messages: [{ role: "user", content: prompt }],
           });
 
@@ -230,6 +262,17 @@ export const Route = createFileRoute("/api/copilot/compile")({
               return json({ error: "Model returned unparseable output" }, 502);
             }
             rule = JSON.parse(match[0]) as Record<string, unknown>;
+          }
+
+          if (operationMode) {
+            const operation = String(rule.operation ?? "");
+            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices"];
+            if (!allowed.includes(operation)) {
+              return json({ error: "The requested commerce operation is not supported yet." }, 422);
+            }
+            rule.requires_confirmation = operation === "publish_prices";
+            rule.warnings = Array.isArray(rule.warnings) ? rule.warnings : [];
+            return json({ type: "operation", operation: rule, latency_ms });
           }
 
           // Normalise percentages if model returns e.g. 25 instead of 0.25

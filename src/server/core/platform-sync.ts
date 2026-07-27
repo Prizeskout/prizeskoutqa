@@ -331,7 +331,9 @@ export async function syncPlatformCatalog(params: {
       .maybeSingle();
 
     if (existing) {
-      // Update price/status in case it changed since last sync
+      // Update price/status in case it changed since last sync, then recompute
+      // the decision. A catalog refresh must never leave an older recommendation
+      // attached to a newer source price.
       await supabaseAdmin
         .from("ps_ingest_events")
         .update({
@@ -340,6 +342,38 @@ export async function syncPlatformCatalog(params: {
           status: "received",
         })
         .eq("id", existing.id);
+      const baseCost = product.cost ?? product.price * 0.6;
+      const decideOutput = decide({
+        region,
+        baseCost,
+        currentRetailPrice: product.price,
+        vatRate,
+        marginFloorPct,
+      });
+      await supabaseAdmin.from("ps_decide_results").insert({
+        ingest_event_id: existing.id,
+        account_id: accountId,
+        licensee_id: licenseeId,
+        region,
+        merchant_id: merchantId,
+        sku: product.sku,
+        base_cost: baseCost,
+        current_retail_price: product.price,
+        commission_rate: commissionRate,
+        vat_rate: vatRate,
+        logistics_subsidy: 0,
+        margin_floor_pct: marginFloorPct,
+        net_margin: decideOutput.netMargin,
+        net_margin_pct: decideOutput.netMarginPct,
+        floor_breached: decideOutput.floorBreached,
+        recommended_price: decideOutput.recommendedPrice,
+        decision_action: decideOutput.decisionAction,
+      });
+      await supabaseAdmin
+        .from("ps_ingest_events")
+        .update({ status: "decided" })
+        .eq("id", existing.id);
+      if (decideOutput.floorBreached) belowFloor++;
       stored++;
       continue;
     }

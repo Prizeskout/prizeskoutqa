@@ -15,6 +15,8 @@ import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/ser
 import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
 import { getDashboardStats } from "@/server/core/dashboard-stats";
 import { getDefendLoopHealth } from "@/server/core/defend-loop-health";
+import { syncPlatformCatalog } from "@/server/core/platform-sync";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
@@ -313,7 +315,39 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ ok: true, ...health }, 200);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout, history, dashboard_stats, defend_loop_health.` }, 400);
+          if (platform === "copilot_operation") {
+            if (body.action !== "sync_catalog") {
+              return resp({ error: "Unsupported Copilot operation." }, 400);
+            }
+            const sourcePlatform = (body.source_platform || "zid").toLowerCase();
+            if (!["zid", "salla", "foodics"].includes(sourcePlatform)) {
+              return resp({ error: "Catalogue sync supports Zid, Salla, and Foodics." }, 400);
+            }
+            const { data: channel } = await supabaseAdmin
+              .from("ps_merchant_channels")
+              .select("bearer_token, manager_token, status, metadata")
+              .eq("account_id", merchant_id)
+              .eq("platform", sourcePlatform)
+              .maybeSingle();
+            if (!channel || channel.status !== "connected" || !channel.bearer_token) {
+              return resp({ error: `${sourcePlatform} is not connected.` }, 400);
+            }
+            const result = await syncPlatformCatalog({
+              platform: sourcePlatform,
+              creds: {
+                bearer_token: channel.bearer_token,
+                manager_token: channel.manager_token,
+                store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
+              },
+              accountId: merchant_id,
+              licenseeId: merchant_id,
+              merchantId: merchant_id,
+              region: sourcePlatform === "zid" ? "SA" : "QA",
+            });
+            return resp({ ok: true, result }, 200);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);
