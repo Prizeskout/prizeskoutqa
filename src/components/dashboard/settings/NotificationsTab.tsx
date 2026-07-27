@@ -19,7 +19,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
       onClick={onToggle}
       style={{
         width: 52, height: 32, borderRadius: 999, border: "none", cursor: "pointer",
-        background: on ? OG : "#E5E7EB", position: "relative", flexShrink: 0,
+        background: on ? OG : "var(--border)", position: "relative", flexShrink: 0,
         transition: "background .2s", minWidth: 52,
       }}
     >
@@ -40,21 +40,21 @@ export function NotificationsTab() {
 
   return (
     <div style={{ maxWidth: 560 }}>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>{t("settingsTabs.notifications.heading")}</h3>
-      <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.7 }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>{t("settingsTabs.notifications.heading")}</h3>
+      <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 28px", lineHeight: 1.7 }}>
         {t("settingsTabs.notifications.description")}
       </p>
 
-      <div style={{ display: "flex", flexDirection: "column", borderRadius: 12, overflow: "hidden", border: "1px solid #E5E2DB" }}>
+      <div style={{ display: "flex", flexDirection: "column", borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
         {ALERTS.map((a, i) => (
           <div key={a.key} style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "16px 20px", background: i % 2 === 0 ? "#FAFAF9" : "#fff",
+            padding: "16px 20px", background: i % 2 === 0 ? "var(--surface2)" : "var(--surface)",
             gap: 20,
           }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t(`settingsTabs.notifications.alerts.${a.i18nKey}.name`)}</div>
-              <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{t(`settingsTabs.notifications.alerts.${a.i18nKey}.desc`)}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t(`settingsTabs.notifications.alerts.${a.i18nKey}.name`)}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{t(`settingsTabs.notifications.alerts.${a.i18nKey}.desc`)}</div>
             </div>
             <Toggle on={state[a.key]} onToggle={() => setState(p => ({ ...p, [a.key]: !p[a.key] }))} />
           </div>

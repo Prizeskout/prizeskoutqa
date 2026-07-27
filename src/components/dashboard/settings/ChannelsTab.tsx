@@ -56,7 +56,7 @@ function StatusBadge({ status, t }: { status: ChannelStatus; t: (key: string) =>
     connected:     { labelKey: "settingsTabs.channels.status.connected",    color: GN,       bg: "rgba(16,185,129,0.08)" },
     pending:       { labelKey: "settingsTabs.channels.status.pending",      color: "#F59E0B", bg: "rgba(245,158,11,0.08)" },
     error:         { labelKey: "settingsTabs.channels.status.error",        color: "#EF4444", bg: "rgba(239,68,68,0.08)" },
-    not_connected: { labelKey: "settingsTabs.channels.status.notConnected", color: "#9CA3AF", bg: "transparent" },
+    not_connected: { labelKey: "settingsTabs.channels.status.notConnected", color: "var(--muted)", bg: "transparent" },
   };
   const { labelKey, color, bg } = map[status];
   return (
@@ -184,23 +184,23 @@ export function ChannelsTab() {
   function Section({ title, items }: { title: string; items: Channel[] }) {
     return (
       <div style={{ marginBottom: 36 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: "#9CA3AF", fontFamily: MONO, marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: "var(--muted)", fontFamily: MONO, marginBottom: 14 }}>
           {title}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 1, borderRadius: 12, overflow: "hidden", border: "1px solid #E5E2DB" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 1, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
           {items.map((ch, i) => {
             const status: ChannelStatus = statuses[ch.platform] ?? "not_connected";
             return (
               <div key={ch.name} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "14px 16px", background: i % 2 === 0 ? "#FAFAF9" : "#fff",
+                padding: "14px 16px", background: i % 2 === 0 ? "var(--surface2)" : "var(--surface)",
                 gap: 12, flexWrap: "wrap",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{ fontSize: 22 }}>{ch.logo}</span>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{ch.name}</div>
-                    {ch.note && <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{ch.note}</div>}
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{ch.name}</div>
+                    {ch.note && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{ch.note}</div>}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -216,9 +216,9 @@ export function ChannelsTab() {
                         disabled={disconnecting === ch.platform}
                         style={{
                           fontSize: 12, fontWeight: 500,
-                          color: disconnecting === ch.platform ? "#9CA3AF" : "#EF4444",
+                          color: disconnecting === ch.platform ? "var(--muted)" : "#EF4444",
                           background: "transparent",
-                          border: `1px solid ${disconnecting === ch.platform ? "#E5E2DB" : "rgba(239,68,68,0.3)"}`,
+                          border: `1px solid ${disconnecting === ch.platform ? "var(--border)" : "rgba(239,68,68,0.3)"}`,
                           borderRadius: 7, padding: "10px 16px",
                           cursor: disconnecting === ch.platform ? "default" : "pointer",
                           fontFamily: "inherit", minHeight: 44, transition: "all .15s",
@@ -232,12 +232,12 @@ export function ChannelsTab() {
                         type="button"
                         onClick={() => handleConnect(ch.platform)}
                         style={{
-                          fontSize: 12, fontWeight: 500, color: "#6B7280", background: "transparent",
-                          border: "1px solid #E5E2DB", borderRadius: 7, padding: "10px 16px",
+                          fontSize: 12, fontWeight: 500, color: "var(--muted)", background: "transparent",
+                          border: "1px solid var(--border)", borderRadius: 7, padding: "10px 16px",
                           cursor: "pointer", fontFamily: "inherit", minHeight: 44,
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#9CA3AF"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#E5E2DB"; }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--muted)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}
                       >{t("settingsTabs.channels.actions.reconnect")}</button>
                     </>
                   )}
@@ -249,8 +249,8 @@ export function ChannelsTab() {
                       type="button"
                       disabled
                       style={{
-                        fontSize: 12, fontWeight: 500, color: "#9CA3AF", background: "transparent",
-                        border: "1px solid #E5E2DB", borderRadius: 7, padding: "10px 16px",
+                        fontSize: 12, fontWeight: 500, color: "var(--muted)", background: "transparent",
+                        border: "1px solid var(--border)", borderRadius: 7, padding: "10px 16px",
                         cursor: "default", fontFamily: "inherit", minHeight: 44,
                       }}
                     >{t("settingsTabs.channels.actions.comingSoon")}</button>
@@ -270,8 +270,8 @@ export function ChannelsTab() {
   return (
     <>
       <div style={{ maxWidth: 640 }}>
-        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>{t("settingsTabs.channels.heading")}</h3>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.7 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>{t("settingsTabs.channels.heading")}</h3>
+        <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 28px", lineHeight: 1.7 }}>
           {t("settingsTabs.channels.description")}
         </p>
         <Section title={t("settingsTabs.channels.sections.aggregators")} items={aggregators} />
@@ -286,17 +286,17 @@ export function ChannelsTab() {
             backdropFilter: "blur(6px)", display: "grid", placeItems: "center",
             padding: 20 }}>
           <div onClick={e => e.stopPropagation()}
-            style={{ width: "min(520px,100%)", background: "#fff",
-              border: "1px solid #E5E2DB", borderRadius: 20,
-              boxShadow: "0 24px 64px rgba(16,24,40,.18)", padding: "28px 30px",
+            style={{ width: "min(520px,100%)", background: "var(--surface)",
+              border: "1px solid var(--border)", borderRadius: 20,
+              boxShadow: "var(--shadow-lg)", padding: "28px 30px",
               display: "flex", flexDirection: "column", gap: 22 }}>
 
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.3px", color: "#111827" }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.3px", color: "var(--text)" }}>
                   {t("settingsTabs.channels.modal.title", { name: byokName })}
                 </h3>
-                <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6B7280", lineHeight: 1.6 }}>
+                <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
                   {t("settingsTabs.channels.modal.description", { name: byokName })}
                 </p>
               </div>
@@ -305,19 +305,19 @@ export function ChannelsTab() {
                 onClick={() => { setByokPlatform(null); setByokStatus("idle"); setByokError(null); setByokFields({}); }}
                 aria-label={t("settingsTabs.channels.modal.close")}
                 style={{ cursor: "pointer", flexShrink: 0, width: 34, height: 34,
-                  borderRadius: 10, border: "1px solid #E5E2DB", background: "#fff",
-                  color: "#6B7280", fontSize: 15, fontWeight: 700 }}>✕</button>
+                  borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)",
+                  color: "var(--muted)", fontSize: 15, fontWeight: 700 }}>✕</button>
             </div>
 
             <form onSubmit={submitByok} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {byokCfg.fields.map(f => (
                 <div key={f.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <label htmlFor={`ct-byok-${f.key}`}
-                    style={{ fontSize: 12.5, fontWeight: 600, color: "#111827" }}>
+                    style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>
                     {t(f.labelKey)}
                   </label>
                   {f.hintKey && (
-                    <span style={{ fontSize: 11.5, color: "#9CA3AF", marginTop: -3 }}>{t(f.hintKey)}</span>
+                    <span style={{ fontSize: 11.5, color: "var(--muted)", marginTop: -3 }}>{t(f.hintKey)}</span>
                   )}
                   <input
                     id={`ct-byok-${f.key}`}
@@ -326,20 +326,20 @@ export function ChannelsTab() {
                     required
                     value={byokFields[f.key] ?? ""}
                     onChange={e => setByokFields(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    style={{ height: 44, borderRadius: 9, border: "1px solid #E5E2DB",
-                      background: "#fff", color: "#111827", padding: "0 13px",
+                    style={{ height: 44, borderRadius: 9, border: "1px solid var(--border)",
+                      background: "var(--surface)", color: "var(--text)", padding: "0 13px",
                       fontSize: 14, fontFamily: "inherit", outline: "none",
                       transition: "border-color .15s" }}
                     onFocus={e => { e.currentTarget.style.borderColor = OG; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "#E5E2DB"; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = "var(--border)"; }}
                   />
                 </div>
               ))}
 
               {byokCfg.portalHintKey && (
-                <p style={{ margin: 0, fontSize: 12, color: "#6B7280", lineHeight: 1.6,
-                  padding: "10px 14px", background: "#FAFAF9",
-                  borderRadius: 9, border: "1px solid #E5E2DB" }}>
+                <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.6,
+                  padding: "10px 14px", background: "var(--surface2)",
+                  borderRadius: 9, border: "1px solid var(--border)" }}>
                   {t(byokCfg.portalHintKey)}
                 </p>
               )}

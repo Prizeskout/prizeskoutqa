@@ -2,8 +2,8 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 export const cardStyle: CSSProperties = {
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #E5E2DB",
+  backgroundColor: "var(--surface)",
+  border: "1px solid var(--border)",
   borderRadius: 10,
   padding: "20px 24px",
 };
@@ -13,12 +13,12 @@ export function Card({ children, style }: { children: ReactNode; style?: CSSProp
 }
 
 export function CardTitle({ children }: { children: ReactNode }) {
-  return <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18" }}>{children}</div>;
+  return <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>{children}</div>;
 }
 
 export function CardSubtitle({ children }: { children: ReactNode }) {
   return (
-    <div style={{ fontSize: 12, color: "#6B6B6B", marginTop: 4 }}>{children}</div>
+    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{children}</div>
   );
 }
 
@@ -29,7 +29,7 @@ export function FieldLabel({ children }: { children: ReactNode }) {
         display: "block",
         fontSize: 12,
         fontWeight: 500,
-        color: "#6B6B6B",
+        color: "var(--muted)",
         marginBottom: 4,
       }}
     >
@@ -40,12 +40,12 @@ export function FieldLabel({ children }: { children: ReactNode }) {
 
 const baseInputStyle: CSSProperties = {
   width: "100%",
-  backgroundColor: "#FFFFFF",
-  border: "1px solid #E5E2DB",
+  backgroundColor: "var(--surface)",
+  border: "1px solid var(--border)",
   borderRadius: 8,
   padding: "10px 14px",
   fontSize: 13,
-  color: "#1A1A18",
+  color: "var(--text)",
   outline: "none",
   fontFamily: "inherit",
   transition: "border-color 0.15s",
@@ -68,8 +68,8 @@ export function TextField({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      onFocus={(e) => (e.currentTarget.style.borderColor = "#EA580C")}
-      onBlur={(e) => (e.currentTarget.style.borderColor = "#E5E2DB")}
+      onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
       style={baseInputStyle}
     />
   );
@@ -88,8 +88,8 @@ export function TextareaField({
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onFocus={(e) => (e.currentTarget.style.borderColor = "#EA580C")}
-      onBlur={(e) => (e.currentTarget.style.borderColor = "#E5E2DB")}
+      onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
       style={{
         ...baseInputStyle,
         height,
@@ -127,7 +127,7 @@ export function SelectField({
           MozAppearance: "none",
           paddingInlineEnd: 38,
           cursor: "pointer",
-          borderColor: focused ? "#EA580C" : "#E5E2DB",
+          borderColor: focused ? "var(--accent)" : "var(--border)",
         }}
       >
         {options.map((o) => (
@@ -138,7 +138,7 @@ export function SelectField({
       </select>
       <ChevronDown
         size={16}
-        color="#6B6B6B"
+        color="var(--muted)"
         style={{
           position: "absolute",
           right: 12,
@@ -187,7 +187,7 @@ export function PrimaryButton({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        backgroundColor: hover ? "#C2410C" : "#EA580C",
+        backgroundColor: hover ? "color-mix(in srgb, var(--accent) 82%, black)" : "var(--accent)",
         color: "#FFFFFF",
         fontSize: 13,
         fontWeight: 600,
@@ -223,9 +223,9 @@ export function OutlineAddButton({
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
-        backgroundColor: hover ? "rgba(234, 88, 12, 0.06)" : "#FFFFFF",
-        border: "1px solid #EA580C",
-        color: "#EA580C",
+        backgroundColor: hover ? "color-mix(in srgb, var(--accent) 8%, transparent)" : "var(--surface)",
+        border: "1px solid var(--accent)",
+        color: "var(--accent)",
         fontSize: 12,
         fontWeight: 600,
         padding: "8px 18px",
@@ -242,7 +242,7 @@ export function OutlineAddButton({
 
 export function IconAction({
   icon,
-  hoverColor = "#EA580C",
+  hoverColor = "var(--accent)",
   onClick,
   ariaLabel,
 }: {
@@ -265,8 +265,8 @@ export function IconAction({
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#FAFAF9",
-        border: `1px solid ${hover ? hoverColor : "#E5E2DB"}`,
+        backgroundColor: "var(--surface2)",
+        border: `1px solid ${hover ? hoverColor : "var(--border)"}`,
         borderRadius: 6,
         cursor: "pointer",
         transition: "border-color 0.15s",
@@ -301,7 +301,7 @@ export function Toggle({
         width: w,
         height: h,
         borderRadius: h / 2,
-        backgroundColor: on ? "#22C55E" : "#E5E2DB",
+        backgroundColor: on ? "var(--green)" : "var(--border)",
         border: "none",
         position: "relative",
         cursor: "pointer",

@@ -39,11 +39,11 @@ function BusinessNameCard() {
 
   return (
     <div style={{
-      background: "#FAFAF9", border: "1px solid #E5E2DB", borderRadius: 12,
+      background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12,
       padding: "18px 20px", marginBottom: 24,
     }}>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>Business name</h3>
-      <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.7 }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>Business name</h3>
+      <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px", lineHeight: 1.7 }}>
         Shown across your dashboard and on exported reports. Set this if you skipped it during onboarding.
       </p>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -53,9 +53,9 @@ function BusinessNameCard() {
           placeholder={loaded ? "Your restaurant or brand name" : "Loading…"}
           disabled={!loaded}
           style={{
-            flex: "1 1 260px", minWidth: 0, border: "1px solid #E5E2DB", borderRadius: 8,
-            padding: "10px 12px", fontSize: 13.5, fontFamily: "inherit", color: "#1A1A18",
-            background: "#fff",
+            flex: "1 1 260px", minWidth: 0, border: "1px solid var(--border)", borderRadius: 8,
+            padding: "10px 12px", fontSize: 13.5, fontFamily: "inherit", color: "var(--text)",
+            background: "var(--surface)",
           }}
         />
         <button
@@ -72,7 +72,7 @@ function BusinessNameCard() {
           {saving ? "Saving…" : "Save"}
         </button>
         {saved && (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#10B981", fontWeight: 500 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--green)", fontWeight: 500 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
             Saved
           </span>
@@ -96,14 +96,14 @@ function StoreAccessTab() {
   return (
     <div style={{ maxWidth: 540 }}>
       <BusinessNameCard />
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>Store Access Code</h3>
-      <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.7 }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>Store Access Code</h3>
+      <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 20px", lineHeight: 1.7 }}>
         This code identifies your store. Enter it on any device to restore your full dashboard — no account needed.
       </p>
 
       {code ? (
         <div style={{
-          background: "#FAFAF9", border: "1px solid #E5E2DB", borderRadius: 12,
+          background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12,
           padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: 14, flexWrap: "wrap",
         }}>
@@ -114,9 +114,9 @@ function StoreAccessTab() {
             type="button"
             onClick={copyCode}
             style={{
-              background: copied ? "rgba(16,185,129,0.08)" : "transparent",
-              color: copied ? "#10B981" : "#6B7280",
-              border: `1px solid ${copied ? "rgba(16,185,129,0.3)" : "#E5E2DB"}`,
+              background: copied ? "color-mix(in srgb, var(--green) 8%, transparent)" : "transparent",
+              color: copied ? "var(--green)" : "var(--muted)",
+              border: `1px solid ${copied ? "color-mix(in srgb, var(--green) 30%, transparent)" : "var(--border)"}`,
               borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500,
               cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -130,14 +130,14 @@ function StoreAccessTab() {
         </div>
       ) : (
         <div style={{
-          background: "#FAFAF9", border: "1px solid #E5E2DB", borderRadius: 12,
-          padding: "18px 20px", color: "#9A9A9A", fontSize: 13, fontFamily: MONO,
+          background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12,
+          padding: "18px 20px", color: "var(--muted)", fontSize: 13, fontFamily: MONO,
         }}>
           No access code found in this browser. Connect a store to generate one.
         </div>
       )}
 
-      <p style={{ fontSize: 12, color: "#9A9A9A", margin: "16px 0 0", lineHeight: 1.6 }}>
+      <p style={{ fontSize: 12, color: "var(--muted)", margin: "16px 0 0", lineHeight: 1.6 }}>
         To restore your dashboard on another device, go to{" "}
         <a href="/onboarding" style={{ color: OG, textDecoration: "none" }}>prizeskout.qa → Dashboard</a>
         {" "}and enter this code.
@@ -163,7 +163,7 @@ export function SettingsTabs() {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #E5E2DB", marginBottom: 24,
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--border)", marginBottom: 24,
         overflowX: "auto", WebkitOverflowScrolling: "touch" as never, scrollbarWidth: "none" as never }}>
         {TABS.map((tab) => {
           const isActive = tab === active;
@@ -172,13 +172,13 @@ export function SettingsTabs() {
               key={tab}
               type="button"
               onClick={() => setActive(tab)}
-              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "#1A1A18"; }}
-              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "#9A9A9A"; }}
+              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "var(--text)"; }}
+              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "var(--muted)"; }}
               style={{
                 padding: "12px 14px", fontSize: 13, fontWeight: 500,
-                color: isActive ? "#1A1A18" : "#9A9A9A",
+                color: isActive ? "var(--text)" : "var(--muted)",
                 cursor: "pointer", background: "transparent", border: "none",
-                borderBottom: `2px solid ${isActive ? "#EA580C" : "transparent"}`,
+                borderBottom: `2px solid ${isActive ? "var(--accent)" : "transparent"}`,
                 transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0,
               }}
             >{t(`settingsTabs.tabLabels.${TAB_LABEL_KEYS[tab]}`)}</button>

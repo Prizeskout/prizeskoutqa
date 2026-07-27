@@ -38,17 +38,17 @@ export function MarginRulesTab() {
 
   return (
     <div style={{ maxWidth: 560 }}>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>{t("settingsTabs.marginRules.heading")}</h3>
-      <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.7 }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>{t("settingsTabs.marginRules.heading")}</h3>
+      <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 28px", lineHeight: 1.7 }}>
         {t("settingsTabs.marginRules.description")}
       </p>
 
       {/* Global floor */}
-      <div style={{ background: "#FAFAF9", border: "1px solid #E5E2DB", borderRadius: 12, padding: "20px 24px", marginBottom: 24 }}>
+      <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 24px", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>{t("settingsTabs.marginRules.globalFloor.label")}</div>
-            <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>{t("settingsTabs.marginRules.globalFloor.hint")}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t("settingsTabs.marginRules.globalFloor.label")}</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{t("settingsTabs.marginRules.globalFloor.hint")}</div>
           </div>
           <span style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: OG }}>{global}%</span>
         </div>
@@ -57,20 +57,20 @@ export function MarginRulesTab() {
           onChange={e => setGlobal(Number(e.target.value))}
           style={{ width: "100%", accentColor: OG }}
         />
-        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 11, color: "#9CA3AF", marginTop: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
           <span>5%</span><span>50%</span>
         </div>
       </div>
 
       {/* Per-category */}
-      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: "#9CA3AF", fontFamily: MONO, marginBottom: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: "var(--muted)", fontFamily: MONO, marginBottom: 14 }}>
         {t("settingsTabs.marginRules.categoryOverrides")}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
         {CATEGORIES.map(cat => (
-          <div key={cat.name} style={{ background: "#FAFAF9", border: "1px solid #E5E2DB", borderRadius: 10, padding: "14px 18px" }}>
+          <div key={cat.name} style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 18px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 600, color: "#1A1A18" }}>{t(`settingsTabs.marginRules.categories.${CATEGORY_LABEL_KEYS[cat.name]}`)}</span>
+              <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>{t(`settingsTabs.marginRules.categories.${CATEGORY_LABEL_KEYS[cat.name]}`)}</span>
               <span style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: cats[cat.name] < global ? "#F59E0B" : GN }}>
                 {cats[cat.name]}%
               </span>
