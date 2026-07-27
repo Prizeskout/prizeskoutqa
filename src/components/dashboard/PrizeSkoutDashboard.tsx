@@ -1387,13 +1387,28 @@ export function PrizeSkoutDashboard() {
   const runCopilot = async (text: string) => {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return;
+    const previousOperation = cpObj?._type === "operation" ? cpObj : null;
+    const previousProducts = cpOperationProducts.map(product => ({
+      name:product.name_en || product.name_ar,
+      sku:product.sku,
+      platform:product.source_platform,
+    }));
     setCpPhase("loading"); setCpPrompt(prompt); setApplied(false); setCpError(null);
     setCpObj(null); setCpChatMessage(null); setCpOperationProducts([]); setCpOperationStatus("idle"); setCpOperationMessage(null);
+    setCpInput("");
     try {
       const res  = await fetch("/api/copilot/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          prompt,
+          ...(previousOperation ? {
+            context:{
+              previous_operation:previousOperation,
+              products:previousProducts,
+            },
+          } : {}),
+        }),
       });
       let data: { type?: string; rule?: Record<string,unknown>; operation?: Record<string,unknown>; message?: string; error?: string } = {};
       try { data = await res.json() as typeof data; } catch { /* non-JSON body */ }
@@ -2704,6 +2719,11 @@ export function PrizeSkoutDashboard() {
                   {t.compile}
                 </button>
               </div>
+              {cpObj?._type === "operation" && cpOperationStatus !== "running" && (
+                <div style={{ marginTop:-10, fontSize:12.5, color:"var(--muted)" }}>
+                  Follow up naturally—Copilot remembers this product scope. Try “show only this product”, “reprice it”, or “push it live”.
+                </div>
+              )}
               <div style={{ display:"flex", gap:9, flexWrap:"wrap", alignItems:"center" }}>
                 <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
                 {[
@@ -2789,6 +2809,23 @@ export function PrizeSkoutDashboard() {
                           ))}
                         </div>
                         {cpOperationProducts.length > 12 && <div style={{ fontSize:12.5, color:"var(--muted)" }}>Showing 12 of {cpOperationProducts.length} matched products. All matched products are included.</div>}
+                        {String(cpObj.operation) !== "publish_prices" && (
+                          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                            {String(cpObj.operation) !== "preview_reprice" && (
+                              <button onClick={()=>runCopilot("Preview repricing for these products")}
+                                style={{ cursor:"pointer", border:"1px solid var(--border)", borderRadius:9, padding:"9px 12px",
+                                  background:"var(--surface)", color:"var(--text)", fontFamily:"inherit", fontWeight:700 }}>
+                                Preview repricing
+                              </button>
+                            )}
+                            <button onClick={()=>runCopilot("Push these recommended prices live")}
+                              style={{ cursor:"pointer", border:`1px solid color-mix(in srgb,${OG} 45%,var(--border))`, borderRadius:9,
+                                padding:"9px 12px", background:`color-mix(in srgb,${OG} 7%,var(--surface))`, color:OG,
+                                fontFamily:"inherit", fontWeight:800 }}>
+                              Prepare live update
+                            </button>
+                          </div>
+                        )}
                       </>
                     )}
                     {String(cpObj.operation) === "publish_prices" && cpOperationProducts.length > 0 && (

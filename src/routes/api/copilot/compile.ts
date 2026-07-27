@@ -162,6 +162,8 @@ explicit live/push/apply language means preview_reprice. Push/apply/publish/go l
 publish_prices and requires_confirmation=true. Never invent a price. A named product is
 scope=single; "all products" is scope=all. Live publishing always requires confirmation.`;
 
+const FOLLOW_UP = /\b(it|them|those|that|same|next|now|then|go ahead|do it|proceed|continue|use recommended|push live|publish live)\b/i;
+
 function isOperationalRequest(text: string): boolean {
   const product = /\b(product|products|catalog|catalogue|sku|item|items)\b/i;
   const operation = /\b(pull|import|fetch|retrieve|sync|refresh|show|list|find|search|reprice|recommend|calculate|preview|push|publish|apply|live update|update)\b/i;
@@ -199,7 +201,13 @@ export const Route = createFileRoute("/api/copilot/compile")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const body = await request.json().catch(() => null) as { prompt?: string } | null;
+        const body = await request.json().catch(() => null) as {
+          prompt?: string;
+          context?: {
+            previous_operation?: Record<string, unknown>;
+            products?: Array<{ name?:string; sku?:string; platform?:string }>;
+          };
+        } | null;
         const prompt = body?.prompt?.trim();
 
         if (!prompt) {
@@ -216,7 +224,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
         const client = new Anthropic({ apiKey });
         const t0 = Date.now();
-        const operationMode = isOperationalRequest(prompt);
+        const hasOperationContext = Boolean(body?.context?.previous_operation);
+        const operationMode = isOperationalRequest(prompt) || (hasOperationContext && FOLLOW_UP.test(prompt));
         const chatMode = !operationMode && isQuestion(prompt);
 
         try {
@@ -224,7 +233,12 @@ export const Route = createFileRoute("/api/copilot/compile")({
             model: "claude-haiku-4-5-20251001",
             max_tokens: chatMode ? 512 : 768,
             system: operationMode ? OPERATION_SYSTEM : chatMode ? CHAT_SYSTEM : RULE_SYSTEM,
-            messages: [{ role: "user", content: prompt }],
+            messages: [{
+              role: "user",
+              content: operationMode && body?.context
+                ? `${prompt}\n\nPRIOR OPERATION CONTEXT (resolve words such as it/them/that/same from this data):\n${JSON.stringify(body.context)}`
+                : prompt,
+            }],
           });
 
           const raw = message.content
@@ -269,6 +283,24 @@ export const Route = createFileRoute("/api/copilot/compile")({
             const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
+            }
+            const prior = body?.context?.previous_operation;
+            const referencedProducts = body?.context?.products ?? [];
+            const vagueQuery = !rule.query || /^(it|them|those|that|same|product|products)$/i.test(String(rule.query).trim());
+            if (prior) {
+              if (vagueQuery) {
+                if (referencedProducts.length === 1 && referencedProducts[0].sku) {
+                  rule.sku = referencedProducts[0].sku;
+                  rule.query = referencedProducts[0].sku;
+                  rule.scope = "single";
+                } else {
+                  rule.query = prior.query ?? null;
+                  rule.sku = prior.sku ?? null;
+                  rule.scope = prior.scope ?? rule.scope ?? "matching";
+                }
+              }
+              if (!rule.platform || rule.platform === "all") rule.platform = prior.platform ?? "all";
+              if (!rule.category) rule.category = prior.category ?? null;
             }
             rule.requires_confirmation = operation === "publish_prices";
             rule.warnings = Array.isArray(rule.warnings) ? rule.warnings : [];
