@@ -279,6 +279,10 @@ export const Route = createFileRoute("/api/channels/connect")({
                 ledger_totals: (raw.ledger_totals as SavePayoutAuditInput["ledger_totals"]) ?? null,
                 period_start: (raw.period_start as string) ?? null,
                 period_end: (raw.period_end as string) ?? null,
+                assurance: (raw.assurance as SavePayoutAuditInput["assurance"]) ?? null,
+                four_way: (raw.four_way as SavePayoutAuditInput["four_way"]) ?? null,
+                cross_check_windows: (raw.cross_check_windows as SavePayoutAuditInput["cross_check_windows"]) ?? null,
+                net_sales_override_docs: (raw.net_sales_override_docs as SavePayoutAuditInput["net_sales_override_docs"]) ?? null,
               };
               const result = await savePayoutAudit(merchant_id, input);
               return result.ok

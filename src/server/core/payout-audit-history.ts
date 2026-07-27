@@ -4,53 +4,41 @@
 // moment they navigate away. Mirrors payout-history.ts's shape exactly —
 // this is a plain persist/list/delete layer, no computation happens here.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-export type AuditDocumentSummary = {
-  file_name: string;
-  document_type: string;
-  order_count: number | null;
-  sub_total_sum: number | null;
-  description?: string | null;
-  received_amount?: number | null;
-};
-
-export type AuditFinding = {
-  id: string;
-  severity: "info" | "warning" | "critical";
-  title: string;
-  detail: string;
-  amount?: number;
-};
-
-export type AuditLedgerRow = {
-  date: string;
-  orders: number;
-  sales: number;
-  commission_at_agreed_rate: number;
-  expected_net: number;
-};
+import type { AuditAssurance, ClassifiedDocument, CrossCheckWindow, Finding, FourWayReconciliation, LedgerRow } from "@/lib/commission-audit";
 
 export type PayoutAuditRecord = {
   id: string;
   commission_rate_pct: number;
   document_count: number;
-  documents: AuditDocumentSummary[];
-  findings: AuditFinding[];
-  ledger: AuditLedgerRow[] | null;
-  ledger_totals: AuditLedgerRow | null;
+  // Full documents (with per-document result/evidence/overrides) only for
+  // audits saved after 2026-07-27; older rows retain the pre-fix summarized
+  // shape (file_name/document_type/order_count/sub_total_sum only), which is
+  // why the UI checks `assurance != null` before trusting this as full detail.
+  documents: ClassifiedDocument[];
+  findings: Finding[];
+  ledger: LedgerRow[] | null;
+  ledger_totals: LedgerRow | null;
   period_start: string | null;
   period_end: string | null;
+  assurance: AuditAssurance | null;
+  four_way: FourWayReconciliation | null;
+  cross_check_windows: CrossCheckWindow[] | null;
+  net_sales_override_docs: string[] | null;
   created_at: string;
 };
 
 export type SavePayoutAuditInput = {
   commission_rate_pct: number;
-  documents: AuditDocumentSummary[];
-  findings: AuditFinding[];
-  ledger: AuditLedgerRow[];
-  ledger_totals: AuditLedgerRow | null;
+  documents: ClassifiedDocument[];
+  findings: Finding[];
+  ledger: LedgerRow[];
+  ledger_totals: LedgerRow | null;
   period_start: string | null;
   period_end: string | null;
+  assurance: AuditAssurance | null;
+  four_way: FourWayReconciliation | null;
+  cross_check_windows: CrossCheckWindow[] | null;
+  net_sales_override_docs: string[] | null;
 };
 
 export async function savePayoutAudit(accountId: string, audit: SavePayoutAuditInput): Promise<{ ok: boolean; error?: string }> {
@@ -64,6 +52,10 @@ export async function savePayoutAudit(accountId: string, audit: SavePayoutAuditI
     ledger_totals: audit.ledger_totals,
     period_start: audit.period_start,
     period_end: audit.period_end,
+    assurance: audit.assurance,
+    four_way: audit.four_way,
+    cross_check_windows: audit.cross_check_windows,
+    net_sales_override_docs: audit.net_sales_override_docs,
   });
   if (error) return { ok: false, error: "Could not save that audit." };
   return { ok: true };
@@ -72,7 +64,7 @@ export async function savePayoutAudit(accountId: string, audit: SavePayoutAuditI
 export async function getAuditHistory(accountId: string, limit = 30): Promise<PayoutAuditRecord[]> {
   const { data, error } = await supabaseAdmin
     .from("ps_payout_audits")
-    .select("id, commission_rate_pct, document_count, documents, findings, ledger, ledger_totals, period_start, period_end, created_at")
+    .select("id, commission_rate_pct, document_count, documents, findings, ledger, ledger_totals, period_start, period_end, assurance, four_way, cross_check_windows, net_sales_override_docs, created_at")
     .eq("account_id", accountId)
     .order("created_at", { ascending: false })
     .limit(limit);

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
-import { CommissionAuditPanel } from "@/components/dashboard/payout/CommissionAuditPanel";
+import { CommissionAuditPanel, type CommissionAuditResult } from "@/components/dashboard/payout/CommissionAuditPanel";
 import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } from "@/components/dashboard/payout/PayoutUploadStaging";
 import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import { SettlementForecastPanel } from "@/components/dashboard/payout/SettlementForecastPanel";
@@ -1007,7 +1007,12 @@ export function PrizeSkoutDashboard() {
   // (see connect.ts's "history" branch). Fetched once per tab visit.
   type PayoutCheckHistoryRow = { id:string; source:"live"|"upload"; platform:string; order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string|null; period_end:string|null; rows_skipped:number|null; rows_total:number|null; commission_amount:number|null; additional_charges:number|null; additional_income:number|null; effective_commission_pct:number|null; brand:string|null; cancelled_gmv:number|null; cancelled_orders:number|null; extra_line_items:{label:string;value:number}[]|null; unexplained_charge:{label:string;amount:number}|null; created_at:string };
   type RepricingHistoryRow = { id:string; sku:string|null; target_channel:string|null; old_price:number|null; new_price:number; currency:string; status:string; upstream_message:string|null; http_status:number|null; retry_count:number|null; duration_ms:number|null; audit_snapshot:Record<string,unknown>|null; created_at:string; completed_at:string|null };
-  type PayoutAuditHistoryRow = { id:string; commission_rate_pct:number; document_count:number; documents:{file_name:string;document_type:string;order_count:number|null;sub_total_sum:number|null;description?:string|null;received_amount?:number|null}[]; findings:Finding[]; ledger:LedgerRow[]|null; ledger_totals:LedgerRow|null; period_start:string|null; period_end:string|null; created_at:string };
+  // `documents`/`assurance`/`four_way`/etc. are the full shape only for
+  // audits saved after 2026-07-27 (see payout-audit-history.ts); older rows
+  // have assurance/four_way as null and documents in the pre-fix summarized
+  // shape, which is why the render below gates on `assurance != null`
+  // before trusting `documents` as full ClassifiedDocument[] detail.
+  type PayoutAuditHistoryRow = { id:string; commission_rate_pct:number; document_count:number; documents:(ClassifiedDocument|{file_name:string;document_type:string;order_count:number|null;sub_total_sum:number|null;description?:string|null;received_amount?:number|null})[]; findings:Finding[]; ledger:LedgerRow[]|null; ledger_totals:LedgerRow|null; period_start:string|null; period_end:string|null; assurance:CommissionAuditResult["assurance"]|null; four_way:CommissionAuditResult["fourWay"]|null; cross_check_windows:CommissionAuditResult["crossCheckWindows"]|null; net_sales_override_docs:string[]|null; created_at:string };
   const [historyPayoutChecks, setHistoryPayoutChecks] = useState<PayoutCheckHistoryRow[]>([]);
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
   const [historyPayoutAudits, setHistoryPayoutAudits] = useState<PayoutAuditHistoryRow[]>([]);
@@ -1789,24 +1794,26 @@ export function PrizeSkoutDashboard() {
     if (!mid || !ac) return;
     setSavingAudit(true);
     try {
-      const documents = payoutDocuments.map(d => ({
-        file_name: d.file_name,
-        document_type: d.document_type,
-        order_count: d.result.order_count ?? null,
-        sub_total_sum: d.result.sub_total_sum ?? null,
-        description: d.description ?? null,
-        received_amount: d.result.received_amount ?? null,
-      }));
+      // Persist the full documents (with per-document result/evidence, not
+      // just a stripped summary) plus the assurance opinion, four-way
+      // reconciliation, cross-check windows and net-sales-override
+      // disclosure — everything the freshly-run report shows — so reopening
+      // this audit from History renders identically instead of a summarized
+      // fallback. See payout-audit-history.ts.
       const res = await fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           merchant_id: mid, access_code: ac, platform: "history", action: "save_payout_audit",
           commission_rate_pct: Number(payoutUploadRate) || 0,
-          documents, findings: auditResult.findings,
+          documents: payoutDocuments, findings: auditResult.findings,
           ledger: auditResult.ledger, ledger_totals: auditResult.ledgerTotals,
           period_start: auditResult.coverage?.start ?? null,
           period_end: auditResult.coverage?.end ?? null,
+          assurance: auditResult.assurance ?? null,
+          four_way: auditResult.fourWay ?? null,
+          cross_check_windows: auditResult.crossCheckWindows ?? null,
+          net_sales_override_docs: auditResult.netSalesOverrideDocs ?? null,
         }),
       });
       const data = await res.json() as { ok?: boolean };
@@ -3640,9 +3647,22 @@ export function PrizeSkoutDashboard() {
                               ))}
                             </div>
                             <CommissionAuditPanel
-                              result={{ ledger: row.ledger ?? [], ledgerTotals: row.ledger_totals, findings: row.findings, coverage: row.period_start ? { start: row.period_start, end: row.period_end ?? row.period_start } : null }}
+                              result={{
+                                ledger: row.ledger ?? [], ledgerTotals: row.ledger_totals, findings: row.findings,
+                                coverage: row.period_start ? { start: row.period_start, end: row.period_end ?? row.period_start } : null,
+                                // assurance is only ever non-null for audits saved after the
+                                // history-fidelity fix — older rows fall through to the panel's
+                                // existing "not retained for this historical audit" fallback.
+                                ...(row.assurance != null ? {
+                                  assurance: row.assurance,
+                                  fourWay: row.four_way ?? undefined,
+                                  crossCheckWindows: row.cross_check_windows ?? undefined,
+                                  netSalesOverrideDocs: row.net_sales_override_docs ?? undefined,
+                                } : {}),
+                              }}
                               currency={currency}
                               documentCount={row.document_count}
+                              documents={row.assurance != null ? (row.documents as ClassifiedDocument[]) : []}
                             />
                           </div>
                         )}

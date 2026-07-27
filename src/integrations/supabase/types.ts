@@ -4152,6 +4152,10 @@ export type Database = {
           ledger_totals: Json | null
           period_start: string | null
           period_end: string | null
+          assurance: Json | null
+          four_way: Json | null
+          cross_check_windows: Json | null
+          net_sales_override_docs: Json | null
           created_at: string
         }
         Insert: {
@@ -4165,6 +4169,10 @@ export type Database = {
           ledger_totals?: Json | null
           period_start?: string | null
           period_end?: string | null
+          assurance?: Json | null
+          four_way?: Json | null
+          cross_check_windows?: Json | null
+          net_sales_override_docs?: Json | null
           created_at?: string
         }
         Update: {
@@ -4178,6 +4186,10 @@ export type Database = {
           ledger_totals?: Json | null
           period_start?: string | null
           period_end?: string | null
+          assurance?: Json | null
+          four_way?: Json | null
+          cross_check_windows?: Json | null
+          net_sales_override_docs?: Json | null
           created_at?: string
         }
         Relationships: []
