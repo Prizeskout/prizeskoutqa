@@ -37,10 +37,19 @@ export const Route = createFileRoute("/api/channels/status")({
             .select("platform, status, connected_at, metadata")
             .eq("account_id", merchantId)
             .neq("status", "revoked"),
+          // A merchant can hold more than one access code (e.g. re-registered
+          // on another device) — .maybeSingle() throws when >1 row matches,
+          // which was silently swallowed here (this destructure never checked
+          // that query's error) and always fell back to null. Scoping to rows
+          // that actually have a name set, newest first, makes this safe
+          // regardless of how many codes the merchant has.
           supabaseAdmin
             .from("ps_access_codes")
             .select("store_name")
             .eq("merchant_id", merchantId)
+            .not("store_name", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
             .maybeSingle(),
         ]);
 

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChannelsTab } from "./ChannelsTab";
 import { MarginRulesTab } from "./MarginRulesTab";
@@ -7,6 +7,80 @@ import { NotificationsTab } from "./NotificationsTab";
 
 const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 const OG = "#EF681A";
+
+function BusinessNameCard() {
+  const merchantId = typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
+  const code = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "") : "";
+  const [name, setName] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!merchantId) { setLoaded(true); return; }
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(merchantId)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { store_name?: string | null } | null) => { if (d?.store_name) setName(d.store_name); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [merchantId]);
+
+  const save = async () => {
+    if (!merchantId || !code || saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/register-code", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: merchantId, code, store_name: name.trim() }),
+      });
+      if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2200); }
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div style={{
+      background: "#FAFAF9", border: "1px solid #E5E2DB", borderRadius: 12,
+      padding: "18px 20px", marginBottom: 24,
+    }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>Business name</h3>
+      <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.7 }}>
+        Shown across your dashboard and on exported reports. Set this if you skipped it during onboarding.
+      </p>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder={loaded ? "Your restaurant or brand name" : "Loading…"}
+          disabled={!loaded}
+          style={{
+            flex: "1 1 260px", minWidth: 0, border: "1px solid #E5E2DB", borderRadius: 8,
+            padding: "10px 12px", fontSize: 13.5, fontFamily: "inherit", color: "#1A1A18",
+            background: "#fff",
+          }}
+        />
+        <button
+          type="button"
+          onClick={save}
+          disabled={!loaded || saving || !name.trim()}
+          style={{
+            cursor: !loaded || saving || !name.trim() ? "default" : "pointer",
+            opacity: !loaded || saving || !name.trim() ? 0.5 : 1,
+            border: "none", borderRadius: 8, background: OG, color: "#fff",
+            fontSize: 13, fontWeight: 600, padding: "10px 18px", fontFamily: "inherit",
+          }}
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+        {saved && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#10B981", fontWeight: 500 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Saved
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function StoreAccessTab() {
   const code = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "") : "";
@@ -21,6 +95,7 @@ function StoreAccessTab() {
 
   return (
     <div style={{ maxWidth: 540 }}>
+      <BusinessNameCard />
       <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", margin: "0 0 6px" }}>Store Access Code</h3>
       <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.7 }}>
         This code identifies your store. Enter it on any device to restore your full dashboard — no account needed.
