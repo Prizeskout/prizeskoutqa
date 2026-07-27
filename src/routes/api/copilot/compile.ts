@@ -164,12 +164,23 @@ scope=single; "all products" is scope=all. Live publishing always requires confi
 
 const FOLLOW_UP = /\b(it|them|those|that|same|next|now|then|go ahead|do it|proceed|continue|use recommended|push live|publish live)\b/i;
 
+// "Find Sony A7S III and show its recommendation" names a specific product
+// by model code and never says "product"/"catalog"/"sku" — so the
+// product-vocabulary check below can't see it. A token mixing letters and
+// digits (a model code, e.g. "A7S", "M4", "256GB") is a reliable substitute
+// signal: ordinary pricing-strategy prose uses bare numbers ("10%", "25")
+// but essentially never alphanumeric codes, so this doesn't pick up
+// conversational questions that merely happen to contain a percentage.
+const MODEL_CODE = /\b(?=[a-zA-Z0-9]*[a-zA-Z])(?=[a-zA-Z0-9]*\d)[a-zA-Z0-9]+\b/;
+const FIND_VERB = /\b(find|search|show|look up|locate)\b/i;
+
 function isOperationalRequest(text: string): boolean {
   const product = /\b(product|products|catalog|catalogue|sku|item|items)\b/i;
   const operation = /\b(pull|import|fetch|retrieve|sync|refresh|show|list|find|search|reprice|recommend|calculate|preview|push|publish|apply|live update|update)\b/i;
   return (product.test(text) && operation.test(text))
     || /\b(push|publish|apply|sync|refresh)\b.*\b(zid|salla|foodics)\b/i.test(text)
-    || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text);
+    || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text)
+    || (FIND_VERB.test(text) && MODEL_CODE.test(text));
 }
 
 // Detect conversational questions vs pricing rule intents.
