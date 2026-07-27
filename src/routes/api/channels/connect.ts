@@ -14,6 +14,7 @@ import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
 import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/server/core/payout-history";
 import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
 import { getDashboardStats } from "@/server/core/dashboard-stats";
+import { getDefendLoopHealth } from "@/server/core/defend-loop-health";
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
@@ -307,7 +308,12 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ ok: true, ...stats }, 200);
           }
 
-          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout, history, dashboard_stats.` }, 400);
+          if (platform === "defend_loop_health") {
+            const health = await getDefendLoopHealth(merchant_id);
+            return resp({ ok: true, ...health }, 200);
+          }
+
+          return resp({ error: `Unsupported platform: ${platform}. Supported: talabat, jahez, keeta_shop_id, margin_floor, talabat_expected_payout, history, dashboard_stats, defend_loop_health.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
           return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);

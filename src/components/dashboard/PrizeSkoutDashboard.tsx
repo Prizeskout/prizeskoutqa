@@ -911,6 +911,8 @@ export function PrizeSkoutDashboard() {
   const [feed, setFeed] = useState<FeedRow[]>([]);
   type HeroStats = { has_activity:boolean; profits_protected_this_month:number; price_updates_this_month:number; price_updates_today:number; avg_margin_saved_pct:number|null; tracked_products:number; daily_series:number[] };
   const [heroStats, setHeroStats] = useState<HeroStats|null>(null);
+  type DefendHealth = { state:"active"|"degraded"|"idle"|"not_monitored"; label:string; detail:string; connected_channels:number; recently_verified_channels:number; last_activity_at:string|null; last_success_at:string|null; recent_failures:number; checked_at:string };
+  const [defendHealth, setDefendHealth] = useState<DefendHealth|null>(null);
   const [importedProducts, setImportedProducts] = useState<ImportedProduct[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
@@ -1112,6 +1114,27 @@ export function PrizeSkoutDashboard() {
       .catch(() => setImportedProducts([]))
       .finally(() => setCatalogLoading(false));
   }, [tab]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadHealth = () => {
+      const mid = localStorage.getItem("ps_merchant_id") ?? "";
+      const ac = localStorage.getItem("ps_access_code") ?? "";
+      if (!mid || !ac) {
+        if (!cancelled) setDefendHealth({ state:"not_monitored", label:"Defend Loop not monitored", detail:"Connect a supported channel to begin monitoring", connected_channels:0, recently_verified_channels:0, last_activity_at:null, last_success_at:null, recent_failures:0, checked_at:new Date().toISOString() });
+        return;
+      }
+      fetch("/api/channels/connect", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ merchant_id:mid, access_code:ac, platform:"defend_loop_health" }),
+      }).then(r => r.ok ? r.json() : null)
+        .then(data => { if (!cancelled && data?.ok) setDefendHealth(data as DefendHealth); })
+        .catch(() => { if (!cancelled) setDefendHealth(null); });
+    };
+    loadHealth();
+    const timer = window.setInterval(loadHealth, 60_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, []);
 
   const toastT = useRef<ReturnType<typeof setTimeout>|null>(null);
   const laterRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -3573,13 +3596,14 @@ export function PrizeSkoutDashboard() {
               </a>
               <div style={{ height:1, background:"var(--border)", marginBottom:8 }} />
               {/* Defend Loop */}
-              <div style={{ border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
-                background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
-                borderRadius:12, padding:"13px 14px", display:"flex", gap:11, alignItems:"flex-start" }}>
-                <span style={{ width:8, height:8, borderRadius:"50%", background:GN, marginTop:5, animation:"pk-pulse 2s infinite" }} />
+              <div role="status" onClick={()=>setTab("vault")} title={defendHealth ? `Checked ${new Date(defendHealth.checked_at).toLocaleTimeString()}` : "Checking live operational signals"}
+                style={{ border:`1px solid color-mix(in srgb,${defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B"} 30%,transparent)`,
+                background:`color-mix(in srgb,${defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B"} 7%,var(--surface))`,
+                borderRadius:12, padding:"13px 14px", display:"flex", gap:11, alignItems:"flex-start", cursor:"pointer" }}>
+                <span style={{ width:8, height:8, borderRadius:"50%", background:defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B", marginTop:5, animation:defendHealth?.state==="active"?"pk-pulse 2s infinite":"none" }} />
                 <span style={{ display:"flex", flexDirection:"column", gap:3 }}>
-                  <span style={{ fontSize:15, fontWeight:700, color:GN }}>{t.defend}</span>
-                  <span style={{ fontSize:13.5, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
+                  <span style={{ fontSize:15, fontWeight:700, color:defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B" }}>{defendHealth?.label ?? "Checking Defend Loop"}</span>
+                  <span style={{ fontSize:11.5, lineHeight:1.45, color:"var(--muted)" }}>{defendHealth?.detail ?? "Reading live channel and dispatch signals…"}</span>
                 </span>
               </div>
               {/* Account */}

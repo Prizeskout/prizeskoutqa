@@ -203,15 +203,16 @@ function PsSidebar({ screen, theme, onToggleTheme, region, onRegionChange }: {
       <div style={{ margin: "0 4px 8px", height: 1, background: "var(--ps-border)" }} />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {/* DEMO: Defend Loop status — static, not live infrastructure data */}
+        {/* This shell has no merchant-scoped health query. Never present a
+            fabricated online/node count; the Revenue Hub owns live status. */}
         <div style={{
           border: "1px solid rgba(16,185,129,0.18)", background: "rgba(16,185,129,0.06)",
           borderRadius: 11, padding: "13px 14px", display: "flex", alignItems: "center", gap: 10,
         }}>
-          <span style={{ width: 8, height: 8, borderRadius: 999, background: "#10B981", animation: "psPulse 2.4s infinite", flexShrink: 0 }} />
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: "#64748B", flexShrink: 0 }} />
           <div style={{ lineHeight: 1.3 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>{t("psShell.defendLoopOnline")}</div>
-            <div style={{ fontSize: 10.5, color: "var(--ps-muted)", fontFamily: "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace" }}>{t("psShell.edgeNodesHealthy")}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#64748B" }}>Defend Loop status</div>
+            <div style={{ fontSize: 10.5, color: "var(--ps-muted)" }}>Open Revenue Hub for live health</div>
           </div>
         </div>
 
