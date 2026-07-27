@@ -8,6 +8,7 @@ import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashb
 import { SettlementForecastPanel } from "@/components/dashboard/payout/SettlementForecastPanel";
 import { PromotionProfitabilityWorkspace } from "@/components/dashboard/promotions/PromotionProfitabilityWorkspace";
 import { ChannelPriceArchitecture } from "@/components/dashboard/pricing/ChannelPriceArchitecture";
+import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControlWorkspace";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
@@ -2415,6 +2416,12 @@ export function PrizeSkoutDashboard() {
                 }))}
                 contract={approvedContract}
                 currency={currency}
+              />
+
+              <GroupControlWorkspace
+                contract={approvedContract}
+                currency={currency}
+                productCount={importedProducts.length}
               />
 
               {/* Tabs */}

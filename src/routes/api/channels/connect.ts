@@ -25,6 +25,7 @@ import { extractContractTerms, type ContractDocumentImage } from "@/server/core/
 import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/server/core/recovery-cases";
 import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan } from "@/server/core/channel-price-plans";
+import { approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -562,6 +563,26 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ok:true,plan:await approveChannelPricePlan(merchant_id,body.id,body.approved_by.trim().slice(0,160))},200);
             }
             return resp({error:"Unsupported channel-price-plan action."},400);
+          }
+
+          if(platform==="group_controls"){
+            if(body.action==="get")return resp({ok:true,group:await getGroupControls(merchant_id)},200);
+            const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="save"){
+              if(!body.group_name?.trim())return resp({error:"Group name is required."},400);
+              for(const key of ["legal_entities","brands","branches","members"]){
+                if(!Array.isArray(raw[key]))return resp({error:`${key} must be an array.`},400);
+              }
+              return resp({ok:true,group:await saveGroupControls(merchant_id,{
+                group_name:body.group_name.trim().slice(0,180),legal_entities:(raw.legal_entities as unknown[]).slice(0,50),
+                brands:(raw.brands as unknown[]).slice(0,100),branches:(raw.branches as unknown[]).slice(0,500),members:(raw.members as unknown[]).slice(0,250),
+              })},200);
+            }
+            if(body.action==="approve"){
+              if(!["finance","operations"].includes(body.approval_role)||!body.reviewer?.trim())return resp({error:"Approval role and reviewer are required."},400);
+              return resp({ok:true,group:await approveGroupControls(merchant_id,body.approval_role as "finance"|"operations",body.reviewer.trim().slice(0,160))},200);
+            }
+            return resp({error:"Unsupported group-controls action."},400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
