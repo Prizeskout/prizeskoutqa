@@ -6,6 +6,7 @@ import { CommissionAuditPanel } from "@/components/dashboard/payout/CommissionAu
 import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } from "@/components/dashboard/payout/PayoutUploadStaging";
 import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import { SettlementForecastPanel } from "@/components/dashboard/payout/SettlementForecastPanel";
+import { PromotionProfitabilityWorkspace } from "@/components/dashboard/promotions/PromotionProfitabilityWorkspace";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
@@ -2389,6 +2390,18 @@ export function PrizeSkoutDashboard() {
                 setApprovedContract(term);
                 setPayoutUploadRate(String(term.commission_rate_pct));
               }} />
+
+              <PromotionProfitabilityWorkspace
+                products={importedProducts.map(product=>({
+                  sku:product.sku,
+                  name:product.name_en||product.name_ar||product.sku,
+                  current_price:product.current_price,
+                  net_margin_pct:product.net_margin_pct,
+                  source_platform:product.source_platform,
+                }))}
+                contract={approvedContract}
+                currency={currency}
+              />
 
               {/* Tabs */}
               <div style={{ display:"flex", background:"var(--surface2)", border:"1px solid var(--border)",

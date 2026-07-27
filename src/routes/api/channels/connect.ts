@@ -23,6 +23,7 @@ import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classif
 import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
 import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/server/core/recovery-cases";
+import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -514,6 +515,37 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ok:true,case:item},200);
             }
             return resp({error:"Unsupported recovery-case action."},400);
+          }
+
+          if(platform==="promotion_scenarios"){
+            if(body.action==="list")return resp({ok:true,scenarios:await listPromotionScenarios(merchant_id)},200);
+            const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="create"){
+              if(!body.name?.trim()||!body.source_platform?.trim())return resp({error:"Campaign name and platform are required."},400);
+              if(!raw.inputs||typeof raw.inputs!=="object"||!raw.results||typeof raw.results!=="object")return resp({error:"Simulation inputs and deterministic results are required."},400);
+              const item=await savePromotionScenario(merchant_id,{
+                name:body.name.trim().slice(0,180),platform:body.source_platform.trim().toLowerCase(),status:"draft",
+                inputs:raw.inputs as Record<string,unknown>,results:raw.results as Record<string,unknown>,
+                promised_platform_funding:null,actual_platform_funding:null,funding_variance:null,
+              });
+              return resp({ok:true,scenario:item},200);
+            }
+            if(body.action==="update"){
+              if(!body.id)return resp({error:"Scenario id is required."},400);
+              const allowed=["draft","approved","running","completed","cancelled"];
+              if(body.scenario_status&&!allowed.includes(body.scenario_status))return resp({error:"Invalid campaign status."},400);
+              const promised=raw.promised_platform_funding==null?null:Number(raw.promised_platform_funding);
+              const actual=raw.actual_platform_funding==null?null:Number(raw.actual_platform_funding);
+              if((promised!=null&&!Number.isFinite(promised))||(actual!=null&&!Number.isFinite(actual)))return resp({error:"Funding amounts must be valid numbers."},400);
+              const item=await updatePromotionScenario(merchant_id,body.id,{
+                ...(body.scenario_status?{status:body.scenario_status as "draft"|"approved"|"running"|"completed"|"cancelled"}:{}),
+                promised_platform_funding:promised,actual_platform_funding:actual,
+                funding_variance:promised!=null&&actual!=null?Math.round((actual-promised)*100)/100:null,
+                ...(body.scenario_status==="approved"?{approved_by:body.approved_by?.trim().slice(0,160)||"Merchant approver",approved_at:new Date().toISOString()}:{}),
+              });
+              return resp({ok:true,scenario:item},200);
+            }
+            return resp({error:"Unsupported promotion-scenario action."},400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
