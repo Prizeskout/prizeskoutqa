@@ -144,7 +144,7 @@ const BYOK_CONFIG: Record<string, { fields:ByokField[]; portalHint?:string }> = 
 
 const T = {
   en: {
-    cp:"CONTROL PLANE", live:"LIVE", defend:"Defend Loop Online", defendS:"4 edge nodes · healthy",
+    cp:"CONTROL PLANE", live:"LIVE", defend:"Defend Loop status", defendS:"Live health is loading",
     navA:"Revenue Protection Hub", navAs:"Analytics",
     navR:"Margin Policy Engine",   navRs:"Rule Book",
     navV:"Integration Vault",      navVs:"Connections",
@@ -294,7 +294,7 @@ const T = {
     historyPayoutAuditEmpty:"No saved audits yet.",
   },
   ar: {
-    cp:"لوحة التحكم", live:"مباشر", defend:"حلقة الدفاع تعمل", defendS:"4 عقد طرفية · سليمة",
+    cp:"لوحة التحكم", live:"مباشر", defend:"حالة حلقة الدفاع", defendS:"جارٍ تحميل الحالة المباشرة",
     navA:"مركز حماية الإيرادات", navAs:"التحليلات",
     navR:"محرك سياسة الهوامش",   navRs:"دفتر القواعد",
     navV:"خزنة التكاملات",        navVs:"الاتصالات",
@@ -444,7 +444,7 @@ const T = {
     historyPayoutAuditEmpty:"لا توجد عمليات تدقيق محفوظة بعد.",
   },
   fr: {
-    cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"Boucle de défense active", defendS:"4 nœuds périphériques · opérationnels",
+    cp:"CENTRE DE CONTRÔLE", live:"EN DIRECT", defend:"État de la boucle de défense", defendS:"Chargement de l’état en direct",
     navA:"Centre de protection des revenus", navAs:"Analytique",
     navR:"Moteur de politique de marge",      navRs:"Livre des règles",
     navV:"Coffre d'intégrations",             navVs:"Connexions",
@@ -1793,13 +1793,14 @@ export function PrizeSkoutDashboard() {
               <span style={{ fontSize:14.5, fontWeight:500 }}>{t.backToSite}</span>
             </a>
             <div style={{ height:1, background:"var(--border)", marginBottom:8 }} />
-            <div style={{ border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`,
-              background:`color-mix(in srgb,${GN} 7%,var(--surface))`,
-              borderRadius:12, padding:"13px 14px", display:"flex", gap:11, alignItems:"flex-start" }}>
-              <span style={{ width:8, height:8, borderRadius:"50%", background:GN, marginTop:5, animation:"pk-pulse 2s infinite" }} />
+            <div role="status" onClick={()=>setTab("vault")} title={defendHealth ? `Checked ${new Date(defendHealth.checked_at).toLocaleTimeString()}` : "Checking live operational signals"}
+              style={{ border:`1px solid color-mix(in srgb,${defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B"} 30%,transparent)`,
+              background:`color-mix(in srgb,${defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B"} 7%,var(--surface))`,
+              borderRadius:12, padding:"13px 14px", display:"flex", gap:11, alignItems:"flex-start", cursor:"pointer" }}>
+              <span style={{ width:8, height:8, borderRadius:"50%", background:defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B", marginTop:5, animation:defendHealth?.state==="active"?"pk-pulse 2s infinite":"none" }} />
               <span style={{ display:"flex", flexDirection:"column", gap:3 }}>
-                <span style={{ fontSize:15, fontWeight:700, color:GN }}>{t.defend}</span>
-                <span style={{ fontSize:13.5, color:"var(--muted)", fontFamily:MONO }}>{t.defendS}</span>
+                <span style={{ fontSize:15, fontWeight:700, color:defendHealth?.state==="active"?GN:defendHealth?.state==="degraded"?"#DC2626":defendHealth?.state==="idle"?"#B45309":"#64748B" }}>{defendHealth?.label ?? "Checking Defend Loop"}</span>
+                <span style={{ fontSize:11.5, lineHeight:1.45, color:"var(--muted)" }}>{defendHealth?.detail ?? "Reading live channel and dispatch signals…"}</span>
               </span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:11, paddingInline:4 }}>

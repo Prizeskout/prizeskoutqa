@@ -654,8 +654,8 @@
   },
   "psShell": {
     "controlPlane": "Control Plane",
-    "defendLoopOnline": "Defend Loop Online",
-    "edgeNodesHealthy": "4 edge nodes · healthy",
+    "defendLoopOnline": "Defend Loop status",
+    "edgeNodesHealthy": "Open Revenue Hub for live health",
     "liveBadge": "LIVE",
     "toggleTheme": "Toggle theme",
     "nav": {
@@ -706,7 +706,7 @@
     "defending": "Defending",
     "paused": "Paused",
     "floorLabelCeiling": "% ceiling",
-    "footerNote": "Changes propagate to all 4 edge nodes in < 2s · last sync just now"
+    "footerNote": "Live propagation status is shown in the Revenue Hub"
   },
   "integrationVault": {
     "subtitle": "Connect & secure your commerce stack",
