@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceArea,
 } from "recharts";
-import type { Finding, LedgerRow, CrossCheckWindow } from "@/lib/commission-audit";
+import type { Finding, LedgerRow, CrossCheckWindow, AuditAssurance } from "@/lib/commission-audit";
 import { SEVERITY_ORDER, summarizeAudit } from "@/lib/commission-audit";
 
 const thStyle = {
@@ -89,6 +89,7 @@ export type CommissionAuditResult = {
   // of their own choosing, not something this engine verified. Optional so
   // audits saved to History before this existed still render fine.
   netSalesOverrideDocs?: string[];
+  assurance?: AuditAssurance;
 };
 
 export function CommissionAuditPanel({
@@ -159,6 +160,35 @@ export function CommissionAuditPanel({
           <span style={{ fontSize: 13, color: "#B45309", lineHeight: 1.6 }}>
             <strong>You've marked {result.netSalesOverrideDocs.join(", ")} as already net of commission.</strong> The Commission (Agreed) column below shows what the platform must have already taken to arrive at those figures — it's not deducted again; Expected Net still equals the Sales you reported. This is your own override, not something this audit verified; its own cross-check (see Findings) may say otherwise.
           </span>
+        </div>
+      )}
+
+      {result.assurance && (
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".06em" }}>Independent assurance gate</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: result.assurance.opinion === "insufficient_evidence" ? "#B45309" : "var(--text)", marginTop: 4 }}>{result.assurance.opinionLabel}</div>
+              <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>Engine {result.assurance.engineVersion} · calculations are not an audit opinion until the evidence gate is satisfied.</div>
+            </div>
+            <div style={{ textAlign: "end" }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: result.assurance.evidenceScore >= 80 ? "#10B981" : "#F59E0B" }}>{result.assurance.evidenceScore}%</div>
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>evidence readiness</div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(155px,1fr))", gap: 9 }}>
+            {result.assurance.assertions.map(a => (
+              <div key={a.id} title={a.detail} style={{ ...statCard, borderColor: a.status === "passed" ? "color-mix(in srgb,#10B981 35%,var(--border))" : a.status === "partial" ? "color-mix(in srgb,#F59E0B 40%,var(--border))" : "color-mix(in srgb,#DC2626 30%,var(--border))" }}>
+                <span style={{ fontSize: 12.5, fontWeight: 800 }}>{a.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: a.status === "passed" ? "#10B981" : a.status === "partial" ? "#B45309" : "#DC2626", textTransform: "uppercase" }}>{a.status}</span>
+                <span style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.4 }}>{a.detail}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 10 }}>
+            <div style={statCard}><span style={{ fontSize: 10.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Claims-ready exposure</span><span style={{ fontSize: 20, fontWeight: 900, color: "#10B981" }}>{fmt(result.assurance.claimsReadyAmount, currency)}</span><span style={{ fontSize: 11.5, color: "var(--muted)" }}>Corroborated by matching sources</span></div>
+            <div style={statCard}><span style={{ fontSize: 10.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>Estimated exposure</span><span style={{ fontSize: 20, fontWeight: 900, color: "#B45309" }}>{fmt(result.assurance.estimatedExposure, currency)}</span><span style={{ fontSize: 11.5, color: "var(--muted)" }}>Requires more evidence before recovery</span></div>
+          </div>
         </div>
       )}
 
@@ -251,6 +281,10 @@ export function CommissionAuditPanel({
                     <td style={tdStyle}>
                       <div style={{ fontWeight: 600 }}>{f.title}</div>
                       <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 3, lineHeight: 1.5 }}>{f.detail}</div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 7, flexWrap: "wrap" }}>
+                        <span style={chip}>{f.evidence_level?.replace("_", " ") ?? "legacy evidence"}</span>
+                        <span style={{ ...chip, color: f.recoverability === "claims_ready" ? "#10B981" : "#B45309" }}>{f.recoverability?.replace("_", " ") ?? "not classified"}</span>
+                      </div>
                       {!!f.trace?.checkedColumns?.length && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 7 }}>
                           <span style={{ ...chip, background: "transparent", border: "none", padding: "3px 0", color: "var(--muted)", fontWeight: 700 }}>Checked:</span>

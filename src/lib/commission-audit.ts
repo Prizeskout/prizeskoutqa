@@ -54,6 +54,9 @@ export type Finding = {
   title: string;
   detail: string;
   amount?: number;
+  evidence_level?: "merchant_asserted" | "single_source" | "corroborated";
+  recoverability?: "unquantified" | "estimated" | "claims_ready";
+  assertion?: "completeness" | "accuracy" | "cutoff" | "authorization" | "occurrence" | "settlement";
   // Structured version of what the detail sentence already says in prose —
   // lets the UI/PDF show the actual investigation (columns checked, rates
   // derived) instead of just the summary sentence.
@@ -97,6 +100,24 @@ export type ClassifiedDocument = {
   // this can still see the evidence next to their chosen treatment rather
   // than have it silently disappear.
   treat_sales_as_net?: boolean;
+};
+
+export type AuditAssertion = {
+  id: "completeness" | "accuracy" | "cutoff" | "authorization" | "occurrence" | "settlement";
+  label: string;
+  status: "passed" | "partial" | "missing";
+  detail: string;
+};
+
+export type AuditAssurance = {
+  opinion: "insufficient_evidence" | "exceptions_found" | "reconciled_with_limitations" | "reconciled";
+  opinionLabel: string;
+  evidenceScore: number;
+  claimsReadyAmount: number;
+  estimatedExposure: number;
+  assertions: AuditAssertion[];
+  limitations: string[];
+  engineVersion: "revenue-assurance-v1";
 };
 
 // Talabat's real statement parser only ever sets effective_commission_pct;
@@ -336,7 +357,7 @@ function computeDuplicateDateFinding(dateCollisions: string[]): Finding | null {
     id: "duplicate-dates",
     severity: "info",
     title: "Overlapping dates across uploaded daily logs",
-    detail: `${dateCollisions.length} date(s) appear in more than one uploaded daily-log file (values were summed): ${shown}${dateCollisions.length > 10 ? "…" : ""}. Confirm you didn't upload overlapping periods twice.`,
+    detail: `${dateCollisions.length} date(s) appear in more than one uploaded daily-log file and were quarantined from all payout calculations: ${shown}${dateCollisions.length > 10 ? "…" : ""}. Resolve which source is authoritative, then rerun the audit.`,
   };
 }
 
@@ -568,6 +589,7 @@ export function reconcile(
   // the UI/PDF can render an unmissable disclosure rather than let the
   // override change numbers silently.
   netSalesOverrideDocs: string[];
+  assurance: AuditAssurance;
 } {
   const dailyDocs = docs.filter(d => d.document_type === "daily_log" && (d.result.daily_rows?.length ?? 0) > 0);
   const statementDocs = docs.filter(d => d.document_type === "statement");
@@ -582,18 +604,24 @@ export function reconcile(
   // day correctly.
   const netDates = new Set<string>();
   const netSalesOverrideDocs: string[] = [];
+  const contributions = new Map<string, { docId: string; orders: number; sales: number; isNet: boolean }[]>();
   for (const doc of dailyDocs) {
     if (doc.treat_sales_as_net) netSalesOverrideDocs.push(friendlyLabel(doc));
     for (const row of doc.result.daily_rows ?? []) {
-      const existing = byDate.get(row.date) ?? { orders: 0, sales: 0 };
-      existing.orders += row.orders;
-      existing.sales += row.sales;
-      byDate.set(row.date, existing);
+      const rows = contributions.get(row.date) ?? [];
+      rows.push({ docId: doc.id, orders: row.orders, sales: row.sales, isNet: !!doc.treat_sales_as_net });
+      contributions.set(row.date, rows);
       const srcSet = sources.get(row.date) ?? new Set<string>();
       srcSet.add(doc.id);
       sources.set(row.date, srcSet);
-      if (doc.treat_sales_as_net) netDates.add(row.date);
     }
+  }
+  for (const [date, rows] of contributions) {
+    // Never manufacture turnover by summing the same date from two files.
+    // Ambiguous dates remain visible as a finding but are excluded from math.
+    if (new Set(rows.map(r => r.docId)).size > 1) continue;
+    byDate.set(date, rows.reduce((a, r) => ({ orders: a.orders + r.orders, sales: a.sales + r.sales }), { orders: 0, sales: 0 }));
+    if (rows.some(r => r.isNet)) netDates.add(date);
   }
 
   const rate = Number.isFinite(commissionRatePct) ? commissionRatePct : 0;
@@ -671,7 +699,39 @@ export function reconcile(
     crossCheckWindows.push(...receivedResult.windows);
   }
 
-  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows, netSalesOverrideDocs };
+  for (const finding of findings) {
+    finding.evidence_level ??= finding.id.startsWith("received-vs-statement-") &&
+      !finding.id.includes("partial") && !finding.id.includes("disjoint") ? "corroborated" : "single_source";
+    finding.recoverability ??= finding.amount == null ? "unquantified"
+      : finding.evidence_level === "corroborated" && finding.severity === "critical" ? "claims_ready" : "estimated";
+  }
+  const exactPeriodCheck = findings.some(f => f.id.startsWith("period-cross-check-") || (
+    f.id.startsWith("received-vs-statement-") && !f.id.includes("partial") && !f.id.includes("disjoint")
+  ));
+  const assertions: AuditAssertion[] = [
+    { id: "completeness", label: "Completeness", status: dailyDocs.length && !dateCollisions.length ? "passed" : dailyDocs.length ? "partial" : "missing", detail: dailyDocs.length ? (dateCollisions.length ? `${dateCollisions.length} duplicate date(s) quarantined from the calculation.` : "Daily activity supplied without duplicate dates.") : "Order-level or daily sales evidence is missing." },
+    { id: "accuracy", label: "Accuracy", status: dailyDocs.length && statementDocs.length ? "partial" : "missing", detail: dailyDocs.length && statementDocs.length ? "Aggregate figures were cross-checked; individual fees, refunds and taxes were not recomputed." : "Activity and platform settlement evidence are both required." },
+    { id: "cutoff", label: "Cut-off", status: exactPeriodCheck ? "passed" : coverage ? "partial" : "missing", detail: exactPeriodCheck ? "At least one like-for-like period was compared." : "No complete like-for-like settlement period was proven." },
+    { id: "authorization", label: "Contract terms", status: "missing", detail: "The agreed commission rate is merchant-entered; no signed contract or versioned rate card is attached." },
+    { id: "occurrence", label: "Occurrence", status: dailyDocs.length ? "partial" : "missing", detail: dailyDocs.length ? "Aggregated activity exists, but individual orders and cancellations are not vouched." : "No underlying transaction evidence supplied." },
+    { id: "settlement", label: "Bank settlement", status: receivedDocs.length ? "partial" : "missing", detail: receivedDocs.length ? "Receipt is merchant-entered, not independently matched to a bank statement." : "No bank receipt evidence supplied." },
+  ];
+  const evidenceScore = Math.round(assertions.reduce((n, a) => n + (a.status === "passed" ? 1 : a.status === "partial" ? 0.5 : 0), 0) / assertions.length * 100);
+  const claimsReadyAmount = round2(findings.filter(f => f.recoverability === "claims_ready").reduce((n, f) => n + (f.amount ?? 0), 0));
+  const estimatedExposure = round2(findings.filter(f => f.recoverability === "estimated").reduce((n, f) => n + (f.amount ?? 0), 0));
+  const limitations = assertions.filter(a => a.status !== "passed").map(a => a.detail);
+  const opinion: AuditAssurance["opinion"] = evidenceScore < 60 ? "insufficient_evidence"
+    : findings.some(f => f.severity === "critical") ? "exceptions_found"
+    : limitations.length ? "reconciled_with_limitations" : "reconciled";
+  const opinionLabel = opinion === "insufficient_evidence" ? "Insufficient evidence — no audit conclusion"
+    : opinion === "exceptions_found" ? "Exceptions identified"
+    : opinion === "reconciled_with_limitations" ? "Reconciled with limitations" : "Reconciled";
+  const assurance: AuditAssurance = {
+    opinion, opinionLabel, evidenceScore, claimsReadyAmount, estimatedExposure,
+    assertions, limitations, engineVersion: "revenue-assurance-v1",
+  };
+
+  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows, netSalesOverrideDocs, assurance };
 }
 
 export const SEVERITY_ORDER: Record<Finding["severity"], number> = { critical: 0, warning: 1, info: 2 };
@@ -696,16 +756,22 @@ export type AuditSummary = {
   totalFlaggedAmount: number;
   topFinding: Finding | null;
   headline: string;
+  claimsReadyAmount: number;
+  estimatedExposure: number;
+  evidenceScore: number;
+  opinionLabel: string;
 };
 
 export function summarizeAudit(
-  result: { ledger: LedgerRow[]; ledgerTotals: LedgerRow | null; findings: Finding[]; coverage: { start: string; end: string } | null },
+  result: { ledger: LedgerRow[]; ledgerTotals: LedgerRow | null; findings: Finding[]; coverage: { start: string; end: string } | null; assurance?: AuditAssurance },
   documentCount: number,
 ): AuditSummary {
   const critical = result.findings.filter(f => f.severity === "critical");
   const warning = result.findings.filter(f => f.severity === "warning");
   const info = result.findings.filter(f => f.severity === "info");
   const totalFlaggedAmount = round2(result.findings.reduce((s, f) => s + (f.amount ?? 0), 0));
+  const claimsReadyAmount = result.assurance?.claimsReadyAmount ?? 0;
+  const estimatedExposure = result.assurance?.estimatedExposure ?? totalFlaggedAmount;
   const topFinding = [...result.findings].sort((a, b) =>
     SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || (b.amount ?? 0) - (a.amount ?? 0),
   )[0] ?? null;
@@ -718,7 +784,9 @@ export function summarizeAudit(
   const docsLabel = `${documentCount} document${documentCount === 1 ? "" : "s"}`;
 
   let headline: string;
-  if (critical.length > 0) {
+  if (result.assurance?.opinion === "insufficient_evidence") {
+    headline = `No independent conclusion can be issued yet. Evidence readiness is ${result.assurance.evidenceScore}% across ${docsLabel}; complete the missing evidence before treating exceptions as recoverable claims.`;
+  } else if (critical.length > 0) {
     headline = `${critical.length} critical finding${critical.length === 1 ? "" : "s"} across ${docsLabel} — approximately ${totalFlaggedAmount.toFixed(2)} flagged, worth resolving before trusting this payout.`;
   } else if (warning.length > 0) {
     headline = `${warning.length} item${warning.length === 1 ? "" : "s"} worth reviewing across ${docsLabel} — approximately ${totalFlaggedAmount.toFixed(2)} flagged, nothing that blocks trusting the payout outright.`;
@@ -742,5 +810,9 @@ export function summarizeAudit(
     totalFlaggedAmount,
     topFinding,
     headline,
+    claimsReadyAmount,
+    estimatedExposure,
+    evidenceScore: result.assurance?.evidenceScore ?? 0,
+    opinionLabel: result.assurance?.opinionLabel ?? "Legacy calculation — assurance not assessed",
   };
 }
