@@ -3599,7 +3599,7 @@ export function PrizeSkoutDashboard() {
                                   title={d.description ?? undefined}>
                                   {d.file_name}
                                   <span style={{ fontSize:10, fontWeight:700, color:"var(--muted)", textTransform:"uppercase" as const, letterSpacing:"0.03em" }}>
-                                    {d.document_type === "daily_log" ? "Daily Log" : d.document_type === "statement" ? "Statement"
+                                    {d.document_type === "daily_log" ? "Daily Log" : d.document_type === "platform_transaction" ? "Platform Transactions" : d.document_type === "statement" ? "Statement"
                                       : d.document_type === "merchant_received" ? "What I Received" : "Report"}
                                   </span>
                                 </span>

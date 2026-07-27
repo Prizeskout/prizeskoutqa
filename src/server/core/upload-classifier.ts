@@ -18,7 +18,7 @@ import type { ExpectedPayoutResult } from "./expected-payout";
 const MODEL = "claude-haiku-4-5-20251001";
 const DESCRIPTION_MAX_LEN = 500;
 
-export type UploadRole = "platform_statement" | "daily_log" | "merchant_received" | "unknown";
+export type UploadRole = "platform_statement" | "platform_transaction" | "daily_log" | "merchant_received" | "unknown";
 
 export type UploadClassification = {
   role: UploadRole;
@@ -26,7 +26,7 @@ export type UploadClassification = {
   confidence: number;
   restated: string;
   accounting_basis: "gross_before_deductions" | "net_after_deductions" | "unclear";
-  suggested_document_type: "daily_log" | "statement" | "summary_pdf" | "merchant_received" | "keep_detected";
+  suggested_document_type: "daily_log" | "platform_transaction" | "statement" | "summary_pdf" | "merchant_received" | "keep_detected";
   audit_use: string;
   risks: string[];
   blocking_question: string | null;
@@ -54,6 +54,7 @@ You never compute, verify, or restate any dollar figures. Any numbers you are gi
 Classify the document's role as one of:
 - platform_statement: the delivery platform's OWN compiled payout/earnings statement, summary report, or payout data of any kind that came FROM the platform (e.g. "what Talabat paid me", "what Talabat says they paid me", "the earnings report Snoonu sent", "what they compiled", "Talabat's payout summary"). Any phrasing that describes a platform's own export or report as showing what it paid belongs here — including casual phrasing like "paid me" — as long as the document itself is something the platform produced (a file, an export, a report).
 - daily_log: a raw per-order or per-day sales/orders export (e.g. "my daily orders CSV", "orders per day")
+- platform_transaction: a transaction-level export produced by the delivery platform, containing platform order/transaction identifiers and amounts before settlement aggregation
 - merchant_received: specifically the merchant's OWN external record — money that landed in their bank/accounting system, entered by the merchant themselves, NOT sourced from the platform (e.g. "what actually hit our bank account", "our accounting shows", "our own bank record"). This is normally a manually-typed amount, not an uploaded file. Only use this when the description clearly points to a source outside the platform (a bank, an accounting system) — a description merely saying a platform "paid" or "gave" the merchant something is platform_statement, not this.
 - unknown: the description doesn't make the role clear
 
@@ -81,7 +82,7 @@ const TOOL_SCHEMA: Anthropic.Tool = {
     properties: {
       role: {
         type: "string",
-        enum: ["platform_statement", "daily_log", "merchant_received", "unknown"],
+        enum: ["platform_statement", "platform_transaction", "daily_log", "merchant_received", "unknown"],
       },
       platform: {
         type: "string",
@@ -90,7 +91,7 @@ const TOOL_SCHEMA: Anthropic.Tool = {
       confidence: { type: "number", minimum: 0, maximum: 1 },
       restated: { type: "string", maxLength: 200 },
       accounting_basis: { type: "string", enum: ["gross_before_deductions", "net_after_deductions", "unclear"] },
-      suggested_document_type: { type: "string", enum: ["daily_log", "statement", "summary_pdf", "merchant_received", "keep_detected"] },
+      suggested_document_type: { type: "string", enum: ["daily_log", "platform_transaction", "statement", "summary_pdf", "merchant_received", "keep_detected"] },
       audit_use: { type: "string", maxLength: 240 },
       risks: { type: "array", items: { type: "string", maxLength: 160 }, maxItems: 3 },
       blocking_question: { type: ["string", "null"], maxLength: 200 },
@@ -125,7 +126,7 @@ export async function classifyUpload(input: ClassifyUploadInput): Promise<Classi
     if (!toolUse) return { ok: false, error: "AI returned no classification." };
 
     const raw = toolUse.input as Partial<UploadClassification>;
-    const roles: UploadRole[] = ["platform_statement", "daily_log", "merchant_received", "unknown"];
+    const roles: UploadRole[] = ["platform_statement", "platform_transaction", "daily_log", "merchant_received", "unknown"];
     const role = roles.includes(raw.role as UploadRole) ? (raw.role as UploadRole) : "unknown";
     const platform = raw.platform && raw.platform !== "unknown" ? raw.platform : null;
     const confidence = typeof raw.confidence === "number" ? Math.max(0, Math.min(1, raw.confidence)) : 0;
@@ -133,7 +134,7 @@ export async function classifyUpload(input: ClassifyUploadInput): Promise<Classi
 
     const accounting_basis = ["gross_before_deductions", "net_after_deductions", "unclear"].includes(raw.accounting_basis ?? "")
       ? raw.accounting_basis! : "unclear";
-    const suggestedTypes = ["daily_log", "statement", "summary_pdf", "merchant_received", "keep_detected"];
+    const suggestedTypes = ["daily_log", "platform_transaction", "statement", "summary_pdf", "merchant_received", "keep_detected"];
     const suggested_document_type = suggestedTypes.includes(raw.suggested_document_type ?? "")
       ? raw.suggested_document_type! : "keep_detected";
     const audit_use = typeof raw.audit_use === "string" ? raw.audit_use.slice(0, 240) : "";

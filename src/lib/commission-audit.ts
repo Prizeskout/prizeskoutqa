@@ -53,7 +53,7 @@ export type PayoutResultLike = {
 // never structurally inferred; it's only ever assigned directly (manual
 // entry, or an explicit user correction of a file's detected type).
 export type StructuralDocumentType = "daily_log" | "statement" | "summary_pdf";
-export type DocumentType = StructuralDocumentType | "merchant_received";
+export type DocumentType = StructuralDocumentType | "platform_transaction" | "merchant_received";
 
 export type Finding = {
   id: string;
@@ -125,6 +125,30 @@ export type AuditAssurance = {
   assertions: AuditAssertion[];
   limitations: string[];
   engineVersion: "revenue-assurance-v1";
+};
+
+export type FourWayStage = {
+  id: "order_activity"|"platform_transactions"|"platform_settlement"|"merchant_receipt";
+  label: string;
+  status: "verified"|"partial"|"asserted"|"missing";
+  amount: number | null;
+  evidenceIds: string[];
+  evidenceBasis: string;
+  coverage: { start:string; end:string } | null;
+};
+
+export type FourWayReconciliation = {
+  stages: FourWayStage[];
+  links: {
+    from: FourWayStage["id"];
+    to: FourWayStage["id"];
+    status: "matched"|"partial"|"unmatched"|"not_testable";
+    variance: number | null;
+    explanation: string;
+  }[];
+  documentaryReceipt: boolean;
+  merchantAssertionOnly: boolean;
+  unresolvedVariance: number | null;
 };
 
 // Talabat's real statement parser only ever sets effective_commission_pct;
@@ -228,6 +252,7 @@ function friendlyLabel(doc: ClassifiedDocument): string {
     // positions) — treated like a defined term, not a plain noun phrase.
     case "daily_log": return "Your daily order log";
     case "statement": return "Your payout statement";
+    case "platform_transaction": return "Your platform transaction export";
     case "summary_pdf": return "Your brand performance report";
     case "merchant_received": return "Bank settlement evidence";
     default: return doc.file_name;
@@ -600,9 +625,11 @@ export function reconcile(
   // override change numbers silently.
   netSalesOverrideDocs: string[];
   assurance: AuditAssurance;
+  fourWay: FourWayReconciliation;
 } {
   const dailyDocs = docs.filter(d => d.document_type === "daily_log" && (d.result.daily_rows?.length ?? 0) > 0);
   const statementDocs = docs.filter(d => d.document_type === "statement");
+  const transactionDocs = docs.filter(d => d.document_type === "platform_transaction");
   const receivedDocs = docs.filter(d => d.document_type === "merchant_received");
 
   const byDate = new Map<string, { orders: number; sales: number }>();
@@ -741,7 +768,40 @@ export function reconcile(
     assertions, limitations, engineVersion: "revenue-assurance-v1",
   };
 
-  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows, netSalesOverrideDocs, assurance };
+  const statementAmount = statementDocs.reduce((sum,doc)=>sum+(doc.result.expected_payout??0),0);
+  const transactionExpected = transactionDocs.reduce((sum,doc)=>sum+(doc.result.expected_payout??0),0);
+  const receivedAmount = receivedDocs.reduce((sum,doc)=>sum+(doc.result.received_amount??0),0);
+  const documentaryReceipt = receivedDocs.some(doc=>doc.result.evidence_level==="document_supported");
+  const merchantAssertionOnly = receivedDocs.length>0&&!documentaryReceipt;
+  const statementCoverage = statementDocs.find(doc=>doc.result.period_start&&doc.result.period_end);
+  const receiptCoverage = receivedDocs.find(doc=>doc.result.period_start&&doc.result.period_end);
+  const stageCoverage=(doc:ClassifiedDocument|undefined)=>doc?.result.period_start&&doc.result.period_end
+    ? {start:doc.result.period_start,end:doc.result.period_end}:null;
+  // The current intake can prove activity and settlement evidence, but does
+  // not yet claim that an aggregate daily log is a platform transaction
+  // export. That intermediate stage therefore stays explicitly missing.
+  const stages:FourWayStage[]=[
+    {id:"order_activity",label:"POS / order activity",status:dailyDocs.length?(ledger.length?"partial":"missing"):"missing",amount:ledgerTotals?.sales??null,evidenceIds:dailyDocs.map(doc=>doc.id),evidenceBasis:dailyDocs.length?"Daily activity supplied; aggregate rows are not order-level vouching.":"No order activity supplied.",coverage},
+    {id:"platform_transactions",label:"Platform transactions",status:transactionDocs.length?"partial":"missing",amount:transactionDocs.length?round2(transactionExpected):null,evidenceIds:transactionDocs.map(doc=>doc.id),evidenceBasis:transactionDocs.length?"Platform transaction export supplied; matching remains aggregate unless order IDs are present.":"No separately identified platform transaction export was supplied.",coverage:stageCoverage(transactionDocs.find(doc=>doc.result.period_start&&doc.result.period_end))},
+    {id:"platform_settlement",label:"Platform settlement",status:statementDocs.length?"verified":"missing",amount:statementDocs.length?round2(statementAmount):null,evidenceIds:statementDocs.map(doc=>doc.id),evidenceBasis:statementDocs.length?"Platform-issued settlement statement parsed.":"No platform settlement statement supplied.",coverage:stageCoverage(statementCoverage)},
+    {id:"merchant_receipt",label:"Merchant settlement evidence",status:documentaryReceipt?"partial":merchantAssertionOnly?"asserted":"missing",amount:receivedDocs.length?round2(receivedAmount):null,evidenceIds:receivedDocs.map(doc=>doc.id),evidenceBasis:documentaryReceipt?"Bank-generated evidence fingerprint recorded; content review remains pending.":merchantAssertionOnly?"Merchant-entered receipt only; no supporting document.":"No merchant settlement evidence supplied.",coverage:stageCoverage(receiptCoverage)},
+  ];
+  const tolerance=(a:number|null,b:number|null)=>a!=null&&b!=null&&Math.abs(a-b)<=Math.max(1,Math.abs(a)*0.0005);
+  const orderToTransactionVariance=ledgerTotals&&transactionDocs.length
+    ? round2((transactionDocs.reduce((sum,doc)=>sum+(doc.result.sub_total_sum??0),0))-ledgerTotals.sales):null;
+  const transactionToSettlementVariance=transactionDocs.length&&statementDocs.length
+    ? round2(statementAmount-transactionExpected):null;
+  const links:FourWayReconciliation["links"]=[
+    {from:"order_activity",to:"platform_transactions",status:orderToTransactionVariance==null?"not_testable":Math.abs(orderToTransactionVariance)<=1?"matched":"unmatched",variance:orderToTransactionVariance,explanation:orderToTransactionVariance==null?"A separately identified platform transaction export is required for order-to-platform matching.":"Aggregate eligible sales compared; order-ID matching is not available from daily totals."},
+    {from:"platform_transactions",to:"platform_settlement",status:transactionToSettlementVariance==null?"not_testable":Math.abs(transactionToSettlementVariance)<=1?"matched":"unmatched",variance:transactionToSettlementVariance,explanation:transactionToSettlementVariance==null?"Both platform transactions and a settlement statement are required.":"Expected transaction net compared with platform-reported settlement; inspect fee findings for the variance."},
+    {from:"platform_settlement",to:"merchant_receipt",status:statementDocs.length&&receivedDocs.length?(tolerance(statementAmount,receivedAmount)?"matched":"unmatched"):"not_testable",variance:statementDocs.length&&receivedDocs.length?round2(receivedAmount-statementAmount):null,explanation:statementDocs.length&&receivedDocs.length?"Compared like-for-like evidence where periods permit; inspect cross-check windows for cut-off limitations.":"Both a platform statement and merchant settlement evidence are required."},
+  ];
+  const fourWay:FourWayReconciliation={
+    stages,links,documentaryReceipt,merchantAssertionOnly,
+    unresolvedVariance:statementDocs.length&&receivedDocs.length?round2(receivedAmount-statementAmount):null,
+  };
+
+  return { ledger, ledgerTotals, findings, coverage, crossCheckWindows, netSalesOverrideDocs, assurance, fourWay };
 }
 
 export const SEVERITY_ORDER: Record<Finding["severity"], number> = { critical: 0, warning: 1, info: 2 };

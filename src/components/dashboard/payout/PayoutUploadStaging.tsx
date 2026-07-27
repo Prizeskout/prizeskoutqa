@@ -7,7 +7,7 @@ const GN = "#10B981";
 // Mirrors src/server/core/upload-classifier.ts's UploadRole — redefined
 // here (not imported) since that module pulls in the Anthropic SDK and
 // server-only env access, which must never end up in the client bundle.
-export type UploadRole = "platform_statement" | "daily_log" | "merchant_received" | "unknown";
+export type UploadRole = "platform_statement" | "platform_transaction" | "daily_log" | "merchant_received" | "unknown";
 
 export type PayoutCheckClassification =
   | { ok: true; classification: {
@@ -34,6 +34,7 @@ export type StagedItem = {
 
 const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
   daily_log: "Daily Log",
+  platform_transaction: "Platform Transactions",
   statement: "Statement",
   summary_pdf: "Report",
   merchant_received: "Bank Settlement",
@@ -46,7 +47,7 @@ const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
 // would silently produce a doc with no amount and no visible effect on the
 // audit at all. See commission-audit.ts's header comment on why "merchant_
 // received" is manual-entry-only, never a file-parsing target.
-const FILE_CORRECTABLE_TYPES: DocumentType[] = ["daily_log", "statement", "summary_pdf"];
+const FILE_CORRECTABLE_TYPES: DocumentType[] = ["daily_log", "platform_transaction", "statement", "summary_pdf"];
 
 const inputStyle = {
   height: 38, border: "1px solid var(--border)", borderRadius: 9,

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { FileSearch, Lock, ShieldCheck, X } from "lucide-react";
 import type {
-  AuditAssurance, ClassifiedDocument, CrossCheckWindow, Finding, LedgerRow,
+  AuditAssurance, ClassifiedDocument, CrossCheckWindow, Finding, FourWayReconciliation, LedgerRow,
 } from "@/lib/commission-audit";
 import { SEVERITY_ORDER, formatDateRange, summarizeAudit } from "@/lib/commission-audit";
 import type { ContractTerm } from "./ContractIntelligenceVault";
@@ -19,6 +19,7 @@ export type CommissionAuditResult = {
   crossCheckWindows?: CrossCheckWindow[];
   netSalesOverrideDocs?: string[];
   assurance?: AuditAssurance;
+  fourWay?: FourWayReconciliation;
 };
 
 type Tab = "summary" | "reconciliation" | "exceptions" | "transactions" | "evidence" | "methodology" | "signoff";
@@ -205,7 +206,31 @@ export function CommissionAuditPanel({
         </section>
       </>}
 
-      {activeTab === "reconciliation" && <section style={{ ...panel, padding: 18 }}><SectionTitle number="3" title="Four-way reconciliation bridge" note="Select any row to inspect its lineage" /><div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 650 }}><thead><tr><th style={th}>Reconciliation stage</th><th style={{ ...th, textAlign: "end" }}>Amount</th><th style={th}>Evidence / basis</th><th style={th}>Trace</th></tr></thead><tbody>{reconciliationRows.map(row => <tr key={row.label} style={{ background: row.total ? "var(--surface2)" : undefined }}><td style={{ ...td, fontWeight: row.total ? 900 : 600 }}>{row.label}</td><td style={{ ...td, textAlign: "end", fontWeight: row.total ? 900 : 700, fontVariantNumeric: "tabular-nums", color: row.unavailable ? "var(--muted)" : undefined }}>{row.value == null || row.unavailable ? "Not evidenced" : money(row.value, currency, row.deduction)}</td><td style={{ ...td, color: "var(--muted)" }}>{row.source}</td><td style={td}><button onClick={() => setTraceStage(row.label)} style={{ border: "1px solid var(--border)", background: "transparent", borderRadius: 6, padding: "5px 8px", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>View lineage</button></td></tr>)}</tbody></table></div></section>}
+      {activeTab === "reconciliation" && <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <section style={{...panel,padding:18}}>
+          <SectionTitle number="3" title="Four-way evidence chain" note="Documentary evidence and assertions are graded separately"/>
+          {result.fourWay?<>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:9}}>
+              {result.fourWay.stages.map((stage,index)=><div key={stage.id} style={{border:"1px solid var(--border)",borderRadius:9,padding:12,position:"relative"}}>
+                <div style={{fontSize:10,color:"var(--muted)",fontWeight:900}}>STAGE {index+1}</div>
+                <div style={{fontSize:13,fontWeight:900,marginTop:3}}>{stage.label}</div>
+                <div style={{fontSize:18,fontWeight:900,marginTop:8}}>{stage.amount==null?"Not evidenced":money(stage.amount,currency)}</div>
+                <div style={{marginTop:7}}><Badge color={stage.status==="verified"?GREEN:stage.status==="missing"?RED:AMBER}>{stage.status.toUpperCase()}</Badge></div>
+                <div style={{fontSize:10.5,color:"var(--muted)",lineHeight:1.45,marginTop:8}}>{stage.evidenceBasis}</div>
+                <div style={{fontSize:10.5,color:"var(--muted)",marginTop:5}}>{stage.coverage?formatDateRange(stage.coverage.start,stage.coverage.end):"Period not established"} · {stage.evidenceIds.length} source{stage.evidenceIds.length===1?"":"s"}</div>
+              </div>)}
+            </div>
+            <div style={{marginTop:12,border:"1px solid var(--border)",borderRadius:9,overflow:"hidden"}}>
+              {result.fourWay.links.map(link=><div key={`${link.from}-${link.to}`} style={{display:"grid",gridTemplateColumns:"1fr auto 1fr minmax(220px,1.5fr)",gap:9,alignItems:"center",padding:"9px 11px",borderBottom:"1px solid var(--border)",fontSize:11.5}}>
+                <strong>{result.fourWay?.stages.find(stage=>stage.id===link.from)?.label}</strong><span>→</span><strong>{result.fourWay?.stages.find(stage=>stage.id===link.to)?.label}</strong>
+                <span style={{color:"var(--muted)"}}><Badge color={link.status==="matched"?GREEN:link.status==="unmatched"?RED:AMBER}>{link.status.replaceAll("_"," ").toUpperCase()}</Badge>{link.variance!=null&&<span style={{marginInlineStart:7}}>{money(link.variance,currency)}</span>}<span style={{display:"block",marginTop:4}}>{link.explanation}</span></span>
+              </div>)}
+            </div>
+            {result.fourWay.merchantAssertionOnly&&<div style={{marginTop:10,padding:"9px 11px",border:"1px solid color-mix(in srgb,#A16207 35%,var(--border))",borderRadius:8,color:AMBER,fontSize:11.5,fontWeight:700}}>Merchant-entered receipt is an assertion, not documentary settlement evidence. It cannot support a claims-ready conclusion by itself.</div>}
+          </>:<div style={{color:"var(--muted)",fontSize:12.5}}>Four-way matching was not retained for this historical audit. Rerun the audit to generate it.</div>}
+        </section>
+        <section style={{ ...panel, padding: 18 }}><SectionTitle number="3A" title="Financial reconciliation bridge" note="Select any row to inspect its lineage" /><div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 650 }}><thead><tr><th style={th}>Reconciliation stage</th><th style={{ ...th, textAlign: "end" }}>Amount</th><th style={th}>Evidence / basis</th><th style={th}>Trace</th></tr></thead><tbody>{reconciliationRows.map(row => <tr key={row.label} style={{ background: row.total ? "var(--surface2)" : undefined }}><td style={{ ...td, fontWeight: row.total ? 900 : 600 }}>{row.label}</td><td style={{ ...td, textAlign: "end", fontWeight: row.total ? 900 : 700, fontVariantNumeric: "tabular-nums", color: row.unavailable ? "var(--muted)" : undefined }}>{row.value == null || row.unavailable ? "Not evidenced" : money(row.value, currency, row.deduction)}</td><td style={{ ...td, color: "var(--muted)" }}>{row.source}</td><td style={td}><button onClick={() => setTraceStage(row.label)} style={{ border: "1px solid var(--border)", background: "transparent", borderRadius: 6, padding: "5px 8px", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>View lineage</button></td></tr>)}</tbody></table></div></section>
+      </div>}
 
       {activeTab === "exceptions" && <section style={{ ...panel, padding: 18 }}><SectionTitle number="4" title="Exception register" note={`${sortedFindings.length} cases · ${money(summary.claimsReadyAmount, currency)} claims-ready`} /><div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1050 }}><thead><tr>{["Exception ID", "Category", "Status", "Severity", "Amount", "Claims-ready", "Confidence", "Affected orders", "Root cause", "Owner", "Due date", "Recovery"].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead><tbody>{sortedFindings.map((f, i) => { const caseId = `EX-${String(i + 1).padStart(3, "0")}`; const substantiated = f.recoverability === "claims_ready"; return <tr key={f.id} onClick={() => setSelectedFinding(f)} style={{ cursor: "pointer" }}><td style={{ ...td, fontWeight: 900, color: NAVY }}>{caseId}</td><td style={td}>{f.assertion ?? "reconciliation"}</td><td style={td}><Badge color={AMBER}>OPEN</Badge></td><td style={td}><Badge color={statusColor(f.severity)}>{f.severity.toUpperCase()}</Badge></td><td style={{ ...td, textAlign: "end" }}>{f.amount != null ? money(f.amount, currency) : "Unquantified"}</td><td style={{ ...td, textAlign: "end" }}>{substantiated && f.amount != null ? money(f.amount, currency) : money(0, currency)}</td><td style={td}>{f.evidence_level === "corroborated" ? "High" : f.evidence_level === "single_source" ? "Medium" : "Low"}</td><td style={td}>{result.ledgerTotals?.orders ?? "Not traced"}</td><td style={td}>Pending investigation</td><td style={td}>Unassigned</td><td style={td}>Not set</td><td style={td}>Not filed</td></tr>; })}</tbody></table></div><div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 10 }}>Select a case to inspect calculations, evidence basis, limitations and next actions.</div></section>}
 
