@@ -366,6 +366,14 @@ export const Route = createFileRoute("/api/channels/connect")({
               if (![commission, vat, payment, fixed, delivery].every(Number.isFinite) || commission < 0 || commission >= 100) {
                 return resp({ error: "Commercial terms contain an invalid amount or percentage." }, 400);
               }
+              const optionalNumbers = [
+                body.promotion_funding_platform_pct, body.settlement_days,
+                body.dispute_deadline_days, body.advertising_commitment, body.minimum_spend,
+              ].filter(value=>value !== "" && value != null).map(Number);
+              if (!optionalNumbers.every(value=>Number.isFinite(value)&&value>=0)
+                || (body.promotion_funding_platform_pct !== "" && Number(body.promotion_funding_platform_pct)>100)) {
+                return resp({ error: "An optional contract obligation contains an invalid value." }, 400);
+              }
               const term = await saveContractDraft(merchant_id, {
                 platform: body.source_platform.trim().toLowerCase(),
                 contract_name: body.contract_name.trim().slice(0, 160),
@@ -374,6 +382,24 @@ export const Route = createFileRoute("/api/channels/connect")({
                 payment_fee_pct: payment,
                 fixed_order_fee: fixed,
                 delivery_contribution: delivery,
+                commission_base: ["gross_before_discount","net_after_discount","eligible_sales"].includes(body.commission_base)
+                  ? body.commission_base as "gross_before_discount"|"net_after_discount"|"eligible_sales"
+                  : "unknown",
+                promotion_funding_platform_pct: body.promotion_funding_platform_pct === "" || body.promotion_funding_platform_pct == null
+                  ? null : Number(body.promotion_funding_platform_pct),
+                refund_liability: ["merchant","platform","shared","conditional"].includes(body.refund_liability)
+                  ? body.refund_liability as "merchant"|"platform"|"shared"|"conditional" : "unknown",
+                cancellation_liability: ["merchant","platform","shared","conditional"].includes(body.cancellation_liability)
+                  ? body.cancellation_liability as "merchant"|"platform"|"shared"|"conditional" : "unknown",
+                settlement_frequency: body.settlement_frequency?.trim().slice(0, 100) || null,
+                settlement_days: body.settlement_days === "" || body.settlement_days == null ? null : Number(body.settlement_days),
+                dispute_deadline_days: body.dispute_deadline_days === "" || body.dispute_deadline_days == null ? null : Number(body.dispute_deadline_days),
+                advertising_commitment: body.advertising_commitment === "" || body.advertising_commitment == null ? null : Number(body.advertising_commitment),
+                minimum_spend: body.minimum_spend === "" || body.minimum_spend == null ? null : Number(body.minimum_spend),
+                currency: body.currency?.trim().toUpperCase().slice(0, 8) || null,
+                coverage_legal_entity: body.coverage_legal_entity?.trim().slice(0, 180) || null,
+                coverage_brands: typeof body.coverage_brands === "string" ? body.coverage_brands.split(",").map(v=>v.trim()).filter(Boolean).slice(0,100) : [],
+                coverage_branches: typeof body.coverage_branches === "string" ? body.coverage_branches.split(",").map(v=>v.trim()).filter(Boolean).slice(0,250) : [],
                 effective_from: body.effective_from,
                 effective_to: body.effective_to || null,
                 source_file_name: body.source_file_name?.trim().slice(0, 220) || null,
@@ -427,6 +453,17 @@ export const Route = createFileRoute("/api/channels/connect")({
                       payment_fee_pct: term.payment_fee_pct,
                       fixed_order_fee: term.fixed_order_fee,
                       delivery_contribution: term.delivery_contribution,
+                      commission_base: term.commission_base,
+                      promotion_funding_platform_pct: term.promotion_funding_platform_pct,
+                      refund_liability: term.refund_liability,
+                      cancellation_liability: term.cancellation_liability,
+                      settlement_frequency: term.settlement_frequency,
+                      settlement_days: term.settlement_days,
+                      dispute_deadline_days: term.dispute_deadline_days,
+                      contract_currency: term.currency,
+                      contract_coverage_legal_entity: term.coverage_legal_entity,
+                      contract_coverage_brands: term.coverage_brands,
+                      contract_coverage_branches: term.coverage_branches,
                       commercial_terms_source: "reviewed_contract",
                       contract_term_id: term.id,
                       contract_effective_from: term.effective_from,

@@ -6,6 +6,13 @@ export type ContractTerm = {
   id:string; platform:string; contract_name:string; commission_rate_pct:number;
   vat_on_fees_pct:number; payment_fee_pct:number; fixed_order_fee:number;
   delivery_contribution:number; effective_from:string; effective_to:string|null;
+  commission_base:"gross_before_discount"|"net_after_discount"|"eligible_sales"|"unknown";
+  promotion_funding_platform_pct:number|null;
+  refund_liability:"merchant"|"platform"|"shared"|"conditional"|"unknown";
+  cancellation_liability:"merchant"|"platform"|"shared"|"conditional"|"unknown";
+  settlement_frequency:string|null;settlement_days:number|null;dispute_deadline_days:number|null;
+  advertising_commitment:number|null;minimum_spend:number|null;currency:string|null;
+  coverage_legal_entity:string|null;coverage_brands:string[];coverage_branches:string[];
   status:"draft"|"approved"|"superseded"; source_file_name:string|null;
   source_sha256:string|null; notes:string|null; reviewed_by:string|null; approved_at:string|null;
   extraction_json?:ContractExtraction|null; extraction_model?:string|null;
@@ -17,6 +24,13 @@ type ContractExtraction={
   contract_name:string|null;platform:string|null;commission_rate_pct:number|null;
   vat_on_fees_pct:number|null;payment_fee_pct:number|null;fixed_order_fee:number|null;
   delivery_contribution:number|null;effective_from:string|null;effective_to:string|null;
+  commission_base:"gross_before_discount"|"net_after_discount"|"eligible_sales"|"unknown";
+  promotion_funding_platform_pct:number|null;
+  refund_liability:"merchant"|"platform"|"shared"|"conditional"|"unknown";
+  cancellation_liability:"merchant"|"platform"|"shared"|"conditional"|"unknown";
+  settlement_frequency:string|null;settlement_days:number|null;dispute_deadline_days:number|null;
+  advertising_commitment:number|null;minimum_spend:number|null;
+  coverage_legal_entity:string|null;coverage_brands:string[];coverage_branches:string[];
   currency:string|null;confidence:number;clauses:ContractClauseEvidence[];
   missing_terms:string[];warnings:string[];
 };
@@ -37,6 +51,11 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
   const [form,setForm]=useState({
     contract_name:"", source_platform:"talabat", commission_rate_pct:"19", vat_on_fees_pct:"0",
     payment_fee_pct:"0", fixed_order_fee:"0", delivery_contribution:"0",
+    commission_base:"unknown",promotion_funding_platform_pct:"",
+    refund_liability:"unknown",cancellation_liability:"unknown",
+    settlement_frequency:"",settlement_days:"",dispute_deadline_days:"",
+    advertising_commitment:"",minimum_spend:"",currency:"QAR",
+    coverage_legal_entity:"",coverage_brands:"",coverage_branches:"",
     effective_from:new Date().toISOString().slice(0,10), effective_to:"", notes:"",
     source_file_name:"", source_sha256:"",
   });
@@ -102,6 +121,19 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
         payment_fee_pct:extracted.payment_fee_pct==null?current.payment_fee_pct:String(extracted.payment_fee_pct),
         fixed_order_fee:extracted.fixed_order_fee==null?current.fixed_order_fee:String(extracted.fixed_order_fee),
         delivery_contribution:extracted.delivery_contribution==null?current.delivery_contribution:String(extracted.delivery_contribution),
+        commission_base:extracted.commission_base||current.commission_base,
+        promotion_funding_platform_pct:extracted.promotion_funding_platform_pct==null?current.promotion_funding_platform_pct:String(extracted.promotion_funding_platform_pct),
+        refund_liability:extracted.refund_liability||current.refund_liability,
+        cancellation_liability:extracted.cancellation_liability||current.cancellation_liability,
+        settlement_frequency:extracted.settlement_frequency||current.settlement_frequency,
+        settlement_days:extracted.settlement_days==null?current.settlement_days:String(extracted.settlement_days),
+        dispute_deadline_days:extracted.dispute_deadline_days==null?current.dispute_deadline_days:String(extracted.dispute_deadline_days),
+        advertising_commitment:extracted.advertising_commitment==null?current.advertising_commitment:String(extracted.advertising_commitment),
+        minimum_spend:extracted.minimum_spend==null?current.minimum_spend:String(extracted.minimum_spend),
+        currency:extracted.currency||current.currency,
+        coverage_legal_entity:extracted.coverage_legal_entity||current.coverage_legal_entity,
+        coverage_brands:extracted.coverage_brands.length?extracted.coverage_brands.join(", "):current.coverage_brands,
+        coverage_branches:extracted.coverage_branches.length?extracted.coverage_branches.join(", "):current.coverage_branches,
         effective_from:extracted.effective_from||current.effective_from,
         effective_to:extracted.effective_to||current.effective_to,
       }));
@@ -155,8 +187,21 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
           <label style={{fontSize:11.5,fontWeight:800}}>Payment fee %<input type="number" style={inputStyle} value={form.payment_fee_pct} onChange={e=>setForm({...form,payment_fee_pct:e.target.value})}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Fixed fee / order<input type="number" style={inputStyle} value={form.fixed_order_fee} onChange={e=>setForm({...form,fixed_order_fee:e.target.value})}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Delivery contribution<input type="number" style={inputStyle} value={form.delivery_contribution} onChange={e=>setForm({...form,delivery_contribution:e.target.value})}/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Commission calculation base<select style={inputStyle} value={form.commission_base} onChange={e=>setForm({...form,commission_base:e.target.value})}><option value="unknown">Not established</option><option value="gross_before_discount">Gross before discount</option><option value="net_after_discount">Net after discount</option><option value="eligible_sales">Contract-defined eligible sales</option></select></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Platform-funded promotion %<input type="number" style={inputStyle} value={form.promotion_funding_platform_pct} onChange={e=>setForm({...form,promotion_funding_platform_pct:e.target.value})} placeholder="Not established"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Refund liability<select style={inputStyle} value={form.refund_liability} onChange={e=>setForm({...form,refund_liability:e.target.value})}>{["unknown","merchant","platform","shared","conditional"].map(v=><option key={v} value={v}>{v==="unknown"?"Not established":v}</option>)}</select></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Cancellation liability<select style={inputStyle} value={form.cancellation_liability} onChange={e=>setForm({...form,cancellation_liability:e.target.value})}>{["unknown","merchant","platform","shared","conditional"].map(v=><option key={v} value={v}>{v==="unknown"?"Not established":v}</option>)}</select></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Settlement frequency<input style={inputStyle} value={form.settlement_frequency} onChange={e=>setForm({...form,settlement_frequency:e.target.value})} placeholder="Weekly on Thursday"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Settlement lag (days)<input type="number" style={inputStyle} value={form.settlement_days} onChange={e=>setForm({...form,settlement_days:e.target.value})} placeholder="Not established"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Dispute deadline (days)<input type="number" style={inputStyle} value={form.dispute_deadline_days} onChange={e=>setForm({...form,dispute_deadline_days:e.target.value})} placeholder="Not established"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Advertising commitment<input type="number" style={inputStyle} value={form.advertising_commitment} onChange={e=>setForm({...form,advertising_commitment:e.target.value})} placeholder="Not established"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Minimum spend<input type="number" style={inputStyle} value={form.minimum_spend} onChange={e=>setForm({...form,minimum_spend:e.target.value})} placeholder="Not established"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Currency<input style={inputStyle} value={form.currency} onChange={e=>setForm({...form,currency:e.target.value.toUpperCase()})} maxLength={8}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Effective from<input type="date" style={inputStyle} value={form.effective_from} onChange={e=>setForm({...form,effective_from:e.target.value})}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Effective to (optional)<input type="date" style={inputStyle} value={form.effective_to} onChange={e=>setForm({...form,effective_to:e.target.value})}/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Covered legal entity<input style={inputStyle} value={form.coverage_legal_entity} onChange={e=>setForm({...form,coverage_legal_entity:e.target.value})} placeholder="Restaurant operating company"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Covered brands<input style={inputStyle} value={form.coverage_brands} onChange={e=>setForm({...form,coverage_brands:e.target.value})} placeholder="Comma-separated"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Covered branches<input style={inputStyle} value={form.coverage_branches} onChange={e=>setForm({...form,coverage_branches:e.target.value})} placeholder="Comma-separated"/></label>
         </div>
         <label style={{display:"block",fontSize:11.5,fontWeight:800,marginTop:10}}>Source agreement<input type="file" accept=".pdf,.txt,.md,.png,.jpg,.jpeg" onChange={e=>chooseFile(e.target.files?.[0])} style={{...inputStyle,padding:8}}/></label>
         {extracting&&<div style={{display:"flex",gap:8,alignItems:"center",fontSize:12.5,color:"#A16207",marginTop:8}}><ScanText size={15}/>Reading agreement and extracting evidence-backed clauses…</div>}

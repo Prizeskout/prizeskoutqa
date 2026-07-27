@@ -19,6 +19,18 @@ export type ContractExtraction = {
   payment_fee_pct: number | null;
   fixed_order_fee: number | null;
   delivery_contribution: number | null;
+  commission_base: "gross_before_discount"|"net_after_discount"|"eligible_sales"|"unknown";
+  promotion_funding_platform_pct: number | null;
+  refund_liability: "merchant"|"platform"|"shared"|"conditional"|"unknown";
+  cancellation_liability: "merchant"|"platform"|"shared"|"conditional"|"unknown";
+  settlement_frequency: string | null;
+  settlement_days: number | null;
+  dispute_deadline_days: number | null;
+  advertising_commitment: number | null;
+  minimum_spend: number | null;
+  coverage_legal_entity: string | null;
+  coverage_brands: string[];
+  coverage_branches: string[];
   effective_from: string | null;
   effective_to: string | null;
   currency: string | null;
@@ -46,6 +58,8 @@ Rules:
 - Return null for every value that is absent, ambiguous, illegible, conditional without a single applicable value, or unsupported.
 - Percentages must be ordinary percentage numbers: 19 means 19%, not 0.19.
 - Distinguish commission from VAT on fees, payment fees, fixed per-order fees, and merchant delivery contributions.
+- Capture the commission calculation base, promotion funding split, refund and cancellation responsibility, settlement cadence, dispute deadline, advertising/minimum-spend commitments, and covered legal entities, brands, and branches.
+- For settlement_days, record the explicit number of calendar days only. Keep descriptive cadence such as "weekly on Thursday" in settlement_frequency.
 - A source quote must be short and copied from the supplied text. Never invent a quote.
 - Page numbers may only come from [PAGE n] markers. Otherwise use null.
 - Surface tiered rates, category exceptions, minimum fees, promotional terms, exclusivity, retroactive changes, and unclear effective dates as warnings.
@@ -65,6 +79,18 @@ const TOOL: Anthropic.Tool = {
       payment_fee_pct: { type: ["number", "null"] },
       fixed_order_fee: { type: ["number", "null"] },
       delivery_contribution: { type: ["number", "null"] },
+      commission_base: { type: "string", enum: ["gross_before_discount", "net_after_discount", "eligible_sales", "unknown"] },
+      promotion_funding_platform_pct: { type: ["number", "null"] },
+      refund_liability: { type: "string", enum: ["merchant", "platform", "shared", "conditional", "unknown"] },
+      cancellation_liability: { type: "string", enum: ["merchant", "platform", "shared", "conditional", "unknown"] },
+      settlement_frequency: { type: ["string", "null"] },
+      settlement_days: { type: ["integer", "null"] },
+      dispute_deadline_days: { type: ["integer", "null"] },
+      advertising_commitment: { type: ["number", "null"] },
+      minimum_spend: { type: ["number", "null"] },
+      coverage_legal_entity: { type: ["string", "null"] },
+      coverage_brands: { type: "array", items: { type: "string" }, maxItems: 100 },
+      coverage_branches: { type: "array", items: { type: "string" }, maxItems: 250 },
       effective_from: { type: ["string", "null"], description: "YYYY-MM-DD when explicit" },
       effective_to: { type: ["string", "null"], description: "YYYY-MM-DD when explicit" },
       currency: { type: ["string", "null"] },
@@ -91,6 +117,10 @@ const TOOL: Anthropic.Tool = {
     required: [
       "contract_name", "platform", "commission_rate_pct", "vat_on_fees_pct",
       "payment_fee_pct", "fixed_order_fee", "delivery_contribution",
+      "commission_base", "promotion_funding_platform_pct", "refund_liability",
+      "cancellation_liability", "settlement_frequency", "settlement_days",
+      "dispute_deadline_days", "advertising_commitment", "minimum_spend",
+      "coverage_legal_entity", "coverage_brands", "coverage_branches",
       "effective_from", "effective_to", "currency", "confidence", "clauses",
       "missing_terms", "warnings",
     ],
@@ -187,6 +217,21 @@ export async function extractContractTerms(
       payment_fee_pct: finiteOrNull(raw.payment_fee_pct),
       fixed_order_fee: finiteOrNull(raw.fixed_order_fee),
       delivery_contribution: finiteOrNull(raw.delivery_contribution),
+      commission_base: ["gross_before_discount","net_after_discount","eligible_sales"].includes(String(raw.commission_base))
+        ? raw.commission_base as ContractExtraction["commission_base"] : "unknown",
+      promotion_funding_platform_pct: finiteOrNull(raw.promotion_funding_platform_pct),
+      refund_liability: ["merchant","platform","shared","conditional"].includes(String(raw.refund_liability))
+        ? raw.refund_liability as ContractExtraction["refund_liability"] : "unknown",
+      cancellation_liability: ["merchant","platform","shared","conditional"].includes(String(raw.cancellation_liability))
+        ? raw.cancellation_liability as ContractExtraction["cancellation_liability"] : "unknown",
+      settlement_frequency: textOrNull(raw.settlement_frequency, 100),
+      settlement_days: finiteOrNull(raw.settlement_days),
+      dispute_deadline_days: finiteOrNull(raw.dispute_deadline_days),
+      advertising_commitment: finiteOrNull(raw.advertising_commitment),
+      minimum_spend: finiteOrNull(raw.minimum_spend),
+      coverage_legal_entity: textOrNull(raw.coverage_legal_entity, 180),
+      coverage_brands: Array.isArray(raw.coverage_brands) ? raw.coverage_brands.filter(v=>typeof v==="string").slice(0,100) as string[] : [],
+      coverage_branches: Array.isArray(raw.coverage_branches) ? raw.coverage_branches.filter(v=>typeof v==="string").slice(0,250) as string[] : [],
       effective_from: dateOrNull(raw.effective_from),
       effective_to: dateOrNull(raw.effective_to),
       currency: textOrNull(raw.currency, 12)?.toUpperCase() ?? null,

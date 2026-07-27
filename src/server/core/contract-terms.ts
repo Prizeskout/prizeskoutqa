@@ -9,6 +9,19 @@ export type ContractTerm = {
   payment_fee_pct: number;
   fixed_order_fee: number;
   delivery_contribution: number;
+  commission_base: "gross_before_discount"|"net_after_discount"|"eligible_sales"|"unknown";
+  promotion_funding_platform_pct: number | null;
+  refund_liability: "merchant"|"platform"|"shared"|"conditional"|"unknown";
+  cancellation_liability: "merchant"|"platform"|"shared"|"conditional"|"unknown";
+  settlement_frequency: string | null;
+  settlement_days: number | null;
+  dispute_deadline_days: number | null;
+  advertising_commitment: number | null;
+  minimum_spend: number | null;
+  currency: string | null;
+  coverage_legal_entity: string | null;
+  coverage_brands: string[];
+  coverage_branches: string[];
   effective_from: string;
   effective_to: string | null;
   status: "draft" | "approved" | "superseded";
@@ -44,7 +57,7 @@ async function fallbackTerms(accountId: string): Promise<ContractTerm[]> {
 
 export async function listContractTerms(accountId: string): Promise<ContractTerm[]> {
   const { data, error } = await table()
-    .select("id, platform, contract_name, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, effective_from, effective_to, status, source_file_name, source_sha256, notes, reviewed_by, approved_at, created_at, extraction_json, extraction_model, extraction_confidence, extracted_at")
+    .select("id, platform, contract_name, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, commission_base, promotion_funding_platform_pct, refund_liability, cancellation_liability, settlement_frequency, settlement_days, dispute_deadline_days, advertising_commitment, minimum_spend, currency, coverage_legal_entity, coverage_brands, coverage_branches, effective_from, effective_to, status, source_file_name, source_sha256, notes, reviewed_by, approved_at, created_at, extraction_json, extraction_model, extraction_confidence, extracted_at")
     .eq("account_id", accountId)
     .order("effective_from", { ascending: false });
   if (missingTable(error)) return fallbackTerms(accountId);

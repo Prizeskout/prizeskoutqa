@@ -85,6 +85,15 @@ export type ExpectedPayoutResult = {
     payment_fee_pct: number;
     fixed_order_fee: number;
     delivery_contribution: number;
+    commission_base?: string;
+    promotion_funding_platform_pct?: number | null;
+    refund_liability?: string;
+    cancellation_liability?: string;
+    settlement_frequency?: string | null;
+    settlement_days?: number | null;
+    dispute_deadline_days?: number | null;
+    currency?: string | null;
+    contract_term_id?: string | null;
     source: string;
   };
   sale_lines?: {
@@ -234,6 +243,15 @@ export async function getTalabatExpectedPayout(
       commission_rate_pct: commissionRatePct, vat_on_fees_pct: vatOnFeesPct,
       payment_fee_pct: paymentFeePct, fixed_order_fee: fixedOrderFee,
       delivery_contribution: deliveryContribution,
+      commission_base: typeof metadata.commission_base === "string" ? metadata.commission_base : "unknown",
+      promotion_funding_platform_pct: typeof metadata.promotion_funding_platform_pct === "number" ? metadata.promotion_funding_platform_pct : null,
+      refund_liability: typeof metadata.refund_liability === "string" ? metadata.refund_liability : "unknown",
+      cancellation_liability: typeof metadata.cancellation_liability === "string" ? metadata.cancellation_liability : "unknown",
+      settlement_frequency: typeof metadata.settlement_frequency === "string" ? metadata.settlement_frequency : null,
+      settlement_days: typeof metadata.settlement_days === "number" ? metadata.settlement_days : null,
+      dispute_deadline_days: typeof metadata.dispute_deadline_days === "number" ? metadata.dispute_deadline_days : null,
+      currency: typeof metadata.contract_currency === "string" ? metadata.contract_currency : null,
+      contract_term_id: typeof metadata.contract_term_id === "string" ? metadata.contract_term_id : null,
       source: typeof metadata.commercial_terms_source === "string" ? metadata.commercial_terms_source : "merchant_contract",
     },
     sale_lines: saleLines,
