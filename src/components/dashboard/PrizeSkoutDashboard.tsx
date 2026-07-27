@@ -1352,16 +1352,33 @@ export function PrizeSkoutDashboard() {
 
   const applyConfig = () => {
     if (applied || !cpObj) return;
-    const name = String(cpObj.engine_rule).split("_").map((w:string) => w[0].toUpperCase()+w.slice(1)).join(" ");
-    const desc = String(cpObj.target_category || cpObj.target_sku_class || "all")
-      + (cpObj.trigger ? " · "+cpObj.trigger : cpObj.competitor ? " · vs "+cpObj.competitor : " · all regions");
+    const policyType = String(cpObj.policy_type ?? cpObj.engine_rule ?? "policy_draft");
+    const policyNames:Record<string,string> = {
+      margin_floor:"Margin floor",
+      approval_threshold:"Manual approval threshold",
+      stale_cost_guard:"Stale cost protection",
+      maximum_price_change:"Maximum price change",
+      competitor_match:"Competitor price match",
+      conditional_floor:"Conditional margin floor",
+      legal_ceiling:"Legal price ceiling",
+      channel_parity:"Channel price parity",
+    };
+    const name = policyNames[policyType] ?? policyType.split("_").map((w:string) => w[0].toUpperCase()+w.slice(1)).join(" ");
+    const channels = Array.isArray(cpObj.channels) ? cpObj.channels.map(String) : [];
+    const desc = String(cpObj.summary
+      ?? `${cpObj.target_category || cpObj.target_sku_class || "all products"}${channels.length ? ` · ${channels.join(", ")}` : " · all channels"}`);
     setApplied(true);
-    const compiledFloor = Number(cpObj.minimum_floor);
+    const compiledFloor = typeof cpObj.minimum_floor === "number" ? cpObj.minimum_floor : null;
+    const approvalThreshold = typeof cpObj.approval_threshold_pct === "number" ? cpObj.approval_threshold_pct : null;
+    const maximumChange = typeof cpObj.maximum_change_pct === "number" ? cpObj.maximum_change_pct : null;
     setRules(prev => [...prev, {
-      name, desc, floor:Number.isFinite(compiledFloor) ? Math.round(compiledFloor*100) : persistedGlobalFloor, active:false,
-      status:"draft", scope:cpObj.target_category ? "category" : "global",
-      maxChangePct:15, dailyChangePct:20, approvalAbovePct:10, cooldownHours:24,
-      rollbackOnReject:true, stopOnStaleCost:true,
+      name, desc, floor:compiledFloor != null && Number.isFinite(compiledFloor) ? Math.round(compiledFloor*100) : persistedGlobalFloor, active:false,
+      status:"draft", scope:channels.length ? "channel" : cpObj.target_category && cpObj.target_category !== "all" ? "category" : "global",
+      maxChangePct:maximumChange != null && Number.isFinite(maximumChange) ? Math.round(maximumChange*100) : 15,
+      dailyChangePct:20,
+      approvalAbovePct:approvalThreshold != null && Number.isFinite(approvalThreshold) ? Math.round(approvalThreshold*100) : 10,
+      cooldownHours:24,
+      rollbackOnReject:true, stopOnStaleCost:Boolean(cpObj.stop_on_stale_cost),
     }]);
     showToast("Rule draft created. Preview its impact before activation.");
   };
@@ -2567,6 +2584,27 @@ export function PrizeSkoutDashboard() {
                       {t.intentLabel}
                     </div>
                     <div style={{ fontSize:18, lineHeight:1.55, fontWeight:600 }}>"{cpPrompt}"</div>
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:9, marginTop:4 }}>
+                      {[
+                        ["Policy",String(cpObj.policy_type ?? cpObj.engine_rule ?? "Draft").replace(/_/g," ")],
+                        ["Scope",Array.isArray(cpObj.channels) && cpObj.channels.length ? cpObj.channels.join(", ") : String(cpObj.target_category ?? "All products")],
+                        ["Control",typeof cpObj.approval_threshold_pct==="number" ? `Approval above ${cpObj.approval_threshold_pct*100}%`
+                          : typeof cpObj.minimum_floor==="number" ? `${cpObj.minimum_floor*100}% margin floor`
+                          : cpObj.stop_on_stale_cost ? "Stop on stale costs" : "Review required"],
+                        ["Lifecycle","Draft · not active"],
+                      ].map(([label,value])=>(
+                        <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:9, padding:"9px 10px" }}>
+                          <div style={{ fontSize:10, color:"var(--muted)", textTransform:"uppercase" }}>{label}</div>
+                          <div style={{ marginTop:3, fontSize:12.5, fontWeight:700, textTransform:"capitalize" }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0 && (
+                      <div style={{ color:"#B45309", background:"color-mix(in srgb,#F59E0B 10%,var(--surface))",
+                        border:"1px solid color-mix(in srgb,#F59E0B 30%,var(--border))", borderRadius:9, padding:"9px 11px", fontSize:12 }}>
+                        {cpObj.warnings.map(String).join(" ")}
+                      </div>
+                    )}
                     <div style={{ marginTop:"auto", display:"flex", gap:14, fontSize:13, color:"var(--muted)", flexWrap:"wrap" }}>
                       <span>{t.intent} <span style={{ color:GN }}>{t.intentResolved}</span></span>
                       <span>{t.confidence} <span style={{ color:GN }}>0.97</span></span>
@@ -2582,11 +2620,12 @@ export function PrizeSkoutDashboard() {
                     <div style={{ whiteSpace:"pre", overflowX:"auto", fontFamily:MONO, fontSize:14.5, lineHeight:1.7 }}>
                       {tokenizeJson(cpObj).map((tk,i) => <span key={i} style={{ color:tk.c }}>{tk.t}</span>)}
                     </div>
-                    <button onClick={applyConfig} style={{ cursor:"pointer", marginTop:4, border:"none",
+                    <button onClick={applyConfig} disabled={Array.isArray(cpObj.warnings) && cpObj.warnings.length>0}
+                      style={{ cursor:Array.isArray(cpObj.warnings)&&cpObj.warnings.length>0?"not-allowed":"pointer", marginTop:4, border:"none",
                       borderRadius:11, padding:"14px 18px", fontSize:15.5, fontWeight:800, fontFamily:"inherit",
-                      color:"#fff", background: applied ? GN : OG,
+                      color:"#fff", background:Array.isArray(cpObj.warnings)&&cpObj.warnings.length>0?"#6B7280":applied ? GN : OG,
                       transition:"background .3s" }}>
-                      {applied ? "Draft added to Rule Book" : "Add to Rule Book as draft"}
+                      {Array.isArray(cpObj.warnings)&&cpObj.warnings.length>0 ? "Complete the missing policy details" : applied ? "Draft added to Rule Book" : "Add to Rule Book as draft"}
                     </button>
                   </div>
                 </div>

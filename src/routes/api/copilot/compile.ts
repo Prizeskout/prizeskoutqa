@@ -34,28 +34,110 @@ Convert the merchant's pricing intent into a JSON engine config. Output ONLY val
 
 Schema:
 {
-  "engine_rule": "active_margin_defense" | "competitor_price_match" | "conditional_floor_raise" | "moci_ceiling_clamp" | "price_parity_lock",
+  "policy_type": "margin_floor" | "approval_threshold" | "stale_cost_guard" | "maximum_price_change" | "competitor_match" | "conditional_floor" | "legal_ceiling" | "channel_parity",
+  "engine_rule": "active_margin_defense" | "manual_approval_gate" | "stale_cost_guard" | "maximum_price_change" | "competitor_price_match" | "conditional_floor_raise" | "moci_ceiling_clamp" | "price_parity_lock",
   "target_category": string,
   "target_sku_class": string,
-  "minimum_floor": number,
-  "maximum_ceiling": number,
-  "competitor": string,
-  "match_direction": "up" | "down" | "both",
-  "trigger": string,
+  "channels": string[],
+  "minimum_floor": number | null,
+  "maximum_ceiling": number | null,
+  "approval_threshold_pct": number | null,
+  "maximum_change_pct": number | null,
+  "stop_on_stale_cost": boolean,
+  "competitor": string | null,
+  "match_direction": "up" | "down" | "both" | null,
+  "trigger": string | null,
   "revert_after_hours": number,
   "region": string,
   "regional_override_allowed": boolean,
+  "summary": string,
+  "warnings": string[],
   "latency_budget_ms": 1850
 }
 
 Rules:
-- minimum_floor and maximum_ceiling are decimal fractions (0.25 = 25%)
+- All percentage fields are decimal fractions (0.25 = 25%)
+- A percentage means ONLY what the merchant attached it to. Never turn an approval threshold into a margin floor.
+- "require approval when a price increase exceeds 10%" means policy_type=approval_threshold, approval_threshold_pct=0.10, minimum_floor=null.
+- "exclude/stop products with stale cost data" means policy_type=stale_cost_guard, stop_on_stale_cost=true, minimum_floor=null.
+- Only explicit margin/floor language may produce minimum_floor.
+- Extract named sales channels into channels (for example ["zid"]).
+- Use null for fields the merchant did not specify. Never invent a floor, ceiling, competitor, trigger, or threshold.
 - latency_budget_ms is always 1850
 - competitor matching/beating → "competitor_price_match"
 - weather/event/time triggered → "conditional_floor_raise"
 - government price cap → "moci_ceiling_clamp"
 - cross-channel parity → "price_parity_lock"
 - default → "active_margin_defense"`;
+
+function normaliseCompiledRule(prompt: string, modelRule: Record<string, unknown>): Record<string, unknown> {
+  const text = prompt.toLowerCase();
+  const percentage = text.match(/(\d+(?:\.\d+)?)\s*%/);
+  const pct = percentage ? Number(percentage[1]) / 100 : null;
+  const channels = ["zid","salla","talabat","jahez","foodics","amazon","noon"]
+    .filter(channel => new RegExp(`\\b${channel}\\b`, "i").test(text));
+  const approvalIntent = /\b(approval|approve|manual review|sign[- ]?off)\b/.test(text);
+  const staleCostIntent = /\b(stale|old|outdated|missing)\b.*\bcost\b|\bcost\b.*\b(stale|old|outdated|missing)\b/.test(text);
+  const maxChangeIntent = /\b(max(?:imum)?|limit|no more than)\b.*\b(change|increase|decrease)\b/.test(text);
+  const marginIntent = /\b(margin|floor)\b/.test(text);
+
+  const rule = { ...modelRule, channels, latency_budget_ms: 1850 };
+  if (approvalIntent) {
+    return {
+      ...rule,
+      policy_type: "approval_threshold",
+      engine_rule: "manual_approval_gate",
+      minimum_floor: null,
+      maximum_ceiling: null,
+      approval_threshold_pct: pct,
+      maximum_change_pct: null,
+      stop_on_stale_cost: false,
+      trigger: "price_change_requires_approval",
+      summary: `Require manual approval when a price change exceeds ${pct == null ? "the configured threshold" : `${pct * 100}%`}.`,
+      warnings: pct == null ? ["An approval threshold is required before this draft can be activated."] : [],
+    };
+  }
+  if (staleCostIntent) {
+    return {
+      ...rule,
+      policy_type: "stale_cost_guard",
+      engine_rule: "stale_cost_guard",
+      minimum_floor: null,
+      maximum_ceiling: null,
+      approval_threshold_pct: null,
+      maximum_change_pct: null,
+      stop_on_stale_cost: true,
+      trigger: "cost_data_stale",
+      summary: "Exclude products with stale or missing cost data from automatic repricing.",
+      warnings: [],
+    };
+  }
+  if (maxChangeIntent) {
+    return {
+      ...rule,
+      policy_type: "maximum_price_change",
+      engine_rule: "maximum_price_change",
+      minimum_floor: null,
+      maximum_ceiling: null,
+      approval_threshold_pct: null,
+      maximum_change_pct: pct,
+      stop_on_stale_cost: false,
+      summary: `Limit each price change to ${pct == null ? "the configured threshold" : `${pct * 100}%`}.`,
+      warnings: pct == null ? ["A maximum-change threshold is required."] : [],
+    };
+  }
+  if (marginIntent) {
+    rule.policy_type = rule.policy_type ?? "margin_floor";
+    rule.minimum_floor = pct ?? rule.minimum_floor ?? null;
+  } else {
+    rule.minimum_floor = null;
+  }
+  rule.approval_threshold_pct = rule.approval_threshold_pct ?? null;
+  rule.maximum_change_pct = rule.maximum_change_pct ?? null;
+  rule.stop_on_stale_cost = Boolean(rule.stop_on_stale_cost);
+  rule.warnings = Array.isArray(rule.warnings) ? rule.warnings : [];
+  return rule;
+}
 
 // Detect conversational questions vs pricing rule intents.
 // Strategy: look for HARD RULE SIGNALS; anything without them is conversational.
@@ -157,7 +239,7 @@ export const Route = createFileRoute("/api/copilot/compile")({
           if (typeof rule.maximum_ceiling === "number" && rule.maximum_ceiling > 1) {
             rule.maximum_ceiling = rule.maximum_ceiling / 100;
           }
-          rule.latency_budget_ms = 1850;
+          rule = normaliseCompiledRule(prompt, rule);
 
           return json({ type: "rule", rule, latency_ms });
         } catch (err) {
