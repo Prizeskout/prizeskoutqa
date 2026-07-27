@@ -4,6 +4,7 @@ import type {
   AuditAssurance, ClassifiedDocument, CrossCheckWindow, Finding, LedgerRow,
 } from "@/lib/commission-audit";
 import { SEVERITY_ORDER, formatDateRange, summarizeAudit } from "@/lib/commission-audit";
+import type { ContractTerm } from "./ContractIntelligenceVault";
 
 const NAVY = "#14213D";
 const GREEN = "#087F5B";
@@ -66,12 +67,13 @@ function SectionTitle({ number, title, note }: { number: string; title: string; 
 }
 
 export function CommissionAuditPanel({
-  result, currency, documentCount = 1, documents = [],
+  result, currency, documentCount = 1, documents = [], approvedContract = null,
 }: {
   result: CommissionAuditResult;
   currency: string;
   documentCount?: number;
   documents?: ClassifiedDocument[];
+  approvedContract?: ContractTerm | null;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("summary");
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
@@ -89,6 +91,14 @@ export function CommissionAuditPanel({
 
   const summary = summarizeAudit(result, documentCount);
   const assurance = result.assurance;
+  const contractCoversAudit = Boolean(approvedContract
+    && (!result.coverage?.start || approvedContract.effective_from <= result.coverage.start)
+    && (!approvedContract.effective_to || !result.coverage?.end || approvedContract.effective_to >= result.coverage.end));
+  const effectiveAssertions = (assurance?.assertions ?? []).map(assertion =>
+    assertion.id === "authorization" && contractCoversAudit
+      ? { ...assertion, status:"passed" as const, detail:`Reviewed ${approvedContract?.contract_name} covers the audit period; ${approvedContract?.commission_rate_pct}% commission was approved by ${approvedContract?.reviewed_by}.` }
+      : assertion
+  );
   const sortedFindings = [...result.findings].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || (b.amount ?? 0) - (a.amount ?? 0));
   const totalExpected = result.ledgerTotals?.expected_net ?? 0;
   const overallMateriality = totalExpected * ((Number(materialityPct) || 0) / 100);
@@ -116,8 +126,8 @@ export function CommissionAuditPanel({
     receivedLabels.includes("statement") && "platform statement",
     receivedLabels.includes("merchant_received") && "bank settlement record",
   ].filter(Boolean).join(", ") || "no structured evidence";
-  const missingEvidence = assurance?.assertions.filter(a => a.status === "missing").map(a => a.label).join(", ") || "none identified";
-  const requiredActions = assurance?.assertions.filter(a => a.status !== "passed").slice(0, 3).map(a => a.detail) ?? [];
+  const missingEvidence = effectiveAssertions.filter(a => a.status === "missing").map(a => a.label).join(", ") || "none identified";
+  const requiredActions = effectiveAssertions.filter(a => a.status !== "passed").slice(0, 3).map(a => a.detail);
 
   const handleDownload = async () => {
     if (downloading) return;
@@ -131,7 +141,9 @@ export function CommissionAuditPanel({
   const assertionEvidence = (id: string) => {
     if (id === "completeness" || id === "occurrence") return receivedLabels.includes("daily_log") ? "Daily activity log" : "No activity evidence";
     if (id === "accuracy" || id === "cutoff") return receivedLabels.includes("statement") ? "Statement vs activity log" : "No platform statement";
-    if (id === "authorization") return "Merchant-entered commercial terms";
+    if (id === "authorization") return approvedContract
+      ? `${approvedContract.contract_name} · approved by ${approvedContract.reviewed_by}`
+      : "Merchant-entered commercial terms";
     return bank?.result.evidence_level === "document_supported" ? "Evidence fingerprint recorded" : bank ? "Manual deposit assertion" : "No bank evidence";
   };
 
@@ -161,7 +173,7 @@ export function CommissionAuditPanel({
     ["Prepared by", preparedBy],
     ["Review status", locked ? "Locked final" : reviewedBy ? "Review in progress" : "Unreviewed draft"],
     ["Data cut-off", result.coverage?.end ? shortDate(result.coverage.end) : "Not established"],
-    ["Scope", `${result.ledgerTotals?.orders ?? 0} orders · ${documents.filter(d => d.document_type === "statement").length} statements · ${documents.filter(d => d.document_type === "merchant_received").length} deposits · 0 reviewed contracts`],
+    ["Scope", `${result.ledgerTotals?.orders ?? 0} orders · ${documents.filter(d => d.document_type === "statement").length} statements · ${documents.filter(d => d.document_type === "merchant_received").length} deposits · ${approvedContract ? 1 : 0} reviewed contracts`],
   ];
 
   return <div style={{ ...panel, overflow: "hidden", color: "var(--text)" }}>
@@ -183,13 +195,13 @@ export function CommissionAuditPanel({
           <div style={{ fontSize: 22, lineHeight: 1.25, fontWeight: 900, color: statusColor(assurance?.opinion === "exceptions_found" ? "failed" : assurance?.opinion === "reconciled" ? "passed" : "partial") }}>{assurance?.opinionLabel ?? "Legacy result — assurance not assessed"}</div>
           <div style={{ marginTop: 9, fontSize: 13, lineHeight: 1.55 }}>{summary.headline}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10, marginTop: 16 }}>
-            {[["Evidence received", evidenceReceived], ["Evidence missing", missingEvidence], ["Materiality", materialityApproved ? money(overallMateriality, currency) : "Not approved"], ["Claims-ready", money(summary.claimsReadyAmount, currency)], ["Estimated exceptions", money(summary.estimatedExposure, currency)], ["Evidence readiness", `${summary.evidenceScore}% (${assurance?.assertions.filter(a => a.status === "passed").length ?? 0} passed, ${assurance?.assertions.filter(a => a.status === "partial").length ?? 0} partial, ${assurance?.assertions.filter(a => a.status === "missing").length ?? 0} missing)`]].map(([label, value]) => <div key={label} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: 11 }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 800, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 4 }}>{value}</div></div>)}
+            {[["Evidence received", contractCoversAudit ? `${evidenceReceived}, reviewed contract` : evidenceReceived], ["Evidence missing", missingEvidence], ["Materiality", materialityApproved ? money(overallMateriality, currency) : "Not approved"], ["Claims-ready", money(summary.claimsReadyAmount, currency)], ["Estimated exceptions", money(summary.estimatedExposure, currency)], ["Evidence readiness", `${Math.round(effectiveAssertions.reduce((sum,a)=>sum+(a.status==="passed"?100:a.status==="partial"?50:0),0)/Math.max(effectiveAssertions.length,1))}% (${effectiveAssertions.filter(a => a.status === "passed").length} passed, ${effectiveAssertions.filter(a => a.status === "partial").length} partial, ${effectiveAssertions.filter(a => a.status === "missing").length} missing)`]].map(([label, value]) => <div key={label} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: 11 }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 800, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 4 }}>{value}</div></div>)}
           </div>
           {!!requiredActions.length && <div style={{ marginTop: 15, borderTop: "1px solid var(--border)", paddingTop: 12 }}><div style={{ fontSize: 11, fontWeight: 900, color: NAVY }}>Required before a conclusion can be issued</div><ol style={{ margin: "7px 0 0 18px", padding: 0, fontSize: 12.5, lineHeight: 1.6 }}>{requiredActions.map(action => <li key={action}>{action}</li>)}</ol></div>}
         </section>
 
         <section style={{ ...panel, padding: 18 }}><SectionTitle number="3" title="Assertion matrix" note="Status reflects evidence, not appearance" />
-          <div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}><thead><tr>{["Assertion", "Status", "Evidence", "Coverage", "Auditor note"].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead><tbody>{(assurance?.assertions ?? []).map(a => <tr key={a.id}><td style={{ ...td, fontWeight: 800 }}>{a.label}</td><td style={td}><Badge color={statusColor(a.status)}>{a.status.toUpperCase()}</Badge></td><td style={td}>{assertionEvidence(a.id)}</td><td style={{ ...td, fontVariantNumeric: "tabular-nums" }}>{assertionCoverage(a)}%</td><td style={{ ...td, color: "var(--muted)" }}>{a.detail}</td></tr>)}</tbody></table></div>
+          <div className="table-scroll"><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}><thead><tr>{["Assertion", "Status", "Evidence", "Coverage", "Auditor note"].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead><tbody>{effectiveAssertions.map(a => <tr key={a.id}><td style={{ ...td, fontWeight: 800 }}>{a.label}</td><td style={td}><Badge color={statusColor(a.status)}>{a.status.toUpperCase()}</Badge></td><td style={td}>{assertionEvidence(a.id)}</td><td style={{ ...td, fontVariantNumeric: "tabular-nums" }}>{assertionCoverage(a)}%</td><td style={{ ...td, color: "var(--muted)" }}>{a.detail}</td></tr>)}</tbody></table></div>
         </section>
       </>}
 

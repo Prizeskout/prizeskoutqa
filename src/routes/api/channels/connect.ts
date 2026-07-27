@@ -17,6 +17,7 @@ import { getDashboardStats } from "@/server/core/dashboard-stats";
 import { getDefendLoopHealth } from "@/server/core/defend-loop-health";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { approveContractTerm, listContractTerms, saveContractDraft } from "@/server/core/contract-terms";
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
@@ -345,6 +346,73 @@ export const Route = createFileRoute("/api/channels/connect")({
               region: sourcePlatform === "zid" ? "SA" : "QA",
             });
             return resp({ ok: true, result }, 200);
+          }
+
+          if (platform === "contract_terms") {
+            if (body.action === "list") {
+              return resp({ ok: true, terms: await listContractTerms(merchant_id) }, 200);
+            }
+            if (body.action === "save_draft") {
+              const commission = Number(body.commission_rate_pct);
+              const vat = Number(body.vat_on_fees_pct || 0);
+              const payment = Number(body.payment_fee_pct || 0);
+              const fixed = Number(body.fixed_order_fee || 0);
+              const delivery = Number(body.delivery_contribution || 0);
+              if (!body.contract_name?.trim() || !body.source_platform?.trim() || !body.effective_from) {
+                return resp({ error: "Contract name, platform, and effective date are required." }, 400);
+              }
+              if (![commission, vat, payment, fixed, delivery].every(Number.isFinite) || commission < 0 || commission >= 100) {
+                return resp({ error: "Commercial terms contain an invalid amount or percentage." }, 400);
+              }
+              const term = await saveContractDraft(merchant_id, {
+                platform: body.source_platform.trim().toLowerCase(),
+                contract_name: body.contract_name.trim().slice(0, 160),
+                commission_rate_pct: commission,
+                vat_on_fees_pct: vat,
+                payment_fee_pct: payment,
+                fixed_order_fee: fixed,
+                delivery_contribution: delivery,
+                effective_from: body.effective_from,
+                effective_to: body.effective_to || null,
+                source_file_name: body.source_file_name?.trim().slice(0, 220) || null,
+                source_sha256: /^[a-f0-9]{64}$/i.test(body.source_sha256 || "") ? body.source_sha256.toLowerCase() : null,
+                notes: body.notes?.trim().slice(0, 1200) || null,
+              });
+              return resp({ ok: true, term }, 200);
+            }
+            if (body.action === "approve") {
+              if (!body.id || !body.reviewed_by?.trim()) {
+                return resp({ error: "Contract draft and reviewer name are required." }, 400);
+              }
+              const term = await approveContractTerm(merchant_id, body.id, body.reviewed_by.trim().slice(0, 160));
+              const { data: channel } = await supabaseAdmin
+                .from("ps_merchant_channels")
+                .select("id, metadata")
+                .eq("account_id", merchant_id)
+                .eq("platform", term.platform)
+                .maybeSingle();
+              if (channel) {
+                await supabaseAdmin
+                  .from("ps_merchant_channels")
+                  .update({
+                    metadata: {
+                      ...((channel.metadata as Record<string, unknown> | null) ?? {}),
+                      commission_rate_pct: term.commission_rate_pct,
+                      vat_on_fees_pct: term.vat_on_fees_pct,
+                      payment_fee_pct: term.payment_fee_pct,
+                      fixed_order_fee: term.fixed_order_fee,
+                      delivery_contribution: term.delivery_contribution,
+                      commercial_terms_source: "reviewed_contract",
+                      contract_term_id: term.id,
+                      contract_effective_from: term.effective_from,
+                      contract_approved_at: term.approved_at,
+                    },
+                  })
+                  .eq("id", channel.id);
+              }
+              return resp({ ok: true, term }, 200);
+            }
+            return resp({ error: "Unsupported contract-terms action." }, 400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);

@@ -4,6 +4,7 @@ import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
 import { CommissionAuditPanel } from "@/components/dashboard/payout/CommissionAuditPanel";
 import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } from "@/components/dashboard/payout/PayoutUploadStaging";
+import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
@@ -978,6 +979,7 @@ export function PrizeSkoutDashboard() {
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
   const [payoutError, setPayoutError]         = useState<string|null>(null);
   const [payoutUploadRate, setPayoutUploadRate] = useState("");
+  const [approvedContract, setApprovedContract] = useState<ContractTerm|null>(null);
 
   // Commission Audit — populated whenever an upload batch includes at least
   // one daily-log document (even a batch of one, see commission-audit.ts).
@@ -2381,6 +2383,11 @@ export function PrizeSkoutDashboard() {
               </div>
               <div style={{ fontSize:13.5, color:"var(--muted)", lineHeight:1.6 }}>{t.payoutCheckDesc}</div>
 
+              <ContractIntelligenceVault onApproved={term=>{
+                setApprovedContract(term);
+                setPayoutUploadRate(String(term.commission_rate_pct));
+              }} />
+
               {/* Tabs */}
               <div style={{ display:"flex", background:"var(--surface2)", border:"1px solid var(--border)",
                 borderRadius:10, padding:3, gap:2, alignSelf:"flex-start" }}>
@@ -2435,7 +2442,7 @@ export function PrizeSkoutDashboard() {
 
               {auditResult && (auditResult.ledger.length > 0 || auditResult.findings.length > 0) && (
                 <>
-                  <CommissionAuditPanel result={auditResult} currency={currency} documentCount={payoutDocuments.length} documents={payoutDocuments} />
+                  <CommissionAuditPanel result={auditResult} currency={currency} documentCount={payoutDocuments.length} documents={payoutDocuments} approvedContract={approvedContract} />
                   <div>
                     <button type="button" onClick={handleSaveAudit} disabled={savingAudit || auditSaved}
                       style={{ cursor: savingAudit || auditSaved ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:12.5,
