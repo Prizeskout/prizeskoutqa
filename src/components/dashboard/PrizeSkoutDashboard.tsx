@@ -11,7 +11,21 @@ type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
 interface FeedRow { tag: string; tagColor: string; text: string; time: string; }
-interface Rule { name: string; desc: string; floor: number; active: boolean; }
+type RuleStatus = "draft" | "testing" | "scheduled" | "active" | "paused" | "failed";
+interface Rule {
+  name: string;
+  desc: string;
+  floor: number;
+  active: boolean;
+  status: RuleStatus;
+  scope: "global" | "category" | "channel" | "product";
+  maxChangePct: number;
+  dailyChangePct: number;
+  approvalAbovePct: number;
+  cooldownHours: number;
+  rollbackOnReject: boolean;
+  stopOnStaleCost: boolean;
+}
 interface ImportedProduct {
   ingest_event_id: string;
   sku: string;
@@ -869,10 +883,17 @@ export function PrizeSkoutDashboard() {
   const [cpChatMessage, setCpChatMessage] = useState<string|null>(null);
   const [applied, setApplied] = useState(false);
   const [rules, setRules] = useState<Rule[]>([
-    { name:"Global margin floor",   desc:"all categories · all regions",         floor:18, active:true },
-    { name:"Bakery margin defense", desc:"category: bakery · Doha + Riyadh",     floor:25, active:true },
-    { name:"Hot drinks storm floor",desc:"trigger: weather.rain_storm",          floor:35, active:true },
+    { name:"Global margin floor", desc:"all products · all connected channels", floor:18, active:true, status:"active", scope:"global", maxChangePct:15, dailyChangePct:20, approvalAbovePct:10, cooldownHours:24, rollbackOnReject:true, stopOnStaleCost:true },
+    { name:"Bakery margin defense", desc:"category: bakery · Doha + Riyadh", floor:25, active:false, status:"draft", scope:"category", maxChangePct:12, dailyChangePct:15, approvalAbovePct:8, cooldownHours:24, rollbackOnReject:true, stopOnStaleCost:true },
+    { name:"Hot drinks storm floor",desc:"trigger: weather.rain_storm", floor:35, active:false, status:"testing", scope:"category", maxChangePct:10, dailyChangePct:12, approvalAbovePct:7, cooldownHours:12, rollbackOnReject:true, stopOnStaleCost:true },
   ]);
+  const [persistedGlobalFloor, setPersistedGlobalFloor] = useState(18);
+  const [rulePreviewIndex, setRulePreviewIndex] = useState<number|null>(null);
+  const [ruleConfirmIndex, setRuleConfirmIndex] = useState<number|null>(null);
+  const [ruleSaving, setRuleSaving] = useState(false);
+  const [ruleSearch, setRuleSearch] = useState("");
+  const [ruleStatusFilter, setRuleStatusFilter] = useState<"all"|RuleStatus>("all");
+  const [ruleAudit, setRuleAudit] = useState<{ action:string; rule:string; at:string }[]>([]);
   const [disputes, setDisputes]         = useState<Dispute[]>([]);
   const [modal, setModal]               = useState<number|null>(null);
   const [fileStep, setFileStep]         = useState(0);
@@ -1025,19 +1046,21 @@ export function PrizeSkoutDashboard() {
   }, [tab]);
 
   useEffect(() => {
-    if (tab !== "analytics") return;
+    if (tab !== "analytics" && tab !== "rules") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac  = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) return;
     setCatalogLoading(true);
-    fetch("/api/channels/connect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "dashboard_stats" }),
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.ok) setHeroStats(d as HeroStats); })
-      .catch(() => {});
+    if (tab === "analytics") {
+      fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "dashboard_stats" }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.ok) setHeroStats(d as HeroStats); })
+        .catch(() => {});
+    }
     const params = new URLSearchParams({ merchant_id: mid, access_code: ac });
     fetch(`/api/repricing/catalog?${params}`)
       .then(r => r.ok ? r.json() : null)
@@ -1094,7 +1117,6 @@ export function PrizeSkoutDashboard() {
   // real persisted value on mount, defaulting to the 18% seed if they've
   // never set one.
   const marginFloorLoadedRef = useRef(false);
-  const suppressNextFloorSaveRef = useRef(false);
 
   useEffect(() => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
@@ -1109,36 +1131,16 @@ export function PrizeSkoutDashboard() {
       .then((d: { margin_floor_pct?: number } | null) => {
         if (typeof d?.margin_floor_pct !== "number") return;
         const pct = Math.round(d.margin_floor_pct * 100);
-        suppressNextFloorSaveRef.current = true;
-        setRules(prev => prev.map(r => r.name === "Global margin floor" ? { ...r, floor: pct } : r));
+        setPersistedGlobalFloor(pct);
+        setRules(prev => prev.map(r => r.name === "Global margin floor" ? { ...r, floor: pct, status:"active", active:true } : r));
       })
       .catch(() => {})
       .finally(() => { marginFloorLoadedRef.current = true; });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const globalFloor = rules.find(r => r.name === "Global margin floor")?.floor;
-
-  useEffect(() => {
-    if (!marginFloorLoadedRef.current || globalFloor == null) return;
-    if (suppressNextFloorSaveRef.current) { suppressNextFloorSaveRef.current = false; return; }
-    const mid = localStorage.getItem("ps_merchant_id") ?? "";
-    const ac  = localStorage.getItem("ps_access_code") ?? "";
-    if (!mid || !ac) return;
-    const timer = setTimeout(() => {
-      fetch("/api/channels/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "margin_floor", action: "set", margin_floor_pct: globalFloor / 100 }),
-      })
-        .then(r => r.ok
-          ? showToast(`🟢 Global margin floor set to ${globalFloor}% · now enforced on real orders`)
-          : showToast("⚠ Could not save margin floor — try again."))
-        .catch(() => showToast("⚠ Could not save margin floor — try again."));
-    }, 600);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalFloor]);
+  // Slider edits remain drafts. A live floor is changed only through the
+  // preview → confirm → activate workflow below.
 
   useEffect(() => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
@@ -1171,6 +1173,68 @@ export function PrizeSkoutDashboard() {
     if (toastT.current) clearTimeout(toastT.current);
     setToast(msg);
     toastT.current = setTimeout(() => setToast(null), 4000);
+  };
+
+  const editRule = (index:number, patch:Partial<Rule>) => {
+    setRules(current => current.map((rule,i) => i === index
+      ? { ...rule, ...patch, active:false, status:"draft" }
+      : rule));
+    setRulePreviewIndex(null);
+    setRuleConfirmIndex(null);
+  };
+
+  const saveRuleDraft = (index:number) => {
+    const rule = rules[index];
+    if (!rule) return;
+    const drafts = JSON.parse(localStorage.getItem("ps_margin_rule_drafts") ?? "[]") as Rule[];
+    const next = [...drafts.filter(item=>item.name!==rule.name), { ...rule, status:"draft" as RuleStatus, active:false }];
+    localStorage.setItem("ps_margin_rule_drafts", JSON.stringify(next));
+    setRules(current=>current.map((item,i)=>i===index?{...item,status:"draft",active:false}:item));
+    setRuleAudit(current=>[{action:"Draft saved",rule:rule.name,at:new Date().toISOString()},...current].slice(0,12));
+    showToast("Draft saved. No live pricing behavior changed.");
+  };
+
+  const previewRule = (index:number) => {
+    setRulePreviewIndex(index);
+    setRuleConfirmIndex(null);
+    setRules(current=>current.map((item,i)=>i===index?{...item,status:"testing",active:false}:item));
+    const rule = rules[index];
+    if (rule) setRuleAudit(current=>[{action:"Impact preview run",rule:rule.name,at:new Date().toISOString()},...current].slice(0,12));
+  };
+
+  const activateRule = async (index:number) => {
+    const rule = rules[index];
+    if (!rule) return;
+    if (rule.scope !== "global") {
+      showToast("This rule remains in Testing until category and event enforcement is connected.");
+      return;
+    }
+    if (ruleConfirmIndex !== index) {
+      setRuleConfirmIndex(index);
+      return;
+    }
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return showToast("Your merchant session could not be found.");
+    setRuleSaving(true);
+    try {
+      const response = await fetch("/api/channels/connect", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({merchant_id:mid,access_code:ac,platform:"margin_floor",action:"set",margin_floor_pct:rule.floor/100}),
+      });
+      if (!response.ok) throw new Error("Activation failed");
+      setPersistedGlobalFloor(rule.floor);
+      setRules(current=>current.map((item,i)=>i===index?{...item,status:"active",active:true}:item));
+      setRuleConfirmIndex(null);
+      setRulePreviewIndex(null);
+      setRuleAudit(current=>[{action:`Activated from ${persistedGlobalFloor}% to ${rule.floor}%`,rule:rule.name,at:new Date().toISOString()},...current].slice(0,12));
+      showToast(`Global margin floor activated at ${rule.floor}%.`);
+    } catch {
+      setRules(current=>current.map((item,i)=>i===index?{...item,status:"failed",active:false}:item));
+      showToast("Activation failed. The previous live policy remains unchanged.");
+    } finally {
+      setRuleSaving(false);
+    }
   };
 
   const productPageSize = 8;
@@ -1292,8 +1356,14 @@ export function PrizeSkoutDashboard() {
     const desc = String(cpObj.target_category || cpObj.target_sku_class || "all")
       + (cpObj.trigger ? " · "+cpObj.trigger : cpObj.competitor ? " · vs "+cpObj.competitor : " · all regions");
     setApplied(true);
-    setRules(prev => [...prev, { name, desc, floor: Math.round(Number(cpObj.minimum_floor)*100), active:true }]);
-    showToast("🟢 Margin rules pushed to in-memory Redis cluster (340ms)");
+    const compiledFloor = Number(cpObj.minimum_floor);
+    setRules(prev => [...prev, {
+      name, desc, floor:Number.isFinite(compiledFloor) ? Math.round(compiledFloor*100) : persistedGlobalFloor, active:false,
+      status:"draft", scope:cpObj.target_category ? "category" : "global",
+      maxChangePct:15, dailyChangePct:20, approvalAbovePct:10, cooldownHours:24,
+      rollbackOnReject:true, stopOnStaleCost:true,
+    }]);
+    showToast("Rule draft created. Preview its impact before activation.");
   };
 
   const fileClaim = () => {
@@ -2412,15 +2482,15 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
                   <h2 style={{ margin:0, fontSize:20.5, fontWeight:800, letterSpacing:"-0.3px" }}>
-                    {t.copilotTitle} <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· {t.copilotSub}</span>
+                    Policy Copilot <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· Rule drafting assistant</span>
                   </h2>
-                  <span style={{ fontSize:15, color:"var(--muted)" }}>{t.copilotDesc}</span>
+                  <span style={{ fontSize:15, color:"var(--muted)" }}>Describe a policy in plain language. Copilot creates a reviewable draft—it never activates a rule automatically.</span>
                 </div>
                 <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700, color:OG,
                   background:`color-mix(in srgb,${OG} 9%,var(--surface))`,
                   border:`1px solid color-mix(in srgb,${OG} 32%,transparent)`,
                   borderRadius:999, padding:"6px 14px" }}>
-                  {t.copilotLive}
+                  Copilot ready
                 </span>
               </div>
               <div data-tour="copilot" style={{ display:"flex", gap:10, alignItems:"center", background:"var(--surface)",
@@ -2441,9 +2511,9 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", gap:9, flexWrap:"wrap", alignItems:"center" }}>
                 <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
                 {[
-                  "Lock bakery margins at 25%",
-                  "Match Jahez sourdough prices down to 18%",
-                  "Raise hot drink floor to 35% during rain storms",
+                  "Maintain at least 25% net margin for cameras sold through Zid",
+                  "Require approval when a price increase exceeds 10%",
+                  "Exclude products with stale cost data from automatic repricing",
                 ].map(label => (
                   <button key={label} className="ps-pill-btn"
                     onClick={()=>{ setCpInput(label); runCopilot(label); }}
@@ -2516,58 +2586,169 @@ export function PrizeSkoutDashboard() {
                       borderRadius:11, padding:"14px 18px", fontSize:15.5, fontWeight:800, fontFamily:"inherit",
                       color:"#fff", background: applied ? GN : OG,
                       transition:"background .3s" }}>
-                      {applied ? t.applyLabel1 : t.applyLabel0}
+                      {applied ? "Draft added to Rule Book" : "Add to Rule Book as draft"}
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Active guardrails */}
-            <div data-tour="guardrails" style={{ display:"flex", flexDirection:"column", gap:16 }}>
-              <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
-                <h2 style={{ margin:0, fontSize:19.5, fontWeight:800, letterSpacing:"-0.2px" }}>{t.guardrails}</h2>
-                <span style={{ fontSize:14, color:"var(--muted)" }}>{rules.length} {t.rulesEnforced}</span>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,320px),1fr))", gap:16 }}>
-                {rules.map((r,i) => (
-                  <div key={i} style={{ background:"var(--surface)", border:"1px solid var(--border)",
-                    borderRadius:16, boxShadow:"var(--shadow)", padding:"20px 22px",
-                    display:"flex", flexDirection:"column", gap:14 }}>
-                    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
-                      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-                        <span style={{ fontSize:16.5, fontWeight:700 }}>{r.name}</span>
-                        <span style={{ fontSize:13, color:"var(--muted)" }}>{r.desc}</span>
-                      </div>
-                      <button onClick={()=>setRules(prev=>prev.map((x,j)=>j===i?{...x,active:!x.active}:x))}
-                        aria-label="Toggle rule"
-                        style={{ cursor:"pointer", flex:"0 0 auto", width:42, height:24,
-                          borderRadius:999, border:"1px solid var(--border)",
-                          background: r.active ? GN : "color-mix(in srgb,var(--muted) 30%,var(--surface))",
-                          position:"relative", padding:0, transition:"background .2s" }}>
-                        <span style={{ position:"absolute", top:2.5, insetInlineStart: r.active ? 20 : 3,
-                          width:17, height:17, borderRadius:"50%", background:"#fff",
-                          boxShadow:"0 1px 3px rgba(0,0,0,.25)", transition:"inset-inline-start .2s" }} />
-                      </button>
-                    </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-                      <input type="range" min={5} max={60} step={1} value={r.floor}
-                        onChange={e=>setRules(prev=>prev.map((x,j)=>j===i?{...x,floor:+e.target.value}:x))}
-                        style={{ flex:1 }} />
-                      <span style={{ fontFamily:DISPLAY, fontSize:18.5, fontWeight:700, fontVariantNumeric:"tabular-nums",
-                        color: r.floor < 15 ? "#DC2626" : OG, minWidth:52, textAlign:"end" }}>{r.floor}%</span>
-                    </div>
-                    {r.floor < 15 && r.active && (
-                      <div style={{ fontSize:13.5, fontWeight:600, color:"#DC2626",
-                        background:"color-mix(in srgb,#DC2626 8%,var(--surface))",
-                        border:"1px solid color-mix(in srgb,#DC2626 25%,transparent)",
-                        borderRadius:9, padding:"8px 12px" }}>{t.floorWarn}</div>
-                    )}
-                    <div style={{ fontSize:13, color: r.name === "Global margin floor" ? (r.active ? GN : "var(--muted)") : "var(--muted)" }}>
-                      {r.name === "Global margin floor" ? (r.active ? t.activeLabel : t.pausedLabel) : t.previewLabel}
-                    </div>
+            {/* Rule hierarchy and lifecycle */}
+            <div data-tour="guardrails" style={{ display:"flex", flexDirection:"column", gap:18 }}>
+              <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:16,
+                boxShadow:"var(--shadow)", padding:"20px 22px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+                  <div>
+                    <h2 style={{ margin:0, fontSize:19.5 }}>Policy hierarchy</h2>
+                    <p style={{ margin:"5px 0 0", color:"var(--muted)", fontSize:13.5 }}>Higher-priority protections win when rules overlap.</p>
                   </div>
-                ))}
+                  <span style={{ fontSize:12, color:GN, fontWeight:800, padding:"7px 11px",
+                    border:`1px solid color-mix(in srgb,${GN} 28%,transparent)`, borderRadius:999 }}>
+                    {rules.filter(rule=>rule.status==="active").length} genuinely active
+                  </span>
+                </div>
+                <div style={{ display:"flex", gap:7, flexWrap:"wrap", marginTop:16 }}>
+                  {["Legal price limits","Product rules","Category rules","Channel rules","Global margin floor","Promotions","Rounding"].map((label,index)=>(
+                    <span key={label} style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5,
+                      padding:"8px 10px", border:"1px solid var(--border)", borderRadius:9, background:"var(--surface2)" }}>
+                      <strong style={{ color:OG }}>{index+1}</strong>{label}{index<6&&<span style={{color:"var(--muted)"}}>→</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
+                <div>
+                  <h2 style={{ margin:0, fontSize:19.5 }}>Policy rules</h2>
+                  <div style={{ marginTop:4, fontSize:13, color:"var(--muted)" }}>
+                    Live floor: {persistedGlobalFloor}% · Draft edits never change live pricing.
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                  <input value={ruleSearch} onChange={event=>setRuleSearch(event.target.value)} placeholder="Search rules…"
+                    style={{ border:"1px solid var(--border)", borderRadius:9, padding:"9px 11px",
+                      background:"var(--surface)", color:"var(--text)", fontFamily:"inherit" }} />
+                  <select value={ruleStatusFilter} onChange={event=>setRuleStatusFilter(event.target.value as typeof ruleStatusFilter)}
+                    style={{ border:"1px solid var(--border)", borderRadius:9, padding:"9px 11px",
+                      background:"var(--surface)", color:"var(--text)", fontFamily:"inherit" }}>
+                    <option value="all">All states</option>
+                    {(["draft","testing","scheduled","active","paused","failed"] as RuleStatus[]).map(status=><option key={status} value={status}>{status[0].toUpperCase()+status.slice(1)}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {rules.map((rule,index)=>({rule,index}))
+                .filter(({rule})=>(ruleStatusFilter==="all"||rule.status===ruleStatusFilter)
+                  && `${rule.name} ${rule.desc}`.toLowerCase().includes(ruleSearch.toLowerCase()))
+                .map(({rule,index}) => {
+                  const statusColor:Record<RuleStatus,string>={draft:"#6B7280",testing:"#2563EB",scheduled:"#7C3AED",active:GN,paused:"#B45309",failed:"#DC2626"};
+                  const completeProducts=importedProducts.filter(product=>product.net_margin_pct!=null);
+                  const incompleteCount=importedProducts.length-completeProducts.length;
+                  const increases=completeProducts.filter(product=>product.net_margin_pct!*100<rule.floor);
+                  const largest=increases.reduce((max,product)=>Math.max(max,product.current_price?((product.recommended_price-product.current_price)/product.current_price)*100:0),0);
+                  return (
+                    <div key={rule.name} style={{ background:"var(--surface)", border:"1px solid var(--border)",
+                      borderRadius:16, boxShadow:"var(--shadow)", overflow:"hidden" }}>
+                      <div style={{ padding:"20px 22px", display:"flex", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+                        <div style={{ minWidth:220 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:9, flexWrap:"wrap" }}>
+                            <h3 style={{ margin:0, fontSize:17 }}>{rule.name}</h3>
+                            <span style={{ color:statusColor[rule.status], fontSize:11, fontWeight:800, textTransform:"uppercase",
+                              padding:"4px 8px", border:`1px solid color-mix(in srgb,${statusColor[rule.status]} 35%,transparent)`,
+                              borderRadius:999 }}>{rule.status}</span>
+                          </div>
+                          <div style={{ marginTop:6, color:"var(--muted)", fontSize:13 }}>{rule.desc}</div>
+                          {rule.scope!=="global"&&<div style={{ marginTop:7, fontSize:12, color:"#B45309" }}>Not connected to live enforcement yet.</div>}
+                        </div>
+                        <div style={{ minWidth:"min(100%,330px)", flex:"1 1 330px" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                            <input type="range" min={5} max={60} value={rule.floor}
+                              onChange={event=>editRule(index,{floor:Number(event.target.value)})} style={{flex:1}} />
+                            <strong style={{ color:OG, fontSize:20, minWidth:54, textAlign:"right" }}>{rule.floor}%</strong>
+                          </div>
+                          <div style={{ marginTop:7, fontSize:11.5, color:"var(--muted)" }}>Net contribution margin after VAT, cost and channel fees.</div>
+                        </div>
+                      </div>
+
+                      <details style={{ borderTop:"1px solid var(--border)", padding:"14px 22px" }}>
+                        <summary style={{ cursor:"pointer", fontWeight:800, fontSize:13.5 }}>Safety limits and exceptions</summary>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:12, marginTop:14 }}>
+                          {[
+                            ["Max increase / update","maxChangePct",rule.maxChangePct,"%"],
+                            ["Max daily change","dailyChangePct",rule.dailyChangePct,"%"],
+                            ["Manual approval above","approvalAbovePct",rule.approvalAbovePct,"%"],
+                            ["Cooldown","cooldownHours",rule.cooldownHours," hours"],
+                          ].map(([label,key,value,suffix])=>(
+                            <label key={String(key)} style={{fontSize:11.5,color:"var(--muted)"}}>{label}
+                              <div style={{display:"flex",alignItems:"center",gap:5,marginTop:5}}>
+                                <input type="number" min={0} value={Number(value)}
+                                  onChange={event=>editRule(index,{[String(key)]:Number(event.target.value)} as Partial<Rule>)}
+                                  style={{width:"100%",border:"1px solid var(--border)",borderRadius:8,padding:"8px",background:"var(--surface2)",color:"var(--text)"}} />
+                                <span>{suffix}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                        <div style={{display:"flex",gap:16,flexWrap:"wrap",marginTop:14,fontSize:12.5}}>
+                          <label><input type="checkbox" checked={rule.rollbackOnReject} onChange={event=>editRule(index,{rollbackOnReject:event.target.checked})}/> Roll back if channel rejects update</label>
+                          <label><input type="checkbox" checked={rule.stopOnStaleCost} onChange={event=>editRule(index,{stopOnStaleCost:event.target.checked})}/> Stop when cost data is stale</label>
+                        </div>
+                      </details>
+
+                      {rulePreviewIndex===index&&(
+                        <div style={{ padding:"18px 22px", borderTop:"1px solid var(--border)", background:"var(--surface2)" }}>
+                          <h4 style={{margin:"0 0 12px"}}>Impact preview</h4>
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
+                            {[
+                              ["Products evaluated",completeProducts.length],
+                              ["Require increases",increases.length],
+                              ["Largest increase",`${Math.max(0,largest).toFixed(1)}%`],
+                              ["Excluded: incomplete cost",incompleteCount],
+                            ].map(([label,value])=><div key={String(label)} style={{border:"1px solid var(--border)",borderRadius:9,padding:"11px",background:"var(--surface)"}}>
+                              <div style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase"}}>{label}</div>
+                              <strong style={{display:"block",fontSize:20,marginTop:4}}>{value}</strong>
+                            </div>)}
+                          </div>
+                          <div style={{marginTop:12,fontSize:12.5,color:"var(--muted)"}}>
+                            Estimated revenue impact is withheld until order-volume and cost provenance are complete. No prices changed during this preview.
+                          </div>
+                        </div>
+                      )}
+
+                      {ruleConfirmIndex===index&&(
+                        <div style={{padding:"13px 22px",borderTop:"1px solid var(--border)",background:"color-mix(in srgb,#F59E0B 9%,var(--surface))",color:"#92400E",fontSize:12.5}}>
+                          Confirm activation of the {rule.floor}% global floor. This creates a live pricing-policy change; the previous and new values will be recorded in the session audit below.
+                        </div>
+                      )}
+                      <div style={{padding:"14px 22px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"flex-end",gap:8,flexWrap:"wrap"}}>
+                        <button onClick={()=>saveRuleDraft(index)} style={{border:"1px solid var(--border)",background:"var(--surface)",borderRadius:8,padding:"9px 12px",fontWeight:700,cursor:"pointer"}}>Save draft</button>
+                        <button onClick={()=>previewRule(index)} style={{border:"1px solid var(--border)",background:"var(--surface)",borderRadius:8,padding:"9px 12px",fontWeight:700,cursor:"pointer"}}>Preview impact</button>
+                        <button disabled={ruleSaving||rulePreviewIndex!==index} onClick={()=>activateRule(index)}
+                          style={{border:"none",background:rulePreviewIndex===index?OG:"#CBD5E1",color:"#fff",borderRadius:8,padding:"9px 13px",fontWeight:800,cursor:rulePreviewIndex===index?"pointer":"not-allowed"}}>
+                          {ruleSaving&&ruleConfirmIndex===index?"Activating…":ruleConfirmIndex===index?"Confirm activation":"Activate rule"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}>
+                <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:"20px 22px"}}>
+                  <h3 style={{margin:0,fontSize:17}}>Margin calculation</h3>
+                  <div style={{marginTop:13,fontFamily:MONO,fontSize:12.5,lineHeight:2,color:"var(--muted)"}}>
+                    Selling price<br/>− VAT<br/>− product cost<br/>− channel commission<br/>− payment fee<br/>− fulfilment cost<br/>− promotional contribution<br/>
+                    <strong style={{color:"var(--text)"}}>= net contribution and net margin</strong>
+                  </div>
+                  <div style={{marginTop:10,fontSize:12,color:"#B45309"}}>Products missing any required cost input are excluded from automatic activation.</div>
+                </div>
+                <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:"20px 22px"}}>
+                  <h3 style={{margin:0,fontSize:17}}>Policy audit trail</h3>
+                  {ruleAudit.length===0?<p style={{color:"var(--muted)",fontSize:13}}>No policy changes in this session.</p>:
+                    <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:10}}>{ruleAudit.map((entry,i)=>
+                      <div key={`${entry.at}-${i}`} style={{fontSize:12.5,borderBottom:"1px solid var(--border)",paddingBottom:9}}>
+                        <strong>{entry.action}</strong> · {entry.rule}<div style={{color:"var(--muted)",marginTop:3}}>{new Date(entry.at).toLocaleString()}</div>
+                      </div>)}</div>}
+                </div>
               </div>
             </div>
           </section>
