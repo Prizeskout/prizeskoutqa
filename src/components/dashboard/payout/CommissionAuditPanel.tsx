@@ -198,6 +198,14 @@ export function CommissionAuditPanel({
       <div style={{ display: "flex", minWidth: 790 }}>{tabs.map(tab => <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ cursor: "pointer", border: 0, borderBottom: activeTab === tab.id ? `3px solid ${NAVY}` : "3px solid transparent", background: "transparent", color: activeTab === tab.id ? NAVY : "var(--muted)", padding: "12px 14px", fontSize: 11.5, fontWeight: activeTab === tab.id ? 900 : 700 }}>{tab.label}</button>)}</div>
     </div>
 
+    {/* Disclosed override — shown regardless of active tab, never folded into
+        a smaller note, since it changes figures away from what this report's
+        own cross-check found. Mirrors the same disclosure in the exported PDF
+        (exportAuditReportPdf.ts) — never silent. */}
+    {!!result.netSalesOverrideDocs?.length && <div style={{ margin: "18px 22px 0", padding: "12px 14px", border: `1px solid color-mix(in srgb,${AMBER} 40%,var(--border))`, background: `color-mix(in srgb,${AMBER} 8%,var(--surface))`, borderRadius: 9, color: AMBER, fontSize: 12.5, fontWeight: 700, lineHeight: 1.55 }}>
+      You've marked {result.netSalesOverrideDocs.join(", ")} as already net of commission. The Commission (Agreed) column shows what the platform must have already taken to arrive at those figures — it's not deducted again; Expected Net still equals the Sales you reported. This is your own override, not something this audit verified; its own cross-check (see Exceptions) may say otherwise.
+    </div>}
+
     <div style={{ padding: "22px", display: "flex", flexDirection: "column", gap: 18 }}>
       {activeTab==="recovery"&&<RecoveryWorkspace findings={sortedFindings} contract={contractCoversAudit?approvedContract:null} currency={currency} orderCount={result.ledgerTotals?.orders??0}/>}
       {activeTab==="close"&&<MonthEndCloseWorkspace totals={result.ledgerTotals} documents={documents} currency={currency} coverage={result.coverage}/>}
