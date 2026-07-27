@@ -5,6 +5,7 @@ import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
 import { CommissionAuditPanel } from "@/components/dashboard/payout/CommissionAuditPanel";
 import { PayoutUploadStaging, type StagedItem, type PayoutCheckClassification } from "@/components/dashboard/payout/PayoutUploadStaging";
 import { ContractIntelligenceVault, type ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
+import { SettlementForecastPanel } from "@/components/dashboard/payout/SettlementForecastPanel";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
@@ -663,7 +664,8 @@ type PayoutResultLike = {
   charge_explainers?: { label:string; value:number }[] | null;
   deduction_breakdown?: { gross_sales:number; commission:number; vat_on_fees:number; payment_fees:number; fixed_order_fees:number; delivery_contribution:number; expected_net:number } | null;
   commercial_terms?: { commission_rate_pct:number; vat_on_fees_pct:number; payment_fee_pct:number; fixed_order_fee:number; delivery_contribution:number; source:string } | null;
-  sale_lines?: { order_id:string; product_name:string; sku:string|null; quantity:number; gross_sale:number; commission:number; vat_on_fees:number; payment_fee:number; fixed_order_fee:number; delivery_contribution:number; expected_net:number }[] | null;
+  sale_lines?: { order_id:string; product_name:string; sku:string|null; quantity:number; gross_sale:number; commission:number; vat_on_fees:number; payment_fee:number; fixed_order_fee:number; delivery_contribution:number; expected_net:number; order_date:string|null; expected_settlement_date:string|null }[] | null;
+  settlement_forecast?: { as_of:string; confidence:"verified_contract"|"incomplete_contract"|"estimated_schedule"; blockers:string[]; expected_today:number; expected_next_settlement:{date:string;amount:number}|null; by_settlement_date:{date:string;amount:number;orders:number}[]; by_product:{product_name:string;sku:string|null;amount:number;quantity:number}[]; by_platform:{platform:string;amount:number;orders:number}[]; transaction_count:number } | null;
 };
 
 function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
@@ -973,7 +975,7 @@ export function PrizeSkoutDashboard() {
   // merchant should have received (see expected-payout.ts). Never fetches
   // their actual payout; the merchant compares it against their own bank
   // deposit themselves.
-  type PayoutCheckData = { order_count:number; sub_total_sum:number; commission_rate_pct:number; expected_payout:number; period_start:string; period_end:string; source?:"live"|"upload"; platform?:string; rows_skipped?:number; rows_total?:number; brand?:string; cancelled_gmv?:number; cancelled_orders?:number; commission_amount?:number; additional_charges?:number; additional_income?:number; effective_commission_pct?:number; extra_line_items?:{label:string;value:number}[]; unexplained_charge?:{label:string;amount:number}|null; daily_rows?:{date:string;orders:number;sales:number;cancelled?:number}[]; cancelled_orders_total?:number; charge_explainers?:{label:string;value:number}[]; classification?:PayoutCheckClassification };
+  type PayoutCheckData = PayoutResultLike & { period_start:string; period_end:string; classification?:PayoutCheckClassification };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
@@ -2438,6 +2440,7 @@ export function PrizeSkoutDashboard() {
                 </div>
               )}
 
+              {payoutData?.source==="live"&&payoutData.settlement_forecast&&payoutData.sale_lines&&<SettlementForecastPanel forecast={payoutData.settlement_forecast} lines={payoutData.sale_lines} currency={currency}/>}
               {payoutData && <PayoutResultDetail data={payoutData} currency={currency} t={t} />}
 
               {auditResult && (auditResult.ledger.length > 0 || auditResult.findings.length > 0) && (

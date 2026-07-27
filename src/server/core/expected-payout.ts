@@ -108,7 +108,20 @@ export type ExpectedPayoutResult = {
     fixed_order_fee: number;
     delivery_contribution: number;
     expected_net: number;
+    order_date: string | null;
+    expected_settlement_date: string | null;
   }[];
+  settlement_forecast?: {
+    as_of: string;
+    confidence: "verified_contract" | "incomplete_contract" | "estimated_schedule";
+    blockers: string[];
+    expected_today: number;
+    expected_next_settlement: { date: string; amount: number } | null;
+    by_settlement_date: { date: string; amount: number; orders: number }[];
+    by_product: { product_name: string; sku: string | null; amount: number; quantity: number }[];
+    by_platform: { platform: string; amount: number; orders: number }[];
+    transaction_count: number;
+  };
 };
 
 export async function getTalabatExpectedPayout(
@@ -136,6 +149,9 @@ export async function getTalabatExpectedPayout(
   const paymentFeePct = typeof metadata.payment_fee_pct === "number" ? metadata.payment_fee_pct : 0;
   const fixedOrderFee = typeof metadata.fixed_order_fee === "number" ? metadata.fixed_order_fee : 0;
   const deliveryContribution = typeof metadata.delivery_contribution === "number" ? metadata.delivery_contribution : 0;
+  const settlementDays = typeof metadata.settlement_days === "number" ? metadata.settlement_days : null;
+  const commissionBase = typeof metadata.commission_base === "string" ? metadata.commission_base : "unknown";
+  const reviewedContract = metadata.commercial_terms_source === "reviewed_contract";
 
   if (typeof chainId !== "string" || typeof vendorId !== "string" || !chainId || !vendorId) {
     return { ok: false, error: "Talabat connection is missing chain_id/vendor_id." };
@@ -206,6 +222,13 @@ export async function getTalabatExpectedPayout(
         const linePayment = paymentFee * share;
         const lineFixed = fixedOrderFee * share;
         const lineDelivery = deliveryContribution * share;
+        const rawOrderDate = [order.created_at, order.created_at_utc, order.order_time, order.timestamp]
+          .find(value => typeof value === "string") as string | undefined;
+        const parsedOrderDate = rawOrderDate && Number.isFinite(Date.parse(rawOrderDate))
+          ? new Date(rawOrderDate) : null;
+        const settlementDate = parsedOrderDate && settlementDays != null
+          ? new Date(parsedOrderDate.getTime() + settlementDays * 86_400_000).toISOString().slice(0,10)
+          : null;
         saleLines.push({
           order_id: order.order_id ?? order.order_code ?? `order-${orderCount}`,
           product_name: entry.item.name ?? `Item ${index + 1}`,
@@ -218,12 +241,41 @@ export async function getTalabatExpectedPayout(
           fixed_order_fee: round(lineFixed),
           delivery_contribution: round(lineDelivery),
           expected_net: round(grossSale - lineCommission - lineVat - linePayment - lineFixed - lineDelivery),
+          order_date: parsedOrderDate?.toISOString() ?? null,
+          expected_settlement_date: settlementDate,
         });
       });
     }
   }
 
   const expectedPayout = subTotalSum - commissionTotal - vatTotal - paymentFeeTotal - fixedFeeTotal - deliveryTotal;
+  const datedLines = saleLines.filter(line=>line.expected_settlement_date);
+  const settlementMap = new Map<string,{ amount:number; orders:Set<string> }>();
+  for (const line of datedLines) {
+    const key = line.expected_settlement_date!;
+    const current = settlementMap.get(key) ?? { amount:0, orders:new Set<string>() };
+    current.amount += line.expected_net;
+    current.orders.add(line.order_id);
+    settlementMap.set(key,current);
+  }
+  const bySettlementDate = [...settlementMap.entries()]
+    .map(([date,value])=>({date,amount:round(value.amount),orders:value.orders.size}))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  const today = new Date().toISOString().slice(0,10);
+  const nextSettlement = bySettlementDate.find(item=>item.date>=today) ?? null;
+  const productMap = new Map<string,{product_name:string;sku:string|null;amount:number;quantity:number}>();
+  for (const line of saleLines) {
+    const key = line.sku || line.product_name;
+    const current = productMap.get(key) ?? {product_name:line.product_name,sku:line.sku,amount:0,quantity:0};
+    current.amount += line.expected_net; current.quantity += line.quantity;
+    productMap.set(key,current);
+  }
+  const blockers = [
+    !reviewedContract && "Commercial terms have not been approved from a reviewed contract.",
+    commissionBase === "unknown" && "Commission calculation base is not established.",
+    settlementDays == null && "Settlement lag is not established, so settlement dates cannot be forecast.",
+    datedLines.length < saleLines.length && "Some Talabat orders do not expose a usable order timestamp.",
+  ].filter(Boolean) as string[];
 
   return {
     ok: true,
@@ -255,6 +307,19 @@ export async function getTalabatExpectedPayout(
       source: typeof metadata.commercial_terms_source === "string" ? metadata.commercial_terms_source : "merchant_contract",
     },
     sale_lines: saleLines,
+    settlement_forecast: {
+      as_of: new Date().toISOString(),
+      confidence: !reviewedContract || commissionBase === "unknown"
+        ? "incomplete_contract"
+        : blockers.length ? "estimated_schedule" : "verified_contract",
+      blockers,
+      expected_today: round(bySettlementDate.find(item=>item.date===today)?.amount ?? 0),
+      expected_next_settlement: nextSettlement ? {date:nextSettlement.date,amount:nextSettlement.amount} : null,
+      by_settlement_date: bySettlementDate,
+      by_product: [...productMap.values()].map(item=>({...item,amount:round(item.amount)})).sort((a,b)=>b.amount-a.amount),
+      by_platform: [{platform:"talabat",amount:round(expectedPayout),orders:orderCount}],
+      transaction_count: saleLines.length,
+    },
     period_start: startTime.toISOString(),
     period_end: endTime.toISOString(),
   };
