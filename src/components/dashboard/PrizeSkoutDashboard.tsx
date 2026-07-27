@@ -2296,7 +2296,7 @@ export function PrizeSkoutDashboard() {
 
               {auditResult && (auditResult.ledger.length > 0 || auditResult.findings.length > 0) && (
                 <>
-                  <CommissionAuditPanel result={auditResult} currency={currency} documentCount={payoutDocuments.length} />
+                  <CommissionAuditPanel result={auditResult} currency={currency} documentCount={payoutDocuments.length} documents={payoutDocuments} />
                   <div>
                     <button type="button" onClick={handleSaveAudit} disabled={savingAudit || auditSaved}
                       style={{ cursor: savingAudit || auditSaved ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:12.5,
