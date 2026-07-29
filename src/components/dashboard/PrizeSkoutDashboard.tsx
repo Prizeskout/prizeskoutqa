@@ -982,6 +982,10 @@ export function PrizeSkoutDashboard() {
   // deposit themselves.
   type PayoutCheckData = PayoutResultLike & { period_start:string; period_end:string; classification?:PayoutCheckClassification };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
+  // Policy Center sub-tab — defaults to "contract" so ContractIntelligenceVault
+  // still mounts on page load and calls onApproved() automatically, same as
+  // when all four workspaces were always-mounted before this was tabbed.
+  const [policyTab, setPolicyTab]             = useState<"contract"|"promotions"|"pricing"|"group">("contract");
   const [payoutLoading, setPayoutLoading]     = useState(false);
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
   const [payoutError, setPayoutError]         = useState<string|null>(null);
@@ -2427,9 +2431,12 @@ export function PrizeSkoutDashboard() {
               )}
             </div>
 
-            {/* Expected Payout Check — full-width, placed right after the
-                hero so it's one of the first things a merchant sees, not
-                buried below the live feed/dispute agent. */}
+            {/* Payout Assurance — the flagship audit tool, kept focused on
+                just the payout check and its results. Contract, promotion,
+                channel-pricing, and group-control configuration used to be
+                stacked in front of this (four unrelated workspaces a
+                merchant had to scroll past to reach the thing this page
+                exists for); they now live in their own Policy Center below. */}
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"26px 28px",
               display:"flex", flexDirection:"column", gap:18 }}>
@@ -2456,50 +2463,6 @@ export function PrizeSkoutDashboard() {
                 )}
               </div>
               <div style={{ fontSize:13.5, color:"var(--muted)", lineHeight:1.6 }}>{t.payoutCheckDesc}</div>
-
-              <div data-demo-tip="Contract Intelligence Vault — upload or paste your marketplace agreement and PrizeSkout extracts the commission rate, fees, and liability terms automatically, with page-level citations.">
-                <ContractIntelligenceVault onApproved={term=>{
-                  setApprovedContract(term);
-                  setPayoutUploadRate(String(term.commission_rate_pct));
-                }} />
-              </div>
-
-              <div data-demo-tip="Promotion Profitability Control — simulate a discount campaign before running it, so you know if it actually makes money after commission and platform funding.">
-                <PromotionProfitabilityWorkspace
-                  products={importedProducts.map(product=>({
-                    sku:product.sku,
-                    name:product.name_en||product.name_ar||product.sku,
-                    current_price:product.current_price,
-                    net_margin_pct:product.net_margin_pct,
-                    source_platform:product.source_platform,
-                  }))}
-                  contract={approvedContract}
-                  currency={currency}
-                />
-              </div>
-
-              <div data-demo-tip="Channel Price Architecture — set different prices per channel (in-store, Talabat, Zid...) on purpose, without losing track of which price is live where.">
-                <ChannelPriceArchitecture
-                  products={importedProducts.map(product=>({
-                    sku:product.sku,
-                    name:product.name_en||product.name_ar||product.sku,
-                    current_price:product.current_price,
-                    net_margin_pct:product.net_margin_pct,
-                    source_platform:product.source_platform,
-                    ingest_event_id:product.ingest_event_id,
-                  }))}
-                  contract={approvedContract}
-                  currency={currency}
-                />
-              </div>
-
-              <div data-demo-tip="Group Control Centre — for multi-branch operators: track every legal entity, brand, and branch under one roof, with finance and operations sign-off before changes go live.">
-                <GroupControlWorkspace
-                  contract={approvedContract}
-                  currency={currency}
-                  productCount={importedProducts.length}
-                />
-              </div>
 
               {/* Tabs */}
               <div style={{ display:"flex", background:"var(--surface2)", border:"1px solid var(--border)",
@@ -2567,6 +2530,84 @@ export function PrizeSkoutDashboard() {
                     </button>
                   </div>
                 </>
+              )}
+            </div>
+
+            {/* Policy Center — contract terms, promotions, channel pricing,
+                and group controls all feed the audit above but are
+                configured far less often than a payout check is run, so
+                they live in their own tabbed area instead of stacking in
+                front of it. */}
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+              borderRadius:16, boxShadow:"var(--shadow)", padding:"26px 28px",
+              display:"flex", flexDirection:"column", gap:18 }}>
+              <div>
+                <h3 style={{ margin:0, fontSize:20, fontWeight:800, letterSpacing:"-0.2px" }}>Policy Center</h3>
+                <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)", lineHeight:1.6 }}>
+                  Contract terms, promotions, channel pricing, and multi-branch controls — the policies your payout audits and price guardrails run against.
+                </div>
+              </div>
+
+              <div style={{ display:"flex", background:"var(--surface2)", border:"1px solid var(--border)",
+                borderRadius:10, padding:3, gap:2, flexWrap:"wrap", alignSelf:"flex-start" }}>
+                {([
+                  ["contract","Contracts","Contract Intelligence Vault — upload or paste your marketplace agreement and PrizeSkout extracts the commission rate, fees, and liability terms automatically, with page-level citations."],
+                  ["promotions","Promotions","Promotion Profitability Control — simulate a discount campaign before running it, so you know if it actually makes money after commission and platform funding."],
+                  ["pricing","Channel Pricing","Channel Price Architecture — set different prices per channel (in-store, Talabat, Zid...) on purpose, without losing track of which price is live where."],
+                  ["group","Group Controls","Group Control Centre — for multi-branch operators: track every legal entity, brand, and branch under one roof, with finance and operations sign-off before changes go live."],
+                ] as [typeof policyTab,string,string][]).map(([id,label,tip]) => (
+                  <button key={id} type="button" onClick={()=>setPolicyTab(id)} data-demo-tip={tip}
+                    style={{ cursor:"pointer", border:"none", borderRadius:8, padding:"9px 15px",
+                      fontSize:13, fontWeight:700, fontFamily:"inherit",
+                      background: policyTab===id ? OG : "transparent",
+                      color: policyTab===id ? "#fff" : "var(--muted)" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {policyTab==="contract" && (
+                <ContractIntelligenceVault onApproved={term=>{
+                  setApprovedContract(term);
+                  setPayoutUploadRate(String(term.commission_rate_pct));
+                }} />
+              )}
+
+              {policyTab==="promotions" && (
+                <PromotionProfitabilityWorkspace
+                  products={importedProducts.map(product=>({
+                    sku:product.sku,
+                    name:product.name_en||product.name_ar||product.sku,
+                    current_price:product.current_price,
+                    net_margin_pct:product.net_margin_pct,
+                    source_platform:product.source_platform,
+                  }))}
+                  contract={approvedContract}
+                  currency={currency}
+                />
+              )}
+
+              {policyTab==="pricing" && (
+                <ChannelPriceArchitecture
+                  products={importedProducts.map(product=>({
+                    sku:product.sku,
+                    name:product.name_en||product.name_ar||product.sku,
+                    current_price:product.current_price,
+                    net_margin_pct:product.net_margin_pct,
+                    source_platform:product.source_platform,
+                    ingest_event_id:product.ingest_event_id,
+                  }))}
+                  contract={approvedContract}
+                  currency={currency}
+                />
+              )}
+
+              {policyTab==="group" && (
+                <GroupControlWorkspace
+                  contract={approvedContract}
+                  currency={currency}
+                  productCount={importedProducts.length}
+                />
               )}
             </div>
 
