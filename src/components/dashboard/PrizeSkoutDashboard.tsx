@@ -1275,7 +1275,11 @@ export function PrizeSkoutDashboard() {
   }, []);
 
   useEffect(() => {
-    if (tab !== "vault") return;
+    // Also loaded on "analytics" (Revenue Hub), not just "vault" (Integration
+    // Vault) — the Imported Products empty state needs to know whether a
+    // sync-capable store is connected before the merchant has ever visited
+    // the Vault tab.
+    if (tab !== "vault" && tab !== "analytics") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
     fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
@@ -1289,6 +1293,47 @@ export function PrizeSkoutDashboard() {
       })
       .catch(() => {});
   }, [tab]);
+
+  // Sync-capable channels only (Zid, Salla, Foodics — the platforms
+  // syncPlatformCatalog actually supports). Used by the direct "Sync
+  // Catalogue" button so a merchant never has to go through the Copilot
+  // just to pull their products in.
+  const SYNC_CAPABLE_PLATFORMS = ["zid", "salla", "foodics"] as const;
+  const [syncingCatalog, setSyncingCatalog] = useState(false);
+  const syncAllCatalogs = async () => {
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac || syncingCatalog) return;
+    setSyncingCatalog(true);
+    try {
+      const results = await Promise.all(SYNC_CAPABLE_PLATFORMS.map(async platform => {
+        try {
+          const res = await fetch("/api/channels/connect", {
+            method:"POST", headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ merchant_id:mid, access_code:ac, platform:"copilot_operation", action:"sync_catalog", source_platform:platform }),
+          });
+          const data = await res.json() as { ok?:boolean; error?:string; result?:{items_found:number;items_stored:number;items_below_floor:number;errors:number} };
+          return { platform, ...data };
+        } catch {
+          return { platform, ok:false as const, error:"Network error" };
+        }
+      }));
+      const succeeded = results.filter(r => r.ok);
+      if (succeeded.length === 0) {
+        showToast("No connected store could be synced — connect one in Settings → Channels first.");
+      } else {
+        const totalStored = succeeded.reduce((sum,r)=>sum+(r.result?.items_stored ?? 0),0);
+        showToast(`Catalogue synced — ${totalStored} product${totalStored===1?"":"s"} from ${succeeded.map(r=>r.platform).join(", ")}.`);
+        const params = new URLSearchParams({ merchant_id: mid, access_code: ac });
+        fetch(`/api/repricing/catalog?${params}`)
+          .then(r => r.ok ? r.json() : null)
+          .then((d: { products?: ImportedProduct[] } | null) => { if (d?.products) setImportedProducts(d.products); })
+          .catch(() => {});
+      }
+    } finally {
+      setSyncingCatalog(false);
+    }
+  };
 
   const showToast = (msg: string) => {
     if (toastT.current) clearTimeout(toastT.current);
@@ -2319,11 +2364,23 @@ export function PrizeSkoutDashboard() {
                   <h3 style={{ margin:0, fontSize:20, fontWeight:800 }}>Imported Products</h3>
                   <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)" }}>Live catalogue items synchronized from your connected stores.</div>
                 </div>
-                <span style={{ color:GN, background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
-                  border:`1px solid color-mix(in srgb,${GN} 28%,transparent)`,
-                  borderRadius:999, padding:"7px 12px", fontSize:12, fontWeight:700 }}>
-                  Synced from connected stores
-                </span>
+                <button type="button" onClick={syncAllCatalogs} disabled={syncingCatalog}
+                  data-demo-tip="Pulls your catalogue straight from every connected store — no need to ask the Copilot for something this routine."
+                  style={{ cursor: syncingCatalog ? "wait" : "pointer", display:"flex", alignItems:"center", gap:7,
+                    color:GN, background:`color-mix(in srgb,${GN} 10%,var(--surface))`,
+                    border:`1px solid color-mix(in srgb,${GN} 28%,transparent)`,
+                    borderRadius:999, padding:"7px 14px", fontSize:12.5, fontWeight:700, fontFamily:"inherit",
+                    opacity: syncingCatalog ? 0.7 : 1 }}>
+                  {syncingCatalog ? "Syncing…" : (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                      </svg>
+                      Sync Catalogue
+                    </>
+                  )}
+                </button>
               </div>
               <div style={{ padding:"14px 18px", display:"flex", gap:10, flexWrap:"wrap",
                 alignItems:"center", borderBottom:"1px solid var(--border)", background:"var(--surface2)" }}>
@@ -2353,8 +2410,30 @@ export function PrizeSkoutDashboard() {
               {catalogLoading ? (
                 <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>Loading catalogue…</div>
               ) : filteredProducts.length === 0 ? (
-                <div style={{ padding:28, color:"var(--muted)", fontSize:14 }}>
-                  {importedProducts.length === 0 ? "No products have been imported yet." : "No products match this search or filter."}
+                <div style={{ padding:32, display:"flex", flexDirection:"column", alignItems:"center", gap:14, textAlign:"center" }}>
+                  {importedProducts.length > 0 ? (
+                    <div style={{ color:"var(--muted)", fontSize:14 }}>No products match this search or filter.</div>
+                  ) : SYNC_CAPABLE_PLATFORMS.some(p => channelStatuses[p] === "connected") ? (
+                    <>
+                      <div style={{ color:"var(--text)", fontSize:15, fontWeight:700 }}>Your store is connected, but nothing's synced yet</div>
+                      <div style={{ color:"var(--muted)", fontSize:13.5, maxWidth:420 }}>Pull your catalogue in to start getting margin-floor price recommendations.</div>
+                      <button type="button" onClick={syncAllCatalogs} disabled={syncingCatalog}
+                        style={{ cursor: syncingCatalog ? "wait" : "pointer", border:"none", borderRadius:10, background:OG, color:"#fff",
+                          fontSize:13.5, fontWeight:700, padding:"11px 20px", fontFamily:"inherit", opacity: syncingCatalog ? 0.7 : 1 }}>
+                        {syncingCatalog ? "Syncing…" : "Sync Catalogue Now"}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ color:"var(--text)", fontSize:15, fontWeight:700 }}>No store connected yet</div>
+                      <div style={{ color:"var(--muted)", fontSize:13.5, maxWidth:420 }}>Connect Zid, Salla, or Foodics to start importing products and defending your margins automatically.</div>
+                      <button type="button" onClick={()=>setTab("vault")}
+                        style={{ cursor:"pointer", border:"none", borderRadius:10, background:OG, color:"#fff",
+                          fontSize:13.5, fontWeight:700, padding:"11px 20px", fontFamily:"inherit" }}>
+                        Go to Integration Vault
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <>
@@ -3264,11 +3343,19 @@ export function PrizeSkoutDashboard() {
                       {isConnected ? t.inboundConnectedMsg : canConnect ? t.inboundAuthorizeMsg : t.inboundComingSoonMsg}
                     </div>
                     {isConnected && (
-                      <div dir="ltr" style={{ fontFamily:MONO, fontSize:13.5, color:GN,
-                        background:`color-mix(in srgb,${GN} 8%,var(--surface2))`,
-                        border:`1px solid color-mix(in srgb,${GN} 22%,transparent)`,
-                        borderRadius:9, padding:"9px 12px" }}>
-                        ✓ active
+                      <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+                        <div dir="ltr" style={{ fontFamily:MONO, fontSize:13.5, color:GN,
+                          background:`color-mix(in srgb,${GN} 8%,var(--surface2))`,
+                          border:`1px solid color-mix(in srgb,${GN} 22%,transparent)`,
+                          borderRadius:9, padding:"9px 12px" }}>
+                          ✓ active
+                        </div>
+                        <button type="button" onClick={syncAllCatalogs} disabled={syncingCatalog}
+                          style={{ cursor: syncingCatalog ? "wait" : "pointer", fontSize:12.5, fontWeight:700,
+                            color:"var(--text)", background:"var(--surface2)", border:"1px solid var(--border)",
+                            borderRadius:9, padding:"9px 12px", fontFamily:"inherit", opacity: syncingCatalog ? 0.7 : 1 }}>
+                          {syncingCatalog ? "Syncing…" : "Sync now"}
+                        </button>
                       </div>
                     )}
                     {canConnect && !isConnected && (
