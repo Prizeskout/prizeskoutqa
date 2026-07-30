@@ -11,6 +11,7 @@ import { PromotionProfitabilityWorkspace } from "@/components/dashboard/promotio
 import { ChannelPriceArchitecture } from "@/components/dashboard/pricing/ChannelPriceArchitecture";
 import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControlWorkspace";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
+import { planChannelPrices, type ChannelEconomics, type ChannelPriceProduct, type PriceChannel } from "@/lib/channel-price-planner";
 
 type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
@@ -990,6 +991,12 @@ export function PrizeSkoutDashboard() {
   const [payoutData, setPayoutData]           = useState<PayoutCheckData|null>(null);
   const [payoutError, setPayoutError]         = useState<string|null>(null);
   const [payoutUploadRate, setPayoutUploadRate] = useState("");
+  // First-run welcome check — auto-runs the Talabat payout check the moment
+  // a merchant with Talabat connected has never had one recorded, so there's
+  // something concrete to show in the first minute instead of an empty card
+  // waiting for someone to find the "Check Last 30 Days" button.
+  const autoPayoutCheckAttempted = useRef(false);
+  const [welcomeAuditBanner, setWelcomeAuditBanner] = useState(false);
   const [approvedContract, setApprovedContract] = useState<ContractTerm|null>(null);
 
   // Commission Audit — populated whenever an upload batch includes at least
@@ -1421,6 +1428,52 @@ export function PrizeSkoutDashboard() {
           || Math.abs(b.recommended_price - b.current_price) - Math.abs(a.recommended_price - a.current_price);
       });
   }, [importedProducts, productFilter, productSearch, productSort]);
+
+  // "Fix these first" — the products bleeding the most margin, ranked and
+  // capped to a handful so it reads as a punch list rather than a re-run of
+  // the full catalogue table below it.
+  const fixTheseFirst = useMemo(() => (
+    importedProducts
+      .filter(p => p.floor_breached)
+      .sort((a,b) => Math.abs(b.recommended_price - b.current_price) - Math.abs(a.recommended_price - a.current_price))
+      .slice(0, 5)
+  ), [importedProducts]);
+
+  // Channel pricing gap — a headline number for what Channel Price
+  // Architecture would find, computed with the same default economics it
+  // uses, so a merchant sees the opportunity before ever opening that tab.
+  // Deliberately restricted to channels this merchant actually has (their
+  // own storefront platform plus Talabat if connected) so the number
+  // reflects their real channel mix, not an arbitrary default set.
+  const channelPricingGap = useMemo(() => {
+    if (!importedProducts.length) return { gap: 0, count: 0 };
+    const relevantChannels: PriceChannel[] = ["in_store"];
+    for (const p of ["zid","salla","foodics"] as const) {
+      if (channelStatuses[p] === "connected" && !relevantChannels.includes(p)) relevantChannels.push(p);
+    }
+    if (channelStatuses.talabat === "connected") relevantChannels.push("talabat");
+    if (relevantChannels.length < 2) return { gap: 0, count: 0 }; // nothing beyond in_store to compare against
+
+    const economicsFor = (channel: PriceChannel): ChannelEconomics => ({
+      channel,
+      commission_pct: channel === "in_store" ? 0 : channel === approvedContract?.platform ? approvedContract.commission_rate_pct : 19,
+      vat_on_fees_pct: channel === approvedContract?.platform ? approvedContract.vat_on_fees_pct : 0,
+      payment_fee_pct: channel === approvedContract?.platform ? approvedContract.payment_fee_pct : 0,
+      fixed_fee: channel === approvedContract?.platform ? approvedContract.fixed_order_fee : 0,
+      minimum_margin_pct: 18,
+    });
+    const products: ChannelPriceProduct[] = importedProducts.map(p => ({
+      sku: p.sku, name: p.name_en || p.name_ar || p.sku, current_price: p.current_price,
+      net_margin_pct: p.net_margin_pct, source_platform: p.source_platform, ingest_event_id: p.ingest_event_id,
+    }));
+    const rows = planChannelPrices(products, relevantChannels.map(economicsFor), 8, 15);
+    const underpriced = rows.filter(r => r.status !== "excluded" && r.consumer_difference != null && r.consumer_difference > 0);
+    return {
+      gap: underpriced.reduce((sum, r) => sum + (r.consumer_difference ?? 0), 0),
+      count: new Set(underpriced.map(r => r.sku)).size,
+    };
+  }, [importedProducts, channelStatuses, approvedContract]);
+
   const productPageCount = Math.max(1, Math.ceil(filteredProducts.length / productPageSize));
   const visibleProducts = filteredProducts.slice((productPage - 1) * productPageSize, productPage * productPageSize);
 
@@ -1704,6 +1757,33 @@ export function PrizeSkoutDashboard() {
       setPayoutLoading(false);
     }
   };
+
+  // First-run welcome check: the instant Talabat is connected and this
+  // merchant has never had a payout check recorded, run one automatically
+  // instead of waiting for someone to find the button. Fires at most once
+  // per mount; a real result already exists in history for every later
+  // visit, so the empty-history condition naturally never re-triggers it.
+  useEffect(() => {
+    if (tab !== "analytics") return;
+    if (channelStatuses.talabat !== "connected") return;
+    if (autoPayoutCheckAttempted.current) return;
+    const mid = localStorage.getItem("ps_merchant_id") ?? "";
+    const ac  = localStorage.getItem("ps_access_code") ?? "";
+    if (!mid || !ac) return;
+    autoPayoutCheckAttempted.current = true;
+    fetch("/api/channels/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "history", action: "payout_checks", limit: 1 }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { items?: unknown[] } | null) => {
+        if (d?.items && d.items.length > 0) return; // already has at least one — not a first run
+        setWelcomeAuditBanner(true);
+        runPayoutCheck();
+      })
+      .catch(() => {});
+  }, [tab, channelStatuses]);
 
   // Parses one uploaded file into a PayoutCheckData without touching any
   // component state — a pure fetch, so addFileItems can call it in a
@@ -2289,6 +2369,34 @@ export function PrizeSkoutDashboard() {
         {tab === "analytics" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:30, animation:"pk-in .3s ease" }}>
 
+            {/* First-run welcome: we auto-ran a Talabat payout check the
+                moment Talabat was connected, since this merchant has never
+                had one — surface it here instead of leaving it for someone
+                to discover the button buried in the Payout Assurance card. */}
+            {welcomeAuditBanner && payoutData && !payoutError && (
+              <div style={{ background:`color-mix(in srgb,${GN} 8%,var(--surface))`,
+                border:`1px solid color-mix(in srgb,${GN} 30%,transparent)`, borderRadius:14,
+                padding:"18px 22px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                  <div style={{ fontSize:13.5, fontWeight:800, color:GN }}>We checked your Talabat payouts automatically</div>
+                  <div style={{ fontSize:13, color:"var(--muted)" }}>
+                    Last 30 days · {payoutData.order_count} orders · expected payout ≈ {currency} {fmtMoney(payoutData.expected_payout, currency)}.
+                    {" "}Compare this against what actually landed in your bank to catch any shortfall.
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:8, alignItems:"center", flexShrink:0 }}>
+                  <button type="button" onClick={()=>{ setWelcomeAuditBanner(false); document.getElementById("ps-payout-assurance-card")?.scrollIntoView({behavior:"smooth", block:"start"}); }}
+                    style={{ cursor:"pointer", border:"none", borderRadius:8, padding:"9px 14px", background:GN, color:"#fff", fontFamily:"inherit", fontWeight:800, fontSize:12.5 }}>
+                    View full report
+                  </button>
+                  <button type="button" aria-label="Dismiss" onClick={()=>setWelcomeAuditBanner(false)}
+                    style={{ cursor:"pointer", border:"none", background:"transparent", color:"var(--muted)", fontSize:18, lineHeight:1, padding:"4px 6px" }}>
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Hero + stat grid */}
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:18 }}>
               <div data-tour="hero" data-demo-tip="Profits protected this month — real QAR value from every price PrizeSkout defended, not a projection." style={{ gridColumn:"span 2", minWidth:"min(100%,560px)", position:"relative",
@@ -2355,6 +2463,63 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
             </div>
+
+            {/* Instant-value strip: a forward-looking channel pricing
+                opportunity (computed from data already loaded, same math as
+                Channel Price Architecture) plus a ranked worst-offenders
+                list — both readable without opening any other tab. */}
+            {importedProducts.length > 0 && (channelPricingGap.count > 0 || fixTheseFirst.length > 0) && (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))", gap:18 }}>
+                {channelPricingGap.count > 0 && (
+                  <div data-demo-tip="A snapshot of what Channel Price Architecture would find right now — the same math, surfaced here so you see it before opening that tab." style={{ background:"var(--surface)", border:"1px solid var(--border)",
+                    borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px", display:"flex", flexDirection:"column", gap:10 }}>
+                    <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>Channel pricing gap</div>
+                    <div style={{ fontFamily:DISPLAY, fontSize:32, fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums" }}>
+                      <span style={{ fontSize:18, fontWeight:500, marginRight:6 }}>{currency}</span>
+                      {fmtMoney(channelPricingGap.gap, currency)}
+                    </div>
+                    <div style={{ fontSize:13.5, color:"var(--muted)", lineHeight:1.5 }}>
+                      {channelPricingGap.count} product{channelPricingGap.count===1?"":"s"} priced below their target margin on at least one of your channels — this is what publishing corrected prices would add.
+                    </div>
+                    <button type="button" onClick={()=>{ setPolicyTab("pricing"); document.getElementById("ps-policy-center-card")?.scrollIntoView({behavior:"smooth", block:"start"}); }}
+                      style={{ alignSelf:"flex-start", cursor:"pointer", border:"none", borderRadius:8, padding:"9px 14px",
+                        background:OG, color:"#fff", fontFamily:"inherit", fontWeight:800, fontSize:12.5, marginTop:4 }}>
+                      Review channel pricing →
+                    </button>
+                  </div>
+                )}
+                {fixTheseFirst.length > 0 && (
+                  <div data-demo-tip="Your worst-margin products, ranked — click any row to review and apply its recommended price." style={{ background:"var(--surface)", border:"1px solid var(--border)",
+                    borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px", display:"flex", flexDirection:"column", gap:12 }}>
+                    <div>
+                      <div style={{ fontSize:12.5, fontWeight:500, letterSpacing:"0.04em", color:"var(--muted)", textTransform:"uppercase" as const }}>Fix these first</div>
+                      <div style={{ fontSize:13, color:"var(--muted)", marginTop:3 }}>Ranked by how far below your margin floor they've fallen.</div>
+                    </div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                      {fixTheseFirst.map(product => {
+                        const displayName = lang === "ar" && product.name_ar ? product.name_ar : product.name_en || product.sku;
+                        return (
+                          <div key={product.ingest_event_id} role="button" tabIndex={0}
+                            aria-label={`Review ${displayName}`}
+                            onClick={()=>openProduct(product)}
+                            onKeyDown={event=>{ if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openProduct(product); } }}
+                            style={{ cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", gap:10,
+                              padding:"8px 6px", borderRadius:8, borderBottom:"1px solid var(--border)" }}>
+                            <div style={{ minWidth:0 }}>
+                              <div style={{ fontSize:13.5, fontWeight:700, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{displayName}</div>
+                              <div style={{ fontSize:11.5, color:"var(--muted)" }}>{product.currency} {fmtMoney(product.current_price, product.currency)} → {fmtMoney(product.recommended_price, product.currency)}</div>
+                            </div>
+                            <span style={{ fontSize:11, fontWeight:800, color:"#B42318", flexShrink:0 }}>
+                              {product.decision_action === "reprice_up" ? "↑" : "↓"} {product.net_margin_pct != null ? `${(product.net_margin_pct*100).toFixed(1)}%` : "—"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", overflow:"hidden" }}>
@@ -2516,7 +2681,7 @@ export function PrizeSkoutDashboard() {
                 stacked in front of this (four unrelated workspaces a
                 merchant had to scroll past to reach the thing this page
                 exists for); they now live in their own Policy Center below. */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+            <div id="ps-payout-assurance-card" style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"26px 28px",
               display:"flex", flexDirection:"column", gap:18 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
@@ -2617,7 +2782,7 @@ export function PrizeSkoutDashboard() {
                 configured far less often than a payout check is run, so
                 they live in their own tabbed area instead of stacking in
                 front of it. */}
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+            <div id="ps-policy-center-card" style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"26px 28px",
               display:"flex", flexDirection:"column", gap:18 }}>
               <div>
