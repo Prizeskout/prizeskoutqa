@@ -24,7 +24,7 @@ import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
 import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/server/core/recovery-cases";
 import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
-import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan } from "@/server/core/channel-price-plans";
+import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
 import { approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
 import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
 
@@ -566,6 +566,15 @@ export const Route = createFileRoute("/api/channels/connect")({
             if(body.action==="approve"){
               if(!body.id||!body.approved_by?.trim())return resp({error:"Plan id and approver name are required."},400);
               return resp({ok:true,plan:await approveChannelPricePlan(merchant_id,body.id,body.approved_by.trim().slice(0,160))},200);
+            }
+            if(body.action==="publish"){
+              if(!body.id)return resp({error:"Plan id is required."},400);
+              try{
+                const {plan,results}=await publishChannelPricePlan(merchant_id,body.id);
+                return resp({ok:true,plan,results},200);
+              }catch(err){
+                return resp({error:err instanceof Error?err.message:"Could not publish plan."},400);
+              }
             }
             return resp({error:"Unsupported channel-price-plan action."},400);
           }

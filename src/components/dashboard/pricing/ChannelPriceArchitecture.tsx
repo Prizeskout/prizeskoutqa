@@ -1,10 +1,10 @@
 import {useEffect,useMemo,useState} from "react";
-import {AlertTriangle,CheckCircle2,Layers3,Save,ShieldCheck} from "lucide-react";
+import {AlertTriangle,CheckCircle2,Layers3,Save,ShieldCheck,Rocket} from "lucide-react";
 import {planChannelPrices,type ChannelEconomics,type ChannelPriceProduct,type PriceChannel} from "@/lib/channel-price-planner";
 import type {ContractTerm} from "@/components/dashboard/payout/ContractIntelligenceVault";
-import type {SavedChannelPricePlan} from "@/server/core/channel-price-plans";
+import type {SavedChannelPricePlan,PublishRowResult} from "@/server/core/channel-price-plans";
 
-const CHANNELS:PriceChannel[]=["in_store","zid","salla","talabat","snoonu","jahez","keeta"];
+const CHANNELS:PriceChannel[]=["in_store","zid","salla","foodics","talabat","snoonu","jahez","keeta"];
 const label=(v:string)=>v.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase());
 const field={width:"100%",boxSizing:"border-box" as const,border:"1px solid var(--border)",borderRadius:7,padding:"7px 8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit"};
 const money=(v:number,currency:string)=>`${currency} ${v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -26,6 +26,8 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
   const [reviewer,setReviewer]=useState("");
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState<string|null>(null);
+  const [publishingId,setPublishingId]=useState<string|null>(null);
+  const [publishResults,setPublishResults]=useState<Record<string,PublishRowResult[]>>({});
 
   useEffect(()=>{
     if(!contract)return;
@@ -47,6 +49,7 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
   const updateConfig=(channel:PriceChannel,key:keyof Omit<ChannelEconomics,"channel">,value:string)=>setConfigs(current=>current.map(item=>item.channel===channel?{...item,[key]:Number(value)||0}:item));
   const save=async()=>{setBusy(true);setError(null);try{await call({action:"create",name:planName,channel_config:activeConfigs,rows});await load();}catch(err){setError(err instanceof Error?err.message:"Could not save plan.");}finally{setBusy(false);}};
   const approve=async(id:string)=>{if(!reviewer.trim()){setError("Enter the finance approver’s name.");return;}setBusy(true);try{await call({action:"approve",id,approved_by:reviewer});await load();}catch(err){setError(err instanceof Error?err.message:"Could not approve plan.");}finally{setBusy(false);}};
+  const publish=async(id:string)=>{setPublishingId(id);setError(null);try{const data=await call({action:"publish",id});setPublishResults(current=>({...current,[id]:data.results??[]}));await load();}catch(err){setError(err instanceof Error?err.message:"Could not publish plan.");}finally{setPublishingId(null);}};
 
   return <section style={{border:"1px solid var(--border)",borderRadius:14,overflow:"hidden",background:"var(--surface)"}}>
     <div style={{padding:"17px 20px",background:"var(--surface2)",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
@@ -89,10 +92,30 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
           <td style={{padding:9,borderBottom:"1px solid var(--border)",color:"var(--muted)"}}>{row.reason}</td>
         </tr>)}</tbody>
       </table></div>
-      <div style={{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}}><button disabled={busy||!rows.length||!planName.trim()} onClick={save} style={{border:0,borderRadius:8,padding:"9px 13px",background:"#14213D",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",display:"flex",gap:6}}><Save size={14}/>Save draft plan</button><span style={{fontSize:11,color:"var(--muted)"}}>Saving or approving never publishes prices. Live updates remain a separate, explicit product-level confirmation.</span></div>
+      <div style={{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}}><button disabled={busy||!rows.length||!planName.trim()} onClick={save} style={{border:0,borderRadius:8,padding:"9px 13px",background:"#14213D",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",display:"flex",gap:6}}><Save size={14}/>Save draft plan</button><span style={{fontSize:11,color:"var(--muted)"}}>Saving never publishes prices. An approved plan can be published live to Talabat and to your own connected storefront — every other channel stays manual for now.</span></div>
       {!!plans.length&&<div style={{borderTop:"1px solid var(--border)",paddingTop:14}}>
         <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"end",flexWrap:"wrap"}}><strong>Price-plan register</strong><label style={{fontSize:10.5,fontWeight:800}}>Finance approver<input style={{...field,width:220,marginLeft:7}} value={reviewer} onChange={e=>setReviewer(e.target.value)}/></label></div>
-        <div style={{display:"flex",flexDirection:"column",gap:7,marginTop:9}}>{plans.map(plan=><div key={plan.id} style={{border:"1px solid var(--border)",borderRadius:9,padding:"9px 11px",display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap"}}><div><strong>{plan.name}</strong><div style={{fontSize:10.5,color:"var(--muted)"}}>{plan.rows.length} rows · {plan.status.toUpperCase()} · {new Date(plan.created_at).toLocaleDateString("en-GB")}</div></div>{plan.status==="draft"?<button disabled={busy} onClick={()=>approve(plan.id)} style={{border:"1px solid #087F5B",borderRadius:7,padding:"7px 9px",background:"transparent",color:"#087F5B",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Approve plan</button>:<span style={{fontSize:11,color:"#087F5B",fontWeight:900,display:"flex",gap:5}}><CheckCircle2 size={14}/>Approved by {plan.approved_by}</span>}</div>)}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:7,marginTop:9}}>{plans.map(plan=>{
+          const results=publishResults[plan.id];
+          const published=results?.filter(r=>r.status==="published").length??0;
+          const skipped=results?.filter(r=>r.status==="skipped").length??0;
+          const failed=results?.filter(r=>r.status==="failed").length??0;
+          return <div key={plan.id} style={{border:"1px solid var(--border)",borderRadius:9,padding:"9px 11px",display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+              <div><strong>{plan.name}</strong><div style={{fontSize:10.5,color:"var(--muted)"}}>{plan.rows.length} rows · {plan.status.replaceAll("_"," ").toUpperCase()} · {new Date(plan.created_at).toLocaleDateString("en-GB")}</div></div>
+              <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                {plan.status==="draft"&&<button disabled={busy} onClick={()=>approve(plan.id)} style={{border:"1px solid #087F5B",borderRadius:7,padding:"7px 9px",background:"transparent",color:"#087F5B",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Approve plan</button>}
+                {plan.status!=="draft"&&<span style={{fontSize:11,color:"#087F5B",fontWeight:900,display:"flex",gap:5}}><CheckCircle2 size={14}/>Approved by {plan.approved_by}</span>}
+                {(plan.status==="approved"||plan.status==="partially_published")&&<button disabled={publishingId===plan.id} onClick={()=>publish(plan.id)} style={{border:0,borderRadius:7,padding:"7px 9px",background:"#B45309",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",display:"flex",gap:5,alignItems:"center"}}><Rocket size={13}/>{publishingId===plan.id?"Publishing…":plan.status==="partially_published"?"Retry remaining":"Publish live"}</button>}
+                {plan.status==="published"&&<span style={{fontSize:11,color:"#B45309",fontWeight:900}}>Published {plan.published_at?new Date(plan.published_at).toLocaleString("en-GB"):""}</span>}
+              </div>
+            </div>
+            {!!results?.length&&<div style={{borderTop:"1px dashed var(--border)",paddingTop:7,fontSize:11}}>
+              <div style={{display:"flex",gap:12,fontWeight:800,marginBottom:5}}><span style={{color:"#087F5B"}}>{published} published</span><span style={{color:"#A16207"}}>{skipped} skipped</span><span style={{color:"#B42318"}}>{failed} failed</span></div>
+              <div style={{display:"flex",flexDirection:"column",gap:3,maxHeight:150,overflow:"auto"}}>{results.map((r,i)=><div key={i} style={{display:"flex",gap:8,color:r.status==="published"?"#087F5B":r.status==="failed"?"#B42318":"var(--muted)"}}><span style={{fontWeight:800,minWidth:70}}>{label(r.channel)}</span><span style={{minWidth:110}}>{r.name}</span><span>{r.reason}</span></div>)}</div>
+            </div>}
+          </div>;
+        })}</div>
       </div>}
       {excluded>0&&<div style={{fontSize:11.5,color:"#A16207",display:"flex",gap:7}}><AlertTriangle size={14}/>{excluded} rows were excluded rather than priced from incomplete cost evidence.</div>}
       {error&&<div style={{fontSize:12,color:"#B42318"}}>{error}</div>}
