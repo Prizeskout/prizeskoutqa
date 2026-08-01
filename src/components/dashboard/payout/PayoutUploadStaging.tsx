@@ -114,7 +114,7 @@ export function PayoutUploadStaging({
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", background: "var(--surface2)", border: "1px solid var(--border)",
         borderRadius: 10, padding: 3, gap: 2, alignSelf: "flex-start" }}>
-        {([["file", "Platform Statements"], ["manual", "Bank Settlement Evidence"]] as [StagedKind, string][]).map(([id, label]) => (
+        {([["file", "Platform reports"], ["manual", "Bank receipt"]] as [StagedKind, string][]).map(([id, label]) => (
           <button key={id} type="button" onClick={() => setMode(id)}
             style={{ cursor: "pointer", border: "none", borderRadius: 8, padding: "9px 15px",
               fontSize: 13, fontWeight: 700, fontFamily: "inherit",
@@ -129,8 +129,8 @@ export function PayoutUploadStaging({
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder={mode === "file"
-            ? 'Describe this file, e.g. "what Talabat paid me" or "what they compiled" (optional)'
-            : "Optional note about this deposit or adjustment"}
+            ? 'Optional description, e.g. "Talabat settlement for July"'
+            : "Optional note about this bank deposit"}
           rows={2}
           style={{ resize: "vertical", border: "1px solid var(--border)", borderRadius: 9,
             background: "var(--surface)", color: "var(--text)", padding: "9px 11px",
@@ -151,7 +151,7 @@ export function PayoutUploadStaging({
               <button type="button" onClick={handleAddFile}
                 style={{ cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#fff", background: OG,
                   border: "none", borderRadius: 9, padding: "10px 16px", fontFamily: "inherit" }}>
-                + Add File
+                Choose Statements
               </button>
             </>
           ) : (
@@ -183,14 +183,14 @@ export function PayoutUploadStaging({
               <button type="button" onClick={handleAddManual}
                 style={{ cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#fff", background: OG,
                   border: "none", borderRadius: 9, padding: "10px 16px", fontFamily: "inherit" }}>
-                + Add Bank Deposit
+                Add Bank Receipt
               </button>
             </>
           )}
         </div>
         <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
           {mode === "file"
-            ? "CSV, XLSX, or PDF (Snoonu only). Add each document one at a time — describe it if you like, then Run Audit when you're done."
+            ? "Add a platform settlement statement, sales or order report, and your agreed commission. A bank receipt is optional but needed to confirm what was actually received."
             : "No bank connection is requested or supported. A selected evidence file stays on this device; PrizeSkout records only its SHA-256 fingerprint. Without one, the deposit remains manually asserted."}
         </span>
       </div>
@@ -297,7 +297,7 @@ export function PayoutUploadStaging({
             color: "#fff", background: doneCount === 0 ? "#9A9A9A" : GN,
             border: "none", borderRadius: 10, padding: "11px 20px", fontFamily: "inherit",
             opacity: doneCount === 0 ? 0.7 : 1 }}>
-          Run Audit{doneCount > 0 ? ` (${doneCount})` : ""}
+          Review Files and Run Check{doneCount > 0 ? ` (${doneCount})` : ""}
         </button>
       </div>
     </div>

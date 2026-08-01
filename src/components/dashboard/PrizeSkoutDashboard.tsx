@@ -162,15 +162,15 @@ const T = {
     navA:"Revenue Protection Hub", navAs:"Analytics",
     navR:"Margin Policy Engine",   navRs:"Rule Book",
     navV:"Integration Vault",      navVs:"Connections",
-    navH:"Payout & Repricing History", navHs:"History",
+    navH:"Activity & Evidence", navHs:"History",
     subA:"Active price optimization and loss prevention",
     subR:"Natural-language pricing rules and margin guardrails",
     subV:"POS, aggregator and cache connections",
-    subH:"Every payout check and automated price change, in one place",
+    subH:"Review payout checks, price changes, confirmations, failures, and saved investigations",
     historyViewLink:"View history →",
-    historyPayoutTitle:"Payout Check History", historyPayoutDesc:"Every Expected Payout Check you've run — live or uploaded.",
-    historyPayoutEmpty:"No payout checks yet. Run one from the Revenue Hub.",
-    historyRepricingTitle:"Repricing History", historyRepricingDesc:"Automated price changes PrizeSkout has made on your behalf.",
+    historyPayoutTitle:"Payout Checks", historyPayoutDesc:"Expected payouts, reported settlements, and evidence still needed.",
+    historyPayoutEmpty:"No payout checks match this view.",
+    historyRepricingTitle:"Price Changes", historyRepricingDesc:"Requested, accepted, confirmed, failed, and rolled-back channel prices.",
     historyRepricingEmpty:"No automated price changes yet.",
     historyLoading:"Loading…",
     historyColDate:"Date", historyColSource:"Source", historyColPlatform:"Platform", historyColOrders:"Orders",
@@ -260,10 +260,10 @@ const T = {
     tourInboundBody:"Connect your POS or e-commerce platform so PrizeSkout can see real orders, costs, and catalog — the foundation everything else runs on.",
     tourOutboundTitle:"This is where the defense happens",
     tourOutboundBody:"Connect Talabat, Jahez, or any delivery aggregator and PrizeSkout starts pushing margin-safe prices automatically — no more silent margin leaks.",
-    payoutCheckTitle:"Forensic Payout Assurance",
-    payoutCheckDesc:"Reconcile restaurant activity, platform settlements, contract terms, and bank receipts. Every exception is graded by evidence strength so estimates are never mistaken for claims-ready recoveries.",
-    payoutCheckBtn:"Check Last 30 Days", payoutCheckBtnLoading:"Pulling your orders…",
-    payoutCheckLiveOnlyNote:"Talabat only, for now — other platforms coming soon.",
+    payoutCheckTitle:"Check Your Platform Payout",
+    payoutCheckDesc:"Find missing or incorrect platform payments by comparing sales, contracted charges, settlement statements, and bank receipts.",
+    payoutCheckBtn:"Check Expected Payout", payoutCheckBtnLoading:"Checking your orders…",
+    payoutCheckLiveOnlyNote:"Uses connected Talabat order data. Add a settlement statement or bank receipt to confirm the amount actually received.",
     payoutCheckOrders:"Orders Checked", payoutCheckSubtotal:"Food Sales (excl. delivery fee)", payoutCheckRate:"Your Commission Rate",
     payoutCheckCommissionLabel:"Platform Commission",
     payoutBreakdownTitle:"Payout Breakdown", payoutBreakdownCommission:"Commission Charge",
@@ -297,14 +297,14 @@ const T = {
     commissionTrendUnexplainedLabel:"Unexplained Additional Charges",
     payoutDownloadPdf:"Download Report", payoutDownloadingPdf:"Generating…",
     payoutDownloadFullReport:"Download Full Report",
-    payoutCheckLiveTab:"Live Check", payoutCheckUploadTab:"Upload File",
+    payoutCheckLiveTab:"Connected Platform", payoutCheckUploadTab:"Upload Statements",
     payoutCheckUploadPlatformLabel:"Platform", payoutCheckCsvOnly:"CSV files only for now.",
     payoutCheckSourceLive:"Live check", payoutCheckSourceUpload:"Uploaded file", payoutCheckShowing:"Showing",
     payoutCheckRowsSkipped:"rows skipped — date or number format didn't match, so they weren't counted.",
     payoutCheckMultiFileHint:"You can also select multiple files at once — CSV, XLSX, or PDF (Snoonu only). Upload a daily order log and a payout statement together for a full commission audit.",
     payoutUploadingProgress:"of the files you selected have uploaded so far…",
     payoutSaveAudit:"Save to History", payoutAuditSaved:"Saved",
-    historyPayoutAuditTitle:"Commission Audit History", historyPayoutAuditDesc:"Every multi-document commission audit you've run and saved.",
+    historyPayoutAuditTitle:"Payout Investigations", historyPayoutAuditDesc:"Saved evidence reviews, possible differences, and next actions.",
     historyPayoutAuditEmpty:"No saved audits yet.",
   },
   ar: {
@@ -993,6 +993,7 @@ export function PrizeSkoutDashboard() {
   // deposit themselves.
   type PayoutCheckData = PayoutResultLike & { period_start:string; period_end:string; classification?:PayoutCheckClassification };
   const [payoutTab, setPayoutTab]             = useState<"live"|"upload">("live");
+  const [payoutWindowDays,setPayoutWindowDays]=useState<7|30>(30);
   // Policy Center sub-tab — defaults to "contract" so ContractIntelligenceVault
   // still mounts on page load and calls onApproved() automatically, same as
   // when all four workspaces were always-mounted before this was tabbed.
@@ -1040,6 +1041,11 @@ export function PrizeSkoutDashboard() {
   const [historyRepricings, setHistoryRepricings]     = useState<RepricingHistoryRow[]>([]);
   const [historyPayoutAudits, setHistoryPayoutAudits] = useState<PayoutAuditHistoryRow[]>([]);
   const [historyLoading, setHistoryLoading]           = useState(false);
+  const [historyView,setHistoryView]=useState<"all"|"payout"|"repricing"|"investigations">("all");
+  const [historySearch,setHistorySearch]=useState("");
+  const [historyPlatform,setHistoryPlatform]=useState("all");
+  const [historyNeedsAttention,setHistoryNeedsAttention]=useState(false);
+  const [showHistoryExport,setShowHistoryExport]=useState(false);
   const [expandedPayoutCheckId, setExpandedPayoutCheckId] = useState<string|null>(null);
   const [expandedRepricingId, setExpandedRepricingId] = useState<string|null>(null);
   const [expandedPayoutAuditId, setExpandedPayoutAuditId] = useState<string|null>(null);
@@ -1840,7 +1846,7 @@ export function PrizeSkoutDashboard() {
       const res = await fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", window_days: 30 }),
+        body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "talabat_expected_payout", window_days:payoutWindowDays }),
       });
       const data = await res.json() as (PayoutCheckData & { ok?: boolean; error?: string });
       if (!res.ok || !data.ok) {
@@ -2102,6 +2108,13 @@ export function PrizeSkoutDashboard() {
     setTourActive(false);
     localStorage.setItem("ps_tour_v1_done", "1");
   };
+
+  const historyQuery=historySearch.trim().toLowerCase();
+  const filteredHistoryPayouts=historyPayoutChecks.filter(row=>(historyPlatform==="all"||row.platform===historyPlatform)&&(!historyQuery||`${row.platform} ${row.brand??""}`.toLowerCase().includes(historyQuery))&&(!historyNeedsAttention||!!row.unexplained_charge||(row.effective_commission_pct!=null&&row.effective_commission_pct>row.commission_rate_pct)));
+  const filteredHistoryRepricings=historyRepricings.filter(row=>(historyPlatform==="all"||row.target_channel===historyPlatform)&&(!historyQuery||`${row.target_channel??""} ${row.sku??""} ${String(row.audit_snapshot?.item_name??"")}`.toLowerCase().includes(historyQuery))&&(!historyNeedsAttention||!["success","confirmed"].includes(row.status)));
+  const filteredHistoryAudits=historyPayoutAudits.filter(row=>(!historyQuery||row.documents.some(document=>document.file_name.toLowerCase().includes(historyQuery)))&&(!historyNeedsAttention||row.findings.some(finding=>finding.severity==="critical")));
+  const historyAttentionCount=historyRepricings.filter(row=>!["success","confirmed"].includes(row.status)).length+historyPayoutAudits.filter(row=>row.findings.some(finding=>finding.severity==="critical")).length+historyPayoutChecks.filter(row=>!!row.unexplained_charge).length;
+  const historyConfirmedCount=historyRepricings.filter(row=>row.status==="success"||row.status==="confirmed").length;
 
   const navDefs = [
     { id:"analytics" as Tab, label:t.navA, sub:t.navAs, tip:"Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place." },
@@ -2877,7 +2890,7 @@ export function PrizeSkoutDashboard() {
                   <button type="button" onClick={()=>setTab("history")}
                     style={{ cursor:"pointer", fontSize:12.5, fontWeight:700, color:OG,
                       background:"transparent", border:"none", padding:0, fontFamily:"inherit" }}>
-                    {t.historyViewLink}
+                    {lang==="en"?"Past payout checks →":t.historyViewLink}
                   </button>
                 </div>
                 {payoutData && (
@@ -2911,7 +2924,16 @@ export function PrizeSkoutDashboard() {
               </div>
 
               {payoutTab === "live" ? (
-                <div style={{ display:"flex", flexDirection:"column", gap:8, alignItems:"flex-start" }}>
+                <div style={{display:"flex",flexDirection:"column",gap:14,alignItems:"flex-start",width:"100%",maxWidth:720}}>
+                  <div style={{width:"100%",border:"1px solid var(--border)",borderRadius:12,padding:"16px 18px",background:"var(--surface2)"}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+                      <div><div style={{fontSize:15,fontWeight:800}}>Check Talabat payout</div><div style={{fontSize:12.5,color:"var(--muted)",marginTop:4}}>Compare connected orders with your agreed commission and expected settlement.</div></div>
+                      <span style={{fontSize:11,fontWeight:800,color:GN,border:`1px solid color-mix(in srgb,${GN} 35%,transparent)`,borderRadius:999,padding:"5px 9px"}}>CONNECTED PLATFORM</span>
+                    </div>
+                    <div style={{display:"flex",gap:7,marginTop:14,flexWrap:"wrap"}}>
+                      {([7,30] as const).map(days=><button key={days} type="button" onClick={()=>setPayoutWindowDays(days)} style={{cursor:"pointer",border:`1px solid ${payoutWindowDays===days?OG:"var(--border)"}`,borderRadius:8,padding:"8px 11px",background:payoutWindowDays===days?"color-mix(in srgb,#EF681A 9%,var(--surface))":"var(--surface)",color:payoutWindowDays===days?OG:"var(--text)",fontFamily:"inherit",fontWeight:700}}>Last {days} days</button>)}
+                    </div>
+                  </div>
                   <button onClick={runPayoutCheck} disabled={payoutLoading}
                     style={{ cursor: payoutLoading ? "not-allowed" : "pointer",
                       fontSize:14, fontWeight:700, color:"#fff", background: payoutLoading ? "#9A9A9A" : OG,
@@ -3837,8 +3859,8 @@ export function PrizeSkoutDashboard() {
         {tab === "history" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:24, animation:"pk-in .3s ease" }}>
 
-            <div style={{ display:"flex", justifyContent:"flex-end" }}>
-              <button type="button" onClick={handleDownloadHistoryPdf} disabled={downloadingHistoryPdf}
+            <div style={{display:"flex",justifyContent:"flex-end",alignItems:"flex-start",gap:16,flexWrap:"wrap"}}>
+              <button type="button" onClick={()=>setShowHistoryExport(true)} disabled={downloadingHistoryPdf}
                 style={{ cursor: downloadingHistoryPdf ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:13.5,
                   fontWeight:600, color:"var(--text)", background:"var(--surface)",
                   border:"1px solid var(--border)", borderRadius:10, padding:"9px 15px",
@@ -3849,11 +3871,21 @@ export function PrizeSkoutDashboard() {
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                {downloadingHistoryPdf ? t.payoutDownloadingPdf : t.payoutDownloadFullReport}
+                {downloadingHistoryPdf ? t.payoutDownloadingPdf : "Export Activity Report"}
               </button>
             </div>
 
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:10}}>
+              {[["Payout checks",historyPayoutChecks.length,GN],["Confirmed price changes",historyConfirmedCount,GN],["Needs attention",historyAttentionCount,historyAttentionCount?"#DC2626":"var(--muted)"],["Saved investigations",historyPayoutAudits.length,OG]].map(([label,value,color])=><div key={String(label)} style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}}><div style={{fontSize:11,color:"var(--muted)",textTransform:"uppercase",fontWeight:700}}>{label}</div><div style={{fontSize:25,fontWeight:800,color:String(color),marginTop:5}}>{value}</div></div>)}
+            </div>
+
+            <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:14,padding:14,display:"flex",flexDirection:"column",gap:12}}>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{([['all','Overview'],['payout','Payout Checks'],['repricing','Price Changes'],['investigations','Investigations']] as const).map(([id,label])=><button key={id} type="button" onClick={()=>setHistoryView(id)} style={{cursor:"pointer",border:`1px solid ${historyView===id?OG:"var(--border)"}`,borderRadius:8,padding:"8px 11px",background:historyView===id?"color-mix(in srgb,#EF681A 9%,var(--surface))":"var(--surface)",color:historyView===id?OG:"var(--text)",fontWeight:700,fontFamily:"inherit"}}>{label}</button>)}</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><input value={historySearch} onChange={event=>setHistorySearch(event.target.value)} placeholder="Search product, SKU, or evidence" style={{flex:"1 1 250px",border:"1px solid var(--border)",borderRadius:8,padding:"9px 11px",background:"var(--surface2)",color:"var(--text)",fontFamily:"inherit"}}/><select value={historyPlatform} onChange={event=>setHistoryPlatform(event.target.value)} style={{border:"1px solid var(--border)",borderRadius:8,padding:"9px 11px",background:"var(--surface2)",color:"var(--text)",fontFamily:"inherit"}}><option value="all">All platforms</option><option value="zid">Zid</option><option value="talabat">Talabat</option><option value="salla">Salla</option><option value="foodics">Foodics</option></select><label style={{display:"flex",alignItems:"center",gap:7,fontSize:12.5,fontWeight:700,padding:"0 8px"}}><input type="checkbox" checked={historyNeedsAttention} onChange={event=>setHistoryNeedsAttention(event.target.checked)}/>Needs attention only</label></div>
+            </div>
+
             {/* Payout Check History */}
+            {(historyView==="all"||historyView==="payout")&&<div style={{display:"contents"}}>
             <div data-demo-tip="Every time PrizeSkout has checked what a platform actually paid against what your contract says it owed you — live-pulled or uploaded."
               style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
@@ -3910,15 +3942,16 @@ export function PrizeSkoutDashboard() {
 
               {historyLoading ? (
                 <div style={{ fontSize:14, color:"var(--muted)" }}>{t.historyLoading}</div>
-              ) : historyPayoutChecks.length === 0 ? (
+              ) : filteredHistoryPayouts.length === 0 ? (
                 <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
-                  borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
+                  borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14,flexWrap:"wrap" }}>
                   <span style={{ width:9, height:9, borderRadius:"50%", background:"var(--muted)", flexShrink:0 }} />
                   <span style={{ fontSize:15, color:"var(--muted)" }}>{t.historyPayoutEmpty}</span>
+                  {historyPayoutChecks.length===0?<button type="button" onClick={()=>setTab("analytics")} style={{marginInlineStart:"auto",border:0,borderRadius:8,padding:"9px 12px",background:OG,color:"white",fontWeight:800,cursor:"pointer"}}>Run a Payout Check</button>:<button type="button" onClick={()=>{setHistorySearch("");setHistoryPlatform("all");setHistoryNeedsAttention(false)}} style={{marginInlineStart:"auto",border:"1px solid var(--border)",borderRadius:8,padding:"8px 11px",background:"var(--surface)",fontWeight:700,cursor:"pointer"}}>Clear filters</button>}
                 </div>
               ) : (
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {historyPayoutChecks.map(row => {
+                  {filteredHistoryPayouts.map(row => {
                     const open = expandedPayoutCheckId === row.id;
                     const rowHasRates = row.commission_rate_pct != null && row.effective_commission_pct != null;
                     const rowExpectedAtAgreed = rowHasRates
@@ -3976,7 +4009,7 @@ export function PrizeSkoutDashboard() {
                           ) : (
                             <button type="button" aria-label="Delete"
                               onClick={e=>{ e.stopPropagation(); setConfirmDeletePayoutId(row.id); }}
-                              style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"flex",
+                              style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"none",
                                 color:"var(--muted)", flexShrink:0 }}>
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                                 strokeLinecap="round" strokeLinejoin="round">
@@ -4007,7 +4040,9 @@ export function PrizeSkoutDashboard() {
               )}
             </div>
 
+            </div>}
             {/* Repricing History */}
+            {(historyView==="all"||historyView==="repricing")&&<div style={{display:"contents"}}>
             <div data-demo-tip="Full audit trail of automatic price changes — same data feeding the Live Execution Stream terminal, kept permanently here."
               style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
@@ -4018,7 +4053,7 @@ export function PrizeSkoutDashboard() {
               </div>
               {historyLoading ? (
                 <div style={{ fontSize:14, color:"var(--muted)" }}>{t.historyLoading}</div>
-              ) : historyRepricings.length === 0 ? (
+              ) : filteredHistoryRepricings.length === 0 ? (
                 <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                   borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
                   <span style={{ width:9, height:9, borderRadius:"50%", background:"var(--muted)", flexShrink:0 }} />
@@ -4026,8 +4061,8 @@ export function PrizeSkoutDashboard() {
                 </div>
               ) : (
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {historyRepricings.map(row => {
-                    const statusColor = row.status === "success" ? GN
+                  {filteredHistoryRepricings.map(row => {
+                    const statusColor = row.status === "confirmed" ? GN : row.status === "success" ? "#2563EB"
                       : row.status === "failed" || row.status === "schema_mismatch" || row.status === "circuit_open" ? "#DC2626"
                       : row.status === "rate_limited" || row.status === "timeout" ? "#B45309"
                       : "var(--muted)";
@@ -4037,6 +4072,9 @@ export function PrizeSkoutDashboard() {
                     const rule = typeof snap.rule === "string" ? snap.rule : null;
                     const marginBefore = typeof snap.margin_before_pct === "number" ? snap.margin_before_pct : null;
                     const marginAfter = typeof snap.margin_after_pct === "number" ? snap.margin_after_pct : null;
+                    const changeAmount=row.old_price==null?null:row.new_price-row.old_price;
+                    const changePct=row.old_price?changeAmount!/row.old_price*100:null;
+                    const statusLabel:Record<string,string>={success:"Sent to platform",confirmed:"Confirmed live",queued:"Queued",confirming:"Awaiting live confirmation",rate_limited:"Failed — retrying",timeout:"Failed — retrying",failed:"Failed — action required",schema_mismatch:"Failed — action required",circuit_open:"Failed — action required",rolled_back:"Rolled back"};
                     return (
                       <div key={row.id} style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                         borderRadius:12, overflow:"hidden" }}>
@@ -4051,13 +4089,13 @@ export function PrizeSkoutDashboard() {
                             </svg>
                             <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
                               <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700 }}>
-                                {row.target_channel ?? "—"}
-                                {row.sku && <span style={{ fontWeight:400, color:"var(--muted)", fontFamily:MONO, fontSize:13 }}>· {row.sku}</span>}
+                                {itemName ?? row.target_channel ?? "Price change"}
+                                {row.target_channel&&<span style={{fontSize:11,fontWeight:800,textTransform:"uppercase",color:"var(--muted)"}}>{row.target_channel}</span>}
                               </div>
                               <div style={{ fontSize:13, color:"var(--muted)" }}>
-                                {new Date(row.created_at).toLocaleString()}
-                                {row.old_price != null ? ` · ${row.old_price} → ${row.new_price} ${row.currency}` : ` · ${row.new_price} ${row.currency}`}
-                                {row.upstream_message ? ` · ${row.upstream_message}` : ""}
+                                {row.old_price != null ? `${row.currency} ${fmtMoney(row.old_price,row.currency)} → ${row.currency} ${fmtMoney(row.new_price,row.currency)}` : `${row.currency} ${fmtMoney(row.new_price,row.currency)}`}
+                                {changePct!=null?` · ${changePct>=0?"+":""}${changePct.toFixed(1)}%`:""}{row.sku?` · SKU ${row.sku}`:""}
+                                <div style={{marginTop:3}}>{new Date(row.created_at).toLocaleString()}{rule?` · ${rule}`:""}</div>
                               </div>
                             </div>
                           </div>
@@ -4066,7 +4104,7 @@ export function PrizeSkoutDashboard() {
                               background:`color-mix(in srgb,${statusColor} 10%,var(--surface))`,
                               border:`1px solid color-mix(in srgb,${statusColor} 28%,transparent)`,
                               borderRadius:999, padding:"4px 10px", textTransform:"uppercase" as const, letterSpacing:"0.03em" }}>
-                              {row.status.replace(/_/g," ")}
+                              {statusLabel[row.status]??row.status.replace(/_/g," ")}
                             </span>
                             {confirmDeleteRepricingId === row.id ? (
                               <div onClick={e=>e.stopPropagation()} style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -4086,7 +4124,7 @@ export function PrizeSkoutDashboard() {
                             ) : (
                               <button type="button" aria-label="Delete"
                                 onClick={e=>{ e.stopPropagation(); setConfirmDeleteRepricingId(row.id); }}
-                                style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"flex",
+                                style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"none",
                                   color:"var(--muted)", flexShrink:0 }}>
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                                   strokeLinecap="round" strokeLinejoin="round">
@@ -4128,7 +4166,9 @@ export function PrizeSkoutDashboard() {
               )}
             </div>
 
+            </div>}
             {/* Commission Audit History */}
+            {(historyView==="all"||historyView==="investigations")&&<div style={{display:"contents"}}>
             <div data-demo-tip="Every full commission audit — the workpaper with the assertion matrix, four-way evidence chain, and exceptions. Click one open to see the whole report again, exactly as first run."
               style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", padding:"22px 24px",
@@ -4139,7 +4179,7 @@ export function PrizeSkoutDashboard() {
               </div>
               {historyLoading ? (
                 <div style={{ fontSize:14, color:"var(--muted)" }}>{t.historyLoading}</div>
-              ) : historyPayoutAudits.length === 0 ? (
+              ) : filteredHistoryAudits.length === 0 ? (
                 <div style={{ border:"1px solid var(--border)", background:"var(--surface2)",
                   borderRadius:12, padding:"24px 20px", display:"flex", alignItems:"center", gap:14 }}>
                   <span style={{ width:9, height:9, borderRadius:"50%", background:"var(--muted)", flexShrink:0 }} />
@@ -4147,7 +4187,7 @@ export function PrizeSkoutDashboard() {
                 </div>
               ) : (
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {historyPayoutAudits.map(row => {
+                  {filteredHistoryAudits.map(row => {
                     const open = expandedPayoutAuditId === row.id;
                     const criticalCount = row.findings.filter(f => f.severity === "critical").length;
                     return (
@@ -4164,7 +4204,7 @@ export function PrizeSkoutDashboard() {
                             </svg>
                             <div style={{ display:"flex", flexDirection:"column", gap:4, minWidth:0 }}>
                               <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14.5, fontWeight:700, flexWrap:"wrap" }}>
-                                {row.document_count} documents
+                                Payout investigation
                                 {criticalCount > 0 && (
                                   <span style={{ fontSize:11.5, fontWeight:700, color:"#DC2626",
                                     background:"color-mix(in srgb,#DC2626 10%,var(--surface))",
@@ -4175,14 +4215,14 @@ export function PrizeSkoutDashboard() {
                                 )}
                               </div>
                               <div style={{ fontSize:13, color:"var(--muted)" }}>
-                                {new Date(row.created_at).toLocaleString()}
+                                {row.document_count} evidence document{row.document_count===1?"":"s"} · {new Date(row.created_at).toLocaleString()}
                                 {row.period_start && ` · ${row.period_start}${row.period_end && row.period_end !== row.period_start ? ` – ${row.period_end}` : ""}`}
                               </div>
                             </div>
                           </div>
                           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                             <div style={{ fontSize:13, color:"var(--muted)" }}>
-                              {row.findings.length} findings
+                              {criticalCount>0?"Review required":`${row.findings.length} finding${row.findings.length===1?"":"s"}`}
                             </div>
                             {confirmDeletePayoutAuditId === row.id ? (
                               <div onClick={e=>e.stopPropagation()} style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -4202,7 +4242,7 @@ export function PrizeSkoutDashboard() {
                             ) : (
                               <button type="button" aria-label="Delete"
                                 onClick={e=>{ e.stopPropagation(); setConfirmDeletePayoutAuditId(row.id); }}
-                                style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"flex",
+                                style={{ cursor:"pointer", background:"transparent", border:"none", padding:4, display:"none",
                                   color:"var(--muted)", flexShrink:0 }}>
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
                                   strokeLinecap="round" strokeLinejoin="round">
@@ -4259,6 +4299,7 @@ export function PrizeSkoutDashboard() {
               )}
             </div>
 
+            </div>}
           </section>
         )}
 
@@ -4269,6 +4310,8 @@ export function PrizeSkoutDashboard() {
           </section>
         )}
       </main>
+
+      {showHistoryExport&&<div onClick={()=>setShowHistoryExport(false)} style={{position:"fixed",inset:0,zIndex:70,background:"rgba(9,12,18,.45)",display:"grid",placeItems:"center",padding:20}}><div onClick={event=>event.stopPropagation()} style={{width:"min(480px,100%)",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22,boxShadow:"var(--shadow-lg)"}}><h3 style={{margin:0}}>Export Activity Report</h3><p style={{fontSize:13,color:"var(--muted)",lineHeight:1.6}}>The PDF includes all payout checks and price changes currently retained for this merchant. Values remain in each record's stored currency; the export does not convert historical transactions.</p><div style={{display:"grid",gap:8,fontSize:13,margin:"16px 0"}}>{[`${historyPayoutChecks.length} payout checks`,`${historyRepricings.length} price changes`,`${historyPayoutAudits.length} saved investigations (listed in the application separately)`].map(label=><div key={label} style={{padding:9,border:"1px solid var(--border)",borderRadius:8}}>✓ {label}</div>)}</div><div style={{display:"flex",justifyContent:"flex-end",gap:8}}><button onClick={()=>setShowHistoryExport(false)} style={{border:"1px solid var(--border)",borderRadius:8,padding:"9px 12px",background:"var(--surface)",fontWeight:700,cursor:"pointer"}}>Cancel</button><button onClick={()=>{setShowHistoryExport(false);void handleDownloadHistoryPdf()}} style={{border:0,borderRadius:8,padding:"9px 12px",background:OG,color:"white",fontWeight:800,cursor:"pointer"}}>Download PDF</button></div></div></div>}
 
       {/* DISPUTE MODAL */}
       {md != null && (
