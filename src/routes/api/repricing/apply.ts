@@ -14,6 +14,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushPriceToSourcePlatform } from "@/server/core/platform-sync";
+import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -61,13 +62,20 @@ export const Route = createFileRoute("/api/repricing/apply")({
         // 2. Fetch the ingest event (ownership check via account_id)
         const { data: evt } = await supabaseAdmin
           .from("ps_ingest_events")
-          .select("id, item_id, source_platform, currency, sku, item_name_en")
+          .select("id, item_id, source_platform, currency, sku, item_name_en, current_retail_price")
           .eq("id", ingestEventId)
           .eq("account_id", accountId)
           .maybeSingle();
 
         if (!evt?.item_id || !evt?.source_platform) {
           return json({ error: "Product not found for this account" }, 404);
+        }
+
+        const policy=await getMerchantMarginPolicy(accountId);
+        const currentPrice=Number(evt.current_retail_price??0);
+        const increasePct=currentPrice>0?(targetPrice-currentPrice)/currentPrice:0;
+        if(increasePct>policy.maxPriceIncreasePct+Number.EPSILON){
+          return json({ok:false,error:`This change is ${(increasePct*100).toFixed(1)}%. Active policy v${policy.version} allows at most ${(policy.maxPriceIncreasePct*100).toFixed(1)}%. Activate a different policy before publishing.`},409);
         }
 
         const { item_id, source_platform, currency } = evt;

@@ -20,6 +20,8 @@ import { dispatchToAggregators } from "./defend-handler";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
 import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { enqueueDispatch } from "./dispatch-queue";
+import { getMerchantMarginPolicy } from "./merchant-pricing-config";
+import { evaluatePolicyControl } from "./margin-policy";
 import {measured} from "./latency";
 
 const VALID_PLATFORMS = ["foodics", "salla", "zid", "sap", "microsoft"] as const;
@@ -214,7 +216,8 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
     await supabaseAdmin.from("ps_ingest_events").update({status:"failed"}).eq("id",ingestEventId);
     return err("economics_not_approved","An effective, approved Talabat economics version is required before PrizeSkout can calculate or publish a price.",409);
   }
-  const marginFloorPct = economics.marginFloorPct;
+  const policy=await getMerchantMarginPolicy(ctx.accountId);
+  const marginFloorPct = policy.marginFloorPct;
   const decideOutput = await measured({traceId:idempotencyKey,accountId:ctx.accountId,stage:"decide"},async()=>decide({
     region,
     baseCost: fin.base_cost,
@@ -242,6 +245,11 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
       commission_rate: decideOutput.commissionRate,
       vat_rate: decideOutput.vatRate,
       logistics_subsidy: decideOutput.logisticsSubsidy,
+      payment_fee_rate:economics.paymentFeeRate,
+      fixed_order_fee:economics.fixedOrderFee,
+      promotion_contribution_rate:economics.promotionContributionRate,
+      economics_version_id:economics.id,
+      margin_policy_version:policy.version,
       margin_floor_pct: decideOutput.marginFloorPct,
       net_margin: decideOutput.netMargin,
       net_margin_pct: decideOutput.netMarginPct,
@@ -295,7 +303,9 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
   let dispatchTriggered = false;
   let dispatchResult: Awaited<ReturnType<typeof dispatchToAggregators>> | null = null;
 
-  if (decideOutput.floorBreached && decideOutput.recommendedPrice !== null && decideRow) {
+  const policyControl=evaluatePolicyControl({approvalMode:policy.approvalMode,maxPriceIncreasePct:policy.maxPriceIncreasePct,currentPrice:fin.current_retail_price,recommendedPrice:decideOutput.recommendedPrice,floorBreached:decideOutput.floorBreached});
+  const {increasePct:proposedIncreasePct,withinIncreaseLimit,mayAutoApply}=policyControl;
+  if (decideOutput.floorBreached && decideOutput.recommendedPrice !== null && decideRow && mayAutoApply) {
     dispatchTriggered = true;
     const recommendedPrice=decideOutput.recommendedPrice;
     const queued=await measured({traceId:idempotencyKey,accountId:ctx.accountId,stage:"enqueue"},()=>enqueueDispatch({
@@ -317,6 +327,9 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
         guaranteed_net_margin_floor: decideOutput.marginFloorPct,
         net_margin_pct: decideOutput.netMarginPct,
         decision_action: decideOutput.decisionAction,
+        margin_policy_version:policy.version,
+        approval_mode:policy.approvalMode,
+        max_price_increase_pct:policy.maxPriceIncreasePct,
       },
       channel:"talabat",
       economicsVersionId:economics.id,
@@ -348,6 +361,7 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
       recommended_price: decideOutput.recommendedPrice,
     },
     dispatch_triggered: dispatchTriggered,
+    policy_control:{version:policy.version,approval_mode:policy.approvalMode,max_price_increase_pct:policy.maxPriceIncreasePct,proposed_increase_pct:proposedIncreasePct,within_increase_limit:withinIncreaseLimit,outcome:policyControl.outcome},
     ...(dispatchResult ? { dispatch: dispatchResult } : {}),
   });
 }

@@ -19,6 +19,7 @@ type Lang = "en" | "ar" | "fr";
 
 interface FeedRow { tag: string; tagColor: string; text: string; time: string; }
 type RuleStatus = "draft" | "testing" | "scheduled" | "active" | "paused" | "failed";
+type ApprovalMode = "recommend_only" | "auto_within_limit" | "approval_every_change";
 interface Rule {
   name: string;
   desc: string;
@@ -32,6 +33,7 @@ interface Rule {
   cooldownHours: number;
   rollbackOnReject: boolean;
   stopOnStaleCost: boolean;
+  approvalMode: ApprovalMode;
 }
 interface ImportedProduct {
   ingest_event_id: string;
@@ -50,6 +52,7 @@ interface ImportedProduct {
   margin_floor_pct?: number;
   commission_rate?: number;
   cost_confidence?: "verified" | "estimated" | "unknown";
+  preview?: { recommended_price:number|null; net_margin_pct:number; floor_breached:boolean; increase_pct:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
 }
 
 const OG = "#EF681A";
@@ -946,11 +949,13 @@ export function PrizeSkoutDashboard() {
   const [cpOperationMessage, setCpOperationMessage] = useState<string|null>(null);
   const [applied, setApplied] = useState(false);
   const [rules, setRules] = useState<Rule[]>([
-    { name:"Global margin floor", desc:"all products · all connected channels", floor:18, active:true, status:"active", scope:"global", maxChangePct:15, dailyChangePct:20, approvalAbovePct:10, cooldownHours:24, rollbackOnReject:true, stopOnStaleCost:true },
-    { name:"Bakery margin defense", desc:"category: bakery · Doha + Riyadh", floor:25, active:false, status:"draft", scope:"category", maxChangePct:12, dailyChangePct:15, approvalAbovePct:8, cooldownHours:24, rollbackOnReject:true, stopOnStaleCost:true },
-    { name:"Hot drinks storm floor",desc:"trigger: weather.rain_storm", floor:35, active:false, status:"testing", scope:"category", maxChangePct:10, dailyChangePct:12, approvalAbovePct:7, cooldownHours:12, rollbackOnReject:true, stopOnStaleCost:true },
+    { name:"Store contribution-margin policy", desc:"all products · verified costs only", floor:18, active:true, status:"active", scope:"global", maxChangePct:15, dailyChangePct:0, approvalAbovePct:0, cooldownHours:0, rollbackOnReject:true, stopOnStaleCost:true, approvalMode:"recommend_only" },
   ]);
   const [persistedGlobalFloor, setPersistedGlobalFloor] = useState(18);
+  const [persistedMaxIncrease,setPersistedMaxIncrease]=useState(15);
+  const [persistedApprovalMode,setPersistedApprovalMode]=useState<ApprovalMode>("recommend_only");
+  const [policyVersion,setPolicyVersion]=useState(1);
+  const [policyVersions,setPolicyVersions]=useState<Array<{id:string;version:number;contribution_margin_floor_pct:number;max_price_increase_pct:number;approval_mode:ApprovalMode;status:string;activated_by:string;activated_at:string}>>([]);
   const [rulePreviewIndex, setRulePreviewIndex] = useState<number|null>(null);
   const [ruleConfirmIndex, setRuleConfirmIndex] = useState<number|null>(null);
   const [ruleSaving, setRuleSaving] = useState(false);
@@ -1261,11 +1266,13 @@ export function PrizeSkoutDashboard() {
       body: JSON.stringify({ merchant_id: mid, access_code: ac, platform: "margin_floor", action: "get" }),
     })
       .then(r => r.ok ? r.json() : null)
-      .then((d: { margin_floor_pct?: number } | null) => {
-        if (typeof d?.margin_floor_pct !== "number") return;
-        const pct = Math.round(d.margin_floor_pct * 100);
+      .then((d: { policy?:{marginFloorPct:number;maxPriceIncreasePct:number;approvalMode:ApprovalMode;version:number};versions?:typeof policyVersions } | null) => {
+        if (!d?.policy) return;
+        const pct = Math.round(d.policy.marginFloorPct * 100);
+        const maxIncrease=Math.round(d.policy.maxPriceIncreasePct*100);
         setPersistedGlobalFloor(pct);
-        setRules(prev => prev.map(r => r.name === "Global margin floor" ? { ...r, floor: pct, status:"active", active:true } : r));
+        setPersistedMaxIncrease(maxIncrease); setPersistedApprovalMode(d.policy.approvalMode); setPolicyVersion(d.policy.version); setPolicyVersions(d.versions??[]);
+        setRules(prev => prev.map(r => ({ ...r, floor:pct,maxChangePct:maxIncrease,approvalMode:d.policy!.approvalMode,status:"active",active:true })));
       })
       .catch(() => {})
       .finally(() => { marginFloorLoadedRef.current = true; });
@@ -1405,12 +1412,21 @@ export function PrizeSkoutDashboard() {
     showToast("Draft saved. No live pricing behavior changed.");
   };
 
-  const previewRule = (index:number) => {
+  const previewRule = async (index:number) => {
     setRulePreviewIndex(index);
     setRuleConfirmIndex(null);
     setRules(current=>current.map((item,i)=>i===index?{...item,status:"testing",active:false}:item));
     const rule = rules[index];
     if (rule) setRuleAudit(current=>[{action:"Impact preview run",rule:rule.name,at:new Date().toISOString()},...current].slice(0,12));
+    if(!rule)return;
+    const mid=localStorage.getItem("ps_merchant_id")??"",ac=localStorage.getItem("ps_access_code")??"";
+    if(!mid||!ac)return;
+    setCatalogLoading(true);
+    try{
+      const params=new URLSearchParams({merchant_id:mid,access_code:ac,preview_floor:String(rule.floor/100),preview_max_increase:String(rule.maxChangePct/100)});
+      const response=await fetch(`/api/repricing/catalog?${params}`),data=response.ok?await response.json() as {products?:ImportedProduct[]}:null;
+      if(data?.products)setImportedProducts(data.products);
+    }finally{setCatalogLoading(false);}
   };
 
   const activateRule = async (index:number) => {
@@ -1431,15 +1447,17 @@ export function PrizeSkoutDashboard() {
     try {
       const response = await fetch("/api/channels/connect", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({merchant_id:mid,access_code:ac,platform:"margin_floor",action:"set",margin_floor_pct:rule.floor/100}),
+        body:JSON.stringify({merchant_id:mid,access_code:ac,platform:"margin_floor",action:"set",margin_floor_pct:rule.floor/100,max_price_increase_pct:rule.maxChangePct/100,approval_mode:rule.approvalMode,activated_by:storeName||"merchant"}),
       });
-      if (!response.ok) throw new Error("Activation failed");
+      const data=await response.json() as {policy?:{version:number};error?:string};
+      if (!response.ok) throw new Error(data.error||"Activation failed");
       setPersistedGlobalFloor(rule.floor);
+      setPersistedMaxIncrease(rule.maxChangePct);setPersistedApprovalMode(rule.approvalMode);setPolicyVersion(data.policy?.version??policyVersion+1);
       setRules(current=>current.map((item,i)=>i===index?{...item,status:"active",active:true}:item));
       setRuleConfirmIndex(null);
       setRulePreviewIndex(null);
       setRuleAudit(current=>[{action:`Activated from ${persistedGlobalFloor}% to ${rule.floor}%`,rule:rule.name,at:new Date().toISOString()},...current].slice(0,12));
-      showToast(`Global margin floor activated at ${rule.floor}%.`);
+      showToast(`Policy v${data.policy?.version??policyVersion+1} activated.`);
     } catch {
       setRules(current=>current.map((item,i)=>i===index?{...item,status:"failed",active:false}:item));
       showToast("Activation failed. The previous live policy remains unchanged.");
@@ -1789,7 +1807,7 @@ export function PrizeSkoutDashboard() {
       dailyChangePct:20,
       approvalAbovePct:approvalThreshold != null && Number.isFinite(approvalThreshold) ? Math.round(approvalThreshold*100) : 10,
       cooldownHours:24,
-      rollbackOnReject:true, stopOnStaleCost:Boolean(cpObj.stop_on_stale_cost),
+      rollbackOnReject:true, stopOnStaleCost:Boolean(cpObj.stop_on_stale_cost), approvalMode:"recommend_only",
     }]);
     showToast("Rule draft created. Preview its impact before activation.");
   };
@@ -3479,8 +3497,38 @@ export function PrizeSkoutDashboard() {
               )}
             </div>
 
-            {/* Rule hierarchy and lifecycle */}
-            <div data-tour="guardrails" style={{ display:"flex", flexDirection:"column", gap:18 }}>
+            {/* Margin Policy v1: one understandable, enforceable store policy. */}
+            <div data-tour="guardrails" style={{display:"flex",flexDirection:"column",gap:18}}>
+              <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:"22px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
+                  <div><h2 style={{margin:0,fontSize:20}}>Protect what you keep from every sale</h2><p style={{margin:"7px 0 0",color:"var(--muted)",fontSize:13.5,maxWidth:720}}>Contribution margin is the share of a product's selling price left after its verified product cost and channel charges. It is not whole-business net profit because rent, salaries and other overhead are not included.</p></div>
+                  <span style={{fontSize:12,fontWeight:800,color:GN}}>ACTIVE · VERSION {policyVersion}</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:16,marginTop:22}}>
+                  <label style={{fontSize:12,fontWeight:800}}>Minimum contribution margin
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}><input aria-label="Minimum contribution margin" type="range" min={5} max={60} value={rules[0].floor} onChange={e=>editRule(0,{floor:Number(e.target.value)})} style={{flex:1}}/><strong style={{fontSize:20,color:OG}}>{rules[0].floor}%</strong></div>
+                  </label>
+                  <label style={{fontSize:12,fontWeight:800}}>Maximum price increase
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}><input aria-label="Maximum price increase" type="number" min={0} max={100} value={rules[0].maxChangePct} onChange={e=>editRule(0,{maxChangePct:Number(e.target.value)})} style={{width:"100%",padding:10,border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}/><strong>%</strong></div>
+                  </label>
+                  <label style={{fontSize:12,fontWeight:800}}>What should PrizeSkout do?
+                    <select aria-label="Approval mode" value={rules[0].approvalMode} onChange={e=>editRule(0,{approvalMode:e.target.value as ApprovalMode})} style={{display:"block",width:"100%",marginTop:8,padding:10,border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}>
+                      <option value="recommend_only">Recommend only — you publish manually</option><option value="approval_every_change">Require approval for every change</option><option value="auto_within_limit">Auto-apply within the maximum</option>
+                    </select>
+                  </label>
+                </div>
+                <div style={{marginTop:16,padding:12,borderRadius:9,background:"var(--surface2)",fontSize:12.5,color:"var(--muted)"}}>Current live policy: keep at least <strong style={{color:"var(--text)"}}>{persistedGlobalFloor}%</strong>, never increase a price by more than <strong style={{color:"var(--text)"}}>{persistedMaxIncrease}%</strong>, mode <strong style={{color:"var(--text)"}}>{persistedApprovalMode.replaceAll("_"," ")}</strong>. Draft edits do nothing until activated.</div>
+                <div style={{display:"flex",justifyContent:"flex-end",gap:9,marginTop:16,flexWrap:"wrap"}}><button onClick={()=>void previewRule(0)} style={{padding:"10px 14px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface)",fontWeight:800,cursor:"pointer"}}>Preview on my catalog</button><button disabled={rulePreviewIndex!==0||ruleSaving} onClick={()=>void activateRule(0)} style={{padding:"10px 14px",border:0,borderRadius:8,background:rulePreviewIndex===0?OG:"#CBD5E1",color:"white",fontWeight:800,cursor:rulePreviewIndex===0?"pointer":"not-allowed"}}>{ruleConfirmIndex===0?(ruleSaving?"Activating…":"Confirm activation"):"Activate this policy"}</button></div>
+                {ruleConfirmIndex===0&&<div style={{marginTop:12,padding:12,borderRadius:8,background:"#FEF3C7",color:"#92400E",fontSize:12.5}}>Confirm a new immutable policy version. Only “Auto-apply within the maximum” permits automatic dispatch; all other modes retain recommendations for approval.</div>}
+              </div>
+
+              {rulePreviewIndex===0&&(()=>{const previews=importedProducts.map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Preview — no prices changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products evaluated",previews.length-blocked.length],["Need protection",affected.length],["Over maximum",over.length],["Blocked: cost unverified",blocked.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Current","Current margin","Proposed","Increase","Result / source"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.net_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${p.currency} ${v.recommended_price.toFixed(2)}`}</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${(v.increase_pct*100).toFixed(1)}%`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome.replaceAll("_"," ")} · {p.cost_confidence}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>Calculated by the production margin evaluator. Unverified costs are blocked. Exact fees come from the economics attached to the product's latest decision.</p></div>})()}
+
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>How we calculate it</h3><div style={{marginTop:12,fontFamily:MONO,fontSize:12.5,lineHeight:1.9,color:"var(--muted)"}}>Selling price<br/>− verified product cost<br/>− contract commission and VAT on fees<br/>− payment, fixed-order, logistics and promotion charges<br/><strong style={{color:"var(--text)"}}>= contribution kept from this sale</strong></div></div><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>Permanent policy history</h3>{policyVersions.length===0?<p style={{fontSize:13,color:"var(--muted)"}}>The first activated version will appear here.</p>:policyVersions.slice(0,5).map(v=><div key={v.id} style={{padding:"10px 0",borderBottom:"1px solid var(--border)",fontSize:12.5}}><strong>v{v.version} · {Math.round(v.contribution_margin_floor_pct*100)}% floor · {Math.round(v.max_price_increase_pct*100)}% max</strong><div style={{color:"var(--muted)",marginTop:3}}>{v.approval_mode.replaceAll("_"," ")} · {v.activated_by} · {new Date(v.activated_at).toLocaleString()}</div></div>)}</div></div>
+            </div>
+
+            {/* Legacy multi-rule concept retained in source for migration reference, never presented as functional. */}
+            {false && <div data-tour="guardrails" style={{ display:"flex", flexDirection:"column", gap:18 }}>
               <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:16,
                 boxShadow:"var(--shadow)", padding:"20px 22px" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
@@ -3636,7 +3684,7 @@ export function PrizeSkoutDashboard() {
                       </div>)}</div>}
                 </div>
               </div>
-            </div>
+            </div>}
           </section>
         )}
 

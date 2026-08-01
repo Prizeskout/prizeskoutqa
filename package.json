@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "start": "node server.mjs",
     "verify-margin": "tsx --env-file=.env.local scripts/verify-margin.mts",
+    "verify-margin-policy": "tsx scripts/verify-margin-policy.mts",
     "typecheck": "tsc --noEmit --pretty false",
     "load:wedge": "tsx scripts/load-wedge.mts"
   },

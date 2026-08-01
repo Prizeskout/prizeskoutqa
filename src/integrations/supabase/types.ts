@@ -90,6 +90,11 @@ export type Database = {
         id:number;trace_id:string;account_id:string;stage:string;duration_ms:number
         success:boolean;attributes:unknown;created_at:string
       }>
+      ps_margin_policy_versions: MutableTable<{
+        id:string;account_id:string;version:number;contribution_margin_floor_pct:number
+        max_price_increase_pct:number;approval_mode:string;status:string;activated_by:string
+        activated_at:string;superseded_at:string|null
+      }>
       accounts_v2: {
         Row: {
           created_at: string
@@ -3763,6 +3768,11 @@ export type Database = {
           commission_rate: number
           vat_rate: number
           logistics_subsidy: number
+          payment_fee_rate: number
+          fixed_order_fee: number
+          promotion_contribution_rate: number
+          economics_version_id: string | null
+          margin_policy_version: number | null
           margin_floor_pct: number
           net_margin: number
           net_margin_pct: number
@@ -3784,6 +3794,11 @@ export type Database = {
           commission_rate: number
           vat_rate: number
           logistics_subsidy?: number
+          payment_fee_rate?: number
+          fixed_order_fee?: number
+          promotion_contribution_rate?: number
+          economics_version_id?: string | null
+          margin_policy_version?: number | null
           margin_floor_pct: number
           net_margin: number
           net_margin_pct: number
@@ -3805,6 +3820,11 @@ export type Database = {
           commission_rate?: number
           vat_rate?: number
           logistics_subsidy?: number
+          payment_fee_rate?: number
+          fixed_order_fee?: number
+          promotion_contribution_rate?: number
+          economics_version_id?: string | null
+          margin_policy_version?: number | null
           margin_floor_pct?: number
           net_margin?: number
           net_margin_pct?: number
@@ -4103,16 +4123,31 @@ export type Database = {
         Row: {
           account_id: string
           margin_floor_pct: number
+          max_price_increase_pct: number
+          approval_mode: string
+          active_version: number
+          activated_by: string | null
+          activated_at: string
           updated_at: string
         }
         Insert: {
           account_id: string
           margin_floor_pct?: number
+          max_price_increase_pct?: number
+          approval_mode?: string
+          active_version?: number
+          activated_by?: string | null
+          activated_at?: string
           updated_at?: string
         }
         Update: {
           account_id?: string
           margin_floor_pct?: number
+          max_price_increase_pct?: number
+          approval_mode?: string
+          active_version?: number
+          activated_by?: string | null
+          activated_at?: string
           updated_at?: string
         }
         Relationships: []

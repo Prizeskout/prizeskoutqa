@@ -7,6 +7,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { decide as calculateMargin } from "@/server/core/decide-engine";
 
 export type RepricingProduct = {
   ingest_event_id: string;
@@ -27,6 +28,7 @@ export type RepricingProduct = {
   margin_floor_pct: number;
   commission_rate: number;
   cost_confidence: "verified" | "estimated" | "unknown";
+  preview?: { recommended_price:number|null; net_margin_pct:number; floor_breached:boolean; increase_pct:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
 };
 
 function json(data: unknown, status = 200) {
@@ -43,6 +45,9 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         const url = new URL(request.url);
         const merchantId = url.searchParams.get("merchant_id")?.trim();
         const accessCode = url.searchParams.get("access_code")?.trim().toUpperCase();
+        const previewFloor=Number(url.searchParams.get("preview_floor"));
+        const previewMaxIncrease=Number(url.searchParams.get("preview_max_increase"));
+        const wantsPreview=previewFloor>0&&previewFloor<1&&previewMaxIncrease>=0&&previewMaxIncrease<=1;
 
         if (!merchantId || !accessCode) {
           return json({ error: "merchant_id and access_code are required" }, 400);
@@ -64,7 +69,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         // Fetch all decide results for this account
         const { data: decideRows, error: decideErr } = await supabaseAdmin
           .from("ps_decide_results")
-          .select("id, sku, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, floor_breached, decision_action, ingest_event_id, created_at")
+          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, logistics_subsidy, payment_fee_rate, fixed_order_fee, promotion_contribution_rate, floor_breached, decision_action, ingest_event_id, created_at")
           .eq("account_id", accountId)
           .order("created_at", { ascending: false });
 
@@ -103,6 +108,9 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           const rawPayload = evt.raw_payload as Record<string, unknown> | null;
           const costSource = String(rawPayload?.cost_source ?? "unknown");
 
+          const currentPrice=Number(evt.current_retail_price??0);
+          const preview=wantsPreview&&costSource==="platform_catalog"?calculateMargin({region:"SA",baseCost:Number(decide.base_cost),currentRetailPrice:currentPrice,commissionRate:Number(decide.commission_rate),vatRate:Number(decide.vat_rate),logisticsSubsidy:Number(decide.logistics_subsidy),paymentFeeRate:Number(decide.payment_fee_rate),fixedOrderFee:Number(decide.fixed_order_fee),promotionContributionRate:Number(decide.promotion_contribution_rate),marginFloorPct:previewFloor}):null;
+          const previewIncrease=preview?.recommendedPrice&&currentPrice>0?(preview.recommendedPrice-currentPrice)/currentPrice:0;
           products.push({
             ingest_event_id: evt.id,
             decide_result_id: decide.id,
@@ -124,6 +132,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             cost_confidence: costSource === "platform_catalog"
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
+            ...(wantsPreview?{preview:preview?{recommended_price:preview.recommendedPrice,net_margin_pct:preview.netMarginPct,floor_breached:preview.floorBreached,increase_pct:previewIncrease,outcome:!preview.floorBreached?"safe":previewIncrease<=previewMaxIncrease?"within_limit":"over_limit"}:{recommended_price:null,net_margin_pct:Number(decide.net_margin_pct??0),floor_breached:Boolean(decide.floor_breached),increase_pct:0,outcome:"blocked_missing_cost"}}:{}),
           });
         }
 

@@ -6,7 +6,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
-import { getMerchantMarginFloor, setMerchantMarginFloor } from "@/server/core/merchant-pricing-config";
+import { activateMerchantMarginPolicy, getMerchantMarginPolicy, listMerchantMarginPolicyVersions, type ApprovalMode } from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout, type ExpectedPayoutResult } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
 import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-parser";
@@ -101,17 +101,19 @@ export const Route = createFileRoute("/api/channels/connect")({
             // until that's resolved on PipeOps' side. See merchant-pricing-
             // config.ts for what actually enforces this value.
             if (body.action === "set") {
-              const pct = Number(body.margin_floor_pct);
-              if (!(pct > 0 && pct < 1)) {
-                return resp({ error: "margin_floor_pct must be between 0 and 1 (exclusive)." }, 400);
-              }
-              const result = await setMerchantMarginFloor(merchant_id, pct);
+              const result = await activateMerchantMarginPolicy(merchant_id,{
+                marginFloorPct:Number(body.margin_floor_pct),
+                maxPriceIncreasePct:Number(body.max_price_increase_pct),
+                approvalMode:body.approval_mode as ApprovalMode,
+                activatedBy:(body.activated_by||"merchant").slice(0,160),
+              });
               return result.ok
-                ? resp({ ok: true, margin_floor_pct: pct }, 200)
+                ? resp({ ok: true, policy:result.policy }, 200)
                 : resp({ ok: false, error: result.error }, 400);
             }
-            const pct = await getMerchantMarginFloor(merchant_id);
-            return resp({ ok: true, margin_floor_pct: pct }, 200);
+            const policy=await getMerchantMarginPolicy(merchant_id);
+            const versions=await listMerchantMarginPolicyVersions(merchant_id);
+            return resp({ ok: true, policy, versions }, 200);
           }
 
           if (platform === "talabat_expected_payout") {
