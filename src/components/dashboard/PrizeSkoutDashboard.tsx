@@ -682,12 +682,15 @@ type PayoutResultLike = {
 
 function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; currency: string; t: typeof T["en"] }) {
   const [downloading, setDownloading] = useState(false);
-  const handleDownload = async () => {
+  const handleDownload = async (format:"pdf"|"word"="pdf") => {
     if (downloading) return;
     setDownloading(true);
     try {
-      const { exportPayoutCheckPdf } = await import("@/components/dashboard/payout/exportPayoutReportPdf");
-      await exportPayoutCheckPdf(data, currency);
+      if(format==="word"){
+        const {exportPayoutCheckWord}=await import("@/components/dashboard/payout/exportReportsWord");await exportPayoutCheckWord(data,currency);
+      }else{
+        const { exportPayoutCheckPdf } = await import("@/components/dashboard/payout/exportPayoutReportPdf");await exportPayoutCheckPdf(data, currency);
+      }
     } catch (err) {
       console.error("Payout check PDF export failed:", err);
     } finally {
@@ -711,7 +714,7 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
   return (
     <>
       <div style={{ display:"flex", justifyContent:"flex-end" }}>
-        <button type="button" onClick={handleDownload} disabled={downloading}
+        <button type="button" onClick={()=>handleDownload("pdf")} disabled={downloading}
           style={{ cursor: downloading ? "not-allowed" : "pointer", fontFamily:"inherit", fontSize:12.5,
             fontWeight:600, color:"var(--text)", background:"var(--surface)",
             border:"1px solid var(--border)", borderRadius:8, padding:"7px 12px",
@@ -722,8 +725,9 @@ function PayoutResultDetail({ data, currency, t }: { data: PayoutResultLike; cur
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          {downloading ? t.payoutDownloadingPdf : t.payoutDownloadPdf}
+          {downloading ? t.payoutDownloadingPdf : "Download PDF"}
         </button>
+        <button type="button" onClick={()=>handleDownload("word")} disabled={downloading} style={{cursor:downloading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:12.5,fontWeight:700,color:"var(--text)",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"7px 12px"}}>Download Word</button>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:12, animation:"pk-in .3s ease" }}>
@@ -1101,14 +1105,19 @@ export function PrizeSkoutDashboard() {
   };
 
   const [downloadingHistoryPdf, setDownloadingHistoryPdf] = useState(false);
-  const handleDownloadHistoryPdf = async () => {
+  const handleDownloadHistoryPdf = async (format: "pdf" | "word" = "pdf") => {
     if (downloadingHistoryPdf) return;
     setDownloadingHistoryPdf(true);
     try {
-      const { exportPayoutHistoryPdf } = await import("@/components/dashboard/payout/exportPayoutReportPdf");
-      await exportPayoutHistoryPdf(historyPayoutChecks, historyRepricings, currency);
+      if (format === "word") {
+        const { exportPayoutHistoryWord } = await import("@/components/dashboard/payout/exportReportsWord");
+        await exportPayoutHistoryWord(historyPayoutChecks, historyRepricings, currency);
+      } else {
+        const { exportPayoutHistoryPdf } = await import("@/components/dashboard/payout/exportPayoutReportPdf");
+        await exportPayoutHistoryPdf(historyPayoutChecks, historyRepricings, currency);
+      }
     } catch (err) {
-      console.error("Payout history PDF export failed:", err);
+      console.error("Payout history report export failed:", err);
     } finally {
       setDownloadingHistoryPdf(false);
     }
@@ -1441,6 +1450,12 @@ export function PrizeSkoutDashboard() {
     if (!rule) return;
     if (rule.scope !== "global") {
       showToast("This rule remains in Testing until category and event enforcement is connected.");
+      return;
+    }
+    if(!marginPolicyDirty){showToast("These settings are already the active policy.");return;}
+    if(rulePreviewIndex!==index){
+      await previewRule(index);
+      showToast("Review the catalog impact, then continue to activation.");
       return;
     }
     if (ruleConfirmIndex !== index) {
@@ -2115,6 +2130,7 @@ export function PrizeSkoutDashboard() {
   const filteredHistoryAudits=historyPayoutAudits.filter(row=>(!historyQuery||row.documents.some(document=>document.file_name.toLowerCase().includes(historyQuery)))&&(!historyNeedsAttention||row.findings.some(finding=>finding.severity==="critical")));
   const historyAttentionCount=historyRepricings.filter(row=>!["success","confirmed"].includes(row.status)).length+historyPayoutAudits.filter(row=>row.findings.some(finding=>finding.severity==="critical")).length+historyPayoutChecks.filter(row=>!!row.unexplained_charge).length;
   const historyConfirmedCount=historyRepricings.filter(row=>row.status==="success"||row.status==="confirmed").length;
+  const marginPolicyDirty=rules[0].floor!==persistedGlobalFloor||rules[0].maxChangePct!==persistedMaxIncrease||rules[0].approvalMode!==persistedApprovalMode;
 
   const navDefs = [
     { id:"analytics" as Tab, label:t.navA, sub:t.navAs, tip:"Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place." },
@@ -3541,7 +3557,8 @@ export function PrizeSkoutDashboard() {
                   </label>
                 </div>
                 <div style={{marginTop:16,padding:12,borderRadius:9,background:"var(--surface2)",fontSize:12.5,color:"var(--muted)"}}>Current live policy: keep at least <strong style={{color:"var(--text)"}}>{persistedGlobalFloor}%</strong>, never increase a price by more than <strong style={{color:"var(--text)"}}>{persistedMaxIncrease}%</strong>, mode <strong style={{color:"var(--text)"}}>{persistedApprovalMode.replaceAll("_"," ")}</strong>. Draft edits do nothing until activated.</div>
-                <div style={{display:"flex",justifyContent:"flex-end",gap:9,marginTop:16,flexWrap:"wrap"}}><button onClick={()=>void previewRule(0)} style={{padding:"10px 14px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface)",fontWeight:800,cursor:"pointer"}}>Preview on my catalog</button><button disabled={rulePreviewIndex!==0||ruleSaving} onClick={()=>void activateRule(0)} style={{padding:"10px 14px",border:0,borderRadius:8,background:rulePreviewIndex===0?OG:"#CBD5E1",color:"white",fontWeight:800,cursor:rulePreviewIndex===0?"pointer":"not-allowed"}}>{ruleConfirmIndex===0?(ruleSaving?"Activating…":"Confirm activation"):"Activate this policy"}</button></div>
+                <div style={{display:"flex",justifyContent:"flex-end",gap:9,marginTop:16,flexWrap:"wrap"}}><button onClick={()=>void previewRule(0)} style={{padding:"10px 14px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface)",fontWeight:800,cursor:"pointer"}}>Preview on my catalog</button><button disabled={ruleSaving||!marginPolicyDirty} onClick={()=>void activateRule(0)} style={{padding:"10px 14px",border:0,borderRadius:8,background:marginPolicyDirty?OG:"#CBD5E1",color:"white",fontWeight:800,cursor:marginPolicyDirty&&!ruleSaving?"pointer":"not-allowed"}}>{!marginPolicyDirty?"Policy already active":ruleConfirmIndex===0?(ruleSaving?"Activating…":"Confirm activation"):rulePreviewIndex===0?"Activate this policy":"Review & activate"}</button></div>
+                <div style={{textAlign:"right",fontSize:11.5,color:"var(--muted)",marginTop:7}}>{marginPolicyDirty?(rulePreviewIndex===0?"Preview complete. Continue to confirmation when ready.":"We’ll preview the catalog impact before asking you to confirm."):"Change any setting to create a new policy version."}</div>
                 {ruleConfirmIndex===0&&<div style={{marginTop:12,padding:12,borderRadius:8,background:"#FEF3C7",color:"#92400E",fontSize:12.5}}>Confirm a new immutable policy version. Only “Auto-apply within the maximum” permits automatic dispatch; all other modes retain recommendations for approval.</div>}
               </div>
 
@@ -4311,7 +4328,7 @@ export function PrizeSkoutDashboard() {
         )}
       </main>
 
-      {showHistoryExport&&<div onClick={()=>setShowHistoryExport(false)} style={{position:"fixed",inset:0,zIndex:70,background:"rgba(9,12,18,.45)",display:"grid",placeItems:"center",padding:20}}><div onClick={event=>event.stopPropagation()} style={{width:"min(480px,100%)",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22,boxShadow:"var(--shadow-lg)"}}><h3 style={{margin:0}}>Export Activity Report</h3><p style={{fontSize:13,color:"var(--muted)",lineHeight:1.6}}>The PDF includes all payout checks and price changes currently retained for this merchant. Values remain in each record's stored currency; the export does not convert historical transactions.</p><div style={{display:"grid",gap:8,fontSize:13,margin:"16px 0"}}>{[`${historyPayoutChecks.length} payout checks`,`${historyRepricings.length} price changes`,`${historyPayoutAudits.length} saved investigations (listed in the application separately)`].map(label=><div key={label} style={{padding:9,border:"1px solid var(--border)",borderRadius:8}}>✓ {label}</div>)}</div><div style={{display:"flex",justifyContent:"flex-end",gap:8}}><button onClick={()=>setShowHistoryExport(false)} style={{border:"1px solid var(--border)",borderRadius:8,padding:"9px 12px",background:"var(--surface)",fontWeight:700,cursor:"pointer"}}>Cancel</button><button onClick={()=>{setShowHistoryExport(false);void handleDownloadHistoryPdf()}} style={{border:0,borderRadius:8,padding:"9px 12px",background:OG,color:"white",fontWeight:800,cursor:"pointer"}}>Download PDF</button></div></div></div>}
+      {showHistoryExport&&<div onClick={()=>setShowHistoryExport(false)} style={{position:"fixed",inset:0,zIndex:70,background:"rgba(9,12,18,.45)",display:"grid",placeItems:"center",padding:20}}><div onClick={event=>event.stopPropagation()} style={{width:"min(500px,100%)",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22,boxShadow:"var(--shadow-lg)"}}><h3 style={{margin:0}}>Export Activity Report</h3><p style={{fontSize:13,color:"var(--muted)",lineHeight:1.6}}>Choose a print-ready PDF or an editable Word document. Both include all retained payout checks and price changes. Values stay in their stored currency and are not converted.</p><div style={{display:"grid",gap:8,fontSize:13,margin:"16px 0"}}>{[`${historyPayoutChecks.length} payout checks`,`${historyRepricings.length} price changes`,`${historyPayoutAudits.length} saved investigations (listed separately in the application)`].map(label=><div key={label} style={{padding:9,border:"1px solid var(--border)",borderRadius:8}}>✓ {label}</div>)}</div><div style={{display:"flex",justifyContent:"flex-end",gap:8,flexWrap:"wrap"}}><button onClick={()=>setShowHistoryExport(false)} style={{border:"1px solid var(--border)",borderRadius:8,padding:"9px 12px",background:"var(--surface)",fontWeight:700,cursor:"pointer"}}>Cancel</button><button onClick={()=>{setShowHistoryExport(false);void handleDownloadHistoryPdf("word")}} style={{border:"1px solid var(--border)",borderRadius:8,padding:"9px 12px",background:"var(--surface)",fontWeight:800,cursor:"pointer"}}>Download Word</button><button onClick={()=>{setShowHistoryExport(false);void handleDownloadHistoryPdf("pdf")}} style={{border:0,borderRadius:8,padding:"9px 12px",background:OG,color:"white",fontWeight:800,cursor:"pointer"}}>Download PDF</button></div></div></div>}
 
       {/* DISPUTE MODAL */}
       {md != null && (

@@ -3,6 +3,7 @@ import { Eye, Activity } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { exportPatternsPdf } from "./exportPatternsPdf";
+import { exportPatternsWord } from "@/components/dashboard/exportDashboardWord";
 import { useBranding, accentRgba } from "@/hooks/useBranding";
 import type { BehaviorPattern } from "@/lib/competitors-data";
 
@@ -60,7 +61,7 @@ export function BehaviorPatterns({ patterns }: { patterns: BehaviorPattern[] }) 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <ExportPdfButton onExport={() => exportPatternsPdf(mapped)} />
+        <ExportPdfButton onExport={() => exportPatternsPdf(mapped)} onExportWord={()=>exportPatternsWord(mapped)} />
       </div>
       <ContextBanner count={mapped.length} />
       {mapped.map((p) => (

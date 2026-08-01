@@ -11,6 +11,7 @@ import {
   type InsightWindow,
 } from "@/server/ai-insights.functions";
 import { exportInsightsPdf } from "./exportInsightsPdf";
+import { exportInsightsWord } from "./exportDashboardWord";
 
 const WINDOWS: { value: InsightWindow; label: string }[] = [
   { value: "24h", label: "Last 24h" },
@@ -23,7 +24,7 @@ export function ExportInsightsButton() {
   const [busy, setBusy] = useState(false);
   const fetchOne = useServerFn(getInsight);
 
-  const handleExport = async (w: InsightWindow) => {
+  const handleExport = async (w: InsightWindow, format: "pdf" | "word") => {
     setOpen(false);
     setBusy(true);
     try {
@@ -31,13 +32,15 @@ export function ExportInsightsButton() {
         fetchOne({ data: { page: "pricing", window: w } }),
         fetchOne({ data: { page: "competitors", window: w } }),
       ]);
-      await exportInsightsPdf([
+      const sections = [
         { title: "Pricing", window: w, insight: pricing.insight },
         { title: "Competitors", window: w, insight: competitors.insight },
-      ]);
-      toast.success("AI insights PDF generated");
+      ];
+      if (format === "word") await exportInsightsWord(sections);
+      else await exportInsightsPdf(sections);
+      toast.success(`AI insights ${format === "word" ? "Word document" : "PDF"} generated`);
     } catch (err) {
-      let msg = "Failed to export PDF";
+      let msg = `Failed to export ${format === "word" ? "Word document" : "PDF"}`;
       if (err instanceof Response) {
         try { msg = (await err.text()) || `Export failed (${err.status})`; }
         catch { msg = `Export failed (${err.status})`; }
@@ -114,13 +117,13 @@ export function ExportInsightsButton() {
                 padding: "6px 10px 4px",
               }}
             >
-              Window
+              Window and format
             </div>
             {WINDOWS.map((w) => (
+              <div key={w.value}>
               <button
-                key={w.value}
                 type="button"
-                onClick={() => handleExport(w.value)}
+                onClick={() => handleExport(w.value, "pdf")}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -146,6 +149,8 @@ export function ExportInsightsButton() {
                 <Download size={12} color="#6B6B6B" />
                 {w.label}
               </button>
+              <button type="button" onClick={() => handleExport(w.value, "word")} style={{display:"block",width:"100%",padding:"6px 10px",border:"none",background:"transparent",color:"#6B6B6B",fontSize:11,textAlign:"start",cursor:"pointer"}}>Export {w.label} as Word</button>
+              </div>
             ))}
           </div>
         </>

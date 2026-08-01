@@ -44,21 +44,21 @@ export async function exportInsightsPdf(sections: Section[]) {
   let y = await drawBrandedHeader(
     doc,
     theme,
-    "AI Insights Report",
+    "Pricing & Market Review",
     `Pricing & Competitors  |  ${today}`,
   );
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(...INK);
-  doc.text("AI-generated reads on this week's data", MARGIN_X, y);
+  doc.text("Recorded findings and required review actions", MARGIN_X, y);
   y += 6;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...MUTED);
   const intro =
-    "Each section is a snapshot of one dashboard, summarized by your AI analyst. Every bullet and action references the specific records (products, rules, competitor moves) it was derived from - listed in the Sources block at the end of the section.";
+    "Each section records findings derived from the selected pricing and competitor records. Evidence reference numbers link every material observation and action to the source register. Analytical assistance was used; conclusions remain subject to merchant review.";
   const introLines = doc.splitTextToSize(intro, CONTENT_W);
   doc.text(introLines, MARGIN_X, y);
   y += introLines.length * 4.6 + 8;
@@ -69,7 +69,7 @@ export async function exportInsightsPdf(sections: Section[]) {
   }
 
   drawBrandedFooters(doc, theme);
-  doc.save(`${slugifyBrand(branding.brandName)}-ai-insights.pdf`);
+  doc.save(`${slugifyBrand(branding.brandName)}-pricing-market-review.pdf`);
 }
 
 function drawSection(
@@ -154,7 +154,7 @@ function drawSection(
 
   // Actions
   if (section.insight.actions.length > 0) {
-    y = drawLabel(doc, "RECOMMENDED ACTIONS", MARGIN_X, y);
+    y = drawLabel(doc, "REQUIRED REVIEW ACTIONS", MARGIN_X, y);
     for (const a of section.insight.actions) {
       const titleLine = a.cites.length
         ? `${a.title}  [${a.cites.join(", ")}]`

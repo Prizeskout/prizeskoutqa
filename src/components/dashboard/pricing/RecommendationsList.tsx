@@ -6,6 +6,7 @@ import { RecommendationCard, type Recommendation, type PricingDecision } from ".
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { exportPricingPdf } from "./exportPricingPdf";
+import { exportPricingWord } from "@/components/dashboard/exportDashboardWord";
 import { recomputePricing } from "@/server/pricing-engine.functions";
 import type { PricingRecommendation } from "@/lib/pricing-data";
 
@@ -127,7 +128,7 @@ export function RecommendationsList({
       )}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
         <RefreshButton onClick={handleRefresh} loading={refreshing} />
-        <ExportPdfButton onExport={() => exportPricingPdf(cards)} />
+        <ExportPdfButton onExport={() => exportPricingPdf(cards)} onExportWord={()=>exportPricingWord(cards)} />
       </div>
       {visible.map((rec) => (
         <RecommendationCard

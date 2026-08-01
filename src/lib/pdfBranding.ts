@@ -4,6 +4,7 @@
 
 import type { jsPDF } from "jspdf";
 import { getBranding, hexToRgb, type Branding } from "@/lib/brandingStore";
+import { getReportIdentity, type ReportIdentity } from "@/lib/reportIdentity";
 
 export type RGB = readonly [number, number, number];
 
@@ -38,6 +39,7 @@ export function tint(rgb: RGB, amount: number): RGB {
 
 export type BrandTheme = {
   branding: Branding;
+  identity: ReportIdentity;
   accent: RGB;
   /** Very pale fill of the accent color, for soft callout backgrounds. */
   accentTint: RGB;
@@ -47,7 +49,7 @@ export type BrandTheme = {
 export function resolveBrandTheme(): BrandTheme {
   const branding = getBranding();
   const accent: RGB = hexToRgb(branding.accentColor) ?? DEFAULT_ACCENT;
-  return { branding, accent, accentTint: tint(accent, 0.92) };
+  return { branding, identity: getReportIdentity(), accent, accentTint: tint(accent, 0.92) };
 }
 
 /**
@@ -94,7 +96,7 @@ export async function drawBrandedHeader(
   title: string,
   subtitle?: string,
 ): Promise<number> {
-  const { branding, accent } = theme;
+  const { branding, accent, identity } = theme;
 
   // Dark header band
   doc.setFillColor(...INK);
@@ -142,8 +144,12 @@ export async function drawBrandedHeader(
     month: "long",
     day: "numeric",
   });
-  const sub = subtitle ?? `Intelligence report  |  ${today}`;
-  doc.text(sub, MARGIN_X, 33);
+  const sub = subtitle ?? `Operational record | ${today}`;
+  const subtitleLine = doc.splitTextToSize(sub, 102)[0] ?? sub;
+  doc.text(subtitleLine, MARGIN_X, 33);
+  doc.setFontSize(7);
+  doc.setTextColor(160, 160, 160);
+  doc.text(`REPORT ${identity.reportId}`, PAGE_W - MARGIN_X, 33, { align: "right" });
 
   return HEADER_H + 12; // first content y
 }
@@ -151,7 +157,7 @@ export async function drawBrandedHeader(
 /** Draw the standard branded footer on every page. Call AFTER all content. */
 export function drawBrandedFooters(doc: jsPDF, theme: BrandTheme): void {
   const total = doc.getNumberOfPages();
-  const footerLeft = `${theme.branding.brandName}  -  Confidential intelligence`;
+  const footerLeft = `${theme.branding.brandName} | Confidential | ${theme.identity.reportId}`;
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
     doc.setDrawColor(...BORDER);
