@@ -1364,7 +1364,7 @@ export function PrizeSkoutDashboard() {
             method:"POST", headers:{ "Content-Type":"application/json" },
             body: JSON.stringify({ merchant_id:mid, access_code:ac, platform:"copilot_operation", action:"sync_catalog", source_platform:platform }),
           });
-          const data = await res.json() as { ok?:boolean; error?:string; result?:{items_found:number;items_stored:number;items_below_floor:number;errors:number} };
+          const data = await res.json() as { ok?:boolean; error?:string; result?:{items_found:number;items_stored:number;items_below_floor:number;items_requiring_cost?:number;errors:number} };
           return { platform, ...data };
         } catch {
           return { platform, ok:false as const, error:"Network error" };
@@ -1375,7 +1375,8 @@ export function PrizeSkoutDashboard() {
         showToast("No connected store could be synced — connect one in Settings → Channels first.");
       } else {
         const totalStored = succeeded.reduce((sum,r)=>sum+(r.result?.items_stored ?? 0),0);
-        showToast(`Catalogue synced — ${totalStored} product${totalStored===1?"":"s"} from ${succeeded.map(r=>r.platform).join(", ")}.`);
+        const costRequired=succeeded.reduce((sum,r)=>sum+(r.result?.items_requiring_cost??0),0);
+        showToast(`Catalogue synced — ${totalStored} product${totalStored===1?"":"s"} from ${succeeded.map(r=>r.platform).join(", ")}.${costRequired?` ${costRequired} require${costRequired===1?"s":""} verified cost before margin recommendations.`:""}`);
         const params = new URLSearchParams({ merchant_id: mid, access_code: ac });
         fetch(`/api/repricing/catalog?${params}`)
           .then(r => r.ok ? r.json() : null)

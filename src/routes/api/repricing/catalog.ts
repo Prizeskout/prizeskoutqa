@@ -11,7 +11,7 @@ import { decide as calculateMargin } from "@/server/core/decide-engine";
 
 export type RepricingProduct = {
   ingest_event_id: string;
-  decide_result_id: string;
+  decide_result_id: string | null;
   sku: string;
   name_en: string;
   name_ar: string;
@@ -19,7 +19,7 @@ export type RepricingProduct = {
   item_id: string;
   current_price: number;
   recommended_price: number;
-  net_margin_pct: number;
+  net_margin_pct: number | null;
   floor_breached: boolean;
   decision_action: string;
   currency: string;
@@ -66,10 +66,11 @@ export const Route = createFileRoute("/api/repricing/catalog")({
 
         const accountId = merchantId;
 
-        // Fetch all decide results for this account
+        // Fetch decisions using the baseline columns so a web deploy remains
+        // readable while a newly-added migration is still rolling out.
         const { data: decideRows, error: decideErr } = await supabaseAdmin
           .from("ps_decide_results")
-          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, logistics_subsidy, payment_fee_rate, fixed_order_fee, promotion_contribution_rate, floor_breached, decision_action, ingest_event_id, created_at")
+          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, logistics_subsidy, floor_breached, decision_action, ingest_event_id, created_at")
           .eq("account_id", accountId)
           .order("created_at", { ascending: false });
 
@@ -77,62 +78,55 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           return json({ error: "Failed to load recommendations" }, 500);
         }
 
-        if (!decideRows?.length) {
-          return json({ products: [] });
-        }
-
-        // Collect all ingest_event_ids (dedup by sku, take latest per sku first)
-        const seenSkus = new Set<string>();
-        const latestByIngestId = new Map<string, typeof decideRows[0]>();
-        for (const row of decideRows) {
-          if (!row.sku || seenSkus.has(row.sku)) continue;
-          seenSkus.add(row.sku);
-          latestByIngestId.set(row.ingest_event_id, row);
-        }
-
-        const ingestIds = Array.from(latestByIngestId.keys());
-
-        // Fetch the corresponding ingest events
-        const { data: ingestRows } = await supabaseAdmin
+        // The catalog is the source of truth for what was synced. A product
+        // without a decision (usually because cost is missing) must still be
+        // visible so the merchant can fix it.
+        const { data: ingestRows, error:ingestError } = await supabaseAdmin
           .from("ps_ingest_events")
           .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, raw_payload")
-          .in("id", ingestIds)
-          .eq("account_id", accountId);
+          .eq("account_id", accountId)
+          .order("created_at",{ascending:false});
+        if(ingestError)return json({error:"Failed to load synced catalog"},500);
 
-        const eventMap = new Map((ingestRows ?? []).map(e => [e.id, e]));
+        const decisionByEvent=new Map<string,(typeof decideRows)[number]>();
+        for(const row of decideRows??[])if(!decisionByEvent.has(row.ingest_event_id))decisionByEvent.set(row.ingest_event_id,row);
+        const seenProducts=new Set<string>();
 
         const products: RepricingProduct[] = [];
-        for (const [ingestId, decide] of latestByIngestId) {
-          const evt = eventMap.get(ingestId);
-          if (!evt || !evt.item_id) continue;
+        for (const evt of ingestRows??[]) {
+          if(!evt.item_id)continue;
+          const productKey=`${evt.source_platform}:${evt.item_id}`;
+          if(seenProducts.has(productKey))continue;
+          seenProducts.add(productKey);
+          const decision=decisionByEvent.get(evt.id);
           const rawPayload = evt.raw_payload as Record<string, unknown> | null;
           const costSource = String(rawPayload?.cost_source ?? "unknown");
 
           const currentPrice=Number(evt.current_retail_price??0);
-          const preview=wantsPreview&&costSource==="platform_catalog"?calculateMargin({region:"SA",baseCost:Number(decide.base_cost),currentRetailPrice:currentPrice,commissionRate:Number(decide.commission_rate),vatRate:Number(decide.vat_rate),logisticsSubsidy:Number(decide.logistics_subsidy),paymentFeeRate:Number(decide.payment_fee_rate),fixedOrderFee:Number(decide.fixed_order_fee),promotionContributionRate:Number(decide.promotion_contribution_rate),marginFloorPct:previewFloor}):null;
+          const preview=wantsPreview&&costSource==="platform_catalog"&&decision?calculateMargin({region:"SA",baseCost:Number(decision.base_cost),currentRetailPrice:currentPrice,commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:previewFloor}):null;
           const previewIncrease=preview?.recommendedPrice&&currentPrice>0?(preview.recommendedPrice-currentPrice)/currentPrice:0;
           products.push({
             ingest_event_id: evt.id,
-            decide_result_id: decide.id,
-            sku: decide.sku ?? evt.sku ?? "",
+            decide_result_id: decision?.id??null,
+            sku: decision?.sku ?? evt.sku ?? "",
             name_en: evt.item_name_en ?? "",
             name_ar: (evt as unknown as Record<string, unknown>).item_name_ar as string ?? "",
             source_platform: evt.source_platform ?? "",
             item_id: evt.item_id,
             current_price: Number(evt.current_retail_price ?? 0),
-            recommended_price: Number(decide.recommended_price ?? 0),
-            net_margin_pct: Number(decide.net_margin_pct ?? 0),
-            floor_breached: Boolean(decide.floor_breached),
-            decision_action: decide.decision_action ?? "hold",
+            recommended_price: Number(decision?.recommended_price ?? currentPrice),
+            net_margin_pct: decision?Number(decision.net_margin_pct):null,
+            floor_breached: Boolean(decision?.floor_breached),
+            decision_action: decision?.decision_action ?? "blocked_missing_cost",
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
             repriced_at: evt.status === "repriced" ? new Date().toISOString() : null,
-            margin_floor_pct: Number(decide.margin_floor_pct ?? 0.18),
-            commission_rate: Number(decide.commission_rate ?? 0),
+            margin_floor_pct: Number(decision?.margin_floor_pct ?? 0.18),
+            commission_rate: Number(decision?.commission_rate ?? 0),
             cost_confidence: costSource === "platform_catalog"
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
-            ...(wantsPreview?{preview:preview?{recommended_price:preview.recommendedPrice,net_margin_pct:preview.netMarginPct,floor_breached:preview.floorBreached,increase_pct:previewIncrease,outcome:!preview.floorBreached?"safe":previewIncrease<=previewMaxIncrease?"within_limit":"over_limit"}:{recommended_price:null,net_margin_pct:Number(decide.net_margin_pct??0),floor_breached:Boolean(decide.floor_breached),increase_pct:0,outcome:"blocked_missing_cost"}}:{}),
+            ...(wantsPreview?{preview:preview?{recommended_price:preview.recommendedPrice,net_margin_pct:preview.netMarginPct,floor_breached:preview.floorBreached,increase_pct:previewIncrease,outcome:!preview.floorBreached?"safe":previewIncrease<=previewMaxIncrease?"within_limit":"over_limit"}:{recommended_price:null,net_margin_pct:Number(decision?.net_margin_pct??0),floor_breached:Boolean(decision?.floor_breached),increase_pct:0,outcome:"blocked_missing_cost"}}:{}),
           });
         }
 

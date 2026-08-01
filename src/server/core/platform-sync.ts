@@ -288,6 +288,7 @@ export type SyncCatalogResult = {
   items_found: number;
   items_stored: number;
   items_below_floor: number;
+  items_requiring_cost: number;
   errors: number;
 };
 
@@ -315,6 +316,7 @@ export async function syncPlatformCatalog(params: {
   let stored = 0;
   let belowFloor = 0;
   let errors = 0;
+  let costRequired = 0;
 
   for (const product of products) {
     if (!product.sku || product.price <= 0) continue;
@@ -350,7 +352,7 @@ export async function syncPlatformCatalog(params: {
         .eq("id", existing.id);
       if (product.cost == null) {
         await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost"}}).eq("id",existing.id);
-        errors++;
+        stored++; costRequired++;
         continue;
       }
       const baseCost = product.cost;
@@ -423,7 +425,7 @@ export async function syncPlatformCatalog(params: {
     if (insertErr || !ingestRow) { errors++; continue; }
     if (product.cost == null) {
       await supabaseAdmin.from("ps_ingest_events").update({status:"failed"}).eq("id",ingestRow.id);
-      errors++;
+      stored++; costRequired++;
       continue;
     }
 
@@ -479,6 +481,7 @@ export async function syncPlatformCatalog(params: {
     items_found: products.length,
     items_stored: stored,
     items_below_floor: belowFloor,
+    items_requiring_cost: costRequired,
     errors,
   };
 }
