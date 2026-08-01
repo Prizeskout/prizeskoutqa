@@ -14,6 +14,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { writeAuditLog, dispatchSummary } from "./govern";
 import { CIRCUIT_OPEN_BACKOFF_SECONDS } from "./decide-engine";
@@ -56,6 +57,7 @@ export type ChannelDispatchResult = {
   duration_ms?: number;
   error?: string;
   dispatch_id?: string;
+  upstream_job_id?: string;
 };
 
 export type DispatchToAggregatorsResult = {
@@ -154,7 +156,7 @@ async function callAggregatorApi(
   locationId: string | undefined,
   newPrice: number,
   currency: string,
-): Promise<{ success: boolean; httpStatus: number; message?: string; durationMs: number }> {
+): Promise<{ success: boolean; httpStatus: number; message?: string; durationMs: number; upstreamJobId?:string }> {
   const start = Date.now();
 
   // Keeta doesn't fit the shared fetch() pattern below — different base URL,
@@ -252,6 +254,7 @@ async function callAggregatorApi(
       httpStatus: result.httpStatus,
       message: result.message,
       durationMs: result.durationMs,
+      upstreamJobId: typeof (result.data as Record<string,unknown>|undefined)?.job_id === "string" ? String((result.data as Record<string,unknown>).job_id) : undefined,
     };
   }
 
@@ -413,7 +416,7 @@ export async function dispatchToAggregators(
           old_price: oldPrice,
           new_price: newPrice,
           currency,
-          audit_snapshot: auditSnapshot,
+          audit_snapshot: auditSnapshot as Json,
           status: "circuit_open",
           upstream_message: "ERR_AGGREGATOR_CIRCUIT_OPEN",
           duration_ms: 0,
@@ -481,7 +484,7 @@ export async function dispatchToAggregators(
         old_price: oldPrice,
         new_price: newPrice,
         currency,
-        audit_snapshot: auditSnapshot,
+        audit_snapshot: auditSnapshot as Json,
         status: dispatchStatus,
         http_status: callResult.httpStatus,
         upstream_message: callResult.message ?? null,
@@ -536,6 +539,7 @@ export async function dispatchToAggregators(
       status: dispatchStatus,
       http_status: callResult.httpStatus,
       duration_ms: callResult.durationMs,
+      ...(callResult.upstreamJobId ? {upstream_job_id:callResult.upstreamJobId} : {}),
       ...(callResult.message ? { error: callResult.message } : {}),
       dispatch_id: dispatchRow?.id,
     });

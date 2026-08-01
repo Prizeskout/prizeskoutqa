@@ -24,6 +24,9 @@ export type RepricingProduct = {
   currency: string;
   status: string;
   repriced_at: string | null;
+  margin_floor_pct: number;
+  commission_rate: number;
+  cost_confidence: "verified" | "estimated" | "unknown";
 };
 
 function json(data: unknown, status = 200) {
@@ -61,7 +64,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         // Fetch all decide results for this account
         const { data: decideRows, error: decideErr } = await supabaseAdmin
           .from("ps_decide_results")
-          .select("id, sku, recommended_price, net_margin_pct, floor_breached, decision_action, ingest_event_id, created_at")
+          .select("id, sku, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, floor_breached, decision_action, ingest_event_id, created_at")
           .eq("account_id", accountId)
           .order("created_at", { ascending: false });
 
@@ -87,7 +90,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         // Fetch the corresponding ingest events
         const { data: ingestRows } = await supabaseAdmin
           .from("ps_ingest_events")
-          .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status")
+          .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, raw_payload")
           .in("id", ingestIds)
           .eq("account_id", accountId);
 
@@ -97,6 +100,8 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         for (const [ingestId, decide] of latestByIngestId) {
           const evt = eventMap.get(ingestId);
           if (!evt || !evt.item_id) continue;
+          const rawPayload = evt.raw_payload as Record<string, unknown> | null;
+          const costSource = String(rawPayload?.cost_source ?? "unknown");
 
           products.push({
             ingest_event_id: evt.id,
@@ -114,6 +119,11 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
             repriced_at: evt.status === "repriced" ? new Date().toISOString() : null,
+            margin_floor_pct: Number(decide.margin_floor_pct ?? 0.18),
+            commission_rate: Number(decide.commission_rate ?? 0),
+            cost_confidence: costSource === "platform_catalog"
+              ? "verified"
+              : costSource.startsWith("estimated_") ? "estimated" : "unknown",
           });
         }
 

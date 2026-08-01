@@ -2,7 +2,8 @@
 // merchant-owned BYOK credentials stored in ps_merchant_channels.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { talabatExchangeToken, TALABAT_BASE, JAHEZ_BASE } from "./byok-connect";
+import { JAHEZ_BASE } from "./byok-connect";
+import { exchangeTalabatToken, TALABAT_BASE } from "./talabat-client";
 
 type PushResult = {
   ok: boolean;
@@ -43,25 +44,24 @@ async function getTalabatToken(channel: {
 
   if (!channel.manager_token || !channel.bearer_token) return null;
 
-  const result = await talabatExchangeToken(channel.manager_token, channel.bearer_token);
-  if (!result) return null;
+  const result = await exchangeTalabatToken(channel.manager_token, channel.bearer_token);
+  if (!result.ok || !result.data?.access_token) return null;
 
   // Update cached token in DB (fire-and-forget)
-  const expiresAt = new Date(Date.now() + result.expiresIn * 1000).toISOString();
-  supabaseAdmin
+  const expiresAt = new Date(Date.now() + result.data.expires_in * 1000).toISOString();
+  await supabaseAdmin
     .from("ps_merchant_channels")
     .update({
       metadata: {
         ...(meta ?? {}),
-        access_token: result.token,
+        access_token: result.data.access_token,
         access_token_expires_at: expiresAt,
       },
     })
     .eq("account_id", meta?.vendor_id ?? "")
-    .then(() => {})
-    .catch(() => {});
+    .then(() => {});
 
-  return result.token;
+  return result.data.access_token;
 }
 
 export async function pushTalabatPrice(
@@ -76,7 +76,10 @@ export async function pushTalabatPrice(
   const vendorId = meta?.vendor_id;
   if (!chainId || !vendorId) return { ok: false, platform: "talabat", message: "Vendor/chain IDs missing" };
 
-  const token = await getTalabatToken(channel);
+  const token = await getTalabatToken({
+    ...channel,
+    metadata: channel.metadata as Record<string, unknown> | null,
+  });
   if (!token) return { ok: false, platform: "talabat", message: "Token exchange failed" };
 
   const res = await fetch(

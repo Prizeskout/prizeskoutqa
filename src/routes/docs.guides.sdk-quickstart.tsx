@@ -142,7 +142,7 @@ function SdkQuickstartPage() {
             body={
               <>
                 Head to{" "}
-                <Link to="/dashboard/api-keys" style={{ color: "#EA580C", fontWeight: 600 }}>
+                <Link to="/api-reference" style={{ color: "#EA580C", fontWeight: 600 }}>
                   API Keys
                 </Link>{" "}
                 in the dashboard and click <strong>Create test key</strong>. Test-mode keys never
@@ -195,7 +195,7 @@ function SdkQuickstartPage() {
             body={
               <>
                 Register a webhook from{" "}
-                <Link to="/dashboard/webhooks" style={{ color: "#EA580C", fontWeight: 600 }}>
+                <Link to="/api-reference" style={{ color: "#EA580C", fontWeight: 600 }}>
                   Webhooks
                 </Link>
                 , subscribe to <code>price.changed</code> and{" "}
@@ -230,7 +230,7 @@ function SdkQuickstartPage() {
               </div>
             </div>
             <Link
-              to="/dashboard/api-explorer"
+              to="/api-reference"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

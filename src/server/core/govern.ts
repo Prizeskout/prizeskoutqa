@@ -8,6 +8,7 @@
 
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 
 // ---------------------------------------------------------------------------
 // Localisation maps
@@ -86,7 +87,7 @@ export async function writeAuditLog(params: WriteAuditParams): Promise<string> {
     data_route: params.dataRoute ?? params.region,
     pdpl_compliant: params.pdplCompliant ?? true,
     payload_hash: payloadHash,
-    payload_snapshot: params.payload,
+    payload_snapshot: params.payload as Json,
   });
 
   return traceId;

@@ -2,13 +2,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { RecommendationCard, type Recommendation } from "./RecommendationCard";
+import { RecommendationCard, type Recommendation, type PricingDecision } from "./RecommendationCard";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { exportPricingPdf } from "./exportPricingPdf";
 import { recomputePricing } from "@/server/pricing-engine.functions";
 import type { PricingRecommendation } from "@/lib/pricing-data";
-import type { PricingDecision } from "@/routes/dashboard.pricing";
 
 function toCardRecommendation(r: PricingRecommendation): Recommendation {
   return {

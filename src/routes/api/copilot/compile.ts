@@ -81,7 +81,7 @@ function normaliseCompiledRule(prompt: string, modelRule: Record<string, unknown
   const maxChangeIntent = /\b(max(?:imum)?|limit|no more than)\b.*\b(change|increase|decrease)\b/.test(text);
   const marginIntent = /\b(margin|floor)\b/.test(text);
 
-  const rule = { ...modelRule, channels, latency_budget_ms: 1850 };
+  const rule: Record<string, unknown> = { ...modelRule, channels, latency_budget_ms: 1850 };
   if (approvalIntent) {
     return {
       ...rule,

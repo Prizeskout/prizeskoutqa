@@ -21,6 +21,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
@@ -195,7 +196,7 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
       current_retail_price: p.price,
       currency: p.currency,
       vat_rate: 0,
-      raw_payload: p.rawPayload,
+      raw_payload: p.rawPayload as Json,
       status: "received",
     })
     .select("id")

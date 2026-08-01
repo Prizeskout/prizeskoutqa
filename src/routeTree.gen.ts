@@ -81,6 +81,8 @@ import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/public/hooks/group-expire'
 import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/public/hooks/flash-start'
 import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
+import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/public/hooks/dispatch-queue'
+import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
@@ -452,6 +454,18 @@ const ApiPublicHooksFlashEndRoute = ApiPublicHooksFlashEndRouteImport.update({
   path: '/api/public/hooks/flash-end',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksDispatchQueueRoute =
+  ApiPublicHooksDispatchQueueRouteImport.update({
+    id: '/api/public/hooks/dispatch-queue',
+    path: '/api/public/hooks/dispatch-queue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksDispatchConfirmationRoute =
+  ApiPublicHooksDispatchConfirmationRouteImport.update({
+    id: '/api/public/hooks/dispatch-confirmation',
+    path: '/api/public/hooks/dispatch-confirmation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -541,6 +555,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
+  '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -616,6 +632,8 @@ export interface FileRoutesByTo {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
+  '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -695,6 +713,8 @@ export interface FileRoutesById {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
+  '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -775,6 +795,8 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/dispatch-confirmation'
+    | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -850,6 +872,8 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/dispatch-confirmation'
+    | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -928,6 +952,8 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/dispatch-confirmation'
+    | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -981,6 +1007,8 @@ export interface RootRouteChildren {
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
+  ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
+  ApiPublicHooksDispatchQueueRoute: typeof ApiPublicHooksDispatchQueueRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
   ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
@@ -1499,6 +1527,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFlashEndRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/dispatch-queue': {
+      id: '/api/public/hooks/dispatch-queue'
+      path: '/api/public/hooks/dispatch-queue'
+      fullPath: '/api/public/hooks/dispatch-queue'
+      preLoaderRoute: typeof ApiPublicHooksDispatchQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/dispatch-confirmation': {
+      id: '/api/public/hooks/dispatch-confirmation'
+      path: '/api/public/hooks/dispatch-confirmation'
+      fullPath: '/api/public/hooks/dispatch-confirmation'
+      preLoaderRoute: typeof ApiPublicHooksDispatchConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid/callback': {
       id: '/api/auth/zid/callback'
       path: '/callback'
@@ -1699,6 +1741,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
+  ApiPublicHooksDispatchConfirmationRoute:
+    ApiPublicHooksDispatchConfirmationRoute,
+  ApiPublicHooksDispatchQueueRoute: ApiPublicHooksDispatchQueueRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
   ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,

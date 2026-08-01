@@ -159,7 +159,7 @@ export function UpgradeModal({ open, onClose, currentPlan, resource, limit }: Up
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Link
-              to="/dashboard/plans"
+              to="/dashboard/revenue-hub"
               onClick={onClose}
               style={{
                 flex: 1,

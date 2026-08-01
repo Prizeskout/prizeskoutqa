@@ -39,6 +39,7 @@ interface ImportedProduct {
   name_en: string;
   name_ar: string;
   source_platform: string;
+  item_id: string;
   current_price: number;
   recommended_price: number;
   net_margin_pct: number | null;
@@ -46,6 +47,9 @@ interface ImportedProduct {
   decision_action: string;
   currency: string;
   status: string;
+  margin_floor_pct?: number;
+  commission_rate?: number;
+  cost_confidence?: "verified" | "estimated" | "unknown";
 }
 
 const OG = "#EF681A";
@@ -930,7 +934,8 @@ export function PrizeSkoutDashboard() {
   const [productPage, setProductPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<ImportedProduct|null>(null);
   const [productPriceDraft, setProductPriceDraft] = useState("");
-  const [productPushStatus, setProductPushStatus] = useState<"idle"|"confirm"|"pushing"|"failed">("idle");
+  const [productPushStatus, setProductPushStatus] = useState<"idle"|"confirm"|"pushing"|"success"|"reverting"|"failed">("idle");
+  const [productOriginalPrice, setProductOriginalPrice] = useState<number|null>(null);
   const [cpPhase, setCpPhase] = useState<"idle"|"loading"|"result">("idle");
   const [cpInput, setCpInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
@@ -1142,6 +1147,39 @@ export function PrizeSkoutDashboard() {
       .catch(() => setImportedProducts([]))
       .finally(() => setCatalogLoading(false));
   }, [tab]);
+
+  // OAuth returns before the background Zid catalogue import necessarily
+  // finishes. Keep the first-run screen alive until the initial value report
+  // is ready instead of leaving reviewers on a permanently empty dashboard.
+  useEffect(() => {
+    if (tab !== "analytics" || channelStatuses.zid !== "connected" || importedProducts.length > 0) return;
+    let cancelled = false;
+    let attempts = 0;
+    const poll = async () => {
+      const mid = localStorage.getItem("ps_merchant_id") ?? "";
+      const ac = localStorage.getItem("ps_access_code") ?? "";
+      if (!mid || !ac || cancelled) return;
+      attempts++;
+      setCatalogLoading(true);
+      try {
+        const params = new URLSearchParams({ merchant_id:mid, access_code:ac });
+        const response = await fetch(`/api/repricing/catalog?${params}`);
+        const data = response.ok ? await response.json() as { products?:ImportedProduct[] } : null;
+        if (!cancelled && data?.products?.length) {
+          setImportedProducts(data.products);
+          setCatalogLoading(false);
+        }
+      } finally {
+        if (!cancelled && attempts >= 15) setCatalogLoading(false);
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => {
+      if (attempts >= 15 || cancelled) return window.clearInterval(timer);
+      void poll();
+    }, 2000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [tab, channelStatuses.zid, importedProducts.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1439,6 +1477,22 @@ export function PrizeSkoutDashboard() {
       .slice(0, 5)
   ), [importedProducts]);
 
+  // First value moment: quantify what the initial catalogue scan found before
+  // asking a merchant or partner reviewer to explore the rest of the product.
+  // This is deliberately a per-catalog-sale opportunity, not a monthly claim:
+  // PrizeSkout does not know sales volume until order data is connected.
+  const storeOpportunity = useMemo(() => {
+    const atRisk = importedProducts.filter(p => p.floor_breached && p.recommended_price > p.current_price);
+    const correctionPerCatalogSale = atRisk.reduce(
+      (sum, p) => sum + Math.max(0, p.recommended_price - p.current_price), 0,
+    );
+    const verified = importedProducts.filter(p => p.cost_confidence === "verified").length;
+    const estimated = importedProducts.filter(p => p.cost_confidence === "estimated").length;
+    const unknown = importedProducts.length - verified - estimated;
+    return { atRisk, correctionPerCatalogSale, verified, estimated, unknown };
+  }, [importedProducts]);
+  const opportunityCurrency = importedProducts[0]?.currency || currency;
+
   // Channel pricing gap — a headline number for what Channel Price
   // Architecture would find, computed with the same default economics it
   // uses, so a merchant sees the opportunity before ever opening that tab.
@@ -1486,6 +1540,7 @@ export function PrizeSkoutDashboard() {
     setSelectedProduct(product);
     setProductPriceDraft(String(product.recommended_price));
     setProductPushStatus("idle");
+    setProductOriginalPrice(product.current_price);
   };
 
   const pushSelectedProductPrice = async () => {
@@ -1525,11 +1580,36 @@ export function PrizeSkoutDashboard() {
           : product
       ));
       setSelectedProduct(product => product ? { ...product, current_price:targetPrice, status:"repriced" } : product);
-      setProductPushStatus("idle");
+      setProductPushStatus("success");
       showToast(`Price updated successfully in ${selectedProduct.source_platform}.`);
     } catch (error) {
       setProductPushStatus("failed");
       showToast(error instanceof Error ? error.message : "Price update failed.");
+    }
+  };
+
+  const revertSelectedProductPrice = async () => {
+    if (!selectedProduct || productOriginalPrice == null) return;
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) return showToast("Reopen PrizeSkout from Zid to restore your merchant session.");
+    setProductPushStatus("reverting");
+    try {
+      const response = await fetch("/api/repricing/apply", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ merchant_id:merchantId, access_code:accessCode, ingest_event_id:selectedProduct.ingest_event_id, target_price:productOriginalPrice }),
+      });
+      const result = await response.json() as { ok?:boolean; error?:string; message?:string };
+      if (!response.ok || !result.ok) throw new Error(result.error ?? result.message ?? "Revert failed");
+      setImportedProducts(products => products.map(product => product.ingest_event_id === selectedProduct.ingest_event_id
+        ? { ...product, current_price:productOriginalPrice, status:"repriced" } : product));
+      setSelectedProduct(product => product ? { ...product, current_price:productOriginalPrice, status:"repriced" } : product);
+      setProductPriceDraft(String(productOriginalPrice));
+      setProductPushStatus("idle");
+      showToast(`Original price restored in ${selectedProduct.source_platform}.`);
+    } catch (error) {
+      setProductPushStatus("failed");
+      showToast(error instanceof Error ? error.message : "Revert failed.");
     }
   };
 
@@ -2349,16 +2429,31 @@ export function PrizeSkoutDashboard() {
                 {productPushStatus === "failed" && (
                   <div style={{ marginTop:12, color:"#DC2626", fontSize:12.5 }}>The update was not applied. Review the price and try again.</div>
                 )}
+                {productPushStatus === "success" && (
+                  <div style={{ marginTop:12, color:GN, background:`color-mix(in srgb,${GN} 9%,var(--surface))`,
+                    border:`1px solid color-mix(in srgb,${GN} 30%,var(--border))`, borderRadius:9, padding:"12px 14px", fontSize:12.5, lineHeight:1.55 }}>
+                    <strong>Price update accepted by {selectedProduct.source_platform}.</strong><br />
+                    The catalogue now shows {selectedProduct.currency} {fmtMoney(selectedProduct.current_price, selectedProduct.currency)}. You can safely restore the original price below.
+                  </div>
+                )}
                 <div style={{ display:"flex", justifyContent:"flex-end", gap:10, marginTop:16 }}>
                   <button type="button" onClick={()=>setSelectedProduct(null)}
                     style={{ border:"1px solid var(--border)", background:"var(--surface)", color:"var(--text)",
                       borderRadius:9, padding:"11px 15px", cursor:"pointer", fontFamily:"inherit", fontWeight:700 }}>Cancel</button>
-                  <button type="button" disabled={productPushStatus==="pushing"} onClick={pushSelectedProductPrice}
+                  {productPushStatus === "success" && productOriginalPrice != null ? (
+                    <button type="button" onClick={revertSelectedProductPrice}
+                      style={{ border:"none", background:"#B45309", color:"#fff", borderRadius:9, padding:"11px 16px",
+                        cursor:"pointer", fontFamily:"inherit", fontWeight:800 }}>
+                      {`Restore original ${selectedProduct.currency} ${fmtMoney(productOriginalPrice, selectedProduct.currency)}`}
+                    </button>
+                  ) : (
+                  <button type="button" disabled={productPushStatus==="pushing" || productPushStatus==="reverting"} onClick={pushSelectedProductPrice}
                     style={{ border:"none", background:productPushStatus==="confirm" ? "#B45309" : OG, color:"#fff",
                       borderRadius:9, padding:"11px 16px", cursor:productPushStatus==="pushing"?"wait":"pointer",
                       fontFamily:"inherit", fontWeight:800 }}>
                     {productPushStatus==="pushing" ? "Updating…" : productPushStatus==="confirm" ? `Confirm update in ${selectedProduct.source_platform}` : "Review price update"}
                   </button>
+                  )}
                 </div>
               </div>
             </section>
@@ -2394,6 +2489,79 @@ export function PrizeSkoutDashboard() {
                     ×
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* The first screen after a store connection must explain the
+                commercial outcome, not merely that a catalogue synchronized. */}
+            {channelStatuses.zid === "connected" && importedProducts.length === 0 && (
+              <div style={{ padding:"22px 24px", borderRadius:16, border:"1px solid color-mix(in srgb,#EF681A 30%,var(--border))",
+                background:"color-mix(in srgb,#EF681A 7%,var(--surface))", display:"flex", alignItems:"center", gap:14 }}>
+                <span aria-hidden="true" style={{ width:12, height:12, borderRadius:"50%", background:OG, boxShadow:`0 0 0 6px color-mix(in srgb,${OG} 15%,transparent)` }} />
+                <div>
+                  <div style={{ fontWeight:850 }}>Zid connected. PrizeSkout is scanning the store now.</div>
+                  <div style={{ marginTop:3, color:"var(--muted)", fontSize:13 }}>We are checking every product against the merchant's margin floor. The opportunity report will appear here automatically.</div>
+                </div>
+              </div>
+            )}
+            {importedProducts.length > 0 && (
+              <div data-tour="value-center" style={{ background:"linear-gradient(135deg,color-mix(in srgb,#EF681A 10%,var(--surface)),var(--surface))",
+                border:"1px solid color-mix(in srgb,#EF681A 34%,var(--border))", borderRadius:18, boxShadow:"var(--shadow)",
+                padding:"26px 28px", display:"flex", flexDirection:"column", gap:20 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", gap:18, alignItems:"flex-start", flexWrap:"wrap" }}>
+                  <div style={{ maxWidth:720 }}>
+                    <div style={{ color:OG, fontSize:11.5, fontWeight:900, letterSpacing:".08em", textTransform:"uppercase" }}>Your first PrizeSkout result</div>
+                    <h2 style={{ margin:"7px 0 7px", fontFamily:DISPLAY, fontSize:30, lineHeight:1.16 }}>
+                      We found {storeOpportunity.atRisk.length} product{storeOpportunity.atRisk.length===1?"":"s"} that need attention
+                    </h2>
+                    <p style={{ margin:0, color:"var(--muted)", fontSize:14, lineHeight:1.6 }}>
+                      PrizeSkout scanned {importedProducts.length} product{importedProducts.length===1?"":"s"} from your connected store and compared each one with your {persistedGlobalFloor}% margin floor.
+                    </p>
+                  </div>
+                  <div style={{ minWidth:230, padding:"16px 18px", borderRadius:13, background:"var(--surface)", border:"1px solid var(--border)" }}>
+                    <div style={{ color:"var(--muted)", fontSize:10.5, fontWeight:800, textTransform:"uppercase", letterSpacing:".06em" }}>Price correction opportunity</div>
+                    <div style={{ marginTop:6, fontFamily:DISPLAY, fontSize:31, fontWeight:800, color:storeOpportunity.correctionPerCatalogSale > 0 ? OG : GN }}>
+                      {opportunityCurrency} {fmtMoney(storeOpportunity.correctionPerCatalogSale, opportunityCurrency)}
+                    </div>
+                    <div style={{ marginTop:4, color:"var(--muted)", fontSize:11.5, lineHeight:1.45 }}>per one sale of each affected SKU; connect order volume to calculate a monthly impact.</div>
+                  </div>
+                </div>
+
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:10 }}>
+                  {[
+                    ["Products scanned", String(importedProducts.length), "Catalogue evidence"],
+                    ["Below margin floor", String(storeOpportunity.atRisk.length), "Action recommended"],
+                    ["Verified product costs", String(storeOpportunity.verified), "Highest confidence"],
+                    ["Estimated / unknown costs", String(storeOpportunity.estimated + storeOpportunity.unknown), "Confirm before automation"],
+                  ].map(([label,value,foot])=>(
+                    <div key={label} style={{ padding:"14px 15px", borderRadius:11, background:"var(--surface)", border:"1px solid var(--border)" }}>
+                      <div style={{ fontSize:10.5, color:"var(--muted)", textTransform:"uppercase", fontWeight:800 }}>{label}</div>
+                      <div style={{ fontFamily:DISPLAY, fontSize:27, fontWeight:800, marginTop:5 }}>{value}</div>
+                      <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:2 }}>{foot}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {storeOpportunity.atRisk.length > 0 ? (
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:14, flexWrap:"wrap" }}>
+                    <div style={{ fontSize:13, color:"var(--muted)" }}><strong style={{ color:"var(--text)" }}>{storeOpportunity.atRisk[0].name_en || storeOpportunity.atRisk[0].sku}</strong> is the strongest first action. Review it, update one live price, then restore it safely.</div>
+                    <button type="button" onClick={()=>openProduct(storeOpportunity.atRisk[0])}
+                      style={{ border:"none", borderRadius:9, padding:"11px 16px", background:OG, color:"white", cursor:"pointer", fontFamily:"inherit", fontWeight:850 }}>
+                      Run a safe Zid test →
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ padding:"13px 15px", borderRadius:10, background:`color-mix(in srgb,${GN} 8%,var(--surface))`, color:GN, fontWeight:750 }}>
+                    No products currently breach your configured margin floor. PrizeSkout will keep monitoring incoming catalogue changes.
+                  </div>
+                )}
+
+                {(storeOpportunity.estimated > 0 || storeOpportunity.unknown > 0) && (
+                  <div style={{ fontSize:11.5, lineHeight:1.55, color:"#92400E", background:"color-mix(in srgb,#F59E0B 9%,var(--surface))",
+                    border:"1px solid color-mix(in srgb,#F59E0B 28%,var(--border))", borderRadius:9, padding:"10px 13px" }}>
+                    <strong>Confidence notice:</strong> {storeOpportunity.estimated} product cost{storeOpportunity.estimated===1?" is":"s are"} estimated and {storeOpportunity.unknown} have unknown provenance. Recommendations are previews until those costs are confirmed; PrizeSkout does not describe them as guaranteed profit.
+                  </div>
+                )}
               </div>
             )}
 

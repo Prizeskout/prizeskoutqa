@@ -17,6 +17,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { writeAuditLog, channelConnectSummary } from "./govern";
 import { syncPlatformCatalog } from "./platform-sync";
@@ -193,7 +194,7 @@ export async function handleChannelConnect(
         connected_at: probeResult.ok ? now : null,
         last_verified_at: now,
         updated_at: now,
-        metadata: probeResult.metadata ?? {},
+        metadata: (probeResult.metadata ?? {}) as Json,
         webhook_secret: webhookSecret,
       },
       { onConflict: "account_id,merchant_id,platform" },

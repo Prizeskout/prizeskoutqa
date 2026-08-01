@@ -165,7 +165,8 @@ export async function updateTalabatPrice(params: {
       const text = await resp.text().catch(() => "");
       return { ok: false, httpStatus: resp.status, message: text.slice(0, 400) || `HTTP ${resp.status}`, durationMs };
     }
-    return { ok: true, httpStatus: resp.status, durationMs };
+    const data = await resp.json().catch(() => null) as unknown;
+    return { ok: true, httpStatus: resp.status, data, durationMs };
   } catch (e) {
     const durationMs = Date.now() - start;
     const isTimeout = e instanceof Error && e.name === "AbortError";

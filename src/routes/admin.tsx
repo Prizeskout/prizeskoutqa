@@ -132,7 +132,7 @@ function AdminShell() {
             Admin role required. Contact a PrizeSkout super-admin.
           </div>
           <Link
-            to="/dashboard/api-keys"
+            to="/api-reference"
             style={{
               display: "inline-block", marginTop: 22,
               padding: "9px 22px", backgroundColor: "#EA580C",

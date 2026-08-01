@@ -28,7 +28,6 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const router = useRouter();
-  const search = Route.useSearch();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,7 +51,7 @@ function LoginPage() {
       return;
     }
     await router.invalidate();
-    navigate({ to: search.redirect || "/dashboard" });
+    navigate({ to: "/dashboard" });
   };
 
   return (

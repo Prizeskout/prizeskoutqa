@@ -5,8 +5,14 @@ import { useTranslation } from "react-i18next";
 import { useBranding } from "@/hooks/useBranding";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveReason } from "@/locales/reasons";
-import type { PricingDecision } from "@/routes/dashboard.pricing";
 import type { Locale } from "@/lib/i18n";
+
+export type PricingDecision = {
+  id: string;
+  recommendation_id: string;
+  decision: "applied" | "dismissed" | "snoozed";
+  snooze_until: string | null;
+};
 
 export type Recommendation = {
   id: string;

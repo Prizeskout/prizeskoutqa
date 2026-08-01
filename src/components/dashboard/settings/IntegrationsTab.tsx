@@ -86,7 +86,7 @@ function SmallButton({
   if (as === "link" && href) {
     return (
       <Link
-        to={href as "/dashboard/api-keys"}
+        to="/api-reference"
         style={style}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
@@ -674,14 +674,14 @@ export function IntegrationsTab() {
               <SmallButton icon={copied ? <Check size={14} color="#16A34A" /> : <Copy size={14} />} onClick={handleCopy}>
                 {copied ? t("settingsTabs.integrations.apiKey.copied") : t("settingsTabs.integrations.apiKey.copy")}
               </SmallButton>
-              <SmallButton icon={<ExternalLink size={14} />} as="link" href="/dashboard/api-keys">
+              <SmallButton icon={<ExternalLink size={14} />} as="link" href="/api-reference">
                 {t("settingsTabs.integrations.apiKey.manageKeys")}
               </SmallButton>
             </div>
           ) : (
             <div style={{ marginTop: 12, fontSize: 12, color: "#9A9A9A" }}>
               {t("settingsTabs.integrations.apiKey.noKey")}{" "}
-              <Link to="/dashboard/api-keys" style={{ color: "#EA580C", textDecoration: "none" }}>
+              <Link to="/api-reference" style={{ color: "#EA580C", textDecoration: "none" }}>
                 {t("settingsTabs.integrations.apiKey.createOne")}
               </Link>
             </div>

@@ -6,6 +6,13 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type MutableTable<Row extends Record<string, unknown>> = {
+  Row: Row
+  Insert: Partial<Row>
+  Update: Partial<Row>
+  Relationships: []
+}
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -14,6 +21,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      margin_channels: MutableTable<{
+        id: string; user_id: string; platform: string; display_name: string
+        commission_rate: number | null; is_active: boolean; created_at: string; updated_at: string
+      }>
+      margin_uploads: MutableTable<{
+        id: string; user_id: string; platform: string; filename: string; row_count: number | null
+        date_from: string | null; date_to: string | null; status: string; error_message: string | null
+        created_at: string; processed_at: string | null
+      }>
+      margin_orders: MutableTable<{
+        id: string; user_id: string; upload_id: string | null; platform: string; external_order_id: string
+        order_date: string; gross_revenue: number; commission_amount: number | null
+        commission_rate: number | null; net_payout: number | null; items: Json
+        daypart: string | null; created_at: string
+      }>
+      margin_cost_profiles: MutableTable<{
+        id: string; user_id: string; item_name: string; cogs: number | null
+        packaging_cost: number | null; prep_time_minutes: number | null
+        hourly_labor_cost: number | null; created_at: string; updated_at: string
+      }>
+      ps_promotion_scenarios: MutableTable<{
+        id: string; account_id: string; name: string; platform: string; status: string
+        inputs: unknown; results: unknown; promised_platform_funding: number | null
+        actual_platform_funding: number | null; funding_variance: number | null
+        approved_by: string | null; approved_at: string | null; created_at: string; updated_at: string
+      }>
+      ps_channel_price_plans: MutableTable<{
+        id: string; account_id: string; name: string; status: string; channel_config: unknown; rows: unknown
+        approved_by: string | null; approved_at: string | null; published_at: string | null
+        created_at: string; updated_at: string
+      }>
+      ps_group_controls: MutableTable<{
+        id: string; account_id: string; group_name: string; legal_entities: unknown; brands: unknown
+        branches: unknown; members: unknown; finance_approved_by: string | null
+        finance_approved_at: string | null; operations_approved_by: string | null
+        operations_approved_at: string | null; created_at: string; updated_at: string
+      }>
+      ps_month_end_closes: MutableTable<{
+        id: string; account_id: string; period_start: string | null; period_end: string | null
+        currency: string; status: string; schedules: unknown; journals: unknown; limitations: unknown
+        prepared_by: string | null; reviewed_by: string | null; approved_at: string | null
+        locked_at: string | null; created_at: string; updated_at: string
+      }>
+      ps_economics_versions: MutableTable<{
+        id:string;account_id:string;merchant_id:string;channel:string;region:string;version:number
+        effective_from:string;effective_to:string|null;commission_rate:number;vat_rate:number
+        payment_fee_rate:number;fixed_order_fee:number;logistics_subsidy:number
+        promotion_contribution_rate:number;margin_floor_pct:number;source_contract_id:string|null
+        status:string;approved_by:string|null;approved_at:string|null;created_at:string
+      }>
+      ps_product_cost_versions: MutableTable<{
+        id:string;account_id:string;merchant_id:string;sku:string;amount:number;currency:string
+        source:string;effective_from:string;effective_to:string|null;evidence_ref:string|null;created_at:string
+      }>
+      ps_dispatch_queue: MutableTable<{
+        id:string;account_id:string;licensee_id:string;ingest_event_id:string;decide_result_id:string
+        merchant_id:string;channel:string;sku:string;old_price:number;target_price:number;currency:string
+        economics_version_id:string;state:string;priority:number;attempts:number;max_attempts:number
+        available_at:string|null;lease_owner:string|null;lease_expires_at:string|null;upstream_job_id:string|null
+        last_error:string|null;accepted_at:string|null;confirmed_at:string|null;rollback_reason:string|null
+        created_at:string;updated_at:string
+      }>
+      ps_channel_rate_limits: MutableTable<{
+        account_id:string;channel:string;max_concurrency:number;requests_per_minute:number
+      }>
+      ps_latency_spans: MutableTable<{
+        id:number;trace_id:string;account_id:string;stage:string;duration_ms:number
+        success:boolean;attributes:unknown;created_at:string
+      }>
       accounts_v2: {
         Row: {
           created_at: string

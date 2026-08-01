@@ -88,7 +88,7 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
   const anyUnpublished=results.some(r=>r.status!=="published");
   const newStatus=anyPublished?(anyUnpublished?"partially_published":"published"):plan.status;
 
-  const update:Record<string,unknown>={status:newStatus,updated_at:new Date().toISOString()};
+  const update:{status:string;updated_at:string;published_at?:string}={status:newStatus,updated_at:new Date().toISOString()};
   if(anyPublished)update.published_at=new Date().toISOString();
 
   const {data:updated,error:updateError}=await supabaseAdmin.from("ps_channel_price_plans").update(update).eq("account_id",accountId).eq("id",id).select("*").single();

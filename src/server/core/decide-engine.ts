@@ -40,6 +40,10 @@ export type DecideInput = {
   vatRate?: number;
   logisticsSubsidy?: number;
   marginFloorPct?: number;
+  commissionRate?: number;
+  paymentFeeRate?: number;
+  fixedOrderFee?: number;
+  promotionContributionRate?: number;
 };
 
 export type DecideOutput = {
@@ -64,10 +68,14 @@ export function decide(input: DecideInput): DecideOutput {
     marginFloorPct = DEFAULT_MARGIN_FLOOR,
   } = input;
 
-  const commissionRate = REGIONAL_COMMISSION[region] ?? 0.22;
+  const commissionRate = input.commissionRate ?? (REGIONAL_COMMISSION[region] ?? 0.22);
   const vatRate = input.vatRate ?? (REGIONAL_VAT[region] ?? 0);
+  const paymentFeeRate = input.paymentFeeRate ?? 0;
+  const fixedOrderFee = input.fixedOrderFee ?? 0;
+  const promotionContributionRate = input.promotionContributionRate ?? 0;
 
-  const netRevenue = currentRetailPrice * (1 - commissionRate - vatRate) - logisticsSubsidy;
+  const variableRate = commissionRate + vatRate + paymentFeeRate + promotionContributionRate;
+  const netRevenue = currentRetailPrice * (1 - variableRate) - logisticsSubsidy - fixedOrderFee;
   const netMargin = netRevenue - baseCost;
   const netMarginPct = currentRetailPrice > 0 ? netMargin / currentRetailPrice : 0;
   const floorBreached = netMarginPct < marginFloorPct;
@@ -78,11 +86,11 @@ export function decide(input: DecideInput): DecideOutput {
   if (!floorBreached) {
     decisionAction = "hold";
   } else {
-    const denominator = 1 - commissionRate - vatRate - marginFloorPct;
+    const denominator = 1 - variableRate - marginFloorPct;
     if (denominator <= 0) {
       decisionAction = "cannot_achieve_floor";
     } else {
-      recommendedPrice = r4((baseCost + logisticsSubsidy) / denominator);
+      recommendedPrice = r4((baseCost + logisticsSubsidy + fixedOrderFee) / denominator);
       decisionAction = recommendedPrice > currentRetailPrice ? "reprice_up" : "reprice_down";
     }
   }

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 
 export type RecoveryCase={
   id:string;platform:string;exception_key:string;title:string;
@@ -36,7 +37,7 @@ export async function createRecoveryCase(accountId:string,input:Omit<RecoveryCas
     const cases=Array.isArray(metadata.recovery_cases)?metadata.recovery_cases as RecoveryCase[]:[];
     const created={...input,id:crypto.randomUUID(),created_at:now,updated_at:now};
     const next=[created,...cases.filter(item=>item.exception_key!==input.exception_key)];
-    const {error:updateError}=await supabaseAdmin.from("ps_merchant_channels").update({metadata:{...metadata,recovery_cases:next}}).eq("id",channel.id);
+    const {error:updateError}=await supabaseAdmin.from("ps_merchant_channels").update({metadata:{...metadata,recovery_cases:next} as unknown as Json}).eq("id",channel.id);
     if(updateError)throw new Error(updateError.message);
     return created;
   }
@@ -53,7 +54,7 @@ export async function updateRecoveryCase(accountId:string,id:string,patch:Partia
     const cases=Array.isArray(metadata.recovery_cases)?metadata.recovery_cases as RecoveryCase[]:[];
     const found=cases.find(item=>item.id===id);if(!found)throw new Error("Recovery case not found.");
     const updated={...found,...safe} as RecoveryCase;
-    await supabaseAdmin.from("ps_merchant_channels").update({metadata:{...metadata,recovery_cases:cases.map(item=>item.id===id?updated:item)}}).eq("id",channel.id);
+    await supabaseAdmin.from("ps_merchant_channels").update({metadata:{...metadata,recovery_cases:cases.map(item=>item.id===id?updated:item)} as unknown as Json}).eq("id",channel.id);
     return updated;
   }
   if(error||!data)throw new Error(error?.message??"Could not update recovery case.");

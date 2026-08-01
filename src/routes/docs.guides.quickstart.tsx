@@ -290,7 +290,7 @@ function QuickstartPage() {
             body={
               <>
                 In the dashboard, go to{" "}
-                <Link to="/dashboard/api-keys" style={{ color: "#EA580C", fontWeight: 600 }}>
+                <Link to="/api-reference" style={{ color: "#EA580C", fontWeight: 600 }}>
                   Settings → API Keys
                 </Link>{" "}
                 and click <strong>Create test key</strong>. Give it a name (e.g.{" "}
@@ -333,7 +333,7 @@ function QuickstartPage() {
             body={
               <>
                 Go to{" "}
-                <Link to="/dashboard/competitors" style={{ color: "#EA580C", fontWeight: 600 }}>
+                <Link to="/products/competitors" style={{ color: "#EA580C", fontWeight: 600 }}>
                   Competitors
                 </Link>{" "}
                 in the dashboard, click <strong>Add competitor</strong>, and paste any product

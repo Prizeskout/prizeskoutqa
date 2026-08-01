@@ -297,7 +297,7 @@ function SubscriptionCard({ plan }: { plan: Plan }) {
 
       <div style={{ marginTop: 10 }}>
         <Link
-          to="/dashboard/plans"
+          to="/dashboard/revenue-hub"
           style={{
             fontSize: 12,
             color: accent,

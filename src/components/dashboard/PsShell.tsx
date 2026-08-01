@@ -75,7 +75,7 @@ const NAV_ITEMS: { screen: PsScreen; titleKey: string; descKey: string }[] = [
   { screen: "integration-vault", titleKey: "psShell.nav.integrationVaultTitle", descKey: "psShell.nav.integrationVaultDesc" },
 ];
 
-const SETTINGS_PATH = "/dashboard/settings";
+const SETTINGS_PATH = "/dashboard/revenue-hub";
 
 const SCREEN_TO_PATH: Record<PsScreen, string> = {
   "revenue-hub": "/dashboard/revenue-hub",

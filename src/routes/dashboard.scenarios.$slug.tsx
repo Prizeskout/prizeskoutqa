@@ -51,7 +51,7 @@ function ScenarioDashboard() {
     <div style={{ padding: "28px 36px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Breadcrumb */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22, fontSize: 13, color: "#78716C" }}>
-        <Link to="/dashboard/scenarios" style={{ color: "#78716C", textDecoration: "none" }}>
+        <Link to="/dashboard/revenue-hub" style={{ color: "#78716C", textDecoration: "none" }}>
           Demo Scenarios
         </Link>
         <span>›</span>

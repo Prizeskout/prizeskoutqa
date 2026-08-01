@@ -218,7 +218,7 @@ function InviteModal({
             <Field label={t("settingsTabs.team.inviteModal.role")}>
               <SelectField
                 value={role}
-                onChange={setRole}
+                onChange={(value) => setRole(value as LicenseeRole)}
                 options={INVITE_ROLES}
                 labels={inviteRoleLabels}
               />
@@ -274,7 +274,7 @@ function EditRoleModal({
   onSaved: (updated: Member) => void;
 }) {
   const { t } = useTranslation();
-  const [role, setRole] = useState<string>(member.role);
+  const [role, setRole] = useState<LicenseeRole>(member.role);
   const [saving, setSaving] = useState(false);
 
   const editableRoleLabels: Record<string, string> = {
@@ -362,7 +362,7 @@ function EditRoleModal({
             <Field label={t("settingsTabs.team.editRoleModal.role")}>
               <SelectField
                 value={role}
-                onChange={setRole}
+                onChange={(value) => setRole(value as LicenseeRole)}
                 options={EDITABLE_ROLES}
                 labels={editableRoleLabels}
               />

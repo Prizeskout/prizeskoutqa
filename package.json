@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "start": "node server.mjs",
-    "verify-margin": "tsx --env-file=.env.local scripts/verify-margin.mts"
+    "verify-margin": "tsx --env-file=.env.local scripts/verify-margin.mts",
+    "typecheck": "tsc --noEmit --pretty false",
+    "load:wedge": "tsx scripts/load-wedge.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",

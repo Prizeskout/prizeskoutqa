@@ -12,11 +12,15 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { resolveAuthoritativeEconomics } from "./economics-resolver";
+import { enqueueDispatch } from "./dispatch-queue";
+import {measured} from "./latency";
 
 const VALID_PLATFORMS = ["foodics", "salla", "zid", "sap", "microsoft"] as const;
 
@@ -191,7 +195,7 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
       current_retail_price: fin.current_retail_price,
       currency,
       vat_rate: vatRate ?? 0,
-      raw_payload: JSON.parse(raw) as Record<string, unknown>,
+      raw_payload: JSON.parse(raw) as Json,
       status: "received",
     })
     .select("id")
@@ -205,14 +209,24 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
   // ------------------------------------------------------------------
   // 5. Decide — run margin engine
   // ------------------------------------------------------------------
-  const marginFloorPct = await getMerchantMarginFloor(ctx.accountId);
-  const decideOutput = decide({
+  const economics = await resolveAuthoritativeEconomics({accountId:ctx.accountId,merchantId:body.merchant_id,channel:"talabat"});
+  if(!economics){
+    await supabaseAdmin.from("ps_ingest_events").update({status:"failed"}).eq("id",ingestEventId);
+    return err("economics_not_approved","An effective, approved Talabat economics version is required before PrizeSkout can calculate or publish a price.",409);
+  }
+  const marginFloorPct = economics.marginFloorPct;
+  const decideOutput = await measured({traceId:idempotencyKey,accountId:ctx.accountId,stage:"decide"},async()=>decide({
     region,
     baseCost: fin.base_cost,
     currentRetailPrice: fin.current_retail_price,
-    vatRate,
+    vatRate:economics.vatRate,
+    commissionRate:economics.commissionRate,
+    paymentFeeRate:economics.paymentFeeRate,
+    fixedOrderFee:economics.fixedOrderFee,
+    promotionContributionRate:economics.promotionContributionRate,
+    logisticsSubsidy:economics.logisticsSubsidy,
     marginFloorPct,
-  });
+  }));
 
   const { data: decideRow } = await supabaseAdmin
     .from("ps_decide_results")
@@ -283,7 +297,8 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
 
   if (decideOutput.floorBreached && decideOutput.recommendedPrice !== null && decideRow) {
     dispatchTriggered = true;
-    dispatchResult = await dispatchToAggregators({
+    const recommendedPrice=decideOutput.recommendedPrice;
+    const queued=await measured({traceId:idempotencyKey,accountId:ctx.accountId,stage:"enqueue"},()=>enqueueDispatch({
       ingestEventId,
       decideResultId: decideRow.id,
       accountId: ctx.accountId,
@@ -293,7 +308,7 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
       locationId: body.location_id,
       region,
       oldPrice: fin.current_retail_price,
-      newPrice: decideOutput.recommendedPrice,
+      newPrice: recommendedPrice,
       currency,
       auditSnapshot: {
         ingested_base_cost: fin.base_cost,
@@ -303,12 +318,11 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
         net_margin_pct: decideOutput.netMarginPct,
         decision_action: decideOutput.decisionAction,
       },
-    });
-
-    await supabaseAdmin
-      .from("ps_ingest_events")
-      .update({ status: "dispatched" })
-      .eq("id", ingestEventId);
+      channel:"talabat",
+      economicsVersionId:economics.id,
+    }));
+    dispatchResult={channels_attempted:queued?1:0,results:queued?[{channel:"talabat",status:"queued",dispatch_id:queued.id}]:[]};
+    await supabaseAdmin.from("ps_ingest_events").update({ status: "dispatched" }).eq("id", ingestEventId);
   }
 
   // ------------------------------------------------------------------

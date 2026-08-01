@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/register-code")({
         }
 
         const { error } = await supabaseAdmin
-          .from("ps_access_codes" as never)
+          .from("ps_access_codes")
           .upsert({ code, merchant_id, email, store_name }, { onConflict: "code" });
 
         if (error) {

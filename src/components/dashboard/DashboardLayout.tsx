@@ -52,7 +52,7 @@ function SandboxBanner() {
           </span>
         </div>
         <Link
-          to="/dashboard/api-explorer"
+          to="/api-reference"
           style={{
             display: "inline-flex",
             alignItems: "center",

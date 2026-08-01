@@ -339,10 +339,21 @@ export async function syncPlatformCatalog(params: {
         .update({
           current_retail_price: product.price,
           inventory_status: product.in_stock ? "in_stock" : "out_of_stock",
+          raw_payload: {
+            source: "platform_sync",
+            external_id: product.external_id,
+            platform,
+            cost_source: product.cost == null ? "missing_requires_verified_cost" : "platform_catalog",
+          },
           status: "received",
         })
         .eq("id", existing.id);
-      const baseCost = product.cost ?? product.price * 0.6;
+      if (product.cost == null) {
+        await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost"}}).eq("id",existing.id);
+        errors++;
+        continue;
+      }
+      const baseCost = product.cost;
       const decideOutput = decide({
         region,
         baseCost,
@@ -394,22 +405,32 @@ export async function syncPlatformCatalog(params: {
         item_name_en: product.name_en,
         item_name_ar: product.name_ar,
         inventory_status: product.in_stock ? "in_stock" : "out_of_stock",
-        base_cost: product.cost ?? product.price * 0.6, // fallback: assume 60% cost if unknown
+        base_cost: product.cost ?? 0,
         current_retail_price: product.price,
         currency: product.currency,
         vat_rate: vatRate,
-        raw_payload: { source: "platform_sync", external_id: product.external_id, platform },
+        raw_payload: {
+          source: "platform_sync",
+          external_id: product.external_id,
+          platform,
+          cost_source: product.cost == null ? "missing_requires_verified_cost" : "platform_catalog",
+        },
         status: "received",
       })
       .select("id")
       .single();
 
     if (insertErr || !ingestRow) { errors++; continue; }
+    if (product.cost == null) {
+      await supabaseAdmin.from("ps_ingest_events").update({status:"failed"}).eq("id",ingestRow.id);
+      errors++;
+      continue;
+    }
 
     // 2. Run decide engine on each item
     const decideOutput = decide({
       region,
-      baseCost: product.cost ?? product.price * 0.6,
+      baseCost: product.cost,
       currentRetailPrice: product.price,
       vatRate,
       marginFloorPct,
@@ -422,7 +443,7 @@ export async function syncPlatformCatalog(params: {
       region,
       merchant_id: merchantId,
       sku: product.sku,
-      base_cost: product.cost ?? product.price * 0.6,
+      base_cost: product.cost,
       current_retail_price: product.price,
       commission_rate: commissionRate,
       vat_rate: vatRate,

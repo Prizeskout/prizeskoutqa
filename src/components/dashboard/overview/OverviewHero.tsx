@@ -90,8 +90,7 @@ export function OverviewHero({
             <ArrowRight size={13} strokeWidth={2} />
           </Link>
           <Link
-            to="/dashboard/competitors"
-            search={{ from: "overview" }}
+            to="/products/competitors"
             style={{
               display: "inline-flex",
               alignItems: "center",
