@@ -99,6 +99,37 @@ try {
   await page.getByText("Imported Products", { exact: true }).waitFor({ timeout: 15_000 });
   console.log("PASS authenticated merchant dashboard loads");
 
+  const channelStatus=await page.request.get(`${baseUrl}/api/channels/status?merchant_id=${encodeURIComponent(access.merchant_id)}`);
+  const connectedChannels=(await channelStatus.json() as {channels?:Array<{platform:string;status:string}>}).channels??[];
+  if(connectedChannels.some(channel=>channel.platform==="zid"&&channel.status==="connected")){
+    const profitBrief=await page.request.post(`${baseUrl}/api/copilot/store`,{data:{merchant_id:access.merchant_id,access_code:access.code,action:"profit_brief",days:30}});
+    const profitBody=await profitBrief.json() as {brief?:{order_count:number;verified_cost_coverage_pct:number};error?:string};
+    assert.equal(profitBrief.status(),200,`Zid Profit Brief failed: ${profitBody.error??"unexpected response"}`);
+    assert(profitBody.brief&&Number.isFinite(profitBody.brief.order_count),"Zid Profit Brief returned no deterministic summary");
+    console.log("PASS live Zid Profit Brief calculation");
+
+    await page.getByText("Know what your Zid orders actually kept",{exact:true}).waitFor({timeout:15_000});
+    const reviewProfit=page.getByRole("button",{name:/Review orders and coupons/});
+    await reviewProfit.click();
+    await page.getByText("Coupon safety check",{exact:true}).waitFor();
+    console.log("PASS Zid Profit Brief renders order and coupon review");
+
+    const {data:snapshot,error:snapshotError}=await admin.from("ps_zid_profit_snapshots").select("id,summary").eq("account_id",access.merchant_id).order("created_at",{ascending:false}).limit(1).maybeSingle();
+    assert(!snapshotError&&snapshot?.id,"Zid Profit Brief snapshot was not persisted after the migration");
+    const today=`${new Date().toISOString().slice(0,10)}T00:00:00.000Z`;
+    const {count:todaySnapshotCount}=await admin.from("ps_zid_profit_snapshots").select("id",{count:"exact",head:true}).eq("account_id",access.merchant_id).gte("created_at",today);
+    assert.equal(todaySnapshotCount,1,"Repeated Profit Brief refreshes must update today's snapshot instead of duplicating it");
+    console.log("PASS Zid Profit Brief snapshot persistence");
+
+    for(const [prompt,expected] of [["What did I actually keep from Zid orders this month?","profit_brief"],["Which coupons put products below my margin floor?","coupon_risk"]] as const){
+      const compiled=await page.request.post(`${baseUrl}/api/copilot/compile`,{data:{prompt}});
+      const compiledBody=await compiled.json() as {operation?:{operation?:string};error?:string};
+      assert.equal(compiled.status(),200,`Copilot could not compile ${expected}: ${compiledBody.error??"unexpected response"}`);
+      assert.equal(compiledBody.operation?.operation,expected,`Copilot routed the merchant request to the wrong operation`);
+    }
+    console.log("PASS Copilot routes profit and coupon safety instructions");
+  }
+
   const review = page.getByRole("button", { name: /Review products/ }).first();
   if (await review.isVisible().catch(() => false)) {
     await review.click();

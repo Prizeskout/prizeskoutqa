@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { buildZidProfitBrief } from "@/server/core/zid-profit-brief";
 
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json"}});
 
 export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST:async({request})=>{
-  const body=await request.json().catch(()=>null) as {merchant_id?:string;access_code?:string;action?:string;order_id?:string;order_status?:string;product_name?:string;product_sku?:string;product_price?:number}|null;
+  const body=await request.json().catch(()=>null) as {merchant_id?:string;access_code?:string;action?:string;days?:number;order_id?:string;order_status?:string;product_name?:string;product_sku?:string;product_price?:number}|null;
   const merchantId=body?.merchant_id?.trim();
   const accessCode=body?.access_code?.trim().toUpperCase();
   if(!merchantId||!accessCode)return json({error:"merchant_id and access_code are required"},400);
@@ -14,6 +15,10 @@ export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST
   if(!channel||channel.status!=="connected"||!channel.bearer_token)return json({error:"Zid is not connected."},400);
   const authorization=channel.bearer_token.startsWith("Bearer ")?channel.bearer_token:`Bearer ${channel.bearer_token}`;
   const headers:Record<string,string>={Authorization:authorization,"X-Manager-Token":channel.manager_token??"",Accept:"application/json","Accept-Language":"en"};
+  if(body?.action==="profit_brief"){
+    try{return json({ok:true,brief:await buildZidProfitBrief(merchantId,headers,Number(body.days)||30)});}
+    catch(error){return json({error:error instanceof Error?error.message:"Could not build the Zid profit brief."},502);}
+  }
   if(body?.action==="change_order_status"){
     const orderId=body.order_id?.trim(),status=body.order_status?.toLowerCase();
     const allowed=["new","preparing","ready","indelivery","delivered","cancelled"];

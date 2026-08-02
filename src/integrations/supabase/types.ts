@@ -3855,6 +3855,12 @@ export type Database = {
         Update: { account_id?: string; pref_key?: string; enabled?: boolean; updated_at?: string }
         Relationships: []
       }
+      ps_zid_profit_snapshots: {
+        Row: { id:string; account_id:string; period_start:string; period_end:string; currency:string; order_count:number; analyzable_order_count:number; revenue:number; contribution:number; loss_order_count:number; discount_total:number; verified_cost_coverage_pct:number; summary:Json; created_at:string }
+        Insert: { id?:string; account_id:string; period_start:string; period_end:string; currency?:string; order_count?:number; analyzable_order_count?:number; revenue?:number; contribution?:number; loss_order_count?:number; discount_total?:number; verified_cost_coverage_pct?:number; summary?:Json; created_at?:string }
+        Update: { id?:string; account_id?:string; period_start?:string; period_end?:string; currency?:string; order_count?:number; analyzable_order_count?:number; revenue?:number; contribution?:number; loss_order_count?:number; discount_total?:number; verified_cost_coverage_pct?:number; summary?:Json; created_at?:string }
+        Relationships: []
+      }
       ps_merchant_channels: {
         Row: {
           id: string

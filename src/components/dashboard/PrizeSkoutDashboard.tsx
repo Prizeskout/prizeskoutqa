@@ -10,6 +10,7 @@ import { SettlementForecastPanel } from "@/components/dashboard/payout/Settlemen
 import { PromotionProfitabilityWorkspace } from "@/components/dashboard/promotions/PromotionProfitabilityWorkspace";
 import { ChannelPriceArchitecture } from "@/components/dashboard/pricing/ChannelPriceArchitecture";
 import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControlWorkspace";
+import { ZidProfitBrief } from "@/components/dashboard/ZidProfitBrief";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 import { planChannelPrices, type ChannelEconomics, type ChannelPriceProduct, type PriceChannel } from "@/lib/channel-price-planner";
 
@@ -1777,6 +1778,19 @@ export function PrizeSkoutDashboard() {
         setCpOrders(data.orders??[]);
         const statuses=Object.entries(data.summary?.by_status??{}).map(([status,count])=>`${count} ${status}`).join(", ");
         setCpOperationMessage(`${data.summary?.count??0} orders retrieved from Zid for today${statuses?` (${statuses})`:""}. Total recorded order value: SAR ${(data.summary?.total??0).toLocaleString()}. No order state was changed.`);
+      } else if(op==="profit_brief"||op==="coupon_risk"){
+        const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
+        const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:"profit_brief",days:30})});
+        const data=await response.json() as {brief?:{currency:string;order_count:number;revenue:number;contribution:number;loss_order_count:number;loss_amount:number;verified_cost_coverage_pct:number;orders:Array<{id:string;code:string;status:string;revenue:number;attention:string|null}>;coupons:Array<{code:string;discount_label:string;products_below_floor:number;risk:string}>};error?:string};
+        if(!response.ok||!data.brief)throw new Error(data.error??"Could not build the Zid profit brief.");
+        const b=data.brief;
+        if(op==="profit_brief"){
+          setCpOrders(b.orders.filter(order=>order.attention).slice(0,20).map(order=>({id:order.id,code:order.code,status:order.attention??order.status,total:order.revenue,currency:b.currency,created_at:""})));
+          setCpOperationMessage(`Across ${b.order_count} Zid orders, recorded order value was ${b.currency} ${b.revenue.toLocaleString()}. Orders with complete verified costs kept ${b.currency} ${b.contribution.toLocaleString()}. ${b.loss_order_count} verified order${b.loss_order_count===1?"":"s"} lost ${b.currency} ${b.loss_amount.toLocaleString()}. Cost evidence covers ${Math.round(b.verified_cost_coverage_pct)}% of ordered units; incomplete orders were not guessed.`);
+        }else{
+          const risky=b.coupons.filter(coupon=>coupon.risk==="review");
+          setCpOperationMessage(risky.length?`${risky.length} coupon${risky.length===1?"":"s"} need review: ${risky.map(coupon=>`${coupon.code} (${coupon.discount_label}) puts ${coupon.products_below_floor} verified products below your active floor`).join("; ")}. This is a read-only safety check; no coupon was changed.`:"No coupon returned by Zid was proven to push a verified-cost product below your active protection floor. Coupons with incomplete evidence remain marked unknown.");
+        }
       } else if (op === "sync_catalog") {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
         const accessCode = localStorage.getItem("ps_access_code") ?? "";
@@ -2578,6 +2592,7 @@ export function PrizeSkoutDashboard() {
         {/* ===== TAB: REVENUE PROTECTION HUB ===== */}
         {tab === "analytics" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:30, animation:"pk-in .3s ease" }}>
+            <ZidProfitBrief connected={channelStatuses.zid === "connected"} />
 
             {/* First-run welcome: we auto-ran a Talabat payout check the
                 moment Talabat was connected, since this merchant has never
@@ -3433,6 +3448,8 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", gap:9, flexWrap:"wrap", alignItems:"center" }}>
                 <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
                 {[
+                  "What did I actually keep from Zid orders this month?",
+                  "Which coupons put products below my margin floor?",
                   "Protect a 20% margin on Zid and cap increases at 10%",
                   "Summarize today's Zid orders",
                   "Show products that need inventory attention",
