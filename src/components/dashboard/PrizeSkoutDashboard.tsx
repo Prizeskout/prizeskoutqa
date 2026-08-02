@@ -57,7 +57,7 @@ interface ImportedProduct {
   margin_floor_pct?: number;
   commission_rate?: number;
   cost_confidence?: "verified" | "estimated" | "unknown";
-  preview?: { recommended_price:number|null; net_margin_pct:number; floor_breached:boolean; increase_pct:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
+  preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; policy_version:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
 }
 
 const OG = "#EF681A";
@@ -947,6 +947,7 @@ export function PrizeSkoutDashboard() {
   const [selectedProduct, setSelectedProduct] = useState<ImportedProduct|null>(null);
   const [productPriceDraft, setProductPriceDraft] = useState("");
   const [productPushStatus, setProductPushStatus] = useState<"idle"|"confirm"|"pushing"|"success"|"reverting"|"failed">("idle");
+  const [productPushError,setProductPushError]=useState<string|null>(null);
   const [productOriginalPrice, setProductOriginalPrice] = useState<number|null>(null);
   const [cpPhase, setCpPhase] = useState<"idle"|"loading"|"result">("idle");
   const [cpInput, setCpInput] = useState("");
@@ -1487,6 +1488,8 @@ export function PrizeSkoutDashboard() {
       setRuleConfirmIndex(null);
       setRulePreviewIndex(null);
       setRuleAudit(current=>[{action:`Activated from ${persistedGlobalFloor}% to ${rule.floor}%`,rule:rule.name,at:new Date().toISOString()},...current].slice(0,12));
+      const catalogResponse=await fetch(`/api/repricing/catalog?${new URLSearchParams({merchant_id:mid,access_code:ac})}`);
+      if(catalogResponse.ok){const catalogData=await catalogResponse.json() as {products?:ImportedProduct[]};if(catalogData.products)setImportedProducts(catalogData.products);}
       showToast(`Policy v${data.policy?.version??policyVersion+1} activated.`);
     } catch {
       setRules(current=>current.map((item,i)=>i===index?{...item,status:"failed",active:false}:item));
@@ -1605,8 +1608,9 @@ export function PrizeSkoutDashboard() {
 
   const openProduct = (product: ImportedProduct) => {
     setSelectedProduct(product);
-    setProductPriceDraft(String(product.recommended_price));
+    setProductPriceDraft(String(product.preview?.allowed_price??product.current_price));
     setProductPushStatus("idle");
+    setProductPushError(null);
     setProductOriginalPrice(product.current_price);
   };
 
@@ -1616,6 +1620,11 @@ export function PrizeSkoutDashboard() {
     if (!Number.isFinite(targetPrice) || targetPrice <= 0) {
       showToast("Enter a valid price greater than zero.");
       return;
+    }
+    const maximumAllowed=selectedProduct.preview?.maximum_increase_pct==null?null:selectedProduct.current_price*(1+selectedProduct.preview.maximum_increase_pct);
+    if(maximumAllowed!=null&&targetPrice>maximumAllowed+0.005){
+      const message=`This price is ${(((targetPrice-selectedProduct.current_price)/selectedProduct.current_price)*100).toFixed(1)}% above the current price. Active policy v${selectedProduct.preview?.policy_version} allows ${((selectedProduct.preview?.maximum_increase_pct??0)*100).toFixed(1)}%, up to ${selectedProduct.currency} ${fmtMoney(maximumAllowed,selectedProduct.currency)}.`;
+      setProductPushError(message);setProductPushStatus("failed");showToast(message);return;
     }
     if (productPushStatus !== "confirm") {
       setProductPushStatus("confirm");
@@ -1628,6 +1637,7 @@ export function PrizeSkoutDashboard() {
       return;
     }
     setProductPushStatus("pushing");
+    setProductPushError(null);
     try {
       const response = await fetch("/api/repricing/apply", {
         method:"POST",
@@ -1651,7 +1661,8 @@ export function PrizeSkoutDashboard() {
       showToast(`Price updated successfully in ${selectedProduct.source_platform}.`);
     } catch (error) {
       setProductPushStatus("failed");
-      showToast(error instanceof Error ? error.message : "Price update failed.");
+      const message=error instanceof Error ? error.message : "Price update failed.";
+      setProductPushError(message);showToast(message);
     }
   };
 
@@ -1689,6 +1700,7 @@ export function PrizeSkoutDashboard() {
       sku:product.sku,
       platform:product.source_platform,
     }));
+    if(cpStoreActionResult?.products)for(const product of cpStoreActionResult.products){if(product.after)previousProducts.push({name:product.after.name,sku:product.after.sku,platform:"zid"});}
     setCpPhase("loading"); setCpPrompt(prompt); setApplied(false); setCpError(null);
     setCpObj(null); setCpChatMessage(null); setCpOperationProducts([]); setCpOperationStatus("idle"); setCpOperationMessage(null);setCpActionResults([]);setCpOrders([]);setCpStoreActionResult(null);
     setCpInput("");
@@ -1770,9 +1782,10 @@ export function PrizeSkoutDashboard() {
     try {
       let products = importedProducts;
       if(["change_order_status","create_product_draft"].includes(op)){
-        const missing=op==="change_order_status"?(!operation.order_id||!operation.order_status):(!operation.product_name||!operation.product_sku||!(Number(operation.product_price)>0));
-        if(missing)throw new Error(op==="change_order_status"?"Specify the Zid order reference and target status.":"Specify the product name, SKU, and selling price.");
-        setCpOperationMessage(op==="change_order_status"?`Ready to move order ${String(operation.order_id)} to ${String(operation.order_status)}. No change has been made.`:`Ready to create ${String(operation.product_name)} (SKU ${String(operation.product_sku)}) at SAR ${Number(operation.product_price).toLocaleString()} as an unpublished Zid draft.`);
+        const missing=op==="change_order_status"?(!operation.order_id||!operation.order_status):(!operation.product_name||!(Number(operation.product_price)>0));
+        if(missing)throw new Error(op==="change_order_status"?"Specify the Zid order reference and target status.":"Specify the product name and a positive selling price.");
+        const skuNote=operation.product_sku?` with SKU ${String(operation.product_sku)}`:" with a clean SKU generated from its name";
+        setCpOperationMessage(op==="change_order_status"?`Ready to move order ${String(operation.order_id)} to ${String(operation.order_status)}. No change has been made.`:`I’ll create ${String(operation.product_name)}${skuNote} at SAR ${Number(operation.product_price).toLocaleString()} and ${operation.publish_product===true?"publish it to your Zid storefront":"save it as an unpublished draft"}. Review the details, then continue.`);
       } else if(["seed_test_store","cleanup_test_store"].includes(op)){
         const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
         const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:"seed_test_store_preview"})});
@@ -1784,7 +1797,7 @@ export function PrizeSkoutDashboard() {
         setCpOperationMessage(op==="cleanup_test_store"?`Ready to clean only PrizeSkout fixtures from Zid store “${p.store.title}” (ID ${p.store.id}): unpublish ${p.existing.products.length} PS-ZID products and remove ${p.existing.coupons.length} test coupons. Genuine orders will remain. ${confirmation}`:`Ready to prepare Zid store “${p.store.title}” (ID ${p.store.id}) from ${p.source_product?.name??"the existing product"}. Plan: ${p.products.length} products (${p.products.filter(item=>p.existing.products.includes(item.sku)).length} already exist), ${p.coupons.length} coupons (${p.coupons.filter(item=>p.existing.coupons.includes(item.code)).length} already exist), realistic SAR 55–120 prices, eight verified costs, two below-floor products, one out-of-stock product, one missing-cost product, one loss-order product and one unpublished draft. No write has happened. ${confirmation}`);
       } else if(op==="product_change"){
         const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
-        const request={mode:String(operation.product_mode??"edit"),sku:operation.sku?String(operation.sku):undefined,query:operation.query?String(operation.query):undefined,scope:String(operation.scope??"single"),inventory_filter:operation.inventory_filter?String(operation.inventory_filter):undefined,changes:{...(operation.new_product_name?{name:String(operation.new_product_name)}:{}),...(operation.new_product_sku?{sku:String(operation.new_product_sku)}:{}),...(Number.isFinite(Number(operation.product_price))&&Number(operation.product_price)>0?{price:Number(operation.product_price)}:{}),...(Number.isFinite(Number(operation.product_cost))&&Number(operation.product_cost)>=0?{cost:Number(operation.product_cost)}:{}),...(Number.isInteger(Number(operation.product_quantity))&&Number(operation.product_quantity)>=0?{quantity:Number(operation.product_quantity)}:{}),...(operation.product_mode==="duplicate"?{is_published:operation.publish_duplicate===true}:{})}};
+        const request={mode:String(operation.product_mode??"edit"),sku:operation.sku?String(operation.sku):undefined,query:operation.query?String(operation.query):undefined,scope:String(operation.scope??"single"),inventory_filter:operation.inventory_filter?String(operation.inventory_filter):undefined,changes:{...(operation.new_product_name?{name:String(operation.new_product_name)}:{}),...(operation.new_product_sku?{sku:String(operation.new_product_sku)}:{}),...(Number.isFinite(Number(operation.product_price))&&Number(operation.product_price)>0?{price:Number(operation.product_price)}:{}),...(Number.isFinite(Number(operation.product_cost))&&Number(operation.product_cost)>=0?{cost:Number(operation.product_cost)}:{}),...(Number.isInteger(Number(operation.product_quantity))&&Number(operation.product_quantity)>=0?{quantity:Number(operation.product_quantity)}:{}),...(typeof operation.product_infinite==="boolean"?{is_infinite:operation.product_infinite}:{}),...(operation.product_mode==="duplicate"?{is_published:operation.publish_duplicate===true}:{})}};
         const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:"preview_product_change",product_request:request})});
         const data=await response.json() as {preview?:{store:{id:string;title:string};mode:string;count:number;products:Array<{sku:string;name:string;changes:Array<{field:string;before:unknown;after:unknown}>}>;approval_token:string;expires_at:string;risk:string;warning:string};error?:string};
         if(!response.ok||!data.preview)throw new Error(data.error??"Could not preview the Zid product change.");const preview=data.preview;
@@ -1861,11 +1874,13 @@ export function PrizeSkoutDashboard() {
     setCpOperationStatus("publishing");
     try{
       const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
-      const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:operation==="product_change"?"apply_product_change":operation,order_id:cpObj.order_id,order_status:cpObj.order_status,product_name:cpObj.product_name,product_sku:cpObj.product_sku,product_price:cpObj.product_price,test_store_id:cpObj.test_store_id,confirm_test_store:cpObj.confirm_test_store,approval_token:cpObj.approval_token})});
+      const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:operation==="product_change"?"apply_product_change":operation,order_id:cpObj.order_id,order_status:cpObj.order_status,product_name:cpObj.product_name,product_sku:cpObj.product_sku,product_price:cpObj.product_price,product_cost:cpObj.product_cost,product_quantity:cpObj.product_quantity,product_infinite:cpObj.product_infinite,publish_product:cpObj.publish_product,test_store_id:cpObj.test_store_id,confirm_test_store:cpObj.confirm_test_store,approval_token:cpObj.approval_token})});
       const result=await response.json() as {ok?:boolean;confirmed?:boolean;action_id?:string;message?:string;results?:Array<{id:string;sku:string;source_sku?:string;status:string;after?:{id:string;sku:string;name:string;price:number|null;cost:number|null;quantity:number|null;is_infinite:boolean;is_published:boolean;is_draft:boolean}}>;error?:string};
       if(!response.ok||!result.ok)throw new Error(result.error??"Zid did not complete the requested action.");
       setCpStoreActionResult({confirmed:Boolean(result.confirmed??result.ok),action_id:result.action_id??(operation==="seed_test_store"?"PS-ZID-SEED":"PS-ZID-CLEANUP"),message:result.message??"Completed",products:result.results});
-      setCpOperationMessage(operation==="product_change"?"Done. I checked the result directly in Zid and the product details are shown below.":result.message??"The Zid action completed.");setCpOperationStatus("complete");
+      if(operation==="create_product_draft"&&result.results?.[0]?.after)setCpObj(current=>current?{...current,created_product_sku:result.results![0].after!.sku,sku:result.results![0].after!.sku,query:result.results![0].after!.sku}:current);
+      setCpObj(current=>current?{...current,last_execution_complete:true,last_action_id:result.action_id??null}:current);
+      setCpOperationMessage(["product_change","create_product_draft"].includes(operation)?"Done. I checked the result directly in Zid and the product details are shown below.":result.message??"The Zid action completed.");setCpOperationStatus("complete");
     }catch(error){setCpOperationStatus("failed");setCpOperationMessage(error instanceof Error?error.message:"The Zid action failed.");}
   };
 
@@ -1893,7 +1908,7 @@ export function PrizeSkoutDashboard() {
       const pct = Number(cpObj.percentage_change);
       const targetPrice = mode === "fixed" && fixed > 0 ? fixed
         : mode === "percentage_change" && Number.isFinite(pct) ? product.current_price * (1 + pct / 100)
-        : product.preview?.recommended_price??product.recommended_price;
+        : product.preview?.allowed_price??product.current_price;
       try {
         const response = await fetch("/api/repricing/apply", {
           method:"POST", headers:{ "Content-Type":"application/json" },
@@ -2580,12 +2595,14 @@ export function PrizeSkoutDashboard() {
                 </div>
               </div>
 
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:18 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))", gap:12, marginTop:18 }}>
                 {[
                   ["Current price",`${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`],
-                  ["Recommended price",`${selectedProduct.recommended_price.toLocaleString(undefined,{maximumFractionDigits:2})} ${selectedProduct.currency}`],
-                  ["Price change",selectedProduct.current_price ? `${((selectedProduct.recommended_price-selectedProduct.current_price)/selectedProduct.current_price*100).toFixed(1)}%` : "—"],
-                  ["Calculated net margin",selectedProduct.net_margin_pct == null ? "—" : `${(selectedProduct.net_margin_pct*100).toFixed(1)}%`],
+                  ["Current contribution margin",selectedProduct.preview ? `${(selectedProduct.preview.current_margin_pct*100).toFixed(1)}%` : selectedProduct.net_margin_pct == null ? "—" : `${(selectedProduct.net_margin_pct*100).toFixed(1)}%`],
+                  [`Price required for ${((selectedProduct.preview?.margin_floor_pct??selectedProduct.margin_floor_pct??.18)*100).toFixed(0)}% target`,selectedProduct.preview?.required_price==null?"Unavailable":`${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.required_price,selectedProduct.currency)}`],
+                  ["Required increase",selectedProduct.preview?.required_price==null?"—":`${(selectedProduct.preview.required_increase_pct*100).toFixed(1)}%`],
+                  ["Highest price allowed now",selectedProduct.preview?.allowed_price==null?"Unavailable":`${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.allowed_price,selectedProduct.currency)}`],
+                  ["Margin at allowed price",selectedProduct.preview?.projected_margin_at_allowed==null?"—":`${(selectedProduct.preview.projected_margin_at_allowed*100).toFixed(1)}%`],
                 ].map(([label,value])=>(
                   <div key={label} style={{ border:"1px solid var(--border)", borderRadius:11, padding:"14px", background:"var(--surface2)" }}>
                     <div style={{ fontSize:10.5, textTransform:"uppercase", color:"var(--muted)" }}>{label}</div>
@@ -2594,16 +2611,20 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
 
+              {selectedProduct.preview?.outcome==="over_limit"&&<div style={{marginTop:14,padding:"12px 14px",border:"1px solid color-mix(in srgb,#B45309 35%,var(--border))",borderRadius:10,background:"color-mix(in srgb,#B45309 7%,var(--surface))",color:"#92400E",fontSize:12.5,lineHeight:1.6}}><strong>The target price is not approved for publishing.</strong> Reaching the margin target would require a {(selectedProduct.preview.required_increase_pct*100).toFixed(1)}% increase, while active policy v{selectedProduct.preview.policy_version} allows {(selectedProduct.preview.maximum_increase_pct*100).toFixed(1)}%. PrizeSkout has prefilled the highest currently permitted price instead. <strong>Market acceptance has not been established.</strong> This target is based on costs and charges, so review demand and comparable prices before approving a large increase.</div>}
+
               <div style={{ marginTop:22, borderTop:"1px solid var(--border)", paddingTop:20 }}>
                 <h3 style={{ margin:"0 0 5px", fontSize:17 }}>Review price update</h3>
                 <p style={{ margin:"0 0 14px", color:"var(--muted)", fontSize:13.5, lineHeight:1.55 }}>
-                  The recommended price is prefilled. You can enter a different amount before sending it to {selectedProduct.source_platform}.
+                  {selectedProduct.preview?.outcome==="over_limit"
+                    ? `The highest price allowed by your active policy is prefilled. It will improve the margin, but it will not reach the full target.`
+                    : `The price that reaches your active margin target is prefilled. Review it before sending it to ${selectedProduct.source_platform}.`}
                 </p>
                 <label style={{ display:"block", fontSize:11.5, fontWeight:700, color:"var(--muted)", textTransform:"uppercase" }}>
                   New price ({selectedProduct.currency})
                 </label>
                 <input type="number" min="0.01" step="0.01" value={productPriceDraft}
-                  onChange={event=>{ setProductPriceDraft(event.target.value); setProductPushStatus("idle"); }}
+                  onChange={event=>{ setProductPriceDraft(event.target.value); setProductPushStatus("idle"); setProductPushError(null); }}
                   style={{ width:"100%", marginTop:7, boxSizing:"border-box", border:"1px solid var(--border)",
                     borderRadius:10, padding:"12px 13px", background:"var(--surface2)", color:"var(--text)",
                     fontFamily:MONO, fontSize:18, fontWeight:700 }} />
@@ -2614,7 +2635,7 @@ export function PrizeSkoutDashboard() {
                   </div>
                 )}
                 {productPushStatus === "failed" && (
-                  <div style={{ marginTop:12, color:"#DC2626", fontSize:12.5 }}>The update was not applied. Review the price and try again.</div>
+                  <div style={{ marginTop:12, color:"#DC2626", fontSize:12.5 }}>{productPushError??"The update was not applied. Review the price and try again."}</div>
                 )}
                 {productPushStatus === "success" && (
                   <div style={{ marginTop:12, color:GN, background:`color-mix(in srgb,${GN} 9%,var(--surface))`,
@@ -3563,7 +3584,7 @@ export function PrizeSkoutDashboard() {
                   <div style={{ padding:"17px 19px", background:"var(--surface2)", display:"flex", justifyContent:"space-between", gap:12, flexWrap:"wrap", alignItems:"center" }}>
                     <div>
                       <div style={{ fontSize:11, color:"var(--muted)", textTransform:"uppercase", letterSpacing:".08em" }}>{cpOperationStatus==="running"?"Working on it":cpOperationStatus==="failed"?"I need your help":cpOperationStatus==="complete"?"Done":["publish_prices","change_order_status","create_product_draft","product_change","seed_test_store","cleanup_test_store"].includes(String(cpObj.operation))?"Review before I continue":"Here’s what I found"}</div>
-                      <div style={{ fontSize:17, fontWeight:800, marginTop:4 }}>{String(cpObj.operation)==="product_change"&&cpOperationStatus==="complete"?"Here’s the product now":cpPrompt}</div>
+                      <div style={{ fontSize:17, fontWeight:800, marginTop:4 }}>{["product_change","create_product_draft"].includes(String(cpObj.operation))&&cpOperationStatus==="complete"?"Here’s the product now":cpPrompt}</div>
                     </div>
                     <span style={{ padding:"6px 11px", borderRadius:999, fontSize:12, fontWeight:800,
                       color:cpOperationStatus==="failed"?"#DC2626":cpOperationStatus==="complete"?GN:OG, border:"1px solid currentColor" }}>
@@ -3572,8 +3593,9 @@ export function PrizeSkoutDashboard() {
                   </div>
                   <div style={{ padding:"18px 19px", display:"flex", flexDirection:"column", gap:14 }}>
                     {cpOperationMessage && <div style={{ fontSize:14.5, lineHeight:1.55 }}>{cpOperationMessage}</div>}
+                    {String(cpObj.operation)==="create_product_draft"&&cpOperationStatus!=="complete"&&<div style={{border:"1px solid var(--border)",borderRadius:12,padding:"14px 15px",background:"var(--surface2)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12}}><div><small style={{color:"var(--muted)"}}>Product</small><div style={{fontWeight:800,marginTop:3}}>{String(cpObj.product_name??"Name required")}</div></div><div><small style={{color:"var(--muted)"}}>SKU</small><div style={{fontWeight:800,marginTop:3}}>{cpObj.product_sku?String(cpObj.product_sku):"Generated from name"}</div></div><div><small style={{color:"var(--muted)"}}>Price</small><div style={{fontWeight:800,marginTop:3}}>SAR {Number(cpObj.product_price??0).toLocaleString()}</div></div><div><small style={{color:"var(--muted)"}}>Cost</small><div style={{fontWeight:800,marginTop:3}}>{cpObj.product_cost==null?"Not supplied":`SAR ${Number(cpObj.product_cost).toLocaleString()}`}</div></div><div><small style={{color:"var(--muted)"}}>Stock</small><div style={{fontWeight:800,marginTop:3}}>{cpObj.product_infinite===true?"Unlimited":cpObj.product_quantity==null?"Not supplied":Number(cpObj.product_quantity).toLocaleString()}</div></div><div><small style={{color:"var(--muted)"}}>After approval</small><div style={{fontWeight:800,marginTop:3,color:cpObj.publish_product===true?GN:"#B45309"}}>{cpObj.publish_product===true?"Live in storefront":"Unpublished draft"}</div></div></div>}
                     {String(cpObj.operation)==="product_change"&&cpOperationStatus!=="complete"&&Boolean(cpObj.product_change_preview)&&(()=>{const preview=cpObj.product_change_preview as {products:Array<{name:string;sku:string;changes:Array<{field:string;before:unknown;after:unknown}>}>};return <div style={{display:"grid",gap:10}}>{preview.products.map(product=><div key={product.sku} style={{border:"1px solid var(--border)",borderRadius:12,padding:"14px 15px",background:"var(--surface2)"}}><div style={{fontWeight:800}}>{product.name}</div><div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>Source SKU {product.sku}</div><div style={{display:"grid",gap:7,marginTop:12}}>{product.changes.filter(change=>!["source"].includes(change.field)).map(change=><div key={change.field} style={{display:"flex",justifyContent:"space-between",gap:14,fontSize:12.5}}><span style={{color:"var(--muted)",textTransform:"capitalize"}}>{change.field}</span><strong style={{textAlign:"right"}}>{String(change.after)}</strong></div>)}</div></div>)}</div>})()}
-                    {["change_order_status","create_product_draft","product_change","seed_test_store","cleanup_test_store"].includes(String(cpObj.operation))&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:14,flexWrap:"wrap",border:"1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",borderRadius:11,padding:"13px 14px",background:"color-mix(in srgb,#F59E0B 8%,var(--surface))"}}><div style={{fontSize:13.5,maxWidth:720}}>{String(cpObj.operation)==="product_change"?(String(cpObj.product_mode)==="delete"?"This will permanently remove the product. Please check it carefully before continuing.":cpOperationStatus==="complete"?"The change was checked against Zid.":"Nothing has changed yet. Continue when the product and details look right."):<><strong>Confirmation needed.</strong> Nothing happens until you approve.</>}</div><button onClick={executeCopilotStoreWrite} disabled={cpOperationStatus==="publishing"||cpOperationStatus==="complete"} style={{border:0,borderRadius:9,padding:"10px 14px",background:cpOperationStatus==="complete"?GN:OG,color:"white",fontFamily:"inherit",fontWeight:800,cursor:cpOperationStatus==="publishing"?"wait":"pointer"}}>{cpOperationStatus==="publishing"?"Working...":cpOperationStatus==="complete"?"Checked in Zid":String(cpObj.product_mode)==="duplicate"?(cpObj.publish_duplicate===true?"Create and publish":"Create product"):String(cpObj.product_mode)==="publish"?"Publish product":"Save change"}</button></div>}
+                    {["change_order_status","create_product_draft","product_change","seed_test_store","cleanup_test_store"].includes(String(cpObj.operation))&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:14,flexWrap:"wrap",border:"1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",borderRadius:11,padding:"13px 14px",background:"color-mix(in srgb,#F59E0B 8%,var(--surface))"}}><div style={{fontSize:13.5,maxWidth:720}}>{["product_change","create_product_draft"].includes(String(cpObj.operation))?(String(cpObj.product_mode)==="delete"?"This will permanently remove the product. Please check it carefully before continuing.":cpOperationStatus==="complete"?"The change was checked against Zid.":"Nothing has changed yet. Continue when the product and details look right."):<><strong>Confirmation needed.</strong> Nothing happens until you approve.</>}</div><button onClick={executeCopilotStoreWrite} disabled={cpOperationStatus==="publishing"||cpOperationStatus==="complete"} style={{border:0,borderRadius:9,padding:"10px 14px",background:cpOperationStatus==="complete"?GN:OG,color:"white",fontFamily:"inherit",fontWeight:800,cursor:cpOperationStatus==="publishing"?"wait":"pointer"}}>{cpOperationStatus==="publishing"?"Working...":cpOperationStatus==="complete"?"Checked in Zid":String(cpObj.operation)==="create_product_draft"?(cpObj.publish_product===true?"Create and publish":"Create draft"):String(cpObj.product_mode)==="duplicate"?(cpObj.publish_duplicate===true?"Create and publish":"Create product"):String(cpObj.product_mode)==="publish"?"Publish product":"Save change"}</button></div>}
                     {cpStoreActionResult&&<div style={{display:"grid",gap:10}}>{cpStoreActionResult.products?.map(product=>{const item=product.after;return <div key={product.id} style={{border:`1px solid ${cpStoreActionResult.confirmed?GN:"#DC2626"}`,borderRadius:12,padding:"15px 16px",background:"var(--surface)"}}><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"start",flexWrap:"wrap"}}><div><div style={{fontSize:17,fontWeight:800}}>{item?.name??product.sku}</div><div style={{fontSize:12.5,color:"var(--muted)",marginTop:3}}>SKU {item?.sku??product.sku}</div></div><span style={{fontSize:11,fontWeight:800,color:item?.is_published?GN:"#B45309",textTransform:"uppercase"}}>{item?.is_published?"Live in store":"Not published"}</span></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10,marginTop:14}}><div><small style={{color:"var(--muted)"}}>Price</small><div style={{fontWeight:750}}>SAR {item?.price?.toLocaleString()??"—"}</div></div><div><small style={{color:"var(--muted)"}}>Stock</small><div style={{fontWeight:750}}>{item?.is_infinite?"Always available":item?.quantity??"Unknown"}</div></div><div><small style={{color:"var(--muted)"}}>Zid check</small><div style={{fontWeight:750,color:product.status==="confirmed"?GN:"#B45309"}}>{product.status==="confirmed"?"Matched":"Needs review"}</div></div></div>{item&&!item.is_published&&<button onClick={()=>prepareCreatedProductPublish(item.sku)} style={{marginTop:14,border:0,borderRadius:9,padding:"10px 14px",background:OG,color:"white",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Publish this product</button>}</div>})}<details style={{fontSize:11.5,color:"var(--muted)"}}><summary style={{cursor:"pointer"}}>Technical receipt</summary><div style={{marginTop:5}}>Action ID: {cpStoreActionResult.action_id}</div></details></div>}
                     {cpOperationProducts.length > 0 && (
                       <>
@@ -3589,7 +3611,7 @@ export function PrizeSkoutDashboard() {
                               <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:3 }}>SKU {product.sku}</div>
                               <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginTop:10, fontSize:12.5 }}>
                                 <span>{product.currency} {product.current_price.toLocaleString()}</span>
-                                <strong style={{ color:(product.preview?.floor_breached??product.floor_breached)?"#DC2626":GN }}>→ {product.currency} {(product.preview?.recommended_price??product.recommended_price).toLocaleString()}</strong>
+                                <strong style={{ color:(product.preview?.floor_breached??product.floor_breached)?"#DC2626":GN }}>→ {product.currency} {(product.preview?.allowed_price??product.current_price).toLocaleString()}</strong>
                               </div>
                               <div style={{fontSize:11,marginTop:6,color:"var(--muted)"}}>{product.cost_confidence==="verified"?"Verified platform cost":"Cost not verified"} · {product.inventory_is_infinite?"always available":product.inventory_quantity!=null?`${product.inventory_quantity} in stock`:product.inventory_status?.replaceAll("_"," ")??"inventory unknown"}</div>
                             </button>
@@ -3717,7 +3739,7 @@ export function PrizeSkoutDashboard() {
                 {ruleConfirmIndex===0&&<div style={{marginTop:12,padding:12,borderRadius:8,background:"#FEF3C7",color:"#92400E",fontSize:12.5}}>These settings will become active immediately. Automatic price updates happen only if you selected “Update automatically within my limit.”</div>}
               </div>
 
-              {rulePreviewIndex===0&&(()=>{const unavailable=importedProducts.filter(p=>p.inventory_status==="out_of_stock"),previews=importedProducts.filter(p=>p.inventory_status!=="out_of_stock").map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Products affected — nothing has changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products checked",previews.length-blocked.length],["Earning below target",affected.length],["Need a larger increase",over.length],["Cost needs confirmation",blocked.length],["Unavailable excluded",unavailable.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Price now","Kept now","Suggested price","Increase","What this means"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.net_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${p.currency} ${v.recommended_price.toFixed(2)}`}</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${(v.increase_pct*100).toFixed(1)}%`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome==="blocked_missing_cost"?"Confirm product cost first":v?.outcome==="over_limit"?"Your increase limit prevents reaching the target":v?.outcome==="within_limit"?"Within your limit":"No change needed"}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>PrizeSkout uses the product cost confirmed by your store and the latest channel charges. Products without a confirmed cost or current availability are never changed automatically.</p></div>})()}
+              {rulePreviewIndex===0&&(()=>{const unavailable=importedProducts.filter(p=>p.inventory_status==="out_of_stock"),previews=importedProducts.filter(p=>p.inventory_status!=="out_of_stock").map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Products affected — nothing has changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products checked",previews.length-blocked.length],["Earning below target",affected.length],["Need a larger increase",over.length],["Cost needs confirmation",blocked.length],["Unavailable excluded",unavailable.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Price now","Kept now","Required for target","Allowed now","What this means"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.current_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.required_price==null?"—":`${p.currency} ${v.required_price.toFixed(2)} (${(v.required_increase_pct*100).toFixed(1)}%)`}</td><td style={{padding:9}}>{v?.allowed_price==null?"—":`${p.currency} ${v.allowed_price.toFixed(2)}`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome==="blocked_missing_cost"?"Confirm product cost first":v?.outcome==="over_limit"?"Active policy caps this increase; market acceptance is not established":v?.outcome==="within_limit"?"Within your active limit; review before publishing":"No change needed"}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>Required prices are calculated from confirmed product costs and channel charges. They are not forecasts of what customers will pay. Products without a confirmed cost or current availability are never changed automatically.</p></div>})()}
 
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>How we calculate it</h3><div style={{marginTop:12,fontFamily:MONO,fontSize:12.5,lineHeight:1.9,color:"var(--muted)"}}>Selling price<br/>− product cost confirmed by your store<br/>− channel commission and tax on fees<br/>− payment, delivery and promotion charges<br/><strong style={{color:"var(--text)"}}>= amount kept from this sale</strong></div></div><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>Previous protection settings</h3>{policyVersions.length===0?<p style={{fontSize:13,color:"var(--muted)"}}>Your first saved settings will appear here.</p>:policyVersions.slice(0,5).map(v=><div key={v.id} style={{padding:"10px 0",borderBottom:"1px solid var(--border)",fontSize:12.5}}><strong>Version {v.version} · keep {Math.round(v.contribution_margin_floor_pct*100)}% · increase up to {Math.round(v.max_price_increase_pct*100)}%</strong><div style={{color:"var(--muted)",marginTop:3}}>{v.activated_by} · {new Date(v.activated_at).toLocaleString()}</div></div>)}</div></div>
             </div>

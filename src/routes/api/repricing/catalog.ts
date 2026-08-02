@@ -8,6 +8,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide as calculateMargin } from "@/server/core/decide-engine";
+import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
 
 export type RepricingProduct = {
   ingest_event_id: string;
@@ -31,7 +32,7 @@ export type RepricingProduct = {
   margin_floor_pct: number;
   commission_rate: number;
   cost_confidence: "verified" | "estimated" | "unknown";
-  preview?: { recommended_price:number|null; net_margin_pct:number; floor_breached:boolean; increase_pct:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
+  preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; policy_version:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
 };
 
 function json(data: unknown, status = 200) {
@@ -68,12 +69,16 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         }
 
         const accountId = merchantId;
+        const activePolicy=await getMerchantMarginPolicy(accountId);
+        const effectiveFloor=wantsPreview?previewFloor:activePolicy.marginFloorPct;
+        const effectiveMaxIncrease=wantsPreview?previewMaxIncrease:activePolicy.maxPriceIncreasePct;
 
-        // Fetch decisions using the baseline columns so a web deploy remains
-        // readable while a newly-added migration is still rolling out.
+        // Use the complete economics snapshot that produced the decision. This
+        // keeps the preview consistent with the active contract, including
+        // payment fees, fixed fees and merchant-funded promotions.
         const { data: decideRows, error: decideErr } = await supabaseAdmin
           .from("ps_decide_results")
-          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, logistics_subsidy, floor_breached, decision_action, ingest_event_id, created_at")
+          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, payment_fee_rate, fixed_order_fee, promotion_contribution_rate, logistics_subsidy, floor_breached, decision_action, ingest_event_id, created_at")
           .eq("account_id", accountId)
           .order("created_at", { ascending: false });
 
@@ -106,12 +111,15 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           const costSource = String(rawPayload?.cost_source ?? "unknown");
 
           const currentPrice=Number(evt.current_retail_price??0);
-          const preview=wantsPreview&&costSource==="platform_catalog"&&decision?calculateMargin({region:"SA",baseCost:Number(decision.base_cost),currentRetailPrice:currentPrice,commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:previewFloor}):null;
-          const uncappedRecommendation=preview?.recommendedPrice??null;
-          const cappedRecommendation=uncappedRecommendation&&currentPrice>0?Math.min(uncappedRecommendation,currentPrice*(1+previewMaxIncrease)):uncappedRecommendation;
-          const projected=cappedRecommendation&&decision?calculateMargin({region:"SA",baseCost:Number(decision.base_cost),currentRetailPrice:cappedRecommendation,commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:previewFloor}):null;
-          const previewIncrease=cappedRecommendation&&currentPrice>0?(cappedRecommendation-currentPrice)/currentPrice:0;
-          const requiredIncrease=uncappedRecommendation&&currentPrice>0?(uncappedRecommendation-currentPrice)/currentPrice:0;
+          const economics=decision?{region:"SA",baseCost:Number(decision.base_cost),commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),paymentFeeRate:Number(decision.payment_fee_rate??0),fixedOrderFee:Number(decision.fixed_order_fee??0),promotionContributionRate:Number(decision.promotion_contribution_rate??0),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:effectiveFloor}:null;
+          const currentAnalysis=costSource==="platform_catalog"&&economics?calculateMargin({...economics,currentRetailPrice:currentPrice}):null;
+          const requiredPrice=currentAnalysis?.recommendedPrice??null;
+          const maximumAllowedPrice=currentPrice>0?Math.round(currentPrice*(1+effectiveMaxIncrease)*100)/100:null;
+          const allowedPrice=requiredPrice==null?null:maximumAllowedPrice==null?requiredPrice:Math.min(requiredPrice,maximumAllowedPrice);
+          const projectedRequired=requiredPrice&&economics?calculateMargin({...economics,currentRetailPrice:requiredPrice}):null;
+          const projectedAllowed=allowedPrice&&economics?calculateMargin({...economics,currentRetailPrice:allowedPrice}):null;
+          const requiredIncrease=requiredPrice&&currentPrice>0?(requiredPrice-currentPrice)/currentPrice:0;
+          const allowedIncrease=allowedPrice&&currentPrice>0?(allowedPrice-currentPrice)/currentPrice:0;
           products.push({
             ingest_event_id: evt.id,
             decide_result_id: decision?.id??null,
@@ -121,9 +129,9 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             source_platform: evt.source_platform ?? "",
             item_id: evt.item_id,
             current_price: Number(evt.current_retail_price ?? 0),
-            recommended_price: Number(decision?.recommended_price ?? currentPrice),
-            net_margin_pct: decision?Number(decision.net_margin_pct):null,
-            floor_breached: Boolean(decision?.floor_breached),
+            recommended_price: requiredPrice ?? currentPrice,
+            net_margin_pct: currentAnalysis?.netMarginPct??(decision?Number(decision.net_margin_pct):null),
+            floor_breached: currentAnalysis?.floorBreached??Boolean(decision?.floor_breached),
             decision_action: decision?.decision_action ?? "blocked_missing_cost",
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
@@ -136,16 +144,16 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             cost_confidence: costSource === "platform_catalog"
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
-            ...(wantsPreview?{preview:preview?{recommended_price:cappedRecommendation==null?null:Math.round(cappedRecommendation*100)/100,net_margin_pct:projected?.netMarginPct??preview.netMarginPct,floor_breached:preview.floorBreached,increase_pct:previewIncrease,outcome:!preview.floorBreached?"safe":requiredIncrease<=previewMaxIncrease?"within_limit":"over_limit"}:{recommended_price:null,net_margin_pct:Number(decision?.net_margin_pct??0),floor_breached:Boolean(decision?.floor_breached),increase_pct:0,outcome:"blocked_missing_cost"}}:{}),
+            preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"over_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:"blocked_missing_cost"},
           });
         }
 
         // Sort: floor-breached first, then by abs(price change) descending
         products.sort((a, b) => {
-          if (a.floor_breached && !b.floor_breached) return -1;
-          if (!a.floor_breached && b.floor_breached) return 1;
-          const aDelta = Math.abs(a.recommended_price - a.current_price);
-          const bDelta = Math.abs(b.recommended_price - b.current_price);
+          if (a.preview?.floor_breached && !b.preview?.floor_breached) return -1;
+          if (!a.preview?.floor_breached && b.preview?.floor_breached) return 1;
+          const aDelta = Math.abs((a.preview?.required_price??a.current_price) - a.current_price);
+          const bDelta = Math.abs((b.preview?.required_price??b.current_price) - b.current_price);
           return bDelta - aDelta;
         });
 

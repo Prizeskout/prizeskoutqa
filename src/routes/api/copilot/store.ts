@@ -7,7 +7,7 @@ import { executeZidProductChange,previewZidProductChange,type ProductChangeReque
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json"}});
 
 export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST:async({request})=>{
-  const body=await request.json().catch(()=>null) as {merchant_id?:string;access_code?:string;action?:string;days?:number;order_id?:string;order_status?:string;product_name?:string;product_sku?:string;product_price?:number;test_store_id?:string;confirm_test_store?:boolean;product_request?:ProductChangeRequest;approval_token?:string}|null;
+  const body=await request.json().catch(()=>null) as {merchant_id?:string;access_code?:string;action?:string;days?:number;order_id?:string;order_status?:string;product_name?:string;product_sku?:string;product_price?:number;product_cost?:number;product_quantity?:number;product_infinite?:boolean;publish_product?:boolean;test_store_id?:string;confirm_test_store?:boolean;product_request?:ProductChangeRequest;approval_token?:string}|null;
   const merchantId=body?.merchant_id?.trim();
   const accessCode=body?.access_code?.trim().toUpperCase();
   if(!merchantId||!accessCode)return json({error:"merchant_id and access_code are required"},400);
@@ -59,12 +59,22 @@ export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST
     return json({ok:confirmed,confirmed,action_id:`PS-ORDER-${Date.now().toString(36).toUpperCase()}`,message:confirmed?`Order ${orderId} was moved to ${status} and confirmed in Zid.`:`Zid accepted the update, but the new status could not be confirmed by readback. Current readback: ${matchedStatus||"order not returned"}.`},confirmed?200:502);
   }
   if(body?.action==="create_product_draft"){
-    const name=body.product_name?.trim(),sku=body.product_sku?.trim(),price=Number(body.product_price);
-    if(!name||!sku||!Number.isFinite(price)||price<=0)return json({error:"Product name, SKU, and a positive price are required."},400);
-    const response=await fetch("https://api.zid.sa/v1/products/",{method:"POST",headers:{...headers,"Access-Token":channel.manager_token??"","Content-Type":"application/json",Role:"Manager"},body:JSON.stringify({name:{en:name,ar:name},sku,price,is_draft:true,is_published:false})});
+    const name=body.product_name?.trim(),price=Number(body.product_price),publish=body.publish_product===true,cost=body.product_cost==null?null:Number(body.product_cost),quantity=body.product_quantity==null?null:Number(body.product_quantity),infinite=body.product_infinite===true;
+    if(!name||!Number.isFinite(price)||price<=0)return json({error:"Product name and a positive selling price are required."},400);
+    if(cost!=null&&(!Number.isFinite(cost)||cost<0))return json({error:"Product cost must be zero or more."},400);
+    if(quantity!=null&&(!Number.isInteger(quantity)||quantity<0))return json({error:"Stock quantity must be a whole number of zero or more."},400);
+    const slug=name.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toUpperCase().slice(0,48)||"PRODUCT";
+    const sku=body.product_sku?.trim()||`${slug}-${Date.now().toString(36).toUpperCase()}`.slice(0,80);
+    const response=await fetch("https://api.zid.sa/v1/products/",{method:"POST",headers:{...headers,"Access-Token":channel.manager_token??"","Content-Type":"application/json",Role:"Manager"},body:JSON.stringify({name:{en:name,ar:name},sku,price,...(cost!=null?{cost}:{}),...(quantity!=null?{quantity}:{}),is_infinite:infinite,is_draft:!publish,is_published:publish})});
     const payload=await response.json().catch(()=>null) as Record<string,unknown>|null;
-    if(!response.ok)return json({error:`Zid rejected the draft product (${response.status}): ${JSON.stringify(payload).slice(0,250)}`},502);
-    return json({ok:true,confirmed:true,product_id:String(payload?.id??"Not returned"),action_id:`PS-PRODUCT-${Date.now().toString(36).toUpperCase()}`,message:`Draft product ${name} was created in Zid and remains unpublished.`});
+    const productId=String(payload?.id??(payload?.data as Record<string,unknown>|undefined)?.id??"");
+    if(!response.ok||!productId)return json({error:`Zid rejected the product (${response.status}): ${JSON.stringify(payload).slice(0,250)}`},502);
+    const readback=await fetch(`https://api.zid.sa/v1/products/${encodeURIComponent(productId)}/`,{headers});
+    const live=readback.ok?await readback.json().catch(()=>null) as Record<string,unknown>|null:null;
+    const liveName=typeof live?.name==="object"&&live.name?String((live.name as Record<string,unknown>).en??(live.name as Record<string,unknown>).ar??""):String(live?.name??"");
+    const confirmed=Boolean(live&&liveName===name&&String(live.sku??"")===sku&&Number(live.price)===price&&Boolean(live.is_published??!live.is_draft)===publish);
+    const after={id:productId,sku:String(live?.sku??sku),name:liveName||name,price:Number(live?.price??price),cost:live?.cost==null?null:Number(live.cost),quantity:live?.quantity==null?null:Number(live.quantity),is_infinite:Boolean(live?.is_infinite),is_published:Boolean(live?.is_published??!live?.is_draft),is_draft:Boolean(live?.is_draft)};
+    return json({ok:true,confirmed,product_id:productId,action_id:`PS-PRODUCT-${Date.now().toString(36).toUpperCase()}`,message:confirmed?`${name} was created and ${publish?"published":"saved as a draft"} in Zid.`:"Zid created the product, but its final details could not be fully confirmed.",results:[{id:productId,sku,status:confirmed?"confirmed":"unconfirmed",after}]});
   }
   if(body?.action!=="list_orders")return json({error:"Unsupported store operation."},400);
   const today=new Date().toISOString().slice(0,10);
