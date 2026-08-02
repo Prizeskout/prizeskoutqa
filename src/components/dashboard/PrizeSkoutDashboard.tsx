@@ -2233,7 +2233,7 @@ export function PrizeSkoutDashboard() {
             {navDefs.map(n => {
               const on = tab === n.id;
               return (
-                <div key={n.id} onClick={()=>setTab(n.id)} data-demo-tip={n.tip} style={{
+                <div key={n.id} role="button" tabIndex={0} aria-current={on?"page":undefined} onClick={()=>setTab(n.id)} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();setTab(n.id);}}} data-demo-tip={n.tip} style={{
                   cursor:"pointer", display:"flex", alignItems:"center", gap:12,
                   padding:"13px 14px", borderRadius:12,
                   background: on ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
@@ -2252,7 +2252,7 @@ export function PrizeSkoutDashboard() {
           </nav>
           <div style={{ marginTop:"auto", display:"flex", flexDirection:"column", gap:4 }}>
             {/* Settings */}
-            <div onClick={()=>setTab("settings")}
+            <div role="button" tabIndex={0} aria-current={tab==="settings"?"page":undefined} onClick={()=>setTab("settings")} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();setTab("settings");}}}
               data-demo-tip="Settings — connect channels, set margin floors, manage outlet locations, and edit your business name."
               style={{
               display:"flex", alignItems:"center", gap:10, padding:"10px 10px",

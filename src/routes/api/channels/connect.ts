@@ -116,6 +116,51 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ ok: true, policy, versions }, 200);
           }
 
+          if (platform === "locations") {
+            if (body.action === "list") {
+              const { data, error } = await supabaseAdmin.from("ps_merchant_locations").select("id,name,city,region,active").eq("account_id", merchant_id).order("created_at");
+              if (error) throw error;
+              return resp({ ok:true, locations:data ?? [] }, 200);
+            }
+            if (body.action === "create") {
+              const name=(body.name ?? "").trim().slice(0,160),city=(body.city ?? "").trim().slice(0,120),region=(body.region ?? "").trim();
+              if (!name || !city || !["Qatar","Saudi Arabia","UAE","Kuwait","Bahrain","Oman"].includes(region)) return resp({error:"Name, city, and a supported region are required."},400);
+              const {data,error}=await supabaseAdmin.from("ps_merchant_locations").insert({account_id:merchant_id,name,city,region,active:true}).select("id,name,city,region,active").single();
+              if(error)throw error;
+              return resp({ok:true,location:data},200);
+            }
+            if (body.action === "toggle") {
+              const {data,error}=await supabaseAdmin.from("ps_merchant_locations").update({active:body.active==="true"}).eq("account_id",merchant_id).eq("id",body.id).select("id,name,city,region,active").maybeSingle();
+              if(error)throw error;
+              if(!data)return resp({error:"Location not found."},404);
+              return resp({ok:true,location:data},200);
+            }
+            if (body.action === "delete") {
+              const {error}=await supabaseAdmin.from("ps_merchant_locations").delete().eq("account_id",merchant_id).eq("id",body.id);
+              if(error)throw error;
+              return resp({ok:true},200);
+            }
+            return resp({error:"Unsupported location action."},400);
+          }
+
+          if (platform === "notification_preferences") {
+            const allowed = new Set(["margin_breach","reprice_applied","channel_down","competitor_drop","promo_overlap","weekly_digest"]);
+            if (body.action === "list") {
+              const { data, error } = await supabaseAdmin.from("ps_merchant_notification_settings").select("pref_key,enabled").eq("account_id", merchant_id);
+              if (error) throw error;
+              return resp({ ok:true, preferences:data ?? [] }, 200);
+            }
+            if (body.action === "set") {
+              if (!allowed.has(body.pref_key ?? "") || !["true","false"].includes(body.enabled ?? "")) return resp({ error:"A valid notification preference and enabled value are required." }, 400);
+              const { data, error } = await supabaseAdmin.from("ps_merchant_notification_settings")
+                .upsert({ account_id:merchant_id, pref_key:body.pref_key, enabled:body.enabled === "true" }, { onConflict:"account_id,pref_key" })
+                .select("pref_key,enabled").single();
+              if (error) throw error;
+              return resp({ ok:true, preference:data }, 200);
+            }
+            return resp({ error:"Unsupported notification preference action." }, 400);
+          }
+
           if (platform === "talabat_expected_payout") {
             // Also multiplexed here, same reason as margin_floor above.
             if (body.action === "upload") {
@@ -622,7 +667,7 @@ export const Route = createFileRoute("/api/channels/connect")({
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
         } catch (err) {
           console.error("[connect] unhandled error:", err);
-          return resp({ ok: false, error: "Unexpected error. Please try again." }, 200);
+          return resp({ ok: false, error: "Unexpected error. Please try again." }, 500);
         }
       },
     },

@@ -194,11 +194,11 @@ export function SettingsTabs() {
           );
         })}
       </div>
-      <div style={{ display: active === "Store Access"  ? "block" : "none" }}><StoreAccessTab /></div>
-      <div style={{ display: active === "Channels"      ? "block" : "none" }}><ChannelsTab /></div>
-      <div style={{ display: active === "Margin Rules"  ? "block" : "none" }}><MarginRulesTab /></div>
-      <div style={{ display: active === "Locations"     ? "block" : "none" }}><LocationsTab /></div>
-      <div style={{ display: active === "Notifications" ? "block" : "none" }}><NotificationsTab /></div>
+      {active === "Store Access" && <StoreAccessTab />}
+      {active === "Channels" && <ChannelsTab />}
+      {active === "Margin Rules" && <MarginRulesTab />}
+      {active === "Locations" && <LocationsTab />}
+      {active === "Notifications" && <NotificationsTab />}
     </div>
   );
 }

@@ -3843,6 +3843,18 @@ export type Database = {
           },
         ]
       }
+      ps_merchant_locations: {
+        Row: { id: string; account_id: string; name: string; city: string; region: string; active: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; account_id: string; name: string; city: string; region: string; active?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; account_id?: string; name?: string; city?: string; region?: string; active?: boolean; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      ps_merchant_notification_settings: {
+        Row: { account_id: string; pref_key: string; enabled: boolean; updated_at: string }
+        Insert: { account_id: string; pref_key: string; enabled: boolean; updated_at?: string }
+        Update: { account_id?: string; pref_key?: string; enabled?: boolean; updated_at?: string }
+        Relationships: []
+      }
       ps_merchant_channels: {
         Row: {
           id: string
