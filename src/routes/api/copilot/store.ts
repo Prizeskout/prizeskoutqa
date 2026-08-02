@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { buildZidProfitBrief } from "@/server/core/zid-profit-brief";
+import { cleanupZidTestSeed,executeZidTestSeed,previewZidTestSeed } from "@/server/core/zid-test-store-seeder";
 
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json"}});
 
 export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST:async({request})=>{
-  const body=await request.json().catch(()=>null) as {merchant_id?:string;access_code?:string;action?:string;days?:number;order_id?:string;order_status?:string;product_name?:string;product_sku?:string;product_price?:number}|null;
+  const body=await request.json().catch(()=>null) as {merchant_id?:string;access_code?:string;action?:string;days?:number;order_id?:string;order_status?:string;product_name?:string;product_sku?:string;product_price?:number;test_store_id?:string;confirm_test_store?:boolean}|null;
   const merchantId=body?.merchant_id?.trim();
   const accessCode=body?.access_code?.trim().toUpperCase();
   if(!merchantId||!accessCode)return json({error:"merchant_id and access_code are required"},400);
@@ -14,7 +15,20 @@ export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST
   const {data:channel}=await supabaseAdmin.from("ps_merchant_channels").select("bearer_token,manager_token,metadata,status").eq("account_id",merchantId).eq("platform","zid").maybeSingle();
   if(!channel||channel.status!=="connected"||!channel.bearer_token)return json({error:"Zid is not connected."},400);
   const authorization=channel.bearer_token.startsWith("Bearer ")?channel.bearer_token:`Bearer ${channel.bearer_token}`;
-  const headers:Record<string,string>={Authorization:authorization,"X-Manager-Token":channel.manager_token??"",Accept:"application/json","Accept-Language":"en"};
+  const metadata=(channel.metadata??{}) as Record<string,unknown>;
+  const headers:Record<string,string>={Authorization:authorization,"X-Manager-Token":channel.manager_token??"","Access-Token":channel.manager_token??"",...(metadata.store_id?{"Store-Id":String(metadata.store_id)}:{}),Role:"Manager",Accept:"application/json","Accept-Language":"en"};
+  if(body?.action==="seed_test_store_preview"){
+    try{return json({ok:true,preview:await previewZidTestSeed(headers)});}
+    catch(error){return json({error:error instanceof Error?error.message:"Could not inspect the Zid test store."},502);}
+  }
+  if(body?.action==="seed_test_store"){
+    try{const result=await executeZidTestSeed(headers,{storeId:body.test_store_id??"",merchantConfirmedTestStore:body.confirm_test_store===true});return json(result,result.ok?200:502);}
+    catch(error){return json({error:error instanceof Error?error.message:"Could not prepare the Zid test store."},502);}
+  }
+  if(body?.action==="cleanup_test_store"){
+    try{const result=await cleanupZidTestSeed(headers,{storeId:body.test_store_id??"",merchantConfirmedTestStore:body.confirm_test_store===true});return json(result,result.ok?200:502);}
+    catch(error){return json({error:error instanceof Error?error.message:"Could not clean the Zid test fixtures."},502);}
+  }
   if(body?.action==="profit_brief"){
     try{return json({ok:true,brief:await buildZidProfitBrief(merchantId,headers,Number(body.days)||30)});}
     catch(error){return json({error:error instanceof Error?error.message:"Could not build the Zid profit brief."},502);}

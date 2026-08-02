@@ -9,6 +9,7 @@ const num=(value:unknown)=>{if(value&&typeof value==="object")value=(value as Ob
 const arr=(value:unknown):Obj[]=>Array.isArray(value)?value.filter(item=>item&&typeof item==="object") as Obj[]:[];
 const text=(...values:unknown[])=>String(values.find(value=>typeof value==="string"||typeof value==="number")??"");
 const pct=(value:unknown)=>{const parsed=num(value);return parsed>1?parsed/100:parsed;};
+const idsFrom=(value:unknown):string[]=>Array.isArray(value)?value.flatMap(item=>item&&typeof item==="object"?[text((item as Obj).id,(item as Obj).product_id)]:[text(item)]).filter(Boolean):typeof value==="string"?value.split(",").map(item=>item.trim()).filter(Boolean):[];
 
 type VatSummary={available:boolean;active:boolean;included_in_prices:boolean;rate:number|null;amount:number;source:"zid_settings"|"order_evidence"|"unavailable";message:string};
 type StockSummary={products:number;available:number;out_of_stock:number;low_stock:number;unknown:number;units_available:number};
@@ -85,8 +86,12 @@ export async function buildZidProfitBrief(accountId:string,headers:Headers,days=
   const verifiedCatalog=availableCatalog.filter(item=>item.verified&&item.price>0);
   const coupons=rawCoupons.slice(0,50).map(coupon=>{
     const discountType=text(coupon.discount_type,coupon.type).toLowerCase(),discount=num(coupon.discount??coupon.discount_value),isPercent=["p","percent","percentage"].includes(discountType);
-    const affected=isPercent?verifiedCatalog.filter(item=>{const discountedGross=item.price*(1-discount/100),discounted=vatIncluded&&configuredVatRate?discountedGross/(1+configuredVatRate):discountedGross;return discounted<=0||(discounted-item.cost)/discounted<policy.marginFloorPct;}):[];
-    return {id:text(coupon.id,coupon.coupon_id),code:text(coupon.code,"No code"),name:text(coupon.name,coupon.code,"Coupon"),discount_label:isPercent?`${discount}%`:`${currency} ${discount.toFixed(2)}`,products_below_floor:affected.length,verified_products_tested:verifiedCatalog.length,risk:!isPercent||!verifiedCatalog.length?"unknown" as const:affected.length?"review" as const:"safe" as const};
+    const applyTo=text(coupon.apply_to,coupon.applies_to).toLowerCase();
+    const targetIds=new Set([coupon.apply_to_array,coupon.product_ids,coupon.products,coupon.apply_to_data].flatMap(idsFrom));
+    const targeted=/product/.test(applyTo)&&targetIds.size>0;
+    const couponCatalog=targeted?verifiedCatalog.filter(item=>Boolean(item.id)&&targetIds.has(item.id!)):verifiedCatalog;
+    const affected=isPercent?couponCatalog.filter(item=>{const discountedGross=item.price*(1-discount/100),discounted=vatIncluded&&configuredVatRate?discountedGross/(1+configuredVatRate):discountedGross;return discounted<=0||(discounted-item.cost)/discounted<policy.marginFloorPct;}):[];
+    return {id:text(coupon.id,coupon.coupon_id),code:text(coupon.code,"No code"),name:text(coupon.name,coupon.code,"Coupon"),discount_label:isPercent?`${discount}%`:`${currency} ${discount.toFixed(2)}`,products_below_floor:affected.length,verified_products_tested:couponCatalog.length,risk:!isPercent||!couponCatalog.length?"unknown" as const:affected.length?"review" as const:"safe" as const};
   });
   const riskyCoupons=coupons.filter(coupon=>coupon.risk==="review");
   const priorities:ZidProfitBrief["priorities"]=[];

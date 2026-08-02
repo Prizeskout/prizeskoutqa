@@ -153,6 +153,21 @@ try {
       assert.equal(compiledBody.operation?.operation,expected,`Copilot routed the merchant request to the wrong operation`);
     }
     console.log("PASS Copilot routes profit, VAT, returns and coupon safety instructions");
+
+    const seedCompiled=await page.request.post(`${baseUrl}/api/copilot/compile`,{data:{prompt:"Prepare my connected Zid test store for the review"}});
+    const seedCompiledBody=await seedCompiled.json() as {operation?:{operation?:string;requires_confirmation?:boolean};error?:string};
+    assert.equal(seedCompiled.status(),200,`Copilot could not compile the test-store seeder: ${seedCompiledBody.error??"unexpected response"}`);
+    assert.equal(seedCompiledBody.operation?.operation,"seed_test_store");
+    assert.equal(seedCompiledBody.operation?.requires_confirmation,true,"Test-store writes must require confirmation");
+    const seedPreview=await page.request.post(`${baseUrl}/api/copilot/store`,{data:{merchant_id:access.merchant_id,access_code:access.code,action:"seed_test_store_preview"}});
+    const seedPreviewBody=await seedPreview.json() as {preview?:{store:{id:string;title:string;test_store_confirmed:boolean};products:Array<{sku:string;price:number;cost:number|null;quantity:number;draft?:boolean}>;coupons:Array<{code:string;discount:number}>;ready:boolean;blockers:string[]};error?:string};
+    assert.equal(seedPreview.status(),200,`Test-store preview failed: ${seedPreviewBody.error??"unexpected response"}`);
+    const fixture=seedPreviewBody.preview;assert(fixture,"Connected Zid store seed preview was not returned");assert(fixture.store.id&&fixture.store.title,"Connected Zid store identity was not returned for explicit confirmation");
+    assert.equal(fixture.products.length,9);assert.equal(fixture.products.filter(product=>product.cost!=null).length,8);assert.equal(fixture.products.filter(product=>product.cost!=null&&product.price>0&&(product.price-product.cost)/product.price<.18).length,3);assert.equal(fixture.products.filter(product=>product.quantity===0).length,1);assert.equal(fixture.products.filter(product=>product.cost==null).length,1);assert.equal(fixture.products.filter(product=>product.draft).length,1);assert(fixture.products.every(product=>product.price>=25&&product.price<=180),"Fixture prices must remain realistic SAR values");assert.equal(fixture.coupons.length,2);
+    assert.equal(new Set(fixture.products.map(product=>product.sku)).size,fixture.products.length,"Seeder SKUs must be unique and idempotent");
+    const wrongStoreSeed=await page.request.post(`${baseUrl}/api/copilot/store`,{data:{merchant_id:access.merchant_id,access_code:access.code,action:"seed_test_store",test_store_id:"WRONG-STORE",confirm_test_store:true}});
+    assert.equal(wrongStoreSeed.status(),502,"Seeder must reject a changed or mismatched store before writing");
+    console.log("PASS guarded Zid review seeder preview and fixture invariants");
   }
 
   const review = page.getByRole("button", { name: /Review products/ }).first();

@@ -143,7 +143,7 @@ const OPERATION_SYSTEM = `You are the operations planner for PrizeSkout, a comme
 Convert the merchant's request into a safe executable operation plan. Output ONLY valid JSON.
 Schema:
 {
-  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft",
+  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft" | "seed_test_store" | "cleanup_test_store",
   "platform": "zid" | "salla" | "foodics" | "all",
   "query": string | null,
   "category": string | null,
@@ -165,7 +165,7 @@ Schema:
   "requires_confirmation": boolean,
   "warnings": string[]
 }
-Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Asking what the store kept, order profit, loss-making orders, or a profit brief means profit_brief. Asking about VAT, tax included in prices, or tax removed from revenue means tax_summary. Asking how returns or refunds affected revenue or profit means returns_impact. Asking whether coupons, discount codes, or promotions are safe means coupon_risk. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically.
+Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Asking what the store kept, order profit, loss-making orders, or a profit brief means profit_brief. Asking about VAT, tax included in prices, or tax removed from revenue means tax_summary. Asking how returns or refunds affected revenue or profit means returns_impact. Asking whether coupons, discount codes, or promotions are safe means coupon_risk. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically. Prepare/seed/set up the Zid test store for review means seed_test_store. Remove/clean up PrizeSkout test fixtures means cleanup_test_store.
 Find/show a named product or SKU means find_products. Reprice/recommend/calculate without
 explicit live/push/apply language means preview_reprice. Push/apply/publish/go live means
 publish_prices and requires_confirmation=true. A request to protect/maintain a stated margin and safely fix products means protect_margin; it is a preview unless the merchant explicitly says publish/apply/go live. Never invent a price. A named product is
@@ -193,6 +193,7 @@ function isOperationalRequest(text: string): boolean {
     || /\b(vat|tax|returns?|refunds?)\b/i.test(text)
     || /\b(mark|move|change|set)\b.*\border\b|\border\b.*\b(ready|preparing|delivered|cancelled)\b/i.test(text)
     || /\b(create|add)\b.*\bproduct\b/i.test(text)
+    || /\b(prepare|seed|set ?up|populate|cleanup|clean up)\b.*\b(test store|zid test|review fixtures?|test fixtures?)\b/i.test(text)
     || /\b(protect|maintain|fix|restore)\b.*\bmargin\b.*\b(zid|store|products?)\b/i.test(text)
     || /\b(push|publish|apply|sync|refresh)\b.*\b(zid|salla|foodics)\b/i.test(text)
     || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text)
@@ -201,6 +202,8 @@ function isOperationalRequest(text: string): boolean {
 
 function deterministicZidInsight(prompt:string):Record<string,unknown>|null{
   const text=prompt.toLowerCase();
+  const seed=/\b(prepare|seed|set ?up|populate)\b.*\b(test store|zid test|review|test data|fixtures?)\b/.test(text),cleanup=/\b(cleanup|clean up|remove|unpublish)\b.*\b(prizeskout|test store|fixtures?|test products?)\b/.test(text);
+  if(seed||cleanup){const operation=cleanup?"cleanup_test_store":"seed_test_store";return {type:"operation",operation:{_type:"operation",operation,platform:"zid",query:null,category:null,sku:null,risk_level:"sensitive_write",requires_confirmation:true,plan:cleanup?["Confirm Zid identifies the connected store as a test store.","Find only products whose SKU starts PS-ZID- and coupons PSMARGIN20/PSSAFE5.","Unpublish test products and remove only the two test coupons.","Keep genuine test orders as review evidence."]:["Confirm Zid identifies the connected store as a test store.","Inspect the existing source product and all PS-ZID fixtures.","Preview nine realistic products and two coupons without writing.","Wait for explicit merchant approval.","Create only missing fixtures using idempotent SKUs and codes.","Read everything back from Zid and report any missing item.","Provide the five-order storefront checkout script."],summary:cleanup?"Clean up only the PrizeSkout review fixtures from the Zid test store.":"Prepare the connected Zid test store for the PrizeSkout review."}};}
   const profit=/\b(what|how much)\b.*\b(keep|kept|profit|contribution)\b|\b(loss[- ]making|unprofitable)\b.*\border|\bprofit brief\b/.test(text);
   const coupons=/\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss|below)|\b(which|check|review)\b.*\b(coupon|coupons)\b/.test(text);
   const tax=/\b(vat|tax|taxes)\b/.test(text),returns=/\b(return|returns|returned|refund|refunds|refunded)\b/.test(text);
@@ -322,7 +325,7 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
           if (operationMode) {
             const operation = String(rule.operation ?? "");
-            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft"];
+            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft", "seed_test_store", "cleanup_test_store"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
             }
@@ -353,8 +356,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
             rule.maximum_increase_pct=Number(rule.maximum_increase_pct)||(capMatch?Number(capMatch[1])/100:null);
             rule.verified_costs_only=operation==="protect_margin"||Boolean(rule.verified_costs_only);
             rule.exclude_out_of_stock=operation==="protect_margin"||Boolean(rule.exclude_out_of_stock);
-            rule.risk_level=operation==="publish_prices"?"reversible_write":["change_order_status","create_product_draft"].includes(operation)?"sensitive_write":"read";
-            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft"].includes(operation);
+            rule.risk_level=operation==="publish_prices"?"reversible_write":["change_order_status","create_product_draft","seed_test_store","cleanup_test_store"].includes(operation)?"sensitive_write":"read";
+            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft","seed_test_store","cleanup_test_store"].includes(operation);
             const platform=String(rule.platform??"all");
             const scope=String(rule.scope??"matching");
             rule.plan=operation==="publish_prices"?[
