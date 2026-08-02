@@ -3619,6 +3619,11 @@ export function PrizeSkoutDashboard() {
       ].includes(operation)
     )
       return;
+    if (operation === "product_change" && !String(cpObj.approval_token ?? "").trim()) {
+      setCpOperationMessage("I need to reload the exact product and proposed change before you can approve it.");
+      await prepareCopilotOperation(cpObj);
+      return;
+    }
     setCpOperationStatus("publishing");
     try {
       const merchantId = localStorage.getItem("ps_merchant_id") ?? "",
@@ -8631,9 +8636,20 @@ export function PrizeSkoutDashboard() {
                           )}
                         </div>
                         <button
-                          onClick={executeCopilotStoreWrite}
+                          onClick={() => {
+                            if (
+                              String(cpObj.operation) === "product_change" &&
+                              !String(cpObj.approval_token ?? "").trim()
+                            ) {
+                              void prepareCopilotOperation(cpObj);
+                              return;
+                            }
+                            void executeCopilotStoreWrite();
+                          }}
                           disabled={
-                            cpOperationStatus === "publishing" || cpOperationStatus === "complete"
+                            cpOperationStatus === "publishing" ||
+                            cpOperationStatus === "running" ||
+                            cpOperationStatus === "complete"
                           }
                           style={{
                             border: 0,
@@ -8643,13 +8659,23 @@ export function PrizeSkoutDashboard() {
                             color: "white",
                             fontFamily: "inherit",
                             fontWeight: 800,
-                            cursor: cpOperationStatus === "publishing" ? "wait" : "pointer",
+                            cursor:
+                              cpOperationStatus === "publishing" || cpOperationStatus === "running"
+                                ? "wait"
+                                : cpOperationStatus === "complete"
+                                  ? "default"
+                                  : "pointer",
                           }}
                         >
                           {cpOperationStatus === "publishing"
                             ? "Working..."
+                            : cpOperationStatus === "running"
+                              ? "Loading preview..."
                             : cpOperationStatus === "complete"
                               ? "Checked in Zid"
+                              : String(cpObj.operation) === "product_change" &&
+                                  !String(cpObj.approval_token ?? "").trim()
+                                ? "Retry product preview"
                               : String(cpObj.operation) === "reverse_refund"
                                 ? "Confirm refund"
                                 : String(cpObj.operation) === "loyalty_adjust"

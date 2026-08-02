@@ -34,6 +34,9 @@ for (const [prompt, expected] of cases) {
 }
 
 const followUp = deterministicZidInsight("publish it", { created_product_sku: "IPAD-PRO-123" }) as Parsed | null;
+const priceOfProduct=deterministicZidInsight("Change the price of Test Wireless Charger to SAR 135") as Parsed|null;
+if(priceOfProduct?.operation?.operation!=="product_change"||priceOfProduct.operation.query!=="Test Wireless Charger")throw new Error(`Price-of-product target failed: ${JSON.stringify(priceOfProduct)}`);
+console.log("PASS: price-of-product phrasing preserves the exact product name");
 if (followUp?.operation?.product_mode !== "publish" || followUp.operation.query !== "IPAD-PRO-123") {
   throw new Error(`Follow-up failed: ${JSON.stringify(followUp)}`);
 }
