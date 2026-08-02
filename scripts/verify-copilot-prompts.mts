@@ -14,6 +14,15 @@ const cases = [
   ["Delete iPad Pro", "product_change"],
   ["Permanently delete iPad Pro", "product_change"],
   ['أنشئ منتج باسم "آيباد برو" بسعر ٣٠٠٠ ريال وانشره', "create_product_draft"],
+  ["Create coupon SAVE10 for 10%", "coupon_change"],
+  ["Disable coupon SAVE10", "coupon_change"],
+  ["Move iPad Pro to the Electronics category", "category_assign"],
+  ["Find customer with +966500000000", "customer_search"],
+  ["Add 50 loyalty points to +966500000000", "loyalty_adjust"],
+  ["Refund reverse order 64d0f002-0185-4fd1-94d2-e3a86be622c9 for SAR 100 via zid_bank_transfer", "reverse_refund"],
+  ["Add product image https://example.com/ipad.jpg to iPad Pro", "product_image_upload"],
+  ["Add color variants Black, Silver and Blue to iPad Pro, price SAR 3000, stock 10", "variant_create"],
+  ["Schedule publish iPad Pro at 2026-08-03T09:00:00+03:00", "schedule_product_action"],
 ] as const;
 
 for (const [prompt, expected] of cases) {
@@ -34,6 +43,6 @@ const cancelled=deterministicZidInsight("cancel that",{operation:"product_change
 if(cancelled?.type!=="chat"||!cancelled.message?.includes("Nothing"))throw new Error(`Cancellation failed: ${JSON.stringify(cancelled)}`);
 console.log("PASS: cancel that stops a pending action");
 
-const unsupported=deterministicZidInsight("Create a 10% coupon",{}) as Parsed|null;
+const unsupported=deterministicZidInsight("Change the shipping weight for iPad Pro",{}) as Parsed|null;
 if(unsupported?.type!=="chat"||!unsupported.message?.includes("not safely connected"))throw new Error(`Unsupported guard failed: ${JSON.stringify(unsupported)}`);
 console.log("PASS: unsupported writes explain the limitation without pretending to execute");

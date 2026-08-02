@@ -85,6 +85,7 @@ import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
 import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/public/hooks/dispatch-queue'
 import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
+import { Route as ApiPublicHooksCopilotSchedulesRouteImport } from './routes/api/public/hooks/copilot-schedules'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
@@ -479,6 +480,12 @@ const ApiPublicHooksDispatchConfirmationRoute =
     path: '/api/public/hooks/dispatch-confirmation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCopilotSchedulesRoute =
+  ApiPublicHooksCopilotSchedulesRouteImport.update({
+    id: '/api/public/hooks/copilot-schedules',
+    path: '/api/public/hooks/copilot-schedules',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -569,6 +576,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -648,6 +656,7 @@ export interface FileRoutesByTo {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -731,6 +740,7 @@ export interface FileRoutesById {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
@@ -815,6 +825,7 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/flash-end'
@@ -894,6 +905,7 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/flash-end'
@@ -976,6 +988,7 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/flash-end'
@@ -1033,6 +1046,7 @@ export interface RootRouteChildren {
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
+  ApiPublicHooksCopilotSchedulesRoute: typeof ApiPublicHooksCopilotSchedulesRoute
   ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
   ApiPublicHooksDispatchQueueRoute: typeof ApiPublicHooksDispatchQueueRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
@@ -1582,6 +1596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksDispatchConfirmationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/copilot-schedules': {
+      id: '/api/public/hooks/copilot-schedules'
+      path: '/api/public/hooks/copilot-schedules'
+      fullPath: '/api/public/hooks/copilot-schedules'
+      preLoaderRoute: typeof ApiPublicHooksCopilotSchedulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid/callback': {
       id: '/api/auth/zid/callback'
       path: '/callback'
@@ -1783,6 +1804,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
+  ApiPublicHooksCopilotSchedulesRoute: ApiPublicHooksCopilotSchedulesRoute,
   ApiPublicHooksDispatchConfirmationRoute:
     ApiPublicHooksDispatchConfirmationRoute,
   ApiPublicHooksDispatchQueueRoute: ApiPublicHooksDispatchQueueRoute,

@@ -143,7 +143,7 @@ const OPERATION_SYSTEM = `You are the operations planner for PrizeSkout, a comme
 Convert the merchant's request into a safe executable operation plan. Output ONLY valid JSON.
 Schema:
 {
-  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft" | "product_change" | "seed_test_store" | "cleanup_test_store",
+  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft" | "product_change" | "product_image_upload" | "variant_create" | "schedule_product_action" | "coupon_change" | "category_assign" | "customer_search" | "loyalty_adjust" | "reverse_refund" | "seed_test_store" | "cleanup_test_store",
   "platform": "zid" | "salla" | "foodics" | "all",
   "query": string | null,
   "category": string | null,
@@ -170,6 +170,15 @@ Schema:
   "product_infinite": boolean | null,
   "inventory_filter": "out_of_stock" | "in_stock" | null,
   "publish_duplicate": boolean | null,
+  "coupon_mode": "create" | "disable" | "enable" | "delete" | null,
+  "coupon_code": string | null,
+  "coupon_discount_pct": number | null,
+  "customer_query": string | null,
+  "loyalty_points": integer | null,
+  "loyalty_direction": "+" | "-" | null,
+  "refund_reverse_id": string | null,
+  "refund_amount": number | null,
+  "refund_method": string | null,
   "summary": string,
   "requires_confirmation": boolean,
   "warnings": string[]
@@ -219,7 +228,25 @@ export function deterministicZidInsight(prompt:string,prior?:Record<string,unkno
   if(prior&&/^\s*(?:what did you (?:just )?change|what happened|show (?:me )?(?:the )?(?:last )?(?:change|result|receipt))[?!.]?\s*$/i.test(canonicalPrompt)){
     return {type:"chat",message:`Last operation: ${String(prior.summary??prior.operation??"store action")}${priorSku?`. Product: ${priorSku}`:""}. ${prior.last_execution_complete===true?"It completed; the verified result remains in the action card and Activity & Evidence history.":"It has not been approved or sent to Zid yet."}`};
   }
-  const unsupportedWrite=/\b(create|add|disable|delete|change|edit|schedule|refund|replace|upload)\b[\s\S]*\b(coupon|discount code|promotion|refund|customer phone|image|photo|category|variant|colour variant|color variant|weight)\b|\b(refund|restock from (?:a )?(?:cancelled|returned) order)\b/i.exec(canonicalPrompt);
+  const couponCreate=canonicalPrompt.match(/\b(?:create|add)\s+(?:a\s+)?(?:new\s+)?(?:coupon|discount code)(?:\s+(?:called|code|named))?\s*([A-Z0-9_-]+)[\s\S]*?(\d+(?:\.\d+)?)\s*%/i);
+  if(couponCreate){return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:"create",coupon_code:couponCreate[1].toUpperCase(),coupon_discount_pct:Number(couponCreate[2]),risk_level:"sensitive_write",requires_confirmation:true,summary:`Create ${couponCreate[2]}% coupon ${couponCreate[1].toUpperCase()}.`,warnings:[]}};}
+  const couponAction=canonicalPrompt.match(/^\s*(disable|deactivate|enable|activate|delete|remove)\s+(?:coupon|discount code)\s+([A-Z0-9_-]+)[.!]?\s*$/i);
+  if(couponAction){const verb=couponAction[1].toLowerCase(),mode=/enable|activate/.test(verb)?"enable":/delete|remove/.test(verb)?"delete":"disable";return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:mode,coupon_code:couponAction[2].toUpperCase(),risk_level:mode==="delete"?"permanent_write":"reversible_write",requires_confirmation:true,summary:`${mode} coupon ${couponAction[2].toUpperCase()}.`,warnings:mode==="delete"?["Deleting a coupon is permanent."]:[]}};}
+  const categoryAssign=canonicalPrompt.match(/\b(?:move|add|assign)\s+(?:the\s+)?(?:product\s+)?(.+?)\s+(?:to|into)\s+(?:the\s+)?(.+?)\s+categor(?:y|ies)[.!]?\s*$/i);
+  if(categoryAssign){return {type:"operation",operation:{_type:"operation",operation:"category_assign",platform:"zid",query:categoryAssign[1].trim(),category:categoryAssign[2].trim(),risk_level:"reversible_write",requires_confirmation:true,summary:`Assign ${categoryAssign[1].trim()} to ${categoryAssign[2].trim()}.`,warnings:[]}};}
+  const customerSearch=canonicalPrompt.match(/\b(?:find|search|look up|show)\s+(?:the\s+)?customer(?:\s+using|\s+with|\s+by)?\s+(.+?)[.!]?\s*$/i);
+  if(customerSearch){return {type:"operation",operation:{_type:"operation",operation:"customer_search",platform:"zid",customer_query:customerSearch[1].trim(),risk_level:"read",requires_confirmation:false,summary:"Search Zid customers with masked personal details.",warnings:[]}};}
+  const loyalty=canonicalPrompt.match(/\b(add|give|remove|deduct)\s+(\d+)\s+(?:loyalty\s+)?points?\s+(?:to|from)\s+(?:customer\s+)?(.+?)(?:\s+(?:because|for)\s+(.+?))?[.!]?\s*$/i);
+  if(loyalty){const direction=/remove|deduct/i.test(loyalty[1])?"-":"+";return {type:"operation",operation:{_type:"operation",operation:"loyalty_adjust",platform:"zid",loyalty_direction:direction,loyalty_points:Number(loyalty[2]),customer_query:loyalty[3].trim(),loyalty_reason:loyalty[4]?.trim()||"Merchant-approved adjustment",risk_level:"sensitive_write",requires_confirmation:true,summary:`${direction==="+"?"Add":"Remove"} ${loyalty[2]} loyalty points.`,warnings:[]}};}
+  const refund=canonicalPrompt.match(/\brefund\s+(?:reverse order\s+)?([A-Z0-9-]+)\s+(?:for\s+)?(?:SAR|SR)?\s*(\d+(?:\.\d+)?)\s+(?:via|using)\s+([a-z_ ]+?)[.!]?\s*$/i);
+  if(refund){return {type:"operation",operation:{_type:"operation",operation:"reverse_refund",platform:"zid",refund_reverse_id:refund[1],refund_amount:Number(refund[2]),refund_method:refund[3].trim().replace(/\s+/g,"_"),risk_level:"financial_write",requires_confirmation:true,summary:`Refund SAR ${refund[2]} against reverse order ${refund[1]}.`,warnings:["PrizeSkout must confirm the refundable amount and supported payment method before submission."]}};}
+  const image=canonicalPrompt.match(/\b(?:add|attach|upload|set)\s+(?:this\s+)?(?:product\s+)?image\s+(https?:\/\/\S+)\s+(?:to|for)\s+(.+?)(?:\s+with alt text\s+[“"]?(.+?)[”"]?)?[.!]?\s*$/i);
+  if(image){return {type:"operation",operation:{_type:"operation",operation:"product_image_upload",platform:"zid",query:image[2].trim(),image_url:image[1].replace(/[.,]$/,""),image_alt:image[3]?.trim()||image[2].trim(),risk_level:"reversible_write",requires_confirmation:true,summary:`Add an image to ${image[2].trim()}.`,warnings:[]}};}
+  const variants=canonicalPrompt.match(/\badd\s+(?:new\s+)?(colou?r|size|material|style|option)\s+variants?\s+(.+?)\s+(?:to|for)\s+(.+?)(?:,|\s+)\s*(?:price|priced at)\s+(?:SAR\s*)?(\d+(?:\.\d+)?)(?:,?\s*(?:stock|quantity)\s+(\d+))?[.!]?\s*$/i);
+  if(variants){const option=variants[1];return {type:"operation",operation:{_type:"operation",operation:"variant_create",platform:"zid",query:variants[3].trim(),variant_option:option,variant_values:variants[2].split(/,|\band\b/i).map(v=>v.trim()).filter(Boolean),variant_price:Number(variants[4]),variant_quantity:variants[5]?Number(variants[5]):null,risk_level:"reversible_write",requires_confirmation:true,summary:`Add ${option} variants to ${variants[3].trim()}.`,warnings:[]}};}
+  const schedule=canonicalPrompt.match(/\b(?:schedule|at)\s+(publish|unpublish|set (?:the )?price|set (?:the )?(?:stock|quantity))\s+(?:of\s+)?(.+?)(?:\s+to\s+(?:SAR\s*)?(\d+(?:\.\d+)?))?\s+(?:for|at|on)\s+(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?)[.!]?\s*$/i);
+  if(schedule){const verb=schedule[1].toLowerCase(),kind=verb==="publish"?"publish_product":verb==="unpublish"?"unpublish_product":verb.includes("price")?"set_product_price":"set_product_stock";return {type:"operation",operation:{_type:"operation",operation:"schedule_product_action",platform:"zid",query:schedule[2].trim(),scheduled_action:kind,scheduled_value:schedule[3]?Number(schedule[3]):null,execute_at:schedule[4].replace(" ","T"),risk_level:"reversible_write",requires_confirmation:true,summary:`Schedule ${verb} for ${schedule[2].trim()}.`,warnings:["The time must include a timezone; otherwise PrizeSkout uses Arabia Standard Time (UTC+03:00)."]}};}
+  const unsupportedWrite=/\b(create|add|disable|delete|change|edit|refund|replace|upload)\b[\s\S]*\b(weight)\b|\b(restock from (?:a )?(?:cancelled|returned) order)\b/i.exec(canonicalPrompt);
   if(unsupportedWrite){return {type:"chat",message:`I understood the requested ${unsupportedWrite[2]??unsupportedWrite[1]} change, but that write workflow is not safely connected to Zid yet. Nothing was changed. PrizeSkout currently supports product creation, duplication, naming, SKU, price, cost, stock, publication, unpublication and deletion with confirmation and readback. This request needs a dedicated Zid endpoint, preview and verification before it can be enabled.`};}
   if(prior&&priorSku&&/^\s*(?:please\s+)?(?:publish|make (?:it|that|the product) live|unpublish|hide|archive)\s*(?:it|that|the product)?[.!]?\s*$/i.test(canonicalPrompt)){
     const publish=!/\b(unpublish|hide|archive)\b/i.test(canonicalPrompt);
@@ -379,7 +406,7 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
           if (operationMode) {
             const operation = String(rule.operation ?? "");
-            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft", "product_change", "seed_test_store", "cleanup_test_store"];
+            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft", "product_change", "product_image_upload", "variant_create", "schedule_product_action", "coupon_change", "category_assign", "customer_search", "loyalty_adjust", "reverse_refund", "seed_test_store", "cleanup_test_store"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
             }
@@ -410,8 +437,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
             rule.maximum_increase_pct=Number(rule.maximum_increase_pct)||(capMatch?Number(capMatch[1])/100:null);
             rule.verified_costs_only=operation==="protect_margin"||Boolean(rule.verified_costs_only);
             rule.exclude_out_of_stock=operation==="protect_margin"||Boolean(rule.exclude_out_of_stock);
-            rule.risk_level=operation==="publish_prices"||operation==="product_change"?"reversible_write":["change_order_status","create_product_draft","seed_test_store","cleanup_test_store"].includes(operation)?"sensitive_write":"read";
-            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft","product_change","seed_test_store","cleanup_test_store"].includes(operation);
+            rule.risk_level=operation==="reverse_refund"?"financial_write":operation==="publish_prices"||operation==="product_change"||operation==="category_assign"?"reversible_write":["change_order_status","create_product_draft","coupon_change","loyalty_adjust","seed_test_store","cleanup_test_store"].includes(operation)?"sensitive_write":"read";
+            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft","product_change","product_image_upload","variant_create","schedule_product_action","coupon_change","category_assign","loyalty_adjust","reverse_refund","seed_test_store","cleanup_test_store"].includes(operation);
             const platform=String(rule.platform??"all");
             const scope=String(rule.scope??"matching");
             rule.plan=operation==="publish_prices"?[
