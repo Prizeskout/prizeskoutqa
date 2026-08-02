@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, CheckCircle2, Clock3 } from "lucide-react";
+import { BriefcaseBusiness, CheckCircle2, Clock3, Download } from "lucide-react";
 import type { Finding } from "@/lib/commission-audit";
 import type { ContractTerm } from "./ContractIntelligenceVault";
 
@@ -49,6 +49,17 @@ export function RecoveryWorkspace({findings,contract,currency,orderCount}:{findi
     try{await call({action:"update",id:item.id,case_status:item.status,owner:item.owner??"",submission_deadline:item.submission_deadline??"",platform_response:item.platform_response??"",recovered_amount:item.recovered_amount,...patch});await load();}
     catch(err){setError(err instanceof Error?err.message:"Could not update recovery case.");}finally{setBusy(null);}
   };
+  const downloadEvidence=async(item:RecoveryCase)=>{
+    const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(`${item.id}:${item.exception_key}:${item.explanation_en}:${item.claims_ready_amount}`));
+    const hash=Array.from(new Uint8Array(digest)).map(value=>value.toString(16).padStart(2,"0")).join("");
+    const {exportDisputeProofPdf}=await import("./exportDisputeProofPdf");
+    await exportDisputeProofPdf({merchantName:"Merchant",claims:[{
+      partner:"Talabat",title:item.title,order:item.exception_key,place:item.owner??"Merchant account",
+      contract:contract?`${contract.contract_name} · ${contract.commission_rate_pct}% commission`:"Contract evidence not attached",
+      charged:item.exception_amount==null?"Not quantified":money(item.exception_amount,currency),
+      leak:money(item.claims_ready_amount,currency),hash,en:item.explanation_en,
+    }],executions:[]});
+  };
   const existing=new Set(cases.map(item=>item.exception_key));
   return <section style={{display:"flex",flexDirection:"column",gap:14}}>
     <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap"}}><div><div style={{fontSize:17,fontWeight:900}}>Claims and Recovery Workspace</div><div style={{fontSize:11.5,color:"var(--muted)",marginTop:3}}>Prepare payout disputes, see what proof is ready, and track money recovered. You record when a dispute is sent.</div></div><span style={{fontSize:11.5,fontWeight:800}}>{cases.length} cases · {money(cases.reduce((sum,item)=>sum+item.recovered_amount,0),currency)} recovered</span></div>
@@ -62,7 +73,7 @@ export function RecoveryWorkspace({findings,contract,currency,orderCount}:{findi
         <label style={{fontSize:10.5,fontWeight:800}}>Recovered amount<input type="number" defaultValue={item.recovered_amount} onBlur={e=>update(item,{recovered_amount:Number(e.target.value)})} style={{...input,width:"100%",boxSizing:"border-box",display:"block",marginTop:4}}/></label>
       </div>
       <details style={{marginTop:10}}><summary style={{fontSize:11.5,fontWeight:900,cursor:"pointer"}}>Bilingual claim narrative and platform response</summary><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:8,marginTop:8}}><div style={{fontSize:11.5,lineHeight:1.55,padding:9,border:"1px solid var(--border)",borderRadius:7}}>{item.explanation_en}</div><div dir="rtl" style={{fontSize:11.5,lineHeight:1.7,padding:9,border:"1px solid var(--border)",borderRadius:7}}>{item.explanation_ar}</div></div><textarea defaultValue={item.platform_response??""} onBlur={e=>update(item,{platform_response:e.target.value})} placeholder="Record the platform’s response; this does not submit anything." rows={2} style={{...input,width:"100%",boxSizing:"border-box",marginTop:8}}/></details>
-      <div style={{display:"flex",gap:6,alignItems:"center",fontSize:10.5,color:item.status==="recovered"?"#087F5B":"var(--muted)",marginTop:9}}>{item.status==="recovered"?<CheckCircle2 size={13}/>:<Clock3 size={13}/>} {busy===item.id?"Saving…":item.status.replaceAll("_"," ")}</div>
+      <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center",marginTop:9,flexWrap:"wrap"}}><div style={{display:"flex",gap:6,alignItems:"center",fontSize:10.5,color:item.status==="recovered"?"#087F5B":"var(--muted)"}}>{item.status==="recovered"?<CheckCircle2 size={13}/>:<Clock3 size={13}/>} {busy===item.id?"Saving…":item.status.replaceAll("_"," ")}</div><button type="button" onClick={()=>void downloadEvidence(item)} style={{display:"flex",gap:5,alignItems:"center",border:"1px solid var(--border)",borderRadius:7,padding:"6px 8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontSize:10.5,fontWeight:800,cursor:"pointer"}}><Download size={13}/>Download evidence PDF</button></div>
     </article>)}</div>
     {error&&<div style={{fontSize:11.5,color:"#B42318"}}>{error}</div>}
   </section>;

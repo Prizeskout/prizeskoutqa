@@ -5,6 +5,7 @@ import type {ContractTerm} from "@/components/dashboard/payout/ContractIntellige
 import type {SavedChannelPricePlan,PublishRowResult} from "@/server/core/channel-price-plans";
 
 const CHANNELS:PriceChannel[]=["in_store","zid","salla","foodics","talabat","snoonu","jahez","keeta"];
+const PUBLISH_CAPABILITY:Record<PriceChannel,"linked_product"|"sku"|"manual">={in_store:"manual",zid:"linked_product",salla:"linked_product",foodics:"linked_product",talabat:"sku",snoonu:"manual",jahez:"manual",keeta:"manual"};
 const label=(v:string)=>v.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase());
 const field={width:"100%",boxSizing:"border-box" as const,border:"1px solid var(--border)",borderRadius:7,padding:"7px 8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit"};
 const money=(v:number,currency:string)=>`${currency} ${v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -59,7 +60,8 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
     <div style={{padding:20,display:"flex",flexDirection:"column",gap:17}}>
       <div>
         <div style={{fontSize:11,fontWeight:900,marginBottom:7}}>Channels to compare</div>
-        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{CHANNELS.map(channel=><label key={channel} style={{border:"1px solid var(--border)",borderRadius:999,padding:"6px 9px",fontSize:11.5,cursor:"pointer"}}><input type="checkbox" checked={enabled.includes(channel)} onChange={()=>setEnabled(current=>current.includes(channel)?current.filter(v=>v!==channel):[...current,channel])}/> {label(channel)}</label>)}</div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{CHANNELS.map(channel=><label key={channel} style={{border:"1px solid var(--border)",borderRadius:999,padding:"6px 9px",fontSize:11.5,cursor:"pointer"}}><input type="checkbox" checked={enabled.includes(channel)} onChange={()=>setEnabled(current=>current.includes(channel)?current.filter(v=>v!==channel):[...current,channel])}/> {label(channel)} <span style={{fontSize:9,fontWeight:900,color:PUBLISH_CAPABILITY[channel]==="manual"?"#A16207":"#087F5B"}}>· {PUBLISH_CAPABILITY[channel]==="manual"?"PLAN ONLY":"LIVE WRITE"}</span></label>)}</div>
+        <div style={{fontSize:10.5,color:"var(--muted)",marginTop:7}}>Live write means PrizeSkout has a real publishing adapter. Zid, Salla and Foodics require a product synced from that same platform; Talabat uses the connected SKU catalogue. Plan-only channels are never reported as synchronized.</div>
       </div>
       <div className="table-scroll"><table style={{width:"100%",borderCollapse:"collapse",minWidth:850,fontSize:11}}>
         <thead><tr>{["Channel","Commission %","VAT on fees %","Payment fee %","Fixed fee","Target net margin %","Term source"].map(v=><th key={v} style={{padding:"8px",textAlign:"start",color:"var(--muted)",borderBottom:"1px solid var(--border)"}}>{v}</th>)}</tr></thead>

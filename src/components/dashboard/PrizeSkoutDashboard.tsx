@@ -200,12 +200,12 @@ const T = {
     genVoucher:"Generate Dispute Voucher",
     downloadCsv:"Download Audit Log (CSV)",
     exportProofs:"Export Dispute Proofs",
-    fileBtn0:"Auto-File Claim to Partner Portal",
-    fileBtn1:"Filing claim…",
-    fileBtn3:"✓ Claim Submitted · ID 8841-B",
-    fileMsg1:"Compiling proof data…",
-    fileMsg2:"Uploading via API…",
-    fileMsg3:"✓ Claim Submitted successfully! (ID: 8841-B)",
+    fileBtn0:"Download Claim Evidence",
+    fileBtn1:"Preparing evidence…",
+    fileBtn3:"✓ Evidence Downloaded",
+    fileMsg1:"Compiling the reviewed claim and proof references…",
+    fileMsg2:"Generating the evidence document…",
+    fileMsg3:"✓ Evidence downloaded. Submit it through the partner portal, then record the response in Claims and Recovery.",
     claimEn:"CLAIM DRAFT · ENGLISH",
     claimAr:"مسودة المطالبة · العربية",
     bilingualTitle:"Bilingual Dispute Package ·",
@@ -350,12 +350,12 @@ const T = {
     genVoucher:"إنشاء قسيمة نزاع",
     downloadCsv:"تنزيل سجل التدقيق (CSV)",
     exportProofs:"تصدير أدلة النزاعات",
-    fileBtn0:"رفع المطالبة تلقائياً إلى بوابة الشريك",
-    fileBtn1:"جارٍ رفع المطالبة…",
-    fileBtn3:"✓ تم تقديم المطالبة · المعرف 8841-B",
-    fileMsg1:"جاري تجميع بيانات الإثبات…",
-    fileMsg2:"جاري الرفع عبر API…",
-    fileMsg3:"✓ تم تقديم المطالبة بنجاح! (المعرف: 8841-B)",
+    fileBtn0:"تنزيل أدلة المطالبة",
+    fileBtn1:"جارٍ إعداد الأدلة…",
+    fileBtn3:"✓ تم تنزيل الأدلة",
+    fileMsg1:"جارٍ تجميع المطالبة ومراجع الأدلة…",
+    fileMsg2:"جارٍ إنشاء مستند الأدلة…",
+    fileMsg3:"✓ تم تنزيل الأدلة. قدّمها عبر بوابة الشريك ثم سجّل الرد في مساحة المطالبات والاسترداد.",
     claimEn:"CLAIM DRAFT · ENGLISH",
     claimAr:"مسودة المطالبة · العربية",
     bilingualTitle:"حزمة نزاع ثنائية اللغة ·",
@@ -500,12 +500,12 @@ const T = {
     genVoucher:"Générer un bon de litige",
     downloadCsv:"Télécharger le journal d'audit (CSV)",
     exportProofs:"Exporter les preuves de litige",
-    fileBtn0:"Déposer automatiquement la réclamation sur le portail partenaire",
-    fileBtn1:"Dépôt de la réclamation…",
-    fileBtn3:"✓ Réclamation soumise · ID 8841-B",
-    fileMsg1:"Compilation des preuves…",
-    fileMsg2:"Téléversement via API…",
-    fileMsg3:"✓ Réclamation soumise avec succès ! (ID : 8841-B)",
+    fileBtn0:"Télécharger les preuves de la réclamation",
+    fileBtn1:"Préparation des preuves…",
+    fileBtn3:"✓ Preuves téléchargées",
+    fileMsg1:"Compilation de la réclamation et des références de preuve…",
+    fileMsg2:"Génération du document de preuve…",
+    fileMsg3:"✓ Preuves téléchargées. Envoyez-les via le portail partenaire, puis consignez la réponse dans Réclamations et recouvrement.",
     claimEn:"CLAIM DRAFT · ENGLISH",
     claimAr:"مسودة المطالبة · العربية",
     bilingualTitle:"Dossier de litige bilingue ·",
@@ -1952,11 +1952,18 @@ export function PrizeSkoutDashboard() {
     showToast("Rule draft created. Preview its impact before activation.");
   };
 
-  const fileClaim = () => {
-    if (fileStep > 0) return;
+  const fileClaim = async () => {
+    if (fileStep > 0 || modal == null || !disputes[modal]) return;
     setFileStep(1);
-    later(() => setFileStep(2), 1000);
-    later(() => { setFileStep(3); showToast("🟢 Claim 8841-B filed with partner portal · tracking enabled"); }, 2100);
+    try {
+      const { exportDisputeProofPdf } = await import("@/components/dashboard/payout/exportDisputeProofPdf");
+      await exportDisputeProofPdf({ merchantName:storeName, claims:[disputes[modal]], executions:[] });
+      setFileStep(3);
+      showToast("Claim evidence downloaded. No platform submission was made.");
+    } catch (error) {
+      setFileStep(0);
+      showToast(error instanceof Error ? `Evidence export failed: ${error.message}` : "Evidence export failed.");
+    }
   };
 
   const downloadCsv = () => {
@@ -1967,6 +1974,20 @@ export function PrizeSkoutDashboard() {
     a.href=url; a.download="prizeskout-audit-log.csv"; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
     showToast(`🟢 Audit log exported (${feed.length} events)`);
+  };
+
+  const exportDisputeProofs = async () => {
+    try {
+      const { exportDisputeProofPdf } = await import("@/components/dashboard/payout/exportDisputeProofPdf");
+      await exportDisputeProofPdf({
+        merchantName: storeName,
+        claims: disputes,
+        executions: feed.map(item => ({ time:item.time, tag:item.tag, detail:item.text })),
+      });
+      showToast(`Evidence PDF downloaded · ${disputes.length} claim draft${disputes.length===1?"":"s"} · ${feed.length} execution record${feed.length===1?"":"s"}`);
+    } catch (error) {
+      showToast(error instanceof Error ? `Evidence export failed: ${error.message}` : "Evidence export failed.");
+    }
   };
 
   const runPayoutCheck = async () => {
@@ -3214,8 +3235,8 @@ export function PrizeSkoutDashboard() {
                     border:"1px solid var(--border)", borderRadius:10, padding:"11px 16px" }}>
                     {t.downloadCsv}
                   </button>
-                  <button onClick={()=>showToast("🟢 Dispute proof bundle exported · 2 claims · hash-verified")}
-                    style={{ cursor:"pointer", fontFamily:"inherit", fontSize:14.5, fontWeight:700, color:OG,
+                  <button onClick={exportDisputeProofs} disabled={!disputes.length&&!feed.length}
+                    style={{ cursor:!disputes.length&&!feed.length?"not-allowed":"pointer", opacity:!disputes.length&&!feed.length?.55:1, fontFamily:"inherit", fontSize:14.5, fontWeight:700, color:OG,
                       background:`color-mix(in srgb,${OG} 7%,var(--surface))`,
                       border:`1px solid color-mix(in srgb,${OG} 30%,transparent)`,
                       borderRadius:10, padding:"11px 16px" }}>
@@ -4310,6 +4331,7 @@ export function PrizeSkoutDashboard() {
                                 </div>
                               ))}
                             </div>
+                            <button type="button" onClick={async event=>{event.stopPropagation();const {exportDisputeProofPdf}=await import("@/components/dashboard/payout/exportDisputeProofPdf");await exportDisputeProofPdf({merchantName:storeName,claims:[],executions:[{time:new Date(row.created_at).toLocaleString("en-GB"),tag:statusLabel[row.status]??row.status,detail:`${itemName??row.sku??"Price change"} · ${row.target_channel??"channel"} · ${row.currency} ${row.old_price??"unknown"} → ${row.new_price}${rule?` · ${rule}`:""}`} ]});}} style={{marginTop:12,border:"1px solid var(--border)",borderRadius:8,padding:"8px 11px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontWeight:800,fontSize:11.5,cursor:"pointer"}}>Download this action’s proof</button>
                           </div>
                         )}
                       </div>
