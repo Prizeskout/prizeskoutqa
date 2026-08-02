@@ -171,13 +171,13 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
     <div style={{padding:"17px 19px",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",background:"var(--surface2)"}}>
       <div style={{display:"flex",gap:11,alignItems:"center"}}>
         <span style={{width:38,height:38,borderRadius:10,display:"grid",placeItems:"center",background:"color-mix(in srgb,#14213D 8%,var(--surface))"}}><FileKey2 size={20} color="#14213D"/></span>
-        <div><div style={{fontSize:16.5,fontWeight:900}}>Contract Intelligence Vault</div><div style={{fontSize:12.5,color:"var(--muted)",marginTop:2}}>Approved, effective-dated commercial terms used by payout assurance.</div></div>
+        <div><div style={{fontSize:16.5,fontWeight:900}}>Contract Intelligence Vault</div><div style={{fontSize:12.5,color:"var(--muted)",marginTop:2}}>Keep the agreement terms PrizeSkout should use when checking your payouts.</div></div>
       </div>
       <button onClick={()=>setOpen(v=>!v)} style={{border:0,borderRadius:9,padding:"9px 12px",background:"#14213D",color:"#fff",fontWeight:800,fontFamily:"inherit",cursor:"pointer",display:"flex",gap:7,alignItems:"center"}}><Plus size={15}/>{open?"Close":"Add contract terms"}</button>
     </div>
     <div style={{padding:"16px 19px",display:"flex",flexDirection:"column",gap:12}}>
       {approved.length>0&&<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{approved.map(term=><span key={term.id} style={{display:"inline-flex",gap:7,alignItems:"center",padding:"7px 10px",border:"1px solid color-mix(in srgb,#087F5B 30%,var(--border))",borderRadius:999,fontSize:12,color:"#087F5B",fontWeight:800}}><ShieldCheck size={14}/>{term.platform.toUpperCase()} · {term.commission_rate_pct}% · from {term.effective_from}</span>)}</div>}
-      {!terms.length&&!open&&<div style={{fontSize:13,color:"#A16207",padding:"10px 12px",border:"1px solid color-mix(in srgb,#A16207 30%,var(--border))",borderRadius:9,background:"color-mix(in srgb,#A16207 6%,var(--surface))"}}>No reviewed contract is on file. Audits will correctly classify commercial terms as merchant-entered until a draft is approved.</div>}
+      {!terms.length&&!open&&<div style={{fontSize:13,color:"#A16207",padding:"10px 12px",border:"1px solid color-mix(in srgb,#A16207 30%,var(--border))",borderRadius:9,background:"color-mix(in srgb,#A16207 6%,var(--surface))"}}>No approved agreement yet. Until you add and approve one, PrizeSkout will treat any terms you enter as unconfirmed.</div>}
       {open&&<div style={{borderTop:"1px solid var(--border)",paddingTop:14}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(175px,1fr))",gap:10}}>
           <label style={{fontSize:11.5,fontWeight:800}}>Contract name<input style={inputStyle} value={form.contract_name} onChange={e=>setForm({...form,contract_name:e.target.value})} placeholder="Talabat partner agreement 2026"/></label>
@@ -204,13 +204,13 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
           <label style={{fontSize:11.5,fontWeight:800}}>Covered branches<input style={inputStyle} value={form.coverage_branches} onChange={e=>setForm({...form,coverage_branches:e.target.value})} placeholder="Comma-separated"/></label>
         </div>
         <label style={{display:"block",fontSize:11.5,fontWeight:800,marginTop:10}}>Source agreement<input type="file" accept=".pdf,.txt,.md,.png,.jpg,.jpeg" onChange={e=>chooseFile(e.target.files?.[0])} style={{...inputStyle,padding:8}}/></label>
-        {extracting&&<div style={{display:"flex",gap:8,alignItems:"center",fontSize:12.5,color:"#A16207",marginTop:8}}><ScanText size={15}/>Reading agreement and extracting evidence-backed clauses…</div>}
+        {extracting&&<div style={{display:"flex",gap:8,alignItems:"center",fontSize:12.5,color:"#A16207",marginTop:8}}><ScanText size={15}/>Reading your agreement and finding the important terms…</div>}
         {scanNotice&&<div style={{display:"flex",gap:8,alignItems:"flex-start",fontSize:11.5,color:"#A16207",marginTop:8}}><AlertTriangle size={14} style={{flex:"0 0 auto"}}/>{scanNotice}</div>}
         {form.source_sha256&&<div style={{fontSize:10.5,color:"var(--muted)",fontFamily:"monospace",marginTop:5}}>SHA-256 {form.source_sha256}</div>}
         {extraction&&<div style={{marginTop:10,border:"1px solid var(--border)",borderRadius:10,overflow:"hidden"}}>
           <div style={{padding:"10px 12px",background:"var(--surface2)",display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-            <strong style={{fontSize:12.5}}>AI-extracted draft · human review required</strong>
-            <span style={{fontSize:11.5,fontWeight:800,color:extraction.confidence>=.8?"#087F5B":"#A16207"}}>{Math.round(extraction.confidence*100)}% document confidence</span>
+            <strong style={{fontSize:12.5}}>Terms found — check them before approval</strong>
+            <span style={{fontSize:11.5,fontWeight:800,color:extraction.confidence>=.8?"#087F5B":"#A16207"}}>{Math.round(extraction.confidence*100)}% confidence in this reading</span>
           </div>
           <div style={{padding:"9px 12px",display:"flex",flexDirection:"column",gap:7}}>
             {extraction.clauses.length?extraction.clauses.map((clause,index)=><div key={`${clause.field}-${index}`} style={{display:"grid",gridTemplateColumns:"minmax(130px,.6fr) minmax(160px,.7fr) 2fr",gap:9,fontSize:11.5,alignItems:"start"}}>
@@ -222,21 +222,21 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
           </div>
         </div>}
         <label style={{display:"block",fontSize:11.5,fontWeight:800,marginTop:10}}>Review notes<textarea rows={2} style={inputStyle} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></label>
-        <button disabled={busy||extracting||!form.contract_name.trim()} onClick={save} style={{marginTop:10,border:0,borderRadius:9,padding:"10px 14px",background:"#EF681A",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",opacity:busy||extracting ? .65 : 1}}>Save reviewed values as draft</button>
+        <button disabled={busy||extracting||!form.contract_name.trim()} onClick={save} style={{marginTop:10,border:0,borderRadius:9,padding:"10px 14px",background:"#EF681A",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",opacity:busy||extracting ? .65 : 1}}>Save for review</button>
       </div>}
       {terms.some(t=>t.status==="draft")&&<div style={{borderTop:"1px solid var(--border)",paddingTop:13}}>
-        <div style={{fontSize:12,fontWeight:900,marginBottom:8}}>Drafts awaiting review</div>
+        <div style={{fontSize:12,fontWeight:900,marginBottom:8}}>Agreements to review</div>
         <label style={{fontSize:11.5,fontWeight:800}}>Reviewer name<input style={{...inputStyle,maxWidth:360,marginLeft:8}} value={reviewer} onChange={e=>setReviewer(e.target.value)} placeholder="Finance manager"/></label>
         <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:10}}>{terms.filter(t=>t.status==="draft").map(term=><div key={term.id} style={{border:"1px solid var(--border)",borderRadius:9,padding:"10px 12px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
             <div><strong>{term.contract_name}</strong><div style={{fontSize:11.5,color:"var(--muted)",marginTop:2}}>{term.platform.toUpperCase()} · {term.commission_rate_pct}% commission · effective {term.effective_from}{term.source_file_name?` · ${term.source_file_name}`:" · no source attached"}</div></div>
             <div style={{display:"flex",gap:7}}>
-              {term.extraction_json&&<button onClick={()=>setReviewId(reviewId===term.id?null:term.id)} style={{border:"1px solid var(--border)",borderRadius:8,padding:"8px 10px",background:"var(--surface)",color:"var(--text)",fontWeight:800,fontFamily:"inherit",cursor:"pointer"}}>{reviewId===term.id?"Hide evidence":"Review evidence"}</button>}
+              {term.extraction_json&&<button onClick={()=>setReviewId(reviewId===term.id?null:term.id)} style={{border:"1px solid var(--border)",borderRadius:8,padding:"8px 10px",background:"var(--surface)",color:"var(--text)",fontWeight:800,fontFamily:"inherit",cursor:"pointer"}}>{reviewId===term.id?"Hide source details":"Check source details"}</button>}
               <button disabled={busy} onClick={()=>approve(term.id)} style={{border:"1px solid #087F5B",borderRadius:8,padding:"8px 10px",color:"#087F5B",background:"transparent",fontWeight:800,fontFamily:"inherit",cursor:"pointer",display:"flex",gap:6,alignItems:"center"}}><CheckCircle2 size={14}/>Approve terms</button>
             </div>
           </div>
           {reviewId===term.id&&term.extraction_json&&<div style={{marginTop:10,paddingTop:10,borderTop:"1px solid var(--border)",display:"flex",flexDirection:"column",gap:7}}>
-            <div style={{fontSize:11.5,fontWeight:800}}>Extraction provenance · {Math.round((term.extraction_confidence??0)*100)}% confidence · {term.extraction_model??"model not recorded"}</div>
+            <div style={{fontSize:11.5,fontWeight:800}}>How these terms were found · {Math.round((term.extraction_confidence??0)*100)}% confidence · {term.extraction_model??"method not recorded"}</div>
             {(term.extraction_json.clauses??[]).map((clause,index)=><div key={index} style={{fontSize:11.5,display:"grid",gridTemplateColumns:"minmax(120px,.5fr) 2fr",gap:8}}>
               <strong>{clause.field.replaceAll("_"," ")}</strong>
               <span style={{color:"var(--muted)"}}>{clause.value} · “{clause.source_quote}”{clause.page?` · page ${clause.page}`:""} · {Math.round(clause.confidence*100)}%</span>

@@ -164,28 +164,28 @@ const T = {
     navR:"Margin Policy Engine",   navRs:"Rule Book",
     navV:"Integration Vault",      navVs:"Connections",
     navH:"Activity & Evidence", navHs:"History",
-    subA:"Active price optimization and loss prevention",
-    subR:"Natural-language pricing rules and margin guardrails",
-    subV:"POS, aggregator and cache connections",
-    subH:"Review payout checks, price changes, confirmations, failures, and saved investigations",
+    subA:"See where money needs attention and take the next action",
+    subR:"Choose how much to keep from each sale and how prices may change",
+    subV:"Connect the systems PrizeSkout reads from and updates",
+    subH:"See what was checked, what changed, and what needs attention",
     historyViewLink:"View history →",
-    historyPayoutTitle:"Payout Checks", historyPayoutDesc:"Expected payouts, reported settlements, and evidence still needed.",
-    historyPayoutEmpty:"No payout checks match this view.",
-    historyRepricingTitle:"Price Changes", historyRepricingDesc:"Requested, accepted, confirmed, failed, and rolled-back channel prices.",
-    historyRepricingEmpty:"No automated price changes yet.",
+    historyPayoutTitle:"Payout Checks", historyPayoutDesc:"What you should have received, what the platform reported, and what is still missing.",
+    historyPayoutEmpty:"No payout checks here yet. Run one from Revenue Protection Hub.",
+    historyRepricingTitle:"Price Changes", historyRepricingDesc:"Every requested price change and whether it was confirmed in the store.",
+    historyRepricingEmpty:"No prices have been changed yet.",
     historyLoading:"Loading…",
     historyColDate:"Date", historyColSource:"Source", historyColPlatform:"Platform", historyColOrders:"Orders",
     historyColExpected:"Expected Payout", historyColChannel:"Channel", historyColSku:"SKU",
     historyColPrice:"Price Change", historyColStatus:"Status",
-    historyDetailPeriod:"Period", historyDetailSales:"Sales used", historyDetailRows:"Rows used",
-    historyDetailItem:"Item", historyDetailRule:"Trigger", historyDetailMargin:"Margin (before → after)",
+    historyDetailPeriod:"Period", historyDetailSales:"Sales checked", historyDetailRows:"Records checked",
+    historyDetailItem:"Product", historyDetailRule:"Why it changed", historyDetailMargin:"Amount kept (before → after)",
     historyDetailDuration:"Duration", historyDetailCompleted:"Completed",
     historyDeleteConfirm:"Delete this record?", historyDeleteYes:"Delete", historyDeleteCancel:"Cancel",
-    stream:"Live Execution Stream", streamS:"Real-time event feed",
-    profLabel:"Profits Protected · This Month",
-    profNoActivity:"No activity yet · connect a store to begin tracking",
-    profDefensesLabel:"price defenses this month",
-    profTrackedFoot:"across your channels", profMarginFoot:"vs. margin floor",
+    stream:"Recent Activity", streamS:"What PrizeSkout is checking and changing",
+    profLabel:"Money protected this month",
+    profNoActivity:"Nothing to show yet · connect a store to start",
+    profDefensesLabel:"safe price updates this month",
+    profTrackedFoot:"from connected stores", profMarginFoot:"more kept per sale",
     copilotTitle:"CFO Copilot",    copilotSub:"Natural Language Rule Engine",
     copilotDesc:"Ask anything about pricing strategy, or describe a rule to compile it into a live engine config.",
     copilotLive:"🟢 Copilot Live",
@@ -208,29 +208,29 @@ const T = {
     verified:"SHA-256", verifiedS:"· VERIFIED ✓",
     autoCompiled:"auto-compiled by dispute agent",
     close:"✕",
-    intentLabel:"Business Intent · Source",
+    intentLabel:"What you asked for",
     intent:"intent:", confidence:"confidence:", ambiguity:"ambiguity:",
     intentResolved:"resolved ✓",
-    applyLabel0:"Apply Config to Core Loop",
-    applyLabel1:"✓ Pushed to Core Loop · Redis 340ms",
-    rulesEnforced:"rules · enforced at edge",
-    activeLabel:"✓ enforcing · <2ms eval",
-    pausedLabel:"Paused. Not currently enforced.",
-    previewLabel:"Preview only · category rules not yet enforced",
-    floorWarn:"⚠ Floor is below 15% cost basis. The guardrail will reject all executions at this level.",
+    applyLabel0:"Save as a draft rule",
+    applyLabel1:"✓ Draft saved",
+    rulesEnforced:"rules currently protecting prices",
+    activeLabel:"✓ protecting prices now",
+    pausedLabel:"Paused · this rule is not protecting prices",
+    previewLabel:"Preview only · no prices will change",
+    floorWarn:"This target is too low to protect product costs. Choose at least 15%.",
     settingsLabel:"Settings", backToSite:"Back to site", myAccount:"My Account",
     settingsSub:"Store access, channels, margin rules, outlets and notifications.",
     supportLabel:"Support",
     inboundTitle:"Inbound Connections",
-    inboundDesc:"POS and e-commerce platforms that feed orders and catalog data into PrizeSkout.",
+    inboundDesc:"Connect the stores and systems PrizeSkout should read products and orders from.",
     outboundTitle:"Outbound Connections",
-    outboundDesc:"Delivery aggregators that PrizeSkout pushes margin-safe prices to in real time.",
-    inboundConnectedMsg:"connected · data syncing",
-    inboundAuthorizeMsg:"not connected · click to authorize",
+    outboundDesc:"Connect the channels where PrizeSkout may update approved prices.",
+    inboundConnectedMsg:"connected · information is up to date",
+    inboundAuthorizeMsg:"not connected · connect now",
     inboundComingSoonMsg:"integration coming soon",
     connectPrefix:"Connect",
     setupBadge:"SETUP", soonBadge:"SOON",
-    storeConnectedSyncing:"Store connected · prices syncing",
+    storeConnectedSyncing:"Store connected · products are updating",
     tapSetupMsg:"Tap SETUP to connect your store",
     awaitingBuildMsg:"Awaiting integration build",
     newDiscrepancy:"New Discrepancy",
@@ -2606,7 +2606,7 @@ export function PrizeSkoutDashboard() {
                 <span aria-hidden="true" style={{ width:12, height:12, borderRadius:"50%", background:OG, boxShadow:`0 0 0 6px color-mix(in srgb,${OG} 15%,transparent)` }} />
                 <div>
                   <div style={{ fontWeight:850 }}>Zid connected. PrizeSkout is scanning the store now.</div>
-                  <div style={{ marginTop:3, color:"var(--muted)", fontSize:13 }}>We are checking every product against the merchant's margin floor. The opportunity report will appear here automatically.</div>
+                  <div style={{ marginTop:3, color:"var(--muted)", fontSize:13 }}>We are checking what each product earns after its cost and channel charges. Your first results will appear here automatically.</div>
                 </div>
               </div>
             )}
@@ -2621,24 +2621,24 @@ export function PrizeSkoutDashboard() {
                       We found {storeOpportunity.atRisk.length} product{storeOpportunity.atRisk.length===1?"":"s"} that need attention
                     </h2>
                     <p style={{ margin:0, color:"var(--muted)", fontSize:14, lineHeight:1.6 }}>
-                      PrizeSkout scanned {importedProducts.length} product{importedProducts.length===1?"":"s"} from your connected store and compared each one with your {persistedGlobalFloor}% margin floor.
+                      PrizeSkout checked {importedProducts.length} product{importedProducts.length===1?"":"s"} and found which ones leave you less than your {persistedGlobalFloor}% target after product cost and channel charges.
                     </p>
                   </div>
                   <div style={{ minWidth:230, padding:"16px 18px", borderRadius:13, background:"var(--surface)", border:"1px solid var(--border)" }}>
-                    <div style={{ color:"var(--muted)", fontSize:10.5, fontWeight:800, textTransform:"uppercase", letterSpacing:".06em" }}>Price correction opportunity</div>
+                    <div style={{ color:"var(--muted)", fontSize:10.5, fontWeight:800, textTransform:"uppercase", letterSpacing:".06em" }}>More you could keep</div>
                     <div style={{ marginTop:6, fontFamily:DISPLAY, fontSize:31, fontWeight:800, color:storeOpportunity.correctionPerCatalogSale > 0 ? OG : GN }}>
                       {opportunityCurrency} {fmtMoney(storeOpportunity.correctionPerCatalogSale, opportunityCurrency)}
                     </div>
-                    <div style={{ marginTop:4, color:"var(--muted)", fontSize:11.5, lineHeight:1.45 }}>per one sale of each affected SKU; connect order volume to calculate a monthly impact.</div>
+                    <div style={{ marginTop:4, color:"var(--muted)", fontSize:11.5, lineHeight:1.45 }}>if one of each affected product sells. Connect orders to see the monthly amount.</div>
                   </div>
                 </div>
 
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:10 }}>
                   {[
-                    ["Products scanned", String(importedProducts.length), "Catalogue evidence"],
-                    ["Below margin floor", String(storeOpportunity.atRisk.length), "Action recommended"],
-                    ["Verified product costs", String(storeOpportunity.verified), "Highest confidence"],
-                    ["Estimated / unknown costs", String(storeOpportunity.estimated + storeOpportunity.unknown), "Confirm before automation"],
+                    ["Products checked", String(importedProducts.length), "From your connected store"],
+                    ["Earning below target", String(storeOpportunity.atRisk.length), "Review these first"],
+                    ["Costs confirmed by store", String(storeOpportunity.verified), "Safe to calculate"],
+                    ["Costs to confirm", String(storeOpportunity.estimated + storeOpportunity.unknown), "No automatic changes"],
                   ].map(([label,value,foot])=>(
                     <div key={label} style={{ padding:"14px 15px", borderRadius:11, background:"var(--surface)", border:"1px solid var(--border)" }}>
                       <div style={{ fontSize:10.5, color:"var(--muted)", textTransform:"uppercase", fontWeight:800 }}>{label}</div>
@@ -2650,22 +2650,22 @@ export function PrizeSkoutDashboard() {
 
                 {storeOpportunity.atRisk.length > 0 ? (
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:14, flexWrap:"wrap" }}>
-                    <div style={{ fontSize:13, color:"var(--muted)" }}><strong style={{ color:"var(--text)" }}>{storeOpportunity.atRisk[0].name_en || storeOpportunity.atRisk[0].sku}</strong> is the strongest first action. Review it, update one live price, then restore it safely.</div>
+                    <div style={{ fontSize:13, color:"var(--muted)" }}><strong style={{ color:"var(--text)" }}>{storeOpportunity.atRisk[0].name_en || storeOpportunity.atRisk[0].sku}</strong> needs attention first. You can review one change, confirm it in Zid, and restore the original price.</div>
                     <button type="button" onClick={()=>openProduct(storeOpportunity.atRisk[0])}
                       style={{ border:"none", borderRadius:9, padding:"11px 16px", background:OG, color:"white", cursor:"pointer", fontFamily:"inherit", fontWeight:850 }}>
-                      Run a safe Zid test →
+                      Review the first price →
                     </button>
                   </div>
                 ) : (
                   <div style={{ padding:"13px 15px", borderRadius:10, background:`color-mix(in srgb,${GN} 8%,var(--surface))`, color:GN, fontWeight:750 }}>
-                    No products currently breach your configured margin floor. PrizeSkout will keep monitoring incoming catalogue changes.
+                    Every product with a confirmed cost is currently meeting your target. PrizeSkout will keep checking new changes.
                   </div>
                 )}
 
                 {(storeOpportunity.estimated > 0 || storeOpportunity.unknown > 0) && (
                   <div style={{ fontSize:11.5, lineHeight:1.55, color:"#92400E", background:"color-mix(in srgb,#F59E0B 9%,var(--surface))",
                     border:"1px solid color-mix(in srgb,#F59E0B 28%,var(--border))", borderRadius:9, padding:"10px 13px" }}>
-                    <strong>Confidence notice:</strong> {storeOpportunity.estimated} product cost{storeOpportunity.estimated===1?" is":"s are"} estimated and {storeOpportunity.unknown} have unknown provenance. Recommendations are previews until those costs are confirmed; PrizeSkout does not describe them as guaranteed profit.
+                    <strong>Some product costs need confirmation.</strong> {storeOpportunity.estimated} cost{storeOpportunity.estimated===1?" is":"s are"} estimated and {storeOpportunity.unknown} {storeOpportunity.unknown===1?"is":"are"} missing. PrizeSkout will show suggestions but will not change these products automatically.
                   </div>
                 )}
               </div>
@@ -2801,7 +2801,7 @@ export function PrizeSkoutDashboard() {
                 justifyContent:"space-between", gap:14, flexWrap:"wrap", borderBottom:"1px solid var(--border)" }}>
                 <div>
                   <h3 style={{ margin:0, fontSize:20, fontWeight:800 }}>Imported Products</h3>
-                  <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)" }}>Live catalogue items synchronized from your connected stores.</div>
+                  <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)" }}>Products from your connected stores, with the next safe action for each one.</div>
                 </div>
                 <button type="button" onClick={syncAllCatalogs} disabled={syncingCatalog}
                   data-demo-tip="Pulls your catalogue straight from every connected store — no need to ask the Copilot for something this routine."
@@ -2816,7 +2816,7 @@ export function PrizeSkoutDashboard() {
                         <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
                         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                       </svg>
-                      Sync Catalogue
+                      Refresh products
                     </>
                   )}
                 </button>
@@ -2833,9 +2833,9 @@ export function PrizeSkoutDashboard() {
                   style={{ border:"1px solid var(--border)", borderRadius:9, background:"var(--surface)",
                     color:"var(--text)", padding:"10px 12px", fontFamily:"inherit", fontSize:13 }}>
                   <option value="all">All products ({importedProducts.length})</option>
-                  <option value="risk">Below margin floor</option>
-                  <option value="healthy">Margin healthy</option>
-                  <option value="repriced">Repriced</option>
+                  <option value="risk">Earning below target</option>
+                  <option value="healthy">Meeting target</option>
+                  <option value="repriced">Price changed</option>
                 </select>
                 <select value={productSort} onChange={event=>setProductSort(event.target.value as typeof productSort)}
                   aria-label="Sort imported products"
@@ -2854,18 +2854,18 @@ export function PrizeSkoutDashboard() {
                     <div style={{ color:"var(--muted)", fontSize:14 }}>No products match this search or filter.</div>
                   ) : SYNC_CAPABLE_PLATFORMS.some(p => channelStatuses[p] === "connected") ? (
                     <>
-                      <div style={{ color:"var(--text)", fontSize:15, fontWeight:700 }}>Your store is connected, but nothing's synced yet</div>
-                      <div style={{ color:"var(--muted)", fontSize:13.5, maxWidth:420 }}>Pull your catalogue in to start getting margin-floor price recommendations.</div>
+                      <div style={{ color:"var(--text)", fontSize:15, fontWeight:700 }}>Your store is connected, but its products have not been loaded yet</div>
+                      <div style={{ color:"var(--muted)", fontSize:13.5, maxWidth:420 }}>Load your products to see what each sale leaves after cost and channel charges.</div>
                       <button type="button" onClick={syncAllCatalogs} disabled={syncingCatalog}
                         style={{ cursor: syncingCatalog ? "wait" : "pointer", border:"none", borderRadius:10, background:OG, color:"#fff",
                           fontSize:13.5, fontWeight:700, padding:"11px 20px", fontFamily:"inherit", opacity: syncingCatalog ? 0.7 : 1 }}>
-                        {syncingCatalog ? "Syncing…" : "Sync Catalogue Now"}
+                        {syncingCatalog ? "Loading products…" : "Load my products"}
                       </button>
                     </>
                   ) : (
                     <>
                       <div style={{ color:"var(--text)", fontSize:15, fontWeight:700 }}>No store connected yet</div>
-                      <div style={{ color:"var(--muted)", fontSize:13.5, maxWidth:420 }}>Connect Zid, Salla, or Foodics to start importing products and defending your margins automatically.</div>
+                      <div style={{ color:"var(--muted)", fontSize:13.5, maxWidth:420 }}>Connect Zid, Salla, or Foodics to check product earnings and review safe price changes.</div>
                       <button type="button" onClick={()=>setTab("vault")}
                         style={{ cursor:"pointer", border:"none", borderRadius:10, background:OG, color:"#fff",
                           fontSize:13.5, fontWeight:700, padding:"11px 20px", fontFamily:"inherit" }}>
@@ -3071,14 +3071,14 @@ export function PrizeSkoutDashboard() {
               <div>
                 <h3 style={{ margin:0, fontSize:20, fontWeight:800, letterSpacing:"-0.2px" }}>Policy Center</h3>
                 <div style={{ marginTop:5, fontSize:13.5, color:"var(--muted)", lineHeight:1.6 }}>
-                  Contract terms, promotions, channel pricing, and multi-branch controls — the policies your payout audits and price guardrails run against.
+                  Set the business rules PrizeSkout should use when it checks payouts and recommends prices.
                 </div>
               </div>
 
               <div style={{ display:"flex", background:"var(--surface2)", border:"1px solid var(--border)",
                 borderRadius:10, padding:3, gap:2, flexWrap:"wrap", alignSelf:"flex-start" }}>
                 {([
-                  ["contract","Contracts","Contract Intelligence Vault — upload or paste your marketplace agreement and PrizeSkout extracts the commission rate, fees, and liability terms automatically, with page-level citations."],
+                  ["contract","Contracts","Contract Intelligence Vault — add your marketplace agreement, check the terms PrizeSkout finds, then approve them for payout checks."],
                   ["promotions","Promotions","Promotion Profitability Control — simulate a discount campaign before running it, so you know if it actually makes money after commission and platform funding."],
                   ["pricing","Channel Pricing","Channel Price Architecture — set different prices per channel (in-store, Talabat, Zid...) on purpose, without losing track of which price is live where."],
                   ["group","Group Controls","Group Control Centre — for multi-branch operators: track every legal entity, brand, and branch under one roof, with finance and operations sign-off before changes go live."],
@@ -3609,31 +3609,31 @@ export function PrizeSkoutDashboard() {
             <div data-tour="guardrails" style={{display:"flex",flexDirection:"column",gap:18}}>
               <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:"22px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
-                  <div><h2 style={{margin:0,fontSize:20}}>Protect what you keep from every sale</h2><p style={{margin:"7px 0 0",color:"var(--muted)",fontSize:13.5,maxWidth:720}}>Contribution margin is the share of a product's selling price left after its verified product cost and channel charges. It is not whole-business net profit because rent, salaries and other overhead are not included.</p></div>
+                  <div><h2 style={{margin:0,fontSize:20}}>Protect what you keep from every sale</h2><p style={{margin:"7px 0 0",color:"var(--muted)",fontSize:13.5,maxWidth:720}}>Choose the minimum percentage you want left after product cost and channel charges. This does not include rent, salaries or other business expenses.</p></div>
                   <span style={{fontSize:12,fontWeight:800,color:GN}}>ACTIVE · VERSION {policyVersion}</span>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:16,marginTop:22}}>
-                  <label style={{fontSize:12,fontWeight:800}}>Minimum contribution margin
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}><input aria-label="Minimum contribution margin" type="range" min={5} max={60} value={rules[0].floor} onChange={e=>editRule(0,{floor:Number(e.target.value)})} style={{flex:1}}/><strong style={{fontSize:20,color:OG}}>{rules[0].floor}%</strong></div>
+                  <label style={{fontSize:12,fontWeight:800}}>Minimum to keep from each sale
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8}}><input aria-label="Minimum to keep from each sale" type="range" min={5} max={60} value={rules[0].floor} onChange={e=>editRule(0,{floor:Number(e.target.value)})} style={{flex:1}}/><strong style={{fontSize:20,color:OG}}>{rules[0].floor}%</strong></div>
                   </label>
-                  <label style={{fontSize:12,fontWeight:800}}>Maximum price increase
+                  <label style={{fontSize:12,fontWeight:800}}>Largest price increase allowed
                     <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}><input aria-label="Maximum price increase" type="number" min={0} max={100} value={rules[0].maxChangePct} onChange={e=>editRule(0,{maxChangePct:Number(e.target.value)})} style={{width:"100%",padding:10,border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}/><strong>%</strong></div>
                   </label>
                   <label style={{fontSize:12,fontWeight:800}}>What should PrizeSkout do?
                     <select aria-label="Approval mode" value={rules[0].approvalMode} onChange={e=>editRule(0,{approvalMode:e.target.value as ApprovalMode})} style={{display:"block",width:"100%",marginTop:8,padding:10,border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}>
-                      <option value="recommend_only">Recommend only — you publish manually</option><option value="approval_every_change">Require approval for every change</option><option value="auto_within_limit">Auto-apply within the maximum</option>
+                      <option value="recommend_only">Show suggestions — I update prices</option><option value="approval_every_change">Ask me before every price change</option><option value="auto_within_limit">Update automatically within my limit</option>
                     </select>
                   </label>
                 </div>
-                <div style={{marginTop:16,padding:12,borderRadius:9,background:"var(--surface2)",fontSize:12.5,color:"var(--muted)"}}>Current live policy: keep at least <strong style={{color:"var(--text)"}}>{persistedGlobalFloor}%</strong>, never increase a price by more than <strong style={{color:"var(--text)"}}>{persistedMaxIncrease}%</strong>, mode <strong style={{color:"var(--text)"}}>{persistedApprovalMode.replaceAll("_"," ")}</strong>. Draft edits do nothing until activated.</div>
-                <div style={{display:"flex",justifyContent:"flex-end",gap:9,marginTop:16,flexWrap:"wrap"}}><button onClick={()=>void previewRule(0)} style={{padding:"10px 14px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface)",fontWeight:800,cursor:"pointer"}}>Preview on my catalog</button><button disabled={ruleSaving||!marginPolicyDirty} onClick={()=>void activateRule(0)} style={{padding:"10px 14px",border:0,borderRadius:8,background:marginPolicyDirty?OG:"#CBD5E1",color:"white",fontWeight:800,cursor:marginPolicyDirty&&!ruleSaving?"pointer":"not-allowed"}}>{!marginPolicyDirty?"Policy already active":ruleConfirmIndex===0?(ruleSaving?"Activating…":"Confirm activation"):rulePreviewIndex===0?"Activate this policy":"Review & activate"}</button></div>
-                <div style={{textAlign:"right",fontSize:11.5,color:"var(--muted)",marginTop:7}}>{marginPolicyDirty?(rulePreviewIndex===0?"Preview complete. Continue to confirmation when ready.":"We’ll preview the catalog impact before asking you to confirm."):"Change any setting to create a new policy version."}</div>
-                {ruleConfirmIndex===0&&<div style={{marginTop:12,padding:12,borderRadius:8,background:"#FEF3C7",color:"#92400E",fontSize:12.5}}>Confirm a new immutable policy version. Only “Auto-apply within the maximum” permits automatic dispatch; all other modes retain recommendations for approval.</div>}
+                <div style={{marginTop:16,padding:12,borderRadius:9,background:"var(--surface2)",fontSize:12.5,color:"var(--muted)"}}>Protection now: keep at least <strong style={{color:"var(--text)"}}>{persistedGlobalFloor}%</strong> from each sale and never increase a price by more than <strong style={{color:"var(--text)"}}>{persistedMaxIncrease}%</strong>. Changes you make here do nothing until you start the new settings.</div>
+                <div style={{display:"flex",justifyContent:"flex-end",gap:9,marginTop:16,flexWrap:"wrap"}}><button onClick={()=>void previewRule(0)} style={{padding:"10px 14px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface)",fontWeight:800,cursor:"pointer"}}>See affected products</button><button disabled={ruleSaving||!marginPolicyDirty} onClick={()=>void activateRule(0)} style={{padding:"10px 14px",border:0,borderRadius:8,background:marginPolicyDirty?OG:"#CBD5E1",color:"white",fontWeight:800,cursor:marginPolicyDirty&&!ruleSaving?"pointer":"not-allowed"}}>{!marginPolicyDirty?"These settings are already protecting you":ruleConfirmIndex===0?(ruleSaving?"Starting protection…":"Confirm and start protection"):rulePreviewIndex===0?"Start protecting my margin":"Review affected products"}</button></div>
+                <div style={{textAlign:"right",fontSize:11.5,color:"var(--muted)",marginTop:7}}>{marginPolicyDirty?(rulePreviewIndex===0?"Review complete. Continue when the changes look right.":"We’ll show every affected product before asking you to confirm."):"Change a setting to prepare new protection rules."}</div>
+                {ruleConfirmIndex===0&&<div style={{marginTop:12,padding:12,borderRadius:8,background:"#FEF3C7",color:"#92400E",fontSize:12.5}}>These settings will become active immediately. Automatic price updates happen only if you selected “Update automatically within my limit.”</div>}
               </div>
 
-              {rulePreviewIndex===0&&(()=>{const previews=importedProducts.map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Preview — no prices changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products evaluated",previews.length-blocked.length],["Need protection",affected.length],["Over maximum",over.length],["Blocked: cost unverified",blocked.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Current","Current margin","Proposed","Increase","Result / source"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.net_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${p.currency} ${v.recommended_price.toFixed(2)}`}</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${(v.increase_pct*100).toFixed(1)}%`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome.replaceAll("_"," ")} · {p.cost_confidence}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>Calculated by the production margin evaluator. Unverified costs are blocked. Exact fees come from the economics attached to the product's latest decision.</p></div>})()}
+              {rulePreviewIndex===0&&(()=>{const previews=importedProducts.map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Products affected — nothing has changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products checked",previews.length-blocked.length],["Earning below target",affected.length],["Need a larger increase",over.length],["Cost needs confirmation",blocked.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Price now","Kept now","Suggested price","Increase","What this means"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.net_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${p.currency} ${v.recommended_price.toFixed(2)}`}</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${(v.increase_pct*100).toFixed(1)}%`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome==="blocked_missing_cost"?"Confirm product cost first":v?.outcome==="over_limit"?"Your increase limit prevents reaching the target":v?.outcome==="within_limit"?"Within your limit":"No change needed"}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>PrizeSkout uses the product cost confirmed by your store and the latest channel charges. Products without a confirmed cost cannot be changed automatically.</p></div>})()}
 
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>How we calculate it</h3><div style={{marginTop:12,fontFamily:MONO,fontSize:12.5,lineHeight:1.9,color:"var(--muted)"}}>Selling price<br/>− verified product cost<br/>− contract commission and VAT on fees<br/>− payment, fixed-order, logistics and promotion charges<br/><strong style={{color:"var(--text)"}}>= contribution kept from this sale</strong></div></div><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>Permanent policy history</h3>{policyVersions.length===0?<p style={{fontSize:13,color:"var(--muted)"}}>The first activated version will appear here.</p>:policyVersions.slice(0,5).map(v=><div key={v.id} style={{padding:"10px 0",borderBottom:"1px solid var(--border)",fontSize:12.5}}><strong>v{v.version} · {Math.round(v.contribution_margin_floor_pct*100)}% floor · {Math.round(v.max_price_increase_pct*100)}% max</strong><div style={{color:"var(--muted)",marginTop:3}}>{v.approval_mode.replaceAll("_"," ")} · {v.activated_by} · {new Date(v.activated_at).toLocaleString()}</div></div>)}</div></div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>How we calculate it</h3><div style={{marginTop:12,fontFamily:MONO,fontSize:12.5,lineHeight:1.9,color:"var(--muted)"}}>Selling price<br/>− product cost confirmed by your store<br/>− channel commission and tax on fees<br/>− payment, delivery and promotion charges<br/><strong style={{color:"var(--text)"}}>= amount kept from this sale</strong></div></div><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>Previous protection settings</h3>{policyVersions.length===0?<p style={{fontSize:13,color:"var(--muted)"}}>Your first saved settings will appear here.</p>:policyVersions.slice(0,5).map(v=><div key={v.id} style={{padding:"10px 0",borderBottom:"1px solid var(--border)",fontSize:12.5}}><strong>Version {v.version} · keep {Math.round(v.contribution_margin_floor_pct*100)}% · increase up to {Math.round(v.max_price_increase_pct*100)}%</strong><div style={{color:"var(--muted)",marginTop:3}}>{v.activated_by} · {new Date(v.activated_at).toLocaleString()}</div></div>)}</div></div>
             </div>
 
             {/* Legacy multi-rule concept retained in source for migration reference, never presented as functional. */}
