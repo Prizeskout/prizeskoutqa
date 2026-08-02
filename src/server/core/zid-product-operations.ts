@@ -217,6 +217,10 @@ function changedFields(before: Snapshot, patch: Obj) {
     after,
   }));
 }
+function buildGeneratedSku(name: string, nonce: string) {
+  const slug = name.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toUpperCase().slice(0, 48) || "PRODUCT";
+  return `${slug}-${nonce.slice(0, 6).toUpperCase()}`.slice(0, 80);
+}
 
 export async function previewZidProductChange(
   accountId: string,
@@ -286,7 +290,7 @@ export async function previewZidProductChange(
           ? [
               { field: "source", before: `${product.name} (${product.sku})`, after: "Kept unchanged" },
               { field: "new product", before: "Does not exist", after: `${text((patch.name as Obj).en)} (${patch.is_published ? "published" : "unpublished draft"})` },
-              { field: "new SKU", before: "Generated if omitted", after: text(patch.sku) || `COPY-${product.sku}` },
+              { field: "new SKU", before: "Generated automatically", after: text(patch.sku) || buildGeneratedSku(text((patch.name as Obj).en), approval.nonce) },
             ]
           : changedFields(product, patch),
     })),
@@ -395,7 +399,7 @@ export async function executeZidProductChange(
     if (approval.mode === "duplicate") {
       const source = freshCall.payload;
       const requestedSku = text(approval.patch.sku);
-      const generatedSku = `COPY-${before.sku}-${approval.nonce.slice(0, 6).toUpperCase()}`.slice(0, 80);
+      const generatedSku = buildGeneratedSku(text((approval.patch.name as Obj).en), approval.nonce);
       const variants = arr(source.variants).map((variant) => {
         const copy = { ...variant };
         for (const key of ["id", "product_id", "created_at", "updated_at", "sku"]) delete copy[key];
