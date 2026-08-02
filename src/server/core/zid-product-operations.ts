@@ -78,8 +78,8 @@ function decodeApproval(token: string, accountId: string): Approval {
   const [raw, sig] = token.split("."),
     key = secret();
   if (!raw || !sig || !key) throw new Error("The approval has an invalid signature.");
-  const expected = createHmac("sha256", key).update(raw).digest();
-  const actual = Buffer.from(sig, "base64url");
+  const expected = Buffer.from(createHmac("sha256", key).update(raw).digest("base64url"));
+  const actual = Buffer.from(sig);
   if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
     throw new Error("The approval has been changed. Preview the action again.");
   const payload = JSON.parse(Buffer.from(raw, "base64url").toString()) as Approval;
