@@ -2,6 +2,7 @@ import {supabaseAdmin} from "@/integrations/supabase/client.server";
 import {pushPriceToSourcePlatform} from "./platform-sync";
 import {getValidTalabatAccessToken, updateTalabatPrice} from "./talabat-client";
 import type {ChannelPriceRow} from "@/lib/channel-price-planner";
+import {createNotification} from "@/server/notifications";
 
 export type SavedChannelPricePlan={id:string;account_id:string;name:string;status:"draft"|"approved"|"partially_published"|"published"|"cancelled";channel_config:unknown[];rows:unknown[];approved_by:string|null;approved_at:string|null;published_at:string|null;created_at:string;updated_at:string};
 export type PublishRowResult={sku:string;name:string;channel:string;planned_price:number;status:"published"|"skipped"|"failed";reason:string};
@@ -93,6 +94,14 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
 
   const {data:updated,error:updateError}=await supabaseAdmin.from("ps_channel_price_plans").update(update).eq("account_id",accountId).eq("id",id).select("*").single();
   if(updateError)throw updateError;
+  const published=results.filter(result=>result.status==="published");
+  const failed=results.filter(result=>result.status==="failed");
+  if(published.length){
+    void createNotification({userId:accountId,preferenceKey:"reprice_applied",category:"pricing",severity:"success",title:`${published.length} price ${published.length===1?"change":"changes"} sent`,body:failed.length?`${failed.length} other ${failed.length===1?"change needs":"changes need"} attention.`:"PrizeSkout sent every approved change to the connected channel.",linkTo:"/dashboard/revenue-hub",dedupeKey:`reprice:${id}`,dedupeWindowMinutes:1440,metadata:{plan_id:id,published:published.length,failed:failed.length}});
+  }
+  if(failed.length){
+    void createNotification({userId:accountId,preferenceKey:"channel_down",category:"pricing",severity:"error",title:`${failed.length} price ${failed.length===1?"change was":"changes were"} not sent`,body:"Open the price plan to see which channel needs attention.",linkTo:"/dashboard/revenue-hub",dedupeKey:`reprice-failed:${id}`,dedupeWindowMinutes:1440,metadata:{plan_id:id,failed:failed.length}});
+  }
   return {plan:updated as SavedChannelPricePlan,results};
 }
 

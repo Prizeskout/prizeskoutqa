@@ -218,6 +218,7 @@ export async function enqueueWebhookEvent(event: WebhookEvent): Promise<{
     if (!post.ok && !willRetry) {
       void createNotification({
         userId: event.userId,
+        preferenceKey: "channel_down",
         category: "webhook_failure",
         severity: "error",
         title: `Webhook delivery failed`,
@@ -363,6 +364,7 @@ export async function processWebhookRetryQueue(limit = 50): Promise<{
       exhausted++;
       void createNotification({
         userId: row.user_id,
+        preferenceKey: "channel_down",
         category: "webhook_failure",
         severity: "error",
         title: "Webhook delivery exhausted retries",

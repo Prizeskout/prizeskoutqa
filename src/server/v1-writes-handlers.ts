@@ -12,6 +12,7 @@
 import { randomBytes } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
+import { createNotification } from "@/server/notifications";
 
 function ok(body: unknown, status = 200): V1Result {
   return { status, body };
@@ -235,6 +236,21 @@ export async function handleSimulatePromotion(request: Request, ctx: V1Context):
   const verdict = healthy
     ? `Healthy. Cannibalization (${cannibalizationPct}%) is below the 40% threshold and ROI is ${netRoi}x. Recommend running.`
     : `Risky. Cannibalization at ${cannibalizationPct}% with ${netRoi}x ROI — consider trimming depth or duration.`;
+
+  if (!healthy) {
+    void createNotification({
+      userId: ctx.userId,
+      preferenceKey: "promo_overlap",
+      category: "pricing",
+      severity: "warning",
+      title: "This promotion may reduce what you keep",
+      body: `${category}: the ${depthPct}% offer is expected to reach ${cannibalizationPct}% cannibalization and ${netRoi}x ROI. Review the discount or duration before publishing.`,
+      linkTo: "/dashboard/promotions",
+      dedupeKey: `promotion-risk:${scenario.id}`,
+      dedupeWindowMinutes: 1440,
+      metadata: { scenario_id: scenario.id, category, depth_pct: depthPct, duration_days: durationDays, net_roi: netRoi },
+    });
+  }
 
   return ok({
     scenario_id: `sim_${scenario.id.replace(/-/g, "").slice(0, 8)}`,

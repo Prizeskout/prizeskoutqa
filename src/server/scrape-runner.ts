@@ -193,6 +193,15 @@ export async function runScrape(
     const result = await attemptScrape(apiKey, job.url);
 
     if (result.ok) {
+      const { data: previous } = await (supabase.from("competitor_scrapes") as any)
+        .select("price,currency")
+        .eq("user_id", job.userId)
+        .eq("url", job.url)
+        .eq("status", "success")
+        .not("price", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       const { error } = await (supabase.from("competitor_scrapes") as any).insert({
         user_id: job.userId,
         url: job.url,
@@ -210,6 +219,23 @@ export async function runScrape(
       }
       if (attempt > 1) {
         console.log(`[scrape] Succeeded for ${job.competitor}/${job.product} on attempt ${attempt}`);
+      }
+      const previousPrice = Number(previous?.price);
+      if (Number.isFinite(previousPrice) && result.price < previousPrice) {
+        const currencyLabel = result.currency ?? previous?.currency ?? "";
+        const dropPct = Math.round(((previousPrice - result.price) / previousPrice) * 1000) / 10;
+        void createNotification({
+          userId: job.userId,
+          preferenceKey: "competitor_drop",
+          category: "pricing",
+          severity: "warning",
+          title: `${job.competitor ?? "A competitor"} lowered a price`,
+          body: `${job.product ?? "Tracked item"}: ${currencyLabel} ${previousPrice.toLocaleString()} → ${currencyLabel} ${result.price.toLocaleString()} (${dropPct}% lower).`,
+          linkTo: "/dashboard/competitors",
+          dedupeKey: `competitor-drop:${job.url}:${result.price}`,
+          dedupeWindowMinutes: 1440,
+          metadata: { url: job.url, previous_price: previousPrice, new_price: result.price, drop_pct: dropPct },
+        });
       }
       // Cache-miss path: keep the shared URL cache fresh even on manual scrapes.
       void (async () => {

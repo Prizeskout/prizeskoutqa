@@ -18,6 +18,7 @@ import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { createNotification } from "@/server/notifications";
 import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { enqueueDispatch } from "./dispatch-queue";
 import { getMerchantMarginPolicy } from "./merchant-pricing-config";
@@ -259,6 +260,21 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
     })
     .select("id")
     .single();
+
+  if (decideOutput.floorBreached) {
+    void createNotification({
+      userId: ctx.accountId,
+      preferenceKey: "margin_breach",
+      category: "pricing",
+      severity: "warning",
+      title: `${body.data.sku} is earning below your target`,
+      body: `It is keeping ${(decideOutput.netMarginPct * 100).toFixed(1)}%; your target is ${(decideOutput.marginFloorPct * 100).toFixed(1)}%. Review the suggested price before making a change.`,
+      linkTo: "/dashboard/revenue-hub",
+      dedupeKey: `margin-breach:${body.source_platform}:${body.data.sku}`,
+      dedupeWindowMinutes: 360,
+      metadata: { sku: body.data.sku, source_platform: body.source_platform, margin_pct: decideOutput.netMarginPct, floor_pct: decideOutput.marginFloorPct },
+    });
+  }
 
   await supabaseAdmin
     .from("ps_ingest_events")

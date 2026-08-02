@@ -17,6 +17,13 @@ export type NotificationCategory =
   | "system";
 
 export type NotificationSeverity = "info" | "warning" | "error" | "success";
+export type NotificationPreferenceKey =
+  | "margin_breach"
+  | "reprice_applied"
+  | "channel_down"
+  | "competitor_drop"
+  | "promo_overlap"
+  | "weekly_digest";
 
 export type CreateNotificationInput = {
   userId: string;
@@ -26,6 +33,7 @@ export type CreateNotificationInput = {
   body?: string;
   linkTo?: string;
   metadata?: Record<string, unknown>;
+  preferenceKey?: NotificationPreferenceKey;
   /**
    * If set, suppress this notification when an unread one with the same
    * category + dedupeKey already exists for the user. Prevents flooding
@@ -44,6 +52,20 @@ export type CreateNotificationInput = {
  */
 export async function createNotification(input: CreateNotificationInput): Promise<void> {
   try {
+    if (input.preferenceKey) {
+      const { data: preference, error: preferenceError } = await supabaseAdmin
+        .from("user_notification_settings")
+        .select("enabled")
+        .eq("user_id", input.userId)
+        .eq("pref_key", input.preferenceKey)
+        .maybeSingle();
+      if (preferenceError) {
+        console.error("createNotification preference lookup failed", preferenceError);
+        return;
+      }
+      const defaultEnabled = input.preferenceKey !== "weekly_digest";
+      if ((preference?.enabled ?? defaultEnabled) === false) return;
+    }
     if (input.dedupeKey) {
       const windowMinutes = input.dedupeWindowMinutes ?? 60;
       const since = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();

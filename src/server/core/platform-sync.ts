@@ -335,9 +335,26 @@ export async function syncPlatformCatalog(params: {
 
   // 1. Fetch products from the platform
   let products: PlatformProduct[] = [];
-  if (platform === "salla") products = await fetchSallaProducts(creds);
-  else if (platform === "foodics") products = await fetchFoodicsProducts(creds);
-  else if (platform === "zid") products = await fetchZidProducts(creds);
+  try {
+    if (platform === "salla") products = await fetchSallaProducts(creds);
+    else if (platform === "foodics") products = await fetchFoodicsProducts(creds);
+    else if (platform === "zid") products = await fetchZidProducts(creds);
+  } catch (error) {
+    const { createNotification } = await import("@/server/notifications");
+    await createNotification({
+      userId: accountId,
+      preferenceKey: "channel_down",
+      category: "system",
+      severity: "error",
+      title: `${platform.toUpperCase()} stopped syncing`,
+      body: "PrizeSkout could not refresh your products. Check the connection and try again.",
+      linkTo: "/dashboard/settings",
+      dedupeKey: `catalog-sync:${platform}`,
+      dedupeWindowMinutes: 360,
+      metadata: { platform, error: error instanceof Error ? error.message : String(error) },
+    });
+    throw error;
+  }
 
   const commissionRate = REGIONAL_COMMISSION[region] ?? 0.22;
   const vatRate = REGIONAL_VAT[region] ?? 0;
@@ -504,6 +521,22 @@ export async function syncPlatformCatalog(params: {
     .eq("account_id", accountId)
     .eq("merchant_id", merchantId)
     .eq("platform", platform);
+
+  if (belowFloor > 0) {
+    const { createNotification } = await import("@/server/notifications");
+    void createNotification({
+      userId: accountId,
+      preferenceKey: "margin_breach",
+      category: "pricing",
+      severity: "warning",
+      title: `${belowFloor} ${belowFloor === 1 ? "product is" : "products are"} earning below your target`,
+      body: `PrizeSkout found ${belowFloor} in your latest ${platform.toUpperCase()} refresh. Review them before changing any prices.`,
+      linkTo: "/dashboard/revenue-hub",
+      dedupeKey: `catalog-margin-breach:${platform}`,
+      dedupeWindowMinutes: 360,
+      metadata: { platform, products_below_floor: belowFloor, products_checked: products.length },
+    });
+  }
 
   return {
     platform,

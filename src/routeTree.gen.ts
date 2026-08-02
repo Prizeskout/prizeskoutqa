@@ -75,6 +75,7 @@ import { Route as ApiAuthKeetaRouteImport } from './routes/api/auth/keeta'
 import { Route as ApiAuthEmailBridgeRouteImport } from './routes/api/auth/email-bridge'
 import { Route as ApiWebhooksZidAppMarketRouteImport } from './routes/api/webhooks/zid/app-market'
 import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
+import { Route as ApiPublicHooksWeeklyMarginDigestRouteImport } from './routes/api/public/hooks/weekly-margin-digest'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
@@ -420,6 +421,12 @@ const ApiPublicV1SplatRoute = ApiPublicV1SplatRouteImport.update({
   path: '/api/public/v1/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksWeeklyMarginDigestRoute =
+  ApiPublicHooksWeeklyMarginDigestRouteImport.update({
+    id: '/api/public/hooks/weekly-margin-digest',
+    path: '/api/public/hooks/weekly-margin-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksWebhookRetryRoute =
   ApiPublicHooksWebhookRetryRouteImport.update({
     id: '/api/public/hooks/webhook-retry',
@@ -571,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
+  '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -649,6 +657,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
+  '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -731,6 +740,7 @@ export interface FileRoutesById {
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
+  '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -814,6 +824,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
+    | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
@@ -892,6 +903,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
+    | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
@@ -973,6 +985,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
+    | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
@@ -1029,6 +1042,7 @@ export interface RootRouteChildren {
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
   ApiPublicHooksWebhookIntelligenceRetryRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
+  ApiPublicHooksWeeklyMarginDigestRoute: typeof ApiPublicHooksWeeklyMarginDigestRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
   ApiWebhooksZidAppMarketRoute: typeof ApiWebhooksZidAppMarketRoute
   ApiPublicV1WebhooksTestSignatureRoute: typeof ApiPublicV1WebhooksTestSignatureRoute
@@ -1498,6 +1512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/weekly-margin-digest': {
+      id: '/api/public/hooks/weekly-margin-digest'
+      path: '/api/public/hooks/weekly-margin-digest'
+      fullPath: '/api/public/hooks/weekly-margin-digest'
+      preLoaderRoute: typeof ApiPublicHooksWeeklyMarginDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/webhook-retry': {
       id: '/api/public/hooks/webhook-retry'
       path: '/api/public/hooks/webhook-retry'
@@ -1773,6 +1794,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWebhookIntelligenceRetryRoute:
     ApiPublicHooksWebhookIntelligenceRetryRoute,
   ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
+  ApiPublicHooksWeeklyMarginDigestRoute: ApiPublicHooksWeeklyMarginDigestRoute,
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
   ApiWebhooksZidAppMarketRoute: ApiWebhooksZidAppMarketRoute,
   ApiPublicV1WebhooksTestSignatureRoute: ApiPublicV1WebhooksTestSignatureRoute,
