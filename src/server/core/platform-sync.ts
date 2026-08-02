@@ -278,6 +278,36 @@ export async function pushPriceToSourcePlatform(
   }
 }
 
+export async function fetchLiveProductPrice(
+  platform: string,
+  creds: PlatformCreds,
+  externalId: string,
+): Promise<{ success:boolean; price:number|null; httpStatus:number; message?:string }> {
+  try {
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),8000);
+    let url="";
+    let headers:Record<string,string>={Accept:"application/json",Authorization:`Bearer ${creds.bearer_token}`};
+    if(platform==="zid"){
+      url=`https://api.zid.sa/v1/products/${externalId}/`;
+      headers={...headers,...zidHeaders(creds)};
+    }else if(platform==="salla") url=`https://api.salla.dev/admin/v2/products/${externalId}`;
+    else if(platform==="foodics") url=`https://api-v2.foodics.com/v2.1/products/${externalId}`;
+    else return {success:false,price:null,httpStatus:400,message:`Unknown source platform: ${platform}`};
+    const response=await fetch(url,{headers,signal:controller.signal});
+    clearTimeout(timeout);
+    if(!response.ok) return {success:false,price:null,httpStatus:response.status,message:(await response.text().catch(()=>"")).slice(0,400)};
+    const payload=await response.json() as Record<string,unknown>;
+    const data=(payload.data&&typeof payload.data==="object"?payload.data:payload) as Record<string,unknown>;
+    const raw=platform==="foodics"?data.selling_price:(data.sale_price??data.price);
+    const amount=raw&&typeof raw==="object"?(raw as Record<string,unknown>).amount:raw;
+    const price=Number(amount);
+    return Number.isFinite(price)?{success:true,price,httpStatus:response.status}:{success:false,price:null,httpStatus:response.status,message:"Live product response did not contain a readable price."};
+  } catch(error) {
+    return {success:false,price:null,httpStatus:error instanceof Error&&error.name==="AbortError"?504:500,message:error instanceof Error?error.message:String(error)};
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Full catalog sync — called on connect and on manual re-sync
 // ---------------------------------------------------------------------------

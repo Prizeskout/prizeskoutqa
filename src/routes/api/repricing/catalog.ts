@@ -24,6 +24,7 @@ export type RepricingProduct = {
   decision_action: string;
   currency: string;
   status: string;
+  inventory_status: string;
   repriced_at: string | null;
   margin_floor_pct: number;
   commission_rate: number;
@@ -83,7 +84,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         // visible so the merchant can fix it.
         const { data: ingestRows, error:ingestError } = await supabaseAdmin
           .from("ps_ingest_events")
-          .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, raw_payload")
+          .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, inventory_status, raw_payload")
           .eq("account_id", accountId)
           .order("created_at",{ascending:false});
         if(ingestError)return json({error:"Failed to load synced catalog"},500);
@@ -104,7 +105,11 @@ export const Route = createFileRoute("/api/repricing/catalog")({
 
           const currentPrice=Number(evt.current_retail_price??0);
           const preview=wantsPreview&&costSource==="platform_catalog"&&decision?calculateMargin({region:"SA",baseCost:Number(decision.base_cost),currentRetailPrice:currentPrice,commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:previewFloor}):null;
-          const previewIncrease=preview?.recommendedPrice&&currentPrice>0?(preview.recommendedPrice-currentPrice)/currentPrice:0;
+          const uncappedRecommendation=preview?.recommendedPrice??null;
+          const cappedRecommendation=uncappedRecommendation&&currentPrice>0?Math.min(uncappedRecommendation,currentPrice*(1+previewMaxIncrease)):uncappedRecommendation;
+          const projected=cappedRecommendation&&decision?calculateMargin({region:"SA",baseCost:Number(decision.base_cost),currentRetailPrice:cappedRecommendation,commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:previewFloor}):null;
+          const previewIncrease=cappedRecommendation&&currentPrice>0?(cappedRecommendation-currentPrice)/currentPrice:0;
+          const requiredIncrease=uncappedRecommendation&&currentPrice>0?(uncappedRecommendation-currentPrice)/currentPrice:0;
           products.push({
             ingest_event_id: evt.id,
             decide_result_id: decision?.id??null,
@@ -120,13 +125,14 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             decision_action: decision?.decision_action ?? "blocked_missing_cost",
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
+            inventory_status: evt.inventory_status ?? "unknown",
             repriced_at: evt.status === "repriced" ? new Date().toISOString() : null,
             margin_floor_pct: Number(decision?.margin_floor_pct ?? 0.18),
             commission_rate: Number(decision?.commission_rate ?? 0),
             cost_confidence: costSource === "platform_catalog"
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
-            ...(wantsPreview?{preview:preview?{recommended_price:preview.recommendedPrice,net_margin_pct:preview.netMarginPct,floor_breached:preview.floorBreached,increase_pct:previewIncrease,outcome:!preview.floorBreached?"safe":previewIncrease<=previewMaxIncrease?"within_limit":"over_limit"}:{recommended_price:null,net_margin_pct:Number(decision?.net_margin_pct??0),floor_breached:Boolean(decision?.floor_breached),increase_pct:0,outcome:"blocked_missing_cost"}}:{}),
+            ...(wantsPreview?{preview:preview?{recommended_price:cappedRecommendation==null?null:Math.round(cappedRecommendation*100)/100,net_margin_pct:projected?.netMarginPct??preview.netMarginPct,floor_breached:preview.floorBreached,increase_pct:previewIncrease,outcome:!preview.floorBreached?"safe":requiredIncrease<=previewMaxIncrease?"within_limit":"over_limit"}:{recommended_price:null,net_margin_pct:Number(decision?.net_margin_pct??0),floor_breached:Boolean(decision?.floor_breached),increase_pct:0,outcome:"blocked_missing_cost"}}:{}),
           });
         }
 

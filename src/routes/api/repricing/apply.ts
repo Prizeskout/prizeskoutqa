@@ -13,7 +13,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushPriceToSourcePlatform } from "@/server/core/platform-sync";
+import { fetchLiveProductPrice, pushPriceToSourcePlatform } from "@/server/core/platform-sync";
 import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
 
 function json(data: unknown, status = 200) {
@@ -109,8 +109,30 @@ export const Route = createFileRoute("/api/repricing/apply")({
           currency ?? "SAR",
         );
 
-        // 5. On success, update the ingest event so the UI reflects the new state
-        if (result.success) {
+        // 5. API acceptance is not completion. Read the product back from the
+        // platform and restore the original price when confirmation fails.
+        let confirmed=false;
+        let livePrice:number|null=null;
+        let rolledBack=false;
+        let verificationMessage:string|undefined;
+        if(result.success){
+          const readback=await fetchLiveProductPrice(source_platform,{
+            bearer_token:channel.bearer_token,manager_token:channel.manager_token??null,
+            store_id:String((channel.metadata as Record<string,unknown>|null)?.store_id??"")||null,
+          },item_id);
+          livePrice=readback.price;
+          confirmed=readback.success&&livePrice!=null&&Math.abs(livePrice-targetPrice)<0.005;
+          if(!confirmed){
+            const rollback=await pushPriceToSourcePlatform(source_platform,{
+              bearer_token:channel.bearer_token,manager_token:channel.manager_token??null,
+              store_id:String((channel.metadata as Record<string,unknown>|null)?.store_id??"")||null,
+            },item_id,currentPrice,currency??"SAR");
+            rolledBack=rollback.success;
+            verificationMessage=readback.message??`Expected ${targetPrice}, received ${livePrice??"no live price"}.`;
+          }
+        }
+
+        if (confirmed) {
           await supabaseAdmin
             .from("ps_ingest_events")
             .update({
@@ -122,10 +144,17 @@ export const Route = createFileRoute("/api/repricing/apply")({
         }
 
         return json({
-          ok: result.success,
+          ok: result.success&&confirmed,
           platform: source_platform,
           httpStatus: result.httpStatus,
-          message: result.message ?? (result.success ? "Price updated" : "Platform rejected the price update"),
+          accepted:result.success,
+          confirmed,
+          live_price:livePrice,
+          rolled_back:rolledBack,
+          original_price:currentPrice,
+          target_price:targetPrice,
+          action_id:`PS-ACT-${Date.now().toString(36).toUpperCase()}`,
+          message:confirmed?"Price updated and confirmed live":result.success?`Live confirmation failed. ${rolledBack?"The original price was restored.":"Automatic rollback could not be confirmed."} ${verificationMessage??""}`:result.message??"Platform rejected the price update",
         });
       },
     },

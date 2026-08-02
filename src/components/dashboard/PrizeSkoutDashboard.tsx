@@ -49,6 +49,7 @@ interface ImportedProduct {
   decision_action: string;
   currency: string;
   status: string;
+  inventory_status?: string;
   margin_floor_pct?: number;
   commission_rate?: number;
   cost_confidence?: "verified" | "estimated" | "unknown";
@@ -951,6 +952,9 @@ export function PrizeSkoutDashboard() {
   const [cpOperationProducts, setCpOperationProducts] = useState<ImportedProduct[]>([]);
   const [cpOperationStatus, setCpOperationStatus] = useState<"idle"|"running"|"ready"|"publishing"|"complete"|"failed">("idle");
   const [cpOperationMessage, setCpOperationMessage] = useState<string|null>(null);
+  const [cpActionResults,setCpActionResults]=useState<Array<{name:string;sku:string;before:number;target:number;live:number|null;confirmed:boolean;rolledBack:boolean;actionId:string;message:string}>>([]);
+  const [cpOrders,setCpOrders]=useState<Array<{id:string;code:string;status:string;total:number;currency:string;created_at:string}>>([]);
+  const [cpStoreActionResult,setCpStoreActionResult]=useState<{confirmed:boolean;action_id:string;message:string}|null>(null);
   const [applied, setApplied] = useState(false);
   const [rules, setRules] = useState<Rule[]>([
     { name:"Store contribution-margin policy", desc:"all products · verified costs only", floor:18, active:true, status:"active", scope:"global", maxChangePct:15, dailyChangePct:0, approvalAbovePct:0, cooldownHours:0, rollbackOnReject:true, stopOnStaleCost:true, approvalMode:"recommend_only" },
@@ -1531,6 +1535,16 @@ export function PrizeSkoutDashboard() {
     const unknown = importedProducts.length - verified - estimated;
     return { atRisk, correctionPerCatalogSale, verified, estimated, unknown };
   }, [importedProducts]);
+  const copilotAlerts=useMemo(()=>{
+    const missingCost=importedProducts.filter(product=>product.cost_confidence!=="verified").length;
+    const marginRisk=importedProducts.filter(product=>product.floor_breached&&product.cost_confidence==="verified").length;
+    const stockRisk=importedProducts.filter(product=>product.inventory_status==="out_of_stock").length;
+    return [
+      missingCost?{label:`${missingCost} product${missingCost===1?" has":"s have"} unverified cost data`,command:"Show products with missing or unverified costs"}:null,
+      marginRisk?{label:`${marginRisk} verified-cost product${marginRisk===1?" is":"s are"} below the active margin floor`,command:"Protect a 20% margin on Zid and cap increases at 10%"}:null,
+      stockRisk?{label:`${stockRisk} product${stockRisk===1?" needs":"s need"} inventory attention`,command:"Show products that need inventory attention"}:null,
+    ].filter((item):item is {label:string;command:string}=>Boolean(item));
+  },[importedProducts]);
   const opportunityCurrency = importedProducts[0]?.currency || currency;
 
   // Channel pricing gap — a headline number for what Channel Price
@@ -1663,7 +1677,7 @@ export function PrizeSkoutDashboard() {
       platform:product.source_platform,
     }));
     setCpPhase("loading"); setCpPrompt(prompt); setApplied(false); setCpError(null);
-    setCpObj(null); setCpChatMessage(null); setCpOperationProducts([]); setCpOperationStatus("idle"); setCpOperationMessage(null);
+    setCpObj(null); setCpChatMessage(null); setCpOperationProducts([]); setCpOperationStatus("idle"); setCpOperationMessage(null);setCpActionResults([]);setCpOrders([]);setCpStoreActionResult(null);
     setCpInput("");
     try {
       const res  = await fetch("/api/copilot/compile", {
@@ -1723,11 +1737,12 @@ export function PrizeSkoutDashboard() {
     });
   };
 
-  const fetchCopilotCatalog = async (): Promise<ImportedProduct[]> => {
+  const fetchCopilotCatalog = async (preview?:{floor:number;cap:number}): Promise<ImportedProduct[]> => {
     const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
     const accessCode = localStorage.getItem("ps_access_code") ?? "";
     if (!merchantId || !accessCode) throw new Error("Reopen PrizeSkout from Zid to restore your merchant session.");
     const params = new URLSearchParams({ merchant_id:merchantId, access_code:accessCode });
+    if(preview){params.set("preview_floor",String(preview.floor));params.set("preview_max_increase",String(preview.cap));}
     const response = await fetch(`/api/repricing/catalog?${params}`);
     const data = await response.json() as { products?:ImportedProduct[]; error?:string };
     if (!response.ok) throw new Error(data.error ?? "Could not load the catalogue.");
@@ -1741,7 +1756,19 @@ export function PrizeSkoutDashboard() {
     setCpOperationStatus("running");
     try {
       let products = importedProducts;
-      if (op === "sync_catalog") {
+      if(["change_order_status","create_product_draft"].includes(op)){
+        const missing=op==="change_order_status"?(!operation.order_id||!operation.order_status):(!operation.product_name||!operation.product_sku||!(Number(operation.product_price)>0));
+        if(missing)throw new Error(op==="change_order_status"?"Specify the Zid order reference and target status.":"Specify the product name, SKU, and selling price.");
+        setCpOperationMessage(op==="change_order_status"?`Ready to move order ${String(operation.order_id)} to ${String(operation.order_status)}. No change has been made.`:`Ready to create ${String(operation.product_name)} (SKU ${String(operation.product_sku)}) at SAR ${Number(operation.product_price).toLocaleString()} as an unpublished Zid draft.`);
+      } else if(op==="list_orders"){
+        const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
+        const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:"list_orders"})});
+        const data=await response.json() as {orders?:Array<{id:string;code:string;status:string;total:number;currency:string;created_at:string}>;summary?:{count:number;total:number;by_status:Record<string,number>};error?:string};
+        if(!response.ok)throw new Error(data.error??"Could not load Zid orders.");
+        setCpOrders(data.orders??[]);
+        const statuses=Object.entries(data.summary?.by_status??{}).map(([status,count])=>`${count} ${status}`).join(", ");
+        setCpOperationMessage(`${data.summary?.count??0} orders retrieved from Zid for today${statuses?` (${statuses})`:""}. Total recorded order value: SAR ${(data.summary?.total??0).toLocaleString()}. No order state was changed.`);
+      } else if (op === "sync_catalog") {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
         const accessCode = localStorage.getItem("ps_access_code") ?? "";
         const platform = String(operation.platform ?? "zid").toLowerCase();
@@ -1755,11 +1782,18 @@ export function PrizeSkoutDashboard() {
         const r = data.result;
         setCpOperationMessage(`Catalogue synchronized: ${r?.items_found ?? products.length} found, ${r?.items_stored ?? products.length} stored, ${r?.items_below_floor ?? 0} below the margin floor${r?.errors ? `, ${r.errors} errors` : ""}.`);
       } else {
-        products = await fetchCopilotCatalog();
-        const matches = matchCopilotProducts(operation, products);
+        const floor=Number(operation.minimum_margin_pct);
+        const cap=Number(operation.maximum_increase_pct);
+        products = await fetchCopilotCatalog((op==="protect_margin"||op==="publish_prices")&&floor>0&&floor<1?{floor,cap:cap>0&&cap<=1?cap:.1}:undefined);
+        let matches = matchCopilotProducts(operation, products);
+        if(op==="protect_margin") matches=matches.filter(product=>product.cost_confidence==="verified"&&product.inventory_status!=="out_of_stock"&&Boolean(product.preview?.floor_breached));
+        if(op==="publish_prices"&&operation.verified_costs_only) matches=matches.filter(product=>product.cost_confidence==="verified"&&(!operation.exclude_out_of_stock||product.inventory_status!=="out_of_stock"));
+        if(op==="low_stock") matches=matches.filter(product=>product.inventory_status==="out_of_stock");
+        if(op==="cost_attention") matches=matches.filter(product=>product.cost_confidence!=="verified");
         setCpOperationProducts(matches);
+        const excludedUnverified=op==="protect_margin"?products.filter(product=>product.floor_breached&&product.cost_confidence!=="verified").length:0;
         setCpOperationMessage(matches.length
-          ? `${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
+          ? op==="protect_margin"?`${matches.length} product${matches.length===1?"":"s"} can be safely reviewed against the requested floor. ${excludedUnverified} at-risk product${excludedUnverified===1?" was":"s were"} excluded because cost evidence is not verified.`:op==="low_stock"?`${matches.length} product${matches.length===1?" is":"s are"} currently marked out of stock. This is a read-only result.`:op==="cost_attention"?`${matches.length} product${matches.length===1?" does":"s do"} not have a verified platform cost and cannot be safely auto-repriced.`:`${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
           : "No matching products were found. Try a product name, SKU, or a broader request.");
       }
       if (op === "sync_catalog") setCpOperationProducts(matchCopilotProducts(operation, products));
@@ -1770,6 +1804,21 @@ export function PrizeSkoutDashboard() {
     }
   };
 
+  const executeCopilotStoreWrite=async()=>{
+    if(!cpObj||cpOperationStatus==="publishing")return;
+    const operation=String(cpObj.operation??"");
+    if(!["change_order_status","create_product_draft"].includes(operation))return;
+    setCpOperationStatus("publishing");
+    try{
+      const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
+      const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:operation,order_id:cpObj.order_id,order_status:cpObj.order_status,product_name:cpObj.product_name,product_sku:cpObj.product_sku,product_price:cpObj.product_price})});
+      const result=await response.json() as {ok?:boolean;confirmed?:boolean;action_id?:string;message?:string;error?:string};
+      if(!response.ok||!result.ok)throw new Error(result.error??"Zid did not complete the requested action.");
+      setCpStoreActionResult({confirmed:Boolean(result.confirmed),action_id:result.action_id??"Not returned",message:result.message??"Completed"});
+      setCpOperationMessage(result.message??"The Zid action completed.");setCpOperationStatus("complete");
+    }catch(error){setCpOperationStatus("failed");setCpOperationMessage(error instanceof Error?error.message:"The Zid action failed.");}
+  };
+
   const publishCopilotPrices = async () => {
     if (!cpObj || cpOperationProducts.length === 0 || cpOperationStatus === "publishing") return;
     const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
@@ -1777,28 +1826,37 @@ export function PrizeSkoutDashboard() {
     setCpOperationStatus("publishing");
     let succeeded = 0;
     const failures:string[] = [];
+    const actionResults:Array<{name:string;sku:string;before:number;target:number;live:number|null;confirmed:boolean;rolledBack:boolean;actionId:string;message:string}>=[];
     for (const product of cpOperationProducts) {
       const mode = String(cpObj.price_mode ?? "recommended");
       const fixed = Number(cpObj.target_price);
       const pct = Number(cpObj.percentage_change);
       const targetPrice = mode === "fixed" && fixed > 0 ? fixed
         : mode === "percentage_change" && Number.isFinite(pct) ? product.current_price * (1 + pct / 100)
-        : product.recommended_price;
+        : product.preview?.recommended_price??product.recommended_price;
       try {
         const response = await fetch("/api/repricing/apply", {
           method:"POST", headers:{ "Content-Type":"application/json" },
           body:JSON.stringify({ merchant_id:merchantId, access_code:accessCode, ingest_event_id:product.ingest_event_id, target_price:Math.round(targetPrice * 100) / 100 }),
         });
-        const result = await response.json() as { ok?:boolean; error?:string; message?:string };
-        if (!response.ok || !result.ok) throw new Error(result.error ?? result.message ?? "Rejected");
+        const result = await response.json() as { ok?:boolean; error?:string; message?:string;live_price?:number|null;confirmed?:boolean;rolled_back?:boolean;action_id?:string };
+        if (!response.ok || !result.ok) {
+          const message=result.error??result.message??"Rejected";
+          failures.push(`${product.name_en || product.sku}: ${message}`);
+          actionResults.push({name:product.name_en||product.sku,sku:product.sku,before:product.current_price,target:Math.round(targetPrice*100)/100,live:result.live_price??null,confirmed:false,rolledBack:Boolean(result.rolled_back),actionId:result.action_id??"Not issued",message});
+          continue;
+        }
         succeeded++;
+        actionResults.push({name:product.name_en||product.sku,sku:product.sku,before:product.current_price,target:Math.round(targetPrice*100)/100,live:result.live_price??null,confirmed:Boolean(result.confirmed),rolledBack:Boolean(result.rolled_back),actionId:result.action_id??"Not available",message:result.message??"Completed"});
       } catch (error) {
         failures.push(`${product.name_en || product.sku}: ${error instanceof Error ? error.message : "failed"}`);
+        actionResults.push({name:product.name_en||product.sku,sku:product.sku,before:product.current_price,target:Math.round(targetPrice*100)/100,live:null,confirmed:false,rolledBack:false,actionId:"Not issued",message:error instanceof Error?error.message:"Failed"});
       }
     }
+    setCpActionResults(actionResults);
     await fetchCopilotCatalog().catch(() => {});
     setCpOperationStatus(failures.length ? "failed" : "complete");
-    setCpOperationMessage(`${succeeded} of ${cpOperationProducts.length} live price update${cpOperationProducts.length === 1 ? "" : "s"} succeeded.${failures.length ? ` ${failures.length} failed: ${failures.slice(0,2).join("; ")}` : ""}`);
+    setCpOperationMessage(`${succeeded} of ${cpOperationProducts.length} price update${cpOperationProducts.length === 1 ? "" : "s"} completed and confirmed live.${failures.length ? ` ${failures.length} did not complete: ${failures.slice(0,2).join("; ")}` : ""}`);
   };
 
   const applyConfig = () => {
@@ -3327,24 +3385,28 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap" }}>
                 <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
                   <h2 style={{ margin:0, fontSize:20.5, fontWeight:800, letterSpacing:"-0.3px" }}>
-                    Commerce Copilot <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· Catalogue, pricing and policy operations</span>
+                    Zid Store Operator <span style={{ color:"var(--muted)", fontWeight:600, fontSize:16.5 }}>· controlled commerce operations</span>
                   </h2>
-                  <span style={{ fontSize:15, color:"var(--muted)" }}>Ask Copilot to sync or search your catalogue, preview repricing, publish approved prices, or draft a margin policy.</span>
+                  <span style={{ fontSize:15, color:"var(--muted)" }}>Describe the outcome you want. PrizeSkout plans it, applies safeguards, asks for approval when required, and verifies live store changes.</span>
                 </div>
                 <span style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, fontWeight:700, color:OG,
                   background:`color-mix(in srgb,${OG} 9%,var(--surface))`,
                   border:`1px solid color-mix(in srgb,${OG} 32%,transparent)`,
                   borderRadius:999, padding:"6px 14px" }}>
-                  Copilot ready
+                  {channelStatuses.zid==="connected"?"Zid connected · approval required":"Zid connection required"}
                 </span>
               </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8}}>
+                {[["Data freshness",catalogLoading?"Refreshing catalogue":importedProducts.length?`${importedProducts.length} products loaded`:"Sync required"],["Permissions",channelStatuses.zid==="connected"?"Read products/orders · update prices":"Unavailable until Zid connects"],["Safety mode","Explicit approval for writes"],["Verification","Live readback · auto rollback"]].map(([label,value])=><div key={label} style={{border:"1px solid var(--border)",borderRadius:10,padding:"9px 11px",background:"var(--surface2)"}}><div style={{fontSize:10,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div><div style={{fontSize:12.5,fontWeight:750,marginTop:3}}>{value}</div></div>)}
+              </div>
+              {copilotAlerts.length>0&&<div style={{display:"grid",gap:7}}><div style={{fontSize:10.5,fontWeight:800,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".07em"}}>Needs your attention</div>{copilotAlerts.map(alert=><button key={alert.label} onClick={()=>runCopilot(alert.command)} style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",textAlign:"left",border:"1px solid color-mix(in srgb,#F59E0B 30%,var(--border))",borderRadius:9,padding:"9px 11px",background:"color-mix(in srgb,#F59E0B 7%,var(--surface))",color:"var(--text)",fontFamily:"inherit",fontSize:12.5,cursor:"pointer"}}><span>{alert.label}</span><strong style={{color:OG}}>Review →</strong></button>)}</div>}
               <div data-tour="copilot" style={{ display:"flex", gap:10, alignItems:"center", background:"var(--surface)",
                 border:"1.5px solid var(--border)", borderRadius:14, padding:"6px 8px 6px 18px",
                 boxShadow:"var(--shadow)" }}>
                 <span style={{ fontSize:17.5, opacity:.55 }}>✦</span>
                 <input value={cpInput} onChange={e=>setCpInput(e.target.value)}
                   onKeyDown={e=>{ if(e.key==="Enter") runCopilot(cpInput); }}
-                  placeholder={lang==="ar" ? "اسأل أي شيء أو اكتب قاعدة تسعير..." : "Try: Pull my Zid catalogue, find Sony A7S III, or preview repricing all products"}
+                  placeholder={lang==="ar" ? "اكتب المهمة التي تريد تنفيذها في متجرك..." : "Try: Protect a 20% margin on Zid and cap increases at 10%"}
                   style={{ flex:1, minWidth:0, border:"none", outline:"none", background:"transparent",
                     color:"var(--text)", fontSize:16, fontFamily:"inherit", padding:"10px 0" }} />
                 <button onClick={()=>runCopilot(cpInput)} style={{ cursor:"pointer", flex:"0 0 auto",
@@ -3361,10 +3423,11 @@ export function PrizeSkoutDashboard() {
               <div style={{ display:"flex", gap:9, flexWrap:"wrap", alignItems:"center" }}>
                 <span style={{ fontSize:13.5, color:"var(--muted)", fontWeight:600 }}>{t.try}</span>
                 {[
+                  "Protect a 20% margin on Zid and cap increases at 10%",
+                  "Summarize today's Zid orders",
+                  "Show products that need inventory attention",
+                  "Find Sony A7S III and explain its economics",
                   "Pull my latest catalogue from Zid",
-                  "Find Sony A7S III and show its recommendation",
-                  "Preview repricing for all Zid products",
-                  "Maintain at least 25% net margin for cameras sold through Zid",
                 ].map(label => (
                   <button key={label} className="ps-pill-btn"
                     onClick={()=>{ setCpInput(label); runCopilot(label); }}
@@ -3422,7 +3485,10 @@ export function PrizeSkoutDashboard() {
                     </span>
                   </div>
                   <div style={{ padding:"18px 19px", display:"flex", flexDirection:"column", gap:14 }}>
+                    {Array.isArray(cpObj.plan) && <div style={{border:"1px solid var(--border)",borderRadius:11,padding:"13px 14px",background:"var(--surface2)"}}><div style={{display:"flex",justifyContent:"space-between",gap:10,marginBottom:9}}><strong style={{fontSize:13}}>Execution plan</strong><span style={{fontSize:11,fontWeight:800,color:String(cpObj.risk_level)==="reversible_write"?"#B45309":GN,textTransform:"uppercase"}}>{String(cpObj.risk_level)==="reversible_write"?"Reversible write":"Read only"}</span></div><ol style={{margin:0,paddingLeft:20,display:"grid",gap:5,fontSize:12.5,lineHeight:1.45}}>{cpObj.plan.map((step,index)=><li key={index}>{String(step)}</li>)}</ol></div>}
                     {cpOperationMessage && <div style={{ fontSize:14.5, lineHeight:1.55 }}>{cpOperationMessage}</div>}
+                    {["change_order_status","create_product_draft"].includes(String(cpObj.operation))&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:14,flexWrap:"wrap",border:"1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",borderRadius:11,padding:"13px 14px",background:"color-mix(in srgb,#F59E0B 8%,var(--surface))"}}><div style={{fontSize:13.5,maxWidth:720}}><strong>Sensitive store action.</strong> {String(cpObj.operation)==="change_order_status"?`Order ${String(cpObj.order_id)} will move to ${String(cpObj.order_status)}.`:`An unpublished draft ${String(cpObj.product_name)} (${String(cpObj.product_sku)}) will be created at SAR ${Number(cpObj.product_price).toLocaleString()}.`} Nothing happens until you approve.</div><button onClick={executeCopilotStoreWrite} disabled={cpOperationStatus==="publishing"||cpOperationStatus==="complete"} style={{border:0,borderRadius:9,padding:"10px 14px",background:cpOperationStatus==="complete"?GN:OG,color:"white",fontFamily:"inherit",fontWeight:800,cursor:cpOperationStatus==="publishing"?"wait":"pointer"}}>{cpOperationStatus==="publishing"?"Executing...":cpOperationStatus==="complete"?"Confirmed in Zid":"Approve exact action"}</button></div>}
+                    {cpStoreActionResult&&<div style={{border:`1px solid ${cpStoreActionResult.confirmed?GN:"#DC2626"}`,borderRadius:10,padding:"11px 13px",fontSize:12.5}}><strong>{cpStoreActionResult.confirmed?"Confirmed by Zid":"Not confirmed"}</strong><div style={{marginTop:4}}>{cpStoreActionResult.message}</div><div style={{marginTop:4,color:"var(--muted)"}}>Action ID: {cpStoreActionResult.action_id}</div></div>}
                     {cpOperationProducts.length > 0 && (
                       <>
                         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))", gap:10 }}>
@@ -3437,13 +3503,14 @@ export function PrizeSkoutDashboard() {
                               <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:3 }}>SKU {product.sku}</div>
                               <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginTop:10, fontSize:12.5 }}>
                                 <span>{product.currency} {product.current_price.toLocaleString()}</span>
-                                <strong style={{ color:product.floor_breached?"#DC2626":GN }}>→ {product.currency} {product.recommended_price.toLocaleString()}</strong>
+                                <strong style={{ color:(product.preview?.floor_breached??product.floor_breached)?"#DC2626":GN }}>→ {product.currency} {(product.preview?.recommended_price??product.recommended_price).toLocaleString()}</strong>
                               </div>
+                              <div style={{fontSize:11,marginTop:6,color:"var(--muted)"}}>{product.cost_confidence==="verified"?"Verified platform cost":"Cost not verified"} · {product.inventory_status?.replaceAll("_"," ")??"inventory unknown"}</div>
                             </button>
                           ))}
                         </div>
                         {cpOperationProducts.length > 12 && <div style={{ fontSize:12.5, color:"var(--muted)" }}>Showing 12 of {cpOperationProducts.length} matched products. All matched products are included.</div>}
-                        {String(cpObj.operation) !== "publish_prices" && (
+                        {String(cpObj.operation) !== "publish_prices" && !["low_stock","cost_attention"].includes(String(cpObj.operation)) && (
                           <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                             {String(cpObj.operation) !== "preview_reprice" && (
                               <button onClick={()=>runCopilot("Preview repricing for these products")}
@@ -3462,6 +3529,7 @@ export function PrizeSkoutDashboard() {
                         )}
                       </>
                     )}
+                    {cpOrders.length>0&&<div style={{border:"1px solid var(--border)",borderRadius:11,overflow:"hidden"}}><div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 1fr",gap:10,padding:"9px 11px",background:"var(--surface2)",fontSize:10.5,fontWeight:800,textTransform:"uppercase",color:"var(--muted)"}}><span>Order</span><span>Status</span><span>Total</span><span>Created</span></div>{cpOrders.slice(0,12).map(order=><div key={order.id} style={{display:"grid",gridTemplateColumns:"1.2fr 1fr 1fr 1fr",gap:10,padding:"10px 11px",borderTop:"1px solid var(--border)",fontSize:12}}><strong>{order.code}</strong><span>{order.status}</span><span>{order.currency} {order.total.toLocaleString()}</span><span>{order.created_at?new Date(order.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"Not supplied"}</span></div>)}</div>}
                     {String(cpObj.operation) === "publish_prices" && cpOperationProducts.length > 0 && (
                       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14, flexWrap:"wrap",
                         background:"color-mix(in srgb,#F59E0B 9%,var(--surface))", border:"1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",
@@ -3476,6 +3544,7 @@ export function PrizeSkoutDashboard() {
                         </button>
                       </div>
                     )}
+                    {cpActionResults.length>0&&<div style={{display:"grid",gap:8}}><strong style={{fontSize:13}}>Verified action results</strong>{cpActionResults.map(result=><div key={`${result.sku}-${result.actionId}`} style={{border:"1px solid var(--border)",borderRadius:10,padding:"11px 12px",display:"grid",gridTemplateColumns:"minmax(150px,1fr) repeat(3,auto)",gap:12,alignItems:"center",fontSize:12}}><div><strong>{result.name}</strong><div style={{color:"var(--muted)"}}>SKU {result.sku} · {result.actionId}</div></div><span>{result.before.toLocaleString()} → {result.target.toLocaleString()}</span><span style={{color:result.confirmed?GN:"#DC2626",fontWeight:800}}>{result.confirmed?`CONFIRMED ${result.live?.toLocaleString()}`:result.rolledBack?"ROLLED BACK":"NOT CONFIRMED"}</span><span style={{color:"var(--muted)"}}>{result.message}</span></div>)}</div>}
                   </div>
                 </div>
               )}

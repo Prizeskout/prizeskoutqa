@@ -143,7 +143,7 @@ const OPERATION_SYSTEM = `You are the operations planner for PrizeSkout, a comme
 Convert the merchant's request into a safe executable operation plan. Output ONLY valid JSON.
 Schema:
 {
-  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices",
+  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "change_order_status" | "create_product_draft",
   "platform": "zid" | "salla" | "foodics" | "all",
   "query": string | null,
   "category": string | null,
@@ -152,14 +152,23 @@ Schema:
   "price_mode": "recommended" | "fixed" | "percentage_change" | null,
   "target_price": number | null,
   "percentage_change": number | null,
+  "minimum_margin_pct": number | null,
+  "maximum_increase_pct": number | null,
+  "verified_costs_only": boolean,
+  "exclude_out_of_stock": boolean,
+  "order_id": string | null,
+  "order_status": "new" | "preparing" | "ready" | "indelivery" | "delivered" | "cancelled" | null,
+  "product_name": string | null,
+  "product_sku": string | null,
+  "product_price": number | null,
   "summary": string,
   "requires_confirmation": boolean,
   "warnings": string[]
 }
-Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products.
+Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically.
 Find/show a named product or SKU means find_products. Reprice/recommend/calculate without
 explicit live/push/apply language means preview_reprice. Push/apply/publish/go live means
-publish_prices and requires_confirmation=true. Never invent a price. A named product is
+publish_prices and requires_confirmation=true. A request to protect/maintain a stated margin and safely fix products means protect_margin; it is a preview unless the merchant explicitly says publish/apply/go live. Never invent a price. A named product is
 scope=single; "all products" is scope=all. Live publishing always requires confirmation.`;
 
 const FOLLOW_UP = /\b(it|them|those|that|same|next|now|then|go ahead|do it|proceed|continue|use recommended|push live|publish live)\b/i;
@@ -178,6 +187,10 @@ function isOperationalRequest(text: string): boolean {
   const product = /\b(product|products|catalog|catalogue|sku|item|items)\b/i;
   const operation = /\b(pull|import|fetch|retrieve|sync|refresh|show|list|find|search|reprice|recommend|calculate|preview|push|publish|apply|live update|update)\b/i;
   return (product.test(text) && operation.test(text))
+    || /\b(show|list|summari[sz]e|check|review)\b.*\b(order|orders)\b/i.test(text)
+    || /\b(mark|move|change|set)\b.*\border\b|\border\b.*\b(ready|preparing|delivered|cancelled)\b/i.test(text)
+    || /\b(create|add)\b.*\bproduct\b/i.test(text)
+    || /\b(protect|maintain|fix|restore)\b.*\bmargin\b.*\b(zid|store|products?)\b/i.test(text)
     || /\b(push|publish|apply|sync|refresh)\b.*\b(zid|salla|foodics)\b/i.test(text)
     || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text)
     || (FIND_VERB.test(text) && MODEL_CODE.test(text));
@@ -291,7 +304,7 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
           if (operationMode) {
             const operation = String(rule.operation ?? "");
-            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices"];
+            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "change_order_status", "create_product_draft"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
             }
@@ -312,8 +325,25 @@ export const Route = createFileRoute("/api/copilot/compile")({
               }
               if (!rule.platform || rule.platform === "all") rule.platform = prior.platform ?? "all";
               if (!rule.category) rule.category = prior.category ?? null;
+              for(const key of ["minimum_margin_pct","maximum_increase_pct","verified_costs_only","exclude_out_of_stock"]){
+                if(rule[key]==null) rule[key]=prior[key]??null;
+              }
             }
-            rule.requires_confirmation = operation === "publish_prices";
+            const floorMatch=prompt.match(/(?:margin|floor)[^\d]{0,20}(\d+(?:\.\d+)?)\s*%|(\d+(?:\.\d+)?)\s*%[^.]{0,30}(?:margin|floor)/i);
+            const capMatch=prompt.match(/(?:no more than|max(?:imum)?|cap(?:ped)? at)[^\d]{0,20}(\d+(?:\.\d+)?)\s*%/i);
+            rule.minimum_margin_pct=Number(rule.minimum_margin_pct)||(floorMatch?Number(floorMatch[1]??floorMatch[2])/100:null);
+            rule.maximum_increase_pct=Number(rule.maximum_increase_pct)||(capMatch?Number(capMatch[1])/100:null);
+            rule.verified_costs_only=operation==="protect_margin"||Boolean(rule.verified_costs_only);
+            rule.exclude_out_of_stock=operation==="protect_margin"||Boolean(rule.exclude_out_of_stock);
+            rule.risk_level=operation==="publish_prices"?"reversible_write":["change_order_status","create_product_draft"].includes(operation)?"sensitive_write":"read";
+            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft"].includes(operation);
+            const platform=String(rule.platform??"all");
+            const scope=String(rule.scope??"matching");
+            rule.plan=operation==="publish_prices"?[
+              `Resolve the ${scope} product scope on ${platform}.`,"Use verified product costs and the active policy constraints.","Show before-and-after prices and contribution margins.","Wait for explicit merchant approval.","Publish each approved price.","Read every product back from the store.","Restore the original price if live confirmation fails.","Record a separate action result for every product.",
+            ]:operation==="protect_margin"?[
+              `Refresh the ${platform} catalogue.`,"Use verified product costs only.","Identify products below the requested contribution-margin floor.","Exclude out-of-stock and unverified-cost products.","Cap every proposed increase at the merchant's stated limit.","Show the proposed changes without publishing them.",
+            ]:operation==="low_stock"?["Load the latest connected-store catalogue.","Identify products currently marked out of stock or requiring inventory attention.","Return a read-only action list; do not alter inventory."]:operation==="cost_attention"?["Load the latest connected-store catalogue.","Separate verified platform costs from missing or estimated costs.","Return products that cannot safely participate in automated repricing."]:operation==="list_orders"?["Read today's orders from Zid.","Group orders by operational status.","Return order references and totals without changing fulfilment state."]:operation==="change_order_status"?["Validate the Zid order reference and requested status.","Show the exact fulfilment change and wait for approval.","Submit the status change to Zid.","Read today's orders again to verify the new status."]:operation==="create_product_draft"?["Validate the proposed name, SKU and price.","Show the exact product fields and wait for approval.","Create the product in Zid as an unpublished draft.","Return the new Zid product reference."]:[`Load the latest ${platform} catalogue.`,`Resolve the ${scope} product scope.`,"Return current store facts without changing the store."];
             rule.warnings = Array.isArray(rule.warnings) ? rule.warnings : [];
             return json({ type: "operation", operation: rule, latency_ms });
           }
