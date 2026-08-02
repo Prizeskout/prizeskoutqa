@@ -937,7 +937,7 @@ export function PrizeSkoutDashboard() {
   const [importedProducts, setImportedProducts] = useState<ImportedProduct[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
-  const [productFilter, setProductFilter] = useState<"all"|"risk"|"healthy"|"repriced">("all");
+  const [productFilter, setProductFilter] = useState<"all"|"risk"|"verified_risk"|"healthy"|"repriced">("all");
   const [productSort, setProductSort] = useState<"risk"|"name"|"price">("risk");
   const [productPage, setProductPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<ImportedProduct|null>(null);
@@ -1499,6 +1499,7 @@ export function PrizeSkoutDashboard() {
       .filter(product => {
         if (query && !`${product.name_en} ${product.name_ar} ${product.sku} ${product.source_platform}`.toLowerCase().includes(query)) return false;
         if (productFilter === "risk") return product.floor_breached;
+        if (productFilter === "verified_risk") return product.floor_breached && product.cost_confidence === "verified";
         if (productFilter === "healthy") return !product.floor_breached;
         if (productFilter === "repriced") return product.status === "repriced";
         return true;
@@ -1541,11 +1542,19 @@ export function PrizeSkoutDashboard() {
     const stockRisk=importedProducts.filter(product=>product.inventory_status==="out_of_stock").length;
     return [
       missingCost?{label:`${missingCost} product${missingCost===1?" has":"s have"} unverified cost data`,command:"Show products with missing or unverified costs"}:null,
-      marginRisk?{label:`${marginRisk} verified-cost product${marginRisk===1?" is":"s are"} below the active margin floor`,command:"Protect a 20% margin on Zid and cap increases at 10%"}:null,
+      marginRisk?{label:`${marginRisk} verified-cost product${marginRisk===1?" is":"s are"} below the active margin floor`,command:null}:null,
       stockRisk?{label:`${stockRisk} product${stockRisk===1?" needs":"s need"} inventory attention`,command:"Show products that need inventory attention"}:null,
-    ].filter((item):item is {label:string;command:string}=>Boolean(item));
+    ].filter((item):item is {label:string;command:string|null}=>Boolean(item));
   },[importedProducts]);
   const opportunityCurrency = importedProducts[0]?.currency || currency;
+
+  const reviewVerifiedMarginRisks = () => {
+    setProductSearch("");
+    setProductSort("risk");
+    setProductFilter("verified_risk");
+    setProductPage(1);
+    requestAnimationFrame(() => document.getElementById("imported-products")?.scrollIntoView({ behavior:"smooth", block:"start" }));
+  };
 
   // Channel pricing gap — a headline number for what Channel Price
   // Architecture would find, computed with the same default economics it
@@ -2795,7 +2804,7 @@ export function PrizeSkoutDashboard() {
               </div>
             )}
 
-            <div style={{ background:"var(--surface)", border:"1px solid var(--border)",
+            <div id="imported-products" style={{ background:"var(--surface)", border:"1px solid var(--border)",
               borderRadius:16, boxShadow:"var(--shadow)", overflow:"hidden" }}>
               <div data-demo-tip="These are real products pulled live from your connected store's API — not a mock catalogue. Each one gets a margin-floor price recommendation automatically." style={{ padding:"22px 26px", display:"flex", alignItems:"center",
                 justifyContent:"space-between", gap:14, flexWrap:"wrap", borderBottom:"1px solid var(--border)" }}>
@@ -2834,6 +2843,7 @@ export function PrizeSkoutDashboard() {
                     color:"var(--text)", padding:"10px 12px", fontFamily:"inherit", fontSize:13 }}>
                   <option value="all">All products ({importedProducts.length})</option>
                   <option value="risk">Earning below target</option>
+                  {productFilter === "verified_risk" && <option value="verified_risk">Below target · cost confirmed</option>}
                   <option value="healthy">Meeting target</option>
                   <option value="repriced">Price changed</option>
                 </select>
@@ -3399,7 +3409,7 @@ export function PrizeSkoutDashboard() {
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8}}>
                 {[["Data freshness",catalogLoading?"Refreshing catalogue":importedProducts.length?`${importedProducts.length} products loaded`:"Sync required"],["Permissions",channelStatuses.zid==="connected"?"Read products/orders · update prices":"Unavailable until Zid connects"],["Safety mode","Explicit approval for writes"],["Verification","Live readback · auto rollback"]].map(([label,value])=><div key={label} style={{border:"1px solid var(--border)",borderRadius:10,padding:"9px 11px",background:"var(--surface2)"}}><div style={{fontSize:10,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div><div style={{fontSize:12.5,fontWeight:750,marginTop:3}}>{value}</div></div>)}
               </div>
-              {copilotAlerts.length>0&&<div style={{display:"grid",gap:7}}><div style={{fontSize:10.5,fontWeight:800,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".07em"}}>Needs your attention</div>{copilotAlerts.map(alert=><button key={alert.label} onClick={()=>runCopilot(alert.command)} style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",textAlign:"left",border:"1px solid color-mix(in srgb,#F59E0B 30%,var(--border))",borderRadius:9,padding:"9px 11px",background:"color-mix(in srgb,#F59E0B 7%,var(--surface))",color:"var(--text)",fontFamily:"inherit",fontSize:12.5,cursor:"pointer"}}><span>{alert.label}</span><strong style={{color:OG}}>Review →</strong></button>)}</div>}
+              {copilotAlerts.length>0&&<div style={{display:"grid",gap:7}}><div style={{fontSize:10.5,fontWeight:800,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".07em"}}>Needs your attention</div>{copilotAlerts.map(alert=><button key={alert.label} onClick={()=>alert.command ? runCopilot(alert.command) : reviewVerifiedMarginRisks()} style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",textAlign:"left",border:"1px solid color-mix(in srgb,#F59E0B 30%,var(--border))",borderRadius:9,padding:"9px 11px",background:"color-mix(in srgb,#F59E0B 7%,var(--surface))",color:"var(--text)",fontFamily:"inherit",fontSize:12.5,cursor:"pointer"}}><span>{alert.label}</span><strong style={{color:OG}}>Review products →</strong></button>)}</div>}
               <div data-tour="copilot" style={{ display:"flex", gap:10, alignItems:"center", background:"var(--surface)",
                 border:"1.5px solid var(--border)", borderRadius:14, padding:"6px 8px 6px 18px",
                 boxShadow:"var(--shadow)" }}>
