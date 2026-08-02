@@ -124,10 +124,14 @@ try {
   const connectedChannels=(await channelStatus.json() as {channels?:Array<{platform:string;status:string}>}).channels??[];
   if(connectedChannels.some(channel=>channel.platform==="zid"&&channel.status==="connected")){
     const profitBrief=await page.request.post(`${baseUrl}/api/copilot/store`,{data:{merchant_id:access.merchant_id,access_code:access.code,action:"profit_brief",days:30}});
-    const profitBody=await profitBrief.json() as {brief?:{order_count:number;verified_cost_coverage_pct:number};error?:string};
+    const profitBody=await profitBrief.json() as {brief?:{order_count:number;gross_revenue:number;revenue:number;verified_cost_coverage_pct:number;vat:{available:boolean;amount:number;message:string};stock:{products:number;available:number;out_of_stock:number;low_stock:number};returns:{orders:number;amount:number;status:string}};error?:string};
     assert.equal(profitBrief.status(),200,`Zid Profit Brief failed: ${profitBody.error??"unexpected response"}`);
     assert(profitBody.brief&&Number.isFinite(profitBody.brief.order_count),"Zid Profit Brief returned no deterministic summary");
-    console.log("PASS live Zid Profit Brief calculation");
+    assert(profitBody.brief&&profitBody.brief.gross_revenue>=profitBody.brief.revenue,"Usable revenue must not exceed gross Zid sales");
+    assert(profitBody.brief&&Number.isFinite(profitBody.brief.vat.amount),"VAT workflow returned no deterministic amount");
+    assert(profitBody.brief&&profitBody.brief.stock.products>=profitBody.brief.stock.available,"Stock workflow returned inconsistent counts");
+    assert(profitBody.brief&&Number.isFinite(profitBody.brief.returns.amount),"Returns workflow returned no deterministic amount");
+    console.log("PASS live VAT-aware, stock-aware, returns-aware Zid Profit Brief calculation");
 
     await page.getByText("Know what your Zid orders actually kept",{exact:true}).waitFor({timeout:15_000});
     const reviewProfit=page.getByRole("button",{name:/Review orders and coupons/});
@@ -142,13 +146,13 @@ try {
     assert.equal(todaySnapshotCount,1,"Repeated Profit Brief refreshes must update today's snapshot instead of duplicating it");
     console.log("PASS Zid Profit Brief snapshot persistence");
 
-    for(const [prompt,expected] of [["What did I actually keep from Zid orders this month?","profit_brief"],["Which coupons put products below my margin floor?","coupon_risk"]] as const){
+    for(const [prompt,expected] of [["What did I actually keep from Zid orders this month?","profit_brief"],["Which coupons put products below my margin floor?","coupon_risk"],["How much VAT did my Zid orders include?","tax_summary"],["How much did returns reduce what I kept?","returns_impact"]] as const){
       const compiled=await page.request.post(`${baseUrl}/api/copilot/compile`,{data:{prompt}});
       const compiledBody=await compiled.json() as {operation?:{operation?:string};error?:string};
       assert.equal(compiled.status(),200,`Copilot could not compile ${expected}: ${compiledBody.error??"unexpected response"}`);
       assert.equal(compiledBody.operation?.operation,expected,`Copilot routed the merchant request to the wrong operation`);
     }
-    console.log("PASS Copilot routes profit and coupon safety instructions");
+    console.log("PASS Copilot routes profit, VAT, returns and coupon safety instructions");
   }
 
   const review = page.getByRole("button", { name: /Review products/ }).first();

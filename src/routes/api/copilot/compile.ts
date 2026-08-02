@@ -143,7 +143,7 @@ const OPERATION_SYSTEM = `You are the operations planner for PrizeSkout, a comme
 Convert the merchant's request into a safe executable operation plan. Output ONLY valid JSON.
 Schema:
 {
-  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "coupon_risk" | "change_order_status" | "create_product_draft",
+  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft",
   "platform": "zid" | "salla" | "foodics" | "all",
   "query": string | null,
   "category": string | null,
@@ -165,7 +165,7 @@ Schema:
   "requires_confirmation": boolean,
   "warnings": string[]
 }
-Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Asking what the store kept, order profit, loss-making orders, or a profit brief means profit_brief. Asking whether coupons, discount codes, or promotions are safe means coupon_risk. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically.
+Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Asking what the store kept, order profit, loss-making orders, or a profit brief means profit_brief. Asking about VAT, tax included in prices, or tax removed from revenue means tax_summary. Asking how returns or refunds affected revenue or profit means returns_impact. Asking whether coupons, discount codes, or promotions are safe means coupon_risk. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically.
 Find/show a named product or SKU means find_products. Reprice/recommend/calculate without
 explicit live/push/apply language means preview_reprice. Push/apply/publish/go live means
 publish_prices and requires_confirmation=true. A request to protect/maintain a stated margin and safely fix products means protect_margin; it is a preview unless the merchant explicitly says publish/apply/go live. Never invent a price. A named product is
@@ -190,6 +190,7 @@ function isOperationalRequest(text: string): boolean {
     || /\b(what|how much)\b.*\b(keep|kept|profit|contribution)\b|\b(loss[- ]making|unprofitable)\b.*\border/i.test(text)
     || /\b(check|review|show|which|are|is)\b.*\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss)|\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss)/i.test(text)
     || /\b(show|list|summari[sz]e|check|review)\b.*\b(order|orders)\b/i.test(text)
+    || /\b(vat|tax|returns?|refunds?)\b/i.test(text)
     || /\b(mark|move|change|set)\b.*\border\b|\border\b.*\b(ready|preparing|delivered|cancelled)\b/i.test(text)
     || /\b(create|add)\b.*\bproduct\b/i.test(text)
     || /\b(protect|maintain|fix|restore)\b.*\bmargin\b.*\b(zid|store|products?)\b/i.test(text)
@@ -202,9 +203,12 @@ function deterministicZidInsight(prompt:string):Record<string,unknown>|null{
   const text=prompt.toLowerCase();
   const profit=/\b(what|how much)\b.*\b(keep|kept|profit|contribution)\b|\b(loss[- ]making|unprofitable)\b.*\border|\bprofit brief\b/.test(text);
   const coupons=/\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss|below)|\b(which|check|review)\b.*\b(coupon|coupons)\b/.test(text);
-  if(!profit&&!coupons)return null;
-  const operation=profit?"profit_brief":"coupon_risk";
-  return {type:"operation",operation:{_type:"operation",operation,platform:"zid",query:null,category:null,sku:null,risk_level:"read",requires_confirmation:false,execution_plan:profit?["Read the last 30 days of Zid orders.","Match ordered products to verified catalogue costs.","Exclude cancelled orders and withhold incomplete cost evidence.","Show contribution, loss-making orders and the next actions without changing the store."]:["Read active Zid coupons.","Apply each percentage discount to verified-cost catalogue products.","Compare the discounted contribution with the active Margin Policy Engine floor.","Show unsafe and unknown coupons without changing them."],summary:profit?"Calculate what recent Zid orders kept using verified product costs.":"Check active Zid coupons against the merchant's protection floor."}};
+  const tax=/\b(vat|tax|taxes)\b/.test(text),returns=/\b(return|returns|returned|refund|refunds|refunded)\b/.test(text);
+  if(!profit&&!coupons&&!tax&&!returns)return null;
+  const operation=tax?"tax_summary":returns?"returns_impact":profit?"profit_brief":"coupon_risk";
+  const plans:Record<string,string[]>={profit_brief:["Read the last 30 days of Zid orders.","Remove confirmed VAT and recorded returns from merchant revenue.","Match ordered products to verified catalogue costs.","Show contribution and loss-making orders without changing the store."],tax_summary:["Read the store's VAT settings from Zid.","Check whether selling prices include VAT.","Use order tax evidence where Zid supplies it.","Show tax removed from contribution calculations without changing the store."],returns_impact:["Read recent Zid orders and recorded refund or return amounts.","Remove recorded returns from usable merchant revenue.","Show affected orders and the impact on what the merchant kept."],coupon_risk:["Read active Zid coupons.","Apply each percentage discount to available verified-cost products.","Remove included VAT before comparing contribution with the active floor.","Show unsafe and unknown coupons without changing them."]};
+  const summaries:Record<string,string>={profit_brief:"Calculate what recent Zid orders kept after confirmed tax, returns and verified product costs.",tax_summary:"Explain how Zid VAT affects recent revenue and margin calculations.",returns_impact:"Show how recorded Zid returns and refunds changed what the store kept.",coupon_risk:"Check active Zid coupons against the merchant's protection floor."};
+  return {type:"operation",operation:{_type:"operation",operation,platform:"zid",query:null,category:null,sku:null,risk_level:"read",requires_confirmation:false,plan:plans[operation],summary:summaries[operation]}};
 }
 
 // Detect conversational questions vs pricing rule intents.
@@ -318,7 +322,7 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
           if (operationMode) {
             const operation = String(rule.operation ?? "");
-            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "coupon_risk", "change_order_status", "create_product_draft"];
+            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
             }

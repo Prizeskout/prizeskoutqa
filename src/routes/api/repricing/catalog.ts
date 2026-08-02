@@ -25,6 +25,8 @@ export type RepricingProduct = {
   currency: string;
   status: string;
   inventory_status: string;
+  inventory_quantity: number | null;
+  inventory_is_infinite: boolean;
   repriced_at: string | null;
   margin_floor_pct: number;
   commission_rate: number;
@@ -126,6 +128,8 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
             inventory_status: evt.inventory_status ?? "unknown",
+            inventory_quantity: rawPayload?.quantity == null ? null : Number(rawPayload.quantity),
+            inventory_is_infinite: Boolean(rawPayload?.is_infinite),
             repriced_at: evt.status === "repriced" ? new Date().toISOString() : null,
             margin_floor_pct: Number(decision?.margin_floor_pct ?? 0.18),
             commission_rate: Number(decision?.commission_rate ?? 0),

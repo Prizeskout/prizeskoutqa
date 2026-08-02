@@ -59,6 +59,8 @@ type PlatformProduct = {
   cost: number | null;   // base cost if the platform exposes it
   currency: string;
   in_stock: boolean;
+  quantity: number | null;
+  is_infinite: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -100,6 +102,8 @@ async function fetchSallaProducts(creds: PlatformCreds): Promise<PlatformProduct
         cost: item.cost ?? null,
         currency: item.price?.currency ?? "SAR",
         in_stock: (item.quantity ?? 1) > 0,
+        quantity: item.quantity ?? null,
+        is_infinite: false,
       });
     }
 
@@ -148,6 +152,8 @@ async function fetchFoodicsProducts(creds: PlatformCreds): Promise<PlatformProdu
         cost: item.cost_price ?? null,
         currency: "SAR", // Foodics is Saudi-first
         in_stock: item.in_stock ?? true,
+        quantity: null,
+        is_infinite: !item.track_inventory,
       });
     }
 
@@ -204,6 +210,8 @@ async function fetchZidProducts(creds: PlatformCreds): Promise<PlatformProduct[]
         cost: item.cost ?? null,
         currency: item.currency ?? "SAR",
         in_stock: item.is_infinite === true || (item.quantity ?? 1) > 0,
+        quantity: item.quantity ?? null,
+        is_infinite: item.is_infinite === true,
       });
     }
 
@@ -393,12 +401,14 @@ export async function syncPlatformCatalog(params: {
             external_id: product.external_id,
             platform,
             cost_source: product.cost == null ? "missing_requires_verified_cost" : "platform_catalog",
+            quantity: product.quantity,
+            is_infinite: product.is_infinite,
           },
           status: "received",
         })
         .eq("id", existing.id);
       if (product.cost == null) {
-        await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost"}}).eq("id",existing.id);
+        await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost",quantity:product.quantity,is_infinite:product.is_infinite}}).eq("id",existing.id);
         stored++; costRequired++;
         continue;
       }
@@ -433,7 +443,7 @@ export async function syncPlatformCatalog(params: {
         .from("ps_ingest_events")
         .update({ status: "decided" })
         .eq("id", existing.id);
-      if (decideOutput.floorBreached) belowFloor++;
+      if (decideOutput.floorBreached && product.in_stock) belowFloor++;
       stored++;
       continue;
     }
@@ -463,6 +473,8 @@ export async function syncPlatformCatalog(params: {
           external_id: product.external_id,
           platform,
           cost_source: product.cost == null ? "missing_requires_verified_cost" : "platform_catalog",
+          quantity: product.quantity,
+          is_infinite: product.is_infinite,
         },
         status: "received",
       })
@@ -510,7 +522,7 @@ export async function syncPlatformCatalog(params: {
       .update({ status: "decided" })
       .eq("id", ingestRow.id);
 
-    if (decideOutput.floorBreached) belowFloor++;
+    if (decideOutput.floorBreached && product.in_stock) belowFloor++;
     stored++;
   }
 

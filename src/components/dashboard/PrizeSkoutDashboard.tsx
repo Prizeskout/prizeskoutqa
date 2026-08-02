@@ -52,6 +52,8 @@ interface ImportedProduct {
   currency: string;
   status: string;
   inventory_status?: string;
+  inventory_quantity?: number | null;
+  inventory_is_infinite?: boolean;
   margin_floor_pct?: number;
   commission_rate?: number;
   cost_confidence?: "verified" | "estimated" | "unknown";
@@ -1500,8 +1502,8 @@ export function PrizeSkoutDashboard() {
     return importedProducts
       .filter(product => {
         if (query && !`${product.name_en} ${product.name_ar} ${product.sku} ${product.source_platform}`.toLowerCase().includes(query)) return false;
-        if (productFilter === "risk") return product.floor_breached;
-        if (productFilter === "verified_risk") return product.floor_breached && product.cost_confidence === "verified";
+        if (productFilter === "risk") return product.floor_breached && product.inventory_status !== "out_of_stock";
+        if (productFilter === "verified_risk") return product.floor_breached && product.cost_confidence === "verified" && product.inventory_status !== "out_of_stock";
         if (productFilter === "healthy") return !product.floor_breached;
         if (productFilter === "repriced") return product.status === "repriced";
         return true;
@@ -1519,7 +1521,7 @@ export function PrizeSkoutDashboard() {
   // the full catalogue table below it.
   const fixTheseFirst = useMemo(() => (
     importedProducts
-      .filter(p => p.floor_breached)
+      .filter(p => p.floor_breached && p.inventory_status !== "out_of_stock")
       .sort((a,b) => Math.abs(b.recommended_price - b.current_price) - Math.abs(a.recommended_price - a.current_price))
       .slice(0, 5)
   ), [importedProducts]);
@@ -1529,7 +1531,7 @@ export function PrizeSkoutDashboard() {
   // This is deliberately a per-catalog-sale opportunity, not a monthly claim:
   // PrizeSkout does not know sales volume until order data is connected.
   const storeOpportunity = useMemo(() => {
-    const atRisk = importedProducts.filter(p => p.floor_breached && p.recommended_price > p.current_price);
+    const atRisk = importedProducts.filter(p => p.floor_breached && p.inventory_status !== "out_of_stock" && p.recommended_price > p.current_price);
     const correctionPerCatalogSale = atRisk.reduce(
       (sum, p) => sum + Math.max(0, p.recommended_price - p.current_price), 0,
     );
@@ -1540,7 +1542,7 @@ export function PrizeSkoutDashboard() {
   }, [importedProducts]);
   const copilotAlerts=useMemo(()=>{
     const missingCost=importedProducts.filter(product=>product.cost_confidence!=="verified").length;
-    const marginRisk=importedProducts.filter(product=>product.floor_breached&&product.cost_confidence==="verified").length;
+    const marginRisk=importedProducts.filter(product=>product.floor_breached&&product.cost_confidence==="verified"&&product.inventory_status!=="out_of_stock").length;
     const stockRisk=importedProducts.filter(product=>product.inventory_status==="out_of_stock").length;
     return [
       missingCost?{label:`${missingCost} product${missingCost===1?" has":"s have"} unverified cost data`,command:"Show products with missing or unverified costs"}:null,
@@ -1779,15 +1781,21 @@ export function PrizeSkoutDashboard() {
         setCpOrders(data.orders??[]);
         const statuses=Object.entries(data.summary?.by_status??{}).map(([status,count])=>`${count} ${status}`).join(", ");
         setCpOperationMessage(`${data.summary?.count??0} orders retrieved from Zid for today${statuses?` (${statuses})`:""}. Total recorded order value: SAR ${(data.summary?.total??0).toLocaleString()}. No order state was changed.`);
-      } else if(op==="profit_brief"||op==="coupon_risk"){
+      } else if(["profit_brief","tax_summary","returns_impact","coupon_risk"].includes(op)){
         const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
         const response=await fetch("/api/copilot/store",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,action:"profit_brief",days:30})});
-        const data=await response.json() as {brief?:{currency:string;order_count:number;revenue:number;contribution:number;loss_order_count:number;loss_amount:number;verified_cost_coverage_pct:number;orders:Array<{id:string;code:string;status:string;revenue:number;attention:string|null}>;coupons:Array<{code:string;discount_label:string;products_below_floor:number;risk:string}>};error?:string};
+        const data=await response.json() as {brief?:{currency:string;order_count:number;gross_revenue:number;revenue:number;contribution:number;loss_order_count:number;loss_amount:number;verified_cost_coverage_pct:number;vat:{available:boolean;active:boolean;included_in_prices:boolean;rate:number|null;amount:number;message:string};returns:{orders:number;amount:number;message:string};stock:{available:number;out_of_stock:number;low_stock:number};orders:Array<{id:string;code:string;status:string;revenue:number;vat_amount:number;return_amount:number;attention:string|null}>;coupons:Array<{code:string;discount_label:string;products_below_floor:number;risk:string}>};error?:string};
         if(!response.ok||!data.brief)throw new Error(data.error??"Could not build the Zid profit brief.");
         const b=data.brief;
         if(op==="profit_brief"){
           setCpOrders(b.orders.filter(order=>order.attention).slice(0,20).map(order=>({id:order.id,code:order.code,status:order.attention??order.status,total:order.revenue,currency:b.currency,created_at:""})));
-          setCpOperationMessage(`Across ${b.order_count} Zid orders, recorded order value was ${b.currency} ${b.revenue.toLocaleString()}. Orders with complete verified costs kept ${b.currency} ${b.contribution.toLocaleString()}. ${b.loss_order_count} verified order${b.loss_order_count===1?"":"s"} lost ${b.currency} ${b.loss_amount.toLocaleString()}. Cost evidence covers ${Math.round(b.verified_cost_coverage_pct)}% of ordered units; incomplete orders were not guessed.`);
+          setCpOperationMessage(`Across ${b.order_count} Zid orders, sales were ${b.currency} ${b.gross_revenue.toLocaleString()}. After confirmed VAT and recorded returns, usable revenue was ${b.currency} ${b.revenue.toLocaleString()}. Orders with complete verified costs kept ${b.currency} ${b.contribution.toLocaleString()}. ${b.loss_order_count} verified order${b.loss_order_count===1?"":"s"} lost ${b.currency} ${b.loss_amount.toLocaleString()}. Cost evidence covers ${Math.round(b.verified_cost_coverage_pct)}% of ordered units; incomplete orders were not guessed.`);
+        }else if(op==="tax_summary"){
+          setCpOrders(b.orders.filter(order=>order.vat_amount>0).slice(0,20).map(order=>({id:order.id,code:order.code,status:`VAT removed: ${b.currency} ${order.vat_amount.toLocaleString()}`,total:order.revenue,currency:b.currency,created_at:""})));
+          setCpOperationMessage(`${b.vat.message} PrizeSkout removed ${b.currency} ${b.vat.amount.toLocaleString()} of confirmed VAT from ${b.currency} ${b.gross_revenue.toLocaleString()} in recent Zid sales before calculating what you kept.`);
+        }else if(op==="returns_impact"){
+          setCpOrders(b.orders.filter(order=>order.return_amount>0).slice(0,20).map(order=>({id:order.id,code:order.code,status:`Return removed: ${b.currency} ${order.return_amount.toLocaleString()}`,total:order.revenue,currency:b.currency,created_at:""})));
+          setCpOperationMessage(`${b.returns.message} Across ${b.returns.orders} affected order${b.returns.orders===1?"":"s"}, returns reduced usable revenue by ${b.currency} ${b.returns.amount.toLocaleString()}. No refund or return was initiated.`);
         }else{
           const risky=b.coupons.filter(coupon=>coupon.risk==="review");
           setCpOperationMessage(risky.length?`${risky.length} coupon${risky.length===1?"":"s"} need review: ${risky.map(coupon=>`${coupon.code} (${coupon.discount_label}) puts ${coupon.products_below_floor} verified products below your active floor`).join("; ")}. This is a read-only safety check; no coupon was changed.`:"No coupon returned by Zid was proven to push a verified-cost product below your active protection floor. Coupons with incomplete evidence remain marked unknown.");
@@ -1812,12 +1820,12 @@ export function PrizeSkoutDashboard() {
         let matches = matchCopilotProducts(operation, products);
         if(op==="protect_margin") matches=matches.filter(product=>product.cost_confidence==="verified"&&product.inventory_status!=="out_of_stock"&&Boolean(product.preview?.floor_breached));
         if(op==="publish_prices"&&operation.verified_costs_only) matches=matches.filter(product=>product.cost_confidence==="verified"&&(!operation.exclude_out_of_stock||product.inventory_status!=="out_of_stock"));
-        if(op==="low_stock") matches=matches.filter(product=>product.inventory_status==="out_of_stock");
+        if(op==="low_stock") matches=matches.filter(product=>product.inventory_status==="out_of_stock"||(!product.inventory_is_infinite&&product.inventory_quantity!=null&&product.inventory_quantity>0&&product.inventory_quantity<=5));
         if(op==="cost_attention") matches=matches.filter(product=>product.cost_confidence!=="verified");
         setCpOperationProducts(matches);
         const excludedUnverified=op==="protect_margin"?products.filter(product=>product.floor_breached&&product.cost_confidence!=="verified").length:0;
         setCpOperationMessage(matches.length
-          ? op==="protect_margin"?`${matches.length} product${matches.length===1?"":"s"} can be safely reviewed against the requested floor. ${excludedUnverified} at-risk product${excludedUnverified===1?" was":"s were"} excluded because cost evidence is not verified.`:op==="low_stock"?`${matches.length} product${matches.length===1?" is":"s are"} currently marked out of stock. This is a read-only result.`:op==="cost_attention"?`${matches.length} product${matches.length===1?" does":"s do"} not have a verified platform cost and cannot be safely auto-repriced.`:`${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
+          ? op==="protect_margin"?`${matches.length} product${matches.length===1?"":"s"} can be safely reviewed against the requested floor. ${excludedUnverified} at-risk product${excludedUnverified===1?" was":"s were"} excluded because cost evidence is not verified.`:op==="low_stock"?`${matches.length} product${matches.length===1?" needs":"s need"} stock attention. Out-of-stock products are excluded from pricing actions. This is a read-only result.`:op==="cost_attention"?`${matches.length} product${matches.length===1?" does":"s do"} not have a verified platform cost and cannot be safely auto-repriced.`:`${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
           : "No matching products were found. Try a product name, SKU, or a broader request.");
       }
       if (op === "sync_catalog") setCpOperationProducts(matchCopilotProducts(operation, products));
@@ -3534,7 +3542,7 @@ export function PrizeSkoutDashboard() {
                                 <span>{product.currency} {product.current_price.toLocaleString()}</span>
                                 <strong style={{ color:(product.preview?.floor_breached??product.floor_breached)?"#DC2626":GN }}>→ {product.currency} {(product.preview?.recommended_price??product.recommended_price).toLocaleString()}</strong>
                               </div>
-                              <div style={{fontSize:11,marginTop:6,color:"var(--muted)"}}>{product.cost_confidence==="verified"?"Verified platform cost":"Cost not verified"} · {product.inventory_status?.replaceAll("_"," ")??"inventory unknown"}</div>
+                              <div style={{fontSize:11,marginTop:6,color:"var(--muted)"}}>{product.cost_confidence==="verified"?"Verified platform cost":"Cost not verified"} · {product.inventory_is_infinite?"always available":product.inventory_quantity!=null?`${product.inventory_quantity} in stock`:product.inventory_status?.replaceAll("_"," ")??"inventory unknown"}</div>
                             </button>
                           ))}
                         </div>
@@ -3660,7 +3668,7 @@ export function PrizeSkoutDashboard() {
                 {ruleConfirmIndex===0&&<div style={{marginTop:12,padding:12,borderRadius:8,background:"#FEF3C7",color:"#92400E",fontSize:12.5}}>These settings will become active immediately. Automatic price updates happen only if you selected “Update automatically within my limit.”</div>}
               </div>
 
-              {rulePreviewIndex===0&&(()=>{const previews=importedProducts.map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Products affected — nothing has changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products checked",previews.length-blocked.length],["Earning below target",affected.length],["Need a larger increase",over.length],["Cost needs confirmation",blocked.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Price now","Kept now","Suggested price","Increase","What this means"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.net_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${p.currency} ${v.recommended_price.toFixed(2)}`}</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${(v.increase_pct*100).toFixed(1)}%`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome==="blocked_missing_cost"?"Confirm product cost first":v?.outcome==="over_limit"?"Your increase limit prevents reaching the target":v?.outcome==="within_limit"?"Within your limit":"No change needed"}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>PrizeSkout uses the product cost confirmed by your store and the latest channel charges. Products without a confirmed cost cannot be changed automatically.</p></div>})()}
+              {rulePreviewIndex===0&&(()=>{const unavailable=importedProducts.filter(p=>p.inventory_status==="out_of_stock"),previews=importedProducts.filter(p=>p.inventory_status!=="out_of_stock").map(p=>({p,v:p.preview}));const affected=previews.filter(x=>x.v?.floor_breached),blocked=previews.filter(x=>x.v?.outcome==="blocked_missing_cost"),over=previews.filter(x=>x.v?.outcome==="over_limit");return <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:22}}><h3 style={{margin:0}}>Products affected — nothing has changed</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginTop:14}}>{[["Products checked",previews.length-blocked.length],["Earning below target",affected.length],["Need a larger increase",over.length],["Cost needs confirmation",blocked.length],["Unavailable excluded",unavailable.length]].map(([label,value])=><div key={String(label)} style={{padding:12,border:"1px solid var(--border)",borderRadius:9}}><div style={{fontSize:10.5,color:"var(--muted)"}}>{label}</div><strong style={{fontSize:21}}>{value}</strong></div>)}</div><div style={{overflowX:"auto",marginTop:16}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12.5}}><thead><tr>{["Product","Price now","Kept now","Suggested price","Increase","What this means"].map(h=><th key={h} style={{textAlign:"left",padding:9,borderBottom:"1px solid var(--border)"}}>{h}</th>)}</tr></thead><tbody>{previews.filter(x=>x.v?.floor_breached||x.v?.outcome==="blocked_missing_cost").slice(0,8).map(({p,v})=><tr key={p.sku}><td style={{padding:9,borderBottom:"1px solid var(--border)"}}><strong>{p.name_en||p.sku}</strong><div style={{color:"var(--muted)"}}>{p.source_platform}</div></td><td style={{padding:9}}>{p.currency} {p.current_price.toFixed(2)}</td><td style={{padding:9}}>{((v?.net_margin_pct??p.net_margin_pct??0)*100).toFixed(1)}%</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${p.currency} ${v.recommended_price.toFixed(2)}`}</td><td style={{padding:9}}>{v?.recommended_price==null?"—":`${(v.increase_pct*100).toFixed(1)}%`}</td><td style={{padding:9,color:v?.outcome==="within_limit"?GN:"#B45309"}}>{v?.outcome==="blocked_missing_cost"?"Confirm product cost first":v?.outcome==="over_limit"?"Your increase limit prevents reaching the target":v?.outcome==="within_limit"?"Within your limit":"No change needed"}</td></tr>)}</tbody></table></div><p style={{fontSize:11.5,color:"var(--muted)"}}>PrizeSkout uses the product cost confirmed by your store and the latest channel charges. Products without a confirmed cost or current availability are never changed automatically.</p></div>})()}
 
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>How we calculate it</h3><div style={{marginTop:12,fontFamily:MONO,fontSize:12.5,lineHeight:1.9,color:"var(--muted)"}}>Selling price<br/>− product cost confirmed by your store<br/>− channel commission and tax on fees<br/>− payment, delivery and promotion charges<br/><strong style={{color:"var(--text)"}}>= amount kept from this sale</strong></div></div><div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:16,padding:20}}><h3 style={{margin:0}}>Previous protection settings</h3>{policyVersions.length===0?<p style={{fontSize:13,color:"var(--muted)"}}>Your first saved settings will appear here.</p>:policyVersions.slice(0,5).map(v=><div key={v.id} style={{padding:"10px 0",borderBottom:"1px solid var(--border)",fontSize:12.5}}><strong>Version {v.version} · keep {Math.round(v.contribution_margin_floor_pct*100)}% · increase up to {Math.round(v.max_price_increase_pct*100)}%</strong><div style={{color:"var(--muted)",marginTop:3}}>{v.activated_by} · {new Date(v.activated_at).toLocaleString()}</div></div>)}</div></div>
             </div>
