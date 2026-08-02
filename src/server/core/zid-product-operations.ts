@@ -211,11 +211,13 @@ function changedFields(before: Snapshot, patch: Obj) {
   const display: Record<string, unknown> = { ...patch };
   if (typeof patch.name === "object" && patch.name) display.name = (patch.name as Obj).en;
   if (typeof patch.description === "object" && patch.description) display.description = (patch.description as Obj).en;
-  return Object.entries(display).map(([field, after]) => ({
+  const changes=Object.entries(display).map(([field, after]) => ({
     field,
     before: field === "name" ? before.name : field === "description" ? before.description : (before as unknown as Obj)[field],
     after,
   }));
+  if(patch.price!==undefined&&before.sale_price!==null)changes.push({field:"storefront sale price",before:before.sale_price,after:before.sale_price});
+  return changes;
 }
 function buildGeneratedSku(name: string, nonce: string) {
   const slug = name.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").toUpperCase().slice(0, 48) || "PRODUCT";

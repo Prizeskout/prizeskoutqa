@@ -3295,15 +3295,18 @@ export function PrizeSkoutDashboard() {
           changes: {
             ...(operation.new_product_name ? { name: String(operation.new_product_name) } : {}),
             ...(operation.new_product_sku ? { sku: String(operation.new_product_sku) } : {}),
-            ...(Number.isFinite(Number(operation.product_price)) &&
+            ...(operation.product_price != null &&
+            Number.isFinite(Number(operation.product_price)) &&
             Number(operation.product_price) > 0
               ? { price: Number(operation.product_price) }
               : {}),
-            ...(Number.isFinite(Number(operation.product_cost)) &&
+            ...(operation.product_cost != null &&
+            Number.isFinite(Number(operation.product_cost)) &&
             Number(operation.product_cost) >= 0
               ? { cost: Number(operation.product_cost) }
               : {}),
-            ...(Number.isInteger(Number(operation.product_quantity)) &&
+            ...(operation.product_quantity != null &&
+            Number.isInteger(Number(operation.product_quantity)) &&
             Number(operation.product_quantity) >= 0
               ? { quantity: Number(operation.product_quantity) }
               : {}),
@@ -3685,6 +3688,7 @@ export function PrizeSkoutDashboard() {
             sku: string;
             name: string;
             price: number | null;
+            sale_price: number | null;
             cost: number | null;
             quantity: number | null;
             is_infinite: boolean;
@@ -8739,7 +8743,7 @@ export function PrizeSkoutDashboard() {
                                     textTransform: "uppercase",
                                   }}
                                 >
-                                  {item?.is_published ? "Live in store" : "Not published"}
+                                  {item?.is_published ? "Published in Zid" : "Not published"}
                                 </span>
                               </div>
                               <div
@@ -8751,7 +8755,7 @@ export function PrizeSkoutDashboard() {
                                 }}
                               >
                                 <div>
-                                  <small style={{ color: "var(--muted)" }}>Price</small>
+                                  <small style={{ color: "var(--muted)" }}>Regular price</small>
                                   <div style={{ fontWeight: 750 }}>
                                     SAR {item?.price?.toLocaleString() ?? "—"}
                                   </div>
@@ -8765,14 +8769,14 @@ export function PrizeSkoutDashboard() {
                                   </div>
                                 </div>
                                 <div>
-                                  <small style={{ color: "var(--muted)" }}>Zid check</small>
+                                  <small style={{ color: "var(--muted)" }}>Zid catalogue check</small>
                                   <div
                                     style={{
                                       fontWeight: 750,
                                       color: product.status === "confirmed" ? GN : "#B45309",
                                     }}
                                   >
-                                    {product.status === "confirmed" ? "Matched" : "Needs review"}
+                                    {product.status === "confirmed" ? "Confirmed" : "Needs review"}
                                   </div>
                                 </div>
                               </div>
