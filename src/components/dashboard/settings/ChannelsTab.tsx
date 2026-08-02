@@ -89,6 +89,8 @@ export function ChannelsTab() {
   const [statuses, setStatuses]         = useState<Record<string, ChannelStatus>>({});
   const [loading, setLoading]           = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [pendingDisconnect, setPendingDisconnect] = useState<string | null>(null);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [byokPlatform, setByokPlatform] = useState<string | null>(null);
   const [byokFields, setByokFields]     = useState<Record<string, string>>({});
   const [byokStatus, setByokStatus]     = useState<"idle" | "loading" | "ok" | "err">("idle");
@@ -130,13 +132,11 @@ export function ChannelsTab() {
   }
 
   async function handleDisconnect(platform: string) {
-    const name = CHANNELS.find(c => c.platform === platform)?.name ?? platform;
-    if (!confirm(t("settingsTabs.channels.confirm.disconnect", { name }))) return;
-
     const mid        = typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
     const accessCode = typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "")  : "";
 
     setDisconnecting(platform);
+    setDisconnectError(null);
     try {
       const res  = await fetch("/api/channels/disconnect", {
         method: "POST",
@@ -144,8 +144,15 @@ export function ChannelsTab() {
         body: JSON.stringify({ merchant_id: mid, access_code: accessCode, platform }),
       });
       const data = await res.json() as { ok?: boolean; error?: string };
-      if (data.ok) setStatuses(prev => ({ ...prev, [platform]: "not_connected" }));
-    } catch { /* silent — status unchanged */ } finally {
+      if (data.ok) {
+        setStatuses(prev => ({ ...prev, [platform]: "not_connected" }));
+        setPendingDisconnect(null);
+      } else {
+        setDisconnectError(data.error ?? "PrizeSkout could not disconnect this channel. Please try again.");
+      }
+    } catch {
+      setDisconnectError("PrizeSkout could not reach the server. Your channel is still connected.");
+    } finally {
       setDisconnecting(null);
     }
   }
@@ -212,7 +219,7 @@ export function ChannelsTab() {
                     <>
                       <button
                         type="button"
-                        onClick={() => handleDisconnect(ch.platform)}
+                        onClick={() => { setPendingDisconnect(ch.platform); setDisconnectError(null); }}
                         disabled={disconnecting === ch.platform}
                         style={{
                           fontSize: 12, fontWeight: 500,
@@ -277,6 +284,39 @@ export function ChannelsTab() {
         <Section title={t("settingsTabs.channels.sections.aggregators")} items={aggregators} />
         <Section title={t("settingsTabs.channels.sections.pos")} items={pos} />
       </div>
+
+      {/* In-app channel disconnect confirmation */}
+      {pendingDisconnect && (() => {
+        const channel = CHANNELS.find(c => c.platform === pendingDisconnect);
+        const name = channel?.name ?? pendingDisconnect;
+        const busy = disconnecting === pendingDisconnect;
+        return (
+          <div
+            role="presentation"
+            onClick={() => { if (!busy) { setPendingDisconnect(null); setDisconnectError(null); } }}
+            style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(9,12,18,.58)", backdropFilter: "blur(7px)", display: "grid", placeItems: "center", padding: 20 }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="disconnect-channel-title"
+              onClick={e => e.stopPropagation()}
+              style={{ width: "min(500px,100%)", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, boxShadow: "var(--shadow-lg)", padding: "28px 30px" }}
+            >
+              <div style={{ width: 46, height: 46, borderRadius: 13, display: "grid", placeItems: "center", background: "rgba(239,68,68,.09)", border: "1px solid rgba(239,68,68,.2)", fontSize: 22, marginBottom: 18 }}>!</div>
+              <h3 id="disconnect-channel-title" style={{ margin: 0, color: "var(--text)", fontSize: 20, fontWeight: 800 }}>Disconnect {name}?</h3>
+              <p style={{ margin: "10px 0 0", color: "var(--muted)", fontSize: 14, lineHeight: 1.7 }}>
+                PrizeSkout will stop syncing this store and remove its saved connection credentials. Your products and orders in {name} will not be deleted.
+              </p>
+              {disconnectError && <p role="alert" style={{ margin: "16px 0 0", padding: "11px 13px", borderRadius: 9, color: "#EF4444", background: "rgba(239,68,68,.07)", border: "1px solid rgba(239,68,68,.2)", fontSize: 13 }}>{disconnectError}</p>}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
+                <button type="button" disabled={busy} onClick={() => { setPendingDisconnect(null); setDisconnectError(null); }} style={{ minHeight: 44, padding: "10px 17px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 700, cursor: busy ? "default" : "pointer" }}>Keep connected</button>
+                <button type="button" disabled={busy} onClick={() => handleDisconnect(pendingDisconnect)} style={{ minHeight: 44, padding: "10px 17px", borderRadius: 9, border: 0, background: "#EF4444", color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: busy ? "wait" : "pointer", opacity: busy ? .7 : 1 }}>{busy ? "Disconnecting…" : `Disconnect ${name}`}</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* BYOK credential modal */}
       {byokPlatform && byokCfg && (
