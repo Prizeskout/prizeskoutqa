@@ -41,7 +41,7 @@ const CHANNEL_AR: Record<string, string> = {
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-export type AuditEventType = "ingest" | "decide" | "dispatch" | "error" | "channel_connect";
+export type AuditEventType = "ingest" | "decide" | "dispatch" | "error" | "channel_connect" | "product_action";
 
 export type WriteAuditParams = {
   accountId: string;

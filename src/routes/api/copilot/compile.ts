@@ -143,7 +143,7 @@ const OPERATION_SYSTEM = `You are the operations planner for PrizeSkout, a comme
 Convert the merchant's request into a safe executable operation plan. Output ONLY valid JSON.
 Schema:
 {
-  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft" | "seed_test_store" | "cleanup_test_store",
+  "operation": "sync_catalog" | "list_products" | "find_products" | "preview_reprice" | "publish_prices" | "protect_margin" | "low_stock" | "cost_attention" | "list_orders" | "profit_brief" | "tax_summary" | "returns_impact" | "coupon_risk" | "change_order_status" | "create_product_draft" | "product_change" | "seed_test_store" | "cleanup_test_store",
   "platform": "zid" | "salla" | "foodics" | "all",
   "query": string | null,
   "category": string | null,
@@ -161,11 +161,18 @@ Schema:
   "product_name": string | null,
   "product_sku": string | null,
   "product_price": number | null,
+  "product_mode": "edit" | "unpublish" | "publish" | "delete" | "duplicate" | null,
+  "new_product_name": string | null,
+  "new_product_sku": string | null,
+  "product_cost": number | null,
+  "product_quantity": integer | null,
+  "inventory_filter": "out_of_stock" | "in_stock" | null,
+  "publish_duplicate": boolean | null,
   "summary": string,
   "requires_confirmation": boolean,
   "warnings": string[]
 }
-Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Asking what the store kept, order profit, loss-making orders, or a profit brief means profit_brief. Asking about VAT, tax included in prices, or tax removed from revenue means tax_summary. Asking how returns or refunds affected revenue or profit means returns_impact. Asking whether coupons, discount codes, or promotions are safe means coupon_risk. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically. Prepare/seed/set up the Zid test store for review means seed_test_store. Remove/clean up PrizeSkout test fixtures means cleanup_test_store.
+Pull/import/refresh/sync catalogue means sync_catalog. Show/list catalogue means list_products. Low/out of stock means low_stock. Missing/unverified product costs means cost_attention. Show/list/summarize today's orders means list_orders. Asking what the store kept, order profit, loss-making orders, or a profit brief means profit_brief. Asking about VAT, tax included in prices, or tax removed from revenue means tax_summary. Asking how returns or refunds affected revenue or profit means returns_impact. Asking whether coupons, discount codes, or promotions are safe means coupon_risk. Mark/move a named order to a status means change_order_status. Create/add a product as a draft means create_product_draft and is never published automatically. Duplicate/copy an existing product and give the copy a new name means product_change with product_mode=duplicate. A duplicate remains unpublished by default; set publish_duplicate=true only when the merchant explicitly asks to publish or make the copy live. Rename, change SKU, edit price/cost/stock, publish, unpublish, archive, or permanently delete an existing product means product_change and always requires confirmation. Default delete to product_mode=unpublish unless the merchant explicitly says permanently/hard delete; only explicit permanent deletion uses product_mode=delete. Prepare/seed/set up the Zid test store for review means seed_test_store. Remove/clean up PrizeSkout test fixtures means cleanup_test_store.
 Find/show a named product or SKU means find_products. Reprice/recommend/calculate without
 explicit live/push/apply language means preview_reprice. Push/apply/publish/go live means
 publish_prices and requires_confirmation=true. A request to protect/maintain a stated margin and safely fix products means protect_margin; it is a preview unless the merchant explicitly says publish/apply/go live. Never invent a price. A named product is
@@ -185,7 +192,7 @@ const FIND_VERB = /\b(find|search|show|look up|locate)\b/i;
 
 function isOperationalRequest(text: string): boolean {
   const product = /\b(product|products|catalog|catalogue|sku|item|items)\b/i;
-  const operation = /\b(pull|import|fetch|retrieve|sync|refresh|show|list|find|search|reprice|recommend|calculate|preview|push|publish|apply|live update|update)\b/i;
+  const operation = /\b(pull|import|fetch|retrieve|sync|refresh|show|list|find|search|reprice|recommend|calculate|preview|push|publish|apply|live update|update|edit|rename|unpublish|archive|delete|remove)\b/i;
   return (product.test(text) && operation.test(text))
     || /\b(what|how much)\b.*\b(keep|kept|profit|contribution)\b|\b(loss[- ]making|unprofitable)\b.*\border/i.test(text)
     || /\b(check|review|show|which|are|is)\b.*\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss)|\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss)/i.test(text)
@@ -202,6 +209,11 @@ function isOperationalRequest(text: string): boolean {
 
 function deterministicZidInsight(prompt:string):Record<string,unknown>|null{
   const text=prompt.toLowerCase();
+  const duplicate=prompt.match(/\b(?:duplicate|copy|clone)\b.*?\bSKU\s*[:#]?\s*([A-Z0-9][A-Z0-9._-]*).*?(?:name (?:it|the copy)|rename (?:it|the copy) to)\s+[“\"]?(.+?)[”\"]?(?=\s+with\s+SKU\s+|\s+(?:and|then)\s+(?:publish|make)|\.?$)(?:\s+with\s+SKU\s+([A-Z0-9._-]+))?(?:\s+(?:and|then)\s+(?:publish(?:\s+it)?|make (?:it|the copy) live))?\.?$/i);
+  if(duplicate){const publishDuplicate=/\b(publish(?:\s+it|\s+the copy)?|make (?:it|the copy) live|go live)\b/i.test(prompt);return {type:"operation",operation:{_type:"operation",operation:"product_change",platform:"zid",query:duplicate[1],sku:duplicate[1],scope:"single",product_mode:"duplicate",new_product_name:duplicate[2].trim(),new_product_sku:duplicate[3]??null,product_price:null,product_cost:null,product_quantity:null,publish_duplicate:publishDuplicate,risk_level:"reversible_write",requires_confirmation:true,plan:["Read the exact source product from Zid.","Preview the new name, unique SKU, copied commercial fields and publication state.","Wait for explicit approval of the signed preview.",publishDuplicate?"Create and publish the approved copy without changing the source.":"Create the copy as an unpublished draft without changing the source.","Read the new product back from Zid and retain audit evidence."],summary:publishDuplicate?"Duplicate and publish the exact Zid product with a new identity.":"Duplicate the exact Zid product as a renamed unpublished draft.",warnings:["Images or advanced product-class attachments that Zid manages through separate APIs may require review after duplication."]}};}
+  if(/\b(unpublish|archive|remove)\b.*\b(all|every)\b.*\bout[- ]of[- ]stock\b/.test(text)){return {type:"operation",operation:{_type:"operation",operation:"product_change",platform:"zid",query:null,sku:null,scope:"matching",inventory_filter:"out_of_stock",product_mode:"unpublish",new_product_name:null,new_product_sku:null,product_price:null,product_cost:null,product_quantity:null,risk_level:"reversible_write",requires_confirmation:true,plan:["Find every currently out-of-stock product in Zid.","Show the exact product list before making changes.","Wait for explicit approval of the signed preview.","Unpublish only the approved products and confirm each result by readback."],summary:"Preview unpublishing every out-of-stock Zid product.",warnings:[]}};}
+  const existingProduct=/\b(rename|edit|change|set|update|unpublish|archive|publish|delete|remove)\b.*\b(product|sku|stock|quantity|cost|price)\b|\b(product|sku)\b.*\b(unpublish|archive|publish|delete|remove)\b/.test(text);
+  if(existingProduct){const skuMatch=prompt.match(/\bSKU\s*[:#]?\s*([A-Z0-9][A-Z0-9._-]*)/i),quoted=[...prompt.matchAll(/[“\"]([^”\"]+)[”\"]/g)].map(match=>match[1]),money=prompt.match(/(?:SAR|QAR|AED)\s*(\d+(?:\.\d+)?)|(?:price|cost)[^\d]{0,18}(\d+(?:\.\d+)?)/i),quantity=prompt.match(/(?:stock|quantity)[^\d]{0,18}(\d+)/i),rename=prompt.match(/rename\s+[“\"]?(.+?)[”\"]?\s+to\s+[“\"]?(.+?)[”\"]?(?:\.|$)/i);const permanent=/\b(permanent(?:ly)?|hard delete|irreversible)\b/.test(text),mode=/\b(unpublish|archive)\b/.test(text)?"unpublish":/\bpublish\b/.test(text)?"publish":/\b(delete|remove)\b/.test(text)?(permanent?"delete":"unpublish"):"edit";const query=skuMatch?.[1]??rename?.[1]?.trim()??quoted[0]??null;const newName=rename?.[2]?.trim()??null;const price=/\bprice\b/.test(text)?Number(money?.[1]??money?.[2])||null:null,cost=/\bcost\b/.test(text)?Number(money?.[1]??money?.[2])||null:null;return {type:"operation",operation:{_type:"operation",operation:"product_change",platform:"zid",query,sku:skuMatch?.[1]??null,scope:/\b(all|every)\b/.test(text)?"matching":"single",product_mode:mode,new_product_name:newName,new_product_sku:null,product_price:price,product_cost:cost,product_quantity:quantity?Number(quantity[1]):null,risk_level:mode==="delete"?"permanent_write":"reversible_write",requires_confirmation:true,plan:["Find the exact product in the currently connected Zid store.","Read its latest values and show the before-and-after change.","Wait for explicit approval of the signed preview.",mode==="delete"?"Permanently delete only the approved product.":"Apply only the approved fields.","Read the product back from Zid and write tamper-evident audit evidence."],summary:mode==="delete"?"Permanently delete the exact approved Zid product.":"Preview and safely apply a change to an existing Zid product.",warnings:mode==="delete"?["Permanent deletion cannot be rolled back. The pre-change snapshot will remain in the audit ledger."]:[]}};}
   const seed=/\b(prepare|seed|set ?up|populate)\b.*\b(test store|zid test|review|test data|fixtures?)\b/.test(text),cleanup=/\b(cleanup|clean up|remove|unpublish)\b.*\b(prizeskout|test store|fixtures?|test products?)\b/.test(text);
   if(seed||cleanup){const operation=cleanup?"cleanup_test_store":"seed_test_store";return {type:"operation",operation:{_type:"operation",operation,platform:"zid",query:null,category:null,sku:null,risk_level:"sensitive_write",requires_confirmation:true,plan:cleanup?["Confirm Zid identifies the connected store as a test store.","Find only products whose SKU starts PS-ZID- and coupons PSMARGIN20/PSSAFE5.","Unpublish test products and remove only the two test coupons.","Keep genuine test orders as review evidence."]:["Confirm Zid identifies the connected store as a test store.","Inspect the existing source product and all PS-ZID fixtures.","Preview nine realistic products and two coupons without writing.","Wait for explicit merchant approval.","Create only missing fixtures using idempotent SKUs and codes.","Read everything back from Zid and report any missing item.","Provide the five-order storefront checkout script."],summary:cleanup?"Clean up only the PrizeSkout review fixtures from the Zid test store.":"Prepare the connected Zid test store for the PrizeSkout review."}};}
   const profit=/\b(what|how much)\b.*\b(keep|kept|profit|contribution)\b|\b(loss[- ]making|unprofitable)\b.*\border|\bprofit brief\b/.test(text);
@@ -325,7 +337,7 @@ export const Route = createFileRoute("/api/copilot/compile")({
 
           if (operationMode) {
             const operation = String(rule.operation ?? "");
-            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft", "seed_test_store", "cleanup_test_store"];
+            const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft", "product_change", "seed_test_store", "cleanup_test_store"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
             }
@@ -356,8 +368,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
             rule.maximum_increase_pct=Number(rule.maximum_increase_pct)||(capMatch?Number(capMatch[1])/100:null);
             rule.verified_costs_only=operation==="protect_margin"||Boolean(rule.verified_costs_only);
             rule.exclude_out_of_stock=operation==="protect_margin"||Boolean(rule.exclude_out_of_stock);
-            rule.risk_level=operation==="publish_prices"?"reversible_write":["change_order_status","create_product_draft","seed_test_store","cleanup_test_store"].includes(operation)?"sensitive_write":"read";
-            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft","seed_test_store","cleanup_test_store"].includes(operation);
+            rule.risk_level=operation==="publish_prices"||operation==="product_change"?"reversible_write":["change_order_status","create_product_draft","seed_test_store","cleanup_test_store"].includes(operation)?"sensitive_write":"read";
+            rule.requires_confirmation = ["publish_prices","change_order_status","create_product_draft","product_change","seed_test_store","cleanup_test_store"].includes(operation);
             const platform=String(rule.platform??"all");
             const scope=String(rule.scope??"matching");
             rule.plan=operation==="publish_prices"?[
