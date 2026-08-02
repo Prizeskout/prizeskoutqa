@@ -3861,6 +3861,30 @@ export type Database = {
         Update: { id?:string; account_id?:string; period_start?:string; period_end?:string; currency?:string; order_count?:number; analyzable_order_count?:number; revenue?:number; contribution?:number; loss_order_count?:number; discount_total?:number; verified_cost_coverage_pct?:number; summary?:Json; created_at?:string }
         Relationships: []
       }
+      ps_attention_items: {
+        Row: { id:string; account_id:string; fingerprint:string; item_type:string; title:string; detail:string; priority:string; status:string; amount:number|null; currency:string|null; evidence_strength:string; source_route:string; copilot_prompt:string|null; context:Json; assigned_to:string|null; snoozed_until:string|null; resolution_note:string|null; detected_at:string; resolved_at:string|null; updated_at:string }
+        Insert: { id?:string; account_id:string; fingerprint:string; item_type:string; title:string; detail:string; priority?:string; status?:string; amount?:number|null; currency?:string|null; evidence_strength?:string; source_route?:string; copilot_prompt?:string|null; context?:Json; assigned_to?:string|null; snoozed_until?:string|null; resolution_note?:string|null; detected_at?:string; resolved_at?:string|null; updated_at?:string }
+        Update: { [key:string]: unknown }
+        Relationships: []
+      }
+      ps_value_ledger: {
+        Row: { id:string; account_id:string; category:string; source_type:string; source_id:string; label:string; amount:number; currency:string; evidence_strength:string; occurred_at:string; metadata:Json }
+        Insert: { id?:string; account_id:string; category:string; source_type:string; source_id:string; label:string; amount:number; currency:string; evidence_strength:string; occurred_at?:string; metadata?:Json }
+        Update: { [key:string]: unknown }
+        Relationships: []
+      }
+      ps_merchant_experience_settings: {
+        Row: { account_id:string; automation_level:string; weekly_review_enabled:boolean; progressive_mode:boolean; updated_at:string }
+        Insert: { account_id:string; automation_level?:string; weekly_review_enabled?:boolean; progressive_mode?:boolean; updated_at?:string }
+        Update: { account_id?:string; automation_level?:string; weekly_review_enabled?:boolean; progressive_mode?:boolean; updated_at?:string }
+        Relationships: []
+      }
+      ps_merchant_engagement_events: {
+        Row: { id:string; account_id:string; event_name:string; object_id:string|null; metadata:Json; created_at:string }
+        Insert: { id?:string; account_id:string; event_name:string; object_id?:string|null; metadata?:Json; created_at?:string }
+        Update: { id?:string; account_id?:string; event_name?:string; object_id?:string|null; metadata?:Json; created_at?:string }
+        Relationships: []
+      }
       ps_merchant_channels: {
         Row: {
           id: string

@@ -11,6 +11,7 @@ import { PromotionProfitabilityWorkspace } from "@/components/dashboard/promotio
 import { ChannelPriceArchitecture } from "@/components/dashboard/pricing/ChannelPriceArchitecture";
 import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControlWorkspace";
 import { ZidProfitBrief } from "@/components/dashboard/ZidProfitBrief";
+import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
 import { classifyResult, reconcile, type ClassifiedDocument, type DocumentType, type Finding, type LedgerRow } from "@/lib/commission-audit";
 import { planChannelPrices, type ChannelEconomics, type ChannelPriceProduct, type PriceChannel } from "@/lib/channel-price-planner";
 
@@ -2592,6 +2593,7 @@ export function PrizeSkoutDashboard() {
         {/* ===== TAB: REVENUE PROTECTION HUB ===== */}
         {tab === "analytics" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:30, animation:"pk-in .3s ease" }}>
+            <MerchantOperatingLoop onAskCopilot={(prompt)=>{setTab("rules");setCpInput(prompt);window.setTimeout(()=>void runCopilot(prompt),0);}} />
             <ZidProfitBrief connected={channelStatuses.zid === "connected"} />
 
             {/* First-run welcome: we auto-ran a Talabat payout check the
@@ -3971,6 +3973,8 @@ export function PrizeSkoutDashboard() {
         {/* ===== TAB: HISTORY ===== */}
         {tab === "history" && (
           <section className="ps-db-section" style={{ padding:"28px 30px 48px", display:"flex", flexDirection:"column", gap:24, animation:"pk-in .3s ease" }}>
+
+            <MerchantOperatingLoop mode="history" />
 
             <div style={{display:"flex",justifyContent:"flex-end",alignItems:"flex-start",gap:16,flexWrap:"wrap"}}>
               <button type="button" onClick={()=>setShowHistoryExport(true)} disabled={downloadingHistoryPdf}

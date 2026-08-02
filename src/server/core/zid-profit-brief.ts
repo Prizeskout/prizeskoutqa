@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { getMerchantMarginPolicy } from "./merchant-pricing-config";
+import { syncProfitBriefAttention } from "./merchant-experience";
 
 type Headers = Record<string,string>;
 type Obj = Record<string,unknown>;
@@ -81,5 +82,6 @@ export async function buildZidProfitBrief(accountId:string,headers:Headers,days=
     ? await supabaseAdmin.from("ps_zid_profit_snapshots").update(snapshot).eq("id",todaySnapshot.id)
     : await supabaseAdmin.from("ps_zid_profit_snapshots").insert(snapshot);
   if(snapshotResult.error)console.error("Zid Profit Brief snapshot could not be saved",snapshotResult.error);
+  await syncProfitBriefAttention(accountId,result);
   return result;
 }

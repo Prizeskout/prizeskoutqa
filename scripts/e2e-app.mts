@@ -87,6 +87,24 @@ try {
   assert.equal(preferenceRestore.status(),200,"Notification preference could not be restored after testing");
   console.log("PASS merchant notification preference persistence");
 
+  const {error:experienceMigrationError}=await admin.from("ps_attention_items").select("id").limit(1);
+  if(experienceMigrationError){
+    console.log("SKIP merchant operating loop persistence (20260802013000_merchant_experience_loop.sql is not applied to this database)");
+  }else{
+    const fingerprint=`e2e-attention-${Date.now()}`;
+    const {data:testAttention,error:testAttentionError}=await admin.from("ps_attention_items").insert({account_id:access.merchant_id,fingerprint,item_type:"e2e",title:"E2E attention lifecycle",detail:"Temporary automated test item",priority:"low",status:"open",evidence_strength:"verified",source_route:"revenue_hub"}).select("id").single();
+    assert(!testAttentionError&&testAttention?.id,"Could not prepare attention lifecycle test");
+    try{
+      for(const [attention_action,value,expected] of [["assign","E2E owner","assigned"],["request_approval","E2E approver","waiting_approval"],["snooze","1","snoozed"],["resolve","Verified during E2E test","resolved"]] as const){
+        const response=await page.request.post(`${baseUrl}/api/channels/connect`,{data:{merchant_id:access.merchant_id,access_code:access.code,platform:"merchant_experience",action:"attention",id:testAttention.id,attention_action,value}});
+        const result=await response.json() as {item?:{status:string};error?:string};
+        assert.equal(response.status(),200,`Attention ${attention_action} failed: ${result.error??"unexpected response"}`);
+        assert.equal(result.item?.status,expected,`Attention item did not enter ${expected}`);
+      }
+      console.log("PASS attention assignment, approval, snooze, resolve, and evidence lifecycle");
+    }finally{await admin.from("ps_attention_items").delete().eq("id",testAttention.id);}
+  }
+
   await page.goto(`${baseUrl}/dashboard/revenue-hub`, { waitUntil: "domcontentloaded" });
   await page.evaluate(({ merchantId, code }) => {
     localStorage.setItem("ps_merchant_id", merchantId);
@@ -97,6 +115,9 @@ try {
   await page.reload({ waitUntil: "networkidle" });
   await page.getByText("Revenue Protection Hub", { exact: false }).first().waitFor({ timeout: 15_000 });
   await page.getByText("Imported Products", { exact: true }).waitFor({ timeout: 15_000 });
+  await page.getByText(/protection queue|need.*attention|being watched/i).first().waitFor({timeout:15_000});
+  await page.getByText("Attention Inbox",{exact:true}).waitFor();
+  console.log("PASS Today briefing and Attention Inbox render");
   console.log("PASS authenticated merchant dashboard loads");
 
   const channelStatus=await page.request.get(`${baseUrl}/api/channels/status?merchant_id=${encodeURIComponent(access.merchant_id)}`);

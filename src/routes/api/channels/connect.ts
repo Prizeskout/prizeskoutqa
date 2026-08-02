@@ -27,6 +27,7 @@ import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario 
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
 import { approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
 import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
+import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement, updateAttention } from "@/server/core/merchant-experience";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -159,6 +160,17 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ ok:true, preference:data }, 200);
             }
             return resp({ error:"Unsupported notification preference action." }, 400);
+          }
+
+          if(platform==="merchant_experience"){
+            if(body.action==="get")return resp({ok:true,...await getMerchantExperience(merchant_id)},200);
+            if(body.action==="attention"){
+              if(!body.id||!["resolve","dismiss","assign","request_approval","snooze"].includes(body.attention_action))return resp({error:"Attention item and valid action are required."},400);
+              return resp({ok:true,item:await updateAttention(merchant_id,{id:body.id,action:body.attention_action,value:body.value})},200);
+            }
+            if(body.action==="settings")return resp({ok:true,settings:await saveExperienceSettings(merchant_id,{automationLevel:body.automation_level,weeklyReview:body.weekly_review_enabled!=="false",progressiveMode:body.progressive_mode!=="false"})},200);
+            if(body.action==="track"){await trackMerchantEngagement(merchant_id,body.event_name,body.object_id);return resp({ok:true},200);}
+            return resp({error:"Unsupported merchant experience action."},400);
           }
 
           if (platform === "talabat_expected_payout") {
