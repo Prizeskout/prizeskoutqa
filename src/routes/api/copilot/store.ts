@@ -143,10 +143,11 @@ export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST
     if(quantity!=null&&(!Number.isInteger(quantity)||quantity<0))return json({error:"Stock quantity must be a whole number of zero or more."},400);
     const slug=name.normalize("NFKD").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").toUpperCase().slice(0,48)||"PRODUCT";
     const sku=body.product_sku?.trim()||`${slug}-${Date.now().toString(36).toUpperCase()}`.slice(0,80);
-    const response=await fetch("https://api.zid.sa/v1/products/",{method:"POST",headers:{...headers,"Access-Token":channel.manager_token??"","Content-Type":"application/json",Role:"Manager"},body:JSON.stringify({name:{en:name,ar:name},sku,price,...(cost!=null?{cost}:{}),...(quantity!=null?{quantity}:{}),is_infinite:infinite,is_draft:!publish,is_published:publish})});
+    const response=await fetch("https://api.zid.sa/v1/products/",{method:"POST",headers:{...headers,"Access-Token":channel.manager_token??"","Content-Type":"application/json",Role:"Manager"},body:JSON.stringify({name:{en:name,ar:name},sku,price,...(cost!=null?{cost}:{}),...(quantity!=null?{quantity}:{}),is_infinite:infinite,is_draft:true,is_published:false})});
     const payload=await response.json().catch(()=>null) as Record<string,unknown>|null;
     const productId=String(payload?.id??(payload?.data as Record<string,unknown>|undefined)?.id??"");
     if(!response.ok||!productId)return json({error:`Zid rejected the product (${response.status}): ${JSON.stringify(payload).slice(0,250)}`},502);
+    if(publish){const publication=await fetch(`https://api.zid.sa/v1/products/${encodeURIComponent(productId)}/`,{method:"PATCH",headers:{...headers,"Content-Type":"application/json"},body:JSON.stringify({is_published:true,is_draft:false})});if(!publication.ok)return json({error:`The product was created as a draft, but Zid rejected publication (${publication.status}): ${(await publication.text().catch(()=>"")).slice(0,220)}`},502);}
     const readback=await fetch(`https://api.zid.sa/v1/products/${encodeURIComponent(productId)}/`,{headers});
     const live=readback.ok?await readback.json().catch(()=>null) as Record<string,unknown>|null:null;
     const liveName=typeof live?.name==="object"&&live.name?String((live.name as Record<string,unknown>).en??(live.name as Record<string,unknown>).ar??""):String(live?.name??"");

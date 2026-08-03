@@ -422,8 +422,11 @@ export async function executeZidProductChange(
         ...(source.weight ? { weight: source.weight } : {}),
         ...(Array.isArray(source.keywords) ? { keywords: source.keywords } : {}),
         ...(variants.length ? { variants } : {}),
-        is_published: Boolean(approval.patch.is_published),
-        is_draft: !approval.patch.is_published,
+        // Create first, then publish with a separate PATCH. Zid may accept an
+        // inline published state without immediately adding the item to its
+        // customer-facing catalogue index.
+        is_published: false,
+        is_draft: true,
       };
       const create = await zidJson("https://api.zid.sa/v1/products/", headers, {
         method: "POST",
@@ -434,6 +437,17 @@ export async function executeZidProductChange(
       if (!create.response.ok || !createdId) {
         results.push({ id: before.id, sku: before.sku, status: "failed", message: `Zid rejected the duplicate (${create.response.status}): ${JSON.stringify(create.payload).slice(0, 180)}` });
         continue;
+      }
+      if (approval.patch.is_published === true) {
+        const publish = await zidJson(
+          `https://api.zid.sa/v1/products/${encodeURIComponent(createdId)}/`,
+          headers,
+          { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_published: true, is_draft: false }) },
+        );
+        if (!publish.response.ok) {
+          results.push({ id: createdId, sku: requestedSku || generatedSku, source_id: before.id, source_sku: before.sku, status: "failed", message: `The copy was created as a draft, but Zid rejected publication (${publish.response.status}): ${JSON.stringify(publish.payload).slice(0, 180)}` });
+          continue;
+        }
       }
       const readback = await zidJson(`https://api.zid.sa/v1/products/${encodeURIComponent(createdId)}/`, headers);
       const created = readback.response.ok ? snapshot(readback.payload) : null;
