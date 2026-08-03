@@ -16,8 +16,8 @@
 //   notes            — any extra context from the merchant
 
 import { createFileRoute } from "@tanstack/react-router";
-import Anthropic from "@anthropic-ai/sdk";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { callAI } from "@/server/ai/providers";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -107,8 +107,7 @@ export const Route = createFileRoute("/api/dispute/voucher")({
           return json({ error: "Invalid access code" }, 403);
         }
 
-        const apiKey = process.env.ANTHROPIC_API_KEY;
-        if (!apiKey) {
+        if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !process.env.ANTHROPIC_API_KEY) {
           return json({ error: "AI service not configured" }, 503);
         }
 
@@ -130,21 +129,9 @@ ${notes ? `Merchant notes: ${notes}` : ""}
 
 Generate the bilingual dispute claim package.`;
 
-        const client = new Anthropic({ apiKey });
-
         try {
-          const message = await client.messages.create({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 1024,
-            system: SYSTEM_PROMPT,
-            messages: [{ role: "user", content: userPrompt }],
-          });
-
-          const raw = message.content
-            .filter(b => b.type === "text")
-            .map(b => (b as { type: "text"; text: string }).text)
-            .join("")
-            .trim()
+          const generated = (await callAI({ system: SYSTEM_PROMPT, user: userPrompt, maxTokens: 1024 })).text;
+          const raw = generated.trim()
             .replace(/^```(?:json)?\s*/i, "")
             .replace(/\s*```\s*$/i, "")
             .trim();

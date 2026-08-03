@@ -10,7 +10,7 @@
 //   { type: "chat",    message: string,             latency_ms: number }
 
 import { createFileRoute } from "@tanstack/react-router";
-import Anthropic from "@anthropic-ai/sdk";
+import { callAI } from "@/server/ai/providers";
 
 // Used only when the input is a conversational question.
 // No JSON schema — model outputs plain text, we return it as-is.
@@ -348,35 +348,20 @@ export const Route = createFileRoute("/api/copilot/compile")({
         const deterministicInsight=deterministicZidInsight(prompt,body?.context?.previous_operation);
         if(deterministicInsight)return json(deterministicInsight);
 
-        const apiKey = process.env.ANTHROPIC_API_KEY;
-        if (!apiKey) {
+        if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !process.env.ANTHROPIC_API_KEY) {
           return json({ error: "AI service not configured" }, 503);
         }
-
-        const client = new Anthropic({ apiKey });
         const t0 = Date.now();
         const hasOperationContext = Boolean(body?.context?.previous_operation);
         const operationMode = isOperationalRequest(prompt) || (hasOperationContext && FOLLOW_UP.test(prompt));
         const chatMode = !operationMode && isQuestion(prompt);
 
         try {
-          const message = await client.messages.create({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: chatMode ? 512 : 768,
-            system: operationMode ? OPERATION_SYSTEM : chatMode ? CHAT_SYSTEM : RULE_SYSTEM,
-            messages: [{
-              role: "user",
-              content: operationMode && body?.context
-                ? `${prompt}\n\nPRIOR OPERATION CONTEXT (resolve words such as it/them/that/same from this data):\n${JSON.stringify(body.context)}`
-                : prompt,
-            }],
-          });
-
-          const raw = message.content
-            .filter(b => b.type === "text")
-            .map(b => (b as { type: "text"; text: string }).text)
-            .join("")
-            .trim();
+          const system = operationMode ? OPERATION_SYSTEM : chatMode ? CHAT_SYSTEM : RULE_SYSTEM;
+          const user = operationMode && body?.context
+            ? `${prompt}\n\nPRIOR OPERATION CONTEXT (resolve words such as it/them/that/same from this data):\n${JSON.stringify(body.context)}`
+            : prompt;
+          const raw = (await callAI({ system, user, maxTokens: chatMode ? 512 : 768 })).text;
 
           const latency_ms = Date.now() - t0;
 

@@ -14,6 +14,7 @@
 // AI Insights' long-context analysis).
 import Anthropic from "@anthropic-ai/sdk";
 import type { ExpectedPayoutResult } from "./expected-payout";
+import { callAI } from "@/server/ai/providers";
 
 const MODEL = "claude-haiku-4-5-20251001";
 const DESCRIPTION_MAX_LEN = 500;
@@ -103,13 +104,25 @@ const TOOL_SCHEMA: Anthropic.Tool = {
 
 export async function classifyUpload(input: ClassifyUploadInput): Promise<ClassifyUploadResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { ok: false, error: "AI classification not configured." };
+  if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !apiKey) {
+    return { ok: false, error: "AI classification not configured." };
+  }
 
   const description = input.description.trim().slice(0, DESCRIPTION_MAX_LEN);
   if (!description) return { ok: false, error: "No description to classify." };
 
-  const client = new Anthropic({ apiKey });
   try {
+    let raw: Partial<UploadClassification>;
+    if (process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY) {
+      const result = await callAI({
+        system: SYSTEM_PROMPT,
+        user: `Merchant description: ${description}\nParsed document context: ${input.parsedSummary}\nDeterministic category: ${input.structuralHint}`,
+        maxTokens: 600,
+        tool: TOOL_SCHEMA as unknown as { name: string; description?: string; input_schema: Record<string, unknown> },
+      });
+      raw = result.toolInput as Partial<UploadClassification>;
+    } else {
+    const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
       model: MODEL,
       max_tokens: 600,
@@ -125,7 +138,8 @@ export async function classifyUpload(input: ClassifyUploadInput): Promise<Classi
     const toolUse = message.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
     if (!toolUse) return { ok: false, error: "AI returned no classification." };
 
-    const raw = toolUse.input as Partial<UploadClassification>;
+    raw = toolUse.input as Partial<UploadClassification>;
+    }
     const roles: UploadRole[] = ["platform_statement", "platform_transaction", "daily_log", "merchant_received", "unknown"];
     const role = roles.includes(raw.role as UploadRole) ? (raw.role as UploadRole) : "unknown";
     const platform = raw.platform && raw.platform !== "unknown" ? raw.platform : null;

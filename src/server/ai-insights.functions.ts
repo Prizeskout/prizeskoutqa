@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callAI } from "@/server/ai/providers";
 
 const PAGES = ["overview", "pricing", "competitors", "market"] as const;
 type Page = (typeof PAGES)[number];
@@ -401,10 +402,23 @@ async function callAnthropicAI(
   contextJson: string,
 ): Promise<RawInsightPayload> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !apiKey) {
+    throw new Error("No AI provider is configured");
+  }
 
   const client = new Anthropic({ apiKey });
   const userPrompt = `Page: ${page}\nTime window: ${WINDOW_LABEL[window]}\n\nData snapshot:\n${contextJson}\n\nProduce insights now.`;
+
+  if (process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY) {
+    const result = await callAI({
+      system: SYSTEM_PROMPT,
+      user: userPrompt,
+      maxTokens: 2048,
+      tool: TOOL_SCHEMA as unknown as { name: string; description?: string; input_schema: Record<string, unknown> },
+    });
+    if (!result.toolInput) throw new Error("AI returned no insights");
+    return result.toolInput as RawInsightPayload;
+  }
 
   let response: Anthropic.Message;
   try {

@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { callAI } from "@/server/ai/providers";
 
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_DOCUMENT_CHARS = 80_000;
@@ -142,7 +143,9 @@ export async function extractContractTerms(
   documentImages: ContractDocumentImage[] = [],
 ): Promise<ExtractContractResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { ok: false, error: "AI contract extraction is not configured." };
+  if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !apiKey) {
+    return { ok: false, error: "AI contract extraction is not configured." };
+  }
   const clean = documentText.replace(/\0/g, "").trim().slice(0, MAX_DOCUMENT_CHARS);
   const images = documentImages.slice(0, 15).filter(image =>
     Number.isInteger(image.page)
@@ -158,6 +161,19 @@ export async function extractContractTerms(
   }
 
   try {
+    let raw: Record<string, unknown>;
+    let resultModel = MODEL;
+    if (images.length === 0) {
+      const result = await callAI({
+        system: SYSTEM,
+        user: `Extract the commercial terms from this agreement text:\n\n${clean}`,
+        maxTokens: 2_500,
+        tool: TOOL as unknown as { name: string; description?: string; input_schema: Record<string, unknown> },
+      });
+      if (!result.toolInput) return { ok: false, error: "The extraction service returned no structured terms." };
+      raw = result.toolInput;
+      resultModel = result.model;
+    } else {
     const client = new Anthropic({ apiKey });
     const message = await client.messages.create({
       model: MODEL,
@@ -190,7 +206,8 @@ export async function extractContractTerms(
     });
     const block = message.content.find((item): item is Anthropic.ToolUseBlock => item.type === "tool_use");
     if (!block) return { ok: false, error: "The extraction service returned no structured terms." };
-    const raw = block.input as Record<string, unknown>;
+    raw = block.input as Record<string, unknown>;
+    }
     const clauses = Array.isArray(raw.clauses) ? raw.clauses.slice(0, 20).flatMap(item => {
       if (!item || typeof item !== "object") return [];
       const clause = item as Record<string, unknown>;
@@ -240,7 +257,7 @@ export async function extractContractTerms(
       missing_terms: Array.isArray(raw.missing_terms) ? raw.missing_terms.filter(v => typeof v === "string").slice(0, 12) as string[] : [],
       warnings: Array.isArray(raw.warnings) ? raw.warnings.filter(v => typeof v === "string").slice(0, 12) as string[] : [],
     };
-    return { ok: true, extraction, model: MODEL };
+    return { ok: true, extraction, model: resultModel };
   } catch (error) {
     console.error("[contract-extractor] extraction failed", error);
     if (error instanceof Anthropic.APIError && error.status === 429) {
