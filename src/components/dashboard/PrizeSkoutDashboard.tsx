@@ -3293,7 +3293,7 @@ export function PrizeSkoutDashboard() {
             ? String(operation.inventory_filter)
             : undefined,
           changes: {
-            ...(operation.new_product_name ? { name: String(operation.new_product_name) } : {}),
+            ...(operation.new_product_name ? { name: String(operation.new_product_name).replace(/[,;:\s]+$/, "") } : {}),
             ...(operation.new_product_sku ? { sku: String(operation.new_product_sku) } : {}),
             ...(operation.product_price != null &&
             Number.isFinite(Number(operation.product_price)) &&

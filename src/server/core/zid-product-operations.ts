@@ -146,7 +146,7 @@ async function storeId(headers: Headers) {
 function validatePatch(request: ProductChangeRequest) {
   const patch: Obj = {};
   if (request.mode === "duplicate") {
-    const duplicateName = request.changes?.name?.trim();
+    const duplicateName = request.changes?.name?.trim().replace(/[,;:\s]+$/, "");
     if (!duplicateName) throw new Error("Give the duplicated product a new name.");
     patch.name = { en: duplicateName, ar: duplicateName };
     if (request.changes?.sku?.trim()) patch.sku = request.changes.sku.trim();
@@ -170,7 +170,7 @@ function validatePatch(request: ProductChangeRequest) {
   if (request.mode === "publish") Object.assign(patch, { is_published: true, is_draft: false });
   const changes = request.changes ?? {};
   if (changes.name !== undefined) {
-    const value = changes.name.trim();
+    const value = changes.name.trim().replace(/[,;:\s]+$/, "");
     if (!value) throw new Error("The new product name cannot be empty.");
     patch.name = { en: value, ar: value };
   }
@@ -231,7 +231,7 @@ export async function previewZidProductChange(
 ) {
   const store = await storeId(headers),
     sku = (request.sku ?? "").trim().toLowerCase(),
-    query = (request.query ?? "").trim().toLowerCase(),
+    query = (request.query ?? "").trim().replace(/[,;:\s]+$/, "").toLowerCase(),
     all = await listProducts(headers, request.sku ?? request.query);
   let matched = all.filter((product) =>
     sku

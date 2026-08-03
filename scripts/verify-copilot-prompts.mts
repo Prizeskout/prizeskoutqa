@@ -37,6 +37,9 @@ const followUp = deterministicZidInsight("publish it", { created_product_sku: "I
 const priceOfProduct=deterministicZidInsight("Change the price of Test Wireless Charger to SAR 135") as Parsed|null;
 if(priceOfProduct?.operation?.operation!=="product_change"||priceOfProduct.operation.query!=="Test Wireless Charger")throw new Error(`Price-of-product target failed: ${JSON.stringify(priceOfProduct)}`);
 console.log("PASS: price-of-product phrasing preserves the exact product name");
+const duplicateByName=deterministicZidInsight("Duplicate PrizeSkout Wireless Charger, rename the copy to PrizeSkout Wireless Charger Plus, and publish it") as Parsed|null;
+if(duplicateByName?.operation?.query!=="PrizeSkout Wireless Charger"||(duplicateByName.operation as Record<string,unknown>).new_product_name!=="PrizeSkout Wireless Charger Plus")throw new Error(`Duplicate punctuation cleanup failed: ${JSON.stringify(duplicateByName)}`);
+console.log("PASS: duplicate phrasing preserves both exact names without separator punctuation");
 if (followUp?.operation?.product_mode !== "publish" || followUp.operation.query !== "IPAD-PRO-123") {
   throw new Error(`Follow-up failed: ${JSON.stringify(followUp)}`);
 }
