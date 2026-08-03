@@ -21,6 +21,7 @@ const cases = [
   ["Add 50 loyalty points to +966500000000", "loyalty_adjust"],
   ["Refund reverse order 64d0f002-0185-4fd1-94d2-e3a86be622c9 for SAR 100 via zid_bank_transfer", "reverse_refund"],
   ["Add product image https://example.com/ipad.jpg to iPad Pro", "product_image_upload"],
+  ["Use this direct image URL: `https://picsum.photos/seed/prizeskout-product/800/800.jpg`\nExample prompt: `Add product image https://picsum.photos/seed/prizeskout-product/800/800.jpg to PrizeSkout Wireless Charger Plus`", "product_image_upload"],
   ["Add color variants Black, Silver and Blue to iPad Pro, price SAR 3000, stock 10", "variant_create"],
   ["Schedule publish iPad Pro at 2026-08-03T09:00:00+03:00", "schedule_product_action"],
 ] as const;
@@ -32,6 +33,10 @@ for (const [prompt, expected] of cases) {
   }
   console.log(`PASS: ${prompt}`);
 }
+
+const pastedImage=deterministicZidInsight("Use this direct image URL: `https://picsum.photos/seed/prizeskout-product/800/800.jpg`\nExample prompt: `Add product image https://picsum.photos/seed/prizeskout-product/800/800.jpg to PrizeSkout Wireless Charger Plus`") as Parsed|null;
+if(pastedImage?.operation?.query!=="PrizeSkout Wireless Charger Plus")throw new Error(`Pasted image guidance target failed: ${JSON.stringify(pastedImage)}`);
+console.log("PASS: pasted image guidance preserves the exact product name");
 
 const followUp = deterministicZidInsight("publish it", { created_product_sku: "IPAD-PRO-123" }) as Parsed | null;
 const priceOfProduct=deterministicZidInsight("Change the price of Test Wireless Charger to SAR 135") as Parsed|null;
