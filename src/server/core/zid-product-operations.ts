@@ -92,6 +92,20 @@ async function zidJson(url: string, headers: Headers, init?: RequestInit) {
   const payload = (await response.json().catch(() => ({}))) as Obj;
   return { response, payload };
 }
+async function storefrontReadback(url: string, headers: Headers) {
+  const customerHeaders: Headers = {
+    Accept: "application/json",
+    "Accept-Language": headers["Accept-Language"] || "en",
+    Role: "Customer",
+    ...(headers["Store-Id"] ? { "Store-Id": headers["Store-Id"] } : {}),
+  };
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const call = await zidJson(url, customerHeaders);
+    if (call.response.ok && text(call.payload.id)) return call.payload;
+    if (attempt < 4) await new Promise((resolve) => setTimeout(resolve, 750));
+  }
+  return null;
+}
 function productRows(payload: Obj) {
   return arr(payload.results).length
     ? arr(payload.results)
@@ -422,11 +436,11 @@ export async function executeZidProductChange(
         ...(source.weight ? { weight: source.weight } : {}),
         ...(Array.isArray(source.keywords) ? { keywords: source.keywords } : {}),
         ...(variants.length ? { variants } : {}),
-        // Create first, then publish with a separate PATCH. Zid may accept an
-        // inline published state without immediately adding the item to its
-        // customer-facing catalogue index.
-        is_published: false,
-        is_draft: true,
+        // Zid supports creating a standard product directly in its intended
+        // publication state. A follow-up PATCH below makes the request
+        // idempotent across stores that defer publication processing.
+        is_published: approval.patch.is_published === true,
+        is_draft: approval.patch.is_published !== true,
       };
       const create = await zidJson("https://api.zid.sa/v1/products/", headers, {
         method: "POST",
@@ -452,8 +466,13 @@ export async function executeZidProductChange(
       const readback = await zidJson(`https://api.zid.sa/v1/products/${encodeURIComponent(createdId)}/`, headers);
       const created = readback.response.ok ? snapshot(readback.payload) : null;
       const expectedName = text((approval.patch.name as Obj).en);
-      const confirmed = Boolean(created && created.name === expectedName && created.sku === (requestedSku || generatedSku) && created.is_published === Boolean(approval.patch.is_published));
-      results.push({ id: createdId, sku: requestedSku || generatedSku, source_id: before.id, source_sku: before.sku, status: confirmed ? "confirmed" : "unconfirmed", before, after: created, message: confirmed ? `${created?.is_published ? "Published" : "Unpublished"} duplicate confirmed by Zid readback; the source product was unchanged.` : "Zid accepted the duplicate, but readback did not match every approved field." });
+      const managerConfirmed = Boolean(created && created.name === expectedName && created.sku === (requestedSku || generatedSku) && created.is_published === Boolean(approval.patch.is_published));
+      const storefrontProduct = approval.patch.is_published === true
+        ? await storefrontReadback(`https://api.zid.sa/v1/products/${encodeURIComponent(createdId)}/`, headers)
+        : null;
+      const storefrontVisible = Boolean(storefrontProduct && nameOf(storefrontProduct) === expectedName);
+      const confirmed = managerConfirmed && (approval.patch.is_published !== true || storefrontVisible);
+      results.push({ id: createdId, sku: requestedSku || generatedSku, source_id: before.id, source_sku: before.sku, status: confirmed ? "confirmed" : "unconfirmed", before, after: created ? { ...created, storefront_visible: storefrontVisible } : created, storefront_visible: storefrontVisible, message: confirmed ? `${created?.is_published ? "Published duplicate confirmed in Zid's customer catalogue" : "Unpublished duplicate confirmed by Zid"}; the source product was unchanged.` : managerConfirmed && approval.patch.is_published === true ? "Zid saved the product as published, but it is not yet visible through Zid's customer catalogue. PrizeSkout will not call it live until that check passes." : "Zid accepted the duplicate, but readback did not match every approved field." });
       continue;
     }
     const response = await fetch(
@@ -489,22 +508,28 @@ export async function executeZidProductChange(
       continue;
     }
     const after = verify.ok ? snapshot((await verify.json()) as Obj) : null;
-    const confirmed =
+    const managerConfirmed =
       Boolean(after) &&
       Object.entries(approval.patch).every(([field, value]) =>
         field === "name" || field === "description"
           ? (after as unknown as Obj)[field] === text((value as Obj).en)
           : JSON.stringify((after as unknown as Obj)[field]) === JSON.stringify(value),
       );
+    const storefrontProduct = approval.mode === "publish" || approval.patch.is_published === true
+      ? await storefrontReadback(`https://api.zid.sa/v1/products/${encodeURIComponent(before.id)}/`, headers)
+      : null;
+    const storefrontVisible = Boolean(storefrontProduct && text(storefrontProduct.id) === before.id);
+    const confirmed = managerConfirmed && (approval.mode !== "publish" && approval.patch.is_published !== true || storefrontVisible);
     results.push({
       id: before.id,
       sku: before.sku,
       status: confirmed ? "confirmed" : "unconfirmed",
       before,
-      after,
+      after: after ? { ...after, storefront_visible: storefrontVisible } : after,
+      storefront_visible: storefrontVisible,
       message: confirmed
-        ? "Change confirmed by Zid readback."
-        : "Zid accepted the update, but readback did not match every approved field.",
+        ? storefrontVisible ? "Change confirmed in Zid's customer catalogue." : "Change confirmed by Zid readback."
+        : managerConfirmed ? "Zid marks the product as published, but it is not yet visible through Zid's customer catalogue." : "Zid accepted the update, but readback did not match every approved field.",
     });
   }
   const trace_id = await audit(accountId, channel, approval, results);

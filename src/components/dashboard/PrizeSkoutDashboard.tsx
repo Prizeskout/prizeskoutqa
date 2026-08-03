@@ -1845,6 +1845,7 @@ export function PrizeSkoutDashboard() {
       sku: string;
       source_sku?: string;
       status: string;
+      storefront_visible?: boolean;
       after?: {
         id: string;
         sku: string;
@@ -1855,6 +1856,7 @@ export function PrizeSkoutDashboard() {
         is_infinite: boolean;
         is_published: boolean;
         is_draft: boolean;
+        storefront_visible?: boolean;
       };
     }>;
   } | null>(null);
@@ -3683,6 +3685,7 @@ export function PrizeSkoutDashboard() {
           sku: string;
           source_sku?: string;
           status: string;
+          storefront_visible?: boolean;
           after?: {
             id: string;
             sku: string;
@@ -3694,11 +3697,19 @@ export function PrizeSkoutDashboard() {
             is_infinite: boolean;
             is_published: boolean;
             is_draft: boolean;
+            storefront_visible?: boolean;
           };
         }>;
         error?: string;
+        candidates?: Array<{ id: string; name: string; sku: string; is_published: boolean }>;
       };
-      if (!response.ok || !result.ok)
+      if (result.candidates?.length) {
+        setCpObj((current) => current ? { ...current, product_candidates: result.candidates } : current);
+        setCpOperationStatus("failed");
+        setCpOperationMessage(result.error ?? "Choose the intended product before continuing.");
+        return;
+      }
+      if ((!response.ok || !result.ok) && !result.results?.length)
         throw new Error(result.error ?? "Zid did not complete the requested action.");
       setCpStoreActionResult({
         confirmed: Boolean(result.confirmed ?? result.ok),
@@ -8594,6 +8605,24 @@ export function PrizeSkoutDashboard() {
                           </div>
                         );
                       })()}
+                    {Array.isArray(cpObj.product_candidates) && cpObj.product_candidates.length > 0 && (
+                      <div style={{ display: "grid", gap: 9 }}>
+                        {(cpObj.product_candidates as Array<{ id: string; name: string; sku: string; is_published: boolean }>).map((candidate) => (
+                          <button
+                            key={candidate.id || candidate.sku}
+                            onClick={() => {
+                              setCpObj((current) => current ? { ...current, query: candidate.sku, sku: candidate.sku, product_candidates: null } : current);
+                              setCpOperationStatus("ready");
+                              setCpOperationMessage(`Selected ${candidate.name} — SKU ${candidate.sku}. Review it, then continue.`);
+                            }}
+                            style={{ border: "1px solid var(--border)", borderRadius: 11, padding: "12px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", gap: 12 }}
+                          >
+                            <span><strong>{candidate.name}</strong><br/><small style={{ color: "var(--muted)" }}>SKU {candidate.sku}</small></span>
+                            <strong style={{ color: OG }}>Choose</strong>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {[
                       "change_order_status",
                       "create_product_draft",
@@ -8653,7 +8682,8 @@ export function PrizeSkoutDashboard() {
                           disabled={
                             cpOperationStatus === "publishing" ||
                             cpOperationStatus === "running" ||
-                            cpOperationStatus === "complete"
+                            cpOperationStatus === "complete" ||
+                            (cpOperationStatus === "failed" && Array.isArray(cpObj.product_candidates) && cpObj.product_candidates.length > 0)
                           }
                           style={{
                             border: 0,
@@ -8739,11 +8769,15 @@ export function PrizeSkoutDashboard() {
                                   style={{
                                     fontSize: 11,
                                     fontWeight: 800,
-                                    color: item?.is_published ? GN : "#B45309",
+                                    color: item?.storefront_visible ? GN : "#B45309",
                                     textTransform: "uppercase",
                                   }}
                                 >
-                                  {item?.is_published ? "Published in Zid" : "Not published"}
+                                  {item?.storefront_visible
+                                    ? "Live in storefront"
+                                    : item?.is_published
+                                      ? "Published; storefront pending"
+                                      : "Not published"}
                                 </span>
                               </div>
                               <div
@@ -8776,11 +8810,17 @@ export function PrizeSkoutDashboard() {
                                       color: product.status === "confirmed" ? GN : "#B45309",
                                     }}
                                   >
-                                    {product.status === "confirmed" ? "Confirmed" : "Needs review"}
+                                    {item?.storefront_visible
+                                      ? "Visible to customers"
+                                      : item?.is_published
+                                        ? "Not visible yet"
+                                        : product.status === "confirmed"
+                                          ? "Confirmed"
+                                          : "Needs review"}
                                   </div>
                                 </div>
                               </div>
-                              {item && !item.is_published && (
+                              {item && !item.storefront_visible && (
                                 <button
                                   onClick={() => prepareCreatedProductPublish(item.sku)}
                                   style={{
@@ -8795,7 +8835,7 @@ export function PrizeSkoutDashboard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  Publish this product
+                                  {item.is_published ? "Retry storefront publication" : "Publish this product"}
                                 </button>
                               )}
                             </div>
