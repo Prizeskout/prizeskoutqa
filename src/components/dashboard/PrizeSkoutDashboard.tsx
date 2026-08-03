@@ -1805,6 +1805,8 @@ export function PrizeSkoutDashboard() {
   const [productOriginalPrice, setProductOriginalPrice] = useState<number | null>(null);
   const [cpPhase, setCpPhase] = useState<"idle" | "loading" | "result">("idle");
   const [cpInput, setCpInput] = useState("");
+  const [assistantDrawerOpen, setAssistantDrawerOpen] = useState(false);
+  const [assistantDrawerInput, setAssistantDrawerInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
   const [cpObj, setCpObj] = useState<Record<string, unknown> | null>(null);
   const [cpChatMessage, setCpChatMessage] = useState<string | null>(null);
@@ -4540,6 +4542,70 @@ export function PrizeSkoutDashboard() {
 
   const md = modal != null ? disputes[modal] : null;
 
+  const assistantContext: Record<Tab, { nudge: string; prompt: string; examples: string[] }> = {
+    analytics: {
+      nudge: "Want to understand a risk or make a catalogue change?",
+      prompt: "Show products losing money",
+      examples: ["Show products losing money", "What did I actually keep from orders this month?"],
+    },
+    rules: {
+      nudge: "Want help choosing or applying safe protection rules?",
+      prompt: "Explain my active margin protection",
+      examples: ["Explain my active margin protection", "Protect a 20% margin on all products"],
+    },
+    vault: {
+      nudge: "Need to sync or inspect a connected store?",
+      prompt: "Pull my latest catalogue",
+      examples: ["Pull my latest catalogue", "Show products that need inventory attention"],
+    },
+    history: {
+      nudge: "Want a recent action or payout result explained?",
+      prompt: "What did you just change?",
+      examples: ["What did you just change?", "Summarize my latest payout check"],
+    },
+    settings: {
+      nudge: "Want help understanding your protection settings?",
+      prompt: "Explain my active margin protection",
+      examples: ["Explain my active margin protection", "Check whether my active coupon is safe"],
+    },
+  };
+  const openAssistantDrawer = (prompt = "") => {
+    setAssistantDrawerInput(prompt);
+    setAssistantDrawerOpen(true);
+  };
+  const submitAssistantDrawer = () => {
+    const prompt = assistantDrawerInput.trim();
+    if (!prompt || cpPhase === "loading") return;
+    setCpInput(prompt);
+    void runCopilot(prompt);
+  };
+  const assistantNudge = (targetTab: Tab) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        flexWrap: "wrap",
+        border: "1px solid color-mix(in srgb,var(--border) 82%,transparent)",
+        borderRadius: 12,
+        padding: "11px 14px",
+        background: "var(--surface2)",
+      }}
+    >
+      <span style={{ fontSize: 13.5, color: "var(--muted)" }}>
+        {assistantContext[targetTab].nudge} <strong style={{ color: "var(--text)" }}>Use CFO Copilot &amp; Store Assistant.</strong>
+      </span>
+      <button
+        type="button"
+        onClick={() => openAssistantDrawer(assistantContext[targetTab].prompt)}
+        style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: 4 }}
+      >
+        Ask PrizeSkout →
+      </button>
+    </div>
+  );
+
   return (
     <div
       className="ps-db"
@@ -5642,13 +5708,14 @@ export function PrizeSkoutDashboard() {
           <section
             className="ps-db-section"
             style={{
-              padding: "28px 30px 48px",
+              padding: "14px 30px 48px",
               display: "flex",
               flexDirection: "column",
               gap: 30,
               animation: "pk-in .3s ease",
             }}
           >
+            {assistantNudge("analytics")}
             <MerchantOperatingLoop
               onAskCopilot={(prompt) => {
                 setTab("rules");
@@ -8051,9 +8118,9 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {/* CFO Copilot */}
+            {/* CFO Copilot & Store Assistant */}
             <div
-              data-demo-tip="CFO Copilot — type a plain-English request. It either runs a real catalogue/pricing action or compiles a margin policy into a live rule, whichever you asked for."
+              data-demo-tip="CFO Copilot & Store Assistant — ask a business question or describe a store task in plain language. PrizeSkout previews protected changes and asks for approval before writing."
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -8078,14 +8145,11 @@ export function PrizeSkoutDashboard() {
                   <h2
                     style={{ margin: 0, fontSize: 20.5, fontWeight: 800, letterSpacing: "-0.3px" }}
                   >
-                    Zid Store Operator{" "}
-                    <span style={{ color: "var(--muted)", fontWeight: 600, fontSize: 16.5 }}>
-                      · controlled commerce operations
-                    </span>
+                    CFO Copilot &amp; Store Assistant
                   </h2>
                   <span style={{ fontSize: 15, color: "var(--muted)" }}>
-                    Describe the outcome you want. PrizeSkout plans it, applies safeguards, asks for
-                    approval when required, and verifies live store changes.
+                    Ask questions about profit, margins and payouts—or tell PrizeSkout to manage
+                    products, prices, stock, categories and other connected commerce operations.
                   </span>
                 </div>
                 <span
@@ -8102,10 +8166,32 @@ export function PrizeSkoutDashboard() {
                     padding: "6px 14px",
                   }}
                 >
-                  {channelStatuses.zid === "connected"
-                    ? "Zid connected · approval required"
-                    : "Zid connection required"}
+                  {Object.values(channelStatuses).includes("connected")
+                    ? "Store connected · changes require your approval"
+                    : "Connect a store to enable live actions"}
                 </span>
+              </div>
+              <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+                {[
+                  ["Ask about my business", "Profit, margins, orders, payouts and risks"],
+                  ["Manage my store", "Create, edit, publish and organise products"],
+                ].map(([label, description]) => (
+                  <div
+                    key={label}
+                    style={{
+                      flex: "1 1 280px",
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                      padding: "11px 13px",
+                      background: "var(--surface2)",
+                    }}
+                  >
+                    <div style={{ fontSize: 13.5, fontWeight: 800 }}>{label}</div>
+                    <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
+                      {description}
+                    </div>
+                  </div>
+                ))}
               </div>
               <div
                 style={{
@@ -8125,9 +8211,9 @@ export function PrizeSkoutDashboard() {
                   ],
                   [
                     "Permissions",
-                    channelStatuses.zid === "connected"
-                      ? "Read products/orders · update prices"
-                      : "Unavailable until Zid connects",
+                    Object.values(channelStatuses).includes("connected")
+                      ? "Read connected data · preview approved changes"
+                      : "Unavailable until a store connects",
                   ],
                   ["Safety mode", "Explicit approval for writes"],
                   ["Verification", "Live readback · auto rollback"],
@@ -8219,7 +8305,7 @@ export function PrizeSkoutDashboard() {
                   placeholder={
                     lang === "ar"
                       ? "اكتب المهمة التي تريد تنفيذها في متجرك..."
-                      : "Try: Protect a 20% margin on Zid and cap increases at 10%"
+                      : "Ask about your business or tell PrizeSkout what to do…"
                   }
                   style={{
                     flex: 1,
@@ -8262,13 +8348,11 @@ export function PrizeSkoutDashboard() {
                   {t.try}
                 </span>
                 {[
-                  "What did I actually keep from Zid orders this month?",
-                  "Which coupons put products below my margin floor?",
-                  "Protect a 20% margin on Zid and cap increases at 10%",
-                  "Summarize today's Zid orders",
-                  "Show products that need inventory attention",
-                  "Find Sony A7S III and explain its economics",
-                  "Pull my latest catalogue from Zid",
+                  "What did I actually keep from orders this month?",
+                  "Show products losing money",
+                  "Change the stock of Wireless Charger to 20",
+                  "Create and publish a new product",
+                  "Check whether my active coupon is safe",
                 ].map((label) => (
                   <button
                     key={label}
@@ -10309,6 +10393,7 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
+            {assistantNudge("vault")}
             {/* Inbound */}
             <div data-tour="inbound" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -10664,6 +10749,7 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
+            {assistantNudge("history")}
             <MerchantOperatingLoop mode="history" />
 
             <div
@@ -12047,6 +12133,7 @@ export function PrizeSkoutDashboard() {
             className="ps-db-section"
             style={{ padding: "28px 30px 48px", animation: "pk-in .3s ease" }}
           >
+            <div style={{ marginBottom: 18 }}>{assistantNudge("settings")}</div>
             <SettingsTabs />
           </section>
         )}
@@ -13067,6 +13154,121 @@ export function PrizeSkoutDashboard() {
             </div>
           );
         })()}
+
+      {/* GLOBAL CFO COPILOT & STORE ASSISTANT */}
+      {!assistantDrawerOpen && (
+        <button
+          type="button"
+          aria-label="Open CFO Copilot and Store Assistant"
+          onClick={() => openAssistantDrawer()}
+          style={{
+            position: "fixed",
+            insetInlineEnd: 24,
+            bottom: 88,
+            zIndex: 310,
+            border: 0,
+            borderRadius: 999,
+            padding: "13px 18px",
+            background: OG,
+            color: "#fff",
+            boxShadow: "0 12px 32px rgba(0,0,0,.2)",
+            fontFamily: "inherit",
+            fontSize: 14,
+            fontWeight: 800,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span aria-hidden="true">✦</span> Ask PrizeSkout
+        </button>
+      )}
+      {assistantDrawerOpen && (
+        <div
+          role="presentation"
+          onClick={() => setAssistantDrawerOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 350, background: "rgba(9,12,18,.34)" }}
+        >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="CFO Copilot and Store Assistant"
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              position: "absolute",
+              insetBlock: 0,
+              insetInlineEnd: 0,
+              width: "min(440px,100vw)",
+              background: "var(--surface)",
+              borderInlineStart: "1px solid var(--border)",
+              boxShadow: "-18px 0 50px rgba(0,0,0,.16)",
+              padding: "22px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              overflowY: "auto",
+              animation: "pk-in .22s ease",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start" }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>CFO Copilot &amp; Store Assistant</h2>
+                <p style={{ margin: "6px 0 0", color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
+                  Ask about profit and payouts, or describe a store change. PrizeSkout keeps your current page open and asks before making changes.
+                </p>
+              </div>
+              <button type="button" aria-label="Close assistant" onClick={() => setAssistantDrawerOpen(false)} style={{ border: "1px solid var(--border)", borderRadius: 9, width: 34, height: 34, background: "var(--surface2)", color: "var(--text)", cursor: "pointer", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "12px 13px", background: "var(--surface2)", fontSize: 12.5, color: "var(--muted)" }}>
+              <strong style={{ color: "var(--text)" }}>{headerTitle}</strong> context · Store changes require your approval
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {assistantContext[tab].examples.map((example) => (
+                <button key={example} type="button" onClick={() => setAssistantDrawerInput(example)} style={{ textAlign: "left", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 13, cursor: "pointer" }}>{example}</button>
+              ))}
+            </div>
+            <textarea
+              autoFocus
+              value={assistantDrawerInput}
+              onChange={(event) => setAssistantDrawerInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  submitAssistantDrawer();
+                }
+              }}
+              placeholder="Ask about your business or tell PrizeSkout what to do…"
+              rows={4}
+              style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 14.5, lineHeight: 1.5, outline: "none" }}
+            />
+            <button type="button" disabled={!assistantDrawerInput.trim() || cpPhase === "loading"} onClick={submitAssistantDrawer} style={{ border: 0, borderRadius: 11, padding: "12px 16px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: !assistantDrawerInput.trim() || cpPhase === "loading" ? "not-allowed" : "pointer", opacity: !assistantDrawerInput.trim() ? .55 : 1 }}>
+              {cpPhase === "loading" ? "Working…" : "Ask PrizeSkout"}
+            </button>
+            {(cpChatMessage || cpOperationMessage || cpPhase === "loading") && (
+              <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface2)", fontSize: 13.5, lineHeight: 1.55 }}>
+                {cpPhase === "loading" ? "PrizeSkout is working on that…" : cpChatMessage ?? cpOperationMessage}
+              </div>
+            )}
+            {cpObj?._type === "operation" && cpOperationStatus !== "complete" && cpOperationStatus !== "failed" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAssistantDrawerOpen(false);
+                  setTab("rules");
+                  window.setTimeout(() => document.querySelector('[data-tour="copilot"]')?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+                }}
+                style={{ border: `1px solid ${OG}`, borderRadius: 10, padding: "11px 14px", background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}
+              >
+                Review and approve this action →
+              </button>
+            )}
+            <button type="button" onClick={() => { setAssistantDrawerOpen(false); setTab("rules"); }} style={{ marginTop: "auto", border: 0, background: "transparent", color: "var(--muted)", fontFamily: "inherit", fontWeight: 700, cursor: "pointer", padding: 8 }}>
+              Open the full assistant
+            </button>
+          </aside>
+        </div>
+      )}
 
       {/* PRODUCT TOUR */}
       {tourActive && (
