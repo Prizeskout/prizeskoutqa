@@ -3217,7 +3217,7 @@ export function PrizeSkoutDashboard() {
           );
         if (op === "coupon_change")
           setCpOperationMessage(
-            `Ready to ${String(operation.coupon_mode)} coupon ${String(operation.coupon_code)}${operation.coupon_discount_pct ? ` at ${Number(operation.coupon_discount_pct)}%` : ""}. Nothing has changed yet.`,
+            `Ready to ${String(operation.coupon_mode)} coupon ${String(operation.coupon_name ?? operation.coupon_code)}${operation.coupon_discount_pct ? ` at ${Number(operation.coupon_discount_pct)}%` : ""}${operation.coupon_start_date ? ` starting ${String(operation.coupon_start_date)}` : ""}. Nothing has changed yet.`,
           );
         if (op === "category_assign")
           setCpOperationMessage(
@@ -3662,7 +3662,9 @@ export function PrizeSkoutDashboard() {
           execute_at: cpObj.execute_at,
           coupon_mode: cpObj.coupon_mode,
           coupon_code: cpObj.coupon_code,
+          coupon_name: cpObj.coupon_name,
           coupon_discount_pct: cpObj.coupon_discount_pct,
+          coupon_start_date: cpObj.coupon_start_date,
           query: cpObj.query,
           category: cpObj.category,
           customer_query: cpObj.customer_query,

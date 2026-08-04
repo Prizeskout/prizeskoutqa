@@ -1,6 +1,7 @@
 import { deterministicZidInsight } from "../src/routes/api/copilot/compile";
+import { productMatches } from "../src/server/core/zid-product-match";
 
-type Parsed = { type?:string; message?:string; operation?: { operation?: string; product_mode?: string; publish_product?: boolean; query?: string } };
+type Parsed = { type?:string; message?:string; operation?: { operation?: string; product_mode?: string; publish_product?: boolean; query?: string; coupon_code?:string; coupon_name?:string; coupon_discount_pct?:number; coupon_start_date?:string; product_price?:number } };
 
 const cases = [
   ['Create and publish a new product with this name: "iPad Pro 11-inch M4 256GB" and set the price at SAR 3000', "create_product_draft"],
@@ -45,6 +46,15 @@ console.log("PASS: price-of-product phrasing preserves the exact product name");
 const duplicateByName=deterministicZidInsight("Duplicate PrizeSkout Wireless Charger, rename the copy to PrizeSkout Wireless Charger Plus, and publish it") as Parsed|null;
 if(duplicateByName?.operation?.query!=="PrizeSkout Wireless Charger"||(duplicateByName.operation as Record<string,unknown>).new_product_name!=="PrizeSkout Wireless Charger Plus")throw new Error(`Duplicate punctuation cleanup failed: ${JSON.stringify(duplicateByName)}`);
 console.log("PASS: duplicate phrasing preserves both exact names without separator punctuation");
+const reviewCoupon=deterministicZidInsight("create a coupon for customers on 4/8/2026 with percentage 50% and the name is CouponTest50") as Parsed|null;
+if(reviewCoupon?.operation?.coupon_name!=="CouponTest50"||reviewCoupon.operation.coupon_code!=="COUPONTEST50"||reviewCoupon.operation.coupon_discount_pct!==50||reviewCoupon.operation.coupon_start_date!=="2026-08-04")throw new Error(`Zid review coupon prompt failed: ${JSON.stringify(reviewCoupon)}`);
+console.log("PASS: Zid review coupon preserves name, percentage, and exact Saudi date");
+const arabicPrice=deterministicZidInsight("غيّر سعر المنتج قهوة عربية فاخرة إلى 85 ريال") as Parsed|null;
+if(arabicPrice?.operation?.operation!=="product_change"||arabicPrice.operation.query!=="قهوة عربية فاخرة"||arabicPrice.operation.product_price!==85)throw new Error(`Arabic product instruction failed: ${JSON.stringify(arabicPrice)}`);
+console.log("PASS: Arabic product price instruction preserves the Arabic product name");
+const localizedProduct={name:{en:"Premium Arabic Coffee",ar:"قَهْوَة عَرَبِيَّة فاخرة"},sku:"AR-COFFEE-1"};
+if(!productMatches(localizedProduct,"قهوة عربية فاخرة",true))throw new Error("Arabic localized-name matching failed");
+console.log("PASS: Arabic names match across diacritics and localized Zid name fields");
 if (followUp?.operation?.product_mode !== "publish" || followUp.operation.query !== "IPAD-PRO-123") {
   throw new Error(`Follow-up failed: ${JSON.stringify(followUp)}`);
 }

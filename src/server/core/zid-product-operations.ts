@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
+import { displayProductName, productMatches } from "./zid-product-match";
 
 type Obj = Record<string, unknown>;
 type Headers = Record<string, string>;
@@ -12,10 +13,7 @@ const number = (value: unknown) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
-const nameOf = (product: Obj) =>
-  typeof product.name === "object" && product.name
-    ? text((product.name as Obj).en, (product.name as Obj).ar)
-    : text(product.name);
+const nameOf = (product: Obj) => displayProductName(product);
 const secret = () =>
   process.env.COPILOT_APPROVAL_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
@@ -246,19 +244,24 @@ export async function previewZidProductChange(
   const store = await storeId(headers),
     sku = (request.sku ?? "").trim().toLowerCase(),
     query = (request.query ?? "").trim().replace(/[,;:\s]+$/, "").toLowerCase(),
-    all = await listProducts(headers, request.sku ?? request.query);
+    initial = await listProducts(headers, request.sku ?? request.query);
+  let all = initial;
   let matched = all.filter((product) =>
     sku
       ? text(product.sku).toLowerCase() === sku
       : query
-        ? nameOf(product).toLowerCase() === query || text(product.sku).toLowerCase() === query
+        ? productMatches(product, query, true)
         : request.scope === "matching",
   );
+  if (!matched.length && (request.sku || request.query)) {
+    all = await listProducts(headers);
+    matched = all.filter(product => sku
+      ? text(product.sku).toLowerCase() === sku
+      : productMatches(product, query, true));
+  }
   if (!matched.length && query)
     matched = all.filter(
-      (product) =>
-        nameOf(product).toLowerCase().includes(query) ||
-        text(product.sku).toLowerCase().includes(query),
+      (product) => productMatches(product, query, false),
     );
   if (request.inventory_filter === "out_of_stock")
     matched = matched.filter((product) => number(product.quantity) === 0 && !product.is_infinite);

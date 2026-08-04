@@ -172,7 +172,9 @@ Schema:
   "publish_duplicate": boolean | null,
   "coupon_mode": "create" | "disable" | "enable" | "delete" | null,
   "coupon_code": string | null,
+  "coupon_name": string | null,
   "coupon_discount_pct": number | null,
+  "coupon_start_date": string | null,
   "customer_query": string | null,
   "loyalty_points": integer | null,
   "loyalty_direction": "+" | "-" | null,
@@ -215,21 +217,38 @@ function isOperationalRequest(text: string): boolean {
     || /\b(protect|maintain|fix|restore)\b.*\bmargin\b.*\b(zid|store|products?)\b/i.test(text)
     || /\b(push|publish|apply|sync|refresh)\b.*\b(zid|salla|foodics)\b/i.test(text)
     || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text)
+    || /(?:منتج|المنتج|منتجات|سعر|تكلفة|مخزون|انشر|نشر|غي[ّ]?ر|عد[ّ]?ل|احذف|انسخ|كرر|ابحث|قسيمة|كوبون)/u.test(text)
     || (FIND_VERB.test(text) && MODEL_CODE.test(text));
 }
 
 export function deterministicZidInsight(prompt:string,prior?:Record<string,unknown>):Record<string,unknown>|null{
+  const normalizedPrompt=prompt.replace(/[٠-٩]/g,digit=>String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))).replace(/[۰-۹]/g,digit=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
   const canonicalPrompt=prompt.replace(/[`]/g,"").replace(/\bprodcut\b/gi,"product").replace(/\bpublsh\b/gi,"publish").replace(/\bcatelogue\b/gi,"catalogue").replace(/[٠-٩]/g,digit=>String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))).replace(/(?:أنشئ|انشئ|إنشاء)/g,"create").replace(/أضف/g,"add").replace(/منتج/g,"product").replace(/باسم/g,"named").replace(/بسعر/g,"price at").replace(/(?:ريال سعودي|ريال|ر\.س)/g,"SAR").replace(/(?:وانشره|انشره|انشر)/g," publish ");
   const text=canonicalPrompt.toLowerCase();
   const priorSku=String(prior?.created_product_sku??prior?.sku??prior?.query??"").trim();
+  const arabicFieldEdit=normalizedPrompt.match(/(?:غي[ّ]?ر|عد[ّ]?ل|حد[ّ]?ث)\s+(سعر|تكلفة|مخزون|كمية)\s+(?:المنتج\s+)?[“"]?(.+?)[”"]?\s+(?:إلى|الى|لـ?)\s*(\d+(?:[,.]\d+)?)\s*(?:ر(?:يال)?|ر\.س|SAR)?/u);
+  if(arabicFieldEdit){const field=arabicFieldEdit[1],query=arabicFieldEdit[2].trim(),value=Number(arabicFieldEdit[3].replace(/,/g,""));return {type:"operation",operation:{_type:"operation",operation:"product_change",platform:"zid",query,sku:null,scope:"single",product_mode:"edit",new_product_name:null,new_product_sku:null,product_price:field==="سعر"?value:null,product_cost:field==="تكلفة"?value:null,product_quantity:/مخزون|كمية/u.test(field)?value:null,risk_level:"reversible_write",requires_confirmation:true,plan:[`ابحث عن منتج واحد باسم ${query}.`,"اعرض القيمة الحالية والقيمة المطلوبة.","انتظر موافقة التاجر.","طبّق التغيير المعتمد فقط في زد.","اقرأ المنتج مرة أخرى واعرض النتيجة المؤكدة."],summary:`تغيير ${field} ${query} إلى ${value}.`,warnings:[]}};}
+  const arabicVisibility=normalizedPrompt.match(/^\s*(انشر|اخف|أخف|الغ(?:اء)?\s+نشر|ألغ(?:اء)?\s+نشر)\s+(?:المنتج\s+)?[“"]?(.+?)[”"]?[.!؟]?\s*$/u);
+  if(arabicVisibility){const publish=arabicVisibility[1]==="انشر",query=arabicVisibility[2].trim();return {type:"operation",operation:{_type:"operation",operation:"product_change",platform:"zid",query,sku:null,scope:"single",product_mode:publish?"publish":"unpublish",risk_level:"reversible_write",requires_confirmation:true,summary:publish?`نشر ${query}.`:`إلغاء نشر ${query}.`,warnings:[]}};}
   if(/^\s*(?:stop|cancel(?: that)?|don['’]?t do it|never mind|nevermind)[.!]?\s*$/i.test(canonicalPrompt)){
     return {type:"chat",message:prior?.last_execution_complete===true?`That action already completed in Zid${priorSku?` for ${priorSku}`:""}, so cancelling cannot reverse it. Tell me the exact recovery you want, such as “unpublish it”, “restore its old price”, or “permanently delete the new product”.`:"Cancelled. Nothing from the pending instruction was sent to Zid."};
   }
   if(prior&&/^\s*(?:what did you (?:just )?change|what happened|show (?:me )?(?:the )?(?:last )?(?:change|result|receipt))[?!.]?\s*$/i.test(canonicalPrompt)){
     return {type:"chat",message:`Last operation: ${String(prior.summary??prior.operation??"store action")}${priorSku?`. Product: ${priorSku}`:""}. ${prior.last_execution_complete===true?"It completed; the verified result remains in the action card and Activity & Evidence history.":"It has not been approved or sent to Zid yet."}`};
   }
-  const couponCreate=canonicalPrompt.match(/\b(?:create|add)\s+(?:a\s+)?(?:new\s+)?(?:coupon|discount code)(?:\s+(?:called|code|named))?\s*([A-Z0-9_-]+)[\s\S]*?(\d+(?:\.\d+)?)\s*%/i);
-  if(couponCreate){return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:"create",coupon_code:couponCreate[1].toUpperCase(),coupon_discount_pct:Number(couponCreate[2]),risk_level:"sensitive_write",requires_confirmation:true,summary:`Create ${couponCreate[2]}% coupon ${couponCreate[1].toUpperCase()}.`,warnings:[]}};}
+  const couponCreateIntent=/\b(?:create|add)\s+(?:a\s+)?(?:new\s+)?(?:coupon|discount code)\b/i.test(canonicalPrompt);
+  if(couponCreateIntent){
+    const explicitName=canonicalPrompt.match(/\b(?:name\s+is|named|called|coupon\s+code\s+is|code\s+is)\s*[“"]?([\p{L}\p{N}._-]+)[”"]?/iu)?.[1];
+    const positionalName=canonicalPrompt.match(/\b(?:coupon|discount code)\s+([\p{L}\p{N}._-]+)\s+(?=for|with|at|on|giving|offering)/iu)?.[1];
+    const reserved=new Set(["for","with","customers","customer","on","at","percentage","discount"]);
+    const couponName=(explicitName??(positionalName&&!reserved.has(positionalName.toLocaleLowerCase("und"))?positionalName:null))?.trim();
+    const pctText=canonicalPrompt.match(/\b(?:percentage|discount(?:\s+of)?|value(?:\s+of)?)\s*(\d+(?:\.\d+)?)\s*%?/i)?.[1]??canonicalPrompt.match(/(\d+(?:\.\d+)?)\s*%/)?.[1];
+    const dateMatch=canonicalPrompt.match(/\b(?:on|from|starting(?:\s+on)?)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/i);
+    const isoDateMatch=canonicalPrompt.match(/\b(?:on|from|starting(?:\s+on)?)\s+(\d{4})-(\d{2})-(\d{2})\b/i);
+    const couponStartDate=isoDateMatch?`${isoDateMatch[1]}-${isoDateMatch[2]}-${isoDateMatch[3]}`:dateMatch?`${dateMatch[3]}-${dateMatch[2].padStart(2,"0")}-${dateMatch[1].padStart(2,"0")}`:null;
+    const discount=Number(pctText);
+    if(couponName&&discount>0&&discount<=100){const couponCode=couponName.replace(/[^\p{L}\p{N}._-]+/gu,"-").toUpperCase();return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:"create",coupon_code:couponCode,coupon_name:couponName,coupon_discount_pct:discount,coupon_start_date:couponStartDate,risk_level:"sensitive_write",requires_confirmation:true,summary:`Create ${discount}% coupon ${couponName}${couponStartDate?` starting ${couponStartDate}`:""}.`,warnings:[]}};}
+  }
   const couponAction=canonicalPrompt.match(/^\s*(disable|deactivate|enable|activate|delete|remove)\s+(?:coupon|discount code)\s+([A-Z0-9_-]+)[.!]?\s*$/i);
   if(couponAction){const verb=couponAction[1].toLowerCase(),mode=/enable|activate/.test(verb)?"enable":/delete|remove/.test(verb)?"delete":"disable";return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:mode,coupon_code:couponAction[2].toUpperCase(),risk_level:mode==="delete"?"permanent_write":"reversible_write",requires_confirmation:true,summary:`${mode} coupon ${couponAction[2].toUpperCase()}.`,warnings:mode==="delete"?["Deleting a coupon is permanent."]:[]}};}
   const categoryAssign=canonicalPrompt.match(/\b(?:move|add|assign)\s+(?:the\s+)?(?:product\s+)?(.+?)\s+(?:to|into)\s+(?:the\s+)?(.+?)\s+categor(?:y|ies)[.!]?\s*$/i);
