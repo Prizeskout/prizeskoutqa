@@ -59,13 +59,7 @@ function NavMarketSwitcher({ market, onChange }: { market: Market; onChange: (m:
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 8, border: "1px solid #2A2422", background: "#0E0A09", color: "#C4BAB5", fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "border-color 0.15s" }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = "#3D2E27"; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2422"; }}
-      >
+      <button type="button" className="ps-nav-pill" onClick={() => setOpen(v => !v)}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={OG} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
         </svg>
@@ -75,20 +69,19 @@ function NavMarketSwitcher({ market, onChange }: { market: Market; onChange: (m:
         </svg>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#0C0908", border: "1px solid #2A2422", borderRadius: 10, padding: "10px 6px", zIndex: 300, minWidth: 224, boxShadow: "0 12px 40px rgba(0,0,0,0.65)", animation: "ps-menu 0.14s ease" }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "#52463F", padding: "2px 10px 9px" }}>MARKET / CURRENCY</div>
+        <div className="ps-nav-menu" style={{ minWidth: 224 }}>
+          <div className="ps-nav-menu-label" style={{ fontFamily: MONO }}>MARKET / CURRENCY</div>
           {MARKETS.map(m => {
             const active = m.code === market.code;
             return (
               <button
                 key={m.code}
                 type="button"
+                className="ps-nav-menu-item"
+                data-active={active}
                 onClick={() => { onChange(m); setOpen(false); }}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 10px", borderRadius: 7, border: "none", background: "transparent", color: active ? "#FAFAF9" : "#A09690", fontSize: 13.5, fontWeight: active ? 600 : 400, cursor: "pointer", fontFamily: "inherit", transition: "background 0.1s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#15110F"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
               >
-                <span style={{ fontFamily: MONO, fontSize: 10, border: `1px solid ${active ? "#4A3228" : "#2A2422"}`, borderRadius: 4, padding: "1px 5px", color: active ? OG : "#52463F", flexShrink: 0 }}>{m.currency}</span>
+                <span className="ps-nav-menu-tag" style={{ fontFamily: MONO }}>{m.currency}</span>
                 {m.country}
                 {active && (
                   <svg style={{ marginLeft: "auto" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={OG} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -134,13 +127,7 @@ function NavLangSwitcher() {
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 8, border: "1px solid #2A2422", background: "#0E0A09", color: "#C4BAB5", fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "border-color 0.15s" }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = "#3D2E27"; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2422"; }}
-      >
+      <button type="button" className="ps-nav-pill" onClick={() => setOpen(v => !v)}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={OG} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -151,8 +138,8 @@ function NavLangSwitcher() {
         </svg>
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#0C0908", border: "1px solid #2A2422", borderRadius: 10, padding: "10px 6px", zIndex: 300, minWidth: 180, boxShadow: "0 12px 40px rgba(0,0,0,0.65)", animation: "ps-menu 0.14s ease" }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.12em", color: "#52463F", padding: "2px 10px 9px" }}>LANGUAGE</div>
+        <div className="ps-nav-menu" style={{ minWidth: 180 }}>
+          <div className="ps-nav-menu-label" style={{ fontFamily: MONO }}>LANGUAGE</div>
           {["en", "ar", "fr"].map(lng => {
             const active = current === lng;
             const d = LANG_DISPLAY[lng];
@@ -160,12 +147,11 @@ function NavLangSwitcher() {
               <button
                 key={lng}
                 type="button"
+                className="ps-nav-menu-item"
+                data-active={active}
                 onClick={() => handleChange(lng)}
-                style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 10px", borderRadius: 7, border: "none", background: "transparent", color: active ? "#FAFAF9" : "#A09690", fontSize: 13.5, fontWeight: active ? 600 : 400, cursor: "pointer", fontFamily: "inherit", transition: "background 0.1s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#15110F"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
               >
-                <span style={{ fontFamily: MONO, fontSize: 10, border: `1px solid ${active ? "#4A3228" : "#2A2422"}`, borderRadius: 4, padding: "1px 5px", color: active ? OG : "#52463F", flexShrink: 0, transition: "border-color 0.1s, color 0.1s" }}>{d.short}</span>
+                <span className="ps-nav-menu-tag" style={{ fontFamily: MONO }}>{d.short}</span>
                 {d.full}
                 {active && (
                   <svg style={{ marginLeft: "auto" }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={OG} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -190,7 +176,7 @@ function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: () => void }
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 7, border: "1px solid var(--lp-border-em)", background: "transparent", color: "var(--lp-muted)", cursor: "pointer", flexShrink: 0, transition: "border-color 0.15s, color 0.15s" }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = OG; e.currentTarget.style.color = OG; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = "#2A2422"; e.currentTarget.style.color = "var(--lp-muted)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--lp-border-em)"; e.currentTarget.style.color = "var(--lp-muted)"; }}
     >
       {dark ? (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -463,7 +449,7 @@ function SurfaceMatrix() {
         <p style={{ fontSize: 14, color: "var(--lp-muted-2)", maxWidth: 300, textAlign: "right", lineHeight: 1.55, margin: 0 }}>{t("landing.infra.surface.subtitle")}</p>
       </div>
 
-      <div className="ps-surface-grid" style={{ border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)" }}>
+      <div className="ps-surface-grid ps-card" style={{ border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)" }}>
         {/* SYNC */}
         <div style={{ padding: "30px 30px 32px", borderRight: "1px solid var(--lp-border-2)", borderBottom: "1px solid var(--lp-border-2)" }}>
           <CardHeader idx="01" name={t("landing.infra.surface.syncName")} badge={t("landing.infra.surface.syncBadge")} />
@@ -763,7 +749,7 @@ function PricingSection({ market }: { market: Market }) {
 
       <div className="ps-pricing-grid" style={{ display: "grid", gap: 20, marginTop: 44 }}>
         {TIERS.map(tier => (
-          <div key={tier.name} style={{
+          <div key={tier.name} className="ps-card" style={{
             background: "var(--lp-surface)", borderRadius: 16, padding: "32px 28px",
             border: tier.featured ? `1px solid ${OG}` : "1px solid var(--lp-border-4)",
             position: "relative", display: "flex", flexDirection: "column",
@@ -854,7 +840,7 @@ function FAQSection() {
         <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.faq.heading")}</h2>
       </div>
 
-      <div className="ps-faq-layout" style={{ display: "flex", border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)", minHeight: 420 }}>
+      <div className="ps-faq-layout ps-card" style={{ display: "flex", border: "1px solid var(--lp-border-4)", borderRadius: 14, overflow: "hidden", background: "var(--lp-surface)", minHeight: 420 }}>
         {/* Left: question list */}
         <div className="ps-faq-list" style={{ width: "38%", flexShrink: 0, borderRight: "1px solid var(--lp-border-2)", overflowY: "auto" }}>
           {FAQS.map((faq, i) => (
@@ -949,13 +935,14 @@ const PAGE_CSS = `
     --lp-text-code:#57534E; --lp-text-max:#6B6560; --lp-rule-color:#8C5E2A;
     --lp-muted:#6B6560; --lp-muted-2:#7C7873;
     --lp-dim:#8C8883; --lp-faint:#9C9893; --lp-inactive:#B8B2AC;
-    --lp-border:#D4CEC8; --lp-border-em:#C8C2BB;
-    --lp-border-2:#D8D3CD; --lp-border-3:#D0CBC4;
-    --lp-border-4:#C8C2BB; --lp-border-5:#BDB7B0; --lp-border-6:#D4CEC8;
-    --lp-border-strip:#DDD8D3;
-    --lp-surface:#F0EDE9; --lp-surface-2:#EAE7E3; --lp-surface-3:#E5E1DC;
-    --lp-surface-4:#DEDAD4; --lp-surface-5:#EDEBE7; --lp-surface-6:#F5F3F0;
-    --lp-surface-strip:#F0EDE9; --lp-surface-dots:#D0CBC4;
+    --lp-border:#E9E6E1; --lp-border-em:#DFDBD5;
+    --lp-border-2:#EBE8E4; --lp-border-3:#E7E3DE;
+    --lp-border-4:#E2DED8; --lp-border-5:#D5D0C9; --lp-border-6:#E9E6E1;
+    --lp-border-strip:#EDEAE6;
+    /* light mode elevates: white cards sit above the tinted page, nested panels recede */
+    --lp-surface:#FFFFFF; --lp-surface-2:#F7F5F2; --lp-surface-3:#F2EFEB;
+    --lp-surface-4:#EDE9E4; --lp-surface-5:#F8F6F3; --lp-surface-6:#FFFFFF;
+    --lp-surface-strip:#F7F5F2; --lp-surface-dots:#E4E0DA;
   }
   *, *::before, *::after { box-sizing: border-box; }
   h1, h2, h3 { font-family: 'Chillax', system-ui, -apple-system, sans-serif; }
@@ -968,6 +955,29 @@ const PAGE_CSS = `
   /* nav link hover */
   .ps-nav-link { transition: color 0.15s; }
   .ps-nav-link:hover { color: var(--lp-text-2) !important; }
+  /* Light mode separates cards from the page with soft elevation rather than heavy
+     borders; dark mode keeps its flat hairline look. */
+  [data-lp-theme="light"] .ps-card { box-shadow:0 1px 2px rgba(28,25,23,0.04), 0 8px 24px -12px rgba(28,25,23,0.10); }
+  [data-lp-theme="light"] .ps-flow-card { box-shadow:0 1px 2px rgba(28,25,23,0.04); }
+  /* nav utility pills + dropdowns */
+  .ps-nav-pill { display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:8px;
+    border:1px solid var(--lp-border-em); background:var(--lp-surface-3); color:var(--lp-text-max);
+    font-size:13px; cursor:pointer; font-family:inherit; transition:border-color .15s; }
+  .ps-nav-pill:hover { border-color:#3D2E27; }
+  [data-lp-theme="light"] .ps-nav-pill:hover { border-color:#A9A29B; }
+  .ps-nav-menu { position:absolute; top:calc(100% + 8px); right:0; z-index:300; padding:10px 6px; border-radius:10px;
+    border:1px solid var(--lp-border-em); background:var(--lp-surface-2);
+    box-shadow:0 12px 40px rgba(0,0,0,0.65); animation:ps-menu .14s ease; }
+  [data-lp-theme="light"] .ps-nav-menu { box-shadow:0 12px 40px rgba(0,0,0,0.14); }
+  .ps-nav-menu-label { font-size:10px; letter-spacing:.12em; color:var(--lp-faint); padding:2px 10px 9px; }
+  .ps-nav-menu-item { display:flex; align-items:center; gap:9px; width:100%; padding:9px 10px; border-radius:7px;
+    border:none; background:transparent; color:var(--lp-muted-2); font-size:13.5px; cursor:pointer;
+    font-family:inherit; text-align:left; transition:background .1s; }
+  .ps-nav-menu-item:hover { background:var(--lp-surface-4); }
+  .ps-nav-menu-item[data-active="true"] { color:var(--lp-text); font-weight:600; }
+  .ps-nav-menu-tag { font-size:10px; border:1px solid var(--lp-border-em); border-radius:4px; padding:1px 5px;
+    color:var(--lp-faint); flex-shrink:0; transition:border-color .1s, color .1s; }
+  .ps-nav-menu-item[data-active="true"] .ps-nav-menu-tag { border-color:rgba(239,104,26,0.45); color:#EF681A; }
   /* layout helpers */
   .ps-nav-utils  { display:flex; align-items:center; gap:10px; }
   .ps-flow-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
