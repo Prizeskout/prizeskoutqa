@@ -115,16 +115,22 @@ const CSS = `
   @keyframes pk-toast{from{transform:translateY(14px) scale(.97)}to{transform:none}}
   .ps-db{
     font-family:'Chillax',system-ui,-apple-system,sans-serif;
-    --bg:#F6F6F4;--surface:#FFFFFF;--surface2:#FBFBFA;--border:#E5E7EB;
-    --text:#111827;--muted:#6B7280;--accent:#EF681A;--green:#10B981;
+    /* Slate neutrals on a white page, matching the marketing site. The previous
+       ramp mixed warm surfaces (#F6F6F4/#FBFBFA) with cool grey text and borders,
+       which is what made light mode read muddy. */
+    --bg:#FFFFFF;--surface:#FFFFFF;--surface2:#F8FAFC;--border:#E2E8F0;
+    --text:#0F172A;--muted:#475569;--accent:#EF681A;--green:#10B981;
+    /* Brand orange is only 2.9:1 on light surfaces, so small text uses a darker
+       step. Fills and borders keep --accent. */
+    --accent-text:#C2410C;
     --term:#0D1117;--term-border:#222B38;--term-text:#C9D1D9;
-    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
-    --shadow-lg:0 24px 64px rgba(16,24,40,.18);
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px -12px rgba(15,23,42,.10);
+    --shadow-lg:0 24px 64px rgba(15,23,42,.18);
     --px:30px;
   }
   .ps-db[data-theme="dark"]{
     --bg:#0B0E13;--surface:#141924;--surface2:#101520;--border:#232B38;
-    --text:#F2F4F8;--muted:#8B93A3;
+    --text:#F2F4F8;--muted:#8B93A3;--accent-text:#EF681A;
     --term:#0A0E15;--term-border:#1D2532;--term-text:#C9D1D9;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
     --shadow-lg:0 24px 64px rgba(0,0,0,.6);
@@ -4700,7 +4706,7 @@ export function PrizeSkoutDashboard() {
                     <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                       {n.label}
                     </span>
-                    <span style={{ fontSize: 13.5, color: on ? OG : "var(--muted)" }}>{n.sub}</span>
+                    <span style={{ fontSize: 13.5, color: on ? "var(--accent-text)" : "var(--muted)" }}>{n.sub}</span>
                   </span>
                 </div>
               );
@@ -4826,7 +4832,7 @@ export function PrizeSkoutDashboard() {
                         ? "#DC2626"
                         : defendHealth?.state === "idle"
                           ? "#B45309"
-                          : "#64748B",
+                          : "#475569",
                   marginTop: 5,
                   animation: defendHealth?.state === "active" ? "pk-pulse 2s infinite" : "none",
                 }}
@@ -4843,7 +4849,7 @@ export function PrizeSkoutDashboard() {
                           ? "#DC2626"
                           : defendHealth?.state === "idle"
                             ? "#B45309"
-                            : "#64748B",
+                            : "#475569",
                   }}
                 >
                   {defendHealth?.label ?? "Checking Defend Loop"}
@@ -7132,7 +7138,7 @@ export function PrizeSkoutDashboard() {
                       fontSize: 14,
                       fontWeight: 700,
                       color: "#fff",
-                      background: payoutLoading ? "#9A9A9A" : OG,
+                      background: payoutLoading ? "#94A3B8" : OG,
                       border: "none",
                       borderRadius: 10,
                       padding: "11px 20px",
@@ -8086,7 +8092,7 @@ export function PrizeSkoutDashboard() {
                           fontSize: 14.5,
                           fontWeight: 700,
                           color: "#fff",
-                          background: disputeLoading ? "#9A9A9A" : OG,
+                          background: disputeLoading ? "#94A3B8" : OG,
                           border: "none",
                           borderRadius: 10,
                           padding: "11px 20px",
@@ -12585,7 +12591,7 @@ export function PrizeSkoutDashboard() {
                       <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                         {n.label}
                       </span>
-                      <span style={{ fontSize: 13.5, color: on ? OG : "var(--muted)" }}>
+                      <span style={{ fontSize: 13.5, color: on ? "var(--accent-text)" : "var(--muted)" }}>
                         {n.sub}
                       </span>
                     </span>
@@ -12768,7 +12774,7 @@ export function PrizeSkoutDashboard() {
                           ? "#DC2626"
                           : defendHealth?.state === "idle"
                             ? "#B45309"
-                            : "#64748B",
+                            : "#475569",
                     marginTop: 5,
                     animation: defendHealth?.state === "active" ? "pk-pulse 2s infinite" : "none",
                   }}
@@ -12785,7 +12791,7 @@ export function PrizeSkoutDashboard() {
                             ? "#DC2626"
                             : defendHealth?.state === "idle"
                               ? "#B45309"
-                              : "#64748B",
+                              : "#475569",
                     }}
                   >
                     {defendHealth?.label ?? "Checking Defend Loop"}
