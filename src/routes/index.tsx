@@ -890,11 +890,22 @@ function FAQSection() {
 
 // ── Page root ─────────────────────────────────────────────────────────────────
 function LandingPage() {
-  const [dark, setDark] = useState(true);
+  // Light is the default for every visit; only an explicit toggle opts into dark.
+  const [dark, setDark] = useState(false);
   const [market, setMarket] = useState<Market>(MARKETS[0]);
 
+  // Restore stored theme
+  useEffect(() => {
+    const stored = localStorage.getItem("ps-lp-theme");
+    if (stored === "light" || stored === "dark") setDark(stored === "dark");
+  }, []);
+
   function toggleDark() {
-    setDark(v => !v);
+    setDark(v => {
+      const next = !v;
+      localStorage.setItem("ps-lp-theme", next ? "dark" : "light");
+      return next;
+    });
   }
 
   return (
