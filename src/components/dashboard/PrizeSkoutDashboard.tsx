@@ -2147,6 +2147,21 @@ export function PrizeSkoutDashboard() {
     }
   };
 
+  // Light is the default on every visit; only an explicit toggle opts into dark.
+  // Read storage in an effect, not the useState initialiser, so the server and
+  // first client render agree.
+  useEffect(() => {
+    const stored = localStorage.getItem("ps-db-theme");
+    if (stored === "light" || stored === "dark") setTheme(stored);
+  }, []);
+
+  const toggleTheme = () =>
+    setTheme((v) => {
+      const next = v === "light" ? "dark" : "light";
+      localStorage.setItem("ps-db-theme", next);
+      return next;
+    });
+
   useEffect(() => {
     if (tab !== "history") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
@@ -4978,7 +4993,7 @@ export function PrizeSkoutDashboard() {
                   LIVE
                 </span>
                 <button
-                  onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
+                  onClick={toggleTheme}
                   aria-label="Toggle theme"
                   style={{
                     cursor: "pointer",
@@ -5134,7 +5149,7 @@ export function PrizeSkoutDashboard() {
           >
             {/* Theme toggle */}
             <button
-              onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
+              onClick={toggleTheme}
               aria-label="Toggle dark mode"
               style={{
                 cursor: "pointer",
