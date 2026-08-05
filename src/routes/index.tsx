@@ -422,8 +422,8 @@ function CredentialStrip() {
     <div style={{ position: "relative", zIndex: 3, borderTop: "1px solid var(--lp-border-strip)", borderBottom: "1px solid var(--lp-border-strip)", background: "var(--lp-surface-strip)", padding: "32px clamp(24px,5vw,72px)" }}>
       <div className="ps-credential-row" style={{ maxWidth: 1440, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 28, flexWrap: "wrap", rowGap: 16 }}>
         <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", color: "var(--lp-fg)", textTransform: "uppercase", whiteSpace: "nowrap", fontWeight: 700 }}>{t("landing.infra.backedBy")}</span>
-        <div className="ps-credential-sep" style={{ width: 1, height: 28, background: "#2A2422" }} />
-        <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 10, padding: "16px 36px", display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
+        <div className="ps-credential-sep" style={{ width: 1, height: 28, background: "var(--lp-border-em)" }} />
+        <div className="ps-cred-card">
           <img src={qstpLogoColored} alt="Qatar Science & Technology Park" style={{ height: 64, width: "auto", display: "block" }} />
         </div>
       </div>
@@ -481,7 +481,7 @@ function SurfaceMatrix() {
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center" }}>
               <svg width="200%" height="100%" viewBox="0 0 800 92" preserveAspectRatio="none" style={{ animation: "ps-wave 3.4s linear infinite" }}>
                 <path d="M0,46 Q50,18 100,46 T200,46 T300,46 T400,46 T500,46 T600,46 T700,46 T800,46" fill="none" stroke={OG} strokeWidth="1.5" opacity="0.85" />
-                <path d="M0,46 Q50,74 100,46 T200,46 T300,46 T400,46 T500,46 T600,46 T700,46 T800,46" fill="none" stroke="#3A2A22" strokeWidth="1" />
+                <path d="M0,46 Q50,74 100,46 T200,46 T300,46 T400,46 T500,46 T600,46 T700,46 T800,46" fill="none" stroke="var(--lp-border-5)" strokeWidth="1" />
               </svg>
             </div>
             <div style={{ position: "absolute", top: 9, left: 13, fontFamily: MONO, fontSize: 10.5, color: OG }}>competitor ↓4.2% detected</div>
@@ -906,7 +906,7 @@ function LandingPage() {
   return (
     <div
       data-lp-theme={dark ? "dark" : "light"}
-      style={{ position: "relative", minHeight: "100vh", width: "100%", background: dark ? BG : "#FAF9F7", color: dark ? "var(--lp-text)" : "#1A1A18", fontFamily: BODY, WebkitFontSmoothing: "antialiased", transition: "background 0.2s, color 0.2s" }}
+      style={{ position: "relative", minHeight: "100vh", width: "100%", background: dark ? BG : "#FFFFFF", color: "var(--lp-text)", fontFamily: BODY, WebkitFontSmoothing: "antialiased", transition: "background 0.2s, color 0.2s" }}
     >
       <style>{PAGE_CSS}</style>
       <Nav dark={dark} onToggleDark={toggleDark} market={market} onMarketChange={setMarket} />
@@ -937,18 +937,21 @@ const PAGE_CSS = `
     --lp-surface-strip:#050505; --lp-surface-dots:#241E1C;
   }
   [data-lp-theme="light"] {
-    --lp-text:#1A1A18; --lp-text-2:#2C2C29; --lp-text-3:#3C3C38;
-    --lp-text-code:#57534E; --lp-text-max:#6B6560; --lp-rule-color:#8C5E2A;
-    --lp-muted:#6B6560; --lp-muted-2:#7C7873;
-    --lp-dim:#8C8883; --lp-faint:#9C9893; --lp-inactive:#B8B2AC;
-    --lp-border:#E9E6E1; --lp-border-em:#DFDBD5;
-    --lp-border-2:#EBE8E4; --lp-border-3:#E7E3DE;
-    --lp-border-4:#E2DED8; --lp-border-5:#D5D0C9; --lp-border-6:#E9E6E1;
-    --lp-border-strip:#EDEAE6;
-    /* light mode elevates: white cards sit above the tinted page, nested panels recede */
-    --lp-surface:#FFFFFF; --lp-surface-2:#F7F5F2; --lp-surface-3:#F2EFEB;
-    --lp-surface-4:#EDE9E4; --lp-surface-5:#F8F6F3; --lp-surface-6:#FFFFFF;
-    --lp-surface-strip:#F7F5F2; --lp-surface-dots:#E4E0DA;
+    /* Neutrals are slate, not warm grey. A warm ramp at this lightness goes muddy
+       against the orange accent; slate keeps white reading as white. */
+    --lp-text:#0F172A; --lp-text-2:#1E293B; --lp-text-3:#334155;
+    --lp-text-code:#475569; --lp-text-max:#64748B; --lp-rule-color:#B45309;
+    --lp-muted:#475569; --lp-muted-2:#64748B;
+    --lp-dim:#94A3B8; --lp-faint:#94A3B8; --lp-inactive:#CBD5E1;
+    --lp-border:#E2E8F0; --lp-border-em:#CBD5E1;
+    --lp-border-2:#E9EEF4; --lp-border-3:#E2E8F0;
+    --lp-border-4:#E2E8F0; --lp-border-5:#CBD5E1; --lp-border-6:#E9EEF4;
+    --lp-border-strip:#E2E8F0;
+    /* The page is pure white; cards stay white and separate by border + shadow,
+       while nested panels and banded sections recede to slate-50/100. */
+    --lp-surface:#FFFFFF; --lp-surface-2:#F8FAFC; --lp-surface-3:#F1F5F9;
+    --lp-surface-4:#E2E8F0; --lp-surface-5:#F8FAFC; --lp-surface-6:#FFFFFF;
+    --lp-surface-strip:#F8FAFC; --lp-surface-dots:#E2E8F0;
   }
   *, *::before, *::after { box-sizing: border-box; }
   h1, h2, h3 { font-family: 'Chillax', system-ui, -apple-system, sans-serif; }
@@ -963,18 +966,23 @@ const PAGE_CSS = `
   .ps-nav-link:hover { color: var(--lp-text-2) !important; }
   /* Light mode separates cards from the page with soft elevation rather than heavy
      borders; dark mode keeps its flat hairline look. */
-  [data-lp-theme="light"] .ps-card { box-shadow:0 1px 2px rgba(28,25,23,0.04), 0 8px 24px -12px rgba(28,25,23,0.10); }
-  [data-lp-theme="light"] .ps-flow-card { box-shadow:0 1px 2px rgba(28,25,23,0.04); }
+  [data-lp-theme="light"] .ps-card { box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10); }
+  [data-lp-theme="light"] .ps-flow-card { box-shadow:0 1px 2px rgba(15,23,42,0.04); }
+  /* The QSTP mark needs a white plate in both themes; only the shadow changes. */
+  .ps-cred-card { background:rgba(255,255,255,0.97); border-radius:10px; padding:16px 36px;
+    display:inline-flex; align-items:center; justify-content:center; box-shadow:0 2px 16px rgba(0,0,0,0.3); }
+  [data-lp-theme="light"] .ps-cred-card { border:1px solid var(--lp-border);
+    box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10); }
   /* nav utility pills + dropdowns */
   .ps-nav-pill { display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:8px;
     border:1px solid var(--lp-border-em); background:var(--lp-surface-3); color:var(--lp-text-max);
     font-size:13px; cursor:pointer; font-family:inherit; transition:border-color .15s; }
   .ps-nav-pill:hover { border-color:#3D2E27; }
-  [data-lp-theme="light"] .ps-nav-pill:hover { border-color:#A9A29B; }
+  [data-lp-theme="light"] .ps-nav-pill:hover { border-color:#94A3B8; }
   .ps-nav-menu { position:absolute; top:calc(100% + 8px); right:0; z-index:300; padding:10px 6px; border-radius:10px;
     border:1px solid var(--lp-border-em); background:var(--lp-surface-2);
     box-shadow:0 12px 40px rgba(0,0,0,0.65); animation:ps-menu .14s ease; }
-  [data-lp-theme="light"] .ps-nav-menu { box-shadow:0 12px 40px rgba(0,0,0,0.14); }
+  [data-lp-theme="light"] .ps-nav-menu { box-shadow:0 12px 40px rgba(15,23,42,0.14); }
   .ps-nav-menu-label { font-size:10px; letter-spacing:.12em; color:var(--lp-faint); padding:2px 10px 9px; }
   .ps-nav-menu-item { display:flex; align-items:center; gap:9px; width:100%; padding:9px 10px; border-radius:7px;
     border:none; background:transparent; color:var(--lp-muted-2); font-size:13.5px; cursor:pointer;
