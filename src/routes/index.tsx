@@ -7,7 +7,6 @@ import { ContactSupportModal } from "@/components/ContactSupportModal";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
-import qatarFoundationLogo from "@/assets/qatar-foundation-logo.png";
 import { DemoPlayer } from "@/components/landing/DemoPlayer";
 
 export const Route = createFileRoute("/")({
@@ -424,12 +423,8 @@ function CredentialStrip() {
       <div className="ps-credential-row" style={{ maxWidth: 1440, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 28, flexWrap: "wrap", rowGap: 16 }}>
         <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.12em", color: "var(--lp-fg)", textTransform: "uppercase", whiteSpace: "nowrap", fontWeight: 700 }}>{t("landing.infra.backedBy")}</span>
         <div className="ps-credential-sep" style={{ width: 1, height: 28, background: "#2A2422" }} />
-        <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 10, padding: "12px 28px", display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
-          <img src={qstpLogoColored} alt="Qatar Science & Technology Park" style={{ height: 44, width: "auto", display: "block" }} />
-        </div>
-        <div className="ps-credential-sep" style={{ width: 1, height: 28, background: "#2A2422" }} />
-        <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 10, padding: "12px 28px", display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
-          <img src={qatarFoundationLogo} alt="Qatar Foundation" style={{ height: 44, width: "auto", display: "block" }} />
+        <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 10, padding: "16px 36px", display: "inline-flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(0,0,0,0.3)" }}>
+          <img src={qstpLogoColored} alt="Qatar Science & Technology Park" style={{ height: 64, width: "auto", display: "block" }} />
         </div>
       </div>
     </div>
