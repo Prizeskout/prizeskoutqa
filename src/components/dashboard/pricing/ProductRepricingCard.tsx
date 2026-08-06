@@ -102,7 +102,7 @@ export function ProductRepricingCard({
           target_price: targetPrice,
         }),
       });
-      const data = await res.json() as { ok?: boolean; error?: string; message?: string; platform?: string };
+      const data = await res.json() as { ok?: boolean; error?: string; message?: string; platform?: string; downstream?:{message:string}|null };
 
       if (data.ok) {
         setPushStatus("pushed");
@@ -110,7 +110,7 @@ export function ProductRepricingCard({
         const label = overridePrice !== null
           ? `Custom price pushed to ${platformLabel(product.source_platform)}`
           : `Recommended price pushed to ${platformLabel(product.source_platform)}`;
-        toast.success(label);
+        toast.success(data.downstream?`${label}. ${data.downstream.message}`:label);
         setShowOverride(false);
         setOverrideRaw("");
       } else {

@@ -12,6 +12,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide, REGIONAL_COMMISSION, REGIONAL_VAT } from "./decide-engine";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { zidCustomerPricePatch } from "@/lib/channel-bridge";
 
 type PlatformCreds = {
   bearer_token: string;
@@ -260,7 +261,11 @@ export async function pushPriceToSourcePlatform(
       url = `https://api.zid.sa/v1/products/${externalId}/`;
       method = "PATCH";
       Object.assign(headers, zidHeaders(creds));
-      body = { price: newPrice };
+      // Preserve Zid's active price mode. Updating only the regular price while
+      // a sale price is active would leave the customer-facing price unchanged.
+      const current = await fetch(url, { headers, signal: controller.signal });
+      const currentPayload = current.ok ? await current.json().catch(() => null) as Record<string, unknown> | null : null;
+      body = zidCustomerPricePatch(currentPayload,newPrice);
     } else {
       return { success: false, httpStatus: 400, message: `Unknown source platform: ${platform}` };
     }

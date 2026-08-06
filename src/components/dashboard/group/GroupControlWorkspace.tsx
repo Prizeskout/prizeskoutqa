@@ -18,6 +18,7 @@ export function GroupControlWorkspace({contract,currency,productCount}:{contract
   const [saved,setSaved]=useState<GroupControls|null>(null);
   const [financeReviewer,setFinanceReviewer]=useState("");
   const [operationsReviewer,setOperationsReviewer]=useState("");
+  const [marginFloor,setMarginFloor]=useState("15");
   const [error,setError]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
   const [newEntity,setNewEntity]=useState("");const [newBrand,setNewBrand]=useState("");
@@ -27,11 +28,12 @@ export function GroupControlWorkspace({contract,currency,productCount}:{contract
     const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"group_controls",...payload})});
     const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error??"Group-control request failed.");return data;
   };
-  const apply=(group:GroupControls|null)=>{setSaved(group);if(!group)return;setGroupName(group.group_name);setEntities(group.legal_entities as string[]);setBrands(group.brands as string[]);setBranches(group.branches as Branch[]);setMembers(group.members as Member[]);};
+  const apply=(group:GroupControls|null)=>{setSaved(group);if(!group)return;setGroupName(group.group_name);setEntities(group.legal_entities as string[]);setBrands(group.brands as string[]);setBranches(group.branches as Branch[]);setMembers(group.members as Member[]);if(group.active_margin_floor_pct!=null)setMarginFloor(String(group.active_margin_floor_pct));};
   const load=()=>call({action:"get"}).then(data=>apply(data.group??null)).catch(err=>setError(err instanceof Error?err.message:"Could not load group controls."));
   useEffect(()=>{load();},[]);
   const save=async()=>{setBusy(true);setError(null);try{const data=await call({action:"save",group_name:groupName,legal_entities:entities,brands,branches,members});apply(data.group);}catch(err){setError(err instanceof Error?err.message:"Could not save group.");}finally{setBusy(false);}};
   const approve=async(role:"finance"|"operations")=>{const reviewer=role==="finance"?financeReviewer:operationsReviewer;if(!reviewer){setError(`Choose a configured ${role} reviewer first.`);return;}setBusy(true);try{const data=await call({action:"approve",approval_role:role,reviewer});apply(data.group);}catch(err){setError(err instanceof Error?err.message:"Could not record approval.");}finally{setBusy(false);}};
+  const activate=async()=>{setBusy(true);setError(null);try{const data=await call({action:"activate",margin_floor_pct:Number(marginFloor)});apply(data.group);}catch(err){setError(err instanceof Error?err.message:"Could not activate group policy.");}finally{setBusy(false);}};
   const total=useMemo(()=>branches.reduce((a,b)=>({sales:a.sales+b.monthly_sales,expected:a.expected+b.expected_settlement,actual:a.actual+b.actual_settlement}),{sales:0,expected:0,actual:0}),[branches]);
   const addBranch=()=>{if(!branchDraft.name.trim())return;setBranches(current=>[...current,{id:id(),name:branchDraft.name.trim(),city:branchDraft.city,entity:branchDraft.entity,brand:branchDraft.brand,channels:branchDraft.channels.split(",").map(v=>v.trim().toLowerCase()).filter(Boolean),contract_id:contract?.id??null,monthly_sales:Number(branchDraft.monthly_sales)||0,expected_settlement:Number(branchDraft.expected)||0,actual_settlement:Number(branchDraft.actual)||0}]);setBranchDraft({...branchDraft,name:"",monthly_sales:"0",expected:"0",actual:"0"});};
 
@@ -80,6 +82,11 @@ export function GroupControlWorkspace({contract,currency,productCount}:{contract
         <label style={{fontSize:10.5,fontWeight:800}}>Operations reviewer<select style={{...input,width:190,display:"block",marginTop:4}} value={operationsReviewer} onChange={e=>setOperationsReviewer(e.target.value)}><option value="">Choose reviewer</option>{members.filter(member=>member.role==="operations_reviewer").map(member=><option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
         <button disabled={busy||!saved||!operationsReviewer||Boolean(saved?.operations_approved_at)} onClick={()=>approve("operations")} style={{border:"1px solid #087F5B",borderRadius:8,padding:"8px 10px",background:"transparent",color:"#087F5B",fontFamily:"inherit",fontWeight:800}}>Operations approve</button>
         {saved?.finance_approved_at&&saved.operations_approved_at&&<span style={{fontSize:11,color:"#087F5B",fontWeight:900,display:"flex",gap:5}}><CheckCircle2 size={14}/>Dual approval complete · different configured roles</span>}
+      </div>
+      <div style={{border:"1px solid var(--border)",borderRadius:10,padding:12}}>
+        <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"end",flexWrap:"wrap"}}><div><strong style={{fontSize:13}}>Activate group margin policy</strong><div style={{fontSize:10.5,color:"var(--muted)",marginTop:3}}>Activation is locked to the exact hierarchy approved by Finance and Operations.</div></div><div style={{display:"flex",gap:7,alignItems:"end"}}><label style={{fontSize:10.5,fontWeight:800}}>Margin floor %<input type="number" min="0" max="100" style={{...input,width:120,display:"block",marginTop:4}} value={marginFloor} onChange={e=>setMarginFloor(e.target.value)}/></label><button disabled={busy||saved?.policy_status!=="approved"} onClick={activate} style={{border:0,borderRadius:8,padding:"9px 12px",background:"#14213D",color:"#fff",fontFamily:"inherit",fontWeight:800,opacity:saved?.policy_status!=="approved"?.45:1}}>Activate policy</button></div></div>
+        {saved?.active_policy_version&&<div style={{fontSize:11.5,fontWeight:800,color:"#087F5B",marginTop:10}}>Policy v{saved.active_policy_version} · {saved.active_margin_floor_pct}% floor · {saved.policy_status?.replaceAll("_"," ")}</div>}
+        {!!saved?.policy_rollout?.length&&<div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:9}}>{saved.policy_rollout.map(item=><span key={item.branch_id} style={{fontSize:10.5,border:"1px solid var(--border)",borderRadius:999,padding:"5px 8px",color:item.status==="live"?"#087F5B":"#A16207",fontWeight:800}}>{item.branch_name} · {item.status}</span>)}</div>}
       </div>
       <div style={{fontSize:10.5,color:"var(--muted)"}}>Settlement calendar basis: {contract?.settlement_frequency??"not established"}{contract?.settlement_days!=null?` · ${contract.settlement_days}-day contractual lag`:""}. Values entered here are branch management records; documentary payout evidence remains in the audit workspace.</div>
       {error&&<div style={{fontSize:12,color:"#B42318"}}>{error}</div>}

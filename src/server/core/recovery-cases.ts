@@ -9,6 +9,7 @@ export type RecoveryCase={
   regulatory_reference:string|null;evidence_sources:string[];calculation:Record<string,unknown>;
   explanation_en:string;explanation_ar:string;submission_deadline:string|null;owner:string|null;
   platform_response:string|null;recovered_amount:number;created_at:string;updated_at:string;
+  submission_reference?:string|null;submitted_at?:string|null;submitted_by?:string|null;submission_evidence_hash?:string|null;
 };
 const table=()=>(supabaseAdmin as any).from("ps_recovery_cases");
 const unavailable=(error:any)=>error?.code==="42P01"||/ps_recovery_cases/i.test(error?.message??"");
@@ -45,7 +46,7 @@ export async function createRecoveryCase(accountId:string,input:Omit<RecoveryCas
   return data as RecoveryCase;
 }
 export async function updateRecoveryCase(accountId:string,id:string,patch:Partial<RecoveryCase>):Promise<RecoveryCase>{
-  const safe={status:patch.status,owner:patch.owner,submission_deadline:patch.submission_deadline,platform_response:patch.platform_response,recovered_amount:patch.recovered_amount,updated_at:new Date().toISOString()};
+  const safe={status:patch.status,owner:patch.owner,submission_deadline:patch.submission_deadline,platform_response:patch.platform_response,recovered_amount:patch.recovered_amount,submission_reference:patch.submission_reference,submitted_at:patch.submitted_at,submitted_by:patch.submitted_by,submission_evidence_hash:patch.submission_evidence_hash,updated_at:new Date().toISOString()};
   const {data,error}=await table().update(safe).eq("account_id",accountId).eq("id",id).select("*").single();
   if(unavailable(error)){
     const channel=await fallbackChannel(accountId);
@@ -59,4 +60,20 @@ export async function updateRecoveryCase(accountId:string,id:string,patch:Partia
   }
   if(error||!data)throw new Error(error?.message??"Could not update recovery case.");
   return data as RecoveryCase;
+}
+
+export async function recordRecoverySubmission(accountId:string,id:string,reference:string,submittedBy:string){
+  const cases=await listRecoveryCases(accountId);
+  const current=cases.find(item=>item.id===id);
+  if(!current)throw new Error("Recovery case not found.");
+  if(current.status!=="ready")throw new Error("Only a claims-ready case can be recorded as submitted.");
+  if(current.claims_ready_amount<=0||!current.contract_term_id||!current.evidence_sources.length)throw new Error("Contract evidence, supporting sources, and a positive claims-ready amount are required.");
+  const submittedAt=new Date().toISOString();
+  const evidencePayload=JSON.stringify({case_id:id,exception_key:current.exception_key,amount:current.claims_ready_amount,contract_term_id:current.contract_term_id,evidence_sources:current.evidence_sources,reference,submitted_by:submittedBy,submitted_at:submittedAt});
+  const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(evidencePayload));
+  const evidenceHash=Array.from(new Uint8Array(digest)).map(value=>value.toString(16).padStart(2,"0")).join("");
+  const updated=await updateRecoveryCase(accountId,id,{status:"submitted_manually",submission_reference:reference,submitted_at:submittedAt,submitted_by:submittedBy,submission_evidence_hash:evidenceHash});
+  const {error}=await (supabaseAdmin as any).from("ps_recovery_submission_events").insert({account_id:accountId,recovery_case_id:id,submission_reference:reference,submitted_by:submittedBy,evidence_hash:evidenceHash});
+  if(error&&error.code!=="42P01")throw new Error(error.message);
+  return updated;
 }

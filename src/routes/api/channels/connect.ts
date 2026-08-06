@@ -22,12 +22,13 @@ import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAud
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
-import { createRecoveryCase, listRecoveryCases, updateRecoveryCase } from "@/server/core/recovery-cases";
-import { listPromotionScenarios, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
+import { createRecoveryCase, listRecoveryCases, recordRecoverySubmission, updateRecoveryCase } from "@/server/core/recovery-cases";
+import { approvePromotionScenario, confirmPromotionChannelLaunch, listPromotionScenarios, preparePromotionLaunch, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
-import { approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
+import { activateGroupPolicy, approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
 import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
 import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement, updateAttention } from "@/server/core/merchant-experience";
+import { confirmZidJahezPropagation, getZidJahezBridgeSettings, listZidJahezPropagationEvents, saveZidJahezBridgeSettings } from "@/server/core/zid-jahez-bridge";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -115,6 +116,34 @@ export const Route = createFileRoute("/api/channels/connect")({
             const policy=await getMerchantMarginPolicy(merchant_id);
             const versions=await listMerchantMarginPolicyVersions(merchant_id);
             return resp({ ok: true, policy, versions }, 200);
+          }
+
+          if (platform === "zid_jahez_bridge") {
+            if (body.action === "get") return resp({ ok: true, settings: await getZidJahezBridgeSettings(merchant_id), events: await listZidJahezPropagationEvents(merchant_id) }, 200);
+            if (body.action === "save") {
+              const raw = body as unknown as Record<string, unknown>;
+              const commission = raw.mazeed_commission_pct == null || raw.mazeed_commission_pct === "" ? null : Number(raw.mazeed_commission_pct);
+              const skus = Array.isArray(raw.eligible_skus) ? raw.eligible_skus.filter(value => typeof value === "string") as string[] : [];
+              try {
+                const settings = await saveZidJahezBridgeSettings(merchant_id, {
+                  mazeed_active: raw.mazeed_active === true,
+                  jahez_active: raw.jahez_active === true,
+                  mazeed_commission_pct: commission,
+                  vat_mode: raw.vat_mode === "mazeed_adds_vat" ? "mazeed_adds_vat" : "store_includes_vat",
+                  eligible_skus: skus,
+                  confirmed_by: String(raw.confirmed_by ?? "").trim().slice(0, 160),
+                });
+                return resp({ ok: true, settings }, 200);
+              } catch (error) {
+                return resp({ error: error instanceof Error ? error.message : "Could not save Zid–Jahez settings." }, 400);
+              }
+            }
+            if(body.action==="confirm_propagation"){
+              const observed=Number(body.observed_price);
+              try{return resp({ok:true,event:await confirmZidJahezPropagation(merchant_id,body.id,observed,body.verified_by)},200);}
+              catch(error){return resp({error:error instanceof Error?error.message:"Could not verify Jahez propagation."},400);}
+            }
+            return resp({ error: "Unsupported Zid–Jahez bridge action." }, 400);
           }
 
           if (platform === "locations") {
@@ -580,6 +609,11 @@ export const Route = createFileRoute("/api/channels/connect")({
               });
               return resp({ok:true,case:item},200);
             }
+            if(body.action==="record_submission"){
+              if(!body.id||!body.submission_reference?.trim()||!body.submitted_by?.trim())return resp({error:"Case id, platform reference, and submitter are required."},400);
+              try{return resp({ok:true,case:await recordRecoverySubmission(merchant_id,body.id,body.submission_reference.trim().slice(0,200),body.submitted_by.trim().slice(0,160))},200);}
+              catch(err){return resp({error:err instanceof Error?err.message:"Could not record submission."},400);}
+            }
             return resp({error:"Unsupported recovery-case action."},400);
           }
 
@@ -595,6 +629,26 @@ export const Route = createFileRoute("/api/channels/connect")({
                 promised_platform_funding:null,actual_platform_funding:null,funding_variance:null,
               });
               return resp({ok:true,scenario:item},200);
+            }
+            if(body.action==="approve"){
+              if(!body.id||!["finance","operations"].includes(body.approval_role)||!body.reviewer?.trim())return resp({error:"Scenario id, approval role, and reviewer are required."},400);
+              try{return resp({ok:true,scenario:await approvePromotionScenario(merchant_id,body.id,body.approval_role as "finance"|"operations",body.reviewer.trim().slice(0,160))},200);}
+              catch(err){return resp({error:err instanceof Error?err.message:"Could not approve campaign."},400);}
+            }
+            if(body.action==="activate"){
+              const marginFloor=Number(body.margin_floor_pct);
+              try{return resp({ok:true,group:await activateGroupPolicy(merchant_id,marginFloor)},200);}
+              catch(err){return resp({error:err instanceof Error?err.message:"Could not activate group policy."},400);}
+            }
+            if(body.action==="prepare_launch"){
+              if(!body.id||!Array.isArray(raw.target_channels))return resp({error:"Scenario id and target channels are required."},400);
+              try{return resp({ok:true,scenario:await preparePromotionLaunch(merchant_id,body.id,(raw.target_channels as unknown[]).filter(value=>typeof value==="string") as string[])},200);}
+              catch(err){return resp({error:err instanceof Error?err.message:"Could not prepare campaign launch."},400);}
+            }
+            if(body.action==="confirm_channel_launch"){
+              if(!body.id||!body.target_channel?.trim()||!body.partner_campaign_id?.trim())return resp({error:"Scenario id, target channel, and partner campaign id are required."},400);
+              try{return resp({ok:true,scenario:await confirmPromotionChannelLaunch(merchant_id,body.id,body.target_channel,body.partner_campaign_id.trim().slice(0,200))},200);}
+              catch(err){return resp({error:err instanceof Error?err.message:"Could not confirm channel launch."},400);}
             }
             if(body.action==="update"){
               if(!body.id)return resp({error:"Scenario id is required."},400);

@@ -32,6 +32,7 @@ export type RepricingProduct = {
   margin_floor_pct: number;
   commission_rate: number;
   cost_confidence: "verified" | "estimated" | "unknown";
+  base_cost: number | null;
   preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; policy_version:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
 };
 
@@ -144,6 +145,9 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             cost_confidence: costSource === "platform_catalog"
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
+            base_cost: costSource === "platform_catalog" && decision
+              ? Number(decision.base_cost)
+              : null,
             preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"over_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:"blocked_missing_cost"},
           });
         }

@@ -21,6 +21,10 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const [fundingDrafts,setFundingDrafts]=useState<Record<string,{promised:string;actual:string}>>({});
+  const [targetChannels,setTargetChannels]=useState<string[]>([products[0]?.source_platform??"zid"]);
+  const [financeReviewer,setFinanceReviewer]=useState("");
+  const [operationsReviewer,setOperationsReviewer]=useState("");
+  const [launchReferences,setLaunchReferences]=useState<Record<string,string>>({});
 
   useEffect(()=>setSelected(products.map(p=>p.sku)),[products]);
   useEffect(()=>{if(contract?.promotion_funding_platform_pct!=null)setPlatformFunding(String(contract.promotion_funding_platform_pct));},[contract]);
@@ -46,12 +50,33 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
     baseline_orders:n(orders),duration_days:n(days),minimum_margin_pct:n(floor),
   }),[discount,platformFunding,contract,lift,orders,days,floor]);
   const result=useMemo(()=>simulatePromotion(scoped,inputs),[scoped,inputs]);
+  const sensitivity=useMemo(()=>[
+    {label:"Downside",lift:Math.min(0,inputs.expected_conversion_lift_pct-15)},
+    {label:"Base",lift:inputs.expected_conversion_lift_pct},
+    {label:"Upside",lift:inputs.expected_conversion_lift_pct+15},
+  ].map(item=>({
+    ...item,
+    result:simulatePromotion(scoped,{...inputs,expected_conversion_lift_pct:item.lift}),
+  })),[scoped,inputs]);
+  const waterfall=useMemo(()=>{
+    const eligible=result.products.filter(product=>product.eligible);
+    return [
+      {label:"List price",value:eligible.reduce((sum,p)=>sum+p.selling_price,0),tone:"neutral"},
+      {label:"Merchant discount",value:-eligible.reduce((sum,p)=>sum+p.merchant_discount,0),tone:"negative"},
+      {label:"Platform funding",value:eligible.reduce((sum,p)=>sum+p.platform_funding,0),tone:"positive"},
+      {label:"Commission + VAT",value:-eligible.reduce((sum,p)=>sum+p.commission+p.vat_on_fees,0),tone:"negative"},
+      {label:"Payment fees",value:-eligible.reduce((sum,p)=>sum+p.payment_fee,0),tone:"negative"},
+      {label:"Product cost",value:-eligible.reduce((sum,p)=>sum+(p.inferred_product_cost??0),0),tone:"negative"},
+      {label:"Net contribution",value:eligible.reduce((sum,p)=>sum+(p.expected_contribution??0),0),tone:"result"},
+    ];
+  },[result.products]);
+  const waterfallScale=Math.max(1,...waterfall.map(item=>Math.abs(item.value)));
   const contractReady=Boolean(contract&&contract.status==="approved"&&contract.commission_base!=="unknown"&&contract.promotion_funding_platform_pct!=null);
 
   const saveDraft=async()=>{
     setBusy(true);setError(null);
     try{
-      await call({action:"create",name,source_platform:contract?.platform??products[0]?.source_platform??"unknown",inputs,results:result});
+      await call({action:"create",name,source_platform:contract?.platform??products[0]?.source_platform??"unknown",inputs:{...inputs,target_channels:targetChannels},results:result});
       await load();
     }catch(err){setError(err instanceof Error?err.message:"Could not save campaign.");}finally{setBusy(false);}
   };
@@ -59,11 +84,30 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
     setBusy(true);setError(null);
     const draft=fundingDrafts[item.id]??{promised:String(item.promised_platform_funding??""),actual:String(item.actual_platform_funding??"")};
     try{
-      await call({action:"update",id:item.id,scenario_status:status??item.status,
+      await call({action:"update",id:item.id,...(status?{scenario_status:status}:{}),
         promised_platform_funding:draft.promised===""?null:n(draft.promised),
         actual_platform_funding:draft.actual===""?null:n(draft.actual),approved_by:"Merchant finance approver"});
       await load();
     }catch(err){setError(err instanceof Error?err.message:"Could not update campaign.");}finally{setBusy(false);}
+  };
+  const approve=async(item:SavedPromotionScenario,role:"finance"|"operations")=>{
+    const reviewer=role==="finance"?financeReviewer:operationsReviewer;
+    if(!reviewer.trim()){setError(`Enter the ${role} reviewer.`);return;}
+    setBusy(true);setError(null);
+    try{await call({action:"approve",id:item.id,approval_role:role,reviewer});await load();}
+    catch(err){setError(err instanceof Error?err.message:"Could not approve campaign.");}finally{setBusy(false);}
+  };
+  const prepareLaunch=async(item:SavedPromotionScenario)=>{
+    setBusy(true);setError(null);
+    try{await call({action:"prepare_launch",id:item.id,target_channels:(item.inputs.target_channels as string[]|undefined)??targetChannels});await load();}
+    catch(err){setError(err instanceof Error?err.message:"Could not prepare launch.");}finally{setBusy(false);}
+  };
+  const confirmLaunch=async(item:SavedPromotionScenario,channel:string)=>{
+    const key=`${item.id}:${channel}`;const reference=launchReferences[key]?.trim();
+    if(!reference){setError(`Enter the ${channel.toUpperCase()} campaign id.`);return;}
+    setBusy(true);setError(null);
+    try{await call({action:"confirm_channel_launch",id:item.id,target_channel:channel,partner_campaign_id:reference});await load();}
+    catch(err){setError(err instanceof Error?err.message:"Could not confirm channel launch.");}finally{setBusy(false);}
   };
 
   return <section style={{border:"1px solid var(--border)",borderRadius:14,overflow:"hidden",background:"var(--surface)"}}>
@@ -85,6 +129,36 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
         <div style={{fontSize:11,fontWeight:900,marginBottom:7}}>Products in campaign · {selected.length} of {products.length}</div>
         <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{products.map(product=><label key={product.sku} style={{border:"1px solid var(--border)",borderRadius:999,padding:"6px 9px",fontSize:11.5,cursor:"pointer",background:selected.includes(product.sku)?"var(--surface2)":"transparent"}}><input type="checkbox" checked={selected.includes(product.sku)} onChange={()=>setSelected(current=>current.includes(product.sku)?current.filter(s=>s!==product.sku):[...current,product.sku])}/> {product.name}</label>)}</div>
       </div>
+      <div>
+        <div style={{fontSize:11,fontWeight:900,marginBottom:7}}>Target channels</div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{["zid","salla","talabat","jahez","keeta","in_store"].map(channel=><label key={channel} style={{border:"1px solid var(--border)",borderRadius:999,padding:"6px 9px",fontSize:11.5,cursor:"pointer",background:targetChannels.includes(channel)?"var(--surface2)":"transparent"}}><input type="checkbox" checked={targetChannels.includes(channel)} onChange={()=>setTargetChannels(current=>current.includes(channel)?current.filter(value=>value!==channel):[...current,channel])}/> {channel.replaceAll("_"," ").toUpperCase()}</label>)}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"minmax(0,1.35fr) minmax(280px,.65fr)",gap:12}}>
+        <div style={{border:"1px solid var(--border)",borderRadius:11,padding:14,overflow:"hidden"}}>
+          <div style={{fontSize:13,fontWeight:900}}>Where the campaign price goes</div>
+          <div style={{fontSize:10.5,color:"var(--muted)",marginTop:3}}>Per campaign basket across the selected products</div>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${waterfall.length},minmax(72px,1fr))`,gap:7,alignItems:"end",height:190,marginTop:13,overflowX:"auto"}}>
+            {waterfall.map(item=>{
+              const color=item.tone==="positive"?"#087F5B":item.tone==="negative"?"#B42318":item.tone==="result"?(item.value>=0?"#087F5B":"#B42318"):"#667085";
+              return <div key={item.label} style={{display:"flex",height:"100%",minWidth:72,flexDirection:"column",justifyContent:"flex-end",alignItems:"stretch",gap:5}}>
+                <div style={{fontSize:11,fontWeight:900,textAlign:"center",color}}>{item.value<0?"−":""}{money(Math.abs(item.value),currency)}</div>
+                <div style={{height:`${Math.max(8,Math.abs(item.value)/waterfallScale*112)}px`,background:color,borderRadius:"6px 6px 2px 2px",opacity:item.tone==="result"?1:.82}}/>
+                <div style={{fontSize:9.5,color:"var(--muted)",textAlign:"center",lineHeight:1.25,minHeight:25}}>{item.label}</div>
+              </div>;
+            })}
+          </div>
+        </div>
+        <div style={{border:"1px solid var(--border)",borderRadius:11,padding:14}}>
+          <div style={{fontSize:13,fontWeight:900}}>Demand sensitivity</div>
+          <div style={{fontSize:10.5,color:"var(--muted)",marginTop:3}}>The lift is an assumption, so review a range—not one confident-looking number.</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:13}}>
+            {sensitivity.map(item=><div key={item.label} style={{border:"1px solid var(--border)",borderRadius:8,padding:"9px 10px",background:item.label==="Base"?"var(--surface2)":"transparent"}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:11,fontWeight:900}}><span>{item.label} · {item.lift>=0?"+":""}{item.lift}% orders</span><span style={{color:item.result.incremental_contribution>=0?"#087F5B":"#B42318"}}>{money(item.result.incremental_contribution,currency)}</span></div>
+              <div style={{fontSize:10,color:"var(--muted)",marginTop:3}}>{item.result.expected_orders} expected orders · {item.result.profitable?"profitable":"below baseline"}</div>
+            </div>)}
+          </div>
+        </div>
+      </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:10}}>
         {[
           ["Products eligible",`${result.eligible_products}`],["Expected orders",`${result.expected_orders}`],
@@ -99,19 +173,20 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
         <tbody>{result.products.map(product=><tr key={product.sku}>{[
           `${product.name} · ${product.sku}`,money(product.selling_price,currency),money(product.campaign_price,currency),
           money(product.merchant_discount,currency),money(product.platform_funding,currency),money(product.commission+product.vat_on_fees,currency),
-          product.inferred_product_cost==null?"Missing":money(product.inferred_product_cost,currency),
+          product.inferred_product_cost==null?"Missing":`${money(product.inferred_product_cost,currency)} · ${product.cost_basis}`,
           product.expected_contribution==null?"Excluded":money(product.expected_contribution,currency),
           product.expected_margin_pct==null?"—":`${product.expected_margin_pct}%`,
           product.maximum_affordable_discount_pct==null?"—":`${product.maximum_affordable_discount_pct}%`,
         ].map((value,index)=><td key={index} style={{padding:"10px 9px",borderBottom:"1px solid var(--border)",fontWeight:index===0?800:500,color:product.eligible?"var(--text)":"#A16207"}}>{value}</td>)}</tr>)}</tbody>
       </table></div>
-      <div style={{fontSize:10.5,color:"var(--muted)"}}>* Product cost is transparently inferred from current net margin until verified product-cost lineage is connected. No campaign is launched from this workspace.</div>
+      <div style={{fontSize:10.5,color:"var(--muted)"}}>* Product cost shows its evidence basis. Verified values come from the connected catalogue economics snapshot; inferred values remain clearly labelled. No campaign is launched from this workspace.</div>
       <div style={{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}}>
         <button disabled={busy||!name.trim()||!selected.length} onClick={saveDraft} style={{border:0,borderRadius:8,padding:"9px 13px",background:"#14213D",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",display:"flex",gap:6}}><Save size={14}/>Save simulation as draft</button>
         <span style={{fontSize:11.5,color:"var(--muted)"}}>Approval records the decision only. It does not enroll the merchant in a platform campaign.</span>
       </div>
       {!!saved.length&&<div style={{borderTop:"1px solid var(--border)",paddingTop:15}}>
         <div style={{fontSize:15,fontWeight:900,marginBottom:10}}>Campaign register and funding reconciliation</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}><input style={{...input,maxWidth:230}} value={financeReviewer} onChange={e=>setFinanceReviewer(e.target.value)} placeholder="Finance reviewer name"/><input style={{...input,maxWidth:230}} value={operationsReviewer} onChange={e=>setOperationsReviewer(e.target.value)} placeholder="Operations reviewer name"/></div>
         <div style={{display:"flex",flexDirection:"column",gap:9}}>{saved.map(item=>{
           const draft=fundingDrafts[item.id]??{promised:String(item.promised_platform_funding??""),actual:String(item.actual_platform_funding??"")};
           const funding=draft.promised!==""&&draft.actual!==""?reconcilePromotionFunding(n(draft.promised),n(draft.actual)):null;
@@ -119,7 +194,14 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
             <div><strong>{item.name}</strong><div style={{fontSize:10.5,color:"var(--muted)",marginTop:3}}>{item.platform.toUpperCase()} · {item.status.toUpperCase()} · {new Date(item.created_at).toLocaleDateString("en-GB")}</div></div>
             <label style={{fontSize:10.5,fontWeight:800}}>Promised funding<input type="number" style={input} value={draft.promised} onChange={e=>setFundingDrafts({...fundingDrafts,[item.id]:{...draft,promised:e.target.value}})}/></label>
             <label style={{fontSize:10.5,fontWeight:800}}>Actual funding<input type="number" style={input} value={draft.actual} onChange={e=>setFundingDrafts({...fundingDrafts,[item.id]:{...draft,actual:e.target.value}})}/></label>
-            <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}><button disabled={busy} onClick={()=>update(item,item.status==="draft"?"approved":item.status)} style={{border:"1px solid var(--border)",borderRadius:7,padding:"8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>{item.status==="draft"?"Approve":"Save funding"}</button>{funding&&<span style={{fontSize:10.5,fontWeight:900,color:funding.status==="matched"?"#087F5B":"#B42318"}}>{funding.status} · {money(funding.variance,currency)}</span>}</div>
+            <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+              {!item.finance_approved_at&&["draft","pending_approval"].includes(item.status)&&<button disabled={busy} onClick={()=>approve(item,"finance")} style={{border:"1px solid var(--border)",borderRadius:7,padding:"8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Finance approve</button>}
+              {!item.operations_approved_at&&["draft","pending_approval"].includes(item.status)&&<button disabled={busy} onClick={()=>approve(item,"operations")} style={{border:"1px solid var(--border)",borderRadius:7,padding:"8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Ops approve</button>}
+              {item.status==="approved"&&<button disabled={busy} onClick={()=>prepareLaunch(item)} style={{border:"1px solid #087F5B",borderRadius:7,padding:"8px",background:"transparent",color:"#087F5B",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Prepare channel launch</button>}
+              {!["draft","pending_approval"].includes(item.status)&&<button disabled={busy} onClick={()=>update(item)} style={{border:"1px solid var(--border)",borderRadius:7,padding:"8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>Save funding</button>}
+              {funding&&<span style={{fontSize:10.5,fontWeight:900,color:funding.status==="matched"?"#087F5B":"#B42318"}}>{funding.status} · {money(funding.variance,currency)}</span>}
+            </div>
+            {!!item.launch_manifest?.length&&<div style={{gridColumn:"1 / -1",display:"flex",gap:7,flexWrap:"wrap"}}>{item.launch_manifest.map(entry=>{const key=`${item.id}:${entry.channel}`;return <div key={entry.channel} title={entry.instruction} style={{display:"flex",gap:5,alignItems:"center",border:"1px solid var(--border)",borderRadius:8,padding:"5px 7px"}}><span style={{fontSize:10.5,color:entry.status==="launched"?"#087F5B":"#A16207",fontWeight:800}}>{entry.channel.toUpperCase()} · {entry.status}</span>{entry.status!=="launched"&&<><input value={launchReferences[key]??""} onChange={e=>setLaunchReferences({...launchReferences,[key]:e.target.value})} placeholder="Partner campaign ID" style={{...input,width:145,padding:"5px 6px",fontSize:10}}/><button disabled={busy} onClick={()=>confirmLaunch(item,entry.channel)} style={{border:0,borderRadius:6,padding:"6px 7px",background:"#087F5B",color:"#fff",fontFamily:"inherit",fontSize:10,fontWeight:800}}>Confirm</button></>}</div>;})}</div>}
           </div>;
         })}</div>
       </div>}

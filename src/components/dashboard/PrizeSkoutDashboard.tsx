@@ -37,7 +37,7 @@ import {
   type PriceChannel,
 } from "@/lib/channel-price-planner";
 
-type Tab = "analytics" | "rules" | "vault" | "history" | "settings";
+type Tab = "analytics" | "promotions" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
@@ -84,6 +84,7 @@ interface ImportedProduct {
   margin_floor_pct?: number;
   commission_rate?: number;
   cost_confidence?: "verified" | "estimated" | "unknown";
+  base_cost?: number | null;
   preview?: {
     required_price: number | null;
     allowed_price: number | null;
@@ -161,6 +162,23 @@ type Dispute = {
   hash: string;
   en: string;
   ar: string;
+};
+
+type DashboardRecoveryCase = {
+  id: string;
+  platform: string;
+  exception_key: string;
+  title: string;
+  status: string;
+  exception_amount: number | null;
+  claims_ready_amount: number;
+  contract_clause: string | null;
+  explanation_en: string;
+  explanation_ar: string;
+  owner: string | null;
+  recovered_amount: number;
+  submitted_at?: string | null;
+  submission_evidence_hash?: string | null;
 };
 
 const INBOUND_INTEGRATIONS = [
@@ -375,7 +393,7 @@ const T = {
     try: "Try:",
     guardrails: "Active Guardrails",
     agentTitle: "Autonomous Dispute Audit Agent",
-    agentActive: "Agent Active",
+    agentActive: "Manual fallback active",
     discLog: "Discrepancy Log · POS Payouts vs Contracts",
     genVoucher: "Generate Dispute Voucher",
     downloadCsv: "Download Audit Log (CSV)",
@@ -602,7 +620,7 @@ const T = {
     try: "جرب:",
     guardrails: "الحواجز النشطة",
     agentTitle: "وكيل تدقيق النزاعات المستقل",
-    agentActive: "الوكيل نشط",
+    agentActive: "الوضع اليدوي الاحتياطي نشط",
     discLog: "سجل التناقضات · مدفوعات نقاط البيع مقابل العقود",
     genVoucher: "إنشاء قسيمة نزاع",
     downloadCsv: "تنزيل سجل التدقيق (CSV)",
@@ -831,7 +849,7 @@ const T = {
     try: "Essayez :",
     guardrails: "Garde-fous actifs",
     agentTitle: "Agent autonome d'audit des litiges",
-    agentActive: "Agent actif",
+    agentActive: "Mode manuel de secours actif",
     discLog: "Journal des écarts · Versements caisse vs contrats",
     genVoucher: "Générer un bon de litige",
     downloadCsv: "Télécharger le journal d'audit (CSV)",
@@ -1910,6 +1928,7 @@ export function PrizeSkoutDashboard() {
   const [ruleStatusFilter, setRuleStatusFilter] = useState<"all" | RuleStatus>("all");
   const [ruleAudit, setRuleAudit] = useState<{ action: string; rule: string; at: string }[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [recoveryCases, setRecoveryCases] = useState<DashboardRecoveryCase[]>([]);
   const [modal, setModal] = useState<number | null>(null);
   const [fileStep, setFileStep] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -1933,6 +1952,7 @@ export function PrizeSkoutDashboard() {
   const [disputeOurPrice, setDisputeOurPrice] = useState("");
   const [disputeNotes, setDisputeNotes] = useState("");
   const [disputeLoading, setDisputeLoading] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(true);
   const [cpError, setCpError] = useState<string | null>(null);
   // Expected Payout Check — pulls real Talabat orders, computes what the
   // merchant should have received (see expected-payout.ts). Never fetches
@@ -2962,7 +2982,7 @@ export function PrizeSkoutDashboard() {
           target_price: targetPrice,
         }),
       });
-      const result = (await response.json()) as { ok?: boolean; error?: string; message?: string };
+      const result = (await response.json()) as { ok?: boolean; error?: string; message?: string; downstream?:{channel:string;status:string;message:string}|null };
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Price update failed");
       setImportedProducts((products) =>
@@ -2976,7 +2996,7 @@ export function PrizeSkoutDashboard() {
         product ? { ...product, current_price: targetPrice, status: "repriced" } : product,
       );
       setProductPushStatus("success");
-      showToast(`Price updated successfully in ${selectedProduct.source_platform}.`);
+      showToast(result.downstream?`Price confirmed in Zid. ${result.downstream.message}`:`Price updated successfully in ${selectedProduct.source_platform}.`);
     } catch (error) {
       setProductPushStatus("failed");
       const message = error instanceof Error ? error.message : "Price update failed.";
@@ -4087,6 +4107,44 @@ export function PrizeSkoutDashboard() {
     }
   };
 
+  const loadRecoveryRegister = async () => {
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) {
+      setRecoveryLoading(false);
+      return;
+    }
+    try {
+      const response = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode, platform: "recovery_cases", action: "list" }),
+      });
+      const payload = (await response.json()) as { ok?: boolean; cases?: DashboardRecoveryCase[]; error?: string };
+      if (!response.ok || !payload.ok) throw new Error(payload.error ?? "Could not load recovery cases.");
+      const cases = payload.cases ?? [];
+      setRecoveryCases(cases);
+      setDisputes(cases.map(item => ({
+        partner: item.platform,
+        title: item.title,
+        order: item.exception_key,
+        place: item.owner ?? "Merchant account",
+        contract: item.contract_clause ?? "Contract evidence not yet attached",
+        charged: item.exception_amount == null ? "Not quantified" : `${currency} ${Number(item.exception_amount).toFixed(2)}`,
+        leak: `${currency} ${Number(item.claims_ready_amount).toFixed(2)}`,
+        hash: item.submission_evidence_hash ?? item.id,
+        en: item.explanation_en,
+        ar: item.explanation_ar,
+      })));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not load recovery cases.");
+    } finally {
+      setRecoveryLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadRecoveryRegister(); }, []);
+
   // First-run welcome check: the instant Talabat is connected and this
   // merchant has never had a payout check recorded, run one automatically
   // instead of waiting for someone to find the button. Fires at most once
@@ -4523,6 +4581,12 @@ export function PrizeSkoutDashboard() {
       tip: "Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place.",
     },
     {
+      id: "promotions" as Tab,
+      label: lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator",
+      sub: lang === "ar" ? "اختبار الربحية" : lang === "fr" ? "Tester la rentabilité" : "Model profitability",
+      tip: "Promo Simulator — test discount, platform funding, fees, demand sensitivity, and margin impact before approving a campaign.",
+    },
+    {
       id: "rules" as Tab,
       label: t.navR,
       sub: t.navRs,
@@ -4545,6 +4609,8 @@ export function PrizeSkoutDashboard() {
   const headerSub =
     tab === "analytics"
       ? t.subA
+      : tab === "promotions"
+        ? "Model discount economics and margin risk before approving a campaign"
       : tab === "rules"
         ? t.subR
         : tab === "settings"
@@ -4555,6 +4621,8 @@ export function PrizeSkoutDashboard() {
   const headerTitle =
     tab === "analytics"
       ? t.navA
+      : tab === "promotions"
+        ? lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator"
       : tab === "rules"
         ? t.navR
         : tab === "settings"
@@ -4570,6 +4638,11 @@ export function PrizeSkoutDashboard() {
       nudge: "Want to understand a risk or make a catalogue change?",
       prompt: "Show products losing money",
       examples: ["Show products losing money", "What did I actually keep from orders this month?"],
+    },
+    promotions: {
+      nudge: "Want help testing a campaign or understanding its margin risk?",
+      prompt: "Check whether my active coupon is safe",
+      examples: ["Check whether my active coupon is safe", "What discount can I afford without breaching margin?"],
     },
     rules: {
       nudge: "Want help choosing or applying safe protection rules?",
@@ -7354,6 +7427,8 @@ export function PrizeSkoutDashboard() {
                     current_price: product.current_price,
                     net_margin_pct: product.net_margin_pct,
                     source_platform: product.source_platform,
+                    unit_cost: product.base_cost ?? null,
+                    cost_confidence: product.cost_confidence ?? "unknown",
                   }))}
                   contract={approvedContract}
                   currency={currency}
@@ -7581,7 +7656,7 @@ export function PrizeSkoutDashboard() {
 
                 {/* Dispute Audit Agent */}
                 <div
-                  data-demo-tip="Autonomous Dispute Audit Agent — reviews payout discrepancies and drafts the evidence package to dispute them with the platform, so you're not building a case from scratch."
+                  data-demo-tip="Detects and tracks payout discrepancies through the recovery register. Manual controls remain available for testing and as a fallback when a partner cannot accept automated submissions."
                   style={{
                     background: "var(--surface)",
                     border: "1px solid var(--border)",
@@ -7641,9 +7716,9 @@ export function PrizeSkoutDashboard() {
                     }}
                   >
                     {[
-                      { value: `${currency} 0`, label: "Recovered Profits", color: "var(--muted)" },
-                      { value: "0", label: "Claims Auto-Filed", color: "var(--text)" },
-                      { value: "0", label: "Pending Aggregator Audits", color: "var(--muted)" },
+                      { value: `${currency} ${recoveryCases.reduce((sum,item)=>sum+Number(item.recovered_amount||0),0).toLocaleString("en-US",{maximumFractionDigits:2})}`, label: "Money Recovered", color: "var(--muted)" },
+                      { value: String(recoveryCases.filter(item=>Boolean(item.submitted_at)).length), label: "Claims Submitted", color: "var(--text)" },
+                      { value: String(recoveryCases.filter(item=>!["recovered","closed","rejected"].includes(item.status)).length), label: "Open Recovery Cases", color: "var(--muted)" },
                     ].map((m) => (
                       <div
                         key={m.label}
@@ -7693,7 +7768,9 @@ export function PrizeSkoutDashboard() {
                     >
                       {t.discLog}
                     </div>
-                    {disputes.length === 0 ? (
+                    {recoveryLoading ? (
+                      <div style={{border:"1px solid var(--border)",background:"var(--surface2)",borderRadius:12,padding:"24px 20px",fontSize:15,color:"var(--muted)"}}>Loading recovery register…</div>
+                    ) : disputes.length === 0 ? (
                       <div
                         style={{
                           border: "1px solid var(--border)",
@@ -7716,7 +7793,7 @@ export function PrizeSkoutDashboard() {
                           }}
                         />
                         <span style={{ fontSize: 15, color: "var(--muted)" }}>
-                          No discrepancies logged · audit agent monitoring payouts in real time
+                          No recovery cases yet · run a payout audit or log a discrepancy
                         </span>
                       </div>
                     ) : (
@@ -8084,14 +8161,47 @@ export function PrizeSkoutDashboard() {
                               showToast("⚠ " + (data.error ?? "Voucher generation failed"));
                               return;
                             }
-                            setDisputes((prev) => [...prev, data]);
+                            const expectedCharge = Number(disputeOurPrice) * Number(disputeRate) / 100;
+                            const discrepancyAmount = Math.max(0, Number(disputeCharged) - expectedCharge);
+                            const caseResponse = await fetch("/api/channels/connect", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                merchant_id: mid,
+                                access_code: ac,
+                                platform: "recovery_cases",
+                                action: "create",
+                                exception_key: disputeOrderId,
+                                title: data.title,
+                                source_platform: disputePartner.toLowerCase(),
+                                case_status: "evidence_required",
+                                severity: discrepancyAmount >= 1000 ? "high" : discrepancyAmount >= 100 ? "medium" : "low",
+                                exception_amount: discrepancyAmount,
+                                claims_ready_amount: 0,
+                                confidence: "low",
+                                affected_orders: 1,
+                                contract_term_id: null,
+                                contract_clause: `Merchant-entered ${disputeRate}% commission rate; reviewed contract not yet attached`,
+                                evidence_sources: ["merchant_entered_discrepancy", "generated_bilingual_voucher"],
+                                calculation: { order_value: Number(disputeOurPrice), contracted_rate_pct: Number(disputeRate), expected_charge: expectedCharge, actual_charge: Number(disputeCharged), discrepancy: discrepancyAmount, voucher_hash: data.hash },
+                                explanation_en: data.en,
+                                explanation_ar: data.ar,
+                                owner: "",
+                              }),
+                            });
+                            const savedCase = (await caseResponse.json()) as { ok?: boolean; error?: string };
+                            if (!caseResponse.ok || !savedCase.ok) {
+                              showToast("Voucher created, but the recovery case could not be saved: " + (savedCase.error ?? "Unknown error"));
+                              return;
+                            }
+                            await loadRecoveryRegister();
                             setShowDisputeForm(false);
                             setDisputeOrderId("");
                             setDisputeCharged("");
                             setDisputeOurPrice("");
                             setDisputeNotes("");
                             setDisputePlace("");
-                            showToast("🟢 Dispute voucher generated · bilingual package ready");
+                            showToast("Discrepancy saved to the recovery register · evidence draft ready");
                           } catch {
                             showToast("⚠ Network error — try again.");
                           } finally {
@@ -8119,7 +8229,7 @@ export function PrizeSkoutDashboard() {
                           transition: "background .2s,opacity .2s",
                         }}
                       >
-                        {disputeLoading ? "Generating…" : "Generate Bilingual Voucher ↗"}
+                        {disputeLoading ? "Saving…" : "Save Recovery Case & Generate Evidence ↗"}
                       </button>
                     </div>
                   )}
@@ -8130,6 +8240,46 @@ export function PrizeSkoutDashboard() {
         )}
 
         {/* ===== TAB: MARGIN POLICY ENGINE ===== */}
+        {tab === "promotions" && (
+          <section
+            className="ps-db-section"
+            style={{
+              padding: "14px 30px 48px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 22,
+              animation: "pk-in .3s ease",
+            }}
+          >
+            {assistantNudge("promotions")}
+            {importedProducts.length > 0 ? (
+              <PromotionProfitabilityWorkspace
+                products={importedProducts.map((product) => ({
+                  sku: product.sku,
+                  name: product.name_en || product.name_ar || product.sku,
+                  current_price: product.current_price,
+                  net_margin_pct: product.net_margin_pct,
+                  source_platform: product.source_platform,
+                  unit_cost: product.base_cost ?? null,
+                  cost_confidence: product.cost_confidence ?? "unknown",
+                }))}
+                contract={approvedContract}
+                currency={currency}
+              />
+            ) : (
+              <div style={{ border: "1px solid var(--border)", borderRadius: 14, padding: 24, background: "var(--surface)" }}>
+                <h3 style={{ margin: 0 }}>Connect or import a catalogue first</h3>
+                <p style={{ color: "var(--muted)", lineHeight: 1.6, marginBottom: 14 }}>
+                  Promo Simulator needs product prices and margin evidence before it can model a safe campaign.
+                </p>
+                <button type="button" onClick={() => setTab("vault")} style={{ border: 0, borderRadius: 8, padding: "9px 13px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>
+                  Open Integration Vault
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
         {tab === "rules" && (
           <section
             className="ps-db-section"

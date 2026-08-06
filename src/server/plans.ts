@@ -8,6 +8,28 @@ export const PLAN_LEVELS: Record<Plan, number> = {
 
 export type PlanMode = "advisory" | "automated";
 
+export type PlanCapability =
+  | "profit_visibility"
+  | "payout_checks"
+  | "competitor_radar"
+  | "promotion_simulator"
+  | "cfo_copilot"
+  | "store_assistant_read"
+  | "evidence_history"
+  | "protected_repricing"
+  | "commission_audits"
+  | "recovery_workflows"
+  | "channel_price_architecture"
+  | "zid_store_actions"
+  | "promotion_operations"
+  | "contract_terms"
+  | "multi_store_controls"
+  | "group_governance"
+  | "month_end_close"
+  | "embedded_platform_api"
+  | "signed_webhooks"
+  | "enterprise_sla";
+
 export type PlanLimits = {
   maxProducts: number;        // -1 = unlimited
   maxCompetitorsPerProduct: number;
@@ -43,6 +65,70 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     mode: "automated",
   },
 };
+
+/**
+ * Commercial capability catalogue. This is additive by tier and describes
+ * product access; operational safety checks still apply to every write.
+ */
+export const PLAN_CAPABILITIES: Record<Plan, ReadonlySet<PlanCapability>> = {
+  starter: new Set([
+    "profit_visibility",
+    "payout_checks",
+    "competitor_radar",
+    "promotion_simulator",
+    "cfo_copilot",
+    "store_assistant_read",
+    "evidence_history",
+  ]),
+  standard: new Set([
+    "profit_visibility",
+    "payout_checks",
+    "competitor_radar",
+    "promotion_simulator",
+    "cfo_copilot",
+    "store_assistant_read",
+    "evidence_history",
+    "protected_repricing",
+    "commission_audits",
+    "recovery_workflows",
+    "channel_price_architecture",
+    "zid_store_actions",
+    "promotion_operations",
+    "contract_terms",
+  ]),
+  enterprise: new Set([
+    "profit_visibility",
+    "payout_checks",
+    "competitor_radar",
+    "promotion_simulator",
+    "cfo_copilot",
+    "store_assistant_read",
+    "evidence_history",
+    "protected_repricing",
+    "commission_audits",
+    "recovery_workflows",
+    "channel_price_architecture",
+    "zid_store_actions",
+    "promotion_operations",
+    "contract_terms",
+    "multi_store_controls",
+    "group_governance",
+    "month_end_close",
+    "embedded_platform_api",
+    "signed_webhooks",
+    "enterprise_sla",
+  ]),
+};
+
+export function hasPlanCapability(plan: Plan, capability: PlanCapability): boolean {
+  return PLAN_CAPABILITIES[plan].has(capability);
+}
+
+export function minPlanForCapability(capability: PlanCapability): Plan {
+  return (["starter", "standard", "enterprise"] as Plan[]).find((plan) =>
+    hasPlanCapability(plan, capability),
+  ) ?? "enterprise";
+}
 
 // Scopes that may appear on API keys, gated by plan.
 // Keys with scopes not in this set for their plan are rejected at dispatch.

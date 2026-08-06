@@ -2,6 +2,8 @@ import {useEffect,useMemo,useState} from "react";
 import {AlertTriangle,CheckCircle2,Layers3,Save,ShieldCheck,Rocket} from "lucide-react";
 import {planChannelPrices,type ChannelEconomics,type ChannelPriceProduct,type PriceChannel} from "@/lib/channel-price-planner";
 import type {ContractTerm} from "@/components/dashboard/payout/ContractIntelligenceVault";
+import {ZidJahezBridgeSettings} from "./ZidJahezBridgeSettings";
+import type {ZidJahezBridgeSettings as BridgeSettings} from "@/server/core/zid-jahez-bridge";
 import type {SavedChannelPricePlan,PublishRowResult} from "@/server/core/channel-price-plans";
 
 const CHANNELS:PriceChannel[]=["in_store","zid","salla","foodics","talabat","snoonu","jahez","keeta"];
@@ -29,11 +31,16 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
   const [error,setError]=useState<string|null>(null);
   const [publishingId,setPublishingId]=useState<string|null>(null);
   const [publishResults,setPublishResults]=useState<Record<string,PublishRowResult[]>>({});
+  const [bridgeSettings,setBridgeSettings]=useState<BridgeSettings|null>(null);
 
   useEffect(()=>{
     if(!contract)return;
     setConfigs(current=>current.map(item=>item.channel===contract.platform?{...item,commission_pct:contract.commission_rate_pct,vat_on_fees_pct:contract.vat_on_fees_pct,payment_fee_pct:contract.payment_fee_pct,fixed_fee:contract.fixed_order_fee}:item));
   },[contract]);
+  useEffect(()=>{
+    if(!bridgeSettings?.jahez_active||bridgeSettings.mazeed_commission_pct==null)return;
+    setConfigs(current=>current.map(item=>item.channel==="jahez"?{...item,commission_pct:bridgeSettings.mazeed_commission_pct!}:item));
+  },[bridgeSettings]);
   const call=async(payload:Record<string,unknown>)=>{
     const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
       merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"channel_price_plans",...payload,
@@ -43,7 +50,12 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
   const load=()=>call({action:"list"}).then(data=>setPlans(data.plans??[])).catch(err=>setError(err instanceof Error?err.message:"Could not load price plans."));
   useEffect(()=>{load();},[]);
   const activeConfigs=configs.filter(c=>enabled.includes(c.channel));
-  const rows=useMemo(()=>planChannelPrices(products,activeConfigs,Number(approval)||0,Number(cap)||0),[products,configs,enabled,approval,cap]);
+  const rows=useMemo(()=>{
+    const planned=planChannelPrices(products,activeConfigs,Number(approval)||0,Number(cap)||0);
+    if(!bridgeSettings?.jahez_active)return planned;
+    const eligible=new Set(bridgeSettings.eligible_skus.map(value=>value.trim().toUpperCase()));
+    return planned.map(row=>row.channel==="jahez"&&!eligible.has(row.sku.trim().toUpperCase())?{...row,status:"excluded" as const,reason:"This SKU is not enrolled in Zid's Jahez channel."}:row);
+  },[products,configs,enabled,approval,cap,bridgeSettings]);
   const shown=rows.filter(row=>`${row.name} ${row.sku} ${row.channel}`.toLowerCase().includes(search.toLowerCase()));
   const approvals=rows.filter(row=>row.status==="approval_required").length;
   const excluded=rows.filter(row=>row.status==="excluded").length;
@@ -58,6 +70,7 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
       <span style={{fontSize:11.5,fontWeight:800,color:"#087F5B",display:"flex",gap:6}}><ShieldCheck size={15}/>Approval controlled</span>
     </div>
     <div style={{padding:20,display:"flex",flexDirection:"column",gap:17}}>
+      <ZidJahezBridgeSettings availableSkus={products.filter(product=>product.source_platform==="zid").map(product=>product.sku)} onSettings={setBridgeSettings}/>
       <div>
         <div style={{fontSize:11,fontWeight:900,marginBottom:7}}>Channels to compare</div>
         <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{CHANNELS.map(channel=><label key={channel} style={{border:"1px solid var(--border)",borderRadius:999,padding:"6px 9px",fontSize:11.5,cursor:"pointer"}}><input type="checkbox" checked={enabled.includes(channel)} onChange={()=>setEnabled(current=>current.includes(channel)?current.filter(v=>v!==channel):[...current,channel])}/> {label(channel)} <span style={{fontSize:9,fontWeight:900,color:PUBLISH_CAPABILITY[channel]==="manual"?"#A16207":"#087F5B"}}>· {PUBLISH_CAPABILITY[channel]==="manual"?"PLAN ONLY":"LIVE WRITE"}</span></label>)}</div>

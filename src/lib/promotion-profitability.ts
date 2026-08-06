@@ -4,6 +4,8 @@ export type PromotionProduct = {
   current_price: number;
   net_margin_pct: number | null;
   source_platform: string;
+  unit_cost?: number | null;
+  cost_confidence?: "verified" | "estimated" | "unknown";
 };
 
 export type PromotionInputs = {
@@ -28,6 +30,7 @@ export type PromotionProductResult = {
   selling_price: number;
   campaign_price: number;
   inferred_product_cost: number | null;
+  cost_basis: "verified" | "inferred" | "missing";
   merchant_discount: number;
   platform_funding: number;
   commission: number;
@@ -71,19 +74,22 @@ function contribution(price: number, cost: number, discountPct: number, inputs: 
 
 export function simulatePromotion(products: PromotionProduct[], inputs: PromotionInputs): PromotionSimulation {
   const results = products.map((product): PromotionProductResult => {
-    if (!(product.current_price > 0) || product.net_margin_pct == null || !Number.isFinite(product.net_margin_pct)) {
+    const verifiedCostAvailable = product.cost_confidence === "verified" && product.unit_cost != null && product.unit_cost >= 0;
+    const inferredCostAvailable = product.net_margin_pct != null && Number.isFinite(product.net_margin_pct);
+    if (!(product.current_price > 0) || (!verifiedCostAvailable && !inferredCostAvailable)) {
       return {
         sku: product.sku, name: product.name, eligible: false,
         exclusion_reason: "Verified product cost or current margin is missing.",
         selling_price: product.current_price, campaign_price: product.current_price,
-        inferred_product_cost: null, merchant_discount: 0, platform_funding: 0,
+        inferred_product_cost: null, cost_basis: "missing", merchant_discount: 0, platform_funding: 0,
         commission: 0, vat_on_fees: 0, payment_fee: 0, expected_contribution: null,
         expected_margin_pct: null, baseline_contribution: null, maximum_affordable_discount_pct: null,
       };
     }
-    // The catalogue currently exposes net margin rather than cost. Keep this
-    // inference explicit so it can be replaced by verified cost-lineage data.
-    const cost = product.current_price * (1 - product.net_margin_pct / 100);
+    const hasVerifiedCost = verifiedCostAvailable;
+    const cost = hasVerifiedCost
+      ? product.unit_cost!
+      : product.current_price * (1 - product.net_margin_pct! / 100);
     const baseline = contribution(product.current_price, cost, 0, inputs);
     const campaign = contribution(product.current_price, cost, inputs.discount_pct, inputs);
     let low = 0, high = 90;
@@ -97,6 +103,7 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
       sku: product.sku, name: product.name, eligible: true, exclusion_reason: null,
       selling_price: round(product.current_price), campaign_price: round(campaign.campaignPrice),
       inferred_product_cost: round(cost), merchant_discount: round(campaign.merchantDiscount),
+      cost_basis: hasVerifiedCost ? "verified" : "inferred",
       platform_funding: round(campaign.platformFunding), commission: round(campaign.commission),
       vat_on_fees: round(campaign.vat), payment_fee: round(campaign.paymentFee),
       expected_contribution: round(campaign.value),
@@ -119,7 +126,9 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
     incremental_contribution: round(campaignContribution - baselineContribution),
     profitable: eligible.length > 0 && campaignContribution >= baselineContribution,
     assumptions: [
-      "Product cost is inferred from the catalogue net-margin value until verified cost lineage is available.",
+      results.every(product => product.cost_basis === "verified")
+        ? "Product cost is verified from the connected catalogue economics snapshot."
+        : "Products without verified cost use a clearly labelled inference from current net margin.",
       "Expected conversion lift is merchant-entered and is not presented as a forecast certainty.",
       inputs.commission_base === "unknown"
         ? "Commission base is unknown; net-after-discount is used provisionally."

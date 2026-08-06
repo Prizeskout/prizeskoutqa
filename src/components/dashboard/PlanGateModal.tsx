@@ -8,8 +8,15 @@
  */
 import { X, Check, Zap } from "lucide-react";
 import { useModeContext, type PlanTier } from "@/lib/mode-context";
+import { useTranslation } from "react-i18next";
+import {
+  PLAN_PACKAGE_KEYS,
+  PLAN_PRICES_QAR_MONTHLY,
+  PLANS,
+  packageFeatureKeys,
+} from "@/lib/plan-config";
 
-const PLANS: {
+type GatePlan = {
   tier: PlanTier;
   name: string;
   price: string;
@@ -17,52 +24,25 @@ const PLANS: {
   tagline: string;
   features: string[];
   highlight?: boolean;
-}[] = [
-  {
-    tier: "starter",
-    name: "Starter",
-    price: "$25",
-    priceSub: "/ mo",
-    tagline: "Competitor intel and AI recommendations to get started.",
-    features: [
-      "50 products · 2 competitors / product",
-      "Daily price refresh",
-      "Advisory mode",
-      "1 seat · full API access",
-    ],
-  },
-  {
-    tier: "standard",
-    name: "Standard",
-    price: "$50",
-    priceSub: "/ mo",
-    tagline: "Automated repricing for growing teams.",
-    features: [
-      "500 products · 5 competitors / product",
-      "Twice-daily price refresh",
-      "Automated repricing",
-      "3 seats · audit log",
-    ],
-    highlight: true,
-  },
-  {
-    tier: "enterprise",
-    name: "Enterprise",
-    price: "Custom",
-    priceSub: "",
-    tagline: "For platforms and category leaders at scale.",
-    features: [
-      "Unlimited products and competitors",
-      "Hourly price refresh",
-      "GCC data residency",
-      "Dedicated customer success",
-    ],
-  },
-];
+};
 
 export function PlanGateModal() {
+  const { t } = useTranslation();
   const { planGateOpen, closePlanGate, activatePlan, activatingPlan } =
     useModeContext();
+
+  const gatePlans: GatePlan[] = PLANS.map((tier) => {
+    const price = PLAN_PRICES_QAR_MONTHLY[tier];
+    return {
+      tier,
+      name: t(`plans.${tier}Name`),
+      price: price == null ? t("plans.custom") : `QAR ${price.toLocaleString("en-US")}`,
+      priceSub: price == null ? "" : t("plans.perMonth"),
+      tagline: t(`${PLAN_PACKAGE_KEYS[tier]}.description`),
+      features: packageFeatureKeys(tier).map((key) => t(key)),
+      highlight: tier === "standard",
+    };
+  });
 
   if (!planGateOpen) return null;
 
@@ -190,7 +170,7 @@ export function PlanGateModal() {
             gap: 16,
           }}
         >
-          {PLANS.map((p) => (
+          {gatePlans.map((p) => (
             <PlanCard
               key={p.tier}
               plan={p}
@@ -208,8 +188,7 @@ export function PlanGateModal() {
             margin: "24px 0 0",
           }}
         >
-          All plans include white-label and unbranded operation. Cancel any
-          time.
+          {t("plans.whiteLabelNote")}
         </p>
       </div>
     </>
@@ -221,7 +200,7 @@ function PlanCard({
   onSelect,
   loading,
 }: {
-  plan: (typeof PLANS)[0];
+  plan: GatePlan;
   onSelect: (tier: PlanTier) => void;
   loading: boolean;
 }) {

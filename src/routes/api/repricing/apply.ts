@@ -15,6 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { fetchLiveProductPrice, pushPriceToSourcePlatform } from "@/server/core/platform-sync";
 import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
+import { recordPendingJahezPropagation } from "@/server/core/zid-jahez-bridge";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -132,6 +133,8 @@ export const Route = createFileRoute("/api/repricing/apply")({
           }
         }
 
+        let downstreamPropagation:{id:string;status:"pending"}|null=null;
+        let downstreamWarning:string|null=null;
         if (confirmed) {
           await supabaseAdmin
             .from("ps_ingest_events")
@@ -141,6 +144,10 @@ export const Route = createFileRoute("/api/repricing/apply")({
             })
             .eq("id", ingestEventId)
             .eq("account_id", accountId);
+          if(source_platform==="zid"&&evt.sku){
+            try{downstreamPropagation=await recordPendingJahezPropagation({accountId,ingestEventId,sku:evt.sku,price:targetPrice,zidLivePrice:livePrice??targetPrice});}
+            catch(error){downstreamWarning=error instanceof Error?error.message:"Could not create Jahez propagation record.";}
+          }
         }
 
         return json({
@@ -154,6 +161,8 @@ export const Route = createFileRoute("/api/repricing/apply")({
           original_price:currentPrice,
           target_price:targetPrice,
           action_id:`PS-ACT-${Date.now().toString(36).toUpperCase()}`,
+          downstream:downstreamPropagation?{channel:"jahez_via_mazeed",status:"pending",event_id:downstreamPropagation.id,message:"Confirmed in Zid. Waiting for independent Jahez verification."}:null,
+          downstream_warning:downstreamWarning,
           message:confirmed?"Price updated and confirmed live":result.success?`Live confirmation failed. ${rolledBack?"The original price was restored.":"Automatic rollback could not be confirmed."} ${verificationMessage??""}`:result.message??"Platform rejected the price update",
         });
       },

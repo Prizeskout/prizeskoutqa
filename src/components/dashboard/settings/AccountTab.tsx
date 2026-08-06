@@ -19,6 +19,7 @@ import {
   PLAN_LIMITS,
   PLAN_ACCENTS,
   freshnessI18nKey,
+  packageFeatureKeys,
   type Plan,
 } from "@/lib/plan-config";
 
@@ -289,6 +290,20 @@ function SubscriptionCard({ plan }: { plan: Plan }) {
             <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1A18", marginTop: 2 }}>{value}</div>
           </div>
         ))}
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#6B6B6B", marginBottom: 8 }}>
+          {t(`plans.packages.${plan}.audience`)}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 7 }}>
+          {packageFeatureKeys(plan).map((key) => (
+            <div key={key} style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 11.5, color: "#4A4A48", lineHeight: 1.45 }}>
+              <Check size={13} color={accent} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>{t(key)}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div style={{ marginTop: 14, fontSize: 12, color: "#9A9A9A" }}>

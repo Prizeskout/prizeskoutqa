@@ -8,6 +8,7 @@ type RecoveryCase={
   exception_amount:number|null;claims_ready_amount:number;confidence:string;
   explanation_en:string;explanation_ar:string;submission_deadline:string|null;
   owner:string|null;platform_response:string|null;recovered_amount:number;created_at:string;
+  submission_reference?:string|null;submitted_at?:string|null;submitted_by?:string|null;submission_evidence_hash?:string|null;
 };
 const input={border:"1px solid var(--border)",borderRadius:7,padding:"7px 8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontSize:11.5};
 const money=(n:number,currency:string)=>`${currency} ${n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -16,6 +17,7 @@ export function RecoveryWorkspace({findings,contract,currency,orderCount}:{findi
   const [cases,setCases]=useState<RecoveryCase[]>([]);
   const [busy,setBusy]=useState<string|null>(null);
   const [error,setError]=useState<string|null>(null);
+  const [submissionDrafts,setSubmissionDrafts]=useState<Record<string,{reference:string;submittedBy:string}>>({});
   const call=async(payload:Record<string,unknown>)=>{
     const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
       merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"recovery_cases",...payload,
@@ -60,6 +62,13 @@ export function RecoveryWorkspace({findings,contract,currency,orderCount}:{findi
       leak:money(item.claims_ready_amount,currency),hash,en:item.explanation_en,
     }],executions:[]});
   };
+  const recordSubmission=async(item:RecoveryCase)=>{
+    const draft=submissionDrafts[item.id]??{reference:"",submittedBy:item.owner??""};
+    if(!draft.reference.trim()||!draft.submittedBy.trim()){setError("Enter the partner submission reference and submitter name.");return;}
+    setBusy(item.id);setError(null);
+    try{await call({action:"record_submission",id:item.id,submission_reference:draft.reference,submitted_by:draft.submittedBy});await load();}
+    catch(err){setError(err instanceof Error?err.message:"Could not record submission.");}finally{setBusy(null);}
+  };
   const existing=new Set(cases.map(item=>item.exception_key));
   return <section style={{display:"flex",flexDirection:"column",gap:14}}>
     <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",flexWrap:"wrap"}}><div><div style={{fontSize:17,fontWeight:900}}>Claims and Recovery Workspace</div><div style={{fontSize:11.5,color:"var(--muted)",marginTop:3}}>Prepare payout disputes, see what proof is ready, and track money recovered. You record when a dispute is sent.</div></div><span style={{fontSize:11.5,fontWeight:800}}>{cases.length} cases · {money(cases.reduce((sum,item)=>sum+item.recovered_amount,0),currency)} recovered</span></div>
@@ -73,6 +82,8 @@ export function RecoveryWorkspace({findings,contract,currency,orderCount}:{findi
         <label style={{fontSize:10.5,fontWeight:800}}>Recovered amount<input type="number" defaultValue={item.recovered_amount} onBlur={e=>update(item,{recovered_amount:Number(e.target.value)})} style={{...input,width:"100%",boxSizing:"border-box",display:"block",marginTop:4}}/></label>
       </div>
       <details style={{marginTop:10}}><summary style={{fontSize:11.5,fontWeight:900,cursor:"pointer"}}>Bilingual claim narrative and platform response</summary><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:8,marginTop:8}}><div style={{fontSize:11.5,lineHeight:1.55,padding:9,border:"1px solid var(--border)",borderRadius:7}}>{item.explanation_en}</div><div dir="rtl" style={{fontSize:11.5,lineHeight:1.7,padding:9,border:"1px solid var(--border)",borderRadius:7}}>{item.explanation_ar}</div></div><textarea defaultValue={item.platform_response??""} onBlur={e=>update(item,{platform_response:e.target.value})} placeholder="Record the platform’s response; this does not submit anything." rows={2} style={{...input,width:"100%",boxSizing:"border-box",marginTop:8}}/></details>
+      {item.status==="ready"&&<div style={{display:"flex",gap:7,alignItems:"end",flexWrap:"wrap",marginTop:10,padding:10,border:"1px solid color-mix(in srgb,#087F5B 30%,var(--border))",borderRadius:8}}><label style={{fontSize:10.5,fontWeight:800}}>Partner submission reference<input style={{...input,display:"block",marginTop:4}} value={submissionDrafts[item.id]?.reference??""} onChange={e=>setSubmissionDrafts({...submissionDrafts,[item.id]:{reference:e.target.value,submittedBy:submissionDrafts[item.id]?.submittedBy??item.owner??""}})} placeholder="Ticket or claim ID"/></label><label style={{fontSize:10.5,fontWeight:800}}>Submitted by<input style={{...input,display:"block",marginTop:4}} value={submissionDrafts[item.id]?.submittedBy??item.owner??""} onChange={e=>setSubmissionDrafts({...submissionDrafts,[item.id]:{reference:submissionDrafts[item.id]?.reference??"",submittedBy:e.target.value}})} placeholder="Responsible person"/></label><button disabled={busy===item.id} onClick={()=>recordSubmission(item)} style={{border:0,borderRadius:7,padding:"8px 10px",background:"#087F5B",color:"#fff",fontFamily:"inherit",fontWeight:800}}>Record verified submission</button></div>}
+      {item.submission_reference&&<div style={{fontSize:10.5,color:"#087F5B",fontWeight:800,marginTop:9}}>Submitted · {item.submission_reference} · {item.submitted_by} · evidence {item.submission_evidence_hash?.slice(0,12)}…</div>}
       <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center",marginTop:9,flexWrap:"wrap"}}><div style={{display:"flex",gap:6,alignItems:"center",fontSize:10.5,color:item.status==="recovered"?"#087F5B":"var(--muted)"}}>{item.status==="recovered"?<CheckCircle2 size={13}/>:<Clock3 size={13}/>} {busy===item.id?"Saving…":item.status.replaceAll("_"," ")}</div><button type="button" onClick={()=>void downloadEvidence(item)} style={{display:"flex",gap:5,alignItems:"center",border:"1px solid var(--border)",borderRadius:7,padding:"6px 8px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontSize:10.5,fontWeight:800,cursor:"pointer"}}><Download size={13}/>Download evidence PDF</button></div>
     </article>)}</div>
     {error&&<div style={{fontSize:11.5,color:"#B42318"}}>{error}</div>}

@@ -8,6 +8,12 @@ import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
 import { DemoPlayer } from "@/components/landing/DemoPlayer";
+import {
+  PLAN_PRICES_QAR_ANNUAL_MONTHLY,
+  PLAN_PRICES_QAR_MONTHLY,
+  packageFeatureKeys,
+  type Plan,
+} from "@/lib/plan-config";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -678,46 +684,26 @@ function LandingFooter() {
 
 // ── PricingSection ────────────────────────────────────────────────────────────
 function getTiers(t: (key: string) => string) {
+  const packageCopy = (plan: Plan) => ({
+    name: t(`plans.${plan}Name`),
+    audience: t(`plans.packages.${plan}.audience`),
+    description: t(`plans.packages.${plan}.description`),
+    features: packageFeatureKeys(plan).map((key) => t(key)),
+  });
   return [
     {
-      name: t("landing.pricing.tiers.core.name"), badge: null, featured: false,
-      monthly: 349, annual: 279, currency: "QAR",
-      features: [
-        t("landing.pricing.tiers.core.features.0"),
-        t("landing.pricing.tiers.core.features.1"),
-        t("landing.pricing.tiers.core.features.2"),
-        t("landing.pricing.tiers.core.features.3"),
-        t("landing.pricing.tiers.core.features.4"),
-        t("landing.pricing.tiers.core.features.5"),
-      ],
+      ...packageCopy("starter"), badge: null, featured: false,
+      monthly: PLAN_PRICES_QAR_MONTHLY.starter, annual: PLAN_PRICES_QAR_ANNUAL_MONTHLY.starter, currency: "QAR",
       cta: t("landing.pricing.tiers.core.cta"), ctaHref: "/onboarding",
     },
     {
-      name: t("landing.pricing.tiers.growth.name"), badge: null, featured: true,
-      monthly: 1099, annual: 879, currency: "QAR",
-      features: [
-        t("landing.pricing.tiers.growth.features.0"),
-        t("landing.pricing.tiers.growth.features.1"),
-        t("landing.pricing.tiers.growth.features.2"),
-        t("landing.pricing.tiers.growth.features.3"),
-        t("landing.pricing.tiers.growth.features.4"),
-        t("landing.pricing.tiers.growth.features.5"),
-        t("landing.pricing.tiers.growth.features.6"),
-      ],
+      ...packageCopy("standard"), badge: null, featured: true,
+      monthly: PLAN_PRICES_QAR_MONTHLY.standard, annual: PLAN_PRICES_QAR_ANNUAL_MONTHLY.standard, currency: "QAR",
       cta: t("landing.pricing.tiers.growth.cta"), ctaHref: "/onboarding",
     },
     {
-      name: t("landing.pricing.tiers.enterprise.name"), badge: t("landing.pricing.tiers.enterprise.badge"), featured: false,
+      ...packageCopy("enterprise"), badge: t("landing.pricing.tiers.enterprise.badge"), featured: false,
       monthly: null, annual: null, currency: null,
-      features: [
-        t("landing.pricing.tiers.enterprise.features.0"),
-        t("landing.pricing.tiers.enterprise.features.1"),
-        t("landing.pricing.tiers.enterprise.features.2"),
-        t("landing.pricing.tiers.enterprise.features.3"),
-        t("landing.pricing.tiers.enterprise.features.4"),
-        t("landing.pricing.tiers.enterprise.features.5"),
-        t("landing.pricing.tiers.enterprise.features.6"),
-      ],
       cta: t("landing.pricing.tiers.enterprise.cta"), ctaHref: "/contact",
     },
   ];
@@ -731,8 +717,9 @@ function PricingSection({ market }: { market: Market }) {
     <section style={{ position: "relative", zIndex: 2, maxWidth: 1440, margin: "0 auto", padding: "80px clamp(24px,5vw,72px) 100px" }}>
       <div style={{ paddingTop: 40, marginBottom: 18, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
         <div>
-          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>GCC-SEGMENTED PRICING</div>
-          <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>Pricing that scales with your margin</h2>
+          <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.1em", color: OG, marginBottom: 12 }}>{t("landing.pricing.eyebrow")}</div>
+          <h2 style={{ fontSize: "clamp(34px,4.2vw,50px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 600, margin: 0, color: "var(--lp-text)" }}>{t("landing.pricing.title")}</h2>
+          <p style={{ maxWidth: 760, fontSize: 14, lineHeight: 1.65, color: "var(--lp-muted)", margin: "16px 0 0" }}>{t("landing.pricing.subtitle")}</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 0, background: "var(--lp-surface-3)", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: 3 }}>
           {(["Monthly", "Annual"] as const).map(b => (
@@ -765,6 +752,12 @@ function PricingSection({ market }: { market: Market }) {
                 <span style={{ fontFamily: MONO, fontSize: 10, color: tier.featured ? OG : "var(--lp-dim)", border: `1px solid ${tier.featured ? "rgba(239,104,26,0.35)" : "#2A2422"}`, borderRadius: 4, padding: "2px 7px" }}>{tier.badge}</span>
               )}
             </div>
+            <div style={{ fontFamily: MONO, fontSize: 10.5, color: OG, lineHeight: 1.5, marginBottom: 8 }}>
+              {tier.audience}
+            </div>
+            <p style={{ fontSize: 12.5, color: "var(--lp-dim)", lineHeight: 1.55, margin: "0 0 20px" }}>
+              {tier.description}
+            </p>
             <div style={{ marginBottom: 24 }}>
               {tier.monthly !== null ? (
                 <>
