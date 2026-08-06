@@ -276,18 +276,18 @@
     },
     "packages": {
       "starter": {
-        "audience": "For a merchant starting with one Zid store",
-        "description": "See true profit, monitor the market and test decisions before changing the store.",
+        "audience": "For a merchant operating one connected store or commerce channel",
+        "description": "Understand profit, monitor the market and take protected actions with the full PrizeSkout intelligence layer.",
         "features": [
-          "1 Zid store · 50 products · 1 user",
+          "1 connected store or commerce channel · 50 products · 1 user",
           "True profit by order, product and channel",
           "Payout checks and commission visibility",
           "Competitor Radar · 2 competitors per product · daily checks",
-          "Margin-safe price recommendations for merchant review",
+          "Margin policies and protected merchant-approved price actions",
           "Promotion and coupon profitability simulator",
-          "CFO Copilot for financial questions and explanations",
-          "AI Store Assistant for read-only catalogue and order review",
-          "Activity, decision and evidence history · email support"
+          "Full CFO Copilot and AI Store Assistant",
+          "Activity, decision and evidence history",
+          "Email support"
         ]
       },
       "standard": {
@@ -296,13 +296,13 @@
         "features": [
           "Everything in Core",
           "500 products · 5 competitors per product · 3 channels · 3 users",
-          "Twice-daily competitor checks and protected repricing",
-          "Margin policies, approval thresholds and verified price actions",
+          "Twice-daily competitor checks and policy-driven automated repricing",
+          "Approval thresholds, scheduled rules and verified automation",
           "Commission audits, discrepancy detection and recovery evidence packs",
           "Saved promotion scenarios, coupon-risk checks and launch tracking",
-          "Full CFO Copilot and approved AI Store Assistant actions",
-          "Approved Zid product, price, stock, coupon and order operations",
-          "Channel Price Architecture and Zid–Mazeed–Jahez propagation tracking",
+          "Team assignments, approval workflows and priority alerts",
+          "Approved catalogue, price, stock, coupon and order operations on supported channels",
+          "Channel Price Architecture and cross-channel propagation tracking",
           "Contract terms, audit history and priority support"
         ]
       },
@@ -636,12 +636,12 @@
     "starterName": "Core",
     "starterPrice": "QAR 349",
       "starterPriceSub": "/ mo · billed monthly",
-    "starterDesc": "Financial clarity, market monitoring and safe decision support for one Zid store.",
+    "starterDesc": "Financial clarity, market monitoring and protected actions for one connected store or commerce channel.",
       "starterF1": "50 products · 2 competitors / product",
       "starterF2": "Daily price refresh",
     "starterF3": "True profit, payout checks and daily Competitor Radar",
       "starterF4": "White-label / unbranded operation",
-    "starterF5": "1 user · CFO Copilot and read-only Store Assistant",
+    "starterF5": "1 user · full CFO Copilot and AI Store Assistant",
       "starterCta": "Get started",
     "standardName": "Growth",
     "standardPrice": "QAR 1,099",
@@ -667,12 +667,12 @@
         "core": {
           "name": "Core",
           "features": [
-            "Connect 1 Zid store",
+            "Connect 1 store or commerce channel",
             "True profit by order, product & channel",
             "Payout checks & commission visibility",
-            "CFO Copilot financial answers",
-            "Read-only AI Store Assistant",
-            "Email support"
+            "Full CFO Copilot + AI Store Assistant",
+            "Margin policies & protected price actions",
+            "Promotion simulator, evidence history & email support"
           ],
           "cta": "Start Core Trial"
         },
@@ -683,8 +683,8 @@
             "Commission audits, recovery & evidence packs",
             "Margin policies & protected price actions",
             "Promotion and coupon profitability",
-            "Full CFO Copilot + AI Store Assistant",
-            "Approved Zid product, price & order actions",
+            "Team approvals, assignments and priority alerts",
+            "Approved catalogue, price, stock, coupon & order operations",
             "Priority support"
           ],
           "cta": "Choose Growth"

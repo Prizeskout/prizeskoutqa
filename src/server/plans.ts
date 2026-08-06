@@ -14,13 +14,14 @@ export type PlanCapability =
   | "competitor_radar"
   | "promotion_simulator"
   | "cfo_copilot"
-  | "store_assistant_read"
+  | "store_assistant"
   | "evidence_history"
-  | "protected_repricing"
+  | "protected_price_actions"
+  | "automated_repricing"
   | "commission_audits"
   | "recovery_workflows"
   | "channel_price_architecture"
-  | "zid_store_actions"
+  | "supported_channel_actions"
   | "promotion_operations"
   | "contract_terms"
   | "multi_store_controls"
@@ -77,8 +78,9 @@ export const PLAN_CAPABILITIES: Record<Plan, ReadonlySet<PlanCapability>> = {
     "competitor_radar",
     "promotion_simulator",
     "cfo_copilot",
-    "store_assistant_read",
+    "store_assistant",
     "evidence_history",
+    "protected_price_actions",
   ]),
   standard: new Set([
     "profit_visibility",
@@ -86,13 +88,14 @@ export const PLAN_CAPABILITIES: Record<Plan, ReadonlySet<PlanCapability>> = {
     "competitor_radar",
     "promotion_simulator",
     "cfo_copilot",
-    "store_assistant_read",
+    "store_assistant",
     "evidence_history",
-    "protected_repricing",
+    "protected_price_actions",
+    "automated_repricing",
     "commission_audits",
     "recovery_workflows",
     "channel_price_architecture",
-    "zid_store_actions",
+    "supported_channel_actions",
     "promotion_operations",
     "contract_terms",
   ]),
@@ -102,13 +105,14 @@ export const PLAN_CAPABILITIES: Record<Plan, ReadonlySet<PlanCapability>> = {
     "competitor_radar",
     "promotion_simulator",
     "cfo_copilot",
-    "store_assistant_read",
+    "store_assistant",
     "evidence_history",
-    "protected_repricing",
+    "protected_price_actions",
+    "automated_repricing",
     "commission_audits",
     "recovery_workflows",
     "channel_price_architecture",
-    "zid_store_actions",
+    "supported_channel_actions",
     "promotion_operations",
     "contract_terms",
     "multi_store_controls",
@@ -160,7 +164,7 @@ export function requiredPlanForRoute(method: string, path: string): Plan {
   if (path.startsWith("/v1/flash/")) return "standard";
   if (path.startsWith("/v1/group/")) return "standard";
   if (path.startsWith("/v1/audit/")) return "standard";
-  if (`${method} ${path}` === "POST /v1/pricing/decisions") return "standard";
+  if (`${method} ${path}` === "POST /v1/pricing/decisions") return "starter";
 
   // Starter (all remaining routes)
   return "starter";

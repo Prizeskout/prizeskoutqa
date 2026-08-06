@@ -19,7 +19,9 @@ try {
   await page.getByText("QAR 1099", { exact: false }).waitFor();
   await page.getByText("Custom", { exact: true }).last().waitFor();
   await page.getByText("Competitor Radar · 2 competitors per product · daily checks", { exact: true }).waitFor();
-  await page.getByText("Channel Price Architecture and Zid–Mazeed–Jahez propagation tracking", { exact: true }).waitFor();
+  await page.getByText("Full CFO Copilot and AI Store Assistant", { exact: true }).waitFor();
+  await page.getByText("Margin policies and protected merchant-approved price actions", { exact: true }).waitFor();
+  await page.getByText("Channel Price Architecture and cross-channel propagation tracking", { exact: true }).waitFor();
   await page.getByText("Autonomous audit and recovery workflows with manual fallback", { exact: true }).waitFor();
   assert.deepEqual(pageErrors, [], `Pricing page errors: ${pageErrors.join("; ")}`);
   console.log("Core, Growth and Enterprise pricing cards rendered with unchanged prices and current product capabilities.");

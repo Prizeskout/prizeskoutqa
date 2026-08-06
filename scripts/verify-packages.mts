@@ -30,10 +30,11 @@ for (const capability of PLAN_CAPABILITIES.standard) {
 }
 
 assert.equal(hasPlanCapability("starter", "competitor_radar"), true);
-assert.equal(hasPlanCapability("starter", "protected_repricing"), false);
-assert.equal(minPlanForCapability("protected_repricing"), "standard");
+assert.equal(hasPlanCapability("starter", "protected_price_actions"), true);
+assert.equal(hasPlanCapability("starter", "store_assistant"), true);
+assert.equal(minPlanForCapability("automated_repricing"), "standard");
 assert.equal(minPlanForCapability("group_governance"), "enterprise");
-assert.equal(requiredPlanForRoute("POST", "/v1/pricing/decisions"), "standard");
+assert.equal(requiredPlanForRoute("POST", "/v1/pricing/decisions"), "starter");
 assert.equal(requiredPlanForRoute("GET", "/v1/embed/config"), "enterprise");
 
 for (const locale of ["en", "ar", "fr"]) {
