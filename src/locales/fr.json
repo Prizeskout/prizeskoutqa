@@ -616,9 +616,11 @@
         "core": {
           "name": "Core",
           "features": [
-            "1 canal entrant",
-            "1 500 synchronisations / mois",
-            "Moteur de marge",
+            "Connexion d’une boutique Zid",
+            "Profit réel par commande, produit et canal",
+            "Contrôle des versements et visibilité des commissions",
+            "Réponses financières du CFO Copilot",
+            "Assistant boutique IA en lecture seule",
             "Support par e-mail"
           ],
           "cta": "Démarrer l'essai Core"
@@ -626,24 +628,27 @@
         "growth": {
           "name": "Growth",
           "features": [
-            "Canaux illimités",
-            "Garantie de latence sous 2 secondes",
-            "15 000 synchronisations / mois",
-            "Veille concurrentielle",
-            "Support Slack prioritaire"
+            "Tout Core",
+            "Audit des commissions, recouvrement et preuves",
+            "Politiques de marge et actions tarifaires protégées",
+            "Rentabilité des promotions et coupons",
+            "CFO Copilot et assistant boutique IA complets",
+            "Actions Zid approuvées sur produits, prix et commandes",
+            "Support prioritaire"
           ],
           "cta": "Choisir le plan Growth"
         },
         "enterprise": {
           "name": "Enterprise",
-          "badge": "ACV sur mesure",
+          "badge": "Sur mesure",
           "features": [
-            "Connecteurs SAP / Oracle ERP",
-            "Résidence de base de données dédiée",
-            "SLA 99,99%",
-            "CSM dédié",
-            "Synchronisations illimitées / mois",
-            "Support 24/7"
+            "Tout Growth",
+            "Contrôles multi-boutiques, sites et groupes",
+            "Intelligence contractuelle et prévision des règlements",
+            "Réclamations, recouvrement et clôture mensuelle",
+            "Approbations par rôle et gouvernance d’audit",
+            "Copilot et assistant boutique à l’échelle du groupe",
+            "Responsable succès dédié et SLA personnalisé"
           ],
           "cta": "Contacter les ventes"
         }

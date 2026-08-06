@@ -618,34 +618,39 @@
         "core": {
           "name": "Core",
           "features": [
-            "1 Inbound Channel",
-            "1,500 syncs / month",
-            "Margin Engine",
-            "Email Support"
+            "Connect 1 Zid store",
+            "True profit by order, product & channel",
+            "Payout checks & commission visibility",
+            "CFO Copilot financial answers",
+            "Read-only AI Store Assistant",
+            "Email support"
           ],
           "cta": "Start Core Trial"
         },
         "growth": {
           "name": "Growth",
           "features": [
-            "Unlimited Channels",
-            "Under 2 Second Latency Guarantee",
-            "15,000 syncs / month",
-            "Competitor Radar",
-            "Slack + Priority Support"
+            "Everything in Core",
+            "Commission audits, recovery & evidence packs",
+            "Margin policies & protected price actions",
+            "Promotion and coupon profitability",
+            "Full CFO Copilot + AI Store Assistant",
+            "Approved Zid product, price & order actions",
+            "Priority support"
           ],
-          "cta": "Secure Growth Plan"
+          "cta": "Choose Growth"
         },
         "enterprise": {
           "name": "Enterprise",
-          "badge": "Custom ACV",
+          "badge": "Custom",
           "features": [
-            "SAP / Oracle ERP Hooks",
-            "Dedicated DB Residency",
-            "99.99% SLA",
-            "Dedicated CSM",
-            "Unlimited syncs / month",
-            "24/7 Support"
+            "Everything in Growth",
+            "Multi-store, location & group controls",
+            "Contract intelligence & settlement forecasting",
+            "Claims, recovery & month-end close",
+            "Role-based approvals and audit governance",
+            "Group-wide Copilot and Store Assistant",
+            "Dedicated success manager & custom SLA"
           ],
           "cta": "Contact Sales"
         }
