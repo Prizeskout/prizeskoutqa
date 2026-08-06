@@ -53,6 +53,7 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
         .select("url")
         .eq("product", product)
         .eq("competitor", competitorKey)
+        .eq("channel", "online")
         .maybeSingle();
       if (error) throw error;
       return data?.url ?? "";
@@ -86,15 +87,16 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
               user_id: userId,
               product,
               competitor: competitorKey,
+              channel: "online",
               url: submittedUrl,
             },
-            { onConflict: "user_id,product,competitor" },
+            { onConflict: "user_id,product,channel,competitor" },
           );
         if (upsertError) throw new Error(`Failed to save URL: ${upsertError.message}`);
       }
 
       const res = await scrapeCompetitorUrl({
-        data: { url: submittedUrl, product, competitor },
+        data: { url: submittedUrl, product, competitor, channel: "online", matchConfidence: 1 },
       });
       if (!res.ok) throw new Error(res.error || "Scrape failed");
       return res;

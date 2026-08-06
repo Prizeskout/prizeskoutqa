@@ -58,7 +58,10 @@ type DueUrl = {
   is_due: boolean;
 };
 
-type Watcher = { user_id: string; product: string; competitor: string };
+type Watcher = {
+  user_id: string; product: string; competitor: string; channel: string;
+  match_confidence: number; match_status: string;
+};
 
 export const Route = createFileRoute("/api/public/hooks/scrape-all")({
   server: {
@@ -123,6 +126,7 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
           let fetchCurrency: string | null = null;
           let fetchStatus: "ok" | "null_price" | "failed" = "failed";
           let fetchError = "";
+          let observation: Record<string, unknown> = {};
 
           if (dryRun) {
             // Deterministic stub: avoids Firecrawl spend while exercising the
@@ -138,6 +142,16 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
               fetchPrice    = raw.price;
               fetchCurrency = raw.currency;
               fetchStatus   = "ok";
+              observation = {
+                original_price: raw.originalPrice,
+                availability: raw.availability,
+                product_title: raw.productTitle,
+                sku: raw.sku,
+                gtin: raw.gtin,
+                seller: raw.seller,
+                evidence: raw.evidence,
+                collector: "firecrawl",
+              };
             } else {
               fetchError  = raw.error;
               fetchStatus = raw.category;
@@ -189,6 +203,9 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
                   product:    w.product,
                   price:      fetchPrice,
                   currency:   fetchCurrency,
+                  channel:    w.channel,
+                  match_confidence: w.match_confidence,
+                  ...observation,
                   status:     "success",
                   scraped_at: now,
                 }
@@ -198,6 +215,8 @@ export const Route = createFileRoute("/api/public/hooks/scrape-all")({
                   competitor: w.competitor,
                   product:    w.product,
                   price:      null,
+                  channel:    w.channel,
+                  match_confidence: w.match_confidence,
                   status:     fetchStatus,
                   error:      fetchError || null,
                   scraped_at: now,

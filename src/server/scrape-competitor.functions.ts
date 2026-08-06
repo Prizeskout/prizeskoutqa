@@ -14,6 +14,8 @@ const InputSchema = z.object({
   url: z.string().url().max(2048),
   competitor: z.string().min(1).max(120).optional(),
   product: z.string().min(1).max(240).optional(),
+  channel: z.string().min(1).max(80).default('online'),
+  matchConfidence: z.number().min(0).max(1).optional(),
 });
 
 export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
@@ -26,6 +28,8 @@ export const scrapeCompetitorUrl = createServerFn({ method: 'POST' })
       url: data.url,
       product: data.product,
       competitor: data.competitor,
+      channel: data.channel,
+      matchConfidence: data.matchConfidence,
     });
 
     if (!result.ok) {
@@ -46,7 +50,7 @@ export const listLatestScrapes = createServerFn({ method: 'GET' })
     const { supabase, userId } = context;
 
     const { data, error } = await (supabase.from('competitor_scrapes') as any)
-      .select('id, url, competitor, product, price, currency, status, scraped_at')
+      .select('id, url, competitor, product, channel, price, currency, availability, evidence, status, scraped_at')
       .eq('user_id', userId)
       .eq('status', 'success')
       .order('scraped_at', { ascending: false })

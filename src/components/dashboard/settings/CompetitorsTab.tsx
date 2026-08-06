@@ -24,9 +24,10 @@ type ProductUrl = {
   product: string;
   url: string;
   category: string | null;
+  channel: string;
 };
 
-type Channel = "Online" | "In-Store";
+type Channel = string;
 type Status = "Active" | "Partial";
 
 type Competitor = {
@@ -38,7 +39,7 @@ type Competitor = {
 
 function ChannelPill({ channel }: { channel: Channel }) {
   const { t } = useTranslation();
-  const isOnline = channel === "Online";
+  const isOnline = channel.toLowerCase() !== "in-store";
   return (
     <span
       style={{
@@ -50,7 +51,7 @@ function ChannelPill({ channel }: { channel: Channel }) {
         borderRadius: 12,
       }}
     >
-      {isOnline ? t("settingsTabs.competitors.channels.online") : t("settingsTabs.competitors.channels.inStore")}
+      {channel}
     </span>
   );
 }
@@ -129,6 +130,7 @@ function AddCompetitorModal({
   const [product, setProduct] = useState("");
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("");
+  const [channel, setChannel] = useState("zid");
   const [saving, setSaving] = useState(false);
 
   const canSave = competitorName.trim() && product.trim() && url.trim();
@@ -143,6 +145,9 @@ function AddCompetitorModal({
         product: product.trim(),
         url: url.trim(),
         category: category.trim() || null,
+        channel: channel.trim().toLowerCase(),
+        match_status: "manual_confirmed",
+        match_confidence: 1,
       });
       if (error) throw error;
       toast.success(t("settingsTabs.competitors.toasts.addedToTracking", { name: competitorName.trim() }));
@@ -158,6 +163,11 @@ function AddCompetitorModal({
   return (
     <ModalShell title={t("settingsTabs.competitors.addModal.title")} onClose={onClose}>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <FieldRow>
+          <Field label={t("settingsTabs.competitors.addModal.channel")}>
+            <TextField value={channel} onChange={setChannel} placeholder={t("settingsTabs.competitors.addModal.channelPlaceholder")} />
+          </Field>
+        </FieldRow>
         <FieldRow>
           <Field label={t("settingsTabs.competitors.addModal.competitorName")}>
             <TextField value={competitorName} onChange={setCompetitorName} placeholder={t("settingsTabs.competitors.addModal.competitorNamePlaceholder")} />
@@ -286,6 +296,7 @@ function EditCompetitorModal({
   const [newProduct, setNewProduct] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [newChannel, setNewChannel] = useState("zid");
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -293,7 +304,7 @@ function EditCompetitorModal({
     (async () => {
       const { data } = await supabase
         .from("competitor_product_urls")
-        .select("id, product, url, category")
+        .select("id, product, url, category, channel")
         .eq("user_id", userId)
         .eq("competitor", competitorName)
         .order("created_at", { ascending: true });
@@ -314,14 +325,18 @@ function EditCompetitorModal({
           product: newProduct.trim(),
           url: newUrl.trim(),
           category: newCategory.trim() || null,
+          channel: newChannel.trim().toLowerCase(),
+          match_status: "manual_confirmed",
+          match_confidence: 1,
         })
-        .select("id, product, url, category")
+        .select("id, product, url, category, channel")
         .single();
       if (error) throw error;
       setUrls((prev) => [...prev, data as ProductUrl]);
       setNewProduct("");
       setNewUrl("");
       setNewCategory("");
+      setNewChannel("zid");
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("settingsTabs.competitors.toasts.urlAddFailed"));
@@ -392,6 +407,7 @@ function EditCompetitorModal({
                     {u.category && (
                       <div style={{ fontSize: 10, color: "#9A9A9A", marginTop: 2 }}>{u.category}</div>
                     )}
+                    <div style={{ fontSize: 10, color: "#F66B21", marginTop: 2, textTransform: "uppercase" }}>{u.channel}</div>
                   </div>
                   <button
                     type="button"
@@ -422,6 +438,11 @@ function EditCompetitorModal({
             {t("settingsTabs.competitors.editModal.addProductUrl")}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <FieldRow>
+              <Field label={t("settingsTabs.competitors.editModal.channel")}>
+                <TextField value={newChannel} onChange={setNewChannel} placeholder={t("settingsTabs.competitors.addModal.channelPlaceholder")} />
+              </Field>
+            </FieldRow>
             <FieldRow>
               <Field label={t("settingsTabs.competitors.editModal.productName")}>
                 <TextField value={newProduct} onChange={setNewProduct} placeholder={t("settingsTabs.competitors.editModal.productNamePlaceholder")} />
@@ -485,20 +506,21 @@ export function CompetitorsTab() {
     setLoading(true);
     const { data } = await supabase
       .from("competitor_product_urls")
-      .select("competitor, product")
+      .select("competitor, product, channel")
       .eq("user_id", user.id);
 
     if (data) {
-      const grouped = new Map<string, Set<string>>();
+      const grouped = new Map<string, { products: Set<string>; channels: Set<string> }>();
       for (const row of data) {
-        if (!grouped.has(row.competitor)) grouped.set(row.competitor, new Set());
-        grouped.get(row.competitor)!.add(row.product);
+        if (!grouped.has(row.competitor)) grouped.set(row.competitor, { products: new Set(), channels: new Set() });
+        grouped.get(row.competitor)!.products.add(row.product);
+        grouped.get(row.competitor)!.channels.add(row.channel);
       }
       setCompetitors(
-        Array.from(grouped.entries()).map(([name, products]) => ({
+        Array.from(grouped.entries()).map(([name, tracked]) => ({
           name,
-          channels: ["Online" as const],
-          products: products.size,
+          channels: Array.from(tracked.channels),
+          products: tracked.products.size,
           status: "Active" as const,
         }))
       );

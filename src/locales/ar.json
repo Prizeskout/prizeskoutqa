@@ -296,7 +296,7 @@
       "h1Line2": "هامشك، محمي.",
       "subtitlePre": "PrizeSkout يعيد حساب",
       "subtitleStrong": "أسعار آمنة للهامش",
-      "subtitlePost": "وينشرها مباشرة عبر طلبات وجاهز ونون وكريم وغيرها، في أقل من ثانيتين، على كل قائمة طعام، تلقائياً.",
+      "subtitlePost": "وينشرها تلقائياً عبر طلبات وجاهز ونون وكريم وكل قائمة طعام متصلة.",
       "ctaPrimary": "احصل على الوصول",
       "ctaSecondary": "قراءة وثائق SDK"
     },
@@ -453,7 +453,7 @@
         "col2": "المطوّرون",
         "col3": "القانونية والامتثال",
         "copyright": "© 2026 PrizeSkout LLC, Qatar",
-        "tagline": "مبني لحافة الخليج · أقل من ثانيتين"
+        "tagline": "مصمم للتسعير الآلي عبر التجارة الخليجية"
       }
     },
     "home": {
@@ -1075,6 +1075,8 @@
         "productPlaceholder": "مثال: Sony WH-1000XM5",
         "productUrl": "رابط المنتج",
         "urlPlaceholder": "https://...",
+        "channel": "قناة البيع",
+        "channelPlaceholder": "مثال: زد، طلبات، نون",
         "category": "الفئة (اختياري)",
         "categoryPlaceholder": "مثال: إلكترونيات",
         "adding": "جارٍ الإضافة…",
@@ -1097,6 +1099,7 @@
         "productNamePlaceholder": "مثال: Sony WH-1000XM5",
         "url": "الرابط",
         "urlPlaceholder": "https://...",
+        "channel": "قناة البيع",
         "category": "الفئة (اختياري)",
         "categoryPlaceholder": "مثال: إلكترونيات",
         "adding": "جارٍ الإضافة…",

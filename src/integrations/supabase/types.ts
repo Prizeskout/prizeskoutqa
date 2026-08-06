@@ -747,9 +747,15 @@ export type Database = {
       competitor_product_urls: {
         Row: {
           category: string | null
+          channel: string
           competitor: string
+          competitor_sku: string | null
           created_at: string
           id: string
+          gtin: string | null
+          match_confidence: number
+          match_status: string
+          merchant_sku: string | null
           product: string
           updated_at: string
           url: string
@@ -757,9 +763,15 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          channel?: string
           competitor?: string
+          competitor_sku?: string | null
           created_at?: string
           id?: string
+          gtin?: string | null
+          match_confidence?: number
+          match_status?: string
+          merchant_sku?: string | null
           product: string
           updated_at?: string
           url: string
@@ -767,9 +779,15 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          channel?: string
           competitor?: string
+          competitor_sku?: string | null
           created_at?: string
           id?: string
+          gtin?: string | null
+          match_confidence?: number
+          match_status?: string
+          merchant_sku?: string | null
           product?: string
           updated_at?: string
           url?: string
@@ -824,46 +842,76 @@ export type Database = {
       }
       competitor_scrapes: {
         Row: {
+          availability: string
+          channel: string
+          collector: string
           competitor: string | null
           created_at: string
           currency: string | null
           error: string | null
+          evidence: Json
+          gtin: string | null
           id: string
           markdown: string | null
+          match_confidence: number | null
           metadata: Json | null
           price: number | null
+          original_price: number | null
+          product_title: string | null
           product: string | null
           scraped_at: string
+          seller: string | null
+          sku: string | null
           status: string
           url: string
           user_id: string
         }
         Insert: {
+          availability?: string
+          channel?: string
+          collector?: string
           competitor?: string | null
           created_at?: string
           currency?: string | null
           error?: string | null
+          evidence?: Json
+          gtin?: string | null
           id?: string
           markdown?: string | null
+          match_confidence?: number | null
           metadata?: Json | null
           price?: number | null
+          original_price?: number | null
+          product_title?: string | null
           product?: string | null
           scraped_at?: string
+          seller?: string | null
+          sku?: string | null
           status?: string
           url: string
           user_id: string
         }
         Update: {
+          availability?: string
+          channel?: string
+          collector?: string
           competitor?: string | null
           created_at?: string
           currency?: string | null
           error?: string | null
+          evidence?: Json
+          gtin?: string | null
           id?: string
           markdown?: string | null
+          match_confidence?: number | null
           metadata?: Json | null
           price?: number | null
+          original_price?: number | null
+          product_title?: string | null
           product?: string | null
           scraped_at?: string
+          seller?: string | null
+          sku?: string | null
           status?: string
           url?: string
           user_id?: string

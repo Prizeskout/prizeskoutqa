@@ -298,7 +298,7 @@
       "h1Line2": "Your margin, defended.",
       "subtitlePre": "PrizeSkout recalculates",
       "subtitleStrong": "margin-safe prices",
-      "subtitlePost": "and pushes them live across Talabat, Jahez, Noon and Careem and others, in under two seconds, on every menu, automatically.",
+      "subtitlePost": "and publishes them automatically across Talabat, Jahez, Noon, Careem and every connected menu.",
       "ctaPrimary": "Get Access",
       "ctaSecondary": "Read SDK Docs"
     },
@@ -455,7 +455,7 @@
         "col2": "DEVELOPERS",
         "col3": "LEGAL & COMPLIANCE",
         "copyright": "© 2026 PrizeSkout LLC, Qatar",
-        "tagline": "Built for the GCC edge, processing in under 2 seconds"
+        "tagline": "Built for automated pricing across GCC commerce"
       }
     },
     "home": {
@@ -1077,6 +1077,8 @@
         "productPlaceholder": "e.g. Sony WH-1000XM5",
         "productUrl": "Product URL",
         "urlPlaceholder": "https://...",
+        "channel": "Sales channel",
+        "channelPlaceholder": "e.g. zid, talabat, noon",
         "category": "Category (optional)",
         "categoryPlaceholder": "e.g. Electronics",
         "adding": "Adding…",
@@ -1099,6 +1101,7 @@
         "productNamePlaceholder": "e.g. Sony WH-1000XM5",
         "url": "URL",
         "urlPlaceholder": "https://...",
+        "channel": "Sales channel",
         "category": "Category (optional)",
         "categoryPlaceholder": "e.g. Electronics",
         "adding": "Adding…",

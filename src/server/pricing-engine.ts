@@ -52,6 +52,10 @@ type ScrapeRow = {
   competitor: string | null;
   price: number | null;
   scraped_at: string;
+  channel?: string;
+  availability?: "in_stock" | "out_of_stock" | "unknown";
+  match_confidence?: number | null;
+  evidence?: Record<string, unknown> | null;
 };
 
 type UrlRow = {
@@ -59,6 +63,9 @@ type UrlRow = {
   competitor: string;
   category: string | null;
   url: string;
+  channel?: string;
+  match_status?: "manual_confirmed" | "auto_matched" | "needs_review" | "rejected";
+  match_confidence?: number;
 };
 
 type RoiCategoryRow = {
@@ -82,7 +89,7 @@ export type ComputedRecommendation = {
   user_id: string;
   product: string;
   category: string;
-  channel: "Online" | "In-Store";
+  channel: string;
   current_price: number;
   recommended_price: number;
   reason: string;
@@ -103,6 +110,7 @@ export type OutlierFlag = {
 
 export type ProductDiagnostic = {
   product: string;
+  channel: string;
   selfPriceSource: "self_url_scrape" | "catalog_prices" | null;
   selfPrice: number | null;
   competitorMin: number | null;
@@ -203,7 +211,12 @@ export function computeRecommendations(input: ComputeInput): {
   reasons: string[];
   diagnostics: ProductDiagnostic[];
 } {
-  const { userId, urls, scrapes, roiCategories, rules, catalogPrices, unitCostByProduct, landedCostByProduct, channelCostByChannel } = input;
+  const {
+    userId, urls, scrapes, roiCategories, rules, catalogPrices,
+    unitCostByProduct = new Map<string, number>(),
+    landedCostByProduct = new Map<string, number>(),
+    channelCostByChannel = new Map<string, ChannelCosts>(),
+  } = input;
   const reasons: string[] = [];
   const diagnostics: ProductDiagnostic[] = [];
 
@@ -215,20 +228,26 @@ export function computeRecommendations(input: ComputeInput): {
     if (!latestByUrl.has(s.url)) latestByUrl.set(s.url, s);
   }
 
-  // Group URLs by product.
+  // Group URLs by product AND channel. Cross-channel comparisons are not
+  // economically equivalent and must never influence the same recommendation.
   const urlsByProduct = new Map<string, UrlRow[]>();
   for (const u of urls) {
-    const list = urlsByProduct.get(u.product) ?? [];
+    if (u.match_status === "rejected") continue;
+    const key = `${u.product}\u0000${(u.channel ?? "online").toLowerCase()}`;
+    const list = urlsByProduct.get(key) ?? [];
     list.push(u);
-    urlsByProduct.set(u.product, list);
+    urlsByProduct.set(key, list);
   }
 
   const recs: ComputedRecommendation[] = [];
   let position = 0;
 
-  for (const [product, productUrls] of urlsByProduct) {
+  for (const [groupKey, productUrls] of urlsByProduct) {
+    const [product, channelKey] = groupKey.split("\u0000");
+    const channel = productUrls[0]?.channel || channelKey || "online";
     const diag: ProductDiagnostic = {
       product,
+      channel,
       selfPriceSource: null,
       selfPrice: null,
       competitorMin: null,
@@ -257,7 +276,9 @@ export function computeRecommendations(input: ComputeInput): {
     }
 
     if (currentPrice === null) {
-      const catalogPrice = catalogPrices.get(product.toLowerCase());
+      const catalogPrice =
+        catalogPrices.get(`${product.toLowerCase()}\u0000${channel.toLowerCase()}`) ??
+        catalogPrices.get(product.toLowerCase());
       if (catalogPrice !== undefined) {
         currentPrice = catalogPrice;
         diag.selfPriceSource = "catalog_prices";
@@ -285,7 +306,11 @@ export function computeRecommendations(input: ComputeInput): {
     for (const u of productUrls) {
       if (u.competitor.toLowerCase() === SELF_COMPETITOR_LABEL) continue;
       const s = latestByUrl.get(u.url);
-      if (!s || s.price === null) continue;
+      if (!s || s.price === null || s.availability === "out_of_stock") continue;
+      // Auto-matched products require high confidence. Manually confirmed URLs
+      // remain authoritative even when a historic observation lacks a score.
+      const confidence = s.match_confidence ?? u.match_confidence ?? 1;
+      if ((u.match_status ?? "manual_confirmed") !== "manual_confirmed" && confidence < 0.9) continue;
       competitorScrapes.push({
         competitor: u.competitor,
         price: s.price,
@@ -379,7 +404,7 @@ export function computeRecommendations(input: ComputeInput): {
     }
     const unitCost = unitCostByProduct.get(product.toLowerCase()) ?? null;
     const landedCost = landedCostByProduct.get(product.toLowerCase()) ?? null;
-    const channelCosts = channelCostByChannel.get("online") ?? null;
+    const channelCosts = channelCostByChannel.get(channel.toLowerCase()) ?? null;
 
     const ctx: RuleContext = {
       currentPrice,
@@ -489,6 +514,7 @@ export function computeRecommendations(input: ComputeInput): {
     const reasonParams = {
       competitor_count: usableScrapes.length,
       competitor_list: competitorList,
+      channel,
       market_price: fmtQar(medianCompetitor),
       min: fmtQar(minCompetitor),
       gap_qar: String(gapQar),
@@ -510,7 +536,7 @@ export function computeRecommendations(input: ComputeInput): {
       user_id: userId,
       product,
       category: category || roi.category,
-      channel: "Online",
+      channel,
       current_price: currentPrice,
       recommended_price: recommendedPrice,
       reason,
@@ -548,10 +574,10 @@ export async function runPricingEngineForUser(
   // 2. Load all inputs in parallel.
   const [urlsRes, scrapesRes, roiRes, rulesRes] = await Promise.all([
     (supabase.from("competitor_product_urls") as any)
-      .select("product, competitor, category, url")
+      .select("product, competitor, category, url, channel, match_status, match_confidence")
       .eq("user_id", userId),
     (supabase.from("competitor_scrapes") as any)
-      .select("url, product, competitor, price, scraped_at")
+      .select("url, product, competitor, price, scraped_at, channel, availability, match_confidence, evidence")
       .eq("user_id", userId)
       .eq("status", "success")
       .order("scraped_at", { ascending: false })
@@ -576,14 +602,16 @@ export async function runPricingEngineForUser(
   if (accountId) {
     const { data: catalogRows } = await (supabase as any)
       .from("catalog_prices")
-      .select("list_price, sale_price, catalog_products(name)")
+      .select("list_price, sale_price, channel, catalog_products(name)")
       .eq("account_id", accountId);
 
     for (const row of (catalogRows ?? []) as any[]) {
       const name: string | undefined = row.catalog_products?.name;
       if (!name) continue;
       const price = Number(row.sale_price ?? row.list_price);
-      if (price > 0) catalogPrices.set(name.toLowerCase(), price);
+      if (price > 0) {
+        catalogPrices.set(`${name.toLowerCase()}\u0000${String(row.channel).toLowerCase()}`, price);
+      }
     }
   }
 
@@ -668,10 +696,12 @@ export async function runPricingEngineForUser(
 
     // Write immutable audit records to pricing_decisions for every recommendation.
     const diagByProduct = new Map<string, ProductDiagnostic>();
-    for (const d of diagnostics) diagByProduct.set(d.product.toLowerCase(), d);
+    for (const d of diagnostics) {
+      diagByProduct.set(`${d.product.toLowerCase()}\u0000${d.channel.toLowerCase()}`, d);
+    }
 
     const auditRows = recs.map((rec) => {
-      const diag = diagByProduct.get(rec.product.toLowerCase());
+      const diag = diagByProduct.get(`${rec.product.toLowerCase()}\u0000${rec.channel.toLowerCase()}`);
       const clampedEffects = (diag?.ruleEffects ?? []).filter((e) => e.clamped);
       const firstClamped = clampedEffects[0] ?? null;
 
@@ -704,11 +734,11 @@ export async function runPricingEngineForUser(
       const costSnap: Record<string, unknown> = {};
       const uc = unitCostByProduct.get(pk);
       const lc = landedCostByProduct.get(pk);
-      const ch = channelCostByChannel.get("online");
+      const ch = channelCostByChannel.get(rec.channel.toLowerCase());
       if (uc != null) costSnap.unit_cost = uc;
       if (lc != null) costSnap.landed_cost = lc;
       if (ch) {
-        costSnap.channel = "Online";
+        costSnap.channel = rec.channel;
         costSnap.commission_pct = ch.commission_pct;
         costSnap.delivery_cost = ch.delivery_cost;
         costSnap.payment_pct = ch.payment_pct;
@@ -731,6 +761,7 @@ export async function runPricingEngineForUser(
           self_price: diag?.selfPrice ?? null,
           self_price_source: diag?.selfPriceSource ?? null,
           competitor_prices: competitorPrices,
+          channel: rec.channel,
           median_competitor: rawMedian,
           min_competitor: diag?.competitorMin ?? null,
           gap_pct:

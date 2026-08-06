@@ -21,12 +21,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createNotification } from "./notifications";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeUrl } from "./url-normalize";
+import type {
+  Availability,
+  CollectionResult,
+  CompetitorCollector,
+} from "./competitor-collector";
 
 const PriceSchema = {
   type: "object",
   properties: {
     price: { type: "number", description: "Numeric product price, no currency symbol" },
     currency: { type: "string", description: "ISO currency code or symbol shown on the page" },
+    original_price: { type: "number", description: "Crossed-out price before discount, if visible" },
+    availability: { type: "string", enum: ["in_stock", "out_of_stock", "unknown"] },
+    product_title: { type: "string" },
+    sku: { type: "string" },
+    gtin: { type: "string", description: "Barcode, EAN, UPC, or GTIN" },
+    seller: { type: "string" },
   },
   required: ["price"],
 } as const;
@@ -40,7 +51,11 @@ type FirecrawlScrapeResponse = {
   success?: boolean;
   data?: {
     markdown?: string;
-    json?: { price?: number; currency?: string };
+    json?: {
+      price?: number; currency?: string; original_price?: number;
+      availability?: Availability; product_title?: string; sku?: string;
+      gtin?: string; seller?: string;
+    };
     metadata?: Record<string, unknown>;
   };
   error?: string;
@@ -51,6 +66,8 @@ export type ScrapeJob = {
   url: string;
   product?: string | null;
   competitor?: string | null;
+  channel?: string | null;
+  matchConfidence?: number | null;
 };
 
 // Callers receive a typed outcome to power per-job coverage reporting.
@@ -64,6 +81,13 @@ export type AttemptSuccess = {
   currency: string | null;
   markdown: string | null;
   metadata: Record<string, unknown>;
+  originalPrice: number | null;
+  availability: Availability;
+  productTitle: string | null;
+  sku: string | null;
+  gtin: string | null;
+  seller: string | null;
+  evidence: Record<string, unknown>;
 };
 
 export type FailureCategory = "null_price" | "failed";
@@ -96,7 +120,7 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
           {
             type: "json",
             schema: PriceSchema,
-            prompt: "Extract the current sale/buy price and currency from this product detail page. Return null if no price is visible.",
+            prompt: "Extract the exact product's current buy price, crossed-out original price, currency, availability, title, SKU/GTIN and seller. Do not use installment amounts, delivery fees, category-card prices, or prices for another variant. Return null price if the exact current price is not visible.",
           },
         ],
         onlyMainContent: true,
@@ -132,6 +156,10 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
   const metadata = payload.data?.metadata ?? {};
   const rawPrice = typeof extracted.price === "number" ? extracted.price : null;
   const currency = extracted.currency ?? null;
+  const cleanText = (value: string | undefined): string | null => {
+    const cleaned = value?.trim();
+    return cleaned ? cleaned : null;
+  };
 
   // null / zero price = page is live but no price is extractable.
   // Reasons: OOS product, category listing page, bot-detection soft-block,
@@ -153,7 +181,36 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
     };
   }
 
-  return { ok: true, price: rawPrice, currency, markdown, metadata };
+  return {
+    ok: true,
+    price: rawPrice,
+    currency,
+    originalPrice:
+      typeof extracted.original_price === "number" && extracted.original_price > rawPrice
+        ? extracted.original_price
+        : null,
+    availability: extracted.availability ?? "unknown",
+    productTitle: cleanText(extracted.product_title),
+    sku: cleanText(extracted.sku),
+    gtin: cleanText(extracted.gtin),
+    seller: cleanText(extracted.seller),
+    markdown,
+    metadata,
+    evidence: { source_url: url, observed_at: new Date().toISOString(), collector: "firecrawl" },
+  };
+}
+
+export class FirecrawlCollector implements CompetitorCollector {
+  readonly name = "firecrawl";
+  constructor(private readonly apiKey: string) {}
+  collect(url: string): Promise<CollectionResult> {
+    return attemptScrape(this.apiKey, url);
+  }
+}
+
+function configuredCollector(): CompetitorCollector | null {
+  const apiKey = process.env.FIRECRAWL_API_KEY_1;
+  return apiKey ? new FirecrawlCollector(apiKey) : null;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -163,13 +220,13 @@ function sleep(ms: number): Promise<void> {
 // Firecrawl fetch with full retry logic — no DB writes.
 // Used by the URL-centric scrape-all hook to decouple fetching from persistence.
 export async function fetchCompetitorPrice(url: string): Promise<AttemptSuccess | AttemptFailure> {
-  const apiKey = process.env.FIRECRAWL_API_KEY_1;
-  if (!apiKey) {
+  const collector = configuredCollector();
+  if (!collector) {
     return { ok: false, error: "FIRECRAWL_API_KEY_1 not configured", retryable: false, category: "failed" };
   }
   let lastFailure: AttemptFailure | null = null;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const result = await attemptScrape(apiKey, url);
+    const result = await collector.collect(url) as AttemptSuccess | AttemptFailure;
     if (result.ok) return result;
     lastFailure = result;
     if (!result.retryable || attempt === MAX_ATTEMPTS) break;
@@ -182,15 +239,15 @@ export async function runScrape(
   supabase: SupabaseClient,
   job: ScrapeJob,
 ): Promise<ScrapeOutcome> {
-  const apiKey = process.env.FIRECRAWL_API_KEY_1;
-  if (!apiKey) {
+  const collector = configuredCollector();
+  if (!collector) {
     return { ok: false, url: job.url, error: "FIRECRAWL_API_KEY_1 is not configured", status: "failed" };
   }
 
   let lastFailure: AttemptFailure | null = null;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const result = await attemptScrape(apiKey, job.url);
+    const result = await collector.collect(job.url) as AttemptSuccess | AttemptFailure;
 
     if (result.ok) {
       const { data: previous } = await (supabase.from("competitor_scrapes") as any)
@@ -211,6 +268,16 @@ export async function runScrape(
         currency: result.currency,
         markdown: result.markdown,
         metadata: result.metadata,
+        channel: job.channel ?? "online",
+        original_price: result.originalPrice,
+        availability: result.availability,
+        product_title: result.productTitle,
+        sku: result.sku,
+        gtin: result.gtin,
+        seller: result.seller,
+        match_confidence: job.matchConfidence ?? null,
+        evidence: result.evidence,
+        collector: collector.name,
         status: "success",
       });
       if (error) {
@@ -286,6 +353,8 @@ export async function runScrape(
     metadata: failure.partial?.metadata ?? {},
     status: persistStatus,
     error: failure.error,
+    channel: job.channel ?? "online",
+    collector: collector.name,
   });
   if (insertErr) {
     console.error(`[scrape] Failed to persist ${persistStatus} row for ${job.url}:`, insertErr.message);
