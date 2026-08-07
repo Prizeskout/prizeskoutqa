@@ -345,16 +345,32 @@ export function MerchantOperatingLoop({
       <Header
         eyebrow={tr("Your daily store brief", "موجز متجرك اليومي", "Votre briefing quotidien")}
         title={
-          approvalTasks.length
-            ? `${approvalTasks.length} management task${approvalTasks.length === 1 ? " is" : "s are"} waiting for you`
-            : urgent.length
-              ? `${urgent.length} important item${urgent.length === 1 ? " needs" : "s need"} your attention`
-              : "Your store management queue is under control"
+          urgent.length
+            ? tr(
+                `${urgent.length} important item${urgent.length === 1 ? " needs" : "s need"} your attention`,
+                `${urgent.length} ${urgent.length === 1 ? "عنصر مهم يحتاج" : "عناصر مهمة تحتاج"} إلى انتباهك`,
+                `${urgent.length} élément${urgent.length === 1 ? " important demande" : "s importants demandent"} votre attention`,
+              )
+            : approvalTasks.length
+              ? tr(
+                  `${approvalTasks.length} management task${approvalTasks.length === 1 ? " is" : "s are"} waiting for you`,
+                  `${approvalTasks.length} ${approvalTasks.length === 1 ? "مهمة إدارية تنتظر" : "مهام إدارية تنتظر"} موافقتك`,
+                  `${approvalTasks.length} tâche${approvalTasks.length === 1 ? " de gestion attend" : "s de gestion attendent"} votre validation`,
+                )
+              : tr("Your store management queue is under control", "قائمة إدارة متجرك تحت السيطرة", "Votre file de gestion est sous contrôle")
         }
         sub={
           data?.profit_brief?.order_count != null
-            ? `PrizeSkout checked ${data.profit_brief.order_count} recent orders and organized the work that needs attention.`
-            : "PrizeSkout is organizing connected products, orders, promotions, inventory and payouts."
+            ? tr(
+                `PrizeSkout checked ${data.profit_brief.order_count} recent orders and organized the work that needs attention.`,
+                `راجع PrizeSkout عدد ${data.profit_brief.order_count} من الطلبات الحديثة ونظّم الأعمال التي تحتاج إلى انتباهك.`,
+                `PrizeSkout a vérifié ${data.profit_brief.order_count} commandes récentes et organisé les tâches à examiner.`,
+              )
+            : tr(
+                "PrizeSkout is organizing connected products, orders, promotions, inventory and payouts.",
+                "ينظّم PrizeSkout المنتجات والطلبات والعروض والمخزون والمدفوعات المتصلة.",
+                "PrizeSkout organise les produits, commandes, promotions, stocks et versements connectés.",
+              )
         }
       />
       <div
@@ -377,6 +393,52 @@ export function MerchantOperatingLoop({
             note={String(note)}
           />
         ))}
+      </div>
+
+      <div id="attention-inbox">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0 }}>
+              {tr("Items needing your attention", "عناصر تحتاج إلى انتباهك", "Éléments à examiner")}
+            </h3>
+            <p style={{ ...copy, margin: "4px 0 0" }}>
+              {tr(
+                "These are the items counted in the brief above. Review them here.",
+                "هذه هي العناصر المحتسبة في الموجز أعلاه. راجعها هنا.",
+                "Ce sont les éléments comptabilisés dans le briefing ci-dessus. Examinez-les ici.",
+              )}
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {(["active", "resolved", "all"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                style={{
+                  ...smallButton,
+                  background: filter === value ? OG : "var(--surface)",
+                  color: filter === value ? "#fff" : "var(--muted)",
+                }}
+              >
+                {value === "active"
+                  ? tr("Active", "نشطة", "Actifs")
+                  : value === "resolved"
+                    ? tr("Resolved", "تم حلها", "Résolus")
+                    : tr("All", "الكل", "Tous")}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Items items={visible} busy={busy} onUpdate={update} onAsk={askCopilot} />
       </div>
 
       <div style={subCard}>
@@ -474,36 +536,6 @@ export function MerchantOperatingLoop({
           )}
         </div>
       )}
-
-      <div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <h3 style={{ margin: 0 }}>{tr("Attention Inbox", "صندوق المهام المهمة", "Boîte des priorités")}</h3>
-          <div style={{ display: "flex", gap: 6 }}>
-            {["active", "resolved", "all"].map((value) => (
-              <button
-                key={value}
-                onClick={() => setFilter(value)}
-                style={{
-                  ...smallButton,
-                  background: filter === value ? OG : "var(--surface)",
-                  color: filter === value ? "#fff" : "var(--muted)",
-                }}
-              >
-                {value[0].toUpperCase() + value.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <Items items={visible} busy={busy} onUpdate={update} onAsk={askCopilot} />
-      </div>
 
       <button
         type="button"
