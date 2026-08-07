@@ -3,7 +3,8 @@
     "groups": {
       "controlPlane": "لوحة التحكم",
       "developers": "المطوّرون",
-      "intelligence": "الذكاء التجاري"
+      "intelligence": "الذكاء التجاري",
+      "demo": "العرض التجريبي"
     },
     "revenueHub": "مركز الإيرادات",
     "policyEngine": "محرك السياسات",
@@ -23,7 +24,8 @@
     "benchmarks": "المعايير",
     "settings": "الإعدادات",
     "admin": "الإدارة",
-    "capabilities": "عرض مباشر"
+    "capabilities": "عرض مباشر",
+    "scenarios": "متاجر تجريبية"
   },
   "sidebar": {
     "home": "الرئيسية",

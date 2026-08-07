@@ -1038,6 +1038,12 @@ const T = {
   },
 };
 
+const DASHBOARD_UI = {
+  en: { groups:{start:"Start",understand:"Understand",plan:"Plan & automate",records:"Records"},today:"Today",startHere:"Start here",overview:"Business Overview",moneyProducts:"Money & products",manager:"Store Manager",delegateApprove:"Delegate & approve",todaySub:"Your priorities, store health, and next best actions",managerSub:"Delegate store operations, approve protected actions, and review verified outcomes",promoSub:"Model discount economics and margin risk before approving a campaign",useAssistants:"Use CFO Copilot or Store Manager.",delegateAsk:"Delegate or ask →",assistant:{today:["Need an explanation or want PrizeSkout to handle store work?","What needs my attention today?","What did I actually keep from orders this month?","Prepare my highest-priority store tasks"],analytics:["Want to understand a risk or make a catalogue change?","Show products losing money","What did I actually keep from orders this month?"],manager:["Delegate store operations or review the work already in progress.","What needs my attention today?","Find products with incomplete information","Prepare my highest-priority store tasks"],promotions:["Want help testing a campaign or understanding its margin risk?","Check whether my active coupon is safe","What discount can I afford without breaching margin?"],rules:["Want help choosing or applying safe protection rules?","Explain my active margin protection","Protect a 20% margin on all products"],vault:["Need to sync or inspect a connected store?","Pull my latest catalogue","Show products that need inventory attention"],history:["Want a recent action or payout result explained?","What did you just change?","Summarize my latest payout check"],settings:["Want help understanding your protection settings?","Explain my active margin protection","Check whether my active coupon is safe"]}},
+  ar: { groups:{start:"ابدأ",understand:"افهم أعمالك",plan:"خطط وأتمت",records:"السجلات"},today:"اليوم",startHere:"ابدأ من هنا",overview:"نظرة عامة على الأعمال",moneyProducts:"الأموال والمنتجات",manager:"مدير المتجر",delegateApprove:"فوّض ووافق",todaySub:"أولوياتك وصحة متجرك وأفضل الخطوات التالية",managerSub:"فوّض عمليات المتجر ووافق على الإجراءات المحمية وراجع النتائج المؤكدة",promoSub:"اختبر أثر الخصومات على الربح والهامش قبل الموافقة على الحملة",useAssistants:"استخدم المساعد المالي أو مدير المتجر.",delegateAsk:"فوّض أو اسأل ←",assistant:{today:["هل تريد شرحاً أو تريد من PrizeSkout تنفيذ أعمال المتجر؟","ما الذي يحتاج إلى انتباهي اليوم؟","كم احتفظت فعلياً من الطلبات هذا الشهر؟","جهّز أهم مهام المتجر"],analytics:["هل تريد فهم مخاطرة أو إجراء تعديل في الكتالوج؟","اعرض المنتجات التي تخسر المال","كم احتفظت فعلياً من الطلبات هذا الشهر؟"],manager:["فوّض عمليات المتجر أو راجع العمل الجاري.","ما الذي يحتاج إلى انتباهي اليوم؟","ابحث عن المنتجات ذات المعلومات الناقصة","جهّز أهم مهام المتجر"],promotions:["هل تريد مساعدة في اختبار حملة أو فهم مخاطرها على الهامش؟","تحقق إن كان كوبوني الحالي آمناً","ما الخصم الذي أستطيع تقديمه دون تجاوز حد الهامش؟"],rules:["هل تريد مساعدة في اختيار قواعد حماية آمنة؟","اشرح حماية الهامش الحالية","احمِ هامشاً بنسبة 20% لكل المنتجات"],vault:["هل تريد مزامنة متجر متصل أو فحصه؟","اسحب أحدث كتالوج لدي","اعرض المنتجات التي تحتاج إلى مراجعة المخزون"],history:["هل تريد شرح إجراء أو نتيجة مدفوعات حديثة؟","ما الذي غيّرته للتو؟","لخّص أحدث فحص للمدفوعات"],settings:["هل تريد فهم إعدادات الحماية؟","اشرح حماية الهامش الحالية","تحقق إن كان كوبوني الحالي آمناً"]}},
+  fr: { groups:{start:"Commencer",understand:"Comprendre",plan:"Planifier et automatiser",records:"Historique"},today:"Aujourd’hui",startHere:"Commencer ici",overview:"Vue d’ensemble",moneyProducts:"Finances et produits",manager:"Gestionnaire de boutique",delegateApprove:"Déléguer et valider",todaySub:"Vos priorités, la santé de votre boutique et les prochaines actions",managerSub:"Déléguez les opérations, validez les actions protégées et contrôlez les résultats",promoSub:"Mesurez la rentabilité et le risque de marge avant de valider une campagne",useAssistants:"Utilisez le copilote financier ou le gestionnaire de boutique.",delegateAsk:"Déléguer ou demander →",assistant:{today:["Besoin d’une explication ou envie de confier une tâche à PrizeSkout ?","Qu’est-ce qui demande mon attention aujourd’hui ?","Combien ai-je réellement conservé sur les commandes ce mois-ci ?","Préparer mes tâches prioritaires"],analytics:["Vous voulez comprendre un risque ou modifier le catalogue ?","Afficher les produits qui perdent de l’argent","Combien ai-je réellement conservé ce mois-ci ?"],manager:["Déléguez les opérations ou examinez le travail en cours.","Qu’est-ce qui demande mon attention aujourd’hui ?","Trouver les produits aux informations incomplètes","Préparer mes tâches prioritaires"],promotions:["Besoin d’aide pour tester une campagne ou son risque de marge ?","Vérifier si mon coupon actif est rentable","Quelle remise puis-je offrir sans passer sous ma marge minimale ?"],rules:["Besoin d’aide pour choisir des règles de protection sûres ?","Expliquer ma protection de marge active","Protéger une marge de 20 % sur tous les produits"],vault:["Besoin de synchroniser ou d’examiner une boutique connectée ?","Importer mon dernier catalogue","Afficher les produits dont le stock demande une vérification"],history:["Besoin d’expliquer une action ou un versement récent ?","Qu’avez-vous modifié à l’instant ?","Résumer mon dernier contrôle de versement"],settings:["Besoin de comprendre vos réglages de protection ?","Expliquer ma protection de marge active","Vérifier si mon coupon actif est rentable"]}},
+} as const;
+
 function parseIntent(text: string): Record<string, unknown> {
   const t = text.toLowerCase();
   const pm = t.match(/(\d+(?:\.\d+)?)\s*%/);
@@ -1108,9 +1114,26 @@ function tokenizeJson(obj: unknown): { t: string; c: string }[] {
   return out;
 }
 
+const DISPLAY_CURRENCIES = ["QAR", "SAR", "AED"] as const;
+type DisplayCurrency = (typeof DISPLAY_CURRENCIES)[number];
+const QAR_RATES: Record<DisplayCurrency, number> = { QAR: 1, SAR: 1.03, AED: 1.0 };
+
+function isDisplayCurrency(value: string | null): value is DisplayCurrency {
+  return DISPLAY_CURRENCIES.includes(value as DisplayCurrency);
+}
+
+function convertMoney(n: number, from: string, to: DisplayCurrency): number {
+  const sourceRate = isDisplayCurrency(from) ? QAR_RATES[from] : 1;
+  return (n / sourceRate) * QAR_RATES[to];
+}
+
 function fmtMoney(n: number, currency: string): string {
-  const rate: Record<string, number> = { QAR: 1, SAR: 1.03, AED: 1.0 };
-  return Math.round(n * (rate[currency] ?? 1)).toLocaleString("en-US");
+  const target = isDisplayCurrency(currency) ? currency : "QAR";
+  return Math.round(n * QAR_RATES[target]).toLocaleString("en-US");
+}
+
+function fmtConvertedMoney(n: number, from: string, to: DisplayCurrency): string {
+  return convertMoney(n, from, to).toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
 // Shared between the live "just ran a check" result and a History tab row's
@@ -1802,7 +1825,11 @@ export function PrizeSkoutDashboard() {
   const [tab, setTab] = useState<Tab>("today");
   const [theme, setTheme] = useState<Theme>("light");
   const [demoMode, setDemoMode] = useState(false);
-  const [currency, setCurrency] = useState("QAR");
+  const [currency, setCurrency] = useState<DisplayCurrency>(() => {
+    if (typeof window === "undefined") return "QAR";
+    const saved = localStorage.getItem("ps_display_currency");
+    return isDisplayCurrency(saved) ? saved : "QAR";
+  });
   const [storeName, setStoreName] = useState("");
   const [lang, setLang] = useState<Lang>("en");
   const [isDesktop, setIsDesktop] = useState(true);
@@ -2835,10 +2862,10 @@ export function PrizeSkoutDashboard() {
         p.inventory_status !== "out_of_stock" &&
         p.recommended_price > p.current_price,
     );
-    const correctionPerCatalogSale = atRisk.reduce(
-      (sum, p) => sum + Math.max(0, p.recommended_price - p.current_price),
-      0,
-    );
+    const correctionPerCatalogSale = atRisk.reduce((sum, p) => {
+      const sourceRate = isDisplayCurrency(p.currency) ? QAR_RATES[p.currency] : 1;
+      return sum + Math.max(0, p.recommended_price - p.current_price) / sourceRate;
+    }, 0);
     const verified = importedProducts.filter((p) => p.cost_confidence === "verified").length;
     const estimated = importedProducts.filter((p) => p.cost_confidence === "estimated").length;
     const unknown = importedProducts.length - verified - estimated;
@@ -2878,7 +2905,7 @@ export function PrizeSkoutDashboard() {
         : null,
     ].filter((item): item is { label: string; command: string | null } => Boolean(item));
   }, [importedProducts]);
-  const opportunityCurrency = importedProducts[0]?.currency || currency;
+  const opportunityCurrency = currency;
 
   const reviewVerifiedMarginRisks = () => {
     setProductSearch("");
@@ -4691,6 +4718,12 @@ export function PrizeSkoutDashboard() {
   };
 
   const t = T[lang];
+  const ui = DASHBOARD_UI[lang];
+  const tr = (en: string, ar: string, fr: string) => (lang === "ar" ? ar : lang === "fr" ? fr : en);
+  const selectCurrency = (next: DisplayCurrency) => {
+    setCurrency(next);
+    localStorage.setItem("ps_display_currency", next);
+  };
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   const tourSteps = buildTourSteps(t);
@@ -4749,28 +4782,28 @@ export function PrizeSkoutDashboard() {
   const navDefs = [
     {
       id: "today" as Tab,
-      group: "Start",
-      label: "Today",
-      sub: "Start here",
+      group: ui.groups.start,
+      label: ui.today,
+      sub: ui.startHere,
       tip: "Today shows the work that matters now, the health of your store, and clear paths to every PrizeSkout tool.",
     },
     {
       id: "analytics" as Tab,
-      group: "Understand",
-      label: "Business Overview",
-      sub: "Money & products",
+      group: ui.groups.understand,
+      label: ui.overview,
+      sub: ui.moneyProducts,
       tip: "Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place.",
     },
     {
       id: "manager" as Tab,
-      group: "Understand",
-      label: "Store Manager",
-      sub: "Delegate & approve",
+      group: ui.groups.understand,
+      label: ui.manager,
+      sub: ui.delegateApprove,
       tip: "Store Manager — your daily brief, delegated backend work, approvals, exceptions, and verified outcomes in one management desk.",
     },
     {
       id: "promotions" as Tab,
-      group: "Plan & automate",
+      group: ui.groups.plan,
       label:
         lang === "ar"
           ? "محاكي العروض"
@@ -4787,21 +4820,21 @@ export function PrizeSkoutDashboard() {
     },
     {
       id: "rules" as Tab,
-      group: "Plan & automate",
+      group: ui.groups.plan,
       label: t.navR,
       sub: t.navRs,
       tip: "Margin Policy Engine — the price guardrails PrizeSkout enforces automatically, like never going below a set margin on a category.",
     },
     {
       id: "vault" as Tab,
-      group: "Plan & automate",
+      group: ui.groups.plan,
       label: t.navV,
       sub: t.navVs,
       tip: "Integration Vault — where you connect delivery apps and POS systems (Talabat, Zid, Jahez, etc.) so PrizeSkout can read and adjust prices.",
     },
     {
       id: "history" as Tab,
-      group: "Records",
+      group: ui.groups.records,
       label: t.navH,
       sub: t.navHs,
       tip: "Payout & Repricing History — every commission audit, price change, and payout check PrizeSkout has run for you, kept for the record.",
@@ -4810,13 +4843,13 @@ export function PrizeSkoutDashboard() {
 
   const headerSub =
     tab === "today"
-      ? "Your priorities, store health, and next best actions"
+      ? ui.todaySub
       : tab === "analytics"
       ? t.subA
       : tab === "manager"
-        ? "Delegate store operations, approve protected actions, and review verified outcomes"
+        ? ui.managerSub
         : tab === "promotions"
-          ? "Model discount economics and margin risk before approving a campaign"
+          ? ui.promoSub
           : tab === "rules"
             ? t.subR
             : tab === "settings"
@@ -4826,11 +4859,11 @@ export function PrizeSkoutDashboard() {
                 : t.subV;
   const headerTitle =
     tab === "today"
-      ? "Today"
+      ? ui.today
       : tab === "analytics"
       ? t.navA
       : tab === "manager"
-        ? "Store Manager"
+        ? ui.manager
         : tab === "promotions"
           ? lang === "ar"
             ? "محاكي العروض"
@@ -4847,59 +4880,12 @@ export function PrizeSkoutDashboard() {
 
   const md = modal != null ? disputes[modal] : null;
 
-  const assistantContext: Record<Tab, { nudge: string; prompt: string; examples: string[] }> = {
-    today: {
-      nudge: "Need an explanation or want PrizeSkout to handle store work?",
-      prompt: "What needs my attention today?",
-      examples: [
-        "What needs my attention today?",
-        "What did I actually keep from orders this month?",
-        "Prepare my highest-priority store tasks",
-      ],
-    },
-    analytics: {
-      nudge: "Want to understand a risk or make a catalogue change?",
-      prompt: "Show products losing money",
-      examples: ["Show products losing money", "What did I actually keep from orders this month?"],
-    },
-    manager: {
-      nudge: "Delegate store operations or review the work already in progress.",
-      prompt: "What needs my attention today?",
-      examples: [
-        "What needs my attention today?",
-        "Find products with incomplete information",
-        "Prepare my highest-priority store tasks",
-      ],
-    },
-    promotions: {
-      nudge: "Want help testing a campaign or understanding its margin risk?",
-      prompt: "Check whether my active coupon is safe",
-      examples: [
-        "Check whether my active coupon is safe",
-        "What discount can I afford without breaching margin?",
-      ],
-    },
-    rules: {
-      nudge: "Want help choosing or applying safe protection rules?",
-      prompt: "Explain my active margin protection",
-      examples: ["Explain my active margin protection", "Protect a 20% margin on all products"],
-    },
-    vault: {
-      nudge: "Need to sync or inspect a connected store?",
-      prompt: "Pull my latest catalogue",
-      examples: ["Pull my latest catalogue", "Show products that need inventory attention"],
-    },
-    history: {
-      nudge: "Want a recent action or payout result explained?",
-      prompt: "What did you just change?",
-      examples: ["What did you just change?", "Summarize my latest payout check"],
-    },
-    settings: {
-      nudge: "Want help understanding your protection settings?",
-      prompt: "Explain my active margin protection",
-      examples: ["Explain my active margin protection", "Check whether my active coupon is safe"],
-    },
-  };
+  const assistantContext = Object.fromEntries(
+    Object.entries(ui.assistant).map(([key, values]) => [
+      key,
+      { nudge: values[0], prompt: values[1], examples: values.slice(1) },
+    ]),
+  ) as Record<Tab, { nudge: string; prompt: string; examples: string[] }>;
   const openAssistantDrawer = (prompt = "") => {
     setAssistantDrawerInput(prompt);
     setAssistantDrawerOpen(true);
@@ -4933,7 +4919,7 @@ export function PrizeSkoutDashboard() {
     >
       <span style={{ fontSize: 13.5, color: "var(--muted)" }}>
         {assistantContext[targetTab].nudge}{" "}
-        <strong style={{ color: "var(--text)" }}>Use CFO Copilot or Store Manager.</strong>
+        <strong style={{ color: "var(--text)" }}>{ui.useAssistants}</strong>
       </span>
       <button
         type="button"
@@ -4948,7 +4934,7 @@ export function PrizeSkoutDashboard() {
           padding: 4,
         }}
       >
-        Delegate or ask →
+        {ui.delegateAsk}
       </button>
     </div>
   );
@@ -5553,7 +5539,7 @@ export function PrizeSkoutDashboard() {
             </button>
             {/* Currency */}
             <div
-              data-demo-tip="Display currency — recalculates every price shown on screen, doesn't touch what's actually charged on each channel."
+              data-demo-tip="Display currency — converts dashboard totals and summaries. Live channel prices remain in their original currency for safe editing."
               style={{
                 display: "flex",
                 background: "var(--surface)",
@@ -5563,10 +5549,12 @@ export function PrizeSkoutDashboard() {
                 gap: 2,
               }}
             >
-              {["QAR", "SAR", "AED"].map((code) => (
+              {DISPLAY_CURRENCIES.map((code) => (
                 <button
                   key={code}
-                  onClick={() => setCurrency(code)}
+                  type="button"
+                  aria-pressed={currency === code}
+                  onClick={() => selectCurrency(code)}
                   style={{
                     cursor: "pointer",
                     border: "none",
@@ -5708,6 +5696,7 @@ export function PrizeSkoutDashboard() {
         <StoreManagerCommandBar
           context={headerTitle}
           examples={assistantContext[tab].examples}
+          lang={lang}
           busy={cpPhase === "loading"}
           onSubmit={submitManagerCommand}
           onOpenManager={() => setTab("manager")}
@@ -6205,7 +6194,7 @@ export function PrizeSkoutDashboard() {
               </div>
             </div>
 
-            <MerchantOperatingLoop onAskCopilot={submitManagerCommand} />
+            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} />
 
             <button
               type="button"
@@ -6239,7 +6228,7 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            <MerchantOperatingLoop onAskCopilot={submitManagerCommand} />
+            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} />
           </section>
         )}
 
@@ -6257,6 +6246,7 @@ export function PrizeSkoutDashboard() {
           >
             {assistantNudge("analytics")}
             <MerchantOperatingLoop
+              lang={lang}
               onAskCopilot={(prompt) => {
                 setTab("rules");
                 setCpInput(prompt);
@@ -11576,7 +11566,7 @@ export function PrizeSkoutDashboard() {
             }}
           >
             {assistantNudge("history")}
-            <MerchantOperatingLoop mode="history" />
+            <MerchantOperatingLoop lang={lang} mode="history" />
 
             <div
               style={{
@@ -13444,10 +13434,12 @@ export function PrizeSkoutDashboard() {
                   marginBottom: 6,
                 }}
               >
-                {["QAR", "SAR", "AED"].map((code) => (
+                {DISPLAY_CURRENCIES.map((code) => (
                   <button
                     key={code}
-                    onClick={() => setCurrency(code)}
+                    type="button"
+                    aria-pressed={currency === code}
+                    onClick={() => selectCurrency(code)}
                     style={{
                       cursor: "pointer",
                       border: "none",
@@ -13990,7 +13982,7 @@ export function PrizeSkoutDashboard() {
       {!assistantDrawerOpen && (
         <button
           type="button"
-          aria-label="Open CFO Copilot and Store Manager"
+          aria-label={tr("Open CFO Copilot and Store Manager", "افتح المساعد المالي ومدير المتجر", "Ouvrir le copilote financier et le gestionnaire")}
           onClick={() => openAssistantDrawer()}
           style={{
             position: "fixed",
@@ -14012,7 +14004,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">✦</span> CFO + Store Manager
+          <span aria-hidden="true">✦</span> {tr("CFO + Store Manager", "المساعد المالي + مدير المتجر", "Copilote financier + Gestionnaire")}
         </button>
       )}
       {assistantDrawerOpen && (
@@ -14024,7 +14016,7 @@ export function PrizeSkoutDashboard() {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label="CFO Copilot and Store Manager"
+            aria-label={tr("CFO Copilot and Store Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
             onClick={(event) => event.stopPropagation()}
             style={{
               position: "absolute",
@@ -14052,7 +14044,7 @@ export function PrizeSkoutDashboard() {
             >
               <div>
                 <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>
-                  CFO Copilot &amp; Store Manager
+                  {tr("CFO Copilot & Store Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
                 </h2>
                 <p
                   style={{
@@ -14062,13 +14054,16 @@ export function PrizeSkoutDashboard() {
                     lineHeight: 1.55,
                   }}
                 >
-                  Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps
-                  your current page open and asks before protected changes.
+                  {tr(
+                    "Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps your current page open and asks before protected changes.",
+                    "فوّض أعمال المتجر أو اسأل المساعد المالي عن الأرباح والمدفوعات. يبقي PrizeSkout صفحتك الحالية مفتوحة ويطلب موافقتك قبل التغييرات المحمية.",
+                    "Déléguez les tâches de la boutique ou interrogez le copilote financier sur les bénéfices et les versements. PrizeSkout conserve votre page ouverte et demande votre validation avant toute modification protégée.",
+                  )}
                 </p>
               </div>
               <button
                 type="button"
-                aria-label="Close assistant"
+                aria-label={tr("Close assistant", "إغلاق المساعد", "Fermer l’assistant")}
                 onClick={() => setAssistantDrawerOpen(false)}
                 style={{
                   border: "1px solid var(--border)",
@@ -14094,8 +14089,8 @@ export function PrizeSkoutDashboard() {
                 color: "var(--muted)",
               }}
             >
-              <strong style={{ color: "var(--text)" }}>{headerTitle}</strong> context · Store
-              changes require your approval
+              <strong style={{ color: "var(--text)" }}>{headerTitle}</strong>{" "}
+              {tr("context · Store changes require your approval", "· تتطلب تغييرات المتجر موافقتك", "· Les modifications de la boutique nécessitent votre validation")}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
               {assistantContext[tab].examples.map((example) => (
@@ -14129,7 +14124,7 @@ export function PrizeSkoutDashboard() {
                   submitAssistantDrawer();
                 }
               }}
-              placeholder="What should PrizeSkout handle today?"
+              placeholder={tr("What should PrizeSkout handle today?", "ما الذي تريد من PrizeSkout إنجازه اليوم؟", "Que doit prendre en charge PrizeSkout aujourd’hui ?")}
               rows={4}
               style={{
                 width: "100%",

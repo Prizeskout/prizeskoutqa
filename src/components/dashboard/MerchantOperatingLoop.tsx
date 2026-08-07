@@ -76,20 +76,22 @@ type Experience = {
 const OG = "#EF681A",
   GN = "#10B981",
   RED = "#DC2626";
-const LEVELS = [
-  { id: "observe", label: "Observe", desc: "Monitor only" },
-  { id: "recommend", label: "Recommend", desc: "Prepare safe actions" },
-  { id: "approve", label: "Approve", desc: "Wait for every approval" },
-  { id: "auto_protect", label: "Auto-protect", desc: "Act only inside active limits" },
-];
-
 export function MerchantOperatingLoop({
   mode = "hub",
   onAskCopilot,
+  lang = "en",
 }: {
   mode?: "hub" | "history";
   onAskCopilot?: (prompt: string) => void;
+  lang?: "en" | "ar" | "fr";
 }) {
+  const tr = (en: string, ar: string, fr: string) => (lang === "ar" ? ar : lang === "fr" ? fr : en);
+  const levels = [
+    { id: "observe", label: tr("Observe", "مراقبة", "Observer"), desc: tr("Monitor only", "المراقبة فقط", "Surveiller uniquement") },
+    { id: "recommend", label: tr("Recommend", "اقتراح", "Recommander"), desc: tr("Prepare safe actions", "تجهيز إجراءات آمنة", "Préparer des actions sûres") },
+    { id: "approve", label: tr("Approve", "الموافقة", "Valider"), desc: tr("Wait for every approval", "انتظار موافقتك دائماً", "Attendre chaque validation") },
+    { id: "auto_protect", label: tr("Auto-protect", "حماية تلقائية", "Protection automatique"), desc: tr("Act only inside active limits", "التنفيذ ضمن الحدود النشطة فقط", "Agir uniquement dans les limites actives") },
+  ];
   const [data, setData] = useState<Experience | null>(null),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(""),
@@ -341,7 +343,7 @@ export function MerchantOperatingLoop({
   return (
     <section data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
       <Header
-        eyebrow="Your daily store brief"
+        eyebrow={tr("Your daily store brief", "موجز متجرك اليومي", "Votre briefing quotidien")}
         title={
           approvalTasks.length
             ? `${approvalTasks.length} management task${approvalTasks.length === 1 ? " is" : "s are"} waiting for you`
@@ -388,7 +390,7 @@ export function MerchantOperatingLoop({
           }}
         >
           <div>
-            <h3 style={{ margin: 0 }}>Management desk</h3>
+            <h3 style={{ margin: 0 }}>{tr("Management desk", "مكتب الإدارة", "Bureau de gestion")}</h3>
             <p style={{ ...copy, margin: "4px 0 0" }}>
               Tell PrizeSkout what you want handled. You will see the plan and approve any store
               changes before they happen.
@@ -457,7 +459,7 @@ export function MerchantOperatingLoop({
             background: "color-mix(in srgb,#F59E0B 7%,var(--surface))",
           }}
         >
-          <strong>Finish your first-value setup</strong>
+          <strong>{tr("Finish your first-value setup", "أكمل إعداد القيمة الأولى", "Terminer la configuration initiale")}</strong>
           <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>
             ✓ Zid connected · ✓ Orders checked · Next: confirm product costs. Evidence is{" "}
             {Math.round(data?.profit_brief?.verified_cost_coverage_pct ?? 0)}%.
@@ -483,7 +485,7 @@ export function MerchantOperatingLoop({
             flexWrap: "wrap",
           }}
         >
-          <h3 style={{ margin: 0 }}>Attention Inbox</h3>
+          <h3 style={{ margin: 0 }}>{tr("Attention Inbox", "صندوق المهام المهمة", "Boîte des priorités")}</h3>
           <div style={{ display: "flex", gap: 6 }}>
             {["active", "resolved", "all"].map((value) => (
               <button
@@ -520,7 +522,7 @@ export function MerchantOperatingLoop({
         >
           <div style={subCard}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <h3 style={{ margin: "0 0 10px" }}>Weekly protection review</h3>
+              <h3 style={{ margin: "0 0 10px" }}>{tr("Weekly protection review", "مراجعة الحماية الأسبوعية", "Revue hebdomadaire de protection")}</h3>
               <button
                 onClick={() => {
                   void call({ action: "track", event_name: "weekly_review_opened" });
@@ -550,13 +552,13 @@ export function MerchantOperatingLoop({
             </div>
           </div>
           <div style={subCard}>
-            <h3 style={{ margin: "0 0 6px" }}>How much should PrizeSkout do?</h3>
+            <h3 style={{ margin: "0 0 6px" }}>{tr("How much should PrizeSkout do?", "ما مقدار العمل الذي ينفذه PrizeSkout؟", "Jusqu’où PrizeSkout doit-il intervenir ?")}</h3>
             <p style={copy}>
               Increase automation only as trust grows. Active Margin Policy Engine limits still
               apply.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-              {LEVELS.map((level) => (
+              {levels.map((level) => (
                 <button
                   key={level.id}
                   disabled={busy === "settings"}
@@ -584,7 +586,7 @@ export function MerchantOperatingLoop({
             </div>
           </div>
           <div style={subCard}>
-            <h3 style={{ margin: "0 0 6px" }}>Store Manager mode</h3>
+            <h3 style={{ margin: "0 0 6px" }}>{tr("Store Manager mode", "وضع مدير المتجر", "Mode du gestionnaire de boutique")}</h3>
             <p style={copy}>
               Choose how much the manager can do. Money-related and permanent changes still follow
               your approval rules.
@@ -615,7 +617,7 @@ export function MerchantOperatingLoop({
             </div>
           </div>
           <div style={subCard}>
-            <h3 style={{ margin: "0 0 6px" }}>Standing management policies</h3>
+            <h3 style={{ margin: "0 0 6px" }}>{tr("Standing management policies", "سياسات الإدارة الدائمة", "Politiques de gestion permanentes")}</h3>
             <p style={copy}>
               Choose what PrizeSkout should watch, suggest, prepare, or handle automatically.
               Automatic work only happens when your connected sales channel supports it.

@@ -3,7 +3,8 @@
     "groups": {
       "controlPlane": "Plan de contrôle",
       "developers": "Développeurs",
-      "intelligence": "Intelligence"
+      "intelligence": "Intelligence",
+      "demo": "Démo"
     },
     "revenueHub": "Hub Revenus",
     "policyEngine": "Moteur de politiques",
@@ -23,7 +24,8 @@
     "benchmarks": "Références",
     "settings": "Paramètres",
     "admin": "Administration",
-    "capabilities": "Démo en direct"
+    "capabilities": "Démo en direct",
+    "scenarios": "Boutiques de démonstration"
   },
   "sidebar": {
     "home": "Accueil",
@@ -703,6 +705,86 @@
         }
       }
     }
+  },
+  "psShell": {
+    "controlPlane": "CENTRE DE CONTRÔLE",
+    "defendLoopOnline": "Boucle de protection active",
+    "edgeNodesHealthy": "Canaux connectés et opérationnels",
+    "liveBadge": "EN DIRECT",
+    "toggleTheme": "Changer de thème",
+    "nav": {
+      "revenueHubTitle": "Hub de protection des revenus",
+      "revenueHubDesc": "Rentabilité et actions prioritaires",
+      "policyEngineTitle": "Moteur de politiques de marge",
+      "policyEngineDesc": "Règles et limites de sécurité",
+      "integrationVaultTitle": "Coffre d’intégrations",
+      "integrationVaultDesc": "Connexions aux boutiques et canaux"
+    }
+  },
+  "revenueHub": {
+    "subtitle": "Identifiez où l’argent demande votre attention et passez à l’action",
+    "profitsProtected": "Argent protégé ce mois-ci",
+    "acrossAllItems": "sur l’ensemble des produits suivis",
+    "trackedProducts": "Produits suivis",
+    "addedToday": "ajoutés aujourd’hui",
+    "priceUpdatesToday": "Mises à jour de prix aujourd’hui",
+    "avgLatency": "Délai moyen",
+    "avgMarginSaved": "Marge moyenne préservée",
+    "aboveFloor": "au-dessus du minimum",
+    "activeRules": "Règles actives",
+    "priceGuardrails": "limites tarifaires",
+    "systemNodes": "Connexions système",
+    "activeCount": "{{count}} actives",
+    "nodeActive": "Active",
+    "liveExecStream": "Activité récente",
+    "simulatedFeed": "Flux de démonstration",
+    "downloadAuditLog": "Télécharger le journal d’audit",
+    "exportDisputeProofs": "Exporter les preuves de réclamation",
+    "streaming": "En direct",
+    "repriceOn": "Prix mis à jour sur {{channel}}",
+    "marginDefendedAt": "Marge protégée à {{margin}}",
+    "demo": "Démo",
+    "today": "Aujourd’hui"
+  },
+  "policyEngine": {
+    "subtitle": "Choisissez la marge à conserver et les changements de prix autorisés",
+    "bannerHeading": "Vos limites de marge protègent chaque action tarifaire",
+    "bannerDesc": "PrizeSkout prépare ou applique les changements uniquement dans les limites que vous avez enregistrées.",
+    "categoriesDefended": "catégories protégées",
+    "colRuleCategory": "Règle / Catégorie",
+    "colNetMarginFloor": "Marge nette minimale",
+    "colActiveDefense": "Protection active",
+    "loadingRules": "Chargement des règles…",
+    "noRules": "Aucune règle enregistrée",
+    "ruleBased": "Basée sur une règle",
+    "defending": "Protection active",
+    "paused": "En pause",
+    "floorLabelCeiling": "Plafond",
+    "footerNote": "L’état de propagation en direct est visible dans le Hub Revenus"
+  },
+  "integrationVault": {
+    "subtitle": "Connectez les systèmes que PrizeSkout consulte et met à jour",
+    "inboundHeading": "Connexions entrantes",
+    "inboundSubLabel": "SOURCES DE DONNÉES",
+    "inboundDesc": "Connectez les boutiques et systèmes dont PrizeSkout doit lire les produits et commandes.",
+    "connected": "Connecté",
+    "installApp": "Installer l’application",
+    "ecommerce": "E-commerce",
+    "posTerminal": "Caisse / POS",
+    "outboundHeading": "Connexions sortantes",
+    "outboundSubLabel": "CANAUX DE VENTE",
+    "outboundDesc": "Connectez les canaux sur lesquels PrizeSkout peut publier les prix validés.",
+    "notYetActive": "Pas encore actif",
+    "setupBadge": "CONFIGURER",
+    "awaitingBuild": "Intégration en préparation",
+    "keyVaultHeading": "Coffre d’identifiants",
+    "keyVaultDesc": "Les identifiants sont chiffrés et ne sont jamais stockés en clair.",
+    "apiKeyLabel": "Saisir la clé API marchand",
+    "verifying": "Vérification…",
+    "reconnect": "Reconnecter",
+    "connect": "Connecter",
+    "handshakeVerified": "Connexion API vérifiée et sécurisée.",
+    "tlsTiming": "TLS 1.3 · 540 ms"
   },
   "footer": {
     "tagline": "Infrastructure de marge en temps réel pour le commerce GCC. Des agents autonomes qui défendent, auditent et récupèrent votre marge pendant que vous gérez votre activité.",

@@ -706,6 +706,7 @@ function DeployCTA({ dark }: { dark: boolean }) {
 }
 
 function LandingFooter() {
+  const { t } = useTranslation();
   const [supportOpen, setSupportOpen] = useState(false);
   return (
     <footer style={{ background: "#000", color: "#F5F6FA", padding: "72px 24px 32px", marginTop: 90 }}>
@@ -715,12 +716,12 @@ function LandingFooter() {
           <div>
             <img src={logoDark} alt="PrizeSkout" style={{ height: 26, width: "auto", display: "block", marginBottom: 18 }} />
             <p style={{ fontSize: 14.5, color: "#9BA1B0", lineHeight: 1.7, margin: "0 0 24px", maxWidth: 300 }}>
-              Real time margin infrastructure for GCC commerce. Autonomous agents that defend, audit, and recover your margin while you run the business.
+              {t("footer.tagline")}
             </p>
             <div style={{ display: "flex", gap: 10 }}>
               {(["X", "in"] as const).map(lbl => (
                 <a key={lbl} href="#" onClick={(e) => e.preventDefault()}
-                  aria-label={lbl === "X" ? "X (Twitter)" : "LinkedIn"}
+                  aria-label={lbl === "X" ? t("footer.social.x") : t("footer.social.linkedin")}
                   style={{ width: 38, height: 38, borderRadius: 9, border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#9BA1B0", textDecoration: "none", fontSize: 14, fontWeight: 700, transition: "border-color 0.15s, color 0.15s" }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.color = "#F5F6FA"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#9BA1B0"; }}
@@ -731,13 +732,13 @@ function LandingFooter() {
 
           {/* Platform */}
           <div>
-            <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6 }}>Platform</div>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "#6B7180", marginBottom: 16 }}>INFRASTRUCTURE LAYER</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6 }}>{t("footer.columns.platform")}</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "#6B7180", marginBottom: 16 }}>{t("footer.layerTags.infrastructure")}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              {["Sync","Decide","Defend","Govern","Margin by PrizeSkout"].map(l => (
-                <a key={l} href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
+              {(["sync","decide","defend","govern","marginByPrizeskout"] as const).map(key => (
+                <a key={key} href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}>{l}</a>
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}>{t(`footer.links.${key}`)}</a>
               ))}
             </div>
           </div>
@@ -745,34 +746,34 @@ function LandingFooter() {
           {/* Agents */}
           <div>
             <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6, display: "flex", alignItems: "center", gap: 7 }}>
-              Agents
+              {t("footer.columns.agents")}
               <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF5A1F", boxShadow: "0 0 8px rgba(255,90,31,0.7)", display: "inline-block" }} />
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "#6B7180", marginBottom: 16 }}>INTELLIGENCE LAYER</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "#6B7180", marginBottom: 16 }}>{t("footer.layerTags.intelligence")}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}>Agent CFO</a>
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}>{t("footer.links.agentCfo")}</a>
               <a href="#" onClick={(e) => e.preventDefault()} style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}>
-                Dispute Audit Agent
-                <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.1em", color: "#FF5A1F", border: "1px solid rgba(255,90,31,0.35)", borderRadius: 4, padding: "2px 6px", marginLeft: 8, verticalAlign: "middle" }}>NEW</span>
+                {t("footer.links.disputeAuditAgent")}
+                <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.1em", color: "#FF5A1F", border: "1px solid rgba(255,90,31,0.35)", borderRadius: 4, padding: "2px 6px", marginInlineStart: 8, verticalAlign: "middle" }}>{t("footer.links.new")}</span>
               </a>
             </div>
           </div>
 
           {/* Developers */}
           <div>
-            <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6 }}>Developers</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6 }}>{t("footer.columns.developers")}</div>
             <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "transparent", marginBottom: 16, userSelect: "none" }}>_</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {[
-                { label: "SDK Docs", href: "/api-docs.html" },
-                { label: "Authentication", href: "/api-docs.html#auth" },
-                { label: "Webhooks", href: "/api-docs.html#webhooks" },
-                { label: "Status", href: null },
-                { label: "Margin Calculator", href: "/roi-calculator" },
+                { label: t("footer.links.sdkDocs"), href: "/api-docs.html" },
+                { label: t("footer.links.authentication"), href: "/api-docs.html#auth" },
+                { label: t("footer.links.webhooks"), href: "/api-docs.html#webhooks" },
+                { label: t("footer.links.status"), href: null },
+                { label: t("footer.links.marginCalculator"), href: "/roi-calculator" },
               ].map(({ label, href }) => (
                 <a key={label} href={href ?? "#"} onClick={!href ? (e) => e.preventDefault() : undefined}
                   style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
@@ -784,15 +785,15 @@ function LandingFooter() {
 
           {/* Company */}
           <div>
-            <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6 }}>Company</div>
+            <div style={{ fontWeight: 600, fontSize: 15, color: "#F5F6FA", marginBottom: 6 }}>{t("footer.columns.company")}</div>
             <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "transparent", marginBottom: 16, userSelect: "none" }}>_</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {[
-                { label: "About", href: null },
-                { label: "Enterprise", href: null },
-                { label: "Contact sales", href: "/contact" },
-                { label: "Support", href: null, onClick: () => setSupportOpen(true) },
-                { label: "Privacy Policy & Terms", href: "/legal" },
+                { label: t("footer.links.about"), href: null },
+                { label: t("footer.links.enterprise"), href: null },
+                { label: t("footer.links.contactSales"), href: "/contact" },
+                { label: t("footer.links.support"), href: null, onClick: () => setSupportOpen(true) },
+                { label: t("footer.links.privacyTerms"), href: "/legal" },
               ].map(({ label, href, onClick }) => (
                 <a key={label} href={href ?? "#"} onClick={onClick ? (e) => { e.preventDefault(); onClick(); } : !href ? (e) => e.preventDefault() : undefined}
                   style={{ fontSize: 14.5, color: "#9BA1B0", textDecoration: "none", transition: "color 0.15s" }}
@@ -806,8 +807,8 @@ function LandingFooter() {
         {/* Bottom bar */}
         <div style={{ marginTop: 64, paddingTop: 28, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
           <div style={{ color: "#6B7180", fontSize: 13.5 }}>
-            © 2026 PrizeSkout · QFC-licensed, Doha, Qatar
-            <span style={{ fontFamily: MONO, fontSize: 11.5, color: "#6B7180" }}> · QFC No. 04412</span>
+            {t("footer.bottomBar.copyright")}
+            <span style={{ fontFamily: MONO, fontSize: 11.5, color: "#6B7180" }}> · {t("footer.bottomBar.qfcNumber")}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <a href="#" onClick={(e) => e.preventDefault()}
@@ -815,9 +816,9 @@ function LandingFooter() {
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(16,185,129,0.5)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}>
               <span className="ps-status-dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", boxShadow: "0 0 8px rgba(16,185,129,0.8)", flexShrink: 0 }} />
-              All systems operational
+              {t("footer.bottomBar.allSystemsOperational")}
             </a>
-            {["99.95% uptime", "GCC data residency"].map(t2 => (
+            {[t("footer.bottomBar.uptime"), t("footer.bottomBar.dataResidency")].map(t2 => (
               <span key={t2} style={{ display: "inline-flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 14px", fontSize: 13, color: "#9BA1B0" }}>{t2}</span>
             ))}
           </div>
