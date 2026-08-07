@@ -31,7 +31,6 @@ import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement,
 import { confirmZidJahezPropagation, getZidJahezBridgeSettings, listZidJahezPropagationEvents, saveZidJahezBridgeSettings } from "@/server/core/zid-jahez-bridge";
 import { createStoreManagerTask, getStoreManager, saveStoreManagerPolicy, saveStoreManagerProfile, transitionStoreManagerTask } from "@/server/core/store-manager";
 import { runScrape } from "@/server/scrape-runner";
-import { backgroundTask } from "@/server/cf-ctx";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -235,9 +234,8 @@ export const Route = createFileRoute("/api/channels/connect")({
             if(body.action==="refresh"){
               if(!body.id)return resp({error:"Tracked product ID is required."},400);
               const {data:target,error}=await (supabaseAdmin.from("competitor_product_urls") as any).select("id,product,competitor,url,channel,match_confidence").eq("user_id",merchant_id).eq("id",body.id).maybeSingle();if(error)throw error;if(!target)return resp({error:"Tracked competitor product was not found."},404);
-              const startedAt=new Date().toISOString();
-              backgroundTask(runScrape(supabaseAdmin,{userId:merchant_id,url:target.url,product:target.product,competitor:target.competitor,channel:target.channel,matchConfidence:Number(target.match_confidence??1)},{maxAttempts:1,timeoutMs:60_000}).catch(error=>{console.error("[competitor-radar] Background price check failed",error);}));
-              return resp({ok:true,status:"queued",target_id:target.id,started_at:startedAt},202);
+              const result=await runScrape(supabaseAdmin,{userId:merchant_id,url:target.url,product:target.product,competitor:target.competitor,channel:target.channel,matchConfidence:Number(target.match_confidence??1)},{maxAttempts:1,timeoutMs:60_000});
+              return result.ok?resp({ok:true,status:"completed",scrape:{url:result.url,price:result.price,currency:result.currency}},200):resp({error:result.error},502);
             }
             return resp({error:"Unsupported Competitor Radar action."},400);
           }
