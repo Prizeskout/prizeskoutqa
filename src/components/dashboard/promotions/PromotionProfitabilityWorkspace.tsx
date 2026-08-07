@@ -503,7 +503,7 @@ export function PromotionProfitabilityWorkspace({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0,1.35fr) minmax(280px,.65fr)",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,280px),1fr))",
             gap: 12,
           }}
         >

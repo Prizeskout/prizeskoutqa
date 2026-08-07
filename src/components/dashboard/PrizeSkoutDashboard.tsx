@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { Fragment, useState, useEffect, useMemo, useRef } from "react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
@@ -40,7 +40,7 @@ import {
 import { compactConversation, resolveProductReferences } from "@/lib/copilot-understanding";
 import { workflowStepLabel } from "@/lib/merchant-language";
 
-type Tab = "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
+type Tab = "today" | "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
@@ -149,6 +149,20 @@ const CSS = `
     .ps-db-section{padding:20px var(--px) 40px!important}
     .ps-db-h1{font-size:20px!important}
     .ps-db-controls{display:none!important}
+    [data-tour="copilot-command"]{margin:12px var(--px) 0!important;padding:14px!important}
+    [data-tour="copilot-command"] input{min-width:0!important}
+    .ps-db [role="dialog"]{max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important}
+  }
+  @media(max-width:560px){
+    .ps-db{--px:12px}
+    .ps-db-header{padding:14px var(--px) 12px!important}
+    .ps-db-section{padding:14px var(--px) 32px!important;gap:14px!important}
+    [data-tour="copilot-command"]{margin:10px var(--px) 0!important;padding:12px!important}
+    [data-tour="copilot-command"]>div:nth-of-type(3){flex-wrap:wrap!important}
+    [data-tour="copilot-command"]>div:nth-of-type(3)>button{width:100%!important}
+    .ps-db input,.ps-db select,.ps-db textarea{font-size:16px!important}
+    .ps-db table{font-size:12px}
+    .ps-db h1,.ps-db h2,.ps-db h3{overflow-wrap:anywhere}
   }
   @keyframes pk-drawer-ltr{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
   @keyframes pk-drawer-rtl{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
@@ -1785,7 +1799,7 @@ function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
 }
 
 export function PrizeSkoutDashboard() {
-  const [tab, setTab] = useState<Tab>("analytics");
+  const [tab, setTab] = useState<Tab>("today");
   const [theme, setTheme] = useState<Theme>("light");
   const [demoMode, setDemoMode] = useState(false);
   const [currency, setCurrency] = useState("QAR");
@@ -2218,12 +2232,12 @@ export function PrizeSkoutDashboard() {
   }, [tab]);
 
   useEffect(() => {
-    if (tab !== "analytics" && tab !== "rules") return;
+    if (tab !== "today" && tab !== "analytics" && tab !== "rules") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) return;
     setCatalogLoading(true);
-    if (tab === "analytics") {
+    if (tab === "today" || tab === "analytics") {
       fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2247,7 +2261,7 @@ export function PrizeSkoutDashboard() {
   // finishes. Keep the first-run screen alive until the initial value report
   // is ready instead of leaving reviewers on a permanently empty dashboard.
   useEffect(() => {
-    if (tab !== "analytics" || channelStatuses.zid !== "connected" || importedProducts.length > 0)
+    if ((tab !== "today" && tab !== "analytics") || channelStatuses.zid !== "connected" || importedProducts.length > 0)
       return;
     let cancelled = false;
     let attempts = 0;
@@ -2515,7 +2529,7 @@ export function PrizeSkoutDashboard() {
     // Vault) — the Imported Products empty state needs to know whether a
     // sync-capable store is connected before the merchant has ever visited
     // the Vault tab.
-    if (tab !== "vault" && tab !== "analytics") return;
+    if (tab !== "vault" && tab !== "today" && tab !== "analytics") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
     fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
@@ -4734,19 +4748,29 @@ export function PrizeSkoutDashboard() {
 
   const navDefs = [
     {
+      id: "today" as Tab,
+      group: "Start",
+      label: "Today",
+      sub: "Start here",
+      tip: "Today shows the work that matters now, the health of your store, and clear paths to every PrizeSkout tool.",
+    },
+    {
       id: "analytics" as Tab,
-      label: t.navA,
-      sub: t.navAs,
+      group: "Understand",
+      label: "Business Overview",
+      sub: "Money & products",
       tip: "Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place.",
     },
     {
       id: "manager" as Tab,
+      group: "Understand",
       label: "Store Manager",
       sub: "Delegate & approve",
       tip: "Store Manager — your daily brief, delegated backend work, approvals, exceptions, and verified outcomes in one management desk.",
     },
     {
       id: "promotions" as Tab,
+      group: "Plan & automate",
       label:
         lang === "ar"
           ? "محاكي العروض"
@@ -4763,18 +4787,21 @@ export function PrizeSkoutDashboard() {
     },
     {
       id: "rules" as Tab,
+      group: "Plan & automate",
       label: t.navR,
       sub: t.navRs,
       tip: "Margin Policy Engine — the price guardrails PrizeSkout enforces automatically, like never going below a set margin on a category.",
     },
     {
       id: "vault" as Tab,
+      group: "Plan & automate",
       label: t.navV,
       sub: t.navVs,
       tip: "Integration Vault — where you connect delivery apps and POS systems (Talabat, Zid, Jahez, etc.) so PrizeSkout can read and adjust prices.",
     },
     {
       id: "history" as Tab,
+      group: "Records",
       label: t.navH,
       sub: t.navHs,
       tip: "Payout & Repricing History — every commission audit, price change, and payout check PrizeSkout has run for you, kept for the record.",
@@ -4782,7 +4809,9 @@ export function PrizeSkoutDashboard() {
   ];
 
   const headerSub =
-    tab === "analytics"
+    tab === "today"
+      ? "Your priorities, store health, and next best actions"
+      : tab === "analytics"
       ? t.subA
       : tab === "manager"
         ? "Delegate store operations, approve protected actions, and review verified outcomes"
@@ -4796,7 +4825,9 @@ export function PrizeSkoutDashboard() {
                 ? t.subH
                 : t.subV;
   const headerTitle =
-    tab === "analytics"
+    tab === "today"
+      ? "Today"
+      : tab === "analytics"
       ? t.navA
       : tab === "manager"
         ? "Store Manager"
@@ -4817,6 +4848,15 @@ export function PrizeSkoutDashboard() {
   const md = modal != null ? disputes[modal] : null;
 
   const assistantContext: Record<Tab, { nudge: string; prompt: string; examples: string[] }> = {
+    today: {
+      nudge: "Need an explanation or want PrizeSkout to handle store work?",
+      prompt: "What needs my attention today?",
+      examples: [
+        "What needs my attention today?",
+        "What did I actually keep from orders this month?",
+        "Prepare my highest-priority store tasks",
+      ],
+    },
     analytics: {
       nudge: "Want to understand a risk or make a catalogue change?",
       prompt: "Show products losing money",
@@ -4945,6 +4985,7 @@ export function PrizeSkoutDashboard() {
             position: "sticky",
             top: 0,
             height: "100vh",
+            overflowY: "auto",
           }}
         >
           <div
@@ -4964,11 +5005,25 @@ export function PrizeSkoutDashboard() {
             {t.cp}
           </div>
           <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {navDefs.map((n) => {
+            {navDefs.map((n, index) => {
               const on = tab === n.id;
               return (
-                <div
-                  key={n.id}
+                <Fragment key={n.id}>
+                  {(index === 0 || navDefs[index - 1]?.group !== n.group) && (
+                    <div
+                      style={{
+                        margin: index === 0 ? "0 6px 1px" : "9px 6px 1px",
+                        color: "var(--muted)",
+                        fontSize: 9.5,
+                        fontWeight: 850,
+                        letterSpacing: ".1em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {n.group}
+                    </div>
+                  )}
+                  <div
                   role="button"
                   tabIndex={0}
                   aria-current={on ? "page" : undefined}
@@ -5011,7 +5066,8 @@ export function PrizeSkoutDashboard() {
                       {n.sub}
                     </span>
                   </span>
-                </div>
+                  </div>
+                </Fragment>
               );
             })}
           </nav>
@@ -6031,6 +6087,146 @@ export function PrizeSkoutDashboard() {
           </div>
         )}
 
+        {/* ===== TAB: TODAY ===== */}
+        {tab === "today" && (
+          <section
+            className="ps-db-section"
+            style={{
+              padding: "20px 30px 48px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+              animation: "pk-in .3s ease",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit,minmax(155px,1fr))",
+                gap: 10,
+              }}
+            >
+              {[
+                [
+                  "Connected channels",
+                  String(defendHealth?.connected_channels ?? 0),
+                  defendHealth?.connected_channels ? "Sharing live store data" : "Connect your first sales channel",
+                ],
+                [
+                  "Tracked products",
+                  catalogLoading ? "Checking…" : String(heroStats?.tracked_products ?? importedProducts.length),
+                  "Products PrizeSkout can review",
+                ],
+                [
+                  "Price updates this month",
+                  heroStats?.has_activity ? String(heroStats.price_updates_this_month) : "0",
+                  "Only confirmed store changes",
+                ],
+                [
+                  "Store status",
+                  defendHealth?.state === "active"
+                    ? "Protected"
+                    : defendHealth?.state === "degraded"
+                      ? "Needs attention"
+                      : "Monitoring",
+                  defendHealth?.detail ?? "Checking connected sales channels",
+                ],
+              ].map(([label, value, note]) => (
+                <div
+                  key={label}
+                  style={{
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                    padding: "14px 15px",
+                    background: "var(--surface)",
+                    boxShadow: "var(--shadow)",
+                  }}
+                >
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>
+                    {label}
+                  </div>
+                  <div style={{ marginTop: 5, fontSize: 22, fontWeight: 850 }}>{value}</div>
+                  <div style={{ marginTop: 3, fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}>{note}</div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 15,
+                padding: "18px 20px",
+                background: "var(--surface)",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              <div style={{ marginBottom: 12 }}>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>Where do you want to go?</h2>
+                <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: 12.5 }}>
+                  Start with today&apos;s work below, or open the part of your business you want to review.
+                </p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 9 }}>
+                {[
+                  ["Your money", "Profit, margins, payouts and recovery", "analytics" as Tab, ""],
+                  ["Your products", "Catalogue, competitor prices and repricing", "analytics" as Tab, "imported-products"],
+                  ["Automation", "Margin rules, approvals and safe actions", "rules" as Tab, ""],
+                  ["History", "Completed changes, checks and evidence", "history" as Tab, ""],
+                ].map(([label, detail, destination, targetId]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => {
+                      setTab(destination as Tab);
+                      if (targetId) {
+                        window.setTimeout(
+                          () => document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                          60,
+                        );
+                      }
+                    }}
+                    style={{
+                      textAlign: "start",
+                      border: "1px solid var(--border)",
+                      borderRadius: 11,
+                      padding: "13px 14px",
+                      background: "var(--surface2)",
+                      color: "var(--text)",
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <strong style={{ display: "block", fontSize: 13.5 }}>{label} →</strong>
+                    <span style={{ display: "block", marginTop: 4, color: "var(--muted)", fontSize: 11.5, lineHeight: 1.4 }}>
+                      {detail}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <MerchantOperatingLoop onAskCopilot={submitManagerCommand} />
+
+            <button
+              type="button"
+              onClick={() => setTab("analytics")}
+              style={{
+                alignSelf: "center",
+                border: "1px solid var(--border)",
+                borderRadius: 999,
+                padding: "10px 16px",
+                background: "var(--surface)",
+                color: "var(--text)",
+                fontFamily: "inherit",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              Open the complete Business Overview →
+            </button>
+          </section>
+        )}
+
         {/* ===== TAB: STORE MANAGER ===== */}
         {tab === "manager" && (
           <section
@@ -6411,7 +6607,7 @@ export function PrizeSkoutDashboard() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+                gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))",
                 gap: 18,
               }}
             >
@@ -6608,7 +6804,7 @@ export function PrizeSkoutDashboard() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,320px),1fr))",
                     gap: 18,
                   }}
                 >
@@ -10387,7 +10583,7 @@ export function PrizeSkoutDashboard() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))",
                   gap: 16,
                 }}
               >
@@ -10931,7 +11127,7 @@ export function PrizeSkoutDashboard() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))",
                     gap: 16,
                   }}
                 >

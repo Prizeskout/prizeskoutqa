@@ -62,6 +62,15 @@ const PS_CSS = `
 .ps-root input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:999px; background:var(--ps-slider-track); }
 .ps-root input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:18px; height:18px; margin-top:-7px; border-radius:999px; background:#EF681A; border:2px solid var(--ps-thumb-border); box-shadow:0 2px 6px rgba(0,0,0,0.25); cursor:pointer; transition:box-shadow .15s ease; }
 .ps-root input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 2px 8px rgba(0,0,0,0.35); }
+.ps-mobile-nav { display:none; }
+@media(max-width:767px){
+  .ps-root input,.ps-root select,.ps-root textarea{font-size:16px!important}
+  .ps-root header{padding:14px 16px!important;position:sticky;top:0}
+  .ps-root header>div:last-child{gap:6px!important}
+  .ps-mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(3,1fr);left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:40;border:1px solid var(--ps-border-3);border-radius:14px;padding:5px;background:color-mix(in srgb,var(--ps-surface-2) 92%,transparent);backdrop-filter:blur(16px);box-shadow:0 12px 36px rgba(0,0,0,.28)}
+  .ps-mobile-nav a{min-width:0;min-height:48px;padding:7px 5px;border-radius:10px;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ps-soft);font-size:10px;font-weight:700;line-height:1.2}
+  .ps-mobile-nav a[data-active="true"]{background:rgba(239,104,26,.12);color:#EF681A}
+}
 @keyframes psPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes psSpin { to{transform:rotate(360deg)} }
 @keyframes psIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
@@ -356,7 +365,7 @@ interface PsShellProps {
 }
 
 function PsShellInner({ screen, title, subtitle, children }: PsShellProps) {
-  const { i18n: i18nHook } = useTranslation();
+  const { t, i18n: i18nHook } = useTranslation();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [region, setRegion] = useState<PsRegion>("Qatar");
   const [isMobile, setIsMobile] = useState(false);
@@ -428,6 +437,20 @@ function PsShellInner({ screen, title, subtitle, children }: PsShellProps) {
           </div>
         </PsRegionContext.Provider>
       </main>
+      {isMobile && (
+        <nav className="ps-mobile-nav" aria-label="Product navigation">
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.screen}
+              to={SCREEN_TO_PATH[item.screen]}
+              data-active={screen === item.screen}
+              aria-current={screen === item.screen ? "page" : undefined}
+            >
+              <span>{t(item.titleKey)}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
       <PlanGateModal />
       <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>

@@ -146,6 +146,7 @@
 
   html {
     scroll-behavior: smooth;
+    max-width: 100%;
   }
 
   body {
@@ -159,6 +160,16 @@
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  img, video, canvas, svg {
+    max-width: 100%;
+  }
+
+  input, select, textarea, button {
+    max-width: 100%;
   }
 
   h1, h2 {
@@ -275,6 +286,40 @@
   @media (min-width: 1024px) {
     .table-scroll::after {
       display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    /* 16px prevents Safari from zooming the whole interface when a merchant
+       focuses a field. Touch controls remain large enough for one-handed use. */
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+    button, [role="button"], a {
+      touch-action: manipulation;
+    }
+    button:not([aria-label]), [role="button"]:not([aria-label]) {
+      min-height: 42px;
+    }
+    .ps-card {
+      padding: 14px;
+      border-radius: 10px;
+    }
+    .table-scroll {
+      width: 100%;
+      overscroll-behavior-inline: contain;
+    }
+    .ps-auth-main {
+      padding: 88px 18px 28px !important;
+      align-items: flex-start !important;
+      min-height: 100dvh;
+    }
+    .ps-auth-back {
+      top: 18px !important;
+      left: 18px !important;
+    }
+    .ps-auth-shell {
+      min-height: 100dvh !important;
     }
   }
 }

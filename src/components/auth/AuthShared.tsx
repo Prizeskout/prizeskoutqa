@@ -140,6 +140,7 @@ export function AuthLeftPanel() {
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div
+      className="ps-auth-shell"
       style={{
         display: "flex",
         minHeight: "100vh",
@@ -148,6 +149,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
       }}
     >
       <main
+        className="ps-auth-main"
         id="main-content"
         tabIndex={-1}
         style={{
@@ -161,7 +163,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           outline: "none",
         }}
       >
-        <div style={{ position: "absolute", top: 24, left: 24 }}>
+        <div className="ps-auth-back" style={{ position: "absolute", top: 24, left: 24 }}>
           <BackToHomeLink tone="dark" />
         </div>
         <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>

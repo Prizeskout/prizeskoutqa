@@ -54,7 +54,7 @@ export function SettlementForecastPanel({forecast,lines,currency}:{forecast:Fore
         <div style={{display:"flex",gap:7,alignItems:"center",fontSize:11.5,fontWeight:900,color:"#A16207"}}><AlertTriangle size={14}/>Forecast limitations</div>
         {forecast.blockers.map(item=><div key={item} style={{fontSize:11.5,color:"var(--muted)",marginTop:5}}>• {item}</div>)}
       </div>}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:10}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,260px),1fr))",gap:10}}>
         <div style={{border:"1px solid var(--border)",borderRadius:10,padding:"12px 13px"}}><div style={{fontSize:12,fontWeight:900,marginBottom:8}}>By settlement date</div>{forecast.by_settlement_date.length?forecast.by_settlement_date.slice(0,6).map(item=><div key={item.date} style={{display:"flex",justifyContent:"space-between",fontSize:11.5,padding:"5px 0",borderBottom:"1px solid var(--border)"}}><span>{item.date} · {item.orders} orders</span><strong>{money(item.amount,currency)}</strong></div>):<span style={{fontSize:11.5,color:"var(--muted)"}}>Approve settlement timing to unlock this forecast.</span>}</div>
         <div style={{border:"1px solid var(--border)",borderRadius:10,padding:"12px 13px"}}><div style={{fontSize:12,fontWeight:900,marginBottom:8}}>Highest expected products</div>{forecast.by_product.slice(0,6).map(item=><div key={item.sku??item.product_name} style={{display:"flex",justifyContent:"space-between",fontSize:11.5,padding:"5px 0",borderBottom:"1px solid var(--border)",gap:8}}><span>{item.product_name} · {item.quantity}</span><strong>{money(item.amount,currency)}</strong></div>)}</div>
       </div>

@@ -311,6 +311,9 @@ const SHELL_STYLES = `
   }
   @media (max-width: 560px) {
     .ps-footer-grid { grid-template-columns: 1fr; }
+    main section { scroll-margin-top: 72px; }
+    main h1 { overflow-wrap: anywhere; }
+    main input, main select, main textarea { font-size: 16px !important; }
   }
 `;
 

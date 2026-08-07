@@ -452,6 +452,138 @@ function CredentialStrip() {
   );
 }
 
+type ManagerScenario = {
+  label: string;
+  request: string;
+  action: string;
+  detail: string;
+};
+
+const MANAGER_SCENARIOS: ManagerScenario[] = [
+  {
+    label: "Catalogue",
+    request: "Prepare the new coffee bundle and schedule it for tomorrow at 9:00.",
+    action: "Product update prepared",
+    detail: "Title, price, inventory and publish time are ready for review.",
+  },
+  {
+    label: "Inventory",
+    request: "Find products that may run out this week and prepare stock updates.",
+    action: "3 stock updates prepared",
+    detail: "Low-stock items were checked against recent sales before any change.",
+  },
+  {
+    label: "Images",
+    request: "Clean up the images for the summer collection and keep the originals.",
+    action: "6 image updates prepared",
+    detail: "Background, crop and quality checks are ready for approval.",
+  },
+];
+
+const PROMO_OPTIONS = [
+  { discount: 10, margin: 24, lift: 12, status: "Healthy" },
+  { discount: 20, margin: 16, lift: 25, status: "Worth reviewing" },
+  { discount: 30, margin: 7, lift: 42, status: "Below your floor" },
+] as const;
+
+function MerchantOperationsPreview() {
+  const [managerIdx, setManagerIdx] = useState(0);
+  const [promoIdx, setPromoIdx] = useState(1);
+  const manager = MANAGER_SCENARIOS[managerIdx];
+  const promo = PROMO_OPTIONS[promoIdx];
+  const promoSafe = promo.margin >= 15;
+
+  return (
+    <section className="ps-ops-section">
+      <div className="ps-ops-heading">
+        <div>
+          <div className="ps-section-kicker">DAILY STORE OPERATIONS</div>
+          <h2>Manage the store. Test the offer.</h2>
+        </div>
+        <p>Two everyday jobs, shown as they work—not buried in a feature list.</p>
+      </div>
+
+      <div className="ps-ops-grid">
+        <article className="ps-ops-card ps-card">
+          <div className="ps-ops-card-top">
+            <div>
+              <span className="ps-ops-step">01 · STORE MANAGER</span>
+              <h3>Ask once. Review the work.</h3>
+            </div>
+            <span className="ps-live-pill"><i /> Ready</span>
+          </div>
+
+          <div className="ps-scenario-tabs" aria-label="Store Manager examples">
+            {MANAGER_SCENARIOS.map((scenario, idx) => (
+              <button key={scenario.label} type="button" aria-pressed={managerIdx === idx} onClick={() => setManagerIdx(idx)}>
+                {scenario.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="ps-manager-conversation">
+            <div className="ps-manager-request">
+              <span>You</span>
+              <p>{manager.request}</p>
+            </div>
+            <div className="ps-manager-result" key={manager.label}>
+              <div className="ps-result-icon">✓</div>
+              <div>
+                <span>PrizeSkout prepared</span>
+                <strong>{manager.action}</strong>
+                <p>{manager.detail}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="ps-approval-row">
+            <span><i /> Nothing changes until you approve</span>
+            <button type="button">Review action →</button>
+          </div>
+        </article>
+
+        <article className="ps-ops-card ps-card">
+          <div className="ps-ops-card-top">
+            <div>
+              <span className="ps-ops-step">02 · PROMO SIMULATOR</span>
+              <h3>See the profit before the promotion.</h3>
+            </div>
+            <span className="ps-preview-pill">Illustrative</span>
+          </div>
+
+          <div className="ps-promo-product">
+            <div className="ps-product-mark">CB</div>
+            <div><strong>Coffee bundle</strong><span>Current price · QAR 80</span></div>
+            <div className="ps-margin-floor"><span>Your minimum margin</span><strong>15%</strong></div>
+          </div>
+
+          <div className="ps-discount-picker" aria-label="Promotion discount example">
+            <span>Try a discount</span>
+            <div>
+              {PROMO_OPTIONS.map((option, idx) => (
+                <button key={option.discount} type="button" aria-pressed={promoIdx === idx} onClick={() => setPromoIdx(idx)}>
+                  {option.discount}%
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="ps-promo-outcome" key={promo.discount}>
+            <div><span>Expected margin</span><strong className={promoSafe ? "is-safe" : "is-risky"}>{promo.margin}%</strong></div>
+            <div><span>Estimated order lift</span><strong>+{promo.lift}%</strong></div>
+            <div><span>Decision</span><strong className={promoSafe ? "is-safe" : "is-risky"}>{promo.status}</strong></div>
+          </div>
+          <div className="ps-margin-track" aria-label={`Illustrative margin ${promo.margin}%, minimum margin 15%`}>
+            <span style={{ width: `${Math.min(promo.margin * 3, 100)}%` }} className={promoSafe ? "is-safe" : "is-risky"} />
+            <i style={{ left: "45%" }}><em>15% floor</em></i>
+          </div>
+          <p className="ps-promo-note">Change the offer, funding and fees in the full simulator before committing a campaign.</p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
 // ── SurfaceMatrix ─────────────────────────────────────────────────────────────
 function SurfaceMatrix() {
   const { t } = useTranslation();
@@ -925,6 +1057,7 @@ function LandingPage() {
       <Nav dark={dark} onToggleDark={toggleDark} market={market} onMarketChange={setMarket} />
       <HeroSection dark={dark} />
       <DemoPlayer currency={market.currency} dark={dark} />
+      <MerchantOperationsPreview />
       <SurfaceMatrix />
       <PricingSection market={market} />
       <FAQSection />
@@ -1014,11 +1147,63 @@ const PAGE_CSS = `
   @keyframes ps-status-pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
   @media(prefers-reduced-motion:reduce){.ps-status-dot{animation:none}}
   .ps-pricing-grid { grid-template-columns:1fr; }
+  .ps-ops-section { position:relative; z-index:2; max-width:1440px; margin:0 auto; padding:78px clamp(24px,5vw,72px) 88px; }
+  .ps-ops-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:34px; }
+  .ps-section-kicker { font-family:${MONO}; font-size:11px; letter-spacing:.1em; color:${OG}; margin-bottom:11px; }
+  .ps-ops-heading h2 { margin:0; color:var(--lp-text); font-size:clamp(32px,4vw,50px); line-height:1.05; letter-spacing:-.03em; font-weight:600; }
+  .ps-ops-heading > p { max-width:330px; margin:0; color:var(--lp-muted-2); font-size:14px; line-height:1.55; text-align:right; }
+  .ps-ops-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .ps-ops-card { min-width:0; padding:25px; border:1px solid var(--lp-border-4); border-radius:15px; background:var(--lp-surface); overflow:hidden; }
+  .ps-ops-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:21px; }
+  .ps-ops-card-top h3 { margin:6px 0 0; color:var(--lp-text); font-size:clamp(20px,2vw,27px); line-height:1.16; letter-spacing:-.02em; }
+  .ps-ops-step { font-family:${MONO}; font-size:10px; letter-spacing:.1em; color:${OG}; }
+  .ps-live-pill,.ps-preview-pill { flex:none; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--lp-border-em); border-radius:999px; padding:6px 9px; color:var(--lp-muted); font-family:${MONO}; font-size:9.5px; }
+  .ps-live-pill i { width:6px; height:6px; border-radius:50%; background:${GN}; box-shadow:0 0 0 4px color-mix(in srgb, ${GN} 14%, transparent); }
+  .ps-scenario-tabs,.ps-discount-picker > div { display:flex; gap:7px; }
+  .ps-scenario-tabs { margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
+  .ps-scenario-tabs::-webkit-scrollbar { display:none; }
+  .ps-scenario-tabs button,.ps-discount-picker button { border:1px solid var(--lp-border-3); border-radius:7px; background:var(--lp-surface-5); color:var(--lp-muted); font:600 11px ${BODY}; padding:7px 11px; cursor:pointer; white-space:nowrap; transition:.15s ease; }
+  .ps-scenario-tabs button[aria-pressed="true"],.ps-discount-picker button[aria-pressed="true"] { border-color:color-mix(in srgb, ${OG} 55%, transparent); background:color-mix(in srgb, ${OG} 11%, var(--lp-surface)); color:${OG}; }
+  .ps-manager-conversation { min-height:197px; padding:14px; border:1px solid var(--lp-border-3); border-radius:11px; background:var(--lp-surface-5); }
+  .ps-manager-request { margin-left:clamp(22px,8%,52px); padding:11px 13px; border-radius:10px 10px 3px 10px; background:color-mix(in srgb, ${OG} 13%, var(--lp-surface)); border:1px solid color-mix(in srgb, ${OG} 28%, transparent); }
+  .ps-manager-request span,.ps-manager-result span { display:block; color:var(--lp-dim); font-family:${MONO}; font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
+  .ps-manager-request p { margin:4px 0 0; color:var(--lp-text-2); font-size:12.5px; line-height:1.45; }
+  .ps-manager-result { display:flex; gap:11px; margin:12px clamp(22px,8%,52px) 0 0; padding:12px; border:1px solid var(--lp-border-3); border-radius:3px 10px 10px; background:var(--lp-surface); animation:ps-menu .18s ease; }
+  .ps-result-icon { flex:none; display:grid; place-items:center; width:26px; height:26px; border-radius:8px; background:color-mix(in srgb, ${GN} 13%, var(--lp-surface)); color:${GN}; font-weight:700; }
+  .ps-manager-result strong { display:block; margin-top:3px; color:var(--lp-text); font-size:13px; }
+  .ps-manager-result p { margin:3px 0 0; color:var(--lp-muted); font-size:11.5px; line-height:1.4; }
+  .ps-approval-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:13px; }
+  .ps-approval-row > span { display:flex; align-items:center; gap:7px; color:var(--lp-muted-2); font-size:10.5px; }
+  .ps-approval-row > span i { width:6px; height:6px; border-radius:50%; background:${GN}; }
+  .ps-approval-row button { border:0; background:transparent; color:${OG}; font:600 11px ${BODY}; cursor:pointer; }
+  .ps-promo-product { display:flex; align-items:center; gap:11px; padding:13px; border:1px solid var(--lp-border-3); border-radius:11px; background:var(--lp-surface-5); }
+  .ps-product-mark { flex:none; display:grid; place-items:center; width:39px; height:39px; border-radius:10px; background:color-mix(in srgb, ${OG} 14%, var(--lp-surface)); color:${OG}; font:700 12px ${MONO}; }
+  .ps-promo-product strong,.ps-promo-product span { display:block; }
+  .ps-promo-product strong { color:var(--lp-text); font-size:13px; }
+  .ps-promo-product span { color:var(--lp-muted-2); font-size:10.5px; margin-top:2px; }
+  .ps-margin-floor { margin-left:auto; text-align:right; }
+  .ps-margin-floor strong { color:var(--lp-text-2); font-size:16px; }
+  .ps-discount-picker { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:16px 0; }
+  .ps-discount-picker > span { color:var(--lp-muted); font-size:11px; }
+  .ps-promo-outcome { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--lp-border-3); border-radius:11px; overflow:hidden; animation:ps-menu .18s ease; }
+  .ps-promo-outcome > div { min-width:0; padding:13px; background:var(--lp-surface-5); border-right:1px solid var(--lp-border-3); }
+  .ps-promo-outcome > div:last-child { border-right:0; }
+  .ps-promo-outcome span,.ps-promo-outcome strong { display:block; }
+  .ps-promo-outcome span { color:var(--lp-muted-2); font-size:9.5px; min-height:25px; line-height:1.25; }
+  .ps-promo-outcome strong { color:var(--lp-text); font-size:14px; line-height:1.25; }
+  .is-safe { color:${GN} !important; } .is-risky { color:#E85D5D !important; }
+  .ps-margin-track { position:relative; height:7px; margin:23px 3px 18px; border-radius:99px; background:var(--lp-surface-4); }
+  .ps-margin-track > span { display:block; height:100%; border-radius:inherit; background:${GN}; transition:width .25s ease; }
+  .ps-margin-track > span.is-risky { background:#E85D5D; }
+  .ps-margin-track > i { position:absolute; top:-4px; width:2px; height:15px; background:var(--lp-text); }
+  .ps-margin-track em { position:absolute; top:17px; left:50%; transform:translateX(-50%); color:var(--lp-dim); font:normal 9px ${MONO}; white-space:nowrap; }
+  .ps-promo-note { margin:24px 0 0; color:var(--lp-muted-2); font-size:10.5px; line-height:1.45; }
 
   /* tablet ≤ 1024px */
   @media(max-width:1024px) {
     .ps-lp-footer { grid-template-columns:1fr 1fr; gap:32px; }
     .ps-lp-footer > div:first-child { grid-column:1/-1; }
+    .ps-ops-grid { grid-template-columns:1fr; }
   }
   /* desktop pricing */
   @media(min-width:900px) {
@@ -1038,15 +1223,32 @@ const PAGE_CSS = `
     .ps-flow-header { flex-direction:column; align-items:flex-start !important; gap:6px; }
     .ps-flow-header-label { white-space:normal; font-size:9.5px !important; }
     .ps-surface-grid { grid-template-columns:1fr; }
+    .ps-ops-section { padding-top:58px; padding-bottom:66px; }
+    .ps-ops-heading { align-items:flex-start; flex-direction:column; margin-bottom:24px; }
+    .ps-ops-heading > p { text-align:left; max-width:420px; }
+    .ps-ops-card { padding:18px; }
+    .ps-ops-card-top { align-items:flex-start; }
+    .ps-live-pill,.ps-preview-pill { padding:5px 7px; }
+    .ps-promo-outcome > div { padding:11px 8px; }
     .ps-surface-grid > div { border-right:none !important; border-bottom:1px solid var(--lp-border-2) !important; }
     .ps-surface-grid > div:last-child { border-bottom:none !important; }
-.ps-lp-footer { grid-template-columns:1fr 1fr; gap:20px; }
+    .ps-lp-footer { grid-template-columns:1fr 1fr; gap:20px; }
     .ps-lp-footer > div:first-child { grid-column:1/-1; }
+    [data-lp-theme] section { scroll-margin-top:72px; }
+    [data-lp-theme] h1 { font-size:clamp(36px,11vw,56px)!important; overflow-wrap:anywhere; }
+    [data-lp-theme] h2 { overflow-wrap:anywhere; }
+    [data-lp-theme] input,[data-lp-theme] select,[data-lp-theme] textarea { font-size:16px!important; }
+    .ps-pricing-grid { margin-top:28px!important; gap:14px!important; }
+    .ps-faq-layout { min-height:0!important; }
+    .ps-faq-list { width:100%!important; max-height:280px; }
+    .ps-faq-answer { padding:24px 20px!important; }
   }
   /* small mobile ≤ 480px */
   @media(max-width:480px) {
     .ps-lp-footer { grid-template-columns:1fr; }
     .ps-credential-row { flex-direction:column; align-items:center; gap:14px; }
     .ps-credential-sep { display:none; }
+    .ps-cred-card { width:100%; padding:14px 20px; }
+    .ps-lp-footer { gap:26px; }
   }
 `;
