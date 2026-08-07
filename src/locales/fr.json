@@ -752,6 +752,8 @@
     "tabLabels": {
       "storeAccess": "Accès boutique",
       "channels": "Canaux",
+      "competitors": "Radar concurrents",
+      "productImages": "Images produits",
       "marginRules": "Règles de marge",
       "locations": "Emplacements",
       "notifications": "Notifications"

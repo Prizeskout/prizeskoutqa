@@ -14,6 +14,8 @@
     "verify-margin": "tsx --env-file=.env.local scripts/verify-margin.mts",
     "verify-margin-policy": "tsx scripts/verify-margin-policy.mts",
     "verify-copilot-prompts": "tsx scripts/verify-copilot-prompts.mts",
+    "verify-product-images": "tsx --env-file=.env.local scripts/verify-product-images.mts",
+    "verify-store-manager-ui": "tsx --env-file=.env.local scripts/verify-store-manager-ui.mts",
     "test:e2e": "tsx --env-file=.env.local scripts/e2e-app.mts",
     "typecheck": "tsc --noEmit --pretty false",
     "load:wedge": "tsx scripts/load-wedge.mts"

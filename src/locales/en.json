@@ -834,6 +834,8 @@
     "tabLabels": {
       "storeAccess": "Store Access",
       "channels": "Channels",
+      "competitors": "Competitor Radar",
+      "productImages": "Product Images",
       "marginRules": "Margin Rules",
       "locations": "Locations",
       "notifications": "Notifications"

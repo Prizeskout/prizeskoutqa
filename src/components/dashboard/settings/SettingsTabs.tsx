@@ -4,6 +4,8 @@ import { ChannelsTab } from "./ChannelsTab";
 import { MarginRulesTab } from "./MarginRulesTab";
 import { LocationsTab } from "./LocationsTab";
 import { NotificationsTab } from "./NotificationsTab";
+import { CompetitorRadarAccessTab } from "./CompetitorRadarAccessTab";
+import { ProductImageManagerTab } from "./ProductImageManagerTab";
 
 const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 const OG = "#EF681A";
@@ -146,12 +148,14 @@ function StoreAccessTab() {
   );
 }
 
-const TABS = ["Store Access", "Channels", "Margin Rules", "Locations", "Notifications"] as const;
+const TABS = ["Store Access", "Channels", "Competitor Radar", "Product Images", "Margin Rules", "Locations", "Notifications"] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_LABEL_KEYS: Record<Tab, string> = {
   "Store Access": "storeAccess",
   "Channels": "channels",
+  "Competitor Radar": "competitors",
+  "Product Images": "productImages",
   "Margin Rules": "marginRules",
   "Locations": "locations",
   "Notifications": "notifications",
@@ -160,6 +164,8 @@ const TAB_LABEL_KEYS: Record<Tab, string> = {
 const TAB_TIPS: Record<Tab, string> = {
   "Store Access": "Your business name and the code that restores your dashboard on any device — no password needed.",
   "Channels": "Connect delivery apps and POS systems. This is what powers live catalogue sync and automatic price pushes.",
+  "Competitor Radar": "Add exact competitor product URLs, map them by channel, and check the latest public price.",
+  "Product Images": "Upload, match, approve, verify, and safely undo product image changes.",
   "Margin Rules": "The minimum margin PrizeSkout defends per category — the floor everything else respects.",
   "Locations": "Every outlet you operate — PrizeSkout tracks margin and routes price defenses per location.",
   "Notifications": "Choose which events alert you in-dashboard and via webhook.",
@@ -196,6 +202,8 @@ export function SettingsTabs() {
       </div>
       {active === "Store Access" && <StoreAccessTab />}
       {active === "Channels" && <ChannelsTab />}
+      {active === "Competitor Radar" && <CompetitorRadarAccessTab />}
+      {active === "Product Images" && <ProductImageManagerTab />}
       {active === "Margin Rules" && <MarginRulesTab />}
       {active === "Locations" && <LocationsTab />}
       {active === "Notifications" && <NotificationsTab />}

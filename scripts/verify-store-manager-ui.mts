@@ -1,0 +1,8 @@
+import assert from "node:assert/strict";
+import { chromium } from "playwright";
+import { createClient } from "@supabase/supabase-js";
+
+const baseUrl=process.env.E2E_BASE_URL??"http://127.0.0.1:4177",url=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+assert(url&&key,"Supabase server credentials are required.");const admin=createClient(url,key),{data:codes}=await admin.from("ps_access_codes").select("merchant_id,code").limit(1);const access=codes?.[0];assert(access?.code,"A merchant access code is required.");
+const browser=await chromium.launch({headless:true});
+try{for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){const page=await browser.newPage({viewportSize:viewport});await page.goto(`${baseUrl}/dashboard/revenue-hub`,{waitUntil:"domcontentloaded"});await page.evaluate(({merchantId,code})=>{localStorage.setItem("ps_merchant_id",merchantId);localStorage.setItem("ps_access_code",code);localStorage.setItem("ps_connected","1");localStorage.setItem("ps_tour_v1_done","1");},{merchantId:access.merchant_id,code:access.code});await page.reload({waitUntil:"networkidle"});await page.getByLabel("Ask or delegate to Store Manager").waitFor({timeout:20_000});assert(await page.getByPlaceholder("What should PrizeSkout handle today?").isVisible());if(viewport.width>600){await page.getByText("Store Manager",{exact:true}).first().click();await page.getByText("Your daily store brief",{exact:true}).waitFor({timeout:15_000});}else{assert(await page.getByRole("button",{name:"Delegate →",exact:true}).isVisible());}await page.close();}console.log("PASS Store Manager navigation, persistent command bar, daily brief, and mobile command entry");}finally{await browser.close();}

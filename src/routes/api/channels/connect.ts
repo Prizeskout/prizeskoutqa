@@ -29,6 +29,8 @@ import { activateGroupPolicy, approveGroupControls, getGroupControls, saveGroupC
 import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
 import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement, updateAttention } from "@/server/core/merchant-experience";
 import { confirmZidJahezPropagation, getZidJahezBridgeSettings, listZidJahezPropagationEvents, saveZidJahezBridgeSettings } from "@/server/core/zid-jahez-bridge";
+import { createStoreManagerTask, getStoreManager, saveStoreManagerPolicy, saveStoreManagerProfile, transitionStoreManagerTask } from "@/server/core/store-manager";
+import { runScrape } from "@/server/scrape-runner";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -192,14 +194,49 @@ export const Route = createFileRoute("/api/channels/connect")({
           }
 
           if(platform==="merchant_experience"){
-            if(body.action==="get")return resp({ok:true,...await getMerchantExperience(merchant_id)},200);
+            if(body.action==="get")return resp({ok:true,...await getMerchantExperience(merchant_id),manager:await getStoreManager(merchant_id)},200);
             if(body.action==="attention"){
               if(!body.id||!["resolve","dismiss","assign","request_approval","snooze"].includes(body.attention_action))return resp({error:"Attention item and valid action are required."},400);
               return resp({ok:true,item:await updateAttention(merchant_id,{id:body.id,action:body.attention_action,value:body.value})},200);
             }
             if(body.action==="settings")return resp({ok:true,settings:await saveExperienceSettings(merchant_id,{automationLevel:body.automation_level,weeklyReview:body.weekly_review_enabled!=="false",progressiveMode:body.progressive_mode!=="false"})},200);
             if(body.action==="track"){await trackMerchantEngagement(merchant_id,body.event_name,body.object_id);return resp({ok:true},200);}
+            if(body.action==="manager_profile")return resp({ok:true,profile:await saveStoreManagerProfile(merchant_id,{operatingMode:body.operating_mode,dailyBriefEnabled:body.daily_brief_enabled!=="false",dailyBriefHour:Number(body.daily_brief_hour),timezone:body.timezone||"Asia/Riyadh",language:body.language||"en"})},200);
+            if(body.action==="manager_policy")return resp({ok:true,policy:await saveStoreManagerPolicy(merchant_id,{key:body.policy_key,enabled:body.enabled!=="false",behavior:body.behavior,description:body.description||body.policy_key,config:{approval_required:body.approval_required!=="false"}})},200);
+            if(body.action==="manager_task_create")return resp({ok:true,task:await createStoreManagerTask(merchant_id,{title:body.title,detail:body.detail,taskType:body.task_type,priority:body.priority,dueAt:body.due_at,approvalRequired:body.approval_required!=="false"})},200);
+            if(body.action==="manager_task_transition")return resp({ok:true,task:await transitionStoreManagerTask(merchant_id,{id:body.id,toStatus:body.to_status,actor:body.actor||"Merchant",note:body.value})},200);
             return resp({error:"Unsupported merchant experience action."},400);
+          }
+
+          if(platform==="competitor_radar"){
+            if(body.action==="list"){
+              const [{data:targets,error:targetError},{data:scrapes,error:scrapeError}]=await Promise.all([
+                (supabaseAdmin.from("competitor_product_urls") as any).select("id,product,competitor,url,category,channel,match_status,match_confidence,created_at,updated_at").eq("user_id",merchant_id).order("created_at",{ascending:false}),
+                (supabaseAdmin.from("competitor_scrapes") as any).select("url,price,currency,availability,status,scraped_at,evidence").eq("user_id",merchant_id).order("scraped_at",{ascending:false}).limit(500),
+              ]);
+              if(targetError)throw targetError;if(scrapeError)throw scrapeError;
+              const latest=new Map<string,Record<string,unknown>>();for(const row of scrapes??[])if(!latest.has(row.url))latest.set(row.url,row);
+              return resp({ok:true,targets:(targets??[]).map((target:Record<string,unknown>)=>({...target,latest_scrape:latest.get(String(target.url))??null}))},200);
+            }
+            if(body.action==="add"){
+              const product=(body.product??"").trim(),competitor=(body.competitor??"").trim(),channel=(body.channel??"online").trim().toLowerCase(),category=(body.category??"").trim()||null;
+              if(!product||!competitor)return resp({error:"Product and competitor names are required."},400);
+              let parsed:URL;try{parsed=new URL(body.url??"");}catch{return resp({error:"Enter a valid public HTTPS product URL."},400);}
+              if(parsed.protocol!=="https:"||/^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(parsed.hostname))return resp({error:"Enter a public HTTPS product URL."},400);
+              if(!/^[a-z0-9][a-z0-9_-]{1,39}$/.test(channel))return resp({error:"Channel must use letters, numbers, hyphens, or underscores."},400);
+              const {data,error}=await (supabaseAdmin.from("competitor_product_urls") as any).insert({user_id:merchant_id,product:product.slice(0,240),competitor:competitor.slice(0,120),url:parsed.toString(),category,channel,match_status:"manual_confirmed",match_confidence:1}).select("id,product,competitor,url,category,channel,match_status,match_confidence,created_at").single();
+              if(error){if(error.code==="23505")return resp({error:"That competitor product is already tracked in this channel."},409);throw error;}return resp({ok:true,target:data},200);
+            }
+            if(body.action==="remove"){
+              if(!body.id)return resp({error:"Tracked product ID is required."},400);
+              const {data,error}=await (supabaseAdmin.from("competitor_product_urls") as any).delete().eq("user_id",merchant_id).eq("id",body.id).select("id").maybeSingle();if(error)throw error;if(!data)return resp({error:"Tracked competitor product was not found."},404);return resp({ok:true},200);
+            }
+            if(body.action==="refresh"){
+              if(!body.id)return resp({error:"Tracked product ID is required."},400);
+              const {data:target,error}=await (supabaseAdmin.from("competitor_product_urls") as any).select("id,product,competitor,url,channel,match_confidence").eq("user_id",merchant_id).eq("id",body.id).maybeSingle();if(error)throw error;if(!target)return resp({error:"Tracked competitor product was not found."},404);
+              const result=await runScrape(supabaseAdmin,{userId:merchant_id,url:target.url,product:target.product,competitor:target.competitor,channel:target.channel,matchConfidence:Number(target.match_confidence??1)});return result.ok?resp({ok:true,scrape:{url:result.url,price:result.price,currency:result.currency}},200):resp({error:result.error},502);
+            }
+            return resp({error:"Unsupported Competitor Radar action."},400);
           }
 
           if (platform === "talabat_expected_payout") {

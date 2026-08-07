@@ -47,10 +47,13 @@ try {
   assert.equal(digestAuth.status(),401,"Weekly digest endpoint must require cron authentication");
   console.log("PASS critical API validation and cron authentication");
 
-  const { data: decision } = await admin.from("ps_decide_results").select("account_id").order("created_at", { ascending: false }).limit(1).maybeSingle();
-  assert(decision?.account_id, "No merchant decision data is available for the dashboard journey");
-  const { data: access } = await admin.from("ps_access_codes").select("merchant_id,code").eq("merchant_id", decision.account_id).limit(1).maybeSingle();
-  assert(access?.code, "No access code is available for the merchant dashboard journey");
+  const [{data:decisions},{data:accessCodes}]=await Promise.all([
+    admin.from("ps_decide_results").select("account_id").order("created_at",{ascending:false}).limit(250),
+    admin.from("ps_access_codes").select("merchant_id,code").limit(250),
+  ]);
+  const decisionAccounts=new Set((decisions??[]).map(row=>row.account_id));
+  const access=(accessCodes??[]).find(row=>decisionAccounts.has(row.merchant_id))??accessCodes?.[0];
+  assert(access?.code,"No dashboard access code is available for the E2E journey");
 
   const locationName=`E2E Test ${Date.now()}`;
   const locationCreate=await page.request.post(`${baseUrl}/api/channels/connect`,{data:{merchant_id:access.merchant_id,access_code:access.code,platform:"locations",action:"create",name:locationName,city:"Doha",region:"Qatar"}});
@@ -87,6 +90,16 @@ try {
   assert.equal(preferenceRestore.status(),200,"Notification preference could not be restored after testing");
   console.log("PASS merchant notification preference persistence");
 
+  const radarMarker=`E2E Radar ${Date.now()}`,radarUrl=`https://example.com/e2e-competitor-${Date.now()}`;
+  const radarAdd=await page.request.post(`${baseUrl}/api/channels/connect`,{data:{merchant_id:access.merchant_id,access_code:access.code,platform:"competitor_radar",action:"add",product:radarMarker,competitor:"E2E Competitor",url:radarUrl,channel:"online",category:"E2E"}}),radarAddBody=await radarAdd.json() as {target?:{id:string;match_status:string;match_confidence:number};error?:string};
+  assert.equal(radarAdd.status(),200,`Competitor Radar target creation failed: ${radarAddBody.error??"unexpected response"}`);assert.equal(radarAddBody.target?.match_status,"manual_confirmed");assert.equal(radarAddBody.target?.match_confidence,1);const radarId=radarAddBody.target!.id;
+  try{
+    const radarList=await page.request.post(`${baseUrl}/api/channels/connect`,{data:{merchant_id:access.merchant_id,access_code:access.code,platform:"competitor_radar",action:"list"}}),radarListBody=await radarList.json() as {targets?:Array<{id:string;product:string;channel:string;url:string}>;error?:string};assert.equal(radarList.status(),200,`Competitor Radar list failed: ${radarListBody.error??"unexpected response"}`);const saved=radarListBody.targets?.find(target=>target.id===radarId);assert.equal(saved?.product,radarMarker);assert.equal(saved?.channel,"online");assert.equal(saved?.url,radarUrl);
+    console.log("PASS Competitor Radar URL, product, competitor, channel, and matching persistence without using a scrape credit");
+  }finally{
+    const radarRemove=await page.request.post(`${baseUrl}/api/channels/connect`,{data:{merchant_id:access.merchant_id,access_code:access.code,platform:"competitor_radar",action:"remove",id:radarId}});assert.equal(radarRemove.status(),200,"Competitor Radar test target was not removed");
+  }
+
   const {error:experienceMigrationError}=await admin.from("ps_attention_items").select("id").limit(1);
   if(experienceMigrationError){
     console.log("SKIP merchant operating loop persistence (20260802013000_merchant_experience_loop.sql is not applied to this database)");
@@ -105,6 +118,27 @@ try {
     }finally{await admin.from("ps_attention_items").delete().eq("id",testAttention.id);}
   }
 
+  const {error:managerMigrationError}=await admin.from("ps_store_manager_tasks").select("id").limit(1);
+  if(managerMigrationError){
+    console.log("SKIP Virtual Store Manager persistence (20260806030000_virtual_store_manager.sql is not applied to this database)");
+  }else{
+    const managerCall=async(data:Record<string,string>)=>page.request.post(`${baseUrl}/api/channels/connect`,{data:{merchant_id:access.merchant_id,access_code:access.code,platform:"merchant_experience",...data}});
+    const initial=await managerCall({action:"get"}),initialBody=await initial.json() as {manager?:{available:boolean;profile:{operating_mode:string;daily_brief_enabled:boolean;daily_brief_hour:number;timezone:string;language:string};policies:Array<{policy_key:string}>};error?:string};
+    assert.equal(initial.status(),200,`Manager briefing failed: ${initialBody.error??"unexpected response"}`);assert.equal(initialBody.manager?.available,true);assert((initialBody.manager?.policies.length??0)>=5,"Default management policies were not created");
+    const original=initialBody.manager!.profile;
+    const profile=await managerCall({action:"manager_profile",operating_mode:"assist",daily_brief_enabled:"true",daily_brief_hour:"9",timezone:"Asia/Riyadh",language:"en"});assert.equal(profile.status(),200,"Manager profile could not be saved");
+    const marker=`E2E manager task ${Date.now()}`,created=await managerCall({action:"manager_task_create",title:marker,detail:"Temporary lifecycle test",task_type:"catalog_admin",priority:"low",approval_required:"true"}),createdBody=await created.json() as {task?:{id:string;status:string};error?:string};assert.equal(created.status(),200,`Manager task creation failed: ${createdBody.error??"unexpected response"}`);assert.equal(createdBody.task?.status,"waiting_approval");const taskId=createdBody.task!.id;
+    try{
+      for(const status of ["approved","executing","verifying","completed"]){const response=await managerCall({action:"manager_task_transition",id:taskId,to_status:status,actor:"E2E merchant",value:`E2E transition to ${status}`}),body=await response.json() as {task?:{status:string};error?:string};assert.equal(response.status(),200,`Manager transition failed: ${body.error??status}`);assert.equal(body.task?.status,status);}
+      const reload=await managerCall({action:"get"}),reloadBody=await reload.json() as {manager?:{tasks:Array<{id:string;status:string}>}};assert.equal(reloadBody.manager?.tasks.find(task=>task.id===taskId)?.status,"completed","Completed manager task did not persist after reload");
+      const invalid=await managerCall({action:"manager_task_transition",id:taskId,to_status:"executing",actor:"E2E merchant"});assert.equal(invalid.status(),500,"Completed tasks must reject invalid re-execution");
+      console.log("PASS Virtual Store Manager profile, default policies, task approval, execution, verification, persistence, and transition guards");
+    }finally{
+      await admin.from("ps_store_manager_tasks").delete().eq("id",taskId);
+      await managerCall({action:"manager_profile",operating_mode:original.operating_mode,daily_brief_enabled:String(original.daily_brief_enabled),daily_brief_hour:String(original.daily_brief_hour),timezone:original.timezone,language:original.language});
+    }
+  }
+
   await page.goto(`${baseUrl}/dashboard/revenue-hub`, { waitUntil: "domcontentloaded" });
   await page.evaluate(({ merchantId, code }) => {
     localStorage.setItem("ps_merchant_id", merchantId);
@@ -114,10 +148,35 @@ try {
   }, { merchantId: access.merchant_id, code: access.code });
   await page.reload({ waitUntil: "networkidle" });
   await page.getByText("Revenue Protection Hub", { exact: false }).first().waitFor({ timeout: 15_000 });
+  await page.getByLabel("Ask or delegate to Store Manager").waitFor({timeout:15_000});
+  await page.getByRole("button",{name:/Store Manager/}).first().waitFor();
+  await page.getByText("Store Manager",{exact:true}).first().click();
+  await page.getByText("Your daily store brief",{exact:true}).waitFor({timeout:15_000});
+  await page.getByText("Revenue Protection Hub",{exact:true}).first().click();
+  console.log("PASS persistent Store Manager command bar, primary navigation, and daily brief entry");
   await page.getByText("Imported Products", { exact: true }).waitFor({ timeout: 15_000 });
   await page.getByText(/protection queue|need.*attention|being watched/i).first().waitFor({timeout:15_000});
   await page.getByText("Attention Inbox",{exact:true}).waitFor();
   console.log("PASS Today briefing and Attention Inbox render");
+  if(!managerMigrationError){
+    await page.getByText("Management desk",{exact:true}).waitFor({timeout:15_000});
+    assert.equal(await page.getByText("setup required",{exact:true}).count(),0,"Manager UI still reports an unapplied migration");
+    const uiTask=`E2E delegated UI task ${Date.now()}`;
+    await page.getByPlaceholder("Example: prepare the new supplier products as drafts").fill(uiTask);
+    await page.getByRole("button",{name:"Delegate task",exact:true}).click();
+    const taskRow=page.getByText(uiTask,{exact:true}).locator("..").locator("..");
+    await page.getByText(uiTask,{exact:true}).waitFor({timeout:10_000});
+    let uiTaskId:string|undefined;
+    try{
+      await taskRow.getByRole("button",{name:"Approve",exact:true}).click();
+      await page.getByText("Task approved. No unsupported platform action was claimed as completed.",{exact:true}).waitFor({timeout:10_000});
+      const {data:uiTaskRow}=await admin.from("ps_store_manager_tasks").select("id,status").eq("account_id",access.merchant_id).eq("title",uiTask).maybeSingle();
+      uiTaskId=uiTaskRow?.id;assert.equal(uiTaskRow?.status,"approved","Dashboard approval did not persist through the manager API");
+    }finally{
+      if(uiTaskId)await admin.from("ps_store_manager_tasks").delete().eq("id",uiTaskId);else await admin.from("ps_store_manager_tasks").delete().eq("account_id",access.merchant_id).eq("title",uiTask);
+    }
+    console.log("PASS Virtual Store Manager dashboard delegation and approval journey");
+  }
   console.log("PASS authenticated merchant dashboard loads");
 
   const channelStatus=await page.request.get(`${baseUrl}/api/channels/status?merchant_id=${encodeURIComponent(access.merchant_id)}`);
@@ -213,6 +272,18 @@ try {
   },undefined,{timeout:10_000});
   assert.equal(await notificationSwitch.isEnabled(),true,"Notification switches must work for an access-code merchant session");
   console.log("PASS notification settings are interactive for access-code merchants");
+
+  await page.getByRole("button",{name:/Competitor Radar/}).click();
+  await page.getByText("Add a competitor product",{exact:true}).waitFor({timeout:10_000});
+  await page.getByPlaceholder("https://competitor.com/product/...").waitFor();
+  await page.getByRole("button",{name:"Add to monitoring",exact:true}).waitFor();
+  console.log("PASS Competitor Radar and exact product URL form are visible in the current merchant dashboard");
+
+  await page.getByRole("button",{name:/Product Images/}).click();
+  await page.getByText("Product Image Manager",{exact:true}).waitFor({timeout:10_000});
+  await page.getByText("Select product images",{exact:true}).waitFor();
+  assert.equal(await page.locator('input[type="file"][multiple]').count(),1,"Product Image Manager must expose one multi-file picker");
+  console.log("PASS Product Image Manager, secure batch picker, and image-job workspace are visible in the current merchant dashboard");
 
   assert.deepEqual(failures, [], `Browser errors:\n${failures.join("\n")}`);
   console.log("E2E app journey passed.");

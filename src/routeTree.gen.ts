@@ -64,6 +64,7 @@ import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/
 import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
 import { Route as ApiDisputeVoucherRouteImport } from './routes/api/dispute/voucher'
 import { Route as ApiCopilotStoreRouteImport } from './routes/api/copilot/store'
+import { Route as ApiCopilotImagesRouteImport } from './routes/api/copilot/images'
 import { Route as ApiCopilotCompileRouteImport } from './routes/api/copilot/compile'
 import { Route as ApiChannelsStatusRouteImport } from './routes/api/channels/status'
 import { Route as ApiChannelsDisconnectRouteImport } from './routes/api/channels/disconnect'
@@ -367,6 +368,11 @@ const ApiCopilotStoreRoute = ApiCopilotStoreRouteImport.update({
   path: '/api/copilot/store',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCopilotImagesRoute = ApiCopilotImagesRouteImport.update({
+  id: '/api/copilot/images',
+  path: '/api/copilot/images',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCopilotCompileRoute = ApiCopilotCompileRouteImport.update({
   id: '/api/copilot/compile',
   path: '/api/copilot/compile',
@@ -563,6 +569,7 @@ export interface FileRoutesByFullPath {
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
+  '/api/copilot/images': typeof ApiCopilotImagesRoute
   '/api/copilot/store': typeof ApiCopilotStoreRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
@@ -643,6 +650,7 @@ export interface FileRoutesByTo {
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
+  '/api/copilot/images': typeof ApiCopilotImagesRoute
   '/api/copilot/store': typeof ApiCopilotStoreRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
@@ -727,6 +735,7 @@ export interface FileRoutesById {
   '/api/channels/disconnect': typeof ApiChannelsDisconnectRoute
   '/api/channels/status': typeof ApiChannelsStatusRoute
   '/api/copilot/compile': typeof ApiCopilotCompileRoute
+  '/api/copilot/images': typeof ApiCopilotImagesRoute
   '/api/copilot/store': typeof ApiCopilotStoreRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
@@ -812,6 +821,7 @@ export interface FileRouteTypes {
     | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/copilot/compile'
+    | '/api/copilot/images'
     | '/api/copilot/store'
     | '/api/dispute/voucher'
     | '/api/repricing/apply'
@@ -892,6 +902,7 @@ export interface FileRouteTypes {
     | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/copilot/compile'
+    | '/api/copilot/images'
     | '/api/copilot/store'
     | '/api/dispute/voucher'
     | '/api/repricing/apply'
@@ -975,6 +986,7 @@ export interface FileRouteTypes {
     | '/api/channels/disconnect'
     | '/api/channels/status'
     | '/api/copilot/compile'
+    | '/api/copilot/images'
     | '/api/copilot/store'
     | '/api/dispute/voucher'
     | '/api/repricing/apply'
@@ -1041,6 +1053,7 @@ export interface RootRouteChildren {
   ApiChannelsDisconnectRoute: typeof ApiChannelsDisconnectRoute
   ApiChannelsStatusRoute: typeof ApiChannelsStatusRoute
   ApiCopilotCompileRoute: typeof ApiCopilotCompileRoute
+  ApiCopilotImagesRoute: typeof ApiCopilotImagesRoute
   ApiCopilotStoreRoute: typeof ApiCopilotStoreRoute
   ApiDisputeVoucherRoute: typeof ApiDisputeVoucherRoute
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
@@ -1449,6 +1462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCopilotStoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/copilot/images': {
+      id: '/api/copilot/images'
+      path: '/api/copilot/images'
+      fullPath: '/api/copilot/images'
+      preLoaderRoute: typeof ApiCopilotImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/copilot/compile': {
       id: '/api/copilot/compile'
       path: '/api/copilot/compile'
@@ -1799,6 +1819,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChannelsDisconnectRoute: ApiChannelsDisconnectRoute,
   ApiChannelsStatusRoute: ApiChannelsStatusRoute,
   ApiCopilotCompileRoute: ApiCopilotCompileRoute,
+  ApiCopilotImagesRoute: ApiCopilotImagesRoute,
   ApiCopilotStoreRoute: ApiCopilotStoreRoute,
   ApiDisputeVoucherRoute: ApiDisputeVoucherRoute,
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,

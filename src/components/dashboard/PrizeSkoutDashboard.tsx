@@ -22,6 +22,7 @@ import { ChannelPriceArchitecture } from "@/components/dashboard/pricing/Channel
 import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControlWorkspace";
 import { ZidProfitBrief } from "@/components/dashboard/ZidProfitBrief";
 import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
+import { StoreManagerCommandBar } from "@/components/dashboard/StoreManagerCommandBar";
 import {
   classifyResult,
   reconcile,
@@ -37,7 +38,7 @@ import {
   type PriceChannel,
 } from "@/lib/channel-price-planner";
 
-type Tab = "analytics" | "promotions" | "rules" | "vault" | "history" | "settings";
+type Tab = "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
@@ -4581,6 +4582,12 @@ export function PrizeSkoutDashboard() {
       tip: "Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place.",
     },
     {
+      id: "manager" as Tab,
+      label: "Store Manager",
+      sub: "Delegate & approve",
+      tip: "Store Manager — your daily brief, delegated backend work, approvals, exceptions, and verified outcomes in one management desk.",
+    },
+    {
       id: "promotions" as Tab,
       label: lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator",
       sub: lang === "ar" ? "اختبار الربحية" : lang === "fr" ? "Tester la rentabilité" : "Model profitability",
@@ -4609,6 +4616,8 @@ export function PrizeSkoutDashboard() {
   const headerSub =
     tab === "analytics"
       ? t.subA
+      : tab === "manager"
+        ? "Delegate store operations, approve protected actions, and review verified outcomes"
       : tab === "promotions"
         ? "Model discount economics and margin risk before approving a campaign"
       : tab === "rules"
@@ -4621,6 +4630,8 @@ export function PrizeSkoutDashboard() {
   const headerTitle =
     tab === "analytics"
       ? t.navA
+      : tab === "manager"
+        ? "Store Manager"
       : tab === "promotions"
         ? lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator"
       : tab === "rules"
@@ -4638,6 +4649,11 @@ export function PrizeSkoutDashboard() {
       nudge: "Want to understand a risk or make a catalogue change?",
       prompt: "Show products losing money",
       examples: ["Show products losing money", "What did I actually keep from orders this month?"],
+    },
+    manager: {
+      nudge: "Delegate store operations or review the work already in progress.",
+      prompt: "What needs my attention today?",
+      examples: ["What needs my attention today?", "Find products with incomplete information", "Prepare my highest-priority store tasks"],
     },
     promotions: {
       nudge: "Want help testing a campaign or understanding its margin risk?",
@@ -4675,6 +4691,13 @@ export function PrizeSkoutDashboard() {
     setCpInput(prompt);
     void runCopilot(prompt);
   };
+  const submitManagerCommand = (prompt: string) => {
+    if (!prompt.trim() || cpPhase === "loading") return;
+    setAssistantDrawerInput(prompt.trim());
+    setAssistantDrawerOpen(true);
+    setCpInput(prompt.trim());
+    void runCopilot(prompt.trim());
+  };
   const assistantNudge = (targetTab: Tab) => (
     <div
       style={{
@@ -4690,14 +4713,14 @@ export function PrizeSkoutDashboard() {
       }}
     >
       <span style={{ fontSize: 13.5, color: "var(--muted)" }}>
-        {assistantContext[targetTab].nudge} <strong style={{ color: "var(--text)" }}>Use CFO Copilot &amp; Store Assistant.</strong>
+        {assistantContext[targetTab].nudge} <strong style={{ color: "var(--text)" }}>Use Store Manager.</strong>
       </span>
       <button
         type="button"
         onClick={() => openAssistantDrawer(assistantContext[targetTab].prompt)}
         style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: 4 }}
       >
-        Ask PrizeSkout →
+        Delegate or ask →
       </button>
     </div>
   );
@@ -5434,6 +5457,13 @@ export function PrizeSkoutDashboard() {
             </button>
           </div>
         </header>
+        <StoreManagerCommandBar
+          context={headerTitle}
+          examples={assistantContext[tab].examples}
+          busy={cpPhase === "loading"}
+          onSubmit={submitManagerCommand}
+          onOpenManager={() => setTab("manager")}
+        />
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
         {selectedProduct && (
           <div
@@ -5797,6 +5827,13 @@ export function PrizeSkoutDashboard() {
               </div>
             </section>
           </div>
+        )}
+
+        {/* ===== TAB: STORE MANAGER ===== */}
+        {tab === "manager" && (
+          <section className="ps-db-section" style={{padding:"20px 30px 48px",display:"flex",flexDirection:"column",gap:20,animation:"pk-in .3s ease"}}>
+            <MerchantOperatingLoop onAskCopilot={submitManagerCommand}/>
+          </section>
         )}
 
         {/* ===== TAB: REVENUE PROTECTION HUB ===== */}
@@ -13328,11 +13365,11 @@ export function PrizeSkoutDashboard() {
           );
         })()}
 
-      {/* GLOBAL CFO COPILOT & STORE ASSISTANT */}
+      {/* GLOBAL STORE MANAGER */}
       {!assistantDrawerOpen && (
         <button
           type="button"
-          aria-label="Open CFO Copilot and Store Assistant"
+          aria-label="Open Store Manager"
           onClick={() => openAssistantDrawer()}
           style={{
             position: "fixed",
@@ -13354,7 +13391,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">✦</span> Ask PrizeSkout
+          <span aria-hidden="true">✦</span> Store Manager
         </button>
       )}
       {assistantDrawerOpen && (
@@ -13366,7 +13403,7 @@ export function PrizeSkoutDashboard() {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label="CFO Copilot and Store Assistant"
+            aria-label="Store Manager"
             onClick={(event) => event.stopPropagation()}
             style={{
               position: "absolute",
@@ -13386,9 +13423,9 @@ export function PrizeSkoutDashboard() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start" }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>CFO Copilot &amp; Store Assistant</h2>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>PrizeSkout Store Manager</h2>
                 <p style={{ margin: "6px 0 0", color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
-                  Ask about profit and payouts, or describe a store change. PrizeSkout keeps your current page open and asks before making changes.
+                  Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps your current page open and asks before protected changes.
                 </p>
               </div>
               <button type="button" aria-label="Close assistant" onClick={() => setAssistantDrawerOpen(false)} style={{ border: "1px solid var(--border)", borderRadius: 9, width: 34, height: 34, background: "var(--surface2)", color: "var(--text)", cursor: "pointer", fontSize: 18 }}>×</button>
@@ -13411,12 +13448,12 @@ export function PrizeSkoutDashboard() {
                   submitAssistantDrawer();
                 }
               }}
-              placeholder="Ask about your business or tell PrizeSkout what to do…"
+              placeholder="What should PrizeSkout handle today?"
               rows={4}
               style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 14.5, lineHeight: 1.5, outline: "none" }}
             />
             <button type="button" disabled={!assistantDrawerInput.trim() || cpPhase === "loading"} onClick={submitAssistantDrawer} style={{ border: 0, borderRadius: 11, padding: "12px 16px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: !assistantDrawerInput.trim() || cpPhase === "loading" ? "not-allowed" : "pointer", opacity: !assistantDrawerInput.trim() ? .55 : 1 }}>
-              {cpPhase === "loading" ? "Working…" : "Ask PrizeSkout"}
+              {cpPhase === "loading" ? "Working…" : "Delegate to Store Manager"}
             </button>
             {(cpChatMessage || cpOperationMessage || cpPhase === "loading") && (
               <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface2)", fontSize: 13.5, lineHeight: 1.55 }}>
