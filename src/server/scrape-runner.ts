@@ -125,6 +125,7 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
         ],
         onlyMainContent: true,
       }),
+      signal: AbortSignal.timeout(25_000),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown network error";
@@ -238,6 +239,7 @@ export async function fetchCompetitorPrice(url: string): Promise<AttemptSuccess 
 export async function runScrape(
   supabase: SupabaseClient,
   job: ScrapeJob,
+  options: { maxAttempts?: number } = {},
 ): Promise<ScrapeOutcome> {
   const collector = configuredCollector();
   if (!collector) {
@@ -246,7 +248,8 @@ export async function runScrape(
 
   let lastFailure: AttemptFailure | null = null;
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  const maxAttempts = Math.max(1, Math.min(MAX_ATTEMPTS, options.maxAttempts ?? MAX_ATTEMPTS));
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const result = await collector.collect(job.url) as AttemptSuccess | AttemptFailure;
 
     if (result.ok) {
@@ -332,10 +335,10 @@ export async function runScrape(
 
     lastFailure = result;
     console.warn(
-      `[scrape] Attempt ${attempt}/${MAX_ATTEMPTS} for ${job.competitor}/${job.product}: ${result.error} (retryable=${result.retryable}, category=${result.category})`,
+      `[scrape] Attempt ${attempt}/${maxAttempts} for ${job.competitor}/${job.product}: ${result.error} (retryable=${result.retryable}, category=${result.category})`,
     );
 
-    if (!result.retryable || attempt === MAX_ATTEMPTS) break;
+    if (!result.retryable || attempt === maxAttempts) break;
     await sleep(RETRY_BASE_MS * attempt);
   }
 

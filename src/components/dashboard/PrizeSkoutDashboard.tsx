@@ -1860,7 +1860,7 @@ export function PrizeSkoutDashboard() {
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [productFilter, setProductFilter] = useState<
-    "all" | "risk" | "verified_risk" | "healthy" | "repriced"
+    "all" | "risk" | "verified_risk" | "missing_cost" | "healthy" | "repriced"
   >("all");
   const [productSort, setProductSort] = useState<"risk" | "name" | "price">("risk");
   const [productPage, setProductPage] = useState(1);
@@ -2820,6 +2820,7 @@ export function PrizeSkoutDashboard() {
             product.cost_confidence === "verified" &&
             product.inventory_status !== "out_of_stock"
           );
+        if (productFilter === "missing_cost") return product.cost_confidence !== "verified";
         if (productFilter === "healthy") return !product.floor_breached;
         if (productFilter === "repriced") return product.status === "repriced";
         return true;
@@ -2916,6 +2917,23 @@ export function PrizeSkoutDashboard() {
       document
         .getElementById("imported-products")
         ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
+
+  const reviewProductsMissingCosts = () => {
+    setTab("analytics");
+    setProductSearch("");
+    setProductSort("risk");
+    const hasMissingCosts = importedProducts.some((product) => product.cost_confidence !== "verified");
+    setProductFilter(hasMissingCosts ? "missing_cost" : "all");
+    setProductPage(1);
+    if (!hasMissingCosts) {
+      showToast("Refreshing product costs. The daily brief may be based on an earlier catalogue check.");
+      void syncAllCatalogs();
+    }
+    window.setTimeout(
+      () => document.getElementById("imported-products")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      0,
     );
   };
 
@@ -6194,7 +6212,7 @@ export function PrizeSkoutDashboard() {
               </div>
             </div>
 
-            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} />
+            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} onContinueSetup={reviewProductsMissingCosts} />
 
             <button
               type="button"
@@ -6228,7 +6246,7 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} />
+            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} onContinueSetup={reviewProductsMissingCosts} />
           </section>
         )}
 
@@ -6247,6 +6265,7 @@ export function PrizeSkoutDashboard() {
             {assistantNudge("analytics")}
             <MerchantOperatingLoop
               lang={lang}
+              onContinueSetup={reviewProductsMissingCosts}
               onAskCopilot={(prompt) => {
                 setTab("rules");
                 setCpInput(prompt);
@@ -7084,6 +7103,7 @@ export function PrizeSkoutDashboard() {
                 >
                   <option value="all">All products ({importedProducts.length})</option>
                   <option value="risk">Earning below target</option>
+                  <option value="missing_cost">Cost needs confirmation</option>
                   {productFilter === "verified_risk" && (
                     <option value="verified_risk">Below target · cost confirmed</option>
                   )}

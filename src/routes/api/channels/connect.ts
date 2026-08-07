@@ -234,7 +234,7 @@ export const Route = createFileRoute("/api/channels/connect")({
             if(body.action==="refresh"){
               if(!body.id)return resp({error:"Tracked product ID is required."},400);
               const {data:target,error}=await (supabaseAdmin.from("competitor_product_urls") as any).select("id,product,competitor,url,channel,match_confidence").eq("user_id",merchant_id).eq("id",body.id).maybeSingle();if(error)throw error;if(!target)return resp({error:"Tracked competitor product was not found."},404);
-              const result=await runScrape(supabaseAdmin,{userId:merchant_id,url:target.url,product:target.product,competitor:target.competitor,channel:target.channel,matchConfidence:Number(target.match_confidence??1)});return result.ok?resp({ok:true,scrape:{url:result.url,price:result.price,currency:result.currency}},200):resp({error:result.error},502);
+              const result=await runScrape(supabaseAdmin,{userId:merchant_id,url:target.url,product:target.product,competitor:target.competitor,channel:target.channel,matchConfidence:Number(target.match_confidence??1)},{maxAttempts:1});return result.ok?resp({ok:true,scrape:{url:result.url,price:result.price,currency:result.currency}},200):resp({error:result.error},502);
             }
             return resp({error:"Unsupported Competitor Radar action."},400);
           }

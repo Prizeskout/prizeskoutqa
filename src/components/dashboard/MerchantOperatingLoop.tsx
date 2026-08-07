@@ -79,10 +79,12 @@ const OG = "#EF681A",
 export function MerchantOperatingLoop({
   mode = "hub",
   onAskCopilot,
+  onContinueSetup,
   lang = "en",
 }: {
   mode?: "hub" | "history";
   onAskCopilot?: (prompt: string) => void;
+  onContinueSetup?: () => void;
   lang?: "en" | "ar" | "fr";
 }) {
   const tr = (en: string, ar: string, fr: string) => (lang === "ar" ? ar : lang === "fr" ? fr : en);
@@ -329,6 +331,11 @@ export function MerchantOperatingLoop({
     void call({ action: "track", event_name: "copilot_from_attention" });
     onAskCopilot?.(prompt);
   };
+  const revealAttention = () => {
+    const target = document.getElementById("attention-inbox");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => target?.focus({ preventScroll: true }), 350);
+  };
   if (mode === "history")
     return (
       <section style={card}>
@@ -373,6 +380,19 @@ export function MerchantOperatingLoop({
               )
         }
       />
+      {urgent.length > 0 && (
+        <button
+          type="button"
+          onClick={revealAttention}
+          style={{ ...linkButton, alignSelf: "flex-start", fontSize: 13.5 }}
+        >
+          {tr(
+            `View the ${urgent.length} item${urgent.length === 1 ? "" : "s"} needing attention ↓`,
+            `اعرض ${urgent.length} ${urgent.length === 1 ? "عنصراً يحتاج" : "عناصر تحتاج"} إلى انتباهك ↓`,
+            `Voir les ${urgent.length} élément${urgent.length === 1 ? "" : "s"} à examiner ↓`,
+          )}
+        </button>
+      )}
       <div
         style={{
           display: "grid",
@@ -381,21 +401,22 @@ export function MerchantOperatingLoop({
         }}
       >
         {[
-          ["Management tasks", openManagerTasks.length, "Tracked until verified"],
-          ["Waiting approval", approvalTasks.length, "Nothing applied yet"],
-          ["High priority", urgent.length, "Review first"],
-          ["Money identified", `${currency} ${moneyAtRisk.toFixed(2)}`, "Not claimed as recovered"],
-        ].map(([label, value, note]) => (
+          ["Management tasks", openManagerTasks.length, "Tracked until verified", undefined],
+          ["Waiting approval", approvalTasks.length, "Nothing applied yet", undefined],
+          ["High priority", urgent.length, urgent.length ? `View ${urgent.length} item${urgent.length === 1 ? "" : "s"} ↓` : "Nothing urgent", urgent.length ? revealAttention : undefined],
+          ["Money identified", `${currency} ${moneyAtRisk.toFixed(2)}`, "Not claimed as recovered", undefined],
+        ].map(([label, value, note, onClick]) => (
           <Metric
             key={String(label)}
             label={String(label)}
             value={String(value)}
             note={String(note)}
+            onClick={typeof onClick === "function" ? onClick : undefined}
           />
         ))}
       </div>
 
-      <div id="attention-inbox">
+      <div id="attention-inbox" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
         <div
           style={{
             display: "flex",
@@ -526,12 +547,13 @@ export function MerchantOperatingLoop({
             ✓ Zid connected · ✓ Orders checked · Next: confirm product costs. Evidence is{" "}
             {Math.round(data?.profit_brief?.verified_cost_coverage_pct ?? 0)}%.
           </div>
-          {onAskCopilot && (
+          {onContinueSetup && (
             <button
-              onClick={() => askCopilot("Show my highest-priority products with missing costs")}
+              type="button"
+              onClick={onContinueSetup}
               style={linkButton}
             >
-              Continue setup →
+              {tr("Review products needing cost data →", "راجع المنتجات التي تحتاج إلى بيانات التكلفة ←", "Examiner les produits sans coût vérifié →")}
             </button>
           )}
         </div>
@@ -946,14 +968,19 @@ function Header({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: 
     </div>
   );
 }
-function Metric({ label, value, note }: { label: string; value: string; note: string }) {
+function Metric({ label, value, note, onClick }: { label: string; value: string; note: string; onClick?: () => void }) {
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick(); } } : undefined}
       style={{
         padding: "12px 13px",
         border: "1px solid var(--border)",
         borderRadius: 10,
         background: "var(--surface2)",
+        cursor: onClick ? "pointer" : "default",
       }}
     >
       <div
