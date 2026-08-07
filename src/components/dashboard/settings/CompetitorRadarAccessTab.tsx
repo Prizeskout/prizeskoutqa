@@ -1,4 +1,5 @@
 import { useEffect,useState } from "react";
+import { MerchantField, inferredMerchantHelp } from "@/components/ui/MerchantField";
 
 type Target={id:string;product:string;competitor:string;url:string;category:string|null;channel:string;match_status:string;match_confidence:number;latest_scrape:{price:number|null;currency:string|null;availability:string|null;status:string;scraped_at:string}|null};
 const OG="#EF681A",GN="#10B981",RED="#DC2626";
@@ -19,7 +20,7 @@ export function CompetitorRadarAccessTab(){
     <div aria-live="polite" style={{fontSize:12.5,color:message.toLowerCase().includes("failed")||message.toLowerCase().includes("not")?RED:"var(--muted)",minHeight:18}}>{message}</div>
   </div>;
 }
-function Field({label,children}:{label:string;children:React.ReactNode}){return <label style={{display:"flex",flexDirection:"column",gap:6,marginBottom:10,fontSize:12,fontWeight:750}}>{label}{children}</label>}
+function Field({label,children}:{label:string;children:React.ReactNode}){return <MerchantField label={label} help={inferredMerchantHelp(label)} style={{marginBottom:10}}>{children}</MerchantField>}
 function Badge({text,color="var(--muted)"}:{text:string;color?:string}){return <span style={{fontSize:9.5,textTransform:"uppercase",fontWeight:850,color,border:"1px solid var(--border)",borderRadius:999,padding:"3px 7px"}}>{text}</span>}
 const card:React.CSSProperties={background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:12,padding:"18px 20px"};
 const copy:React.CSSProperties={fontSize:13,color:"var(--muted)",lineHeight:1.65};

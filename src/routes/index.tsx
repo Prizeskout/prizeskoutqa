@@ -18,13 +18,28 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Pricing Infrastructure for GCC Commerce" },
+      { title: "PrizeSkout | AI Store Manager & Revenue Protection" },
       {
         name: "description",
         content:
-          "Stop managing API hell and scraping liabilities. Deploy a serverless event middleware that programmatically syncs, calculates, and defends merchant net margins across regional delivery platforms, instantly.",
+          "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.",
       },
-      { property: "og:title", content: "PrizeSkout | Pricing Infrastructure for GCC Commerce" },
+      { property: "og:title", content: "PrizeSkout | AI Store Manager & Revenue Protection" },
+      {
+        property: "og:description",
+        content:
+          "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://prizeskout.qa/" },
+      { property: "og:site_name", content: "PrizeSkout" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "PrizeSkout | AI Store Manager & Revenue Protection" },
+      {
+        name: "twitter:description",
+        content:
+          "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.",
+      },
     ],
   }),
   component: LandingPage,

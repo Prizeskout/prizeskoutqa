@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { MerchantField, inferredMerchantHelp } from "@/components/ui/MerchantField";
 
 type Item = { id:string; file_name:string; file_size:number; product_name:string|null; product_sku:string|null; match_status:string; match_confidence:number; alt_text:string|null; uploaded_image_id:string|null };
 type Job = { id:string; title:string; status:string; created_at:string; ps_product_image_items:Item[] };
@@ -24,6 +25,6 @@ export function ProductImageManagerTab(){
   </div>;
 }
 
-function Field({label,children}:{label:string;children:React.ReactNode}){return <label style={{display:"flex",flexDirection:"column",gap:6,fontSize:12,fontWeight:750}}>{label}{children}</label>}
+function Field({label,children}:{label:string;children:React.ReactNode}){return <MerchantField label={label} help={inferredMerchantHelp(label)}>{children}</MerchantField>}
 function Badge({text,color}:{text:string;color:string}){return <span style={{fontSize:9.5,fontWeight:850,textTransform:"uppercase",color,border:"1px solid var(--border)",borderRadius:999,padding:"3px 7px"}}>{text.replaceAll("_"," ")}</span>}
 const card:React.CSSProperties={background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:12,padding:"18px 20px"},copy:React.CSSProperties={fontSize:13,color:"var(--muted)",lineHeight:1.65},input:React.CSSProperties={border:"1px solid var(--border)",borderRadius:8,padding:"10px 11px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit"},button:React.CSSProperties={border:"1px solid var(--border)",borderRadius:8,padding:"8px 11px",background:"var(--surface)",color:"var(--text)",fontFamily:"inherit",fontSize:11.5,fontWeight:750,cursor:"pointer"},empty:React.CSSProperties={padding:20,border:"1px dashed var(--border)",borderRadius:10,color:"var(--muted)",fontSize:12.5,textAlign:"center"};

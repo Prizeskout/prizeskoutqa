@@ -10,9 +10,9 @@ import { getGeoSuggestion } from "@/server/geo-suggest.functions";
 import appCss from "../styles.css?url";
 
 
-const SITE_TITLE = "PrizeSkout | Commerce Intelligence";
+const SITE_TITLE = "PrizeSkout | AI Store Manager & Revenue Protection";
 const SITE_DESCRIPTION =
-  "AI-powered pricing intelligence for e-commerce platforms, physical retailers, and omnichannel brands.";
+  "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.";
 
 function NotFoundPage() {
   return (
@@ -207,10 +207,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: SITE_DESCRIPTION },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
-      { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png?v=4" },
+      { rel: "shortcut icon", type: "image/x-icon", href: "/favicon.ico?v=4" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=4" },
       {
         rel: "stylesheet",
         href: appCss,

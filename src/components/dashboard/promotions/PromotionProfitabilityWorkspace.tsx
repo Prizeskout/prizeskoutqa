@@ -7,6 +7,7 @@ import {
 } from "@/lib/promotion-profitability";
 import type { ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import type { SavedPromotionScenario } from "@/server/core/promotion-scenarios";
+import { MerchantField } from "@/components/ui/MerchantField";
 
 const input = {
   width: "100%",
@@ -334,21 +335,18 @@ export function PromotionProfitabilityWorkspace({
             gap: 10,
           }}
         >
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Campaign name
+          <MerchantField label="Campaign name" help="A private name for identifying this promotion. Customers will not see it." source="merchant">
             <input style={input} value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Discount %
+          </MerchantField>
+          <MerchantField label="Discount %" help="The percentage customers receive off the normal selling price." source="merchant" consequence="A larger discount can increase orders but reduce what you keep per order.">
             <input
               type="number"
               style={input}
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Platform funding %
+          </MerchantField>
+          <MerchantField label="Platform funding %" help="How much of the customer discount the sales platform pays." source="contract" whereToFind="your campaign agreement">
             <input
               type="number"
               style={input}
@@ -356,9 +354,8 @@ export function PromotionProfitabilityWorkspace({
               onChange={(e) => setPlatformFunding(e.target.value)}
               placeholder="From contract"
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Commission %
+          </MerchantField>
+          <MerchantField label="Commission %" help="The percentage the platform charges on each campaign order." source="contract" whereToFind="your commercial agreement or latest payout statement">
             <input
               type="number"
               style={input}
@@ -366,9 +363,8 @@ export function PromotionProfitabilityWorkspace({
               onChange={(e) => setCommission(e.target.value)}
               placeholder="From contract"
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            VAT on fees %
+          </MerchantField>
+          <MerchantField label="VAT on fees %" help="VAT charged on the platform's commission and fees, not the customer's order total." source="contract">
             <input
               type="number"
               style={input}
@@ -376,9 +372,8 @@ export function PromotionProfitabilityWorkspace({
               onChange={(e) => setVatOnFees(e.target.value)}
               placeholder="From contract"
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Payment fee %
+          </MerchantField>
+          <MerchantField label="Payment fee %" help="The percentage deducted for processing the customer's payment." source="contract" whereToFind="your payment or platform agreement">
             <input
               type="number"
               style={input}
@@ -386,9 +381,8 @@ export function PromotionProfitabilityWorkspace({
               onChange={(e) => setPaymentFee(e.target.value)}
               placeholder="From contract"
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Fixed order fee
+          </MerchantField>
+          <MerchantField label="Fixed order fee" help={`Any fixed ${currency} amount charged on every campaign order.`} source="contract">
             <input
               type="number"
               style={input}
@@ -396,9 +390,8 @@ export function PromotionProfitabilityWorkspace({
               onChange={(e) => setFixedOrderFee(e.target.value)}
               placeholder="From contract"
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Commission base
+          </MerchantField>
+          <MerchantField label="Commission base" help="The order amount the platform uses when calculating its commission." source="contract" whereToFind="the commission section of your agreement">
             <select
               style={input}
               value={commissionBase}
@@ -409,43 +402,39 @@ export function PromotionProfitabilityWorkspace({
               <option value="net_after_discount">Net after discount</option>
               <option value="eligible_sales">Eligible sales</option>
             </select>
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Expected order lift %
+          </MerchantField>
+          <MerchantField label="Expected order lift %" help="Your estimated increase in orders while the promotion is running." source="estimate" consequence="PrizeSkout uses this estimate to project whether extra orders make up for the discount.">
             <input
               type="number"
               style={input}
               value={lift}
               onChange={(e) => setLift(e.target.value)}
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Baseline orders
+          </MerchantField>
+          <MerchantField label="Baseline orders" help="How many orders you would normally expect during the same number of days without this promotion." source="estimate">
             <input
               type="number"
               style={input}
               value={orders}
               onChange={(e) => setOrders(e.target.value)}
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Duration (days)
+          </MerchantField>
+          <MerchantField label="Duration (days)" help="How many calendar days the promotion will run." source="merchant">
             <input
               type="number"
               style={input}
               value={days}
               onChange={(e) => setDays(e.target.value)}
             />
-          </label>
-          <label style={{ fontSize: 11, fontWeight: 800 }}>
-            Minimum margin %
+          </MerchantField>
+          <MerchantField label="Minimum margin %" help="The lowest profit margin you are willing to accept after all campaign costs." source="merchant" consequence="PrizeSkout warns you when a campaign would go below this protected margin.">
             <input
               type="number"
               style={input}
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
             />
-          </label>
+          </MerchantField>
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 900, marginBottom: 7 }}>

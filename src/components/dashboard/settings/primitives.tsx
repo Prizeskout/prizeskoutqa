@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { MerchantField, inferredMerchantHelp } from "@/components/ui/MerchantField";
 
 export const cardStyle: CSSProperties = {
   backgroundColor: "var(--surface)",
@@ -154,15 +155,16 @@ export function SelectField({
 export function Field({
   label,
   children,
+  help,
 }: {
   label: string;
   children: ReactNode;
+  help?: string;
 }) {
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <FieldLabel>{label}</FieldLabel>
+    <MerchantField label={label} help={help ?? inferredMerchantHelp(label)} style={{ flex: 1 }}>
       {children}
-    </div>
+    </MerchantField>
   );
 }
 
