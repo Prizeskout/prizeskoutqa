@@ -37,6 +37,8 @@ import {
   type ChannelPriceProduct,
   type PriceChannel,
 } from "@/lib/channel-price-planner";
+import { compactConversation, resolveProductReferences } from "@/lib/copilot-understanding";
+import { workflowStepLabel } from "@/lib/merchant-language";
 
 type Tab = "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
 type Theme = "light" | "dark";
@@ -1835,6 +1837,8 @@ export function PrizeSkoutDashboard() {
   const [cpPrompt, setCpPrompt] = useState("");
   const [cpObj, setCpObj] = useState<Record<string, unknown> | null>(null);
   const [cpChatMessage, setCpChatMessage] = useState<string | null>(null);
+  const cpConversationRef = useRef<Array<{ role: "user" | "assistant"; text: string }>>([]);
+  const cpPendingDraftRef = useRef<Record<string, unknown> | null>(null);
   const [cpOperationProducts, setCpOperationProducts] = useState<ImportedProduct[]>([]);
   const [cpOperationStatus, setCpOperationStatus] = useState<
     "idle" | "running" | "ready" | "publishing" | "complete" | "failed"
@@ -2983,7 +2987,12 @@ export function PrizeSkoutDashboard() {
           target_price: targetPrice,
         }),
       });
-      const result = (await response.json()) as { ok?: boolean; error?: string; message?: string; downstream?:{channel:string;status:string;message:string}|null };
+      const result = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        downstream?: { channel: string; status: string; message: string } | null;
+      };
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Price update failed");
       setImportedProducts((products) =>
@@ -2997,7 +3006,11 @@ export function PrizeSkoutDashboard() {
         product ? { ...product, current_price: targetPrice, status: "repriced" } : product,
       );
       setProductPushStatus("success");
-      showToast(result.downstream?`Price confirmed in Zid. ${result.downstream.message}`:`Price updated successfully in ${selectedProduct.source_platform}.`);
+      showToast(
+        result.downstream
+          ? `Price confirmed in Zid. ${result.downstream.message}`
+          : `Price updated successfully in ${selectedProduct.source_platform}.`,
+      );
     } catch (error) {
       setProductPushStatus("failed");
       const message = error instanceof Error ? error.message : "Price update failed.";
@@ -3046,10 +3059,10 @@ export function PrizeSkoutDashboard() {
     }
   };
 
-  const runCopilot = async (text: string) => {
+  const runCopilot = async (text: string, requestedRole: "cfo" | "manager" | "auto" = "auto") => {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return;
-    const previousOperation = cpObj?._type === "operation" ? cpObj : null;
+    const previousOperation = cpObj?._type === "operation" ? cpObj : cpPendingDraftRef.current;
     const previousProducts = cpOperationProducts.map((product) => ({
       name: product.name_en || product.name_ar,
       sku: product.sku,
@@ -3064,6 +3077,17 @@ export function PrizeSkoutDashboard() {
             platform: "zid",
           });
       }
+    const conversation = compactConversation([
+      ...cpConversationRef.current,
+      { role: "user", text: prompt },
+    ]);
+    const catalogContext = importedProducts
+      .slice(0, 100)
+      .map((product) => ({
+        name: product.name_en || product.name_ar,
+        sku: product.sku,
+        platform: product.source_platform,
+      }));
     setCpPhase("loading");
     setCpPrompt(prompt);
     setApplied(false);
@@ -3083,20 +3107,33 @@ export function PrizeSkoutDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          ...(previousOperation
-            ? {
-                context: {
-                  previous_operation: previousOperation,
-                  products: previousProducts,
-                },
-              }
-            : {}),
+          requested_role: requestedRole,
+          context: {
+            previous_operation: previousOperation ?? undefined,
+            products: previousProducts.length ? previousProducts : catalogContext,
+            conversation,
+            current_page: tab,
+            language: lang,
+            currency: "SAR",
+            connected_channels: [
+              ...new Set(
+                importedProducts.map((product) => product.source_platform).filter(Boolean),
+              ),
+            ],
+            pending_approval:
+              previousOperation && previousOperation.requires_confirmation
+                ? previousOperation
+                : null,
+          },
         }),
       });
       let data: {
         type?: string;
         rule?: Record<string, unknown>;
         operation?: Record<string, unknown>;
+        workflow?: Record<string, unknown>;
+        draft_operation?: Record<string, unknown>;
+        draft_workflow?: Record<string, unknown>;
         message?: string;
         error?: string;
       } = {};
@@ -3113,16 +3150,39 @@ export function PrizeSkoutDashboard() {
         setCpPhase("idle");
         return;
       }
-      if (data.type === "operation" && data.operation) {
+      cpConversationRef.current = conversation;
+      if (data.type === "workflow" && data.workflow) {
+        cpPendingDraftRef.current = null;
+        const workflow = { ...data.workflow, _type: "manager_workflow" };
+        setCpObj(workflow);
+        setCpChatMessage(null);
+        setCpPhase("result");
+        await prepareManagerWorkflow(workflow);
+      } else if (data.type === "operation" && data.operation) {
+        cpPendingDraftRef.current = null;
         const operation = { ...data.operation, _type: "operation" };
         setCpObj(operation);
         setCpChatMessage(null);
         setCpPhase("result");
         await prepareCopilotOperation(operation);
+      } else if (data.type === "clarification" && data.message) {
+        cpPendingDraftRef.current =
+          data.draft_workflow ?? data.draft_operation ?? previousOperation;
+        setCpChatMessage(data.message);
+        setCpObj(null);
+        setCpPhase("result");
+        cpConversationRef.current = compactConversation([
+          ...conversation,
+          { role: "assistant", text: data.message },
+        ]);
       } else if (data.type === "chat" && data.message) {
         setCpChatMessage(data.message);
         setCpObj(null);
         setCpPhase("result");
+        cpConversationRef.current = compactConversation([
+          ...conversation,
+          { role: "assistant", text: data.message },
+        ]);
       } else if (data.rule) {
         setCpObj(data.rule);
         setCpChatMessage(null);
@@ -3137,6 +3197,51 @@ export function PrizeSkoutDashboard() {
     }
   };
 
+  const prepareManagerWorkflow = async (workflow: Record<string, unknown>) => {
+    setCpOperationStatus("running");
+    try {
+      const steps = Array.isArray(workflow.steps)
+        ? (workflow.steps as Array<Record<string, unknown>>)
+        : [];
+      const response = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
+          access_code: localStorage.getItem("ps_access_code") ?? "",
+          platform: "merchant_experience",
+          action: "manager_task_create",
+          title: String(workflow.title ?? "Store management workflow"),
+          detail: String(workflow.summary ?? "Prepared by the Store Manager."),
+          task_type: "manager_workflow",
+          priority: String(workflow.priority ?? "medium"),
+          approval_required: "true",
+          risk_level: String(workflow.risk_level ?? "read_only"),
+          workflow,
+        }),
+      });
+      const data = (await response.json()) as {
+        ok?: boolean;
+        task?: { id: string };
+        error?: string;
+      };
+      if (!response.ok || !data.ok || !data.task)
+        throw new Error(data.error ?? "The workflow could not be added to the Management desk.");
+      setCpObj((current) => (current ? { ...current, manager_task_id: data.task!.id } : current));
+      const manual = steps.filter((step) => step.execution === "manual_fallback").length;
+      const approvals = steps.filter((step) => step.approval_required === true).length;
+      setCpOperationMessage(
+        `I prepared and saved a ${steps.length}-step plan in the Management desk. ${approvals} step${approvals === 1 ? " needs" : "s need"} your approval.${manual ? ` ${manual} step${manual === 1 ? " needs" : "s need"} someone to complete it because the partner does not let PrizeSkout do it directly.` : ""} Nothing has changed in your store.`,
+      );
+      setCpOperationStatus("ready");
+    } catch (error) {
+      setCpOperationStatus("failed");
+      setCpOperationMessage(
+        error instanceof Error ? error.message : "The workflow could not be prepared.",
+      );
+    }
+  };
+
   const matchCopilotProducts = (
     operation: Record<string, unknown>,
     products = importedProducts,
@@ -3148,15 +3253,23 @@ export function PrizeSkoutDashboard() {
     const category = String(operation.category ?? "")
       .trim()
       .toLowerCase();
-    return products.filter((product) => {
+    const filtered = products.filter((product) => {
       const platformMatch =
         platform === "all" || product.source_platform.toLowerCase() === platform;
       const haystack =
         `${product.name_en} ${product.name_ar} ${product.sku} ${product.item_id}`.toLowerCase();
-      const queryMatch = !query || haystack.includes(query);
       const categoryMatch = !category || haystack.includes(category);
-      return platformMatch && queryMatch && categoryMatch;
+      return platformMatch && categoryMatch;
     });
+    if (!query) return filtered;
+    const references = filtered.map((product) => ({
+      product,
+      name: product.name_en || product.name_ar,
+      sku: product.sku,
+      platform: product.source_platform,
+    }));
+    const resolved = resolveProductReferences(references, query, platform);
+    return resolved.matches.map((match) => match.product);
   };
 
   const fetchCopilotCatalog = async (preview?: {
@@ -3339,7 +3452,9 @@ export function PrizeSkoutDashboard() {
             ? String(operation.inventory_filter)
             : undefined,
           changes: {
-            ...(operation.new_product_name ? { name: String(operation.new_product_name).replace(/[,;:\s]+$/, "") } : {}),
+            ...(operation.new_product_name
+              ? { name: String(operation.new_product_name).replace(/[,;:\s]+$/, "") }
+              : {}),
             ...(operation.new_product_sku ? { sku: String(operation.new_product_sku) } : {}),
             ...(operation.product_price != null &&
             Number.isFinite(Number(operation.product_price)) &&
@@ -3594,6 +3709,28 @@ export function PrizeSkoutDashboard() {
             ? { floor, cap: cap > 0 && cap <= 1 ? cap : 0.1 }
             : undefined,
         );
+        const requestedQuery = String(operation.query ?? operation.sku ?? "").trim();
+        if (requestedQuery && String(operation.scope ?? "single") === "single") {
+          const candidates = products.map((product) => ({
+            product,
+            name: product.name_en || product.name_ar,
+            sku: product.sku,
+            platform: product.source_platform,
+          }));
+          const grounded = resolveProductReferences(
+            candidates,
+            requestedQuery,
+            String(operation.platform ?? "all"),
+          );
+          if (grounded.status === "ambiguous") {
+            const choices = grounded.matches
+              .map((match) => `${match.name} (${match.sku})`)
+              .join(", ");
+            throw new Error(
+              `I found several close matches: ${choices}. Tell me the exact product name or SKU, and I’ll continue with the same request.`,
+            );
+          }
+        }
         let matches = matchCopilotProducts(operation, products);
         if (op === "protect_margin")
           matches = matches.filter(
@@ -3669,7 +3806,9 @@ export function PrizeSkoutDashboard() {
     )
       return;
     if (operation === "product_change" && !String(cpObj.approval_token ?? "").trim()) {
-      setCpOperationMessage("I need to reload the exact product and proposed change before you can approve it.");
+      setCpOperationMessage(
+        "I need to reload the exact product and proposed change before you can approve it.",
+      );
       await prepareCopilotOperation(cpObj);
       return;
     }
@@ -3750,7 +3889,9 @@ export function PrizeSkoutDashboard() {
         candidates?: Array<{ id: string; name: string; sku: string; is_published: boolean }>;
       };
       if (result.candidates?.length) {
-        setCpObj((current) => current ? { ...current, product_candidates: result.candidates } : current);
+        setCpObj((current) =>
+          current ? { ...current, product_candidates: result.candidates } : current,
+        );
         setCpOperationStatus("failed");
         setCpOperationMessage(result.error ?? "Choose the intended product before continuing.");
         return;
@@ -4058,7 +4199,7 @@ export function PrizeSkoutDashboard() {
         executions: feed.map((item) => ({ time: item.time, tag: item.tag, detail: item.text })),
       });
       showToast(
-        `Evidence PDF downloaded · ${disputes.length} claim draft${disputes.length === 1 ? "" : "s"} · ${feed.length} execution record${feed.length === 1 ? "" : "s"}`,
+        `Report downloaded · ${disputes.length} claim draft${disputes.length === 1 ? "" : "s"} · ${feed.length} recorded action${feed.length === 1 ? "" : "s"}`,
       );
     } catch (error) {
       showToast(
@@ -4119,24 +4260,39 @@ export function PrizeSkoutDashboard() {
       const response = await fetch("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode, platform: "recovery_cases", action: "list" }),
+        body: JSON.stringify({
+          merchant_id: merchantId,
+          access_code: accessCode,
+          platform: "recovery_cases",
+          action: "list",
+        }),
       });
-      const payload = (await response.json()) as { ok?: boolean; cases?: DashboardRecoveryCase[]; error?: string };
-      if (!response.ok || !payload.ok) throw new Error(payload.error ?? "Could not load recovery cases.");
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        cases?: DashboardRecoveryCase[];
+        error?: string;
+      };
+      if (!response.ok || !payload.ok)
+        throw new Error(payload.error ?? "Could not load recovery cases.");
       const cases = payload.cases ?? [];
       setRecoveryCases(cases);
-      setDisputes(cases.map(item => ({
-        partner: item.platform,
-        title: item.title,
-        order: item.exception_key,
-        place: item.owner ?? "Merchant account",
-        contract: item.contract_clause ?? "Contract evidence not yet attached",
-        charged: item.exception_amount == null ? "Not quantified" : `${currency} ${Number(item.exception_amount).toFixed(2)}`,
-        leak: `${currency} ${Number(item.claims_ready_amount).toFixed(2)}`,
-        hash: item.submission_evidence_hash ?? item.id,
-        en: item.explanation_en,
-        ar: item.explanation_ar,
-      })));
+      setDisputes(
+        cases.map((item) => ({
+          partner: item.platform,
+          title: item.title,
+          order: item.exception_key,
+          place: item.owner ?? "Merchant account",
+          contract: item.contract_clause ?? "Contract evidence not yet attached",
+          charged:
+            item.exception_amount == null
+              ? "Not quantified"
+              : `${currency} ${Number(item.exception_amount).toFixed(2)}`,
+          leak: `${currency} ${Number(item.claims_ready_amount).toFixed(2)}`,
+          hash: item.submission_evidence_hash ?? item.id,
+          en: item.explanation_en,
+          ar: item.explanation_ar,
+        })),
+      );
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Could not load recovery cases.");
     } finally {
@@ -4144,7 +4300,9 @@ export function PrizeSkoutDashboard() {
     }
   };
 
-  useEffect(() => { void loadRecoveryRegister(); }, []);
+  useEffect(() => {
+    void loadRecoveryRegister();
+  }, []);
 
   // First-run welcome check: the instant Talabat is connected and this
   // merchant has never had a payout check recorded, run one automatically
@@ -4589,8 +4747,18 @@ export function PrizeSkoutDashboard() {
     },
     {
       id: "promotions" as Tab,
-      label: lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator",
-      sub: lang === "ar" ? "اختبار الربحية" : lang === "fr" ? "Tester la rentabilité" : "Model profitability",
+      label:
+        lang === "ar"
+          ? "محاكي العروض"
+          : lang === "fr"
+            ? "Simulateur de promotions"
+            : "Promo Simulator",
+      sub:
+        lang === "ar"
+          ? "اختبار الربحية"
+          : lang === "fr"
+            ? "Tester la rentabilité"
+            : "Model profitability",
       tip: "Promo Simulator — test discount, platform funding, fees, demand sensitivity, and margin impact before approving a campaign.",
     },
     {
@@ -4618,29 +4786,33 @@ export function PrizeSkoutDashboard() {
       ? t.subA
       : tab === "manager"
         ? "Delegate store operations, approve protected actions, and review verified outcomes"
-      : tab === "promotions"
-        ? "Model discount economics and margin risk before approving a campaign"
-      : tab === "rules"
-        ? t.subR
-        : tab === "settings"
-          ? t.settingsSub
-          : tab === "history"
-            ? t.subH
-            : t.subV;
+        : tab === "promotions"
+          ? "Model discount economics and margin risk before approving a campaign"
+          : tab === "rules"
+            ? t.subR
+            : tab === "settings"
+              ? t.settingsSub
+              : tab === "history"
+                ? t.subH
+                : t.subV;
   const headerTitle =
     tab === "analytics"
       ? t.navA
       : tab === "manager"
         ? "Store Manager"
-      : tab === "promotions"
-        ? lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator"
-      : tab === "rules"
-        ? t.navR
-        : tab === "settings"
-          ? t.settingsLabel
-          : tab === "history"
-            ? t.navH
-            : t.navV;
+        : tab === "promotions"
+          ? lang === "ar"
+            ? "محاكي العروض"
+            : lang === "fr"
+              ? "Simulateur de promotions"
+              : "Promo Simulator"
+          : tab === "rules"
+            ? t.navR
+            : tab === "settings"
+              ? t.settingsLabel
+              : tab === "history"
+                ? t.navH
+                : t.navV;
 
   const md = modal != null ? disputes[modal] : null;
 
@@ -4653,12 +4825,19 @@ export function PrizeSkoutDashboard() {
     manager: {
       nudge: "Delegate store operations or review the work already in progress.",
       prompt: "What needs my attention today?",
-      examples: ["What needs my attention today?", "Find products with incomplete information", "Prepare my highest-priority store tasks"],
+      examples: [
+        "What needs my attention today?",
+        "Find products with incomplete information",
+        "Prepare my highest-priority store tasks",
+      ],
     },
     promotions: {
       nudge: "Want help testing a campaign or understanding its margin risk?",
       prompt: "Check whether my active coupon is safe",
-      examples: ["Check whether my active coupon is safe", "What discount can I afford without breaching margin?"],
+      examples: [
+        "Check whether my active coupon is safe",
+        "What discount can I afford without breaching margin?",
+      ],
     },
     rules: {
       nudge: "Want help choosing or applying safe protection rules?",
@@ -4691,12 +4870,12 @@ export function PrizeSkoutDashboard() {
     setCpInput(prompt);
     void runCopilot(prompt);
   };
-  const submitManagerCommand = (prompt: string) => {
+  const submitManagerCommand = (prompt: string, requestedRole: "cfo" | "manager" = "cfo") => {
     if (!prompt.trim() || cpPhase === "loading") return;
     setAssistantDrawerInput(prompt.trim());
     setAssistantDrawerOpen(true);
     setCpInput(prompt.trim());
-    void runCopilot(prompt.trim());
+    void runCopilot(prompt.trim(), requestedRole);
   };
   const assistantNudge = (targetTab: Tab) => (
     <div
@@ -4713,12 +4892,21 @@ export function PrizeSkoutDashboard() {
       }}
     >
       <span style={{ fontSize: 13.5, color: "var(--muted)" }}>
-        {assistantContext[targetTab].nudge} <strong style={{ color: "var(--text)" }}>Use CFO Copilot or Store Manager.</strong>
+        {assistantContext[targetTab].nudge}{" "}
+        <strong style={{ color: "var(--text)" }}>Use CFO Copilot or Store Manager.</strong>
       </span>
       <button
         type="button"
         onClick={() => openAssistantDrawer(assistantContext[targetTab].prompt)}
-        style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: 4 }}
+        style={{
+          border: 0,
+          background: "transparent",
+          color: OG,
+          fontFamily: "inherit",
+          fontWeight: 800,
+          cursor: "pointer",
+          padding: 4,
+        }}
       >
         Delegate or ask →
       </button>
@@ -4817,7 +5005,11 @@ export function PrizeSkoutDashboard() {
                     <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                       {n.label}
                     </span>
-                    <span style={{ fontSize: 13.5, color: on ? "var(--accent-text)" : "var(--muted)" }}>{n.sub}</span>
+                    <span
+                      style={{ fontSize: 13.5, color: on ? "var(--accent-text)" : "var(--muted)" }}
+                    >
+                      {n.sub}
+                    </span>
                   </span>
                 </div>
               );
@@ -4966,7 +5158,7 @@ export function PrizeSkoutDashboard() {
                   {defendHealth?.label ?? "Checking Defend Loop"}
                 </span>
                 <span style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--muted)" }}>
-                  {defendHealth?.detail ?? "Reading live channel and dispatch signals…"}
+                  {defendHealth?.detail ?? "Checking your connected sales channels…"}
                 </span>
               </span>
             </div>
@@ -5465,7 +5657,13 @@ export function PrizeSkoutDashboard() {
           onOpenManager={() => setTab("manager")}
           onOpenCfo={() => {
             setTab("rules");
-            window.setTimeout(() => document.querySelector('[data-tour="copilot"]')?.scrollIntoView({behavior:"smooth",block:"center"}),50);
+            window.setTimeout(
+              () =>
+                document
+                  .querySelector('[data-tour="copilot"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+              50,
+            );
           }}
         />
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
@@ -5835,8 +6033,17 @@ export function PrizeSkoutDashboard() {
 
         {/* ===== TAB: STORE MANAGER ===== */}
         {tab === "manager" && (
-          <section className="ps-db-section" style={{padding:"20px 30px 48px",display:"flex",flexDirection:"column",gap:20,animation:"pk-in .3s ease"}}>
-            <MerchantOperatingLoop onAskCopilot={submitManagerCommand}/>
+          <section
+            className="ps-db-section"
+            style={{
+              padding: "20px 30px 48px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+              animation: "pk-in .3s ease",
+            }}
+          >
+            <MerchantOperatingLoop onAskCopilot={submitManagerCommand} />
           </section>
         )}
 
@@ -7757,9 +7964,27 @@ export function PrizeSkoutDashboard() {
                     }}
                   >
                     {[
-                      { value: `${currency} ${recoveryCases.reduce((sum,item)=>sum+Number(item.recovered_amount||0),0).toLocaleString("en-US",{maximumFractionDigits:2})}`, label: "Money Recovered", color: "var(--muted)" },
-                      { value: String(recoveryCases.filter(item=>Boolean(item.submitted_at)).length), label: "Claims Submitted", color: "var(--text)" },
-                      { value: String(recoveryCases.filter(item=>!["recovered","closed","rejected"].includes(item.status)).length), label: "Open Recovery Cases", color: "var(--muted)" },
+                      {
+                        value: `${currency} ${recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 2 })}`,
+                        label: "Money Recovered",
+                        color: "var(--muted)",
+                      },
+                      {
+                        value: String(
+                          recoveryCases.filter((item) => Boolean(item.submitted_at)).length,
+                        ),
+                        label: "Claims Submitted",
+                        color: "var(--text)",
+                      },
+                      {
+                        value: String(
+                          recoveryCases.filter(
+                            (item) => !["recovered", "closed", "rejected"].includes(item.status),
+                          ).length,
+                        ),
+                        label: "Open Recovery Cases",
+                        color: "var(--muted)",
+                      },
                     ].map((m) => (
                       <div
                         key={m.label}
@@ -7810,7 +8035,18 @@ export function PrizeSkoutDashboard() {
                       {t.discLog}
                     </div>
                     {recoveryLoading ? (
-                      <div style={{border:"1px solid var(--border)",background:"var(--surface2)",borderRadius:12,padding:"24px 20px",fontSize:15,color:"var(--muted)"}}>Loading recovery register…</div>
+                      <div
+                        style={{
+                          border: "1px solid var(--border)",
+                          background: "var(--surface2)",
+                          borderRadius: 12,
+                          padding: "24px 20px",
+                          fontSize: 15,
+                          color: "var(--muted)",
+                        }}
+                      >
+                        Loading recovery register…
+                      </div>
                     ) : disputes.length === 0 ? (
                       <div
                         style={{
@@ -8202,8 +8438,12 @@ export function PrizeSkoutDashboard() {
                               showToast("⚠ " + (data.error ?? "Voucher generation failed"));
                               return;
                             }
-                            const expectedCharge = Number(disputeOurPrice) * Number(disputeRate) / 100;
-                            const discrepancyAmount = Math.max(0, Number(disputeCharged) - expectedCharge);
+                            const expectedCharge =
+                              (Number(disputeOurPrice) * Number(disputeRate)) / 100;
+                            const discrepancyAmount = Math.max(
+                              0,
+                              Number(disputeCharged) - expectedCharge,
+                            );
                             const caseResponse = await fetch("/api/channels/connect", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
@@ -8216,23 +8456,44 @@ export function PrizeSkoutDashboard() {
                                 title: data.title,
                                 source_platform: disputePartner.toLowerCase(),
                                 case_status: "evidence_required",
-                                severity: discrepancyAmount >= 1000 ? "high" : discrepancyAmount >= 100 ? "medium" : "low",
+                                severity:
+                                  discrepancyAmount >= 1000
+                                    ? "high"
+                                    : discrepancyAmount >= 100
+                                      ? "medium"
+                                      : "low",
                                 exception_amount: discrepancyAmount,
                                 claims_ready_amount: 0,
                                 confidence: "low",
                                 affected_orders: 1,
                                 contract_term_id: null,
                                 contract_clause: `Merchant-entered ${disputeRate}% commission rate; reviewed contract not yet attached`,
-                                evidence_sources: ["merchant_entered_discrepancy", "generated_bilingual_voucher"],
-                                calculation: { order_value: Number(disputeOurPrice), contracted_rate_pct: Number(disputeRate), expected_charge: expectedCharge, actual_charge: Number(disputeCharged), discrepancy: discrepancyAmount, voucher_hash: data.hash },
+                                evidence_sources: [
+                                  "merchant_entered_discrepancy",
+                                  "generated_bilingual_voucher",
+                                ],
+                                calculation: {
+                                  order_value: Number(disputeOurPrice),
+                                  contracted_rate_pct: Number(disputeRate),
+                                  expected_charge: expectedCharge,
+                                  actual_charge: Number(disputeCharged),
+                                  discrepancy: discrepancyAmount,
+                                  voucher_hash: data.hash,
+                                },
                                 explanation_en: data.en,
                                 explanation_ar: data.ar,
                                 owner: "",
                               }),
                             });
-                            const savedCase = (await caseResponse.json()) as { ok?: boolean; error?: string };
+                            const savedCase = (await caseResponse.json()) as {
+                              ok?: boolean;
+                              error?: string;
+                            };
                             if (!caseResponse.ok || !savedCase.ok) {
-                              showToast("Voucher created, but the recovery case could not be saved: " + (savedCase.error ?? "Unknown error"));
+                              showToast(
+                                "Voucher created, but the recovery case could not be saved: " +
+                                  (savedCase.error ?? "Unknown error"),
+                              );
                               return;
                             }
                             await loadRecoveryRegister();
@@ -8242,7 +8503,9 @@ export function PrizeSkoutDashboard() {
                             setDisputeOurPrice("");
                             setDisputeNotes("");
                             setDisputePlace("");
-                            showToast("Discrepancy saved to the recovery register · evidence draft ready");
+                            showToast(
+                              "Discrepancy saved to the recovery register · evidence draft ready",
+                            );
                           } catch {
                             showToast("⚠ Network error — try again.");
                           } finally {
@@ -8308,12 +8571,33 @@ export function PrizeSkoutDashboard() {
                 currency={currency}
               />
             ) : (
-              <div style={{ border: "1px solid var(--border)", borderRadius: 14, padding: 24, background: "var(--surface)" }}>
+              <div
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 14,
+                  padding: 24,
+                  background: "var(--surface)",
+                }}
+              >
                 <h3 style={{ margin: 0 }}>Connect or import a catalogue first</h3>
                 <p style={{ color: "var(--muted)", lineHeight: 1.6, marginBottom: 14 }}>
-                  Promo Simulator needs product prices and margin evidence before it can model a safe campaign.
+                  Promo Simulator needs product prices and margin evidence before it can model a
+                  safe campaign.
                 </p>
-                <button type="button" onClick={() => setTab("vault")} style={{ border: 0, borderRadius: 8, padding: "9px 13px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>
+                <button
+                  type="button"
+                  onClick={() => setTab("vault")}
+                  style={{
+                    border: 0,
+                    borderRadius: 8,
+                    padding: "9px 13px",
+                    background: OG,
+                    color: "#fff",
+                    fontFamily: "inherit",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
                   Open Integration Vault
                 </button>
               </div>
@@ -8429,8 +8713,8 @@ export function PrizeSkoutDashboard() {
                       ? "Read connected data · preview approved changes"
                       : "Unavailable until a store connects",
                   ],
-                  ["Safety mode", "Explicit approval for writes"],
-                  ["Verification", "Live readback · auto rollback"],
+                  ["Safety mode", "Your approval is required before changes"],
+                  ["Verification", "Checks every change and restores the old value if needed"],
                 ].map(([label, value]) => (
                   <div
                     key={label}
@@ -8903,24 +9187,59 @@ export function PrizeSkoutDashboard() {
                           </div>
                         );
                       })()}
-                    {Array.isArray(cpObj.product_candidates) && cpObj.product_candidates.length > 0 && (
-                      <div style={{ display: "grid", gap: 9 }}>
-                        {(cpObj.product_candidates as Array<{ id: string; name: string; sku: string; is_published: boolean }>).map((candidate) => (
-                          <button
-                            key={candidate.id || candidate.sku}
-                            onClick={() => {
-                              setCpObj((current) => current ? { ...current, query: candidate.sku, sku: candidate.sku, product_candidates: null } : current);
-                              setCpOperationStatus("ready");
-                              setCpOperationMessage(`Selected ${candidate.name} — SKU ${candidate.sku}. Review it, then continue.`);
-                            }}
-                            style={{ border: "1px solid var(--border)", borderRadius: 11, padding: "12px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", gap: 12 }}
-                          >
-                            <span><strong>{candidate.name}</strong><br/><small style={{ color: "var(--muted)" }}>SKU {candidate.sku}</small></span>
-                            <strong style={{ color: OG }}>Choose</strong>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {Array.isArray(cpObj.product_candidates) &&
+                      cpObj.product_candidates.length > 0 && (
+                        <div style={{ display: "grid", gap: 9 }}>
+                          {(
+                            cpObj.product_candidates as Array<{
+                              id: string;
+                              name: string;
+                              sku: string;
+                              is_published: boolean;
+                            }>
+                          ).map((candidate) => (
+                            <button
+                              key={candidate.id || candidate.sku}
+                              onClick={() => {
+                                setCpObj((current) =>
+                                  current
+                                    ? {
+                                        ...current,
+                                        query: candidate.sku,
+                                        sku: candidate.sku,
+                                        product_candidates: null,
+                                      }
+                                    : current,
+                                );
+                                setCpOperationStatus("ready");
+                                setCpOperationMessage(
+                                  `Selected ${candidate.name} — SKU ${candidate.sku}. Review it, then continue.`,
+                                );
+                              }}
+                              style={{
+                                border: "1px solid var(--border)",
+                                borderRadius: 11,
+                                padding: "12px 14px",
+                                background: "var(--surface)",
+                                color: "var(--text)",
+                                fontFamily: "inherit",
+                                cursor: "pointer",
+                                textAlign: "left",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: 12,
+                              }}
+                            >
+                              <span>
+                                <strong>{candidate.name}</strong>
+                                <br />
+                                <small style={{ color: "var(--muted)" }}>SKU {candidate.sku}</small>
+                              </span>
+                              <strong style={{ color: OG }}>Choose</strong>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     {[
                       "change_order_status",
                       "create_product_draft",
@@ -8949,9 +9268,13 @@ export function PrizeSkoutDashboard() {
                         }}
                       >
                         <div style={{ fontSize: 13.5, maxWidth: 720 }}>
-                          {["product_change", "create_product_draft", "product_image_upload", "variant_create", "schedule_product_action"].includes(
-                            String(cpObj.operation),
-                          ) ? (
+                          {[
+                            "product_change",
+                            "create_product_draft",
+                            "product_image_upload",
+                            "variant_create",
+                            "schedule_product_action",
+                          ].includes(String(cpObj.operation)) ? (
                             String(cpObj.product_mode) === "delete" ? (
                               "This will permanently remove the product. Please check it carefully before continuing."
                             ) : cpOperationStatus === "complete" ? (
@@ -8981,7 +9304,9 @@ export function PrizeSkoutDashboard() {
                             cpOperationStatus === "publishing" ||
                             cpOperationStatus === "running" ||
                             cpOperationStatus === "complete" ||
-                            (cpOperationStatus === "failed" && Array.isArray(cpObj.product_candidates) && cpObj.product_candidates.length > 0)
+                            (cpOperationStatus === "failed" &&
+                              Array.isArray(cpObj.product_candidates) &&
+                              cpObj.product_candidates.length > 0)
                           }
                           style={{
                             border: 0,
@@ -9003,30 +9328,30 @@ export function PrizeSkoutDashboard() {
                             ? "Working..."
                             : cpOperationStatus === "running"
                               ? "Loading preview..."
-                            : cpOperationStatus === "complete"
-                              ? "Checked in Zid"
-                              : String(cpObj.operation) === "product_change" &&
-                                  !String(cpObj.approval_token ?? "").trim()
-                                ? "Retry product preview"
-                              : String(cpObj.operation) === "reverse_refund"
-                                ? "Confirm refund"
-                                : String(cpObj.operation) === "loyalty_adjust"
-                                  ? "Confirm points change"
-                                  : String(cpObj.operation) === "coupon_change"
-                                    ? `Confirm ${String(cpObj.coupon_mode)}`
-                                    : String(cpObj.operation) === "category_assign"
-                                      ? "Assign category"
-                                      : String(cpObj.operation) === "create_product_draft"
-                                        ? cpObj.publish_product === true
-                                          ? "Create and publish"
-                                          : "Create draft"
-                                        : String(cpObj.product_mode) === "duplicate"
-                                          ? cpObj.publish_duplicate === true
-                                            ? "Create and publish"
-                                            : "Create product"
-                                          : String(cpObj.product_mode) === "publish"
-                                            ? "Publish product"
-                                            : "Save change"}
+                              : cpOperationStatus === "complete"
+                                ? "Checked in Zid"
+                                : String(cpObj.operation) === "product_change" &&
+                                    !String(cpObj.approval_token ?? "").trim()
+                                  ? "Retry product preview"
+                                  : String(cpObj.operation) === "reverse_refund"
+                                    ? "Confirm refund"
+                                    : String(cpObj.operation) === "loyalty_adjust"
+                                      ? "Confirm points change"
+                                      : String(cpObj.operation) === "coupon_change"
+                                        ? `Confirm ${String(cpObj.coupon_mode)}`
+                                        : String(cpObj.operation) === "category_assign"
+                                          ? "Assign category"
+                                          : String(cpObj.operation) === "create_product_draft"
+                                            ? cpObj.publish_product === true
+                                              ? "Create and publish"
+                                              : "Create draft"
+                                            : String(cpObj.product_mode) === "duplicate"
+                                              ? cpObj.publish_duplicate === true
+                                                ? "Create and publish"
+                                                : "Create product"
+                                              : String(cpObj.product_mode) === "publish"
+                                                ? "Publish product"
+                                                : "Save change"}
                         </button>
                       </div>
                     )}
@@ -9101,7 +9426,9 @@ export function PrizeSkoutDashboard() {
                                   </div>
                                 </div>
                                 <div>
-                                  <small style={{ color: "var(--muted)" }}>Zid catalogue check</small>
+                                  <small style={{ color: "var(--muted)" }}>
+                                    Zid catalogue check
+                                  </small>
                                   <div
                                     style={{
                                       fontWeight: 750,
@@ -9133,14 +9460,16 @@ export function PrizeSkoutDashboard() {
                                     cursor: "pointer",
                                   }}
                                 >
-                                  {item.is_published ? "Retry storefront publication" : "Publish this product"}
+                                  {item.is_published
+                                    ? "Retry storefront publication"
+                                    : "Publish this product"}
                                 </button>
                               )}
                             </div>
                           );
                         })}
                         <details style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                          <summary style={{ cursor: "pointer" }}>Technical receipt</summary>
+                          <summary style={{ cursor: "pointer" }}>See change details</summary>
                           <div style={{ marginTop: 5 }}>
                             Action ID: {cpStoreActionResult.action_id}
                           </div>
@@ -9413,213 +9742,300 @@ export function PrizeSkoutDashboard() {
                   </div>
                 </div>
               )}
-              {cpPhase === "result" && cpObj && cpObj._type !== "operation" && (
+              {cpPhase === "result" && cpObj?._type === "manager_workflow" && (
                 <div
                   style={{
+                    border: "1px solid color-mix(in srgb,#EF681A 28%,var(--border))",
+                    borderRadius: 14,
+                    padding: 20,
+                    background: "var(--surface)",
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))",
-                    gap: 16,
-                    animation: "pk-in .35s ease",
+                    gap: 12,
                   }}
                 >
-                  <div
-                    style={{
-                      background: `color-mix(in srgb,${OG} 6%,var(--surface))`,
-                      border: `1px solid color-mix(in srgb,${OG} 24%,transparent)`,
-                      borderRadius: 14,
-                      padding: "20px 22px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                    }}
-                  >
+                  <div>
                     <div
                       style={{
-                        fontSize: 12.5,
-                        fontWeight: 500,
-                        letterSpacing: "0.04em",
+                        fontSize: 11,
+                        fontWeight: 900,
                         color: OG,
-                        textTransform: "uppercase" as const,
+                        textTransform: "uppercase",
                       }}
                     >
-                      {t.intentLabel}
+                      Store Manager workflow
                     </div>
-                    <div style={{ fontSize: 18, lineHeight: 1.55, fontWeight: 600 }}>
-                      "{cpPrompt}"
+                    <h3 style={{ margin: "5px 0" }}>
+                      {String(cpObj.title ?? "Prepared workflow")}
+                    </h3>
+                    <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                      {String(cpObj.summary ?? "")}
                     </div>
+                  </div>
+                  {cpOperationMessage && (
                     <div
                       style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2,minmax(0,1fr))",
-                        gap: 9,
-                        marginTop: 4,
+                        padding: "10px 12px",
+                        borderRadius: 9,
+                        background: "var(--surface2)",
+                        fontSize: 12.5,
                       }}
                     >
-                      {[
-                        [
-                          "Policy",
-                          String(cpObj.policy_type ?? cpObj.engine_rule ?? "Draft").replace(
-                            /_/g,
-                            " ",
-                          ),
-                        ],
-                        [
-                          "Scope",
-                          Array.isArray(cpObj.channels) && cpObj.channels.length
-                            ? cpObj.channels.join(", ")
-                            : String(cpObj.target_category ?? "All products"),
-                        ],
-                        [
-                          "Control",
-                          typeof cpObj.approval_threshold_pct === "number"
-                            ? `Approval above ${cpObj.approval_threshold_pct * 100}%`
-                            : typeof cpObj.minimum_floor === "number"
-                              ? `${cpObj.minimum_floor * 100}% margin floor`
-                              : cpObj.stop_on_stale_cost
-                                ? "Stop on stale costs"
-                                : "Review required",
-                        ],
-                        ["Lifecycle", "Draft · not active"],
-                      ].map(([label, value]) => (
+                      {cpOperationMessage}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {(Array.isArray(cpObj.steps) ? cpObj.steps : []).map((raw, index) => {
+                      const step = raw as Record<string, unknown>;
+                      return (
                         <div
-                          key={label}
+                          key={index}
                           style={{
-                            background: "var(--surface)",
                             border: "1px solid var(--border)",
-                            borderRadius: 9,
-                            padding: "9px 10px",
+                            borderRadius: 10,
+                            padding: "11px 12px",
+                            display: "grid",
+                            gridTemplateColumns: "28px minmax(0,1fr) auto",
+                            gap: 9,
+                            alignItems: "start",
                           }}
                         >
-                          <div
+                          <strong style={{ color: OG }}>{index + 1}</strong>
+                          <div>
+                            <strong>{String(step.title ?? step.capability)}</strong>
+                            <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>
+                              {String(step.success_condition ?? "")}
+                            </div>
+                          </div>
+                          <span
                             style={{
-                              fontSize: 10,
-                              color: "var(--muted)",
+                              fontSize: 9.5,
+                              fontWeight: 850,
+                              color: step.execution === "manual_fallback" ? "#A16207" : "#087F5B",
                               textTransform: "uppercase",
                             }}
                           >
-                            {label}
-                          </div>
-                          <div
-                            style={{
-                              marginTop: 3,
-                              fontSize: 12.5,
-                              fontWeight: 700,
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {value}
-                          </div>
+                            {workflowStepLabel(step)}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                    {Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0 && (
-                      <div
-                        style={{
-                          color: "#B45309",
-                          background: "color-mix(in srgb,#F59E0B 10%,var(--surface))",
-                          border: "1px solid color-mix(in srgb,#F59E0B 30%,var(--border))",
-                          borderRadius: 9,
-                          padding: "9px 11px",
-                          fontSize: 12,
-                        }}
-                      >
-                        {cpObj.warnings.map(String).join(" ")}
-                      </div>
-                    )}
-                    <div
-                      style={{
-                        marginTop: "auto",
-                        display: "flex",
-                        gap: 14,
-                        fontSize: 13,
-                        color: "var(--muted)",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span>
-                        {t.intent} <span style={{ color: GN }}>{t.intentResolved}</span>
-                      </span>
-                      <span>
-                        {t.confidence} <span style={{ color: GN }}>0.97</span>
-                      </span>
-                      <span>{t.ambiguity} none</span>
-                    </div>
+                      );
+                    })}
                   </div>
+                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                    Task ID {String(cpObj.manager_task_id ?? "being prepared")} · No external action
+                    is treated as complete until its success condition is verified.
+                  </div>
+                </div>
+              )}
+              {cpPhase === "result" &&
+                cpObj &&
+                cpObj._type !== "operation" &&
+                cpObj._type !== "manager_workflow" && (
                   <div
-                    dir="ltr"
                     style={{
-                      background: "var(--term)",
-                      border: "1px solid var(--term-border)",
-                      borderRadius: 14,
-                      padding: "18px 20px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))",
+                      gap: 16,
+                      animation: "pk-in .35s ease",
                     }}
                   >
                     <div
                       style={{
+                        background: `color-mix(in srgb,${OG} 6%,var(--surface))`,
+                        border: `1px solid color-mix(in srgb,${OG} 24%,transparent)`,
+                        borderRadius: 14,
+                        padding: "20px 22px",
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        flexDirection: "column",
+                        gap: 12,
                       }}
                     >
-                      <span style={{ fontFamily: MONO, fontSize: 13, color: "#5A6472" }}>
-                        compiled.rule.json
-                      </span>
-                      <span style={{ fontFamily: MONO, fontSize: 12.5, color: GN }}>
-                        ✓ schema v3 · 1.2s
-                      </span>
+                      <div
+                        style={{
+                          fontSize: 12.5,
+                          fontWeight: 500,
+                          letterSpacing: "0.04em",
+                          color: OG,
+                          textTransform: "uppercase" as const,
+                        }}
+                      >
+                        {t.intentLabel}
+                      </div>
+                      <div style={{ fontSize: 18, lineHeight: 1.55, fontWeight: 600 }}>
+                        "{cpPrompt}"
+                      </div>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+                          gap: 9,
+                          marginTop: 4,
+                        }}
+                      >
+                        {[
+                          [
+                            "Policy",
+                            String(cpObj.policy_type ?? cpObj.engine_rule ?? "Draft").replace(
+                              /_/g,
+                              " ",
+                            ),
+                          ],
+                          [
+                            "Scope",
+                            Array.isArray(cpObj.channels) && cpObj.channels.length
+                              ? cpObj.channels.join(", ")
+                              : String(cpObj.target_category ?? "All products"),
+                          ],
+                          [
+                            "Control",
+                            typeof cpObj.approval_threshold_pct === "number"
+                              ? `Approval above ${cpObj.approval_threshold_pct * 100}%`
+                              : typeof cpObj.minimum_floor === "number"
+                                ? `${cpObj.minimum_floor * 100}% margin floor`
+                                : cpObj.stop_on_stale_cost
+                                  ? "Stop on stale costs"
+                                  : "Review required",
+                          ],
+                          ["Lifecycle", "Draft · not active"],
+                        ].map(([label, value]) => (
+                          <div
+                            key={label}
+                            style={{
+                              background: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: 9,
+                              padding: "9px 10px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 10,
+                                color: "var(--muted)",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {label}
+                            </div>
+                            <div
+                              style={{
+                                marginTop: 3,
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0 && (
+                        <div
+                          style={{
+                            color: "#B45309",
+                            background: "color-mix(in srgb,#F59E0B 10%,var(--surface))",
+                            border: "1px solid color-mix(in srgb,#F59E0B 30%,var(--border))",
+                            borderRadius: 9,
+                            padding: "9px 11px",
+                            fontSize: 12,
+                          }}
+                        >
+                          {cpObj.warnings.map(String).join(" ")}
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          marginTop: "auto",
+                          display: "flex",
+                          gap: 14,
+                          fontSize: 13,
+                          color: "var(--muted)",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span>
+                          {t.intent} <span style={{ color: GN }}>{t.intentResolved}</span>
+                        </span>
+                        <span>
+                          {t.confidence} <span style={{ color: GN }}>0.97</span>
+                        </span>
+                        <span>{t.ambiguity} none</span>
+                      </div>
                     </div>
                     <div
+                      dir="ltr"
                       style={{
-                        whiteSpace: "pre",
-                        overflowX: "auto",
-                        fontFamily: MONO,
-                        fontSize: 14.5,
-                        lineHeight: 1.7,
+                        background: "var(--term)",
+                        border: "1px solid var(--term-border)",
+                        borderRadius: 14,
+                        padding: "18px 20px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
                       }}
                     >
-                      {tokenizeJson(cpObj).map((tk, i) => (
-                        <span key={i} style={{ color: tk.c }}>
-                          {tk.t}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span style={{ fontFamily: MONO, fontSize: 13, color: "#5A6472" }}>
+                          compiled.rule.json
                         </span>
-                      ))}
+                        <span style={{ fontFamily: MONO, fontSize: 12.5, color: GN }}>
+                          ✓ schema v3 · 1.2s
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          whiteSpace: "pre",
+                          overflowX: "auto",
+                          fontFamily: MONO,
+                          fontSize: 14.5,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {tokenizeJson(cpObj).map((tk, i) => (
+                          <span key={i} style={{ color: tk.c }}>
+                            {tk.t}
+                          </span>
+                        ))}
+                      </div>
+                      <button
+                        onClick={applyConfig}
+                        disabled={Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0}
+                        style={{
+                          cursor:
+                            Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0
+                              ? "not-allowed"
+                              : "pointer",
+                          marginTop: 4,
+                          border: "none",
+                          borderRadius: 11,
+                          padding: "14px 18px",
+                          fontSize: 15.5,
+                          fontWeight: 800,
+                          fontFamily: "inherit",
+                          color: "#fff",
+                          background:
+                            Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0
+                              ? "#6B7280"
+                              : applied
+                                ? GN
+                                : OG,
+                          transition: "background .3s",
+                        }}
+                      >
+                        {Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0
+                          ? "Complete the missing policy details"
+                          : applied
+                            ? "Draft added to Rule Book"
+                            : "Add to Rule Book as draft"}
+                      </button>
                     </div>
-                    <button
-                      onClick={applyConfig}
-                      disabled={Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0}
-                      style={{
-                        cursor:
-                          Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0
-                            ? "not-allowed"
-                            : "pointer",
-                        marginTop: 4,
-                        border: "none",
-                        borderRadius: 11,
-                        padding: "14px 18px",
-                        fontSize: 15.5,
-                        fontWeight: 800,
-                        fontFamily: "inherit",
-                        color: "#fff",
-                        background:
-                          Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0
-                            ? "#6B7280"
-                            : applied
-                              ? GN
-                              : OG,
-                        transition: "background .3s",
-                      }}
-                    >
-                      {Array.isArray(cpObj.warnings) && cpObj.warnings.length > 0
-                        ? "Complete the missing policy details"
-                        : applied
-                          ? "Draft added to Rule Book"
-                          : "Add to Rule Book as draft"}
-                    </button>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Margin Policy v1: one understandable, enforceable store policy. */}
@@ -11582,7 +11998,7 @@ export function PrizeSkoutDashboard() {
             {(historyView === "all" || historyView === "repricing") && (
               <div style={{ display: "contents" }}>
                 <div
-                  data-demo-tip="Full audit trail of automatic price changes — same data feeding the Live Execution Stream terminal, kept permanently here."
+                  data-demo-tip="A permanent history of price changes, including what changed, why it changed, and whether the store confirmed it."
                   style={{
                     background: "var(--surface)",
                     border: "1px solid var(--border)",
@@ -12797,7 +13213,12 @@ export function PrizeSkoutDashboard() {
                       <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
                         {n.label}
                       </span>
-                      <span style={{ fontSize: 13.5, color: on ? "var(--accent-text)" : "var(--muted)" }}>
+                      <span
+                        style={{
+                          fontSize: 13.5,
+                          color: on ? "var(--accent-text)" : "var(--muted)",
+                        }}
+                      >
                         {n.sub}
                       </span>
                     </span>
@@ -13003,7 +13424,7 @@ export function PrizeSkoutDashboard() {
                     {defendHealth?.label ?? "Checking Defend Loop"}
                   </span>
                   <span style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--muted)" }}>
-                    {defendHealth?.detail ?? "Reading live channel and dispatch signals…"}
+                    {defendHealth?.detail ?? "Checking your connected sales channels…"}
                   </span>
                 </span>
               </div>
@@ -13425,21 +13846,81 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .22s ease",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 14,
+                alignItems: "start",
+              }}
+            >
               <div>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>CFO Copilot &amp; Store Manager</h2>
-                <p style={{ margin: "6px 0 0", color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
-                  Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps your current page open and asks before protected changes.
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>
+                  CFO Copilot &amp; Store Manager
+                </h2>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    color: "var(--muted)",
+                    fontSize: 13.5,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps
+                  your current page open and asks before protected changes.
                 </p>
               </div>
-              <button type="button" aria-label="Close assistant" onClick={() => setAssistantDrawerOpen(false)} style={{ border: "1px solid var(--border)", borderRadius: 9, width: 34, height: 34, background: "var(--surface2)", color: "var(--text)", cursor: "pointer", fontSize: 18 }}>×</button>
+              <button
+                type="button"
+                aria-label="Close assistant"
+                onClick={() => setAssistantDrawerOpen(false)}
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 9,
+                  width: 34,
+                  height: 34,
+                  background: "var(--surface2)",
+                  color: "var(--text)",
+                  cursor: "pointer",
+                  fontSize: 18,
+                }}
+              >
+                ×
+              </button>
             </div>
-            <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "12px 13px", background: "var(--surface2)", fontSize: 12.5, color: "var(--muted)" }}>
-              <strong style={{ color: "var(--text)" }}>{headerTitle}</strong> context · Store changes require your approval
+            <div
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                padding: "12px 13px",
+                background: "var(--surface2)",
+                fontSize: 12.5,
+                color: "var(--muted)",
+              }}
+            >
+              <strong style={{ color: "var(--text)" }}>{headerTitle}</strong> context · Store
+              changes require your approval
             </div>
             <div style={{ display: "grid", gap: 8 }}>
               {assistantContext[tab].examples.map((example) => (
-                <button key={example} type="button" onClick={() => setAssistantDrawerInput(example)} style={{ textAlign: "left", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 13, cursor: "pointer" }}>{example}</button>
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setAssistantDrawerInput(example)}
+                  style={{
+                    textAlign: "left",
+                    border: "1px solid var(--border)",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                    background: "var(--surface)",
+                    color: "var(--text)",
+                    fontFamily: "inherit",
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  {example}
+                </button>
               ))}
             </div>
             <textarea
@@ -13454,30 +13935,103 @@ export function PrizeSkoutDashboard() {
               }}
               placeholder="What should PrizeSkout handle today?"
               rows={4}
-              style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 14.5, lineHeight: 1.5, outline: "none" }}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                resize: "vertical",
+                border: "1.5px solid var(--border)",
+                borderRadius: 12,
+                padding: "13px 14px",
+                background: "var(--surface)",
+                color: "var(--text)",
+                fontFamily: "inherit",
+                fontSize: 14.5,
+                lineHeight: 1.5,
+                outline: "none",
+              }}
             />
-            <button type="button" disabled={!assistantDrawerInput.trim() || cpPhase === "loading"} onClick={submitAssistantDrawer} style={{ border: 0, borderRadius: 11, padding: "12px 16px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: !assistantDrawerInput.trim() || cpPhase === "loading" ? "not-allowed" : "pointer", opacity: !assistantDrawerInput.trim() ? .55 : 1 }}>
+            <button
+              type="button"
+              disabled={!assistantDrawerInput.trim() || cpPhase === "loading"}
+              onClick={submitAssistantDrawer}
+              style={{
+                border: 0,
+                borderRadius: 11,
+                padding: "12px 16px",
+                background: OG,
+                color: "#fff",
+                fontFamily: "inherit",
+                fontWeight: 800,
+                cursor:
+                  !assistantDrawerInput.trim() || cpPhase === "loading" ? "not-allowed" : "pointer",
+                opacity: !assistantDrawerInput.trim() ? 0.55 : 1,
+              }}
+            >
               {cpPhase === "loading" ? "Working…" : "Ask or delegate"}
             </button>
             {(cpChatMessage || cpOperationMessage || cpPhase === "loading") && (
-              <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface2)", fontSize: 13.5, lineHeight: 1.55 }}>
-                {cpPhase === "loading" ? "PrizeSkout is working on that…" : cpChatMessage ?? cpOperationMessage}
+              <div
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  padding: "13px 14px",
+                  background: "var(--surface2)",
+                  fontSize: 13.5,
+                  lineHeight: 1.55,
+                }}
+              >
+                {cpPhase === "loading"
+                  ? "PrizeSkout is working on that…"
+                  : (cpChatMessage ?? cpOperationMessage)}
               </div>
             )}
-            {cpObj?._type === "operation" && cpOperationStatus !== "complete" && cpOperationStatus !== "failed" && (
-              <button
-                type="button"
-                onClick={() => {
-                  setAssistantDrawerOpen(false);
-                  setTab("rules");
-                  window.setTimeout(() => document.querySelector('[data-tour="copilot"]')?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-                }}
-                style={{ border: `1px solid ${OG}`, borderRadius: 10, padding: "11px 14px", background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}
-              >
-                Review and approve this action →
-              </button>
-            )}
-            <button type="button" onClick={() => { setAssistantDrawerOpen(false); setTab("rules"); }} style={{ marginTop: "auto", border: 0, background: "transparent", color: "var(--muted)", fontFamily: "inherit", fontWeight: 700, cursor: "pointer", padding: 8 }}>
+            {cpObj?._type === "operation" &&
+              cpOperationStatus !== "complete" &&
+              cpOperationStatus !== "failed" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAssistantDrawerOpen(false);
+                    setTab("rules");
+                    window.setTimeout(
+                      () =>
+                        document
+                          .querySelector('[data-tour="copilot"]')
+                          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+                      50,
+                    );
+                  }}
+                  style={{
+                    border: `1px solid ${OG}`,
+                    borderRadius: 10,
+                    padding: "11px 14px",
+                    background: "transparent",
+                    color: OG,
+                    fontFamily: "inherit",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  Review and approve this action →
+                </button>
+              )}
+            <button
+              type="button"
+              onClick={() => {
+                setAssistantDrawerOpen(false);
+                setTab("rules");
+              }}
+              style={{
+                marginTop: "auto",
+                border: 0,
+                background: "transparent",
+                color: "var(--muted)",
+                fontFamily: "inherit",
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: 8,
+              }}
+            >
               Open the full assistant
             </button>
           </aside>

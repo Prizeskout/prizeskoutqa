@@ -56,29 +56,25 @@ export function ProductRepricingCard({
   );
 
   const overridePrice = overrideRaw !== "" ? parseFloat(overrideRaw) : null;
-  const targetPrice = overridePrice !== null && !isNaN(overridePrice)
-    ? overridePrice
-    : product.recommended_price;
+  const targetPrice =
+    overridePrice !== null && !isNaN(overridePrice) ? overridePrice : product.recommended_price;
 
   const delta = priceDelta(product.current_price, targetPrice);
   const isDecrease = targetPrice < product.current_price;
 
-  const confidencePct = product.net_margin_pct != null
-    ? Math.round(Math.min(100, Math.max(0, product.net_margin_pct * 100)))
-    : null;
+  const confidencePct =
+    product.net_margin_pct != null
+      ? Math.round(Math.min(100, Math.max(0, product.net_margin_pct * 100)))
+      : null;
 
   const qualifiesForAutoApply =
-    autoApplyThreshold !== null &&
-    confidencePct !== null &&
-    confidencePct >= autoApplyThreshold;
+    autoApplyThreshold !== null && confidencePct !== null && confidencePct >= autoApplyThreshold;
 
   async function handleApply() {
-    const merchantId = typeof window !== "undefined"
-      ? (localStorage.getItem("ps_merchant_id") ?? "")
-      : "";
-    const accessCode = typeof window !== "undefined"
-      ? (localStorage.getItem("ps_access_code") ?? "")
-      : "";
+    const merchantId =
+      typeof window !== "undefined" ? (localStorage.getItem("ps_merchant_id") ?? "") : "";
+    const accessCode =
+      typeof window !== "undefined" ? (localStorage.getItem("ps_access_code") ?? "") : "";
 
     if (!merchantId || !accessCode) {
       toast.error("Session not found — please reconnect your store.");
@@ -102,15 +98,22 @@ export function ProductRepricingCard({
           target_price: targetPrice,
         }),
       });
-      const data = await res.json() as { ok?: boolean; error?: string; message?: string; platform?: string; downstream?:{message:string}|null };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        platform?: string;
+        downstream?: { message: string } | null;
+      };
 
       if (data.ok) {
         setPushStatus("pushed");
         setLastPrice(targetPrice);
-        const label = overridePrice !== null
-          ? `Custom price pushed to ${platformLabel(product.source_platform)}`
-          : `Recommended price pushed to ${platformLabel(product.source_platform)}`;
-        toast.success(data.downstream?`${label}. ${data.downstream.message}`:label);
+        const label =
+          overridePrice !== null
+            ? `Your price is now live on ${platformLabel(product.source_platform)}`
+            : `The recommended price is now live on ${platformLabel(product.source_platform)}`;
+        toast.success(data.downstream ? `${label}. ${data.downstream.message}` : label);
         setShowOverride(false);
         setOverrideRaw("");
       } else {
@@ -124,10 +127,13 @@ export function ProductRepricingCard({
   }
 
   const cardBorder =
-    pushStatus === "pushed" ? "#22C55E" :
-    pushStatus === "failed"  ? "#EF4444" :
-    product.floor_breached   ? "#F59E0B" :
-    "#E5E2DB";
+    pushStatus === "pushed"
+      ? "#22C55E"
+      : pushStatus === "failed"
+        ? "#EF4444"
+        : product.floor_breached
+          ? "#F59E0B"
+          : "#E5E2DB";
 
   return (
     <div
@@ -140,12 +146,27 @@ export function ProductRepricingCard({
       }}
     >
       {/* ── Header ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+        }}
+      >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, color: "#1A1A18", wordBreak: "break-word" }}>
             {product.name_en || product.sku}
           </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginTop: 6,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
             <span
               style={{
                 fontSize: 10,
@@ -178,7 +199,7 @@ export function ProductRepricingCard({
                 }}
               >
                 <AlertTriangle size={10} />
-                Below cost floor
+                Below your protected margin
               </span>
             )}
             {qualifiesForAutoApply && pushStatus === "idle" && (
@@ -192,7 +213,7 @@ export function ProductRepricingCard({
                   color: "#15803D",
                 }}
               >
-                Auto-qualify
+                Can be handled automatically
               </span>
             )}
           </div>
@@ -237,10 +258,26 @@ export function ProductRepricingCard({
       >
         {/* Current price */}
         <div>
-          <div style={{ fontSize: 9, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              color: "#9A9A9A",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
             Current
           </div>
-          <div style={{ fontSize: 17, fontWeight: 500, color: "#9A9A9A", textDecoration: "line-through", marginTop: 2 }}>
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: 500,
+              color: "#9A9A9A",
+              textDecoration: "line-through",
+              marginTop: 2,
+            }}
+          >
             {formatPrice(product.current_price, product.currency)}
           </div>
         </div>
@@ -249,18 +286,28 @@ export function ProductRepricingCard({
 
         {/* Recommended / override price */}
         <div>
-          <div style={{ fontSize: 9, fontWeight: 600, color: overridePrice !== null ? "#3B82F6" : "#22C55E", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            {overridePrice !== null ? "Override" : "Recommended"}
+          <div
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              color: overridePrice !== null ? "#3B82F6" : "#22C55E",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {overridePrice !== null ? "Your price" : "Recommended"}
           </div>
           {showOverride ? (
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B" }}>{product.currency}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "#6B6B6B" }}>
+                {product.currency}
+              </span>
               <input
                 type="number"
                 min="0.01"
                 step="0.01"
                 value={overrideRaw}
-                onChange={e => setOverrideRaw(e.target.value)}
+                onChange={(e) => setOverrideRaw(e.target.value)}
                 placeholder={String(product.recommended_price)}
                 autoFocus
                 style={{
@@ -277,7 +324,14 @@ export function ProductRepricingCard({
               />
             </div>
           ) : (
-            <div style={{ fontSize: 17, fontWeight: 700, color: overridePrice !== null ? "#3B82F6" : "#22C55E", marginTop: 2 }}>
+            <div
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                color: overridePrice !== null ? "#3B82F6" : "#22C55E",
+                marginTop: 2,
+              }}
+            >
               {formatPrice(targetPrice, product.currency)}
             </div>
           )}
@@ -288,10 +342,25 @@ export function ProductRepricingCard({
           <>
             <div style={{ width: 1, height: 36, backgroundColor: "#E5E2DB", flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: 9, fontWeight: 600, color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  color: "#9A9A9A",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
                 Change
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: isDecrease ? "#EF4444" : "#22C55E", marginTop: 2 }}>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: isDecrease ? "#EF4444" : "#22C55E",
+                  marginTop: 2,
+                }}
+              >
                 {delta}
               </div>
             </div>
@@ -299,17 +368,37 @@ export function ProductRepricingCard({
         )}
 
         {/* Action buttons */}
-        <div style={{ marginInlineStart: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            marginInlineStart: "auto",
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           {pushStatus === "pushed" && (
             <>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: "#22C55E" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#22C55E",
+                }}
+              >
                 <Check size={13} />
-                Pushed to {platformLabel(product.source_platform)}
+                Confirmed in {platformLabel(product.source_platform)}
                 {lastPrice !== null && ` · ${formatPrice(lastPrice, product.currency)}`}
               </div>
               <button
                 type="button"
-                onClick={() => { setPushStatus("idle"); setLastPrice(null); }}
+                onClick={() => {
+                  setPushStatus("idle");
+                  setLastPrice(null);
+                }}
                 title="Change price again"
                 style={{
                   display: "inline-flex",
@@ -326,7 +415,7 @@ export function ProductRepricingCard({
                 }}
               >
                 <RotateCcw size={11} />
-                Reprice again
+                Change price again
               </button>
             </>
           )}
@@ -359,7 +448,7 @@ export function ProductRepricingCard({
               <button
                 type="button"
                 onClick={() => {
-                  setShowOverride(v => !v);
+                  setShowOverride((v) => !v);
                   if (showOverride) setOverrideRaw("");
                 }}
                 title={showOverride ? "Use recommended price" : "Enter a custom price"}
@@ -378,7 +467,7 @@ export function ProductRepricingCard({
                 }}
               >
                 <Edit3 size={11} />
-                {showOverride ? "Use recommended" : "Override"}
+                {showOverride ? "Use recommended" : "Choose my own price"}
               </button>
 
               {/* Apply button */}

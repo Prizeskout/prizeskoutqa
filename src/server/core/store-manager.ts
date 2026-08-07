@@ -56,14 +56,14 @@ export async function saveStoreManagerPolicy(accountId:string,input:{key:string;
   const {data,error}=await supabaseAdmin.from("ps_store_manager_policies" as never).upsert({account_id:accountId,policy_key:input.key,enabled:input.enabled,behavior:input.behavior,description:input.description.slice(0,500),config:config as Json} as never,{onConflict:"account_id,policy_key"}).select("*").single();if(error)throw error;return data;
 }
 
-export async function createStoreManagerTask(accountId:string,input:{title:string;detail?:string;taskType?:string;priority?:string;dueAt?:string;approvalRequired?:boolean;riskLevel?:string}){
+export async function createStoreManagerTask(accountId:string,input:{title:string;detail?:string;taskType?:string;priority?:string;dueAt?:string;approvalRequired?:boolean;riskLevel?:string;workflow?:Record<string,unknown>}){
   const title=input.title.trim();if(title.length<3)throw new Error("Describe the work the Store Manager should handle.");
   const priority=["critical","high","medium","low"].includes(input.priority??"")?input.priority!:"medium";
   const dueAt=input.dueAt?new Date(input.dueAt):null;if(dueAt&&!Number.isFinite(dueAt.getTime()))throw new Error("Use a valid due date.");
   const idempotencyKey=`merchant:${Date.now().toString(36)}:${title.toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,50)}`;
   const approvalRequired=input.approvalRequired!==false;
-  const riskLevel=["read_only","reversible","financial","external_commitment"].includes(input.riskLevel??"")?input.riskLevel!:"read_only";
-  const row={account_id:accountId,idempotency_key:idempotencyKey,source:"merchant",task_type:(input.taskType??"store_admin").slice(0,60),title:title.slice(0,180),detail:(input.detail??"").slice(0,2000),status:approvalRequired?"waiting_approval":"detected",risk_level:riskLevel,priority,due_at:dueAt?.toISOString()??null,approval_required:approvalRequired,input:{} as Json};
+  const requestedRisk=input.riskLevel??"read_only",riskLevel=["read_only","reversible","financial","permanent"].includes(requestedRisk)?requestedRisk:requestedRisk==="external_commitment"?"permanent":"read_only";
+  const row={account_id:accountId,idempotency_key:idempotencyKey,source:input.workflow?"assistant":"merchant",task_type:(input.taskType??"store_admin").slice(0,60),title:title.slice(0,180),detail:(input.detail??"").slice(0,2000),status:approvalRequired?"waiting_approval":"detected",risk_level:riskLevel,priority,due_at:dueAt?.toISOString()??null,approval_required:approvalRequired,input:(input.workflow??{}) as Json};
   const {data,error}=await supabaseAdmin.from("ps_store_manager_tasks" as never).insert(row as never).select("*").single();if(error)throw error;
   await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:(data as any).id,from_status:null,to_status:(data as any).status,actor:"merchant",note:"Task created from the management dashboard."} as never);
   return data;
