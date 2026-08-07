@@ -12,6 +12,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runScrape } from "@/server/scrape-runner";
+import { backgroundTask } from "@/server/cf-ctx";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
 
 function ok(body: unknown, status = 200, headers?: Record<string, string>): V1Result {
@@ -238,9 +239,9 @@ export async function handleTriggerScrape(request: Request, ctx: V1Context): Pro
     }
 
     // Fire the scrape in the background. Don't await — return job id immediately.
-    runScrape(supabaseAdmin as any, { userId: ctx.userId, url }).catch((e) => {
+    backgroundTask(runScrape(supabaseAdmin as any, { userId: ctx.userId, url }, { maxAttempts: 1, timeoutMs: 60_000 }).catch((e) => {
       console.error("scrape (single url) failed in background", e);
-    });
+    }));
 
     return ok(
       {
@@ -268,7 +269,7 @@ export async function handleTriggerScrape(request: Request, ctx: V1Context): Pro
 
   const tracked = (urls ?? []) as Array<{ url: string; product: string | null; competitor: string | null }>;
   // Concurrency cap of 3 (per spec note).
-  (async () => {
+  backgroundTask((async () => {
     const queue = [...tracked];
     const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
       while (queue.length > 0) {
@@ -287,7 +288,7 @@ export async function handleTriggerScrape(request: Request, ctx: V1Context): Pro
       }
     });
     await Promise.all(workers);
-  })().catch((e) => console.error("scrape (all) supervisor failed", e));
+  })().catch((e) => console.error("scrape (all) supervisor failed", e)));
 
   return ok(
     {

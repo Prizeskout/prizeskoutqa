@@ -104,7 +104,7 @@ export type AttemptFailure = {
   };
 };
 
-async function attemptScrape(apiKey: string, url: string): Promise<AttemptSuccess | AttemptFailure> {
+async function attemptScrape(apiKey: string, url: string, timeoutMs = 25_000): Promise<AttemptSuccess | AttemptFailure> {
   let fcRes: Response;
   try {
     fcRes = await fetch("https://api.firecrawl.dev/v2/scrape", {
@@ -125,7 +125,7 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
         ],
         onlyMainContent: true,
       }),
-      signal: AbortSignal.timeout(25_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown network error";
@@ -203,15 +203,15 @@ async function attemptScrape(apiKey: string, url: string): Promise<AttemptSucces
 
 export class FirecrawlCollector implements CompetitorCollector {
   readonly name = "firecrawl";
-  constructor(private readonly apiKey: string) {}
+  constructor(private readonly apiKey: string, private readonly timeoutMs = 25_000) {}
   collect(url: string): Promise<CollectionResult> {
-    return attemptScrape(this.apiKey, url);
+    return attemptScrape(this.apiKey, url, this.timeoutMs);
   }
 }
 
-function configuredCollector(): CompetitorCollector | null {
+function configuredCollector(timeoutMs?: number): CompetitorCollector | null {
   const apiKey = process.env.FIRECRAWL_API_KEY_1;
-  return apiKey ? new FirecrawlCollector(apiKey) : null;
+  return apiKey ? new FirecrawlCollector(apiKey, timeoutMs) : null;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -239,9 +239,9 @@ export async function fetchCompetitorPrice(url: string): Promise<AttemptSuccess 
 export async function runScrape(
   supabase: SupabaseClient,
   job: ScrapeJob,
-  options: { maxAttempts?: number } = {},
+  options: { maxAttempts?: number; timeoutMs?: number } = {},
 ): Promise<ScrapeOutcome> {
-  const collector = configuredCollector();
+  const collector = configuredCollector(options.timeoutMs);
   if (!collector) {
     return { ok: false, url: job.url, error: "FIRECRAWL_API_KEY_1 is not configured", status: "failed" };
   }
