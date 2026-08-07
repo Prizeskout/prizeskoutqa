@@ -4713,7 +4713,7 @@ export function PrizeSkoutDashboard() {
       }}
     >
       <span style={{ fontSize: 13.5, color: "var(--muted)" }}>
-        {assistantContext[targetTab].nudge} <strong style={{ color: "var(--text)" }}>Use Store Manager.</strong>
+        {assistantContext[targetTab].nudge} <strong style={{ color: "var(--text)" }}>Use CFO Copilot or Store Manager.</strong>
       </span>
       <button
         type="button"
@@ -5463,6 +5463,10 @@ export function PrizeSkoutDashboard() {
           busy={cpPhase === "loading"}
           onSubmit={submitManagerCommand}
           onOpenManager={() => setTab("manager")}
+          onOpenCfo={() => {
+            setTab("rules");
+            window.setTimeout(() => document.querySelector('[data-tour="copilot"]')?.scrollIntoView({behavior:"smooth",block:"center"}),50);
+          }}
         />
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
         {selectedProduct && (
@@ -13365,11 +13369,11 @@ export function PrizeSkoutDashboard() {
           );
         })()}
 
-      {/* GLOBAL STORE MANAGER */}
+      {/* GLOBAL CFO COPILOT + STORE MANAGER */}
       {!assistantDrawerOpen && (
         <button
           type="button"
-          aria-label="Open Store Manager"
+          aria-label="Open CFO Copilot and Store Manager"
           onClick={() => openAssistantDrawer()}
           style={{
             position: "fixed",
@@ -13391,7 +13395,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">✦</span> Store Manager
+          <span aria-hidden="true">✦</span> CFO + Store Manager
         </button>
       )}
       {assistantDrawerOpen && (
@@ -13403,7 +13407,7 @@ export function PrizeSkoutDashboard() {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label="Store Manager"
+            aria-label="CFO Copilot and Store Manager"
             onClick={(event) => event.stopPropagation()}
             style={{
               position: "absolute",
@@ -13423,7 +13427,7 @@ export function PrizeSkoutDashboard() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "start" }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>PrizeSkout Store Manager</h2>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>CFO Copilot &amp; Store Manager</h2>
                 <p style={{ margin: "6px 0 0", color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
                   Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps your current page open and asks before protected changes.
                 </p>
@@ -13453,7 +13457,7 @@ export function PrizeSkoutDashboard() {
               style={{ width: "100%", boxSizing: "border-box", resize: "vertical", border: "1.5px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 14.5, lineHeight: 1.5, outline: "none" }}
             />
             <button type="button" disabled={!assistantDrawerInput.trim() || cpPhase === "loading"} onClick={submitAssistantDrawer} style={{ border: 0, borderRadius: 11, padding: "12px 16px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: !assistantDrawerInput.trim() || cpPhase === "loading" ? "not-allowed" : "pointer", opacity: !assistantDrawerInput.trim() ? .55 : 1 }}>
-              {cpPhase === "loading" ? "Working…" : "Delegate to Store Manager"}
+              {cpPhase === "loading" ? "Working…" : "Ask or delegate"}
             </button>
             {(cpChatMessage || cpOperationMessage || cpPhase === "loading") && (
               <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "13px 14px", background: "var(--surface2)", fontSize: 13.5, lineHeight: 1.55 }}>

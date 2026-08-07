@@ -197,14 +197,36 @@ export async function handleSimulatePromotion(request: Request, ctx: V1Context):
     return err("validation_failed", "Invalid simulation inputs.", 422, { fields });
   }
 
-  // Algorithm: GMV uplift ≈ baseline_per_day * duration * (1 + depth_elasticity).
-  // We don't have per-account baselines exposed yet, so use a fixed reference
-  // baseline and surface the assumption in the response.
-  const baselinePerDay = 12000; // QAR — placeholder until per-account baselines wire in
+  // Algorithm: GMV uplift ≈ the merchant's daily baseline * duration *
+  // discount depth * the disclosed demand-response assumption.
+  // Use the merchant's own latest order snapshot. Missing history blocks the
+  // projection instead of silently substituting another merchant's economics.
+  const { data: snapshot, error: snapshotError } = await supabaseAdmin
+    .from("ps_zid_profit_snapshots")
+    .select("summary, currency, revenue, order_count, period_start, period_end, created_at")
+    .eq("account_id", ctx.accountId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (snapshotError) return err("internal_error", "Could not load the merchant revenue baseline.", 500);
+  const summary = (snapshot?.summary ?? {}) as Record<string, unknown>;
+  const period = (summary.period ?? {}) as Record<string, unknown>;
+  const periodDays = Number(period.days ?? 0);
+  const baselineRevenue = Number(snapshot?.revenue ?? summary.revenue ?? 0);
+  const baselineOrderCount = Number(snapshot?.order_count ?? summary.order_count ?? 0);
+  if (!snapshot || !(periodDays > 0) || !(baselineRevenue > 0) || !(baselineOrderCount > 0)) {
+    return err(
+      "baseline_unavailable",
+      "A recent store order snapshot with revenue and orders is required before an absolute promotion projection can be calculated. Refresh the store profit brief, then try again.",
+      409,
+    );
+  }
+  const baselinePerDay = baselineRevenue / periodDays;
+  const averageOrderValue = baselineRevenue / baselineOrderCount;
   const elasticity = 1.4; // demand response per percent off
   const grossUplift = baselinePerDay * durationDays * (depthPct / 100) * elasticity;
   const cannibalizationPct = Math.min(60, Math.round(depthPct * 1.8 + durationDays * 0.6));
-  const incrementalOrders = Math.round((grossUplift / 450) * (1 - cannibalizationPct / 100));
+  const incrementalOrders = Math.round((grossUplift / averageOrderValue) * (1 - cannibalizationPct / 100));
   const channelMultiplier = channel === "both" ? 1.4 : channel === "in-store" ? 0.85 : 1.0;
   const gmvUplift = Math.round(grossUplift * channelMultiplier);
   const netRoi = Math.round(((1 - cannibalizationPct / 100) * (depthPct / 100) * elasticity * 10) * 10) / 10;
@@ -261,12 +283,20 @@ export async function handleSimulatePromotion(request: Request, ctx: V1Context):
       cannibalization_pct: cannibalizationPct,
       net_roi: netRoi,
       healthy,
-      currency: "QAR",
+      currency: snapshot.currency || "SAR",
     },
     assumptions: {
-      baseline_per_day: baselinePerDay,
+      baseline_per_day: Math.round(baselinePerDay * 100) / 100,
+      average_order_value: Math.round(averageOrderValue * 100) / 100,
+      baseline_period: {
+        start: snapshot.period_start,
+        end: snapshot.period_end,
+        days: periodDays,
+        orders: baselineOrderCount,
+      },
+      source_snapshot_at: snapshot.created_at,
       elasticity,
-      note: "v1 simulator uses a reference baseline. Per-account baselines wire in next.",
+      note: "Revenue and average order value come from the merchant's latest connected-store order snapshot. Elasticity remains a disclosed model assumption.",
     },
     simulated_at: scenario.simulated_at,
     verdict,

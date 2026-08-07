@@ -148,12 +148,14 @@ try {
   }, { merchantId: access.merchant_id, code: access.code });
   await page.reload({ waitUntil: "networkidle" });
   await page.getByText("Revenue Protection Hub", { exact: false }).first().waitFor({ timeout: 15_000 });
-  await page.getByLabel("Ask or delegate to Store Manager").waitFor({timeout:15_000});
+  await page.getByLabel("Ask CFO Copilot").waitFor({timeout:15_000});
+  await page.getByRole("tab",{name:"CFO Copilot",exact:true}).waitFor();
+  await page.getByRole("tab",{name:"Store Manager",exact:true}).waitFor();
   await page.getByRole("button",{name:/Store Manager/}).first().waitFor();
   await page.getByText("Store Manager",{exact:true}).first().click();
   await page.getByText("Your daily store brief",{exact:true}).waitFor({timeout:15_000});
   await page.getByText("Revenue Protection Hub",{exact:true}).first().click();
-  console.log("PASS persistent Store Manager command bar, primary navigation, and daily brief entry");
+  console.log("PASS CFO Copilot and Store Manager have equal persistent entry, with primary management navigation and daily brief");
   await page.getByText("Imported Products", { exact: true }).waitFor({ timeout: 15_000 });
   await page.getByText(/protection queue|need.*attention|being watched/i).first().waitFor({timeout:15_000});
   await page.getByText("Attention Inbox",{exact:true}).waitFor();

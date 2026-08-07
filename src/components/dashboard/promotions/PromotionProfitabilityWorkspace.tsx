@@ -12,6 +12,11 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
   const [name,setName]=useState("Proposed marketplace campaign");
   const [discount,setDiscount]=useState("20");
   const [platformFunding,setPlatformFunding]=useState("");
+  const [commission,setCommission]=useState("");
+  const [vatOnFees,setVatOnFees]=useState("");
+  const [paymentFee,setPaymentFee]=useState("");
+  const [fixedOrderFee,setFixedOrderFee]=useState("");
+  const [commissionBase,setCommissionBase]=useState<"gross_before_discount"|"net_after_discount"|"eligible_sales"|"unknown">("unknown");
   const [lift,setLift]=useState("25");
   const [orders,setOrders]=useState("100");
   const [days,setDays]=useState("7");
@@ -27,7 +32,15 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
   const [launchReferences,setLaunchReferences]=useState<Record<string,string>>({});
 
   useEffect(()=>setSelected(products.map(p=>p.sku)),[products]);
-  useEffect(()=>{if(contract?.promotion_funding_platform_pct!=null)setPlatformFunding(String(contract.promotion_funding_platform_pct));},[contract]);
+  useEffect(()=>{
+    if(!contract)return;
+    if(contract.promotion_funding_platform_pct!=null)setPlatformFunding(String(contract.promotion_funding_platform_pct));
+    if(contract.commission_rate_pct!=null)setCommission(String(contract.commission_rate_pct));
+    if(contract.vat_on_fees_pct!=null)setVatOnFees(String(contract.vat_on_fees_pct));
+    if(contract.payment_fee_pct!=null)setPaymentFee(String(contract.payment_fee_pct));
+    if(contract.fixed_order_fee!=null)setFixedOrderFee(String(contract.fixed_order_fee));
+    setCommissionBase(contract.commission_base??"unknown");
+  },[contract]);
 
   const call=async(payload:Record<string,unknown>)=>{
     const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
@@ -44,11 +57,11 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
   const scoped=useMemo(()=>products.filter(p=>selected.includes(p.sku)),[products,selected]);
   const inputs=useMemo(()=>({
     discount_pct:n(discount),platform_funding_pct:n(platformFunding),
-    commission_pct:contract?.commission_rate_pct??19,vat_on_fees_pct:contract?.vat_on_fees_pct??0,
-    payment_fee_pct:contract?.payment_fee_pct??0,fixed_order_fee:contract?.fixed_order_fee??0,
-    commission_base:contract?.commission_base??"unknown",expected_conversion_lift_pct:n(lift),
+    commission_pct:n(commission),vat_on_fees_pct:n(vatOnFees),
+    payment_fee_pct:n(paymentFee),fixed_order_fee:n(fixedOrderFee),
+    commission_base:commissionBase,expected_conversion_lift_pct:n(lift),
     baseline_orders:n(orders),duration_days:n(days),minimum_margin_pct:n(floor),
-  }),[discount,platformFunding,contract,lift,orders,days,floor]);
+  }),[discount,platformFunding,commission,vatOnFees,paymentFee,fixedOrderFee,commissionBase,lift,orders,days,floor]);
   const result=useMemo(()=>simulatePromotion(scoped,inputs),[scoped,inputs]);
   const sensitivity=useMemo(()=>[
     {label:"Downside",lift:Math.min(0,inputs.expected_conversion_lift_pct-15)},
@@ -71,7 +84,8 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
     ];
   },[result.products]);
   const waterfallScale=Math.max(1,...waterfall.map(item=>Math.abs(item.value)));
-  const contractReady=Boolean(contract&&contract.status==="approved"&&contract.commission_base!=="unknown"&&contract.promotion_funding_platform_pct!=null);
+  const commercialInputsReady=commission!==""&&platformFunding!==""&&commissionBase!=="unknown";
+  const contractReady=Boolean(contract&&contract.status==="approved"&&commercialInputsReady);
 
   const saveDraft=async()=>{
     setBusy(true);setError(null);
@@ -120,6 +134,11 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
         <label style={{fontSize:11,fontWeight:800}}>Campaign name<input style={input} value={name} onChange={e=>setName(e.target.value)}/></label>
         <label style={{fontSize:11,fontWeight:800}}>Discount %<input type="number" style={input} value={discount} onChange={e=>setDiscount(e.target.value)}/></label>
         <label style={{fontSize:11,fontWeight:800}}>Platform funding %<input type="number" style={input} value={platformFunding} onChange={e=>setPlatformFunding(e.target.value)} placeholder="From contract"/></label>
+        <label style={{fontSize:11,fontWeight:800}}>Commission %<input type="number" style={input} value={commission} onChange={e=>setCommission(e.target.value)} placeholder="From contract"/></label>
+        <label style={{fontSize:11,fontWeight:800}}>VAT on fees %<input type="number" style={input} value={vatOnFees} onChange={e=>setVatOnFees(e.target.value)} placeholder="From contract"/></label>
+        <label style={{fontSize:11,fontWeight:800}}>Payment fee %<input type="number" style={input} value={paymentFee} onChange={e=>setPaymentFee(e.target.value)} placeholder="From contract"/></label>
+        <label style={{fontSize:11,fontWeight:800}}>Fixed order fee<input type="number" style={input} value={fixedOrderFee} onChange={e=>setFixedOrderFee(e.target.value)} placeholder="From contract"/></label>
+        <label style={{fontSize:11,fontWeight:800}}>Commission base<select style={input} value={commissionBase} onChange={e=>setCommissionBase(e.target.value as typeof commissionBase)}><option value="unknown">Select basis</option><option value="gross_before_discount">Gross before discount</option><option value="net_after_discount">Net after discount</option><option value="eligible_sales">Eligible sales</option></select></label>
         <label style={{fontSize:11,fontWeight:800}}>Expected order lift %<input type="number" style={input} value={lift} onChange={e=>setLift(e.target.value)}/></label>
         <label style={{fontSize:11,fontWeight:800}}>Baseline orders<input type="number" style={input} value={orders} onChange={e=>setOrders(e.target.value)}/></label>
         <label style={{fontSize:11,fontWeight:800}}>Duration (days)<input type="number" style={input} value={days} onChange={e=>setDays(e.target.value)}/></label>
@@ -181,7 +200,8 @@ export function PromotionProfitabilityWorkspace({products,contract,currency}:{pr
       </table></div>
       <div style={{fontSize:10.5,color:"var(--muted)"}}>* Product cost shows its evidence basis. Verified values come from the connected catalogue economics snapshot; inferred values remain clearly labelled. No campaign is launched from this workspace.</div>
       <div style={{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}}>
-        <button disabled={busy||!name.trim()||!selected.length} onClick={saveDraft} style={{border:0,borderRadius:8,padding:"9px 13px",background:"#14213D",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",display:"flex",gap:6}}><Save size={14}/>Save simulation as draft</button>
+        {!commercialInputsReady&&<div style={{fontSize:11.5,color:"#A16207",alignSelf:"center"}}>Enter the commission, commission basis and funding split before saving. PrizeSkout will not invent missing contract terms.</div>}
+        <button disabled={busy||!name.trim()||!selected.length||!commercialInputsReady} onClick={saveDraft} style={{border:0,borderRadius:8,padding:"9px 13px",background:"#14213D",color:"#fff",fontFamily:"inherit",fontWeight:800,cursor:"pointer",display:"flex",gap:6,opacity:commercialInputsReady?1:.5}}><Save size={14}/>Save simulation as draft</button>
         <span style={{fontSize:11.5,color:"var(--muted)"}}>Approval records the decision only. It does not enroll the merchant in a platform campaign.</span>
       </div>
       {!!saved.length&&<div style={{borderTop:"1px solid var(--border)",paddingTop:15}}>
