@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { applyLocale, getStoredLocale, type Locale } from "@/lib/i18n";
 import logo from "@/assets/logo-light.svg";
+import { ProductHeroDemo } from "./ProductHeroDemo";
 
 const ORANGE="#F36A21", NAVY="#10182D", MUTED="#657086", GREEN="#18A66A";
 const channels=["Zid","Salla","Foodics","Talabat","Jahez","Careem","noon food"];
@@ -45,11 +46,7 @@ export function RevenueProtectionLanding(){
       <h1>{tr("Every order.","كل طلب.")}<br/><span>{tr("Your margin, defended.","هامشك محمي.")}</span></h1>
       <p>{tr("PrizeSkout watches every price, promotion, commission and payout across your sales channels — protecting profit automatically and recovering revenue that should never have been lost.","يراقب PrizeSkout كل سعر وعرض وعمولة ودفعة عبر قنوات مبيعاتك، ليحمي أرباحك تلقائياً ويسترد الإيرادات التي كان يجب ألا تضيع.")}</p>
       <div className="rpl-ctas"><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a><a href="#platform">{tr("See how it works","شاهد كيف يعمل")}</a></div>
-      <div className="rpl-hero-card ps-white-card">
-        <div className="rpl-protected"><small>{tr("REVENUE PROTECTED THIS MONTH","الإيرادات المحمية هذا الشهر")}</small><strong>QAR 18,420</strong><span>↑ 14.8%</span></div>
-        <div className="rpl-metrics"><Metric label={tr("Net margin","صافي الهامش")} value="22.4%"/><Metric label={tr("Recovered","تم استرداده")} value="QAR 3,840"/><Metric label={tr("At risk","معرض للخطر")} value="QAR 1,260"/></div>
-        <div className="rpl-live"><small>{tr("LIVE PROTECTION","حماية مباشرة")}</small>{[["Talabat","24.1%",tr("Protected","محمي")],["Jahez","21.8%",tr("Protected","محمي")],["Careem","17.2%",tr("Adjust","يحتاج تعديلاً")]].map(x=><div key={x[0]}><b>{x[0]}</b><span>{x[1]}</span><em className={x[2]===tr("Adjust","يحتاج تعديلاً")?"warn":""}>{x[2]}</em></div>)}</div>
-      </div>
+      <ProductHeroDemo lang={lang}/>
     </section>
 
     <section className="rpl-integrations" id="integrations"><p>{tr("Built for the commerce stack you already run.","مصمم للعمل مع منظومة التجارة التي تستخدمها بالفعل.")}</p><div>{channels.map(x=><span key={x}>{x}</span>)}</div></section>
