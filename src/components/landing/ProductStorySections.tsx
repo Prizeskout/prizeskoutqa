@@ -350,20 +350,37 @@ function RecoveryStory({ lang }: { lang: Lang }) {
         ]}
       />
       <Reveal className="recovery-frame">
+        <header className="recovery-toolbar">
+          <div><i /><b>{tx(lang, ["Payout investigation", "فحص الدفعة"])}</b></div>
+          <span>{tx(lang, ["EXAMPLE DATA", "بيانات توضيحية"])}</span>
+        </header>
         <div className="payout-sheet">
-          <span>{tx(lang, ["PAYOUT RECEIVED", "تم استلام الدفعة"])}</span>
-          <strong>QAR 39,625</strong>
-          <div>
+          <div className="payout-heading">
+            <span>{tx(lang, ["PAYOUT RECEIVED", "تم استلام الدفعة"])}</span>
+            <em>{tx(lang, ["RECONCILING", "جارٍ التدقيق"])}</em>
+            <strong>QAR 39,625</strong>
+            <small>{tx(lang, ["Settlement #ST-2048 · 184 orders", "التسوية #ST-2048 · 184 طلباً"])}</small>
+          </div>
+          <div className="commission-row contract-row">
             <small>{tx(lang, ["Contract commission", "عمولة العقد"])}</small>
             <b>19.0%</b>
           </div>
-          <div className="flag">
+          <div className="commission-row flag">
             <small>{tx(lang, ["Commission charged", "العمولة المحتسبة"])}</small>
             <b>21.4%</b>
           </div>
+          <div className="order-scan">
+            {[
+              ["#10482", "QAR 11.02", "QAR 12.41"],
+              ["#10491", "QAR 8.74", "QAR 9.86"],
+              ["+182", "", ""],
+            ].map((order, i) => <span key={order[0]} style={{ "--scan-row": i } as React.CSSProperties}><b>{order[0]}</b>{order[1] && <><small>{tx(lang,["Expected","المتوقع"])} {order[1]}</small><em>{tx(lang,["Charged","المحتسب"])} {order[2]}</em></>}</span>)}
+          </div>
+          <div className="scan-line" aria-hidden="true" />
         </div>
+        <div className="recovery-transfer" aria-hidden="true"><i>→</i><span /></div>
         <div className="evidence-flow">
-          <h3>{tx(lang, ["Building the evidence", "جارٍ تجهيز الأدلة"])}</h3>
+          <div className="evidence-heading"><h3>{tx(lang, ["Building the evidence", "جارٍ تجهيز الأدلة"])}</h3><span>{tx(lang,["MATCHING RECORDS","مطابقة السجلات"])}</span></div>
           {[
             ["Agreement rate", "نسبة الاتفاقية"],
             ["184 affected orders", "184 طلباً متأثراً"],
@@ -376,10 +393,12 @@ function RecoveryStory({ lang }: { lang: Lang }) {
           ))}
           <footer>
             <small>{tx(lang, ["POTENTIAL OVERCHARGE", "رسوم زائدة محتملة"])}</small>
-            <b>QAR 486</b>
-            <button>{tx(lang, ["Review recovery case", "راجع حالة الاسترداد"])}</button>
+            <b><span>QAR</span> 486</b>
+            <em>✓ {tx(lang,["EVIDENCE READY FOR REVIEW","الأدلة جاهزة للمراجعة"])}</em>
+            <button>{tx(lang, ["Review case", "راجع الحالة"])}</button>
           </footer>
         </div>
+        <DemoCursor label={tx(lang, ["Review case", "راجع الحالة"])} />
       </Reveal>
     </section>
   );
