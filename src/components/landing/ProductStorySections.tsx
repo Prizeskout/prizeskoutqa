@@ -398,7 +398,7 @@ const caps: Array<[Pair, Pair, string]> = [
   ],
   [
     ["CFO Copilot", "المساعد المالي"],
-    ["Ask your restaurant’s numbers anything.", "اسأل عن أرقام مطعمك بأي صيغة."],
+    ["Ask your business numbers anything.", "اسأل عن أرقام تجارتك بأي صيغة."],
     "cfo",
   ],
   [
@@ -431,8 +431,23 @@ const caps: Array<[Pair, Pair, string]> = [
   ],
 ];
 function PlatformMatrix({ lang }: { lang: Lang }) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [active, setActive] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const observer = new IntersectionObserver(([entry]) => setPlaying(entry.isIntersecting), { threshold: 0.25 });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!playing || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => setActive((current) => (current + 1) % caps.length), 6200);
+    return () => window.clearInterval(timer);
+  }, [playing]);
   return (
-    <section className="pss-section">
+    <section className="pss-section capability-showroom" ref={sectionRef}>
       <Intro
         lang={lang}
         center
@@ -446,22 +461,38 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
           "كل قدرة تعزز النتيجة نفسها: هوامش أقوى، ودفعات أوضح، وعبء تشغيلي أقل.",
         ]}
       />
-      <Reveal className="platform-matrix">
+      <Reveal className="platform-matrix" >
         {caps.map(([title, body, cls], i) => (
-          <article className={cls} key={title[0]}>
-            <small>0{i + 1}</small>
+          <button
+            type="button"
+            className={`capability-card ${cls} ${active === i ? "is-active" : ""}`}
+            key={title[0]}
+            onMouseEnter={() => setActive(i)}
+            onFocus={() => setActive(i)}
+            onClick={() => setActive(i)}
+            aria-pressed={active === i}
+          >
+            <span className="capability-copy"><small>0{i + 1}</small><span>{tx(lang, ["LIVE WORKFLOW", "سير عمل مباشر"])}</span></span>
             <h3>{tx(lang, title)}</h3>
             <p>{tx(lang, body)}</p>
-            <div className="matrix-visual">
-              <i />
-              <i />
-              <i />
-            </div>
-          </article>
+            <CapabilityDemo kind={cls} lang={lang} />
+            <i className="capability-progress" aria-hidden="true" />
+          </button>
         ))}
       </Reveal>
     </section>
   );
+}
+
+function CapabilityDemo({ kind, lang }: { kind: string; lang: Lang }) {
+  if (kind === "policy") return <div className="cap-demo cap-policy"><span><small>{tx(lang,["Commission changed","تغيرت العمولة"])}</small><b>18% → 21%</b></span><i>→</i><span><small>{tx(lang,["Safe price","السعر الآمن"])}</small><b>QAR 46.20</b></span><em>✓ {tx(lang,["18% floor protected","تمت حماية حد 18%"])}</em></div>;
+  if (kind === "profit") return <div className="cap-demo cap-profit"><span><small>{tx(lang,["Order","الطلب"])}</small><b>QAR 58</b></span><i>−12.36</i><i>−21.00</i><strong><small>{tx(lang,["True profit","الربح الحقيقي"])}</small>QAR 24.64</strong></div>;
+  if (kind === "cfo") return <div className="cap-demo cap-cfo"><span>{tx(lang,["Why did margin fall?","لماذا انخفض الهامش؟"])}</span><p><i>✦</i>{tx(lang,["Fees rose on 11 products.","ارتفعت الرسوم على 11 منتجاً."])}<b>{tx(lang,["View drivers →","عرض الأسباب ←"])}</b></p></div>;
+  if (kind === "radar") return <div className="cap-demo cap-radar"><span><small>{tx(lang,["Market","السوق"])}</small><b>QAR 31</b></span><i>≠</i><span><small>{tx(lang,["Safe match","مطابقة آمنة"])}</small><b>QAR 32.50</b></span><em>{tx(lang,["19.4% margin","هامش 19.4%"])}</em></div>;
+  if (kind === "promo") return <div className="cap-demo cap-promo"><div><span>20%</span><i><em /></i></div><p><span>{tx(lang,["Orders","الطلبات"])} <b>+31%</b></span><span>{tx(lang,["Profit","الربح"])} <b>−7.4%</b></span></p><strong>{tx(lang,["Try 12% · profit +9.2%","جرّب 12% · الربح +9.2%"])}</strong></div>;
+  if (kind === "audit") return <div className="cap-demo cap-audit">{[["184", "Orders","طلبات"],["21.4%", "Charged","محتسب"],["19%", "Agreed","متفق عليه"]].map(x=><span key={x[1]}><b>{x[0]}</b><small>{tx(lang,[x[1],x[2]] as Pair)}</small></span>)}<strong>✓ {tx(lang,["Evidence ready for review","الأدلة جاهزة للمراجعة"])}</strong></div>;
+  if (kind === "manager") return <div className="cap-demo cap-manager"><p>“{tx(lang,["Update price to QAR 42","حدّث السعر إلى 42 ر.ق"])}”</p><span>✓ {tx(lang,["Storefront prepared","تم تجهيز واجهة المتجر"])}</span><span>✓ {tx(lang,["Channel update prepared","تم تجهيز تحديث القناة"])}</span><b>{tx(lang,["Review & approve","راجع ووافق"])}</b></div>;
+  return <div className="cap-demo cap-integrations"><span>{tx(lang,["Storefront","واجهة المتجر"])}</span><i>→</i><strong>PS</strong><i>→</i><span>{tx(lang,["Channel","القناة"])}</span><em /><small>{tx(lang,["Orders in · approved updates out","الطلبات تدخل · التحديثات المعتمدة تخرج"])}</small></div>;
 }
 
 function OperatingDay({ lang }: { lang: Lang }) {
@@ -720,7 +751,7 @@ function FinalCta({ lang }: { lang: Lang }) {
       </p>
       <div>
         <a href="/onboarding">{tx(lang, ["Connect your store", "اربط متجرك"])}</a>
-        <a href="/contact">{tx(lang, ["Book a guided demo", "احجز عرضاً توضيحياً"])}</a>
+        <a href="/contact">{tx(lang, ["Book a demo", "احجز عرضاً توضيحياً"])}</a>
       </div>
     </section>
   );
