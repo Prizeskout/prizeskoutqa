@@ -1774,49 +1774,70 @@ function PayoutResultDetail({
 // step's target exists in the DOM; ProductTour itself doesn't know tabs.
 type TourStepDef = TourStep & { tab?: Tab };
 
+const FIRST_VALUE_EN = {
+  welcomeTitle: "Reach your first useful result",
+  welcomeBody: "In about two minutes, you will confirm your live data, find the work that matters, and see where to set your first protection rule.",
+  dataTitle: "Confirm what PrizeSkout can see",
+  dataBody: "These figures come from your connected channels. Check the products, activity, and channel status before acting on any recommendation.",
+  copilotTitle: "Ask about your own numbers",
+  copilotBody: "CFO Copilot starts with your store context. Try a suggested question, then review the records behind its answer before making a decision.",
+  priorityTitle: "Work from priorities, not noise",
+  priorityBody: "Your daily brief groups money risks, missing information, and approvals into a clear queue. Start with the highest priority item.",
+  protectionTitle: "Choose your first protection rule",
+  protectionBody: "Set the minimum margin your store should protect. PrizeSkout keeps proposed actions inside your controls and asks for approval where required.",
+  sourceTitle: "Know the source of every result",
+  sourceBody: "Connected stores, platform credentials, and imported reports determine what PrizeSkout can verify. Missing data is shown instead of being guessed.",
+  completeTitle: "Your workspace is ready",
+  completeBody: "You now know where to verify data, ask questions, review priorities, and set protection. Continue with the first item that needs your attention.",
+};
+const tourAccountKey = (kind: "done" | "step") => {
+  const merchant = localStorage.getItem("ps_merchant_id") || "browser";
+  return `ps_first_value_${kind}_v1:${merchant}`;
+};
+
 function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
+  const en = t === T.en;
   return [
-    { id: "welcome", title: t.tourWelcomeTitle, body: t.tourWelcomeBody },
+    { id: "welcome", title: en ? FIRST_VALUE_EN.welcomeTitle : t.tourWelcomeTitle, body: en ? FIRST_VALUE_EN.welcomeBody : t.tourWelcomeBody },
+    {
+      id: "copilot",
+      tab: "today",
+      target: '[data-tour="copilot-command"]',
+      title: en ? FIRST_VALUE_EN.copilotTitle : t.tourCopilotTitle,
+      body: en ? FIRST_VALUE_EN.copilotBody : t.tourCopilotBody,
+    },
+    {
+      id: "priorities",
+      tab: "today",
+      target: '[data-tour="merchant-operating-loop"]',
+      title: en ? FIRST_VALUE_EN.priorityTitle : t.tourSupportTitle,
+      body: en ? FIRST_VALUE_EN.priorityBody : t.tourSupportBody,
+    },
     {
       id: "hero",
       tab: "analytics",
       target: '[data-tour="hero"]',
-      title: t.tourHeroTitle,
-      body: t.tourHeroBody,
-    },
-    {
-      id: "copilot",
-      tab: "rules",
-      target: '[data-tour="copilot"]',
-      title: t.tourCopilotTitle,
-      body: t.tourCopilotBody,
+      title: en ? FIRST_VALUE_EN.dataTitle : t.tourHeroTitle,
+      body: en ? FIRST_VALUE_EN.dataBody : t.tourHeroBody,
     },
     {
       id: "guardrails",
       tab: "rules",
       target: '[data-tour="guardrails"]',
-      title: t.tourGuardrailsTitle,
-      body: t.tourGuardrailsBody,
-    },
-    {
-      id: "support",
-      target: '[data-tour="support"]',
-      title: t.tourSupportTitle,
-      body: t.tourSupportBody,
+      title: en ? FIRST_VALUE_EN.protectionTitle : t.tourGuardrailsTitle,
+      body: en ? FIRST_VALUE_EN.protectionBody : t.tourGuardrailsBody,
     },
     {
       id: "inbound",
       tab: "vault",
       target: '[data-tour="inbound"]',
-      title: t.tourInboundTitle,
-      body: t.tourInboundBody,
+      title: en ? FIRST_VALUE_EN.sourceTitle : t.tourInboundTitle,
+      body: en ? FIRST_VALUE_EN.sourceBody : t.tourInboundBody,
     },
     {
-      id: "outbound",
-      tab: "vault",
-      target: '[data-tour="outbound"]',
-      title: t.tourOutboundTitle,
-      body: t.tourOutboundBody,
+      id: "complete",
+      title: en ? FIRST_VALUE_EN.completeTitle : t.tourOutboundTitle,
+      body: en ? FIRST_VALUE_EN.completeBody : t.tourOutboundBody,
     },
   ];
 }
@@ -2408,8 +2429,23 @@ export function PrizeSkoutDashboard() {
   // on a new device sees it once more, which is the right tradeoff for a
   // lightweight client-side check over a backend "is this account new" flag.
   useEffect(() => {
-    if (localStorage.getItem("ps_tour_v1_done")) return;
-    const timer = setTimeout(() => setTourActive(true), 800);
+    const doneKey = tourAccountKey("done");
+    if (localStorage.getItem(doneKey)) return;
+    // Migrate the original browser wide flag once for the current merchant.
+    if (localStorage.getItem("ps_tour_v1_done")) {
+      localStorage.setItem(doneKey, "1");
+      localStorage.removeItem("ps_tour_v1_done");
+      return;
+    }
+    // Mark the tour as seen when it is presented. If the user refreshes,
+    // navigates away, or logs out mid-tour, it should not auto-open again.
+    // The manual tour launcher can still open it at any time.
+    const timer = setTimeout(() => {
+      localStorage.setItem(doneKey, "1");
+      const savedStep = Number(localStorage.getItem(tourAccountKey("step")));
+      if (Number.isInteger(savedStep) && savedStep > 0) setTourStep(savedStep);
+      setTourActive(true);
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -4749,10 +4785,18 @@ export function PrizeSkoutDashboard() {
     const step = tourSteps[i];
     if (step?.tab && step.tab !== tab) setTab(step.tab);
     setTourStep(i);
+    localStorage.setItem(tourAccountKey("step"), String(i));
   };
   const closeTour = () => {
     setTourActive(false);
-    localStorage.setItem("ps_tour_v1_done", "1");
+    localStorage.setItem(tourAccountKey("done"), "1");
+    localStorage.setItem(tourAccountKey("step"), String(tourStep));
+  };
+  const finishTour = () => {
+    setTourActive(false);
+    localStorage.setItem(tourAccountKey("done"), "1");
+    localStorage.removeItem(tourAccountKey("step"));
+    setTourStep(0);
   };
 
   const historyQuery = historySearch.trim().toLowerCase();
@@ -5633,7 +5677,8 @@ export function PrizeSkoutDashboard() {
             <button
               type="button"
               onClick={() => {
-                setTourStep(0);
+                const savedStep = Number(localStorage.getItem(tourAccountKey("step")));
+                setTourStep(Number.isInteger(savedStep) && savedStep >= 0 && savedStep < tourSteps.length ? savedStep : 0);
                 setTourActive(true);
               }}
               title={t.tourReplayLabel}
@@ -14256,14 +14301,17 @@ export function PrizeSkoutDashboard() {
           stepIndex={tourStep}
           onStepChange={goToTourStep}
           onClose={closeTour}
-          onFinish={closeTour}
+          onFinish={finishTour}
           dir={dir}
           labels={{
             back: t.tourBackBtn,
-            next: t.tourNextBtn,
-            finish: t.tourFinishBtn,
-            skip: t.tourSkipLabel,
-            start: t.tourStartBtn,
+            next: lang === "en" ? "Continue" : t.tourNextBtn,
+            finish: lang === "en" ? "Finish setup" : t.tourFinishBtn,
+            skip: lang === "en" ? "Pause and exit" : lang === "ar" ? "إيقاف مؤقت وخروج" : "Pause et quitter",
+            start: lang === "en" ? "Begin setup" : t.tourStartBtn,
+            setup: lang === "en" ? "FIRST VALUE SETUP" : lang === "ar" ? "إعداد القيمة الأولى" : "PREMIÈRE VALEUR",
+            complete: lang === "en" ? "complete" : lang === "ar" ? "مكتمل" : "terminé",
+            remaining: lang === "en" ? "About {minutes} min left" : lang === "ar" ? "حوالي {minutes} دقيقة متبقية" : "Environ {minutes} min restantes",
           }}
         />
       )}

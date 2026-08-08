@@ -717,6 +717,7 @@ function OnboardingPage() {
     localStorage.removeItem("ps_access_code");
     localStorage.removeItem("ps_connected");
     localStorage.removeItem("ps_tour_v1_done"); // so the product tour runs for the new store too
+    localStorage.removeItem("ps_first_value_step_v1");
     sessionStorage.removeItem("ps_ob_storeName");
     sessionStorage.removeItem("ps_ob_email");
     sessionStorage.removeItem("ps_ob_region");

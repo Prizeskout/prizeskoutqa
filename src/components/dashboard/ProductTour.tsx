@@ -13,7 +13,10 @@ export type TourStep = {
   body: string;
 };
 
-type TourLabels = { back: string; next: string; finish: string; skip: string; start: string };
+type TourLabels = {
+  back: string; next: string; finish: string; skip: string; start: string;
+  setup: string; complete: string; remaining: string;
+};
 
 type Rect = { top: number; left: number; width: number; height: number };
 type Placement = "top" | "bottom" | "left" | "right";
@@ -28,6 +31,7 @@ const CSS = `
   @keyframes pk-tour-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   @keyframes pk-tour-ring{0%,100%{opacity:1}50%{opacity:.45}}
   @keyframes pk-tour-pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.pk-tour-motion{animation:none!important;transition:none!important}}
 `;
 
 function useTargetRect(selector: string | undefined, stepId: string): Rect | null {
@@ -48,10 +52,13 @@ function useTargetRect(selector: string | undefined, stepId: string): Rect | nul
     };
     measure();
     const frame = requestAnimationFrame(measure);
+    const observer = new MutationObserver(measure);
+    observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("scroll", measure, true);
     window.addEventListener("resize", measure);
     return () => {
       cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("resize", measure);
     };
@@ -78,6 +85,8 @@ export function ProductTour({
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === steps.length - 1;
   const centered = !rect;
+  const progress = Math.round(((stepIndex + 1) / steps.length) * 100);
+  const minutesLeft = Math.max(1, Math.ceil((steps.length - stepIndex) * 18 / 60));
 
   useLayoutEffect(() => {
     if (centered) { setPos(null); return; }
@@ -145,7 +154,7 @@ export function ProductTour({
         <>
           {/* Backdrop dimming — static. Kept separate from the ring below so
               animating the ring's opacity doesn't make the whole page flicker. */}
-          <div style={{ position: "fixed", zIndex: 301, pointerEvents: "none",
+          <div className="pk-tour-motion" style={{ position: "fixed", zIndex: 301, pointerEvents: "none",
             top: rect.top - RING_PAD, left: rect.left - RING_PAD,
             width: rect.width + RING_PAD * 2, height: rect.height + RING_PAD * 2,
             borderRadius: 14, boxShadow: "0 0 0 4000px rgba(8,10,14,.66)" }} />
@@ -159,7 +168,7 @@ export function ProductTour({
         </>
       )}
 
-      <div ref={tooltipRef} role="dialog" aria-modal="true" aria-label={step.title} dir={dir} tabIndex={-1}
+      <div ref={tooltipRef} className="pk-tour-motion" role="dialog" aria-modal="true" aria-label={step.title} dir={dir} tabIndex={-1}
         style={{ outline: "none",
           position: "fixed", zIndex: 302, width: TOOLTIP_W, maxWidth: "calc(100vw - 32px)",
           background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16,
@@ -171,19 +180,33 @@ export function ProductTour({
             : { top: pos?.top ?? -9999, left: pos?.left ?? -9999, visibility: pos ? "visible" : "hidden" }),
         }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: "1px", color: "var(--muted)" }}>
-            {String(stepIndex + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
-          </span>
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 850, letterSpacing: "1.2px", color: OG }}>{labels.setup}</div>
+            <div style={{ marginTop: 3, fontSize: 10.5, color: "var(--muted)" }}>{labels.remaining.replace("{minutes}", String(minutesLeft))}</div>
+          </div>
+          <button onClick={onClose} aria-label={labels.skip} title={labels.skip}
+            style={{ cursor: "pointer", flexShrink: 0, borderRadius: 8,
+              border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)",
+              fontSize: 11, fontWeight: 750, padding: "7px 10px", fontFamily: "inherit" }}>
+            {labels.skip}
+          </button>
           <button onClick={onClose} aria-label={labels.skip} title={labels.skip}
             style={{ cursor: "pointer", flexShrink: 0, width: 26, height: 26, borderRadius: 8,
               border: "1px solid var(--border)", background: "var(--surface)", color: "var(--muted)",
-              fontSize: 12, fontWeight: 700, display: "grid", placeItems: "center", padding: 0 }}>
+              fontSize: 12, fontWeight: 700, display: "none", placeItems: "center", padding: 0 }}>
             ✕
           </button>
         </div>
 
+        <div aria-label={`${progress}% ${labels.complete}`} style={{ height: 5, borderRadius: 99, background: "var(--surface2)", overflow: "hidden" }}>
+          <div className="pk-tour-motion" style={{ height: "100%", width: `${progress}%`, borderRadius: 99, background: `linear-gradient(90deg,${OG},#FF9B5C)`, transition: "width .35s ease" }} />
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, letterSpacing: "-0.2px" }}>{step.title}</h3>
+          <div style={{ fontFamily: MONO, fontSize: 10.5, fontWeight: 750, color: "var(--muted)" }}>
+            {String(stepIndex + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
+          </div>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 850, letterSpacing: "-0.2px" }}>{step.title}</h3>
           <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.65, color: "var(--muted)" }}>{step.body}</p>
         </div>
 
