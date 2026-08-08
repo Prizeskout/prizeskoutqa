@@ -1,6 +1,6 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import logoDark from "@/assets/logo-dark.svg";
+import logoLight from "@/assets/logo-light.svg";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -14,13 +14,15 @@ export const Route = createFileRoute("/onboarding")({
 
 const OG = "#EF681A";
 const GN = "#10B981";
-const BG = "#080809";
+const BG = "#F7F9FC";
+const NAVY = "#10182D";
+const MUTED = "#687389";
 const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 
 const STEPS = [
-  { label: "Store Config",    sub: "Identify your business" },
-  { label: "Channel Connect", sub: "Link your platforms"    },
-  { label: "Defense Floors",  sub: "Set your margin rules"  },
+  { label: "Your business",       sub: "Region and account" },
+  { label: "Connect channels",    sub: "Bring your data in" },
+  { label: "Set your protection", sub: "Choose margin controls" },
 ];
 
 const REGIONS    = ["Qatar", "Saudi Arabia", "UAE", "Kuwait", "Bahrain", "Oman"] as const;
@@ -31,6 +33,10 @@ const REGION_CODE: Record<string, string> = {
   "Qatar": "QA", "Saudi Arabia": "SA", "UAE": "AE",
   "Kuwait": "KW", "Bahrain": "BH", "Oman": "OM",
 };
+const COUNTRY_DEFAULTS: Record<string, [string,string]> = {
+  qa:["Qatar","QAR"],sa:["Saudi Arabia","SAR"],ae:["UAE","AED"],kw:["Kuwait","KWD"],bh:["Bahrain","BHD"],om:["Oman","OMR"],
+};
+const REGION_CURRENCY: Record<string,string> = {Qatar:"QAR","Saudi Arabia":"SAR",UAE:"AED",Kuwait:"KWD",Bahrain:"BHD",Oman:"OMR"};
 
 function makeAccessCode(region: string): string {
   const rc = REGION_CODE[region] ?? "QA";
@@ -41,22 +47,22 @@ function makeAccessCode(region: string): string {
 function inputStyle(focus?: boolean): React.CSSProperties {
   return {
     width: "100%",
-    background: "#0E0F12",
-    border: `1px solid ${focus ? OG : "rgba(255,255,255,0.10)"}`,
-    borderRadius: 8,
-    padding: "11px 14px",
+    background: "#fff",
+    border: `1px solid ${focus ? OG : "#DDE3EB"}`,
+    borderRadius: 10,
+    padding: "13px 14px",
     fontSize: 13,
-    color: "#E7E8EA",
+    color: NAVY,
     outline: "none",
     fontFamily: "inherit",
-    boxShadow: focus ? "0 0 0 3px rgba(239,104,26,0.12)" : "none",
+    boxShadow: focus ? "0 0 0 3px rgba(239,104,26,0.10)" : "none",
     transition: "border-color 0.15s, box-shadow 0.15s",
   };
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 12, fontWeight: 500, color: "#9CA3AF", marginBottom: 6 }}>
+    <div style={{ fontSize: 12, fontWeight: 700, color: NAVY, marginBottom: 7 }}>
       {children}
     </div>
   );
@@ -107,7 +113,7 @@ function FocusSelect({
           ...inputStyle(open),
           display: "flex", alignItems: "center", justifyContent: "space-between",
           cursor: "pointer", textAlign: "left",
-          color: value ? "#E7E8EA" : "#6B7280",
+          color: value ? NAVY : "#8A93A3",
         }}
       >
         <span>{value || placeholder}</span>
@@ -120,8 +126,8 @@ function FocusSelect({
       {open && (
         <div style={{
           position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
-          background: "#0E0F12", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-          overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+          background: "#fff", border: "1px solid #DDE3EB", borderRadius: 10,
+          overflow: "hidden", boxShadow: "0 16px 40px rgba(16,24,45,0.14)",
         }}>
           {options.map(o => (
             <button
@@ -130,12 +136,12 @@ function FocusSelect({
               onMouseDown={() => { onChange(o); setOpen(false); }}
               style={{
                 display: "block", width: "100%", textAlign: "left",
-                padding: "10px 14px", fontSize: 13, color: o === value ? OG : "#E7E8EA",
-                background: o === value ? "rgba(239,104,26,0.08)" : "transparent",
+                padding: "10px 14px", fontSize: 13, color: o === value ? OG : NAVY,
+                background: o === value ? "#FFF4EC" : "transparent",
                 border: "none", cursor: "pointer", fontFamily: "inherit",
               }}
-              onMouseEnter={e => { if (o !== value) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = o === value ? "rgba(239,104,26,0.08)" : "transparent"; }}
+              onMouseEnter={e => { if (o !== value) (e.currentTarget as HTMLButtonElement).style.background = "#F7F9FC"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = o === value ? "#FFF4EC" : "transparent"; }}
             >
               {o}
             </button>
@@ -148,17 +154,17 @@ function FocusSelect({
 
 function StepProgress({ current }: { current: number }) {
   return (
-    <div style={{ marginBottom: 40 }}>
+    <div className="ob-progress" style={{ marginBottom: 34 }}>
       <div style={{ display: "flex", alignItems: "center" }}>
         {STEPS.map((s, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", flex: i < STEPS.length - 1 ? 1 : "none" }}>
             <div style={{
               width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
-              background: i < current ? GN : i === current ? OG : "rgba(255,255,255,0.06)",
-              border: `1px solid ${i < current ? GN : i === current ? OG : "rgba(255,255,255,0.12)"}`,
+              background: i < current ? GN : i === current ? OG : "#EEF1F5",
+              border: `1px solid ${i < current ? GN : i === current ? OG : "#DDE3EB"}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 11, fontWeight: 700, fontFamily: MONO,
-              color: i <= current ? "#fff" : "#52555C",
+              color: i <= current ? "#fff" : "#8A93A3",
               transition: "all 0.2s",
             }}>
               {i < current
@@ -166,18 +172,18 @@ function StepProgress({ current }: { current: number }) {
                 : i + 1}
             </div>
             {i < STEPS.length - 1 && (
-              <div style={{ flex: 1, height: 1, background: i < current ? GN : "rgba(255,255,255,0.07)", margin: "0 10px", transition: "background 0.3s" }} />
+              <div style={{ flex: 1, height: 1, background: i < current ? GN : "#DDE3EB", margin: "0 10px", transition: "background 0.3s" }} />
             )}
           </div>
         ))}
       </div>
-      <div style={{ display: "flex", gap: 0, marginTop: 10 }}>
+      <div className="ob-progress-copy" style={{ display: "flex", gap: 0, marginTop: 10 }}>
         {STEPS.map((s, i) => (
           <div key={i} style={{ flex: i < STEPS.length - 1 ? 1 : "none", minWidth: 0 }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: "0.5px", color: i === current ? OG : i < current ? GN : "#52555C", marginBottom: 2 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", color: i === current ? OG : i < current ? GN : "#8A93A3", marginBottom: 2 }}>
               {s.label.toUpperCase()}
             </div>
-            <div style={{ fontSize: 10.5, color: "#52555C" }}>{s.sub}</div>
+            <div style={{ fontSize: 10.5, color: MUTED }}>{s.sub}</div>
           </div>
         ))}
       </div>
@@ -234,8 +240,9 @@ function Step1({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Store Configuration</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Tell us about your business so we can configure your region-specific margin rules.</p>
+        <span className="ob-kicker">YOUR BUSINESS</span>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: NAVY, margin: "7px 0 7px" }}>Tell us about your business</h2>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>We use this to prepare the right currency, channels and margin controls.</p>
       </div>
 
       <div>
@@ -253,7 +260,7 @@ function Step1({
 
       <div>
         <FieldLabel>Region</FieldLabel>
-        <FocusSelect value={region} onChange={setRegion} options={REGIONS} placeholder="Select region…" />
+        <FocusSelect value={region} onChange={value=>{setRegion(value);setCurrency(REGION_CURRENCY[value]??"")}} options={REGIONS} placeholder="Select region…" />
       </div>
 
       <div>
@@ -263,7 +270,7 @@ function Step1({
 
       <div style={{ marginTop: 8 }}>
         <PrimaryBtn onClick={onNext} disabled={!canProceed}>
-          Continue to Channel Connect →
+          Continue to connect channels →
         </PrimaryBtn>
       </div>
     </div>
@@ -271,17 +278,18 @@ function Step1({
 }
 
 function EcommCard({
-  name, glyph, glyphColor, glyphBg, connected, onConnect,
+  name, glyph, glyphColor, glyphBg, connected, onConnect, featured = false,
 }: {
   name: string; glyph: string; glyphColor: string; glyphBg: string;
-  connected: boolean; onConnect: () => void;
+  connected: boolean; onConnect: () => void; featured?: boolean;
 }) {
   return (
-    <div style={{
-      border: `1px solid ${connected ? "rgba(16,185,129,0.25)" : "rgba(255,255,255,0.08)"}`,
-      background: connected ? "rgba(16,185,129,0.06)" : "#0E0F12",
-      borderRadius: 10, padding: "14px 16px",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
+    <div className={`ob-channel ${featured ? "featured" : ""}`} style={{
+      border: `1px solid ${connected ? "#A9E5CC" : featured ? "#F36A21" : "#DDE3EB"}`,
+      background: connected ? "#F0FAF6" : featured ? "linear-gradient(135deg,#FFF7F1,#fff)" : "#fff",
+      borderRadius: featured ? 16 : 12, padding: featured ? "22px" : "15px 16px",
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
+      boxShadow: featured ? "0 18px 45px rgba(243,106,33,.10)" : "none",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{
@@ -294,9 +302,9 @@ function EcommCard({
           }
         </div>
         <div>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: "#E7E8EA" }}>{name}</div>
-          <div style={{ fontSize: 11, color: "#6B7280", fontFamily: MONO }}>
-            {connected ? "Connected · syncing catalog" : "E-commerce platform · OAuth 2.0"}
+          <div className="ob-channel-name" style={{ display:"flex",alignItems:"center",gap:8,fontSize: featured ? 17 : 13.5, fontWeight: 700, color: NAVY }}>{name}{featured&&<span style={{padding:"4px 7px",borderRadius:99,background:OG,color:"#fff",fontSize:7,fontWeight:900,letterSpacing:".08em"}}>RECOMMENDED FIRST</span>}</div>
+          <div style={{ fontSize: 11, color: MUTED, marginTop:4 }}>
+            {connected ? "Connected and syncing your catalogue" : featured ? "Official integration for products, orders and inventory" : "Supported storefront connection"}
           </div>
         </div>
       </div>
@@ -307,7 +315,7 @@ function EcommCard({
             onClick={onConnect}
             style={{
               background: OG, color: "#fff", fontSize: 12, fontWeight: 600,
-              padding: "7px 14px", border: "none", borderRadius: 7,
+              padding: featured ? "10px 16px" : "8px 14px", border: "none", borderRadius: 9,
               cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
               boxShadow: "0 4px 12px rgba(239,104,26,0.22)",
             }}
@@ -345,27 +353,28 @@ function Step2({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Connect Your Platforms</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Connect your e-commerce store and delivery aggregators to start tracking margin in real time.</p>
+        <span className="ob-kicker">BRING YOUR DATA IN</span>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: NAVY, margin: "7px 0 7px" }}>Connect your channels</h2>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Start with your storefront, then add any connected channels you use.</p>
       </div>
 
       <div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", letterSpacing: "0.6px", marginBottom: 10 }}>E-COMMERCE PLATFORMS</div>
+        <div style={{ fontSize: 10, fontWeight: 800, color: MUTED, letterSpacing: "0.12em", marginBottom: 10 }}>START HERE</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <EcommCard
-            name="Salla" glyph="S" glyphColor="#E7E8EA" glyphBg="rgba(99,102,241,0.15)"
-            connected={sallaConnected} onConnect={connectSalla}
+            featured name="Zid" glyph="Z" glyphColor={OG} glyphBg="#FFF0E6"
+            connected={zidConnected} onConnect={connectZid}
           />
           <EcommCard
-            name="Zid" glyph="Z" glyphColor="#E7E8EA" glyphBg="rgba(239,104,26,0.15)"
-            connected={zidConnected} onConnect={connectZid}
+            name="Salla" glyph="S" glyphColor={NAVY} glyphBg="#EEF1F6"
+            connected={sallaConnected} onConnect={connectSalla}
           />
         </div>
       </div>
 
       <div>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", letterSpacing: "0.6px", marginBottom: 10 }}>
-          DELIVERY AGGREGATORS <span style={{ color: "#3A3D46", fontWeight: 400 }}>(optional)</span>
+          OTHER CONNECTED CHANNELS <span style={{ color: "#9AA2B1", fontWeight: 500 }}>(optional)</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
@@ -406,14 +415,15 @@ function Step3({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Define Defense Floors</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Set your minimum net margin. PrizeSkout defends these floors automatically across every connected aggregator.</p>
+        <span className="ob-kicker">SET YOUR PROTECTION</span>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: NAVY, margin: "7px 0 7px" }}>Choose your margin floor</h2>
+        <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>Set the minimum margin PrizeSkout should protect when preparing channel actions.</p>
       </div>
 
-      <div style={{ background: "#0E0F12", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "20px 20px" }}>
+      <div style={{ background: "#F8FAFC", border: "1px solid #DDE3EB", borderRadius: 14, padding: "20px 20px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#E7E8EA" }}>Global Margin Floor</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>Global Margin Floor</div>
             <div style={{ fontSize: 11, color: "#6B7280", fontFamily: MONO, marginTop: 2 }}>applied across all categories</div>
           </div>
           <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: OG }}>{marginFloor}%</div>
@@ -432,8 +442,8 @@ function Step3({
         <div style={{ fontSize: 12, fontWeight: 600, color: "#9CA3AF", marginBottom: 12, letterSpacing: "0.3px" }}>CATEGORY OVERRIDES (optional)</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {CATEGORIES.map(cat => (
-            <div key={cat} style={{ display: "flex", alignItems: "center", gap: 16, background: "#0E0F12", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "10px 14px" }}>
-              <div style={{ fontSize: 12.5, color: "#A1A8B3", width: 110, flexShrink: 0 }}>{cat}</div>
+            <div key={cat} style={{ display: "flex", alignItems: "center", gap: 16, background: "#fff", border: "1px solid #DDE3EB", borderRadius: 10, padding: "10px 14px" }}>
+              <div style={{ fontSize: 12.5, color: NAVY, width: 110, flexShrink: 0 }}>{cat}</div>
               <input
                 type="range" min={5} max={40} step={1}
                 value={categoryFloors[cat] ?? marginFloor}
@@ -451,7 +461,7 @@ function Step3({
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
         <GhostBtn onClick={onBack}>← Back</GhostBtn>
         <div style={{ flex: 1 }}>
-          <PrimaryBtn onClick={onFinish}>Activate Defense Loops & Enter Command Room</PrimaryBtn>
+          <PrimaryBtn onClick={onFinish}>Activate protection and enter dashboard</PrimaryBtn>
         </div>
       </div>
     </div>
@@ -686,10 +696,11 @@ function OnboardingPage() {
   // "starts empty" comments on the state above for why this can't run in
   // the initializers themselves.
   useEffect(() => {
+    const landingDefault = COUNTRY_DEFAULTS[localStorage.getItem("prizeskout-country") ?? ""];
     setStoreName(sessionStorage.getItem("ps_ob_storeName") ?? "");
     setEmail(sessionStorage.getItem("ps_ob_email") ?? "");
-    setRegion(sessionStorage.getItem("ps_ob_region") ?? "");
-    setCurrency(sessionStorage.getItem("ps_ob_currency") ?? "");
+    setRegion(sessionStorage.getItem("ps_ob_region") ?? landingDefault?.[0] ?? "");
+    setCurrency(sessionStorage.getItem("ps_ob_currency") ?? landingDefault?.[1] ?? "");
     setMerchantId(localStorage.getItem("ps_merchant_id") ?? "");
     setExistingSetup(localStorage.getItem("ps_connected") === "true");
   }, []);
@@ -771,34 +782,37 @@ function OnboardingPage() {
   const showProgress = !restoreMode && step < 3;
 
   return (
-    <div style={{
+    <div className="ob-shell" style={{
       minHeight: "100vh", background: BG, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", padding: "24px 16px",
       fontFamily: "'Chillax', system-ui, -apple-system, sans-serif",
     }}>
       <style>{`
-        @media(min-width:600px){.ob-card{padding:36px 40px!important}}
+        .ob-card h2{color:${NAVY}!important}.ob-kicker{color:${OG};font-size:9px;font-weight:900;letter-spacing:.14em}.ob-shell{position:relative}.ob-shell:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 78% 8%,rgba(243,106,33,.09),transparent 28%)}
+        @media(min-width:600px){.ob-card{padding:38px 42px!important}}
+        @media(max-width:600px){.ob-progress-copy{display:none}.ob-channel{align-items:flex-start!important;flex-direction:column}.ob-channel>button{width:100%}}
       `}</style>
 
       {/* Logo + back link */}
-      <div style={{ width: "100%", maxWidth: 560, marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <img src={logoDark} alt="PrizeSkout" style={{ height: 26, width: "auto" }} />
+      <div style={{ width: "100%", maxWidth: 620, marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "space-between",position:"relative" }}>
+        <img src={logoLight} alt="PrizeSkout" style={{ height: 30, width: "auto" }} />
         {step < 3 && (
-          <a href="/" style={{ fontSize: 13, color: "#52555C", textDecoration: "none", fontFamily: MONO, padding: "8px 0" }}>← Back to home</a>
+          <a href="/" style={{ fontSize: 13, color: MUTED, textDecoration: "none", padding: "8px 0" }}>← Back to home</a>
         )}
       </div>
 
       {/* Step progress (hidden on code screen and restore mode) */}
       {showProgress && (
-        <div style={{ width: "100%", maxWidth: 560 }}>
+        <div style={{ width: "100%", maxWidth: 620,position:"relative" }}>
           <StepProgress current={step} />
         </div>
       )}
 
       {/* Card */}
       <div className="ob-card" style={{
-        width: "100%", maxWidth: 560, background: "#0B0C0F",
-        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "28px 20px",
+        width: "100%", maxWidth: 620, background: "#fff",
+        border: "1px solid #DDE3EB", borderRadius: 22, padding: "30px 22px",
+        boxShadow: "0 28px 80px rgba(16,24,45,.09)", position:"relative",
       }}>
         {restoreMode ? (
           <RestoreForm onCancel={startFreshOnboarding} />

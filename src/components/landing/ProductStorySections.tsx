@@ -1,14 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import logo from "@/assets/logo-light.svg";
 import "./ProductStorySections.css";
+import { landingMoney, localizeLandingMoney, type LandingMarket } from "./currency";
 
 type Lang = "en" | "ar";
 type Pair = [string, string];
 const tx = (lang: Lang, p: Pair) => p[lang === "ar" ? 1 : 0];
+const MarketContext = createContext<LandingMarket | null>(null);
+function useMarketMoney() {
+  const market = useContext(MarketContext);
+  if (!market) throw new Error("Landing market is unavailable");
+  return {
+    money: (value: number, digits?: number) => landingMoney(market, value, digits),
+    localized: (value: string) => localizeLandingMoney(value, market),
+  };
+}
 
-export function ProductStorySections({ lang }: { lang: Lang }) {
+export function ProductStorySections({ lang, market }: { lang: Lang; market: LandingMarket }) {
   return (
-    <div className="pss" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <MarketContext.Provider value={market}><div className="pss" dir={lang === "ar" ? "rtl" : "ltr"}>
       <CommerceNetwork lang={lang} />
       <ProfitStory lang={lang} />
       <ProtectionStory lang={lang} />
@@ -21,7 +31,7 @@ export function ProductStorySections({ lang }: { lang: Lang }) {
       <Pricing lang={lang} />
       <Faq lang={lang} />
       <FinalCta lang={lang} />
-    </div>
+    </div></MarketContext.Provider>
   );
 }
 
@@ -125,6 +135,7 @@ function Node({ cls, label, detail }: { cls: string; label: string; detail: stri
 }
 
 function ProfitStory({ lang }: { lang: Lang }) {
+  const { money, localized } = useMarketMoney();
   return (
     <section className="pss-section" id="platform">
       <Intro
@@ -144,7 +155,7 @@ function ProfitStory({ lang }: { lang: Lang }) {
         <div className="profit-stage">
           <div className="order-source">
             <span>{tx(lang, ["ORDER RECEIVED", "تم استلام الطلب"])}</span>
-            <strong>QAR 58.00</strong>
+            <strong>{money(58,2)}</strong>
             <small>{tx(lang, ["Aggregator · #10482", "منصة التجميع · #10482"])}</small>
             <div className="order-meta"><span>{tx(lang, ["Paid", "مدفوع"])}</span><span>18:42</span></div>
           </div>
@@ -152,10 +163,10 @@ function ProfitStory({ lang }: { lang: Lang }) {
           <div className="profit-ledger">
             <header><span>{tx(lang, ["COST RECONCILIATION", "مطابقة التكاليف"])}</span><small>{tx(lang, ["4 of 4 matched", "تمت مطابقة 4 من 4"])}</small></header>
           {[
-            ["Order value", "قيمة الطلب", "QAR 58.00", ""],
-            ["Commission & fees", "العمولة والرسوم", "− QAR 12.36", "minus"],
-            ["Product cost", "تكلفة المنتج", "− QAR 21.00", "minus"],
-            ["True profit", "الربح الحقيقي", "QAR 24.64", "total"],
+            ["Order value", "قيمة الطلب", money(58,2), ""],
+            ["Commission & fees", "العمولة والرسوم", `− ${money(12.36,2)}`, "minus"],
+            ["Product cost", "تكلفة المنتج", `− ${money(21,2)}`, "minus"],
+            ["True profit", "الربح الحقيقي", money(24.64,2), "total"],
           ].map((x, index) => (
             <div className={x[3]} key={x[0]} style={{ "--row": index } as React.CSSProperties}>
               <i aria-hidden="true">✓</i>
@@ -168,7 +179,7 @@ function ProfitStory({ lang }: { lang: Lang }) {
           <div className="copilot-note">
             <div className="copilot-head"><i>✦</i><small>CFO COPILOT</small></div>
             <b>{tx(lang, ["Here’s what changed", "إليك ما تغير"])}</b>
-            <p>{tx(lang, ["Fees consumed 21.3% of this order. After every known cost, QAR 24.64 remains as true profit.", "استهلكت الرسوم 21.3% من هذا الطلب. وبعد كل التكاليف المعروفة، تبقى 24.64 ر.ق كربح حقيقي."])}</p>
+            <p>{localized(tx(lang, ["Fees consumed 21.3% of this order. After every known cost, QAR 24.64 remains as true profit.", "استهلكت الرسوم 21.3% من هذا الطلب. وبعد كل التكاليف المعروفة، تبقى 24.64 ر.ق كربح حقيقي."]))}</p>
             <div className="copilot-proof"><span>{tx(lang, ["Known costs", "التكاليف المعروفة"])} <b>100%</b></span><i><em /></i></div>
           </div>
         </div>
@@ -179,6 +190,7 @@ function ProfitStory({ lang }: { lang: Lang }) {
 }
 
 function DecisionStory({ lang }: { lang: Lang }) {
+  const { money, localized } = useMarketMoney();
   return (
     <section className="pss-section tint">
       <Intro
@@ -186,7 +198,7 @@ function DecisionStory({ lang }: { lang: Lang }) {
         kicker={["COMPETITOR RADAR + PROMOTION SIMULATOR", "رادار المنافسين + محاكي العروض"]}
         title={["Competitive without becoming unprofitable.", "نافس دون أن تصبح غير مربح."]}
         body={[
-          "Competitor context and promotion economics meet in one safe recommendation—not a race to the lowest price.",
+          "Competitor context and promotion economics produce one safe recommendation without racing to the lowest price.",
           "تجتمع بيانات المنافسين واقتصاديات العرض في توصية آمنة، لا في سباق نحو السعر الأقل.",
         ]}
       />
@@ -197,16 +209,16 @@ function DecisionStory({ lang }: { lang: Lang }) {
           <div className="price-compare">
             <span>
               <small>{tx(lang, ["Your price", "سعرك"])}</small>
-              <b>QAR 34</b>
+              <b>{money(34)}</b>
             </span>
             <i>→</i>
             <span>
               <small>{tx(lang, ["Aggregator market", "سوق منصة التجميع"])}</small>
-              <b>QAR 31</b>
+              <b>{money(31)}</b>
             </span>
           </div>
           <footer>
-            ✓ {tx(lang, ["Safe range: QAR 32.50–35.20", "النطاق الآمن: 32.50–35.20 ر.ق"])}
+            ✓ {localized(tx(lang, ["Safe range: QAR 32.50 to QAR 35.20", "النطاق الآمن: من 32.50 ر.ق إلى 35.20 ر.ق"]))}
           </footer>
         </div>
         <div className="sim-card">
@@ -234,6 +246,7 @@ function DecisionStory({ lang }: { lang: Lang }) {
 }
 
 function ProtectionStory({ lang }: { lang: Lang }) {
+  const { money } = useMarketMoney();
   return (
     <section className="pss-section dark">
       <Intro
@@ -260,10 +273,10 @@ function ProtectionStory({ lang }: { lang: Lang }) {
         </div>
         <div className="safe-change">
           <small>{tx(lang, ["CURRENT", "الحالي"])}</small>
-          <strong>QAR 49.20</strong>
+          <strong>{money(49.2,2)}</strong>
           <i>→</i>
           <small>{tx(lang, ["PROTECTED", "المحمي"])}</small>
-          <strong>QAR 50.60</strong>
+          <strong>{money(50.6,2)}</strong>
           <button>{tx(lang, ["Approve protected change", "وافق على التغيير المحمي"])}</button>
         </div>
         <div className="margin-gauge">
@@ -280,6 +293,7 @@ function ProtectionStory({ lang }: { lang: Lang }) {
 }
 
 function ManagerStory({ lang }: { lang: Lang }) {
+  const { localized } = useMarketMoney();
   return (
     <section className="pss-section">
       <Intro
@@ -295,10 +309,10 @@ function ManagerStory({ lang }: { lang: Lang }) {
         <div className="manager-prompt">
           <small>{tx(lang, ["YOU ASKED", "طلبت"])}</small>
           <p>
-            {tx(lang, [
+            {localized(tx(lang, [
               "“Add the new Truffle Burger, improve the image, set QAR 42, add 80 units and prepare it everywhere.”",
               "«أضف برجر الترفل الجديد، وحسّن الصورة، وحدد السعر عند 42 ر.ق، وأضف 80 وحدة وجهزه في كل مكان.»",
-            ])}
+            ]))}
           </p>
         </div>
         <div className="manager-work">
@@ -335,6 +349,7 @@ function ManagerStory({ lang }: { lang: Lang }) {
 }
 
 function RecoveryStory({ lang }: { lang: Lang }) {
+  const { money } = useMarketMoney();
   return (
     <section className="pss-section tint">
       <Intro
@@ -358,7 +373,7 @@ function RecoveryStory({ lang }: { lang: Lang }) {
           <div className="payout-heading">
             <span>{tx(lang, ["PAYOUT RECEIVED", "تم استلام الدفعة"])}</span>
             <em>{tx(lang, ["RECONCILING", "جارٍ التدقيق"])}</em>
-            <strong>QAR 39,625</strong>
+            <strong>{money(39625)}</strong>
             <small>{tx(lang, ["Settlement #ST-2048 · 184 orders", "التسوية #ST-2048 · 184 طلباً"])}</small>
           </div>
           <div className="commission-row contract-row">
@@ -371,8 +386,8 @@ function RecoveryStory({ lang }: { lang: Lang }) {
           </div>
           <div className="order-scan">
             {[
-              ["#10482", "QAR 11.02", "QAR 12.41"],
-              ["#10491", "QAR 8.74", "QAR 9.86"],
+              ["#10482", money(11.02,2), money(12.41,2)],
+              ["#10491", money(8.74,2), money(9.86,2)],
               ["+182", "", ""],
             ].map((order, i) => <span key={order[0]} style={{ "--scan-row": i } as React.CSSProperties}><b>{order[0]}</b>{order[1] && <><small>{tx(lang,["Expected","المتوقع"])} {order[1]}</small><em>{tx(lang,["Charged","المحتسب"])} {order[2]}</em></>}</span>)}
           </div>
@@ -393,7 +408,7 @@ function RecoveryStory({ lang }: { lang: Lang }) {
           ))}
           <footer>
             <small>{tx(lang, ["POTENTIAL OVERCHARGE", "رسوم زائدة محتملة"])}</small>
-            <b><span>QAR</span> 486</b>
+            <b>{money(486)}</b>
             <em>✓ {tx(lang,["EVIDENCE READY FOR REVIEW","الأدلة جاهزة للمراجعة"])}</em>
             <button>{tx(lang, ["Review case", "راجع الحالة"])}</button>
           </footer>
@@ -504,13 +519,14 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
 }
 
 function CapabilityDemo({ kind, lang }: { kind: string; lang: Lang }) {
-  if (kind === "policy") return <div className="cap-demo cap-policy"><span><small>{tx(lang,["Commission changed","تغيرت العمولة"])}</small><b>18% → 21%</b></span><i>→</i><span><small>{tx(lang,["Safe price","السعر الآمن"])}</small><b>QAR 46.20</b></span><em>✓ {tx(lang,["18% floor protected","تمت حماية حد 18%"])}</em></div>;
-  if (kind === "profit") return <div className="cap-demo cap-profit"><span><small>{tx(lang,["Order","الطلب"])}</small><b>QAR 58</b></span><i>−12.36</i><i>−21.00</i><strong><small>{tx(lang,["True profit","الربح الحقيقي"])}</small>QAR 24.64</strong></div>;
+  const { money, localized } = useMarketMoney();
+  if (kind === "policy") return <div className="cap-demo cap-policy"><span><small>{tx(lang,["Commission changed","تغيرت العمولة"])}</small><b>18% → 21%</b></span><i>→</i><span><small>{tx(lang,["Safe price","السعر الآمن"])}</small><b>{money(46.2,2)}</b></span><em>✓ {tx(lang,["18% floor protected","تمت حماية حد 18%"])}</em></div>;
+  if (kind === "profit") return <div className="cap-demo cap-profit"><span><small>{tx(lang,["Order","الطلب"])}</small><b>{money(58)}</b></span><i>−{money(12.36,2)}</i><i>−{money(21,2)}</i><strong><small>{tx(lang,["True profit","الربح الحقيقي"])}</small>{money(24.64,2)}</strong></div>;
   if (kind === "cfo") return <div className="cap-demo cap-cfo"><span>{tx(lang,["Why did margin fall?","لماذا انخفض الهامش؟"])}</span><p><i>✦</i>{tx(lang,["Fees rose on 11 products.","ارتفعت الرسوم على 11 منتجاً."])}<b>{tx(lang,["View drivers →","عرض الأسباب ←"])}</b></p></div>;
-  if (kind === "radar") return <div className="cap-demo cap-radar"><span><small>{tx(lang,["Market","السوق"])}</small><b>QAR 31</b></span><i>≠</i><span><small>{tx(lang,["Safe match","مطابقة آمنة"])}</small><b>QAR 32.50</b></span><em>{tx(lang,["19.4% margin","هامش 19.4%"])}</em></div>;
+  if (kind === "radar") return <div className="cap-demo cap-radar"><span><small>{tx(lang,["Market","السوق"])}</small><b>{money(31)}</b></span><i>≠</i><span><small>{tx(lang,["Safe match","مطابقة آمنة"])}</small><b>{money(32.5,2)}</b></span><em>{tx(lang,["19.4% margin","هامش 19.4%"])}</em></div>;
   if (kind === "promo") return <div className="cap-demo cap-promo"><div><span>20%</span><i><em /></i></div><p><span>{tx(lang,["Orders","الطلبات"])} <b>+31%</b></span><span>{tx(lang,["Profit","الربح"])} <b>−7.4%</b></span></p><strong>{tx(lang,["Try 12% · profit +9.2%","جرّب 12% · الربح +9.2%"])}</strong></div>;
   if (kind === "audit") return <div className="cap-demo cap-audit">{[["184", "Orders","طلبات"],["21.4%", "Charged","محتسب"],["19%", "Agreed","متفق عليه"]].map(x=><span key={x[1]}><b>{x[0]}</b><small>{tx(lang,[x[1],x[2]] as Pair)}</small></span>)}<strong>✓ {tx(lang,["Evidence ready for review","الأدلة جاهزة للمراجعة"])}</strong></div>;
-  if (kind === "manager") return <div className="cap-demo cap-manager"><p>“{tx(lang,["Update price to QAR 42","حدّث السعر إلى 42 ر.ق"])}”</p><span>✓ {tx(lang,["Storefront prepared","تم تجهيز واجهة المتجر"])}</span><span>✓ {tx(lang,["Channel update prepared","تم تجهيز تحديث القناة"])}</span><b>{tx(lang,["Review & approve","راجع ووافق"])}</b></div>;
+  if (kind === "manager") return <div className="cap-demo cap-manager"><p>“{localized(tx(lang,["Update price to QAR 42","حدّث السعر إلى 42 ر.ق"]))}”</p><span>✓ {tx(lang,["Storefront prepared","تم تجهيز واجهة المتجر"])}</span><span>✓ {tx(lang,["Channel update prepared","تم تجهيز تحديث القناة"])}</span><b>{tx(lang,["Review & approve","راجع ووافق"])}</b></div>;
   return <div className="cap-demo cap-integrations"><span>{tx(lang,["Storefront","واجهة المتجر"])}</span><i>→</i><strong>PS</strong><i>→</i><span>{tx(lang,["Channel","القناة"])}</span><em /><small>{tx(lang,["Orders in · approved updates out","الطلبات تدخل · التحديثات المعتمدة تخرج"])}</small></div>;
 }
 
@@ -553,7 +569,7 @@ function OperatingDay({ lang }: { lang: Lang }) {
           "يواصل PrizeSkout العمل بعد أن تتوقف عن المتابعة.",
         ]}
         body={[
-          "A simulated day showing how the capabilities reinforce one another. Example data—not a customer performance claim.",
+          "A simulated day showing how the capabilities reinforce one another. This is example data, not a customer performance claim.",
           "يوم تجريبي يوضح كيف تدعم القدرات بعضها بعضاً. بيانات توضيحية وليست ادعاءً بأداء عميل.",
         ]}
       />
@@ -597,6 +613,7 @@ function TrustStrip({ lang }: { lang: Lang }) {
 }
 
 function Pricing({ lang }: { lang: Lang }) {
+  const { money } = useMarketMoney();
   return (
     <section className="pss-section pss-pricing" id="pricing">
       <Intro
@@ -616,7 +633,7 @@ function Pricing({ lang }: { lang: Lang }) {
         <Price
           lang={lang}
           name="Core"
-          price="QAR 349"
+          price={money(349)}
           subtitle={["Understand and manage", "افهم وأدر"]}
           features={[
             ["Full CFO Copilot", "المساعد المالي الكامل"],
@@ -630,7 +647,7 @@ function Pricing({ lang }: { lang: Lang }) {
           lang={lang}
           popular
           name="Growth"
-          price="QAR 1,099"
+          price={money(1099)}
           subtitle={["Protect and recover", "احمِ واسترد"]}
           features={[
             ["Everything in Core", "كل ما في Core"],
@@ -678,7 +695,7 @@ function Price({
       <small>{tx(lang, subtitle)}</small>
       <h3>{name}</h3>
       <strong>{price}</strong>
-      {price.startsWith("QAR") && <span>/ {tx(lang, ["month", "شهر"])}</span>}
+      {price !== "Custom" && price !== "مخصص" && <span>/ {tx(lang, ["month", "شهر"])}</span>}
       <ul>
         {features.map((x) => (
           <li key={x[0]}>✓ {tx(lang, x)}</li>
