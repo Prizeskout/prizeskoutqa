@@ -34,14 +34,28 @@ const ui: Record<string, [string, string]> = {
   before:["Current","الحالي"], after:["Recommended","الموصى به"],
 };
 
+const cursorPaths: Record<string, Array<[number,number,[string,string]]>> = {
+  connect:[[13,46,["Select channel","اختر القناة"]],[38,55,["Connect securely","اتصل بأمان"]],[71,72,["Syncing now","تجري المزامنة"]]],
+  profit:[[22,55,["Open order","افتح الطلب"]],[55,61,["Match costs","طابق التكاليف"]],[77,77,["True profit","الربح الحقيقي"]]],
+  copilot:[[69,50,["Ask CFO","اسأل المساعد المالي"]],[45,67,["Reading evidence","قراءة الأدلة"]],[76,79,["View action","اعرض الإجراء"]]],
+  radar:[[28,63,["Check price","تحقق من السعر"]],[53,64,["Compare","قارن"]],[79,65,["Safe price","السعر الآمن"]]],
+  promo:[[28,65,["Try 20%","جرّب 20%"]],[51,60,["Compare scenarios","قارن السيناريوهات"]],[73,65,["Choose safer","اختر الأكثر أماناً"]]],
+  reprice:[[28,64,["Current price","السعر الحالي"]],[52,65,["Apply policy","طبّق السياسة"]],[75,65,["Review change","راجع التغيير"]]],
+  recover:[[29,60,["Open payout","افتح الدفعة"]],[55,62,["Check contract","تحقق من العقد"]],[74,78,["Build evidence","جهّز الأدلة"]]],
+  manage:[[28,57,["Delegate task","فوّض المهمة"]],[62,58,["Prepare changes","جهّز التغييرات"]],[75,76,["Review plan","راجع الخطة"]]],
+};
+
 export function ProductHeroDemo({lang}:{lang:DemoLanguage}) {
   const [active,setActive]=useState(0);
   const [playing,setPlaying]=useState(true);
   const [reduceMotion,setReduceMotion]=useState(false);
+  const [phase,setPhase]=useState(0);
   const t=(pair:[string,string])=>pair[lang==="ar"?1:0];
   useEffect(()=>{const media=window.matchMedia("(prefers-reduced-motion: reduce)");const sync=()=>{setReduceMotion(media.matches);if(media.matches)setPlaying(false)};sync();media.addEventListener("change",sync);return()=>media.removeEventListener("change",sync)},[]);
-  useEffect(()=>{if(!playing||reduceMotion)return;const timer=window.setInterval(()=>setActive(value=>(value+1)%stages.length),4300);return()=>window.clearInterval(timer)},[playing,reduceMotion]);
+  useEffect(()=>{if(!playing||reduceMotion)return;const timer=window.setInterval(()=>setActive(value=>(value+1)%stages.length),3200);return()=>window.clearInterval(timer)},[playing,reduceMotion]);
+  useEffect(()=>{setPhase(0);if(!playing||reduceMotion)return;const timer=window.setInterval(()=>setPhase(value=>(value+1)%3),900);return()=>window.clearInterval(timer)},[active,playing,reduceMotion]);
   const stage=stages[active];
+  const cursor=cursorPaths[stage.id][phase];
   const panel=useMemo(()=>renderPanel(stage.id,lang,t),[stage.id,lang]);
   const select=(index:number)=>{setActive(index);setPlaying(false)};
   return <section className="phd" dir={lang==="ar"?"rtl":"ltr"} aria-label={t(ui.demo)}>
@@ -60,12 +74,13 @@ export function ProductHeroDemo({lang}:{lang:DemoLanguage}) {
         <footer><div><strong>2,840</strong><small>{t(ui.orders)}</small></div><div><strong>1,432</strong><small>{t(ui.catalogue)}</small></div><div><strong>14</strong><small>{t(ui.payouts)}</small></div></footer>
       </aside>
       <article className="phd-workspace">
+        {!reduceMotion&&<div className={`phd-cursor phase-${phase}`} style={{left:`${cursor[0]}%`,top:`${cursor[1]}%`}} aria-hidden="true"><svg viewBox="0 0 30 38"><path d="M3 2.5 26 24l-10.3 1.5L10.5 35 3 2.5Z"/></svg><span>{t(cursor[2])}</span><i/></div>}
         <div className="phd-copy"><div><small>{t(stage.eyebrow)}</small><h3>{t(stage.title)}</h3><p>{t(stage.body)}</p></div><span className="phd-live"><i/>{lang==="ar"?"يعمل الآن":"Working now"}</span></div>
         {panel}
         <div className="phd-result"><span>✓</span><div><small>{lang==="ar"?"النتيجة":"OUTCOME"}</small><strong>{t(stage.outcome)}</strong></div><em>{t(stage.action)}</em></div>
       </article>
     </div>
-    <div className="phd-progress" aria-hidden="true"><span key={`${active}-${playing}`} style={{animationDuration:playing?"4300ms":"0ms"}}/></div>
+    <div className="phd-progress" aria-hidden="true"><span key={`${active}-${playing}`} style={{animationDuration:playing?"3200ms":"0ms"}}/></div>
   </section>
 }
 
