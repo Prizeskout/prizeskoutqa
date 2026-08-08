@@ -137,33 +137,40 @@ function ProfitStory({ lang }: { lang: Lang }) {
         ]}
       />
       <Reveal className="story-frame profit-frame">
-        <div className="order-source">
-          <span>{tx(lang, ["NEW ORDER", "طلب جديد"])}</span>
-          <strong>QAR 58.00</strong>
-          <small>{tx(lang, ["Aggregator · #10482", "منصة التجميع · #10482"])}</small>
+        <div className="profit-toolbar">
+          <div><i /><span>{tx(lang, ["True Profit · Live order", "الربح الحقيقي · طلب مباشر"])}</span></div>
+          <small>{tx(lang, ["EXAMPLE DATA", "بيانات توضيحية"])}</small>
         </div>
-        <div className="profit-ledger">
+        <div className="profit-stage">
+          <div className="order-source">
+            <span>{tx(lang, ["ORDER RECEIVED", "تم استلام الطلب"])}</span>
+            <strong>QAR 58.00</strong>
+            <small>{tx(lang, ["Aggregator · #10482", "منصة التجميع · #10482"])}</small>
+            <div className="order-meta"><span>{tx(lang, ["Paid", "مدفوع"])}</span><span>18:42</span></div>
+          </div>
+          <div className="profit-transfer" aria-hidden="true"><i /></div>
+          <div className="profit-ledger">
+            <header><span>{tx(lang, ["COST RECONCILIATION", "مطابقة التكاليف"])}</span><small>{tx(lang, ["4 of 4 matched", "تمت مطابقة 4 من 4"])}</small></header>
           {[
             ["Order value", "قيمة الطلب", "QAR 58.00", ""],
             ["Commission & fees", "العمولة والرسوم", "− QAR 12.36", "minus"],
             ["Product cost", "تكلفة المنتج", "− QAR 21.00", "minus"],
             ["True profit", "الربح الحقيقي", "QAR 24.64", "total"],
-          ].map((x) => (
-            <div className={x[3]} key={x[0]}>
+          ].map((x, index) => (
+            <div className={x[3]} key={x[0]} style={{ "--row": index } as React.CSSProperties}>
+              <i aria-hidden="true">✓</i>
               <span>{tx(lang, [x[0], x[1]])}</span>
               <b>{x[2]}</b>
             </div>
           ))}
-        </div>
-        <div className="copilot-note">
-          <small>CFO COPILOT</small>
-          <b>{tx(lang, ["Here’s what changed", "إليك ما تغير"])}</b>
-          <p>
-            {tx(lang, [
-              "Fees consumed 21.3% of the order. You kept QAR 24.64 after every known cost.",
-              "استهلكت الرسوم 21.3% من الطلب، واحتفظت بـ24.64 ر.ق بعد كل التكاليف المعروفة.",
-            ])}
-          </p>
+            <footer><span>{tx(lang, ["TRUE MARGIN", "الهامش الحقيقي"])}</span><strong>42.5%</strong></footer>
+          </div>
+          <div className="copilot-note">
+            <div className="copilot-head"><i>✦</i><small>CFO COPILOT</small></div>
+            <b>{tx(lang, ["Here’s what changed", "إليك ما تغير"])}</b>
+            <p>{tx(lang, ["Fees consumed 21.3% of this order. After every known cost, QAR 24.64 remains as true profit.", "استهلكت الرسوم 21.3% من هذا الطلب. وبعد كل التكاليف المعروفة، تبقى 24.64 ر.ق كربح حقيقي."])}</p>
+            <div className="copilot-proof"><span>{tx(lang, ["Known costs", "التكاليف المعروفة"])} <b>100%</b></span><i><em /></i></div>
+          </div>
         </div>
         <DemoCursor label={tx(lang, ["Explain this order", "اشرح هذا الطلب"])} />
       </Reveal>
