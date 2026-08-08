@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { applyLocale, type Locale } from "@/lib/i18n";
+import { applyLocale, getStoredLocale, type Locale } from "@/lib/i18n";
 import logo from "@/assets/logo-light.svg";
 
 const ORANGE="#F36A21", NAVY="#10182D", MUTED="#657086", GREEN="#18A66A";
@@ -19,35 +19,43 @@ const capabilities=[
 export function RevenueProtectionLanding(){
   const {i18n}=useTranslation();
   const [menu,setMenu]=useState(false);
-  const lang=(i18n.language?.slice(0,2)==="ar"?"ar":"en") as "ar"|"en";
-  const change=(next:"ar"|"en")=>{void i18n.changeLanguage(next);applyLocale(next as Locale);setMenu(false)};
+  const [lang,setLang]=useState<"ar"|"en">("en");
+  useEffect(()=>{const stored=getStoredLocale()==="ar"?"ar":"en";setLang(stored);void i18n.changeLanguage(stored);applyLocale(stored)},[i18n]);
+  const change=(next:"ar"|"en")=>{setLang(next);applyLocale(next as Locale);void i18n.changeLanguage(next);setMenu(false)};
+  const tr=(en:string,ar:string)=>lang==="ar"?ar:en;
+  const capabilityRows=lang==="ar"?[
+    ["01","إعادة التسعير المحمية","احمِ الحد الأدنى لهامشك في كل قناة."],["02","الربح الحقيقي","اعرف ما حققه كل طلب فعلياً."],
+    ["03","المساعد المالي","اسأل عن أرقام متجرك بأي صيغة."],["04","رادار المنافسين","تابع السوق دون الدخول في حرب أسعار."],
+    ["05","محاكي العروض","اختبر ربحية الحملة قبل إطلاقها."],["06","استرداد المستحقات","اكتشف الرسوم الزائدة وجهّز الأدلة واسترد أموالك."],
+    ["07","مدير المتجر بالذكاء الاصطناعي","اطلب مرة واحدة، راجع، ثم انشر في كل مكان."],["08","التكاملات","مركز تحكم واحد لكل قنواتك."]
+  ]:capabilities;
   return <main className="rpl" dir={lang==="ar"?"rtl":"ltr"}>
     <style>{css}</style>
     <nav className="rpl-nav">
       <a href="/" aria-label="PrizeSkout home"><img src={logo} alt="PrizeSkout"/></a>
-      <div className="rpl-links"><a href="#product">Product</a><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#integrations">Integrations</a></div>
+      <div className="rpl-links"><a href="#product">{tr("Product","المنتج")}</a><a href="#platform">{tr("Platform","المنصة")}</a><a href="#pricing">{tr("Pricing","الأسعار")}</a><a href="#integrations">{tr("Integrations","التكاملات")}</a></div>
       <div className="rpl-actions">
         <div className="rpl-language"><button onClick={()=>setMenu(v=>!v)}>{lang==="ar"?"العربية":"English"} <span>⌄</span></button>{menu&&<div><button onClick={()=>change("en")}>English</button><button onClick={()=>change("ar")}>العربية</button></div>}</div>
-        <a className="rpl-demo" href="/contact">Book a demo</a>
+        <a className="rpl-demo" href="/contact">{tr("Book a demo","احجز عرضاً توضيحياً")}</a>
       </div>
     </nav>
 
     <section className="rpl-hero" id="product">
-      <div className="eyebrow">AI REVENUE PROTECTION FOR RESTAURANTS</div>
-      <h1>Every order.<br/><span>Your margin, defended.</span></h1>
-      <p>PrizeSkout watches every price, promotion, commission and payout across your sales channels — protecting profit automatically and recovering revenue that should never have been lost.</p>
-      <div className="rpl-ctas"><a href="/onboarding">Connect your store</a><a href="#platform">See how it works</a></div>
+      <div className="eyebrow">{tr("AI REVENUE PROTECTION FOR RESTAURANTS","حماية إيرادات المطاعم بالذكاء الاصطناعي")}</div>
+      <h1>{tr("Every order.","كل طلب.")}<br/><span>{tr("Your margin, defended.","هامشك محمي.")}</span></h1>
+      <p>{tr("PrizeSkout watches every price, promotion, commission and payout across your sales channels — protecting profit automatically and recovering revenue that should never have been lost.","يراقب PrizeSkout كل سعر وعرض وعمولة ودفعة عبر قنوات مبيعاتك، ليحمي أرباحك تلقائياً ويسترد الإيرادات التي كان يجب ألا تضيع.")}</p>
+      <div className="rpl-ctas"><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a><a href="#platform">{tr("See how it works","شاهد كيف يعمل")}</a></div>
       <div className="rpl-hero-card ps-white-card">
-        <div className="rpl-protected"><small>REVENUE PROTECTED THIS MONTH</small><strong>QAR 18,420</strong><span>↑ 14.8%</span></div>
-        <div className="rpl-metrics"><Metric label="Net margin" value="22.4%"/><Metric label="Recovered" value="QAR 3,840"/><Metric label="At risk" value="QAR 1,260"/></div>
-        <div className="rpl-live"><small>LIVE PROTECTION</small>{[["Talabat","24.1%","Protected"],["Jahez","21.8%","Protected"],["Careem","17.2%","Adjust"]].map(x=><div key={x[0]}><b>{x[0]}</b><span>{x[1]}</span><em className={x[2]==="Adjust"?"warn":""}>{x[2]}</em></div>)}</div>
+        <div className="rpl-protected"><small>{tr("REVENUE PROTECTED THIS MONTH","الإيرادات المحمية هذا الشهر")}</small><strong>QAR 18,420</strong><span>↑ 14.8%</span></div>
+        <div className="rpl-metrics"><Metric label={tr("Net margin","صافي الهامش")} value="22.4%"/><Metric label={tr("Recovered","تم استرداده")} value="QAR 3,840"/><Metric label={tr("At risk","معرض للخطر")} value="QAR 1,260"/></div>
+        <div className="rpl-live"><small>{tr("LIVE PROTECTION","حماية مباشرة")}</small>{[["Talabat","24.1%",tr("Protected","محمي")],["Jahez","21.8%",tr("Protected","محمي")],["Careem","17.2%",tr("Adjust","يحتاج تعديلاً")]].map(x=><div key={x[0]}><b>{x[0]}</b><span>{x[1]}</span><em className={x[2]===tr("Adjust","يحتاج تعديلاً")?"warn":""}>{x[2]}</em></div>)}</div>
       </div>
     </section>
 
-    <section className="rpl-integrations" id="integrations"><p>Built for the commerce stack you already run.</p><div>{channels.map(x=><span key={x}>{x}</span>)}</div></section>
+    <section className="rpl-integrations" id="integrations"><p>{tr("Built for the commerce stack you already run.","مصمم للعمل مع منظومة التجارة التي تستخدمها بالفعل.")}</p><div>{channels.map(x=><span key={x}>{x}</span>)}</div></section>
 
     <section className="rpl-section" id="platform">
-      <SectionIntro number="01 · SEE" title={<>Know what you<br/>actually made.</>} body="Not GMV. Not the order value. Your real profit after commissions, fees, tax, promotions and food cost."/>
+      <SectionIntro title={lang==="ar"?<>اعرف ما حققته<br/>فعلياً.</>:<>Know what you<br/>actually made.</>} body={tr("Not GMV. Not the order value. Your real profit after commissions, fees, tax, promotions and food cost.","ليس إجمالي المبيعات ولا قيمة الطلب، بل ربحك الحقيقي بعد العمولات والرسوم والضرائب والعروض وتكلفة المنتجات.")}/>
       <div className="rpl-two">
         <div className="ps-white-card order-card"><div className="card-label">TRUE PROFIT · ORDER #88421</div>{[["Order value","SAR 58.00"],["Aggregator commission","− SAR 11.02"],["VAT","− SAR 2.54"],["Promotion contribution","− SAR 3.00"],["Food cost","− SAR 16.80"]].map(x=><div key={x[0]}><span>{x[0]}</span><b>{x[1]}</b></div>)}<footer><span>SAR 24.64 YOU KEEP</span><b>42.5% NET MARGIN</b></footer></div>
         <div className="ps-white-card copilot-card"><div className="card-label">CFO COPILOT</div><h3>Ask your numbers anything.</h3><div className="bubble user">Why did my Jahez margin fall last week?</div><div className="bubble ai"><small>PRIZESKOUT</small>Your chicken category margin fell 3.8%, primarily because commission increased while 11 SKUs retained their previous selling price.<button>Fix pricing</button></div></div>
@@ -55,28 +63,28 @@ export function RevenueProtectionLanding(){
     </section>
 
     <section className="rpl-section soft">
-      <SectionIntro number="02 · PROTECT" title={<>Set the margin.<br/>PrizeSkout defends it.</>} body="Choose the minimum profit you are willing to make. PrizeSkout continuously calculates the safe selling price for every connected channel."/>
+      <SectionIntro title={lang==="ar"?<>حدد الهامش.<br/>وPrizeSkout يحميه.</>:<>Set the margin.<br/>PrizeSkout defends it.</>} body={tr("Choose the minimum profit you are willing to make. PrizeSkout continuously calculates the safe selling price for every connected channel.","حدد أقل ربح تقبل به، وسيحسب PrizeSkout باستمرار سعر البيع الآمن لكل قناة متصلة.")}/>
       <div className="rpl-two">
         <div className="ps-white-card repricer"><div className="card-label">PROTECTED REPRICING</div><div className="factor-row">{[["Your base price","SAR 40"],["Talabat commission","25%"],["Food cost","32%"],["Other fees","5%"],["Minimum margin","18%"]].map(x=><div key={x[0]}><small>{x[0]}</small><b>{x[1]}</b></div>)}</div><div className="safe-price"><span>→</span><small>SAFE TALABAT PRICE</small><strong>SAR 49.20</strong><em>18.3% margin · protected</em></div><p>Recalculates as costs and commissions move.</p></div>
         <div className="protect-stack"><div className="ps-white-card mini"><div className="card-label">COMPETITOR RADAR</div><h3>Competitive without becoming unprofitable.</h3><div className="price-lines"><span>Your price <b>SAR 34</b></span><span>Competitor A <b>SAR 33</b></span><span>Competitor B <b>SAR 31</b></span></div><footer>RECOMMENDED <strong>SAR 32.50</strong><em>19.4% margin · safe</em></footer></div><div className="ps-white-card mini"><div className="card-label">PROMOTION SIMULATOR</div><h3>Know if the discount makes money before launch.</h3><div className="promo"><strong>20% OFF</strong><span>Expected orders +31%</span><span>Revenue +18%</span><span className="loss">Net profit −7.4%</span></div><footer className="dont">DON’T LAUNCH <small>Try 12% instead · Projected profit +9.2%</small></footer></div></div>
       </div>
     </section>
 
-    <section className="rpl-section"><SectionIntro number="03 · RECOVER" title={<>If the numbers don’t match,<br/>PrizeSkout finds the money.</>} body="PrizeSkout audits commissions and payouts against the terms you agreed to, identifies discrepancies order by order and prepares the evidence needed to dispute them."/><div className="ps-white-card audit"><div><div className="card-label">COMMISSION AUDIT</div><div className="audit-grid"><Metric label="Contracted commission" value="19.0%"/><Metric label="Effective commission charged" value="21.4%"/><Metric label="Affected orders" value="184"/><Metric label="Potential overcharge" value="SAR 6,482"/></div></div><div className="evidence"><h3>From discrepancy<br/>to recovery. Automatically.</h3>{["Order IDs","Settlement records","Contract rate","Fee calculations","Cryptographic audit trail"].map(x=><span key={x}>✓ {x}</span>)}<button>Prepare recovery claim</button></div></div></section>
+    <section className="rpl-section"><SectionIntro title={<>If the numbers don’t match,<br/>PrizeSkout finds the money.</>} body="PrizeSkout audits commissions and payouts against the terms you agreed to, identifies discrepancies order by order and prepares the evidence needed to dispute them."/><div className="ps-white-card audit"><div><div className="card-label">COMMISSION AUDIT</div><div className="audit-grid"><Metric label="Contracted commission" value="19.0%"/><Metric label="Effective commission charged" value="21.4%"/><Metric label="Affected orders" value="184"/><Metric label="Potential overcharge" value="SAR 6,482"/></div></div><div className="evidence"><h3>From discrepancy<br/>to recovery. Automatically.</h3>{["Order IDs","Settlement records","Contract rate","Fee calculations","Cryptographic audit trail"].map(x=><span key={x}>✓ {x}</span>)}<button>Prepare recovery claim</button></div></div></section>
 
-    <section className="rpl-section soft"><SectionIntro number="04 · OPERATE" title={<>Tell PrizeSkout once.</>} body="Update products, prices, availability, images and menus across connected channels from one place. PrizeSkout prepares the work. You approve the action."/><div className="ps-white-card manager"><div className="bubble user">Add our new Truffle Burger at SAR 42, set inventory to 80 and publish tomorrow at 10 AM.</div>{[["Zid","Product created","SAR 42 · 80 units"],["Foodics","Inventory synced","80 units available"],["Talabat","Price prepared","Waiting for approval"],["Jahez","Price prepared","Waiting for approval"]].map(x=><div className="manager-row" key={x[0]}><b>{x[0]}</b><em>READY</em><span>{x[1]}<small>{x[2]}</small></span></div>)}<button>Approve all changes</button><small>Human approval required before publish</small></div></section>
+    <section className="rpl-section soft"><SectionIntro title={<>Tell PrizeSkout once.</>} body="Update products, prices, availability, images and menus across connected channels from one place. PrizeSkout prepares the work. You approve the action."/><div className="ps-white-card manager"><div className="bubble user">Add our new Truffle Burger at SAR 42, set inventory to 80 and publish tomorrow at 10 AM.</div>{[["Zid","Product created","SAR 42 · 80 units"],["Foodics","Inventory synced","80 units available"],["Talabat","Price prepared","Waiting for approval"],["Jahez","Price prepared","Waiting for approval"]].map(x=><div className="manager-row" key={x[0]}><b>{x[0]}</b><em>READY</em><span>{x[1]}<small>{x[2]}</small></span></div>)}<button>Approve all changes</button><small>Human approval required before publish</small></div></section>
 
-    <section className="rpl-section" id="capabilities"><div className="center-intro"><div className="eyebrow">THE PRIZESKOUT PLATFORM</div><h2>Eight capabilities. One revenue protection system.</h2><p>Every capability reinforces the same outcome: stronger margins, cleaner payouts and less operational drag.</p></div><div className="cap-grid">{capabilities.map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div></section>
+    <section className="rpl-section" id="capabilities"><div className="center-intro"><div className="eyebrow">{tr("THE PRIZESKOUT PLATFORM","منصة PRIZESKOUT")}</div><h2>{tr("Eight capabilities. One revenue protection system.","ثماني قدرات. نظام واحد لحماية الإيرادات.")}</h2><p>{tr("Every capability reinforces the same outcome: stronger margins, cleaner payouts and less operational drag.","كل قدرة تحقق النتيجة نفسها: هوامش أقوى، ومدفوعات أوضح، وإدارة أسهل.")}</p></div><div className="cap-grid">{capabilityRows.map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div></section>
 
     <section className="rpl-section soft" id="pricing"><div className="center-intro"><div className="eyebrow">SIMPLE PRICING</div><h2>Start with visibility. Scale into protection.</h2><p>No bloated feature matrices. Pick the operating level that matches your restaurant today.</p></div><div className="price-grid"><Plan name="Core" subtitle="See & understand" price="QAR 349" features={["True Profit","CFO Copilot","Competitor Radar","Promotion Simulator"]}/><Plan popular name="Growth" subtitle="Protect & recover" price="QAR 1,099" features={["Everything in Core","Protected repricing","Commission audits","Dispute recovery"]}/><Plan name="Enterprise" subtitle="Operate at scale" price="Custom" features={["Multi-location","Enterprise APIs","Custom policies","Dedicated SLA"]}/></div></section>
 
-    <section className="rpl-final"><img src={logo} alt="PrizeSkout"/><h2>Your margins should not depend<br/>on someone else’s dashboard.</h2><p>Connect your commerce stack and put every order under active revenue protection.</p><div className="rpl-ctas"><a href="/contact">Book a demo</a><a href="/onboarding">Connect your store</a></div></section>
+    <section className="rpl-final"><img src={logo} alt="PrizeSkout"/><h2>{tr("Your margins should not depend on someone else’s dashboard.","يجب ألا تعتمد هوامشك على لوحة تحكم جهة أخرى.")}</h2><p>{tr("Connect your commerce stack and put every order under active revenue protection.","اربط منظومة تجارتك وضع كل طلب تحت حماية نشطة للإيرادات.")}</p><div className="rpl-ctas"><a href="/contact">{tr("Book a demo","احجز عرضاً توضيحياً")}</a><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a></div></section>
     <footer className="rpl-footer"><img src={logo} alt="PrizeSkout"/><div><a href="#product">Product</a><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#integrations">Integrations</a><a href="/legal">Security</a></div><span>© 2026 PrizeSkout</span></footer>
   </main>
 }
 
 function Metric({label,value}:{label:string,value:string}){return <div className="metric"><small>{label}</small><strong>{value}</strong></div>}
-function SectionIntro({number,title,body}:{number:string,title:React.ReactNode,body:string}){return <div className="section-intro"><div className="eyebrow">{number}</div><h2>{title}</h2><p>{body}</p></div>}
+function SectionIntro({title,body}:{title:React.ReactNode,body:string}){return <div className="section-intro"><h2>{title}</h2><p>{body}</p></div>}
 function Plan({name,subtitle,price,features,popular}:{name:string,subtitle:string,price:string,features:string[],popular?:boolean}){return <article className={`plan ${popular?"popular":""}`}>{popular&&<em>MOST POPULAR</em>}<h3>{name}</h3><p>{subtitle}</p><strong>{price}</strong>{price!=="Custom"&&<small>/ month</small>}<ul>{features.map(x=><li key={x}>✓ {x}</li>)}</ul><a href={name==="Enterprise"?"/contact":"/onboarding"}>{name==="Enterprise"?"Talk to sales":"Start now"}</a></article>}
 
 const css=`
