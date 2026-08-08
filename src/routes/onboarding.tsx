@@ -38,6 +38,16 @@ const COUNTRY_DEFAULTS: Record<string, [string,string]> = {
 };
 const REGION_CURRENCY: Record<string,string> = {Qatar:"QAR","Saudi Arabia":"SAR",UAE:"AED",Kuwait:"KWD",Bahrain:"BHD",Oman:"OMR"};
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs = 15_000) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 function makeAccessCode(region: string): string {
   const rc = REGION_CODE[region] ?? "QA";
   const n  = String(Math.floor(1000 + Math.random() * 9000));
@@ -341,6 +351,7 @@ function Step2({
   jahez: Record<string,string>; setJahez: (v:Record<string,string>) => void;
   onNext: () => void; onBack: () => void;
 }) {
+  const [validationError,setValidationError]=useState("");
   function connectSalla() {
     window.location.href = `/api/auth/salla?merchant_id=${encodeURIComponent(merchantId)}&return_to=%2Fonboarding`;
   }
@@ -353,7 +364,18 @@ function Step2({
   const jahezReady=["api_key","secret_code","branch_id"].every(key=>jahez[key]?.trim());
   const hasTalabat=Object.values(talabat).some(value=>value.trim());
   const hasJahez=Object.values(jahez).some(value=>value.trim());
-  const canProceed=(sallaConnected||zidConnected||talabatReady||jahezReady)&&(!hasTalabat||talabatReady)&&(!hasJahez||jahezReady);
+  const hasConnectedChannel=sallaConnected||zidConnected||talabatReady||jahezReady;
+  const missingTalabat=[
+    ["client_id","Client ID"],["client_secret","Client Secret"],["vendor_id","Vendor ID"],
+    ["chain_id","Chain ID"],["commission_rate_pct","contract commission"],
+  ].filter(([key])=>!talabat[key]?.trim()).map(([,label])=>label);
+  const missingJahez=[["api_key","API Key"],["secret_code","Secret Code"],["branch_id","Branch ID"]]
+    .filter(([key])=>!jahez[key]?.trim()).map(([,label])=>label);
+  function continueToProtection(){
+    if(hasTalabat&&!talabatReady){setValidationError(`Complete Talabat before continuing: ${missingTalabat.join(", ")}.`);return;}
+    if(hasJahez&&!jahezReady){setValidationError(`Complete Jahez before continuing: ${missingJahez.join(", ")}.`);return;}
+    setValidationError("");onNext();
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -401,10 +423,12 @@ function Step2({
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
         <GhostBtn onClick={onBack}>← Back</GhostBtn>
         <div style={{ flex: 1 }}>
-          <PrimaryBtn onClick={onNext} disabled={!canProceed}>Continue to set protection →</PrimaryBtn>
+          <PrimaryBtn onClick={continueToProtection} disabled={!hasConnectedChannel}>Continue to set protection →</PrimaryBtn>
         </div>
       </div>
-      {!canProceed&&<p style={{margin:0,color:MUTED,fontSize:11,textAlign:"center"}}>Connect Zid or Salla, or complete the required Talabat or Jahez credentials to continue.</p>}
+      {validationError
+        ? <p role="alert" style={{margin:0,color:"#B42318",fontSize:11,textAlign:"center"}}>{validationError}</p>
+        : !hasConnectedChannel&&<p style={{margin:0,color:MUTED,fontSize:11,textAlign:"center"}}>Connect Zid or Salla, or complete the required Talabat or Jahez credentials to continue.</p>}
     </div>
   );
 }
@@ -769,7 +793,7 @@ function OnboardingPage() {
     // login path can later verify a real onboarded merchant owns it, rather
     // than trusting whatever's cached in the browser's localStorage.
     try {
-      const registration=await fetch("/api/register-code", {
+      const registration=await fetchWithTimeout("/api/register-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ merchant_id: mid, code, email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined }),
@@ -777,11 +801,16 @@ function OnboardingPage() {
       if(!registration.ok)throw new Error("PrizeSkout could not secure your onboarding session. Please try again.");
       for(const [platform,credentials] of [["talabat",talabat],["jahez",jahez]] as const){
         if(!Object.keys(credentials).length)continue;
-        const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials})});
+        const response=await fetchWithTimeout("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials})});
         const result=await response.json() as {ok?:boolean;error?:string};
         if(!response.ok||!result.ok)throw new Error(result.error??`PrizeSkout could not configure ${platform}.`);
       }
-    }catch(error){setFinishError(error instanceof Error?error.message:"Setup could not be completed.");setFinishing(false);return;}
+    }catch(error){
+      const message=error instanceof DOMException&&error.name==="AbortError"
+        ? "The connection took too long. Nothing was lost. Please try again."
+        : error instanceof Error?error.message:"Setup could not be completed.";
+      setFinishError(message);setFinishing(false);return;
+    }
     localStorage.setItem("ps_access_code", code);
     localStorage.setItem("ps_connected", "true");
 
