@@ -68,7 +68,7 @@ export function ProductHeroDemo({lang}:{lang:DemoLanguage}) {
       <div className="phd-top-actions"><span>{String(active+1).padStart(2,"0")} / {String(stages.length).padStart(2,"0")}</span><button type="button" onClick={()=>setPlaying(v=>!v)} aria-label={playing?t(ui.pause):t(ui.play)}>{playing?"Ⅱ":"▶"} <b>{playing?t(ui.pause):t(ui.play)}</b></button></div>
     </div>
     <div className="phd-steps" role="tablist" aria-label={t(ui.journey)}>{stages.map((item,index)=><button key={item.id} type="button" role="tab" aria-selected={index===active} className={index===active?"active":""} onClick={()=>select(index)}><span>{String(index+1).padStart(2,"0")}</span>{t(item.nav)}</button>)}</div>
-    <div className="phd-stage" key={stage.id}>
+    <div className="phd-stage" key={stage.id} data-scene={String(active+1).padStart(2,"0")}>
       <aside className="phd-channels">
         <header><span className="phd-pulse"/><div><b>{t(ui.journey)}</b><small>{lang==="ar"?"مزامنة آمنة ومستمرة":"Secure, continuous sync"}</small></div></header>
         <Channel name="Zid" status={t(ui.connected)} active={["connect","publish"].includes(stage.id)}/>
@@ -78,9 +78,11 @@ export function ProductHeroDemo({lang}:{lang:DemoLanguage}) {
         <footer><div><strong>2,840</strong><small>{t(ui.orders)}</small></div><div><strong>1,432</strong><small>{t(ui.catalogue)}</small></div><div><strong>14</strong><small>{t(ui.payouts)}</small></div></footer>
       </aside>
       <article className={`phd-workspace phd-${stage.id} phd-action-${phase}`}>
+        <div className="phd-appbar"><div><i/><i/><i/></div><span>PrizeSkout · Bayt Burger</span><em>{lang==="ar"?"مباشر":"LIVE"}</em></div>
         {!reduceMotion&&<div className={`phd-cursor phase-${phase}`} style={{left:`${cursor[0]}%`,top:`${cursor[1]}%`}} aria-hidden="true"><svg viewBox="0 0 30 38"><path d="M3 2.5 26 24l-10.3 1.5L10.5 35 3 2.5Z"/></svg><span>{t(cursor[2])}</span><i/></div>}
         <div className="phd-copy"><div><small>{t(stage.eyebrow)}</small><h3>{t(stage.title)}</h3><p>{t(stage.body)}</p></div><span className="phd-live"><i/>{lang==="ar"?"يعمل الآن":"Working now"}</span></div>
         {panel}
+        <div className="phd-activity"><span>{phase===0?"01":phase===1?"02":"03"}</span><b>{t(cursor[2])}</b><i>{phase<2?(lang==="ar"?"جارٍ التنفيذ":"in progress"):(lang==="ar"?"تم":"complete")}</i></div>
         <div className="phd-result"><span>✓</span><div><small>{lang==="ar"?"النتيجة":"OUTCOME"}</small><strong>{t(stage.outcome)}</strong></div><em>{t(stage.action)}</em></div>
       </article>
     </div>
