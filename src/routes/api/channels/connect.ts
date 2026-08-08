@@ -69,7 +69,7 @@ export const Route = createFileRoute("/api/channels/connect")({
               fixedOrderFee: fixed_order_fee, deliveryContribution: delivery_contribution,
             });
             return result.ok
-              ? resp({ ok: true, platform }, 200)
+              ? resp({ ok: true, platform, status: "connected" }, 200)
               : resp({ ok: false, error: result.message }, 200);
           }
 
@@ -80,7 +80,7 @@ export const Route = createFileRoute("/api/channels/connect")({
             }
             const result = await connectJahez({ merchantId: merchant_id, apiKey: api_key, secretCode: secret_code, branchId: branch_id });
             return result.ok
-              ? resp({ ok: true, platform }, 200)
+              ? resp({ ok: true, platform, status: "pending" }, 200)
               : resp({ ok: false, error: result.message }, 200);
           }
 

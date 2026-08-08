@@ -170,10 +170,10 @@ export function ChannelsTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ merchant_id: mid, access_code: accessCode, platform: p, ...byokFields }),
       });
-      const data = await res.json() as { ok?: boolean; error?: string };
+      const data = await res.json() as { ok?: boolean; error?: string; status?: ChannelStatus };
       if (data.ok) {
         setByokStatus("ok");
-        setStatuses(prev => ({ ...prev, [p]: "connected" }));
+        setStatuses(prev => ({ ...prev, [p]: data.status ?? "connected" }));
         setTimeout(() => { setByokPlatform(null); setByokStatus("idle"); setByokError(null); setByokFields({}); }, 1200);
       } else {
         setByokStatus("err");

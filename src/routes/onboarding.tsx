@@ -302,7 +302,7 @@ function EcommCard({
           }
         </div>
         <div>
-          <div className="ob-channel-name" style={{ display:"flex",alignItems:"center",gap:8,fontSize: featured ? 17 : 13.5, fontWeight: 700, color: NAVY }}>{name}{featured&&<span style={{padding:"4px 7px",borderRadius:99,background:OG,color:"#fff",fontSize:7,fontWeight:900,letterSpacing:".08em"}}>RECOMMENDED FIRST</span>}</div>
+          <div className="ob-channel-name" style={{ display:"flex",alignItems:"center",gap:8,fontSize: featured ? 17 : 13.5, fontWeight: 700, color: NAVY }}>{name}</div>
           <div style={{ fontSize: 11, color: MUTED, marginTop:4 }}>
             {connected ? "Connected and syncing your catalogue" : featured ? "Official integration for products, orders and inventory" : "Supported storefront connection"}
           </div>
@@ -330,17 +330,15 @@ function EcommCard({
 function Step2({
   merchantId,
   sallaConnected, zidConnected,
-  talabatToken, setTalabatToken,
-  snoonuToken, setSnoonuToken,
-  jahezToken, setJahezToken,
+  talabat, setTalabat,
+  jahez, setJahez,
   onNext, onBack,
 }: {
   merchantId: string;
   sallaConnected: boolean;
   zidConnected: boolean;
-  talabatToken: string; setTalabatToken: (v: string) => void;
-  snoonuToken: string; setSnoonuToken: (v: string) => void;
-  jahezToken: string; setJahezToken: (v: string) => void;
+  talabat: Record<string,string>; setTalabat: (v:Record<string,string>) => void;
+  jahez: Record<string,string>; setJahez: (v:Record<string,string>) => void;
   onNext: () => void; onBack: () => void;
 }) {
   function connectSalla() {
@@ -349,6 +347,13 @@ function Step2({
   function connectZid() {
     window.location.href = `/api/auth/zid?merchant_id=${encodeURIComponent(merchantId)}&return_to=%2Fonboarding`;
   }
+  const updateTalabat=(key:string,value:string)=>setTalabat({...talabat,[key]:value});
+  const updateJahez=(key:string,value:string)=>setJahez({...jahez,[key]:value});
+  const talabatReady=["client_id","client_secret","vendor_id","chain_id","commission_rate_pct"].every(key=>talabat[key]?.trim());
+  const jahezReady=["api_key","secret_code","branch_id"].every(key=>jahez[key]?.trim());
+  const hasTalabat=Object.values(talabat).some(value=>value.trim());
+  const hasJahez=Object.values(jahez).some(value=>value.trim());
+  const canProceed=(sallaConnected||zidConnected||talabatReady||jahezReady)&&(!hasTalabat||talabatReady)&&(!hasJahez||jahezReady);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -374,30 +379,32 @@ function Step2({
 
       <div>
         <div style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", letterSpacing: "0.6px", marginBottom: 10 }}>
-          OTHER CONNECTED CHANNELS <span style={{ color: "#9AA2B1", fontWeight: 500 }}>(optional)</span>
+          CONNECT YOUR ACTIVE CHANNELS
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div>
-            <FieldLabel>Talabat API Token</FieldLabel>
-            <FocusInput value={talabatToken} onChange={setTalabatToken} placeholder="tbt_live_xxxxxxxxxxxx" type="password" />
-          </div>
-          <div>
-            <FieldLabel>Snoonu API Token</FieldLabel>
-            <FocusInput value={snoonuToken} onChange={setSnoonuToken} placeholder="snu_live_xxxxxxxxxxxx" type="password" />
-          </div>
-          <div>
-            <FieldLabel>Jahez API Token</FieldLabel>
-            <FocusInput value={jahezToken} onChange={setJahezToken} placeholder="jhz_live_xxxxxxxxxxxx" type="password" />
-          </div>
+          <div className="ob-credential-group"><h3>Talabat Partner API</h3><p>PrizeSkout exchanges your Client ID and Client Secret for short-lived Talabat access tokens.</p><div className="ob-credential-grid">
+            <div><FieldLabel>Client ID</FieldLabel><FocusInput value={talabat.client_id??""} onChange={v=>updateTalabat("client_id",v)} placeholder="From Talabat Partner Portal" /></div>
+            <div><FieldLabel>Client Secret</FieldLabel><FocusInput value={talabat.client_secret??""} onChange={v=>updateTalabat("client_secret",v)} type="password" /></div>
+            <div><FieldLabel>Vendor ID</FieldLabel><FocusInput value={talabat.vendor_id??""} onChange={v=>updateTalabat("vendor_id",v)} /></div>
+            <div><FieldLabel>Chain ID</FieldLabel><FocusInput value={talabat.chain_id??""} onChange={v=>updateTalabat("chain_id",v)} placeholder="UUID from Shops Integrations" /></div>
+            <div><FieldLabel>Contract commission (%)</FieldLabel><FocusInput value={talabat.commission_rate_pct??""} onChange={v=>updateTalabat("commission_rate_pct",v)} placeholder="e.g. 19" /></div>
+          </div></div>
+          <div className="ob-credential-group"><h3>Jahez</h3><p>Credentials are stored securely and remain pending until verification completes.</p><div className="ob-credential-grid">
+            <div><FieldLabel>API Key</FieldLabel><FocusInput value={jahez.api_key??""} onChange={v=>updateJahez("api_key",v)} /></div>
+            <div><FieldLabel>Secret Code</FieldLabel><FocusInput value={jahez.secret_code??""} onChange={v=>updateJahez("secret_code",v)} type="password" /></div>
+            <div><FieldLabel>Branch ID</FieldLabel><FocusInput value={jahez.branch_id??""} onChange={v=>updateJahez("branch_id",v)} /></div>
+          </div></div>
+          <div className="ob-import-note"><b>Snoonu</b><span>Connect through payout report import after setup. A live API credential connector is not currently available.</span></div>
         </div>
       </div>
 
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
         <GhostBtn onClick={onBack}>← Back</GhostBtn>
         <div style={{ flex: 1 }}>
-          <PrimaryBtn onClick={onNext}>Continue to Defense Floors →</PrimaryBtn>
+          <PrimaryBtn onClick={onNext} disabled={!canProceed}>Continue to set protection →</PrimaryBtn>
         </div>
       </div>
+      {!canProceed&&<p style={{margin:0,color:MUTED,fontSize:11,textAlign:"center"}}>Connect Zid or Salla, or complete the required Talabat or Jahez credentials to continue.</p>}
     </div>
   );
 }
@@ -405,12 +412,12 @@ function Step2({
 function Step3({
   marginFloor, setMarginFloor,
   categoryFloors, setCategoryFloor,
-  onFinish, onBack,
+  onFinish, onBack, finishing, finishError,
 }: {
   marginFloor: number; setMarginFloor: (v: number) => void;
   categoryFloors: Record<string, number>;
   setCategoryFloor: (cat: string, v: number) => void;
-  onFinish: () => void; onBack: () => void;
+  onFinish: () => void; onBack: () => void; finishing:boolean;finishError:string;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -461,9 +468,10 @@ function Step3({
       <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
         <GhostBtn onClick={onBack}>← Back</GhostBtn>
         <div style={{ flex: 1 }}>
-          <PrimaryBtn onClick={onFinish}>Activate protection and enter dashboard</PrimaryBtn>
+          <PrimaryBtn onClick={onFinish} disabled={finishing}>{finishing?"Verifying channels…":"Activate protection and enter dashboard"}</PrimaryBtn>
         </div>
       </div>
+      {finishError&&<p role="alert" style={{margin:0,padding:"11px 13px",border:"1px solid #F5B9B5",borderRadius:9,background:"#FFF2F1",color:"#C83F36",fontSize:12}}>{finishError}</p>}
     </div>
   );
 }
@@ -650,10 +658,13 @@ function OnboardingPage() {
   const [sallaConnected, setSallaConnected] = useState(false);
   const [zidConnected,   setZidConnected]   = useState(false);
 
-  // Step 2 aggregator tokens
-  const [talabatToken, setTalabatToken] = useState("");
-  const [snoonuToken,  setSnoonuToken]  = useState("");
-  const [jahezToken,   setJahezToken]   = useState("");
+  // Step 2 channel credentials. These are submitted only after the merchant
+  // access code is registered, so the protected connection endpoint can
+  // verify ownership before storing anything.
+  const [talabat, setTalabat] = useState<Record<string,string>>({});
+  const [jahez, setJahez] = useState<Record<string,string>>({});
+  const [finishError,setFinishError]=useState("");
+  const [finishing,setFinishing]=useState(false);
 
   // Step 3
   const [marginFloor, setMarginFloor]         = useState(18);
@@ -688,6 +699,7 @@ function OnboardingPage() {
     sessionStorage.removeItem("ps_ob_currency");
     setMerchantId(""); setStoreName(""); setEmail(""); setRegion(""); setCurrency("");
     setSallaConnected(false); setZidConnected(false);
+    setTalabat({});setJahez({});
     setRestoreMode(false); setStep(0);
     setExistingSetup(false);
   }
@@ -742,6 +754,7 @@ function OnboardingPage() {
   }
 
   async function handleFinish() {
+    setFinishing(true);setFinishError("");
     let mid = merchantId || localStorage.getItem("ps_merchant_id") || "";
     if (!mid) {
       mid = crypto.randomUUID();
@@ -749,18 +762,28 @@ function OnboardingPage() {
       setMerchantId(mid);
     }
     const code = makeAccessCode(region);
-    localStorage.setItem("ps_access_code", code);
-    localStorage.setItem("ps_connected", "true");
 
-    // Persist code mapping in the background — don't block navigation. Email
+    // Register the access code before channel credentials. The channel
+    // endpoint verifies this mapping and rejects unregistered callers.
     // is stored alongside the code so the "Access your dashboard -> Email"
     // login path can later verify a real onboarded merchant owns it, rather
     // than trusting whatever's cached in the browser's localStorage.
-    fetch("/api/register-code", {
+    try {
+      const registration=await fetch("/api/register-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ merchant_id: mid, code, email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined }),
-    }).catch(() => {});
+      });
+      if(!registration.ok)throw new Error("PrizeSkout could not secure your onboarding session. Please try again.");
+      for(const [platform,credentials] of [["talabat",talabat],["jahez",jahez]] as const){
+        if(!Object.keys(credentials).length)continue;
+        const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials})});
+        const result=await response.json() as {ok?:boolean;error?:string};
+        if(!response.ok||!result.ok)throw new Error(result.error??`PrizeSkout could not configure ${platform}.`);
+      }
+    }catch(error){setFinishError(error instanceof Error?error.message:"Setup could not be completed.");setFinishing(false);return;}
+    localStorage.setItem("ps_access_code", code);
+    localStorage.setItem("ps_connected", "true");
 
     // Create the Supabase account in the background so the merchant can use
     // email access immediately after onboarding without needing the code.
@@ -777,6 +800,7 @@ function OnboardingPage() {
 
     setAccessCode(code);
     setStep(3);
+    setFinishing(false);
   }
 
   const showProgress = !restoreMode && step < 3;
@@ -788,9 +812,9 @@ function OnboardingPage() {
       fontFamily: "'Chillax', system-ui, -apple-system, sans-serif",
     }}>
       <style>{`
-        .ob-card h2{color:${NAVY}!important}.ob-kicker{color:${OG};font-size:9px;font-weight:900;letter-spacing:.14em}.ob-shell{position:relative}.ob-shell:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 78% 8%,rgba(243,106,33,.09),transparent 28%)}
+        .ob-card h2{color:${NAVY}!important}.ob-kicker{color:${OG};font-size:9px;font-weight:900;letter-spacing:.14em}.ob-shell{position:relative}.ob-shell:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 78% 8%,rgba(243,106,33,.09),transparent 28%)}.ob-credential-group{padding:18px;border:1px solid #DDE3EB;border-radius:14px;background:#F8FAFC}.ob-credential-group h3{margin:0;color:${NAVY};font-size:14px}.ob-credential-group>p{margin:5px 0 14px;color:${MUTED};font-size:11px;line-height:1.55}.ob-credential-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ob-import-note{display:flex;gap:12px;padding:14px;border:1px solid #DDE3EB;border-radius:12px;background:#fff}.ob-import-note b{color:${NAVY}}.ob-import-note span{color:${MUTED};font-size:11px;line-height:1.5}
         @media(min-width:600px){.ob-card{padding:38px 42px!important}}
-        @media(max-width:600px){.ob-progress-copy{display:none}.ob-channel{align-items:flex-start!important;flex-direction:column}.ob-channel>button{width:100%}}
+        @media(max-width:600px){.ob-progress-copy{display:none}.ob-channel{align-items:flex-start!important;flex-direction:column}.ob-channel>button{width:100%}.ob-credential-grid{grid-template-columns:1fr}}
       `}</style>
 
       {/* Logo + back link */}
@@ -846,9 +870,8 @@ function OnboardingPage() {
             merchantId={merchantId}
             sallaConnected={sallaConnected}
             zidConnected={zidConnected}
-            talabatToken={talabatToken} setTalabatToken={setTalabatToken}
-            snoonuToken={snoonuToken}   setSnoonuToken={setSnoonuToken}
-            jahezToken={jahezToken}     setJahezToken={setJahezToken}
+            talabat={talabat} setTalabat={setTalabat}
+            jahez={jahez} setJahez={setJahez}
             onNext={() => setStep(2)}
             onBack={() => setStep(0)}
           />
@@ -858,6 +881,7 @@ function OnboardingPage() {
             categoryFloors={categoryFloors} setCategoryFloor={setCategoryFloor}
             onFinish={handleFinish}
             onBack={() => setStep(1)}
+            finishing={finishing} finishError={finishError}
           />
         ) : (
           <AccessCodeScreen
