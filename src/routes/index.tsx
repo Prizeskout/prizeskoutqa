@@ -8,6 +8,7 @@ import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
 import { DemoPlayer } from "@/components/landing/DemoPlayer";
+import { RevenueProtectionLanding } from "@/components/landing/RevenueProtectionLanding";
 import {
   PLAN_PRICES_QAR_ANNUAL_MONTHLY,
   PLAN_PRICES_QAR_MONTHLY,
@@ -1031,6 +1032,9 @@ function FAQSection() {
 
 // ── Page root ─────────────────────────────────────────────────────────────────
 function LandingPage() {
+  return <RevenueProtectionLanding />;
+  /* Legacy landing retained temporarily for safe rollback while the new
+     revenue-protection direction is validated. */
   // Light is the default for every visit; only an explicit toggle opts into dark.
   const [dark, setDark] = useState(false);
   const [market, setMarket] = useState<Market>(MARKETS[0]);
