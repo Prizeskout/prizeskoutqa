@@ -68,7 +68,7 @@ function Intro({
 
 function CommerceNetwork({ lang }: { lang: Lang }) {
   return (
-    <section className="pss-network">
+    <section className="pss-network" id="integrations">
       <Intro
         lang={lang}
         center
@@ -126,7 +126,7 @@ function Node({ cls, label, detail }: { cls: string; label: string; detail: stri
 
 function ProfitStory({ lang }: { lang: Lang }) {
   return (
-    <section className="pss-section">
+    <section className="pss-section" id="platform">
       <Intro
         lang={lang}
         kicker={["SEE", "اعرف"]}
