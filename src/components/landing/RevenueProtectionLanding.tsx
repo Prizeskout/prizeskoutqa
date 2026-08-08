@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { applyLocale, getStoredLocale, type Locale } from "@/lib/i18n";
 import logo from "@/assets/logo-light.svg";
 import { ProductHeroDemo } from "./ProductHeroDemo";
+import { ProductStorySections } from "./ProductStorySections";
 
 const ORANGE="#F36A21", NAVY="#10182D", MUTED="#657086", GREEN="#18A66A";
 const channels=["Zid","Salla","Foodics","Talabat","Jahez","Careem","noon food"];
@@ -49,6 +50,8 @@ export function RevenueProtectionLanding(){
       <ProductHeroDemo lang={lang}/>
     </section>
 
+    <ProductStorySections lang={lang}/>
+    {false&&<>
     <section className="rpl-integrations" id="integrations"><p>{tr("Built for the commerce stack you already run.","مصمم للعمل مع منظومة التجارة التي تستخدمها بالفعل.")}</p><div>{channels.map(x=><span key={x}>{x}</span>)}</div></section>
 
     <section className="rpl-section" id="platform">
@@ -76,6 +79,7 @@ export function RevenueProtectionLanding(){
     <section className="rpl-section soft" id="pricing"><div className="center-intro"><div className="eyebrow">SIMPLE PRICING</div><h2>Start with visibility. Scale into protection.</h2><p>No bloated feature matrices. Pick the operating level that matches your restaurant today.</p></div><div className="price-grid"><Plan name="Core" subtitle="See & understand" price="QAR 349" features={["True Profit","CFO Copilot","Competitor Radar","Promotion Simulator"]}/><Plan popular name="Growth" subtitle="Protect & recover" price="QAR 1,099" features={["Everything in Core","Protected repricing","Commission audits","Dispute recovery"]}/><Plan name="Enterprise" subtitle="Operate at scale" price="Custom" features={["Multi-location","Enterprise APIs","Custom policies","Dedicated SLA"]}/></div></section>
 
     <section className="rpl-final"><img src={logo} alt="PrizeSkout"/><h2>{tr("Your margins should not depend on someone else’s dashboard.","يجب ألا تعتمد هوامشك على لوحة تحكم جهة أخرى.")}</h2><p>{tr("Connect your commerce stack and put every order under active revenue protection.","اربط منظومة تجارتك وضع كل طلب تحت حماية نشطة للإيرادات.")}</p><div className="rpl-ctas"><a href="/contact">{tr("Book a demo","احجز عرضاً توضيحياً")}</a><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a></div></section>
+    </>}
     <footer className="rpl-footer"><img src={logo} alt="PrizeSkout"/><div><a href="#product">Product</a><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#integrations">Integrations</a><a href="/legal">Security</a></div><span>© 2026 PrizeSkout</span></footer>
   </main>
 }
