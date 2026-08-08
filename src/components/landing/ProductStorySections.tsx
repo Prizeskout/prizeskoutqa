@@ -699,7 +699,6 @@ function FinalCta({ lang }: { lang: Lang }) {
         <span>✓ {tx(lang, ["Work prepared", "العمل جاهز"])}</span>
         <span>✓ {tx(lang, ["Payout monitored", "الدفعة تحت المراقبة"])}</span>
       </div>
-      <img src={logo} alt="PrizeSkout" />
       <h2>
         {tx(lang, [
           "Your margins should not depend on someone else’s dashboard.",
