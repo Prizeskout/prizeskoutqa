@@ -620,6 +620,8 @@ function DetailedPricing({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   const { t } = useTranslation();
   const [annual, setAnnual] = useState(false);
+  const [expandedPlan, setExpandedPlan] = useState<DetailedPlan | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   const copy = (plan: DetailedPlan) => ({
     audience: t(`plans.packages.${plan}.audience`),
     description: t(`plans.packages.${plan}.description`),
@@ -651,30 +653,48 @@ function DetailedPricing({ lang }: { lang: Lang }) {
           const details = copy(plan.id);
           const configuredPrice = annual ? PLAN_PRICES_QAR_ANNUAL_MONTHLY[plan.id] : PLAN_PRICES_QAR_MONTHLY[plan.id];
           const price = configuredPrice == null ? tx(lang, ["Custom", "مخصص"]) : money(configuredPrice);
-          return <DetailedPrice key={plan.id} lang={lang} {...plan} price={price} annual={annual} {...details} />;
+          return <DetailedPrice key={plan.id} planId={plan.id} lang={lang} {...plan} price={price} annual={annual} expanded={expandedPlan === plan.id} onToggle={() => setExpandedPlan(current => current === plan.id ? null : plan.id)} {...details} />;
         })}
       </div>
+      <button type="button" className="pss-compare-trigger" aria-expanded={compareOpen} onClick={() => setCompareOpen(value => !value)}>
+        {compareOpen ? tx(lang, ["Hide plan comparison", "إخفاء مقارنة الخطط"]) : tx(lang, ["Compare all plans", "مقارنة كل الخطط"])}
+      </button>
+      {compareOpen && <div className="pss-plan-comparison">
+        {plans.map(plan => {
+          const details = copy(plan.id);
+          return <section key={plan.id}><h4>{plan.name}</h4><ul>{details.features.map(feature => <li key={feature}>✓ {feature}</li>)}</ul></section>;
+        })}
+      </div>}
     </section>
   );
 }
 
 function DetailedPrice({
-  lang, name, price, audience, description, features, popular, annual,
+  planId, lang, name, price, audience, description, features, popular, annual, expanded, onToggle,
 }: {
+  planId: DetailedPlan;
   lang: Lang; name: string; price: string; audience: string; description: string;
-  features: string[]; popular: boolean; annual: boolean;
+  features: string[]; popular: boolean; annual: boolean; expanded: boolean; onToggle: () => void;
 }) {
   const custom = name === "Enterprise";
+  const limitIndex = planId === "starter" ? 0 : 1;
+  const limits = features[limitIndex]?.split(" · ") ?? [];
+  const keyFeatures = features.filter((_, index) => index !== limitIndex).slice(0, 4);
+  const visibleFeatures = expanded ? features.filter((_, index) => index !== limitIndex) : keyFeatures;
   return (
     <article className={`pss-price pss-price-detailed ${popular ? "popular" : ""}`}>
       {popular && <em>{tx(lang, ["MOST POPULAR", "الأكثر شيوعاً"])}</em>}
-      <small>{audience}</small>
+      <div className="pss-best-for"><b>{tx(lang, ["BEST FOR", "الأنسب لـ"])}</b><span>{audience.replace(/^For /, "")}</span></div>
       <h3>{name}</h3>
       <strong>{price}</strong>
       {!custom && <span>/ {tx(lang, ["month", "شهر"])}</span>}
       {!custom && annual && <div className="pss-annual-note">{tx(lang, ["Billed annually", "تتم الفوترة سنوياً"])}</div>}
-      <p>{description}</p>
-      <ul>{features.map(feature => <li key={feature}>✓ {feature}</li>)}</ul>
+      <div className="pss-plan-limits">{limits.map(limit => <span key={limit}>{limit}</span>)}</div>
+      {expanded && <p>{description}</p>}
+      <ul>{visibleFeatures.map(feature => <li key={feature}>✓ {feature}</li>)}</ul>
+      <button type="button" className="pss-feature-toggle" aria-expanded={expanded} onClick={onToggle}>
+        {expanded ? tx(lang, ["Show less", "عرض أقل"]) : tx(lang, [`See all ${features.length} features`, `عرض كل الميزات وعددها ${features.length}`])}
+      </button>
       <a href={custom ? "/contact" : "/onboarding"}>
         {custom ? tx(lang, ["Talk to sales", "تحدث مع المبيعات"]) : popular ? tx(lang, ["Choose Growth", "اختر Growth"]) : tx(lang, ["Get started", "ابدأ الآن"])}
       </a>
