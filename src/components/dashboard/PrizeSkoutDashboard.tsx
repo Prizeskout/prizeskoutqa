@@ -3194,7 +3194,7 @@ export function PrizeSkoutDashboard() {
 
   const runCopilot = async (text: string, requestedRole: "cfo" | "manager" | "auto" = "auto") => {
     const prompt = text.trim();
-    if (!prompt || cpPhase === "loading") return;
+    if (!prompt || cpPhase === "loading") return false;
     const previousOperation = cpObj?._type === "operation" ? cpObj : cpPendingDraftRef.current;
     const previousProducts = cpOperationProducts.map((product) => ({
       name: product.name_en || product.name_ar,
@@ -3281,7 +3281,7 @@ export function PrizeSkoutDashboard() {
             `Server error (${res.status}) — the route may still be deploying. Try again in a moment.`,
         );
         setCpPhase("idle");
-        return;
+        return false;
       }
       cpConversationRef.current = conversation;
       if (data.type === "workflow" && data.workflow) {
@@ -3290,14 +3290,14 @@ export function PrizeSkoutDashboard() {
         setCpObj(workflow);
         setCpChatMessage(null);
         setCpPhase("result");
-        await prepareManagerWorkflow(workflow);
+        return await prepareManagerWorkflow(workflow);
       } else if (data.type === "operation" && data.operation) {
         cpPendingDraftRef.current = null;
         const operation = { ...data.operation, _type: "operation" };
         setCpObj(operation);
         setCpChatMessage(null);
         setCpPhase("result");
-        await prepareCopilotOperation(operation);
+        return await prepareCopilotOperation(operation);
       } else if (data.type === "clarification" && data.message) {
         cpPendingDraftRef.current =
           data.draft_workflow ?? data.draft_operation ?? previousOperation;
@@ -3308,6 +3308,7 @@ export function PrizeSkoutDashboard() {
           ...conversation,
           { role: "assistant", text: data.message },
         ]);
+        return false;
       } else if (data.type === "chat" && data.message) {
         setCpChatMessage(data.message);
         setCpObj(null);
@@ -3316,17 +3317,21 @@ export function PrizeSkoutDashboard() {
           ...conversation,
           { role: "assistant", text: data.message },
         ]);
+        return true;
       } else if (data.rule) {
         setCpObj(data.rule);
         setCpChatMessage(null);
         setCpPhase("result");
+        return true;
       } else {
         setCpError(data.error ?? "Unexpected response — try rephrasing your request.");
         setCpPhase("idle");
+        return false;
       }
     } catch (error) {
       setCpError(error instanceof Error ? error.message : "Request failed. Check your connection and try again.");
       setCpPhase("idle");
+      return false;
     }
   };
 
@@ -3370,11 +3375,13 @@ export function PrizeSkoutDashboard() {
         `I prepared and saved a ${steps.length}-step plan in the Management desk. ${approvals} step${approvals === 1 ? " needs" : "s need"} your approval.${manual ? ` ${manual} step${manual === 1 ? " needs" : "s need"} someone to complete it because the partner does not let PrizeSkout do it directly.` : ""} Nothing has changed in your store.`,
       );
       setCpOperationStatus("ready");
+      return true;
     } catch (error) {
       setCpOperationStatus("failed");
       setCpOperationMessage(
         error instanceof Error ? error.message : "The workflow could not be prepared.",
       );
+      return false;
     }
   };
 
@@ -3925,11 +3932,13 @@ export function PrizeSkoutDashboard() {
       }
       if (op === "sync_catalog") setCpOperationProducts(matchCopilotProducts(operation, products));
       setCpOperationStatus(op === "customer_search" ? "complete" : "ready");
+      return true;
     } catch (error) {
       setCpOperationStatus("failed");
       setCpOperationMessage(
         error instanceof Error ? error.message : "The operation could not be completed.",
       );
+      return false;
     }
   };
 
@@ -5008,20 +5017,20 @@ export function PrizeSkoutDashboard() {
     if (requestedRole === "manager") {
       setAssistantDrawerOpen(false);
       setTab("manager");
-      showToast("AI Store Manager is preparing and assigning the work.");
+      showToast("Shop Manager is preparing and assigning the work.");
     } else {
       setAssistantDrawerOpen(true);
     }
     void runCopilot(prompt.trim(), requestedRole);
   };
-  const runPrizeSkoutAssistant = (prompt: string) => {
-    if (!prompt.trim() || cpPhase === "loading") return;
+  const runPrizeSkoutAssistant = async (prompt: string): Promise<boolean> => {
+    if (!prompt.trim() || cpPhase === "loading") return false;
     setAssistantDrawerOpen(false);
     setCpInput(prompt.trim());
     const managementIntent = /\b(?:prepare|delegate|assign|handle|manage|organize|organise|follow up|highest priority|store tasks?|workflow)\b/i.test(prompt);
     setTab(managementIntent ? "manager" : "rules");
     if (managementIntent) showToast("PrizeSkout is preparing and assigning the work.");
-    void runCopilot(prompt.trim(), managementIntent ? "manager" : "auto");
+    const result = runCopilot(prompt.trim(), managementIntent ? "manager" : "auto");
     window.setTimeout(
       () =>
         document
@@ -5029,6 +5038,7 @@ export function PrizeSkoutDashboard() {
           ?.scrollIntoView({ behavior: "smooth", block: "start" }),
       0,
     );
+    return await result;
   };
   const runPreparedManagerTask = (prompt: string) => runPrizeSkoutAssistant(prompt);
   const assistantNudge = (targetTab: Tab) => (
@@ -9039,9 +9049,9 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {/* PrizeSkout Assistant */}
+            {/* CFO Copilot and Shop Manager */}
             <div
-              data-demo-tip="PrizeSkout Assistant answers business questions, runs safe checks, prepares store work, and asks once before protected changes."
+              data-demo-tip="CFO Copilot and Shop Manager answer business questions, run safe checks, prepare store work, and ask once before protected changes."
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -9066,7 +9076,7 @@ export function PrizeSkoutDashboard() {
                   <h2
                     style={{ margin: 0, fontSize: 20.5, fontWeight: 800, letterSpacing: "-0.3px" }}
                   >
-                    PrizeSkout Assistant
+                    CFO Copilot and Shop Manager
                   </h2>
                   <span style={{ fontSize: 15, color: "var(--muted)" }}>
                     Ask questions about profit, margins and payouts—or tell PrizeSkout to manage
@@ -9365,7 +9375,7 @@ export function PrizeSkoutDashboard() {
                       paddingLeft: 2,
                     }}
                   >
-                    PrizeSkout Assistant
+                    CFO Copilot and Shop Manager
                   </div>
                   <div
                     style={{
@@ -9497,7 +9507,7 @@ export function PrizeSkoutDashboard() {
                           <div style={{ marginBottom: 14 }}>
                             <strong>Complete the product details</strong>
                             <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 12.5 }}>
-                              Name and selling price are required. Everything else can be added now or later.
+                              Name and selling price are required. Leave stock blank to use unlimited stock.
                             </div>
                           </div>
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 12 }}>
@@ -9506,7 +9516,7 @@ export function PrizeSkoutDashboard() {
                               ["SKU", "product_sku", "text", "Generated if left blank", false],
                               ["Selling price", "product_price", "number", "0.00", true],
                               ["Cost", "product_cost", "number", "Optional", false],
-                              ["Stock", "product_quantity", "number", "Optional", false],
+                              ["Stock", "product_quantity", "number", "Unlimited if blank", false],
                             ].map(([label, field, type, placeholder, required]) => (
                               <label key={String(field)} style={{ display: "grid", gap: 6, fontSize: 12.5, color: "var(--muted)" }}>
                                 <span>{label}{required ? " *" : ""}</span>
@@ -14300,7 +14310,7 @@ export function PrizeSkoutDashboard() {
       {!assistantDrawerOpen && (
         <button
           type="button"
-          aria-label={tr("Open PrizeSkout Assistant", "افتح مساعد PrizeSkout", "Ouvrir l’assistant PrizeSkout")}
+          aria-label={tr("Open CFO Copilot and Shop Manager", "افتح المساعد المالي ومدير المتجر", "Ouvrir le copilote financier et le gestionnaire de boutique")}
           onClick={() => {
             setAssistantDrawerOpen(false);
             setTab("rules");
@@ -14329,7 +14339,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">✦</span> {tr("PrizeSkout Assistant", "مساعد PrizeSkout", "Assistant PrizeSkout")}
+          <span aria-hidden="true">✦</span> {tr("CFO Copilot and Shop Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
         </button>
       )}
       {assistantDrawerOpen && (
@@ -14341,7 +14351,7 @@ export function PrizeSkoutDashboard() {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label={tr("CFO Copilot and Store Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
+            aria-label={tr("CFO Copilot and Shop Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
             onClick={(event) => event.stopPropagation()}
             style={{
               position: "absolute",
@@ -14370,7 +14380,7 @@ export function PrizeSkoutDashboard() {
             >
               <div>
                 <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>
-                  {tr("CFO Copilot & Store Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
+                  {tr("CFO Copilot and Shop Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
                 </h2>
                 <p
                   style={{

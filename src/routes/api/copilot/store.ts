@@ -141,7 +141,7 @@ export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST
     return json({ok:confirmed,confirmed,action_id:`PS-ORDER-${Date.now().toString(36).toUpperCase()}`,message:confirmed?`Order ${orderId} was moved to ${status} and confirmed in Zid.`:`Zid accepted the update, but the new status could not be confirmed by readback. Current readback: ${matchedStatus||"order not returned"}.`},confirmed?200:502);
   }
   if(body?.action==="create_product_draft"){
-    const name=body.product_name?.trim(),price=Number(body.product_price),publish=body.publish_product===true,cost=body.product_cost==null?null:Number(body.product_cost),quantity=body.product_quantity==null?null:Number(body.product_quantity),infinite=body.product_infinite===true;
+    const name=body.product_name?.trim(),price=Number(body.product_price),publish=body.publish_product===true,cost=body.product_cost==null?null:Number(body.product_cost),quantity=body.product_quantity==null?null:Number(body.product_quantity),infinite=body.product_infinite===true||body.product_quantity==null;
     if(!name||!Number.isFinite(price)||price<=0)return json({error:"Product name and a positive selling price are required."},400);
     if(cost!=null&&(!Number.isFinite(cost)||cost<0))return json({error:"Product cost must be zero or more."},400);
     if(quantity!=null&&(!Number.isInteger(quantity)||quantity<0))return json({error:"Stock quantity must be a whole number of zero or more."},400);

@@ -36,6 +36,7 @@ type ManagerTask = {
   status: string;
   priority: string;
   approval_required: boolean;
+  risk_level: string;
   assigned_to: string | null;
   due_at: string | null;
   created_at: string;
@@ -86,7 +87,7 @@ export function MerchantOperatingLoop({
 }: {
   mode?: "hub" | "history";
   onAskCopilot?: (prompt: string) => void;
-  onRunTask?: (prompt: string) => void;
+  onRunTask?: (prompt: string) => Promise<boolean>;
   onContinueSetup?: () => void;
   lang?: "en" | "ar" | "fr";
 }) {
@@ -544,7 +545,7 @@ export function MerchantOperatingLoop({
           tasks={openManagerTasks}
           busy={busy}
           onMove={moveTask}
-          onRun={onRunTask ?? onAskCopilot}
+          onRun={onRunTask}
         />
       </div>
 
@@ -757,8 +758,9 @@ function ManagerTasks({
   tasks: ManagerTask[];
   busy: string;
   onMove: (task: ManagerTask, to: string) => void;
-  onRun?: (prompt: string) => void;
+  onRun?: (prompt: string) => Promise<boolean>;
 }) {
+  const [runningId, setRunningId] = useState("");
   if (!tasks.length)
     return (
       <div style={{ marginTop: 12, fontSize: 12.5, color: "var(--muted)" }}>
@@ -790,7 +792,7 @@ function ManagerTasks({
             </div>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            {task.status === "waiting_approval" && (
+            {task.status === "waiting_approval" && task.risk_level !== "read_only" && (
               <button
                 disabled={busy === task.id}
                 onClick={() => onMove(task, "approved")}
@@ -799,30 +801,51 @@ function ManagerTasks({
                 Approve
               </button>
             )}
+            {task.status === "waiting_approval" && task.risk_level === "read_only" && onRun && (
+              <button
+                disabled={busy === task.id || runningId === task.id}
+                onClick={async () => {
+                  setRunningId(task.id);
+                  const completed = await onRun(task.title);
+                  if (completed) onMove(task, "completed");
+                  setRunningId("");
+                }}
+                style={{ ...smallButton, color: GN }}
+              >
+                {runningId === task.id ? "Running check" : "Run check"}
+              </button>
+            )}
             {["detected", "needs_attention"].includes(task.status) && (
               <button
-                disabled={busy === task.id}
-                onClick={() => {
+                disabled={busy === task.id || runningId === task.id}
+                onClick={async () => {
                   if (onRun) {
-                    onRun(task.title);
-                    onMove(task, "prepared");
+                    setRunningId(task.id);
+                    const completed = await onRun(task.title);
+                    if (completed) onMove(task, task.risk_level === "read_only" ? "completed" : "prepared");
+                    setRunningId("");
                   } else {
                     onMove(task, "investigating");
                   }
                 }}
                 style={smallButton}
               >
-                {onRun ? "Run task" : "Start review"}
+                {runningId === task.id ? "Running task" : onRun ? "Run task" : "Start review"}
               </button>
             )}
             {["investigating", "prepared"].includes(task.status) &&
-              !task.approval_required && (
+              task.risk_level === "read_only" && onRun && (
                 <button
-                  disabled={busy === task.id}
-                  onClick={() => onMove(task, "completed")}
+                  disabled={busy === task.id || runningId === task.id}
+                  onClick={async () => {
+                    setRunningId(task.id);
+                    const completed = await onRun(task.title);
+                    if (completed) onMove(task, "completed");
+                    setRunningId("");
+                  }}
                   style={{ ...smallButton, color: GN }}
                 >
-                  Mark complete
+                  {runningId === task.id ? "Running check" : "Retry check"}
                 </button>
               )}
             {!["executing", "verifying"].includes(task.status) && (

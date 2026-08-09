@@ -5,7 +5,7 @@ type Lang = "en" | "ar" | "fr";
 const OG = "#EF681A";
 const COPY = {
   en: {
-    name: "PrizeSkout Assistant",
+    name: "CFO Copilot and Shop Manager",
     description: "Ask a question or describe an outcome. PrizeSkout will choose the right tool, act when safe, and ask once before any protected change.",
     placeholder: "What would you like PrizeSkout to handle?",
     submit: "Send",
@@ -14,7 +14,7 @@ const COPY = {
     suggestions: ["What needs my attention today?", "Find products with incomplete information", "Prepare my highest priority store tasks"],
   },
   ar: {
-    name: "مساعد PrizeSkout",
+    name: "المساعد المالي ومدير المتجر",
     description: "اطرح سؤالاً أو صف النتيجة المطلوبة. سيختار PrizeSkout الأداة المناسبة وينفذ ما هو آمن ويطلب موافقتك مرة واحدة قبل أي تغيير محمي.",
     placeholder: "ما الذي تريد من PrizeSkout إنجازه؟",
     submit: "إرسال",
@@ -23,7 +23,7 @@ const COPY = {
     suggestions: ["ما الذي يحتاج إلى انتباهي اليوم؟", "اعرض المنتجات ذات المعلومات الناقصة", "جهّز أهم مهام المتجر"],
   },
   fr: {
-    name: "Assistant PrizeSkout",
+    name: "Copilote financier et gestionnaire de boutique",
     description: "Posez une question ou décrivez le résultat souhaité. PrizeSkout choisit le bon outil, agit lorsque cela est sûr et demande une seule validation avant tout changement protégé.",
     placeholder: "Que souhaitez vous confier à PrizeSkout ?",
     submit: "Envoyer",
