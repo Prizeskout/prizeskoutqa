@@ -1,31 +1,99 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-type Task = { status: string; priority: string };
-type Attention = { status: string; priority: string };
 type Lang = "en" | "ar" | "fr";
 
-const OG = "#EF681A", NAVY = "#14213D", RED = "#DC2626";
+const OG = "#EF681A";
 const COPY = {
-  en: { copilots: "PrizeSkout Copilots", cfoDesc: "Understand profit, margins, payouts, and financial risks.", managerDesc: "Delegate catalogue and store operations with protected approvals.", approval: "approval waiting", approvals: "approvals waiting", task: "management task open", tasks: "management tasks open", desk: "Management desk", urgent: "urgent", choose: "Choose a PrizeSkout copilot", cfo: "CFO Copilot", manager: "Store Manager", askLabel: "Ask CFO Copilot", delegateLabel: "Delegate to Store Manager", askPlaceholder: "Ask CFO Copilot about your numbers…", delegatePlaceholder: "What should PrizeSkout handle today?", ask: "Ask CFO →", delegate: "Delegate →", open: "Open full", managerSuggestions: ["What needs my attention today?", "Find products with incomplete information", "Prepare my highest-priority store tasks"] },
-  ar: { copilots: "مساعدا PrizeSkout", cfoDesc: "افهم الأرباح والهوامش والمدفوعات والمخاطر المالية.", managerDesc: "فوّض أعمال الكتالوج والمتجر مع موافقات تحميك.", approval: "موافقة بانتظارك", approvals: "موافقات بانتظارك", task: "مهمة إدارية مفتوحة", tasks: "مهام إدارية مفتوحة", desk: "مكتب الإدارة", urgent: "عاجل", choose: "اختر مساعد PrizeSkout", cfo: "المساعد المالي", manager: "مدير المتجر", askLabel: "اسأل المساعد المالي", delegateLabel: "فوّض إلى مدير المتجر", askPlaceholder: "اسأل المساعد المالي عن أرقامك…", delegatePlaceholder: "ما الذي تريد من PrizeSkout إنجازه اليوم؟", ask: "اسأل المساعد ←", delegate: "فوّض ←", open: "افتح بالكامل", managerSuggestions: ["ما الذي يحتاج إلى انتباهي اليوم؟", "اعرض المنتجات ذات المعلومات الناقصة", "جهّز أهم مهام المتجر"] },
-  fr: { copilots: "Assistants PrizeSkout", cfoDesc: "Comprenez les bénéfices, les marges, les versements et les risques financiers.", managerDesc: "Déléguez le catalogue et les opérations de la boutique avec des validations protégées.", approval: "validation en attente", approvals: "validations en attente", task: "tâche de gestion ouverte", tasks: "tâches de gestion ouvertes", desk: "Bureau de gestion", urgent: "urgent", choose: "Choisir un assistant PrizeSkout", cfo: "Copilote financier", manager: "Gestionnaire de boutique", askLabel: "Interroger le copilote financier", delegateLabel: "Déléguer au gestionnaire", askPlaceholder: "Interrogez le copilote financier sur vos chiffres…", delegatePlaceholder: "Que doit prendre en charge PrizeSkout aujourd’hui ?", ask: "Demander →", delegate: "Déléguer →", open: "Ouvrir", managerSuggestions: ["Qu’est-ce qui demande mon attention aujourd’hui ?", "Trouver les produits aux informations incomplètes", "Préparer mes tâches prioritaires"] },
+  en: {
+    name: "PrizeSkout Assistant",
+    description: "Ask a question or describe an outcome. PrizeSkout will choose the right tool, act when safe, and ask once before any protected change.",
+    placeholder: "What would you like PrizeSkout to handle?",
+    submit: "Send",
+    working: "Working",
+    open: "Open assistant",
+    suggestions: ["What needs my attention today?", "Find products with incomplete information", "Prepare my highest priority store tasks"],
+  },
+  ar: {
+    name: "مساعد PrizeSkout",
+    description: "اطرح سؤالاً أو صف النتيجة المطلوبة. سيختار PrizeSkout الأداة المناسبة وينفذ ما هو آمن ويطلب موافقتك مرة واحدة قبل أي تغيير محمي.",
+    placeholder: "ما الذي تريد من PrizeSkout إنجازه؟",
+    submit: "إرسال",
+    working: "جارٍ التنفيذ",
+    open: "فتح المساعد",
+    suggestions: ["ما الذي يحتاج إلى انتباهي اليوم؟", "اعرض المنتجات ذات المعلومات الناقصة", "جهّز أهم مهام المتجر"],
+  },
+  fr: {
+    name: "Assistant PrizeSkout",
+    description: "Posez une question ou décrivez le résultat souhaité. PrizeSkout choisit le bon outil, agit lorsque cela est sûr et demande une seule validation avant tout changement protégé.",
+    placeholder: "Que souhaitez vous confier à PrizeSkout ?",
+    submit: "Envoyer",
+    working: "En cours",
+    open: "Ouvrir l’assistant",
+    suggestions: ["Que dois je examiner aujourd’hui ?", "Trouver les produits aux informations incomplètes", "Préparer mes tâches prioritaires"],
+  },
 } as const;
 
-export function StoreManagerCommandBar({ context, examples, onSubmit, onOpenManager, onOpenCfo, busy = false, lang = "en" }: { context: string; examples: string[]; onSubmit: (prompt: string, mode: "cfo" | "manager") => void; onOpenManager: () => void; onOpenCfo: () => void; busy?: boolean; lang?: Lang }) {
+export function StoreManagerCommandBar({
+  context,
+  examples,
+  onSubmit,
+  onOpenAssistant,
+  busy = false,
+  lang = "en",
+}: {
+  context: string;
+  examples: string[];
+  onSubmit: (prompt: string) => void;
+  onOpenAssistant: () => void;
+  busy?: boolean;
+  lang?: Lang;
+}) {
   const c = COPY[lang];
-  const [mode, setMode] = useState<"cfo" | "manager">("cfo"), [value, setValue] = useState(""), [tasks, setTasks] = useState<Task[]>([]), [attention, setAttention] = useState<Attention[]>([]);
-  useEffect(() => { let active = true; const load = async () => { try { const response = await fetch("/api/channels/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: localStorage.getItem("ps_merchant_id") ?? "", access_code: localStorage.getItem("ps_access_code") ?? "", platform: "merchant_experience", action: "get" }) }), body = await response.json(); if (active && response.ok && body.ok) { setTasks(body.manager?.tasks ?? []); setAttention(body.items ?? []); } } catch { /* Both copilots remain usable if status cannot be loaded. */ } }; void load(); const timer = window.setInterval(() => void load(), 60_000); return () => { active = false; window.clearInterval(timer); }; }, []);
-  const openTasks = tasks.filter(task => !["completed", "cancelled"].includes(task.status));
-  const approvals = openTasks.filter(task => task.status === "waiting_approval");
-  const urgent = attention.filter(item => ["open", "assigned", "waiting_approval"].includes(item.status) && ["critical", "high"].includes(item.priority));
-  const activeColor = mode === "cfo" ? NAVY : OG;
-  const suggestions = mode === "cfo" ? examples : [...c.managerSuggestions];
-  const submit = () => { const prompt = value.trim(); if (!prompt || busy) return; onSubmit(prompt, mode); setValue(""); };
+  const [value, setValue] = useState("");
+  const suggestions = [...new Set([...examples, ...c.suggestions])].slice(0, 3);
+  const submit = () => {
+    const prompt = value.trim();
+    if (!prompt || busy) return;
+    onSubmit(prompt);
+    setValue("");
+  };
 
-  return <section data-tour="copilot-command" style={{ margin: "18px 30px 0", padding: "16px 18px", border: `1px solid color-mix(in srgb,${activeColor} 28%,var(--border))`, borderRadius: 15, background: `linear-gradient(135deg,color-mix(in srgb,${activeColor} 6%,var(--surface)),var(--surface))`, boxShadow: "0 10px 28px rgba(15,23,42,.06)" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 11 }}><div><div style={{ fontSize: 11, fontWeight: 900, color: activeColor, textTransform: "uppercase", letterSpacing: ".08em" }}>{c.copilots} · {context}</div><div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>{mode === "cfo" ? c.cfoDesc : c.managerDesc}</div></div><button type="button" onClick={onOpenManager} style={{ border: "1px solid var(--border)", borderRadius: 999, padding: "7px 10px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 750, fontSize: 11.5, cursor: "pointer" }}>{approvals.length ? `${approvals.length} ${approvals.length === 1 ? c.approval : c.approvals}` : openTasks.length ? `${openTasks.length} ${openTasks.length === 1 ? c.task : c.tasks}` : c.desk}{urgent.length ? <span style={{ color: RED }}> · {urgent.length} {c.urgent}</span> : null}</button></div>
-    <div role="tablist" aria-label={c.choose} style={{ display: "inline-flex", padding: 3, border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface2)", marginBottom: 10 }}>{[["cfo", c.cfo], ["manager", c.manager]].map(([id, label]) => <button key={id} role="tab" aria-selected={mode === id} onClick={() => setMode(id as "cfo" | "manager")} style={{ border: 0, borderRadius: 7, padding: "8px 12px", background: mode === id ? (id === "cfo" ? NAVY : OG) : "transparent", color: mode === id ? "#fff" : "var(--muted)", fontFamily: "inherit", fontWeight: 850, cursor: "pointer" }}>{label}</button>)}</div>
-    <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}><input aria-label={mode === "cfo" ? c.askLabel : c.delegateLabel} value={value} onChange={event => setValue(event.target.value)} onKeyDown={event => { if (event.key === "Enter") submit(); }} placeholder={mode === "cfo" ? c.askPlaceholder : c.delegatePlaceholder} style={{ flex: 1, minWidth: 0, border: "1.5px solid var(--border)", borderRadius: 11, padding: "12px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 14.5, outline: "none" }} /><button type="button" disabled={!value.trim() || busy} onClick={submit} style={{ border: 0, borderRadius: 11, padding: "11px 16px", background: activeColor, color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: value.trim() && !busy ? "pointer" : "default", opacity: value.trim() && !busy ? 1 : .55 }}>{mode === "cfo" ? c.ask : c.delegate}</button></div>
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginTop: 9, flexWrap: "wrap" }}><div style={{ display: "flex", gap: 7, overflowX: "auto" }}>{suggestions.slice(0, 3).map(example => <button key={example} type="button" onClick={() => setValue(example)} style={{ whiteSpace: "nowrap", border: "1px solid var(--border)", borderRadius: 999, padding: "6px 9px", background: "var(--surface)", color: "var(--muted)", fontFamily: "inherit", fontSize: 10.5, cursor: "pointer" }}>{example}</button>)}</div><button type="button" onClick={mode === "cfo" ? onOpenCfo : onOpenManager} style={{ border: 0, background: "transparent", color: activeColor, fontFamily: "inherit", fontSize: 11.5, fontWeight: 850, cursor: "pointer" }}>{c.open} {mode === "cfo" ? c.cfo : c.manager} →</button></div>
-  </section>;
+  return (
+    <section
+      data-tour="copilot-command"
+      style={{
+        margin: "18px 30px 0",
+        padding: "16px 18px",
+        border: `1px solid color-mix(in srgb,${OG} 28%,var(--border))`,
+        borderRadius: 15,
+        background: `linear-gradient(135deg,color-mix(in srgb,${OG} 6%,var(--surface)),var(--surface))`,
+        boxShadow: "0 10px 28px rgba(15,23,42,.06)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start", flexWrap: "wrap", marginBottom: 11 }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "var(--text)" }}>{c.name}</div>
+          <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3, maxWidth: 760 }}>{c.description}</div>
+          <div style={{ fontSize: 10.5, color: OG, marginTop: 5, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>{context}</div>
+        </div>
+        <button type="button" onClick={onOpenAssistant} style={{ border: "1px solid var(--border)", borderRadius: 999, padding: "8px 11px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, fontSize: 11.5, cursor: "pointer" }}>{c.open}</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+        <input
+          aria-label={c.name}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => { if (event.key === "Enter") submit(); }}
+          placeholder={c.placeholder}
+          style={{ flex: 1, minWidth: 0, border: "1.5px solid var(--border)", borderRadius: 11, padding: "12px 14px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 14.5, outline: "none" }}
+        />
+        <button type="button" disabled={!value.trim() || busy} onClick={submit} style={{ border: 0, borderRadius: 11, padding: "11px 18px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: value.trim() && !busy ? "pointer" : "default", opacity: value.trim() && !busy ? 1 : 0.55 }}>{busy ? c.working : c.submit}</button>
+      </div>
+      <div style={{ display: "flex", gap: 7, overflowX: "auto", marginTop: 9 }}>
+        {suggestions.map((example) => (
+          <button key={example} type="button" onClick={() => setValue(example)} style={{ whiteSpace: "nowrap", border: "1px solid var(--border)", borderRadius: 999, padding: "6px 9px", background: "var(--surface)", color: "var(--muted)", fontFamily: "inherit", fontSize: 10.5, cursor: "pointer" }}>{example}</button>
+        ))}
+      </div>
+    </section>
+  );
 }

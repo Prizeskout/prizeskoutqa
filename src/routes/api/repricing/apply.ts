@@ -48,31 +48,34 @@ export const Route = createFileRoute("/api/repricing/apply")({
         }
 
         // 1. Validate access code — confirm the caller owns this merchant_id
-        const { data: codeRow } = await supabaseAdmin
-          .from("ps_access_codes" as never)
-          .select("merchant_id")
-          .eq("code", accessCode)
-          .maybeSingle() as { data: { merchant_id: string } | null };
+        const accountId = merchantId;
+        const [codeResult, eventResult, policy] = await Promise.all([
+          supabaseAdmin
+            .from("ps_access_codes" as never)
+            .select("merchant_id")
+            .eq("code", accessCode)
+            .maybeSingle(),
+          supabaseAdmin
+            .from("ps_ingest_events")
+            .select("id, item_id, source_platform, currency, sku, item_name_en, current_retail_price")
+            .eq("id", ingestEventId)
+            .eq("account_id", accountId)
+            .maybeSingle(),
+          getMerchantMarginPolicy(accountId),
+        ]);
+        const codeRow = codeResult.data as { merchant_id: string } | null;
 
         if (!codeRow || codeRow.merchant_id !== merchantId) {
           return json({ error: "Invalid access code" }, 403);
         }
 
-        const accountId = merchantId;
-
         // 2. Fetch the ingest event (ownership check via account_id)
-        const { data: evt } = await supabaseAdmin
-          .from("ps_ingest_events")
-          .select("id, item_id, source_platform, currency, sku, item_name_en, current_retail_price")
-          .eq("id", ingestEventId)
-          .eq("account_id", accountId)
-          .maybeSingle();
+        const evt = eventResult.data;
 
         if (!evt?.item_id || !evt?.source_platform) {
           return json({ error: "Product not found for this account" }, 404);
         }
 
-        const policy=await getMerchantMarginPolicy(accountId);
         const currentPrice=Number(evt.current_retail_price??0);
         const increasePct=currentPrice>0?(targetPrice-currentPrice)/currentPrice:0;
         if(increasePct>policy.maxPriceIncreasePct+Number.EPSILON){

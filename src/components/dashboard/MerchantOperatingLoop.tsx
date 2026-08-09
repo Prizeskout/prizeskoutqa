@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { confidenceLabel, merchantStatus } from "../../lib/merchant-language";
+import { fetchWithTimeout } from "../../lib/fetch-with-timeout";
 
 type Item = {
   id: string;
@@ -79,11 +80,13 @@ const OG = "#EF681A",
 export function MerchantOperatingLoop({
   mode = "hub",
   onAskCopilot,
+  onRunTask,
   onContinueSetup,
   lang = "en",
 }: {
   mode?: "hub" | "history";
   onAskCopilot?: (prompt: string) => void;
+  onRunTask?: (prompt: string) => void;
   onContinueSetup?: () => void;
   lang?: "en" | "ar" | "fr";
 }) {
@@ -102,7 +105,7 @@ export function MerchantOperatingLoop({
     [message, setMessage] = useState(""),
     [newTask, setNewTask] = useState("");
   const call = async (body: Record<string, string>) => {
-    const response = await fetch("/api/channels/connect", {
+    const response = await fetchWithTimeout("/api/channels/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -111,7 +114,7 @@ export function MerchantOperatingLoop({
         platform: "merchant_experience",
         ...body,
       }),
-    });
+    }, 12_000);
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error ?? "Request failed");
     return result;
@@ -128,7 +131,7 @@ export function MerchantOperatingLoop({
   };
   useEffect(() => {
     void load();
-    void call({ action: "track", event_name: "today_viewed" });
+    void call({ action: "track", event_name: "today_viewed" }).catch(() => undefined);
     const refresh = window.setTimeout(() => void load(), 3000);
     const refreshAfterDelegation = () => void load();
     window.addEventListener("prizeskout:manager-task-created", refreshAfterDelegation);
@@ -146,7 +149,7 @@ export function MerchantOperatingLoop({
         action: "track",
         event_name: "attention_deep_link_opened",
         object_id: location.hash.replace("#attention-", ""),
-      });
+      }).catch(() => undefined);
     }
   }, [data]);
   const update = async (item: Item, action: string, value = "") => {
@@ -541,7 +544,7 @@ export function MerchantOperatingLoop({
           tasks={openManagerTasks}
           busy={busy}
           onMove={moveTask}
-          onRun={onAskCopilot}
+          onRun={onRunTask ?? onAskCopilot}
         />
       </div>
 

@@ -39,6 +39,7 @@ import {
 } from "@/lib/channel-price-planner";
 import { compactConversation, resolveProductReferences } from "@/lib/copilot-understanding";
 import { workflowStepLabel } from "@/lib/merchant-language";
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 
 type Tab = "today" | "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
 const DASHBOARD_TABS: readonly Tab[] = ["today", "analytics", "manager", "promotions", "rules", "vault", "history", "settings"];
@@ -1917,6 +1918,7 @@ export function PrizeSkoutDashboard() {
   const [productPushStatus, setProductPushStatus] = useState<
     "idle" | "confirm" | "pushing" | "success" | "reverting" | "failed"
   >("idle");
+  const [productPushStage, setProductPushStage] = useState<"sending" | "verifying">("sending");
   const [productPushError, setProductPushError] = useState<string | null>(null);
   const [productOriginalPrice, setProductOriginalPrice] = useState<number | null>(null);
   const [cpPhase, setCpPhase] = useState<"idle" | "loading" | "result">("idle");
@@ -3101,9 +3103,12 @@ export function PrizeSkoutDashboard() {
       return;
     }
     setProductPushStatus("pushing");
+    setProductPushStage("sending");
     setProductPushError(null);
+    showToast(`Sending the approved price to ${selectedProduct.source_platform}.`);
+    const verificationTimer = window.setTimeout(() => setProductPushStage("verifying"), 1200);
     try {
-      const response = await fetch("/api/repricing/apply", {
+      const response = await fetchWithTimeout("/api/repricing/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3112,7 +3117,7 @@ export function PrizeSkoutDashboard() {
           ingest_event_id: selectedProduct.ingest_event_id,
           target_price: targetPrice,
         }),
-      });
+      }, 30_000);
       const result = (await response.json()) as {
         ok?: boolean;
         error?: string;
@@ -3142,6 +3147,8 @@ export function PrizeSkoutDashboard() {
       const message = error instanceof Error ? error.message : "Price update failed.";
       setProductPushError(message);
       showToast(message);
+    } finally {
+      window.clearTimeout(verificationTimer);
     }
   };
 
@@ -3153,7 +3160,7 @@ export function PrizeSkoutDashboard() {
       return showToast("Reopen PrizeSkout from Zid to restore your merchant session.");
     setProductPushStatus("reverting");
     try {
-      const response = await fetch("/api/repricing/apply", {
+      const response = await fetchWithTimeout("/api/repricing/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3162,7 +3169,7 @@ export function PrizeSkoutDashboard() {
           ingest_event_id: selectedProduct.ingest_event_id,
           target_price: productOriginalPrice,
         }),
-      });
+      }, 30_000);
       const result = (await response.json()) as { ok?: boolean; error?: string; message?: string };
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Revert failed");
@@ -3228,7 +3235,7 @@ export function PrizeSkoutDashboard() {
     setCpStoreActionResult(null);
     setCpInput("");
     try {
-      const res = await fetch("/api/copilot/compile", {
+      const res = await fetchWithTimeout("/api/copilot/compile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3252,7 +3259,7 @@ export function PrizeSkoutDashboard() {
                 : null,
           },
         }),
-      });
+      }, 25_000);
       let data: {
         type?: string;
         rule?: Record<string, unknown>;
@@ -3317,8 +3324,8 @@ export function PrizeSkoutDashboard() {
         setCpError(data.error ?? "Unexpected response — try rephrasing your request.");
         setCpPhase("idle");
       }
-    } catch {
-      setCpError("Request failed — check your connection or try again.");
+    } catch (error) {
+      setCpError(error instanceof Error ? error.message : "Request failed. Check your connection and try again.");
       setCpPhase("idle");
     }
   };
@@ -3329,7 +3336,7 @@ export function PrizeSkoutDashboard() {
       const steps = Array.isArray(workflow.steps)
         ? (workflow.steps as Array<Record<string, unknown>>)
         : [];
-      const response = await fetch("/api/channels/connect", {
+      const response = await fetchWithTimeout("/api/channels/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3347,7 +3354,7 @@ export function PrizeSkoutDashboard() {
           risk_level: String(workflow.risk_level ?? "read_only"),
           workflow,
         }),
-      });
+      }, 12_000);
       const data = (await response.json()) as {
         ok?: boolean;
         task?: { id: string };
@@ -3414,7 +3421,7 @@ export function PrizeSkoutDashboard() {
       params.set("preview_floor", String(preview.floor));
       params.set("preview_max_increase", String(preview.cap));
     }
-    const response = await fetch(`/api/repricing/catalog?${params}`);
+    const response = await fetchWithTimeout(`/api/repricing/catalog?${params}`);
     const data = (await response.json()) as { products?: ImportedProduct[]; error?: string };
     if (!response.ok) throw new Error(data.error ?? "Could not load the catalogue.");
     const products = data.products ?? [];
@@ -3449,7 +3456,7 @@ export function PrizeSkoutDashboard() {
       } else if (op === "customer_search") {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "",
           accessCode = localStorage.getItem("ps_access_code") ?? "";
-        const response = await fetch("/api/copilot/store", {
+        const response = await fetchWithTimeout("/api/copilot/store", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3518,7 +3525,7 @@ export function PrizeSkoutDashboard() {
       } else if (["seed_test_store", "cleanup_test_store"].includes(op)) {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "",
           accessCode = localStorage.getItem("ps_access_code") ?? "";
-        const response = await fetch("/api/copilot/store", {
+        const response = await fetchWithTimeout("/api/copilot/store", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3608,7 +3615,7 @@ export function PrizeSkoutDashboard() {
               : {}),
           },
         };
-        const response = await fetch("/api/copilot/store", {
+        const response = await fetchWithTimeout("/api/copilot/store", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3657,7 +3664,7 @@ export function PrizeSkoutDashboard() {
       } else if (op === "list_orders") {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "",
           accessCode = localStorage.getItem("ps_access_code") ?? "";
-        const response = await fetch("/api/copilot/store", {
+        const response = await fetchWithTimeout("/api/copilot/store", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3689,7 +3696,7 @@ export function PrizeSkoutDashboard() {
       } else if (["profit_brief", "tax_summary", "returns_impact", "coupon_risk"].includes(op)) {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "",
           accessCode = localStorage.getItem("ps_access_code") ?? "";
-        const response = await fetch("/api/copilot/store", {
+        const response = await fetchWithTimeout("/api/copilot/store", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3811,7 +3818,7 @@ export function PrizeSkoutDashboard() {
         const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
         const accessCode = localStorage.getItem("ps_access_code") ?? "";
         const platform = String(operation.platform ?? "zid").toLowerCase();
-        const response = await fetch("/api/channels/connect", {
+        const response = await fetchWithTimeout("/api/channels/connect", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3957,7 +3964,7 @@ export function PrizeSkoutDashboard() {
     try {
       const merchantId = localStorage.getItem("ps_merchant_id") ?? "",
         accessCode = localStorage.getItem("ps_access_code") ?? "";
-      const response = await fetch("/api/copilot/store", {
+      const response = await fetchWithTimeout("/api/copilot/store", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4092,7 +4099,7 @@ export function PrizeSkoutDashboard() {
       accessCode = localStorage.getItem("ps_access_code") ?? "";
     setCpOperationStatus("running");
     try {
-      const response = await fetch("/api/copilot/store", {
+      const response = await fetchWithTimeout("/api/copilot/store", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4945,7 +4952,7 @@ export function PrizeSkoutDashboard() {
       : tab === "analytics"
       ? t.subA
       : tab === "manager"
-        ? ui.managerSub
+        ? lang === "ar" ? "العمل الذي يتولاه PrizeSkout والقرارات التي تحتاج موافقتك" : lang === "fr" ? "Travail pris en charge par PrizeSkout et décisions à valider" : "Work PrizeSkout is handling and decisions that need your approval"
         : tab === "promotions"
           ? ui.promoSub
           : tab === "rules"
@@ -4961,7 +4968,7 @@ export function PrizeSkoutDashboard() {
       : tab === "analytics"
       ? t.navA
       : tab === "manager"
-        ? ui.manager
+        ? lang === "ar" ? "المهام" : lang === "fr" ? "Tâches" : "Tasks"
         : tab === "promotions"
           ? lang === "ar"
             ? "محاكي العروض"
@@ -5007,6 +5014,23 @@ export function PrizeSkoutDashboard() {
     }
     void runCopilot(prompt.trim(), requestedRole);
   };
+  const runPrizeSkoutAssistant = (prompt: string) => {
+    if (!prompt.trim() || cpPhase === "loading") return;
+    setAssistantDrawerOpen(false);
+    setCpInput(prompt.trim());
+    const managementIntent = /\b(?:prepare|delegate|assign|handle|manage|organize|organise|follow up|highest priority|store tasks?|workflow)\b/i.test(prompt);
+    setTab(managementIntent ? "manager" : "rules");
+    if (managementIntent) showToast("PrizeSkout is preparing and assigning the work.");
+    void runCopilot(prompt.trim(), managementIntent ? "manager" : "auto");
+    window.setTimeout(
+      () =>
+        document
+          .querySelector('[data-tour="copilot"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      0,
+    );
+  };
+  const runPreparedManagerTask = (prompt: string) => runPrizeSkoutAssistant(prompt);
   const assistantNudge = (targetTab: Tab) => (
     <div
       style={{
@@ -5803,9 +5827,8 @@ export function PrizeSkoutDashboard() {
           examples={assistantContext[tab].examples}
           lang={lang}
           busy={cpPhase === "loading"}
-          onSubmit={submitManagerCommand}
-          onOpenManager={() => setTab("manager")}
-          onOpenCfo={() => {
+          onSubmit={runPrizeSkoutAssistant}
+          onOpenAssistant={() => {
             setTab("rules");
             window.setTimeout(
               () =>
@@ -5827,7 +5850,7 @@ export function PrizeSkoutDashboard() {
             }}
           >
             {[
-              ["manager", lang === "ar" ? "مدير المتجر بالذكاء الاصطناعي" : lang === "fr" ? "Gestionnaire IA" : "AI Store Manager"],
+              ["manager", lang === "ar" ? "المهام" : lang === "fr" ? "Tâches" : "Tasks"],
               ["promotions", lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator"],
               ["rules", lang === "ar" ? "قواعد الحماية" : lang === "fr" ? "Règles de protection" : "Protection Rules"],
             ].map(([destination, label]) => {
@@ -6224,6 +6247,31 @@ export function PrizeSkoutDashboard() {
                       "The update was not applied. Review the price and try again."}
                   </div>
                 )}
+                {productPushStatus === "pushing" && (
+                  <div
+                    aria-live="polite"
+                    style={{
+                      marginTop: 12,
+                      padding: "11px 13px",
+                      border: "1px solid color-mix(in srgb,var(--accent) 28%,var(--border))",
+                      borderRadius: 9,
+                      background: "color-mix(in srgb,var(--accent) 6%,var(--surface))",
+                      fontSize: 12.5,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <strong>
+                      {productPushStage === "sending"
+                        ? `Sending the price to ${selectedProduct.source_platform}`
+                        : `Verifying the live price in ${selectedProduct.source_platform}`}
+                    </strong>
+                    <div style={{ color: "var(--muted)", marginTop: 2 }}>
+                      {productPushStage === "sending"
+                        ? "The approved update is being submitted now."
+                        : "The channel accepted the request. PrizeSkout is reading the product back before calling it complete."}
+                    </div>
+                  </div>
+                )}
                 {productPushStatus === "success" && (
                   <div
                     style={{
@@ -6299,7 +6347,9 @@ export function PrizeSkoutDashboard() {
                       }}
                     >
                       {productPushStatus === "pushing"
-                        ? "Updating…"
+                        ? productPushStage === "sending"
+                          ? "Sending"
+                          : "Verifying"
                         : productPushStatus === "confirm"
                           ? `Confirm update in ${selectedProduct.source_platform}`
                           : "Review price update"}
@@ -6375,7 +6425,7 @@ export function PrizeSkoutDashboard() {
               ))}
             </div>
 
-            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} onContinueSetup={reviewProductsMissingCosts} />
+            <MerchantOperatingLoop lang={lang} onAskCopilot={runPrizeSkoutAssistant} onRunTask={runPreparedManagerTask} onContinueSetup={reviewProductsMissingCosts} />
 
             <button
               type="button"
@@ -6409,7 +6459,7 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} onContinueSetup={reviewProductsMissingCosts} />
+            <MerchantOperatingLoop lang={lang} onAskCopilot={runPrizeSkoutAssistant} onRunTask={runPreparedManagerTask} onContinueSetup={reviewProductsMissingCosts} />
           </section>
         )}
 
@@ -6428,6 +6478,7 @@ export function PrizeSkoutDashboard() {
             <MerchantOperatingLoop
               lang={lang}
               onContinueSetup={reviewProductsMissingCosts}
+              onRunTask={runPreparedManagerTask}
               onAskCopilot={(prompt) => {
                 setTab("rules");
                 setCpInput(prompt);
@@ -8988,9 +9039,9 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {/* CFO Copilot & Store Assistant */}
+            {/* PrizeSkout Assistant */}
             <div
-              data-demo-tip="CFO Copilot & Store Assistant — ask a business question or describe a store task in plain language. PrizeSkout previews protected changes and asks for approval before writing."
+              data-demo-tip="PrizeSkout Assistant answers business questions, runs safe checks, prepares store work, and asks once before protected changes."
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -9015,7 +9066,7 @@ export function PrizeSkoutDashboard() {
                   <h2
                     style={{ margin: 0, fontSize: 20.5, fontWeight: 800, letterSpacing: "-0.3px" }}
                   >
-                    CFO Copilot &amp; Store Assistant
+                    PrizeSkout Assistant
                   </h2>
                   <span style={{ fontSize: 15, color: "var(--muted)" }}>
                     Ask questions about profit, margins and payouts—or tell PrizeSkout to manage
@@ -9314,7 +9365,7 @@ export function PrizeSkoutDashboard() {
                       paddingLeft: 2,
                     }}
                   >
-                    CFO Copilot
+                    PrizeSkout Assistant
                   </div>
                   <div
                     style={{
@@ -10218,7 +10269,7 @@ export function PrizeSkoutDashboard() {
                         textTransform: "uppercase",
                       }}
                     >
-                      Store Manager workflow
+                      PrizeSkout task
                     </div>
                     <h3 style={{ margin: "5px 0" }}>
                       {String(cpObj.title ?? "Prepared workflow")}
@@ -14249,8 +14300,15 @@ export function PrizeSkoutDashboard() {
       {!assistantDrawerOpen && (
         <button
           type="button"
-          aria-label={tr("Open CFO Copilot and Store Manager", "افتح المساعد المالي ومدير المتجر", "Ouvrir le copilote financier et le gestionnaire")}
-          onClick={() => openAssistantDrawer()}
+          aria-label={tr("Open PrizeSkout Assistant", "افتح مساعد PrizeSkout", "Ouvrir l’assistant PrizeSkout")}
+          onClick={() => {
+            setAssistantDrawerOpen(false);
+            setTab("rules");
+            window.setTimeout(
+              () => document.querySelector('[data-tour="copilot"]')?.scrollIntoView({ behavior: "smooth", block: "start" }),
+              0,
+            );
+          }}
           style={{
             position: "fixed",
             insetInlineEnd: 24,
@@ -14271,7 +14329,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">✦</span> {tr("CFO + Store Manager", "المساعد المالي + مدير المتجر", "Copilote financier + Gestionnaire")}
+          <span aria-hidden="true">✦</span> {tr("PrizeSkout Assistant", "مساعد PrizeSkout", "Assistant PrizeSkout")}
         </button>
       )}
       {assistantDrawerOpen && (
@@ -14290,6 +14348,7 @@ export function PrizeSkoutDashboard() {
               insetBlock: 0,
               insetInlineEnd: 0,
               width: "min(440px,100vw)",
+              boxSizing: "border-box",
               background: "var(--surface)",
               borderInlineStart: "1px solid var(--border)",
               boxShadow: "-18px 0 50px rgba(0,0,0,.16)",
