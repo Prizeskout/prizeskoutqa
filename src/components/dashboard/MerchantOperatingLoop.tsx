@@ -288,6 +288,8 @@ export function MerchantOperatingLoop({
       setMessage(
         to === "approved"
           ? "Task approved. No unsupported platform action was claimed as completed."
+          : to === "completed"
+            ? "Task completed and added to Activity."
           : "Task status updated.",
       );
     } catch (error) {
@@ -535,7 +537,12 @@ export function MerchantOperatingLoop({
             Delegate task
           </button>
         </div>
-        <ManagerTasks tasks={openManagerTasks} busy={busy} onMove={moveTask} />
+        <ManagerTasks
+          tasks={openManagerTasks}
+          busy={busy}
+          onMove={moveTask}
+          onRun={onAskCopilot}
+        />
       </div>
 
       {(data?.profit_brief?.verified_cost_coverage_pct ?? 100) < 80 && (
@@ -742,10 +749,12 @@ function ManagerTasks({
   tasks,
   busy,
   onMove,
+  onRun,
 }: {
   tasks: ManagerTask[];
   busy: string;
   onMove: (task: ManagerTask, to: string) => void;
+  onRun?: (prompt: string) => void;
 }) {
   if (!tasks.length)
     return (
@@ -790,12 +799,29 @@ function ManagerTasks({
             {["detected", "needs_attention"].includes(task.status) && (
               <button
                 disabled={busy === task.id}
-                onClick={() => onMove(task, "investigating")}
+                onClick={() => {
+                  if (onRun) {
+                    onRun(task.title);
+                    onMove(task, "prepared");
+                  } else {
+                    onMove(task, "investigating");
+                  }
+                }}
                 style={smallButton}
               >
-                Start review
+                {onRun ? "Run task" : "Start review"}
               </button>
             )}
+            {["investigating", "prepared"].includes(task.status) &&
+              !task.approval_required && (
+                <button
+                  disabled={busy === task.id}
+                  onClick={() => onMove(task, "completed")}
+                  style={{ ...smallButton, color: GN }}
+                >
+                  Mark complete
+                </button>
+              )}
             {!["executing", "verifying"].includes(task.status) && (
               <button
                 disabled={busy === task.id}
@@ -826,6 +852,17 @@ function Items({
   onAsk?: (prompt: string) => void;
 }) {
   const [showAll, setShowAll] = useState(false);
+  const [itemDecision, setItemDecision] = useState<{
+    id: string;
+    action: "resolve" | "dismiss";
+  } | null>(null);
+  const [decisionNote, setDecisionNote] = useState("");
+  const beginDecision = (item: Item, action: "resolve" | "dismiss") => {
+    setItemDecision({ id: item.id, action });
+    setDecisionNote(
+      action === "resolve" ? "Issue corrected" : "Not relevant to my business",
+    );
+  };
   if (!items.length)
     return (
       <div
@@ -896,13 +933,7 @@ function Items({
               )}
               <button
                 disabled={busy === item.id}
-                onClick={() => {
-                  const note = window.prompt(
-                    "What resolved this item?",
-                    "Reviewed and resolved by merchant.",
-                  );
-                  if (note?.trim()) onUpdate(item, "resolve", note.trim());
-                }}
+                onClick={() => beginDecision(item, "resolve")}
                 style={{ ...smallButton, color: GN }}
               >
                 Resolve
@@ -938,16 +969,75 @@ function Items({
                   </button>
                   <button
                     disabled={busy === item.id}
-                    onClick={() => {
-                      const reason = window.prompt("Why are you dismissing this item?");
-                      if (reason?.trim()) onUpdate(item, "dismiss", reason.trim());
-                    }}
+                    onClick={() => beginDecision(item, "dismiss")}
                     style={smallButton}
                   >
                     Dismiss
                   </button>
                 </div>
               </details>
+            </div>
+          )}
+          {!history && itemDecision?.id === item.id && (
+            <div
+              style={{
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                padding: 12,
+                background: "var(--surface2)",
+                display: "grid",
+                gap: 9,
+              }}
+            >
+              <div>
+                <strong style={{ fontSize: 13.5 }}>
+                  {itemDecision.action === "resolve"
+                    ? "How was this resolved?"
+                    : "Why should this be dismissed?"}
+                </strong>
+                <div style={{ marginTop: 3, fontSize: 11.5, color: "var(--muted)" }}>
+                  This note will be saved in Activity as part of the decision record.
+                </div>
+              </div>
+              <select
+                value={decisionNote}
+                onChange={(event) => setDecisionNote(event.target.value)}
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  padding: "9px 10px",
+                  background: "var(--surface)",
+                  color: "var(--text)",
+                  fontFamily: "inherit",
+                }}
+              >
+                {(itemDecision.action === "resolve"
+                  ? ["Issue corrected", "Reviewed, no further action needed", "Handled outside PrizeSkout"]
+                  : ["Not relevant to my business", "Duplicate finding", "Incorrect finding"]
+                ).map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+              <div style={{ display: "flex", gap: 7, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setItemDecision(null)}
+                  style={smallButton}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={busy === item.id || !decisionNote.trim()}
+                  onClick={() => {
+                    onUpdate(item, itemDecision.action, decisionNote.trim());
+                    setItemDecision(null);
+                  }}
+                  style={{ ...smallButton, background: GN, borderColor: GN, color: "white" }}
+                >
+                  {itemDecision.action === "resolve" ? "Mark resolved" : "Dismiss item"}
+                </button>
+              </div>
             </div>
           )}
         </article>

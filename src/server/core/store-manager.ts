@@ -72,7 +72,9 @@ export async function createStoreManagerTask(accountId:string,input:{title:strin
 export async function transitionStoreManagerTask(accountId:string,input:{id:string;toStatus:string;actor?:string;note?:string}){
   if(!STATUSES.includes(input.toStatus))throw new Error("Choose a valid task status.");
   const {data:current,error:readError}=await supabaseAdmin.from("ps_store_manager_tasks" as never).select("*").eq("account_id",accountId).eq("id",input.id).maybeSingle();if(readError||!current)throw new Error("Task not found.");
-  const from=String((current as any).status);if(!(TRANSITIONS[from]??[]).includes(input.toStatus))throw new Error(`A task cannot move from ${from.replaceAll("_"," ")} to ${input.toStatus.replaceAll("_"," ")}.`);
+  const from=String((current as any).status);
+  const readOnlyCompletion=input.toStatus==="completed"&&["investigating","prepared"].includes(from)&&(current as any).approval_required===false&&String((current as any).risk_level)==="read_only";
+  if(!(TRANSITIONS[from]??[]).includes(input.toStatus)&&!readOnlyCompletion)throw new Error(`A task cannot move from ${from.replaceAll("_"," ")} to ${input.toStatus.replaceAll("_"," ")}.`);
   const patch:Record<string,unknown>={status:input.toStatus};
   if(input.toStatus==="approved")Object.assign(patch,{approved_by:(input.actor??"Merchant").slice(0,120),approved_at:new Date().toISOString()});
   if(input.toStatus==="completed")patch.completed_at=new Date().toISOString();
