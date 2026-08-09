@@ -628,9 +628,27 @@ function DetailedPricing({ lang }: { lang: Lang }) {
     features: t(`plans.packages.${plan}.features`, { returnObjects: true }) as string[],
   });
   const plans = [
-    { id: "starter" as const, name: "Core", popular: false },
-    { id: "standard" as const, name: "Growth", popular: true },
-    { id: "enterprise" as const, name: "Enterprise", price: tx(lang, ["Custom", "مخصص"]), popular: false },
+    { id: "starter" as const, name: "Core", popular: false,
+      best: ["One store ready to run and protect profit", "متجر واحد جاهز للتشغيل وحماية الربح"] as Pair,
+      outcomes: [
+        ["Understand true profit and payout health", "افهم الربح الحقيقي وصحة المدفوعات"],
+        ["Set margin policies and approve protected actions", "حدد سياسات الهامش ووافق على الإجراءات المحمية"],
+        ["Use CFO Copilot and AI Store Assistant", "استخدم مساعد المدير المالي ومساعد المتجر"],
+      ] as Pair[] },
+    { id: "standard" as const, name: "Growth", popular: true,
+      best: ["A growing team ready for more leverage", "فريق نام جاهز لمزيد من الكفاءة"] as Pair,
+      outcomes: [
+        ["Everything in Core", "كل ما في Core"],
+        ["Automate protected workflows", "أتمت مسارات العمل المحمية"],
+        ["Audit discrepancies and prepare recovery evidence", "دقق الفروقات وجهز أدلة الاسترداد"],
+      ] as Pair[] },
+    { id: "enterprise" as const, name: "Enterprise", popular: false,
+      best: ["Groups that need scale and governance", "مجموعات تحتاج إلى التوسع والحوكمة"] as Pair,
+      outcomes: [
+        ["Everything in Growth", "كل ما في Growth"],
+        ["Coordinate stores, teams and entities", "نسق المتاجر والفرق والكيانات"],
+        ["Apply group controls, APIs and service levels", "طبق ضوابط المجموعة وواجهات API ومستويات الخدمة"],
+      ] as Pair[] },
   ];
   return (
     <section className="pss-section pss-pricing" id="pricing">
@@ -644,6 +662,10 @@ function DetailedPricing({ lang }: { lang: Lang }) {
           "حدود واضحة وقدرات فعلية دون افتراضات مخفية. اختر مستوى التشغيل الذي يناسب أعمالك اليوم.",
         ]}
       />
+      <p className="pss-plan-principle">{tx(lang, [
+        "Core delivers the complete PrizeSkout value loop. Growth adds automation and capacity. Enterprise adds scale and governance.",
+        "تقدم Core دورة قيمة PrizeSkout الكاملة. تضيف Growth الأتمتة والسعة. وتضيف Enterprise التوسع والحوكمة.",
+      ])}</p>
       <div className="pss-billing-toggle" role="group" aria-label={tx(lang, ["Billing frequency", "دورية الفوترة"])}>
         <button type="button" aria-pressed={!annual} className={!annual ? "active" : ""} onClick={() => setAnnual(false)}>{tx(lang, ["Monthly", "شهري"])}</button>
         <button type="button" aria-pressed={annual} className={annual ? "active" : ""} onClick={() => setAnnual(true)}>{tx(lang, ["Annual", "سنوي"])} <span>{tx(lang, ["SAVE 20%", "وفر 20%"])} </span></button>
@@ -670,21 +692,20 @@ function DetailedPricing({ lang }: { lang: Lang }) {
 }
 
 function DetailedPrice({
-  planId, lang, name, price, audience, description, features, popular, annual, expanded, onToggle,
+  planId, lang, name, price, best, outcomes, description, features, popular, annual, expanded, onToggle,
 }: {
   planId: DetailedPlan;
-  lang: Lang; name: string; price: string; audience: string; description: string;
+  lang: Lang; name: string; price: string; best: Pair; outcomes: Pair[]; description: string;
   features: string[]; popular: boolean; annual: boolean; expanded: boolean; onToggle: () => void;
 }) {
   const custom = name === "Enterprise";
   const limitIndex = planId === "starter" ? 0 : 1;
   const limits = features[limitIndex]?.split(" · ") ?? [];
-  const keyFeatures = features.filter((_, index) => index !== limitIndex).slice(0, 4);
-  const visibleFeatures = expanded ? features.filter((_, index) => index !== limitIndex) : keyFeatures;
+  const visibleFeatures = expanded ? features.filter((_, index) => index !== limitIndex) : outcomes.map(outcome => tx(lang, outcome));
   return (
     <article className={`pss-price pss-price-detailed ${popular ? "popular" : ""}`}>
       {popular && <em>{tx(lang, ["MOST POPULAR", "الأكثر شيوعاً"])}</em>}
-      <div className="pss-best-for"><b>{tx(lang, ["BEST FOR", "الأنسب لـ"])}</b><span>{audience.replace(/^For /, "")}</span></div>
+      <div className="pss-best-for"><b>{tx(lang, ["BEST FOR", "الأنسب لـ"])}</b><span>{tx(lang, best)}</span></div>
       <h3>{name}</h3>
       <strong>{price}</strong>
       {!custom && <span>/ {tx(lang, ["month", "شهر"])}</span>}
