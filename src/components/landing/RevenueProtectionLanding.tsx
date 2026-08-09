@@ -56,9 +56,9 @@ export function RevenueProtectionLanding(){
     </nav>
 
     <section className="rpl-hero" id="product">
-      <div className="eyebrow">{tr("REVENUE PROTECTION FOR MODERN COMMERCE","حماية إيرادات التجارة الحديثة")}</div>
+      <div className="eyebrow">{tr("PROFIT PROTECTION FOR RESTAURANTS & MODERN COMMERCE","حماية إيرادات التجارة الحديثة")}</div>
       <h1>{tr("Every order.","كل طلب.")}<br/><span>{tr("Your margin, defended.","هامشك محمي.")}</span></h1>
-      <p>{tr("PrizeSkout watches every price, promotion, commission and payout across your sales channels. It protects profit automatically and recovers revenue that should never have been lost.","يراقب PrizeSkout كل سعر وعرض وعمولة ودفعة عبر قنوات مبيعاتك، ليحمي أرباحك تلقائياً ويسترد الإيرادات التي كان يجب ألا تضيع.")}</p>
+      <p>{tr("PrizeSkout protects your margins across delivery apps and connected stores - tracking prices, commissions, payouts and promotions so revenue doesn't disappear between the sale and your bank account.","يراقب PrizeSkout كل سعر وعرض وعمولة ودفعة عبر قنوات مبيعاتك، ليحمي أرباحك تلقائياً ويسترد الإيرادات التي كان يجب ألا تضيع.")}</p>
       <div className="rpl-ctas"><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a><a href="#platform">{tr("See how it works","شاهد كيف يعمل")}</a></div>
       <ProductHeroDemo lang={lang} market={selectedCountry as LandingMarket}/>
     </section>

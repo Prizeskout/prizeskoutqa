@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import logo from "@/assets/logo-light.svg";
 import "./ProductStorySections.css";
 import { landingMoney, localizeLandingMoney, type LandingMarket } from "./currency";
@@ -28,7 +29,7 @@ export function ProductStorySections({ lang, market }: { lang: Lang; market: Lan
       <PlatformMatrix lang={lang} />
       <OperatingDay lang={lang} />
       <TrustStrip lang={lang} />
-      <Pricing lang={lang} />
+      <DetailedPricing lang={lang} />
       <Faq lang={lang} />
       <FinalCta lang={lang} />
     </div></MarketContext.Provider>
@@ -609,6 +610,66 @@ function TrustStrip({ lang }: { lang: Lang }) {
         ))}
       </div>
     </section>
+  );
+}
+
+type DetailedPlan = "starter" | "standard" | "enterprise";
+
+function DetailedPricing({ lang }: { lang: Lang }) {
+  const { money } = useMarketMoney();
+  const { t } = useTranslation();
+  const copy = (plan: DetailedPlan) => ({
+    audience: t(`plans.packages.${plan}.audience`),
+    description: t(`plans.packages.${plan}.description`),
+    features: t(`plans.packages.${plan}.features`, { returnObjects: true }) as string[],
+  });
+  const plans = [
+    { id: "starter" as const, name: "Core", price: money(349), popular: false },
+    { id: "standard" as const, name: "Growth", price: money(1099), popular: true },
+    { id: "enterprise" as const, name: "Enterprise", price: tx(lang, ["Custom", "مخصص"]), popular: false },
+  ];
+  return (
+    <section className="pss-section pss-pricing" id="pricing">
+      <Intro
+        lang={lang}
+        center
+        kicker={["SIMPLE PRICING", "أسعار بسيطة"]}
+        title={["Start with visibility. Scale into protection.", "ابدأ بالوضوح، وتوسع نحو الحماية."]}
+        body={[
+          "Clear limits, real capabilities and no hidden package assumptions. Choose the operating level that fits your business today.",
+          "حدود واضحة وقدرات فعلية دون افتراضات مخفية. اختر مستوى التشغيل الذي يناسب أعمالك اليوم.",
+        ]}
+      />
+      <div className="pss-price-grid">
+        {plans.map(plan => {
+          const details = copy(plan.id);
+          return <DetailedPrice key={plan.id} lang={lang} {...plan} {...details} />;
+        })}
+      </div>
+    </section>
+  );
+}
+
+function DetailedPrice({
+  lang, name, price, audience, description, features, popular,
+}: {
+  lang: Lang; name: string; price: string; audience: string; description: string;
+  features: string[]; popular: boolean;
+}) {
+  const custom = name === "Enterprise";
+  return (
+    <article className={`pss-price pss-price-detailed ${popular ? "popular" : ""}`}>
+      {popular && <em>{tx(lang, ["MOST POPULAR", "الأكثر شيوعاً"])}</em>}
+      <small>{audience}</small>
+      <h3>{name}</h3>
+      <strong>{price}</strong>
+      {!custom && <span>/ {tx(lang, ["month", "شهر"])}</span>}
+      <p>{description}</p>
+      <ul>{features.map(feature => <li key={feature}>✓ {feature}</li>)}</ul>
+      <a href={custom ? "/contact" : "/onboarding"}>
+        {custom ? tx(lang, ["Talk to sales", "تحدث مع المبيعات"]) : popular ? tx(lang, ["Choose Growth", "اختر Growth"]) : tx(lang, ["Get started", "ابدأ الآن"])}
+      </a>
+    </article>
   );
 }
 
