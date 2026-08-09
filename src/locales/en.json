@@ -285,7 +285,7 @@
           "Competitor Radar · 2 competitors per product · daily checks",
           "Margin policies and protected merchant-approved price actions",
           "Promotion and coupon profitability simulator",
-          "Full CFO Copilot and AI Store Assistant",
+          "Full CFO Copilot and AI Store Manager",
           "Activity, decision and evidence history",
           "Email support"
         ]
@@ -316,7 +316,7 @@
           "Contract intelligence, settlement forecasting and month-end close",
           "Autonomous audit and recovery workflows with manual fallback",
           "Role-based approvals, evidence governance and group-wide policies",
-          "Group-wide CFO Copilot and AI Store Assistant operations",
+          "Group-wide CFO Copilot and AI Store Manager operations",
           "Multi-tenant API, white-label embeds and signed webhooks",
           "GCC data residency and custom reporting",
           "Dedicated success manager and custom SLA"
@@ -641,7 +641,7 @@
       "starterF2": "Daily price refresh",
     "starterF3": "True profit, payout checks and daily Competitor Radar",
       "starterF4": "White-label / unbranded operation",
-    "starterF5": "1 user · full CFO Copilot and AI Store Assistant",
+    "starterF5": "1 user · full CFO Copilot and AI Store Manager",
       "starterCta": "Get started",
     "standardName": "Growth",
     "standardPrice": "QAR 1,099",
@@ -670,7 +670,7 @@
             "Connect 1 store or commerce channel",
             "True profit by order, product & channel",
             "Payout checks & commission visibility",
-            "Full CFO Copilot + AI Store Assistant",
+            "Full CFO Copilot + AI Store Manager",
             "Margin policies & protected price actions",
             "Promotion simulator, evidence history & email support"
           ],
@@ -698,7 +698,7 @@
             "Contract intelligence & settlement forecasting",
             "Claims, recovery & month-end close",
             "Role-based approvals and audit governance",
-            "Group-wide Copilot and Store Assistant",
+            "Group-wide Copilot and AI Store Manager",
             "Dedicated success manager & custom SLA"
           ],
           "cta": "Contact Sales"

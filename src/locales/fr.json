@@ -285,7 +285,7 @@
           "Radar concurrentiel · 2 concurrents par produit · contrôle quotidien",
           "Politiques de marge et actions tarifaires protégées approuvées par le marchand",
           "Simulateur de rentabilité des promotions et coupons",
-          "CFO Copilot et assistant boutique IA complets",
+          "CFO Copilot et AI Store Manager complets",
           "Historique des activités, décisions et preuves",
           "Support e-mail"
         ]
@@ -316,7 +316,7 @@
           "Intelligence contractuelle, prévision des règlements et clôture mensuelle",
           "Audit et recouvrement autonomes avec traitement manuel de secours",
           "Approbations par rôle, gouvernance des preuves et règles de groupe",
-          "CFO Copilot et assistant boutique à l’échelle du groupe",
+          "CFO Copilot et AI Store Manager à l’échelle du groupe",
           "API multi-locataire, intégrations en marque blanche et webhooks signés",
           "Résidence des données GCC et rapports personnalisés",
           "Responsable succès dédié et SLA personnalisé"
@@ -641,7 +641,7 @@
       "starterF2": "Actualisation quotidienne des prix",
     "starterF3": "Bénéfice réel, contrôle des versements et radar quotidien",
       "starterF4": "Opération en marque blanche",
-    "starterF5": "1 utilisateur · CFO Copilot et assistant boutique IA complets",
+    "starterF5": "1 utilisateur · CFO Copilot et AI Store Manager complets",
       "starterCta": "Commencer",
     "standardName": "Growth",
     "standardPrice": "1 099 QAR",
@@ -670,7 +670,7 @@
             "Connexion d’une boutique ou d’un canal commercial",
             "Profit réel par commande, produit et canal",
             "Contrôle des versements et visibilité des commissions",
-            "CFO Copilot et assistant boutique IA complets",
+            "CFO Copilot et AI Store Manager complets",
             "Politiques de marge et actions tarifaires protégées",
             "Simulateur de promotions, preuves et support e-mail"
           ],
@@ -698,7 +698,7 @@
             "Intelligence contractuelle et prévision des règlements",
             "Réclamations, recouvrement et clôture mensuelle",
             "Approbations par rôle et gouvernance d’audit",
-            "Copilot et assistant boutique à l’échelle du groupe",
+            "Copilot et AI Store Manager à l’échelle du groupe",
             "Responsable succès dédié et SLA personnalisé"
           ],
           "cta": "Contacter les ventes"

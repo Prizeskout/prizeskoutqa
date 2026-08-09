@@ -633,7 +633,7 @@ function DetailedPricing({ lang }: { lang: Lang }) {
       outcomes: [
         ["Understand true profit and payout health", "افهم الربح الحقيقي وصحة المدفوعات"],
         ["Set margin policies and approve protected actions", "حدد سياسات الهامش ووافق على الإجراءات المحمية"],
-        ["Use CFO Copilot and AI Store Assistant", "استخدم مساعد المدير المالي ومساعد المتجر"],
+        ["Use CFO Copilot and AI Store Manager", "استخدم مساعد المدير المالي ومدير المتجر بالذكاء الاصطناعي"],
       ] as Pair[] },
     { id: "standard" as const, name: "Growth", popular: true,
       best: ["A growing team ready for more leverage", "فريق نام جاهز لمزيد من الكفاءة"] as Pair,
