@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import logo from "@/assets/logo-light.svg";
 import "./ProductStorySections.css";
 import { landingMoney, localizeLandingMoney, type LandingMarket } from "./currency";
+import { PLAN_PRICES_QAR_ANNUAL_MONTHLY, PLAN_PRICES_QAR_MONTHLY } from "@/lib/plan-config";
 
 type Lang = "en" | "ar";
 type Pair = [string, string];
@@ -618,14 +619,15 @@ type DetailedPlan = "starter" | "standard" | "enterprise";
 function DetailedPricing({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   const { t } = useTranslation();
+  const [annual, setAnnual] = useState(false);
   const copy = (plan: DetailedPlan) => ({
     audience: t(`plans.packages.${plan}.audience`),
     description: t(`plans.packages.${plan}.description`),
     features: t(`plans.packages.${plan}.features`, { returnObjects: true }) as string[],
   });
   const plans = [
-    { id: "starter" as const, name: "Core", price: money(349), popular: false },
-    { id: "standard" as const, name: "Growth", price: money(1099), popular: true },
+    { id: "starter" as const, name: "Core", popular: false },
+    { id: "standard" as const, name: "Growth", popular: true },
     { id: "enterprise" as const, name: "Enterprise", price: tx(lang, ["Custom", "مخصص"]), popular: false },
   ];
   return (
@@ -640,10 +642,16 @@ function DetailedPricing({ lang }: { lang: Lang }) {
           "حدود واضحة وقدرات فعلية دون افتراضات مخفية. اختر مستوى التشغيل الذي يناسب أعمالك اليوم.",
         ]}
       />
+      <div className="pss-billing-toggle" role="group" aria-label={tx(lang, ["Billing frequency", "دورية الفوترة"])}>
+        <button type="button" aria-pressed={!annual} className={!annual ? "active" : ""} onClick={() => setAnnual(false)}>{tx(lang, ["Monthly", "شهري"])}</button>
+        <button type="button" aria-pressed={annual} className={annual ? "active" : ""} onClick={() => setAnnual(true)}>{tx(lang, ["Annual", "سنوي"])} <span>{tx(lang, ["SAVE 20%", "وفر 20%"])} </span></button>
+      </div>
       <div className="pss-price-grid">
         {plans.map(plan => {
           const details = copy(plan.id);
-          return <DetailedPrice key={plan.id} lang={lang} {...plan} {...details} />;
+          const configuredPrice = annual ? PLAN_PRICES_QAR_ANNUAL_MONTHLY[plan.id] : PLAN_PRICES_QAR_MONTHLY[plan.id];
+          const price = configuredPrice == null ? tx(lang, ["Custom", "مخصص"]) : money(configuredPrice);
+          return <DetailedPrice key={plan.id} lang={lang} {...plan} price={price} annual={annual} {...details} />;
         })}
       </div>
     </section>
@@ -651,10 +659,10 @@ function DetailedPricing({ lang }: { lang: Lang }) {
 }
 
 function DetailedPrice({
-  lang, name, price, audience, description, features, popular,
+  lang, name, price, audience, description, features, popular, annual,
 }: {
   lang: Lang; name: string; price: string; audience: string; description: string;
-  features: string[]; popular: boolean;
+  features: string[]; popular: boolean; annual: boolean;
 }) {
   const custom = name === "Enterprise";
   return (
@@ -664,6 +672,7 @@ function DetailedPrice({
       <h3>{name}</h3>
       <strong>{price}</strong>
       {!custom && <span>/ {tx(lang, ["month", "شهر"])}</span>}
+      {!custom && annual && <div className="pss-annual-note">{tx(lang, ["Billed annually", "تتم الفوترة سنوياً"])}</div>}
       <p>{description}</p>
       <ul>{features.map(feature => <li key={feature}>✓ {feature}</li>)}</ul>
       <a href={custom ? "/contact" : "/onboarding"}>
