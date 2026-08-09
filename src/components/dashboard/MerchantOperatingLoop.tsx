@@ -130,7 +130,12 @@ export function MerchantOperatingLoop({
     void load();
     void call({ action: "track", event_name: "today_viewed" });
     const refresh = window.setTimeout(() => void load(), 3000);
-    return () => window.clearTimeout(refresh);
+    const refreshAfterDelegation = () => void load();
+    window.addEventListener("prizeskout:manager-task-created", refreshAfterDelegation);
+    return () => {
+      window.clearTimeout(refresh);
+      window.removeEventListener("prizeskout:manager-task-created", refreshAfterDelegation);
+    };
   }, []);
   useEffect(() => {
     if (!data || !location.hash.startsWith("#attention-")) return;

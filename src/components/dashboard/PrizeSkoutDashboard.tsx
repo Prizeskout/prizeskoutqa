@@ -1913,6 +1913,7 @@ export function PrizeSkoutDashboard() {
   const [productPage, setProductPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<ImportedProduct | null>(null);
   const [productPriceDraft, setProductPriceDraft] = useState("");
+  const [productCostDraft, setProductCostDraft] = useState("");
   const [productPushStatus, setProductPushStatus] = useState<
     "idle" | "confirm" | "pushing" | "success" | "reverting" | "failed"
   >("idle");
@@ -2971,14 +2972,17 @@ export function PrizeSkoutDashboard() {
   const opportunityCurrency = currency;
 
   const reviewVerifiedMarginRisks = () => {
+    setTab("analytics");
     setProductSearch("");
     setProductSort("risk");
     setProductFilter("verified_risk");
     setProductPage(1);
-    requestAnimationFrame(() =>
-      document
-        .getElementById("imported-products")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    window.setTimeout(
+      () =>
+        document
+          .getElementById("imported-products")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      0,
     );
   };
 
@@ -3062,6 +3066,7 @@ export function PrizeSkoutDashboard() {
   const openProduct = (product: ImportedProduct) => {
     setSelectedProduct(product);
     setProductPriceDraft(String(product.preview?.allowed_price ?? product.current_price));
+    setProductCostDraft(product.base_cost == null ? "" : String(product.base_cost));
     setProductPushStatus("idle");
     setProductPushError(null);
     setProductOriginalPrice(product.current_price);
@@ -3336,7 +3341,9 @@ export function PrizeSkoutDashboard() {
           detail: String(workflow.summary ?? "Prepared by the Store Manager."),
           task_type: "manager_workflow",
           priority: String(workflow.priority ?? "medium"),
-          approval_required: "true",
+          approval_required: String(
+            steps.some((step) => step.approval_required === true),
+          ),
           risk_level: String(workflow.risk_level ?? "read_only"),
           workflow,
         }),
@@ -3349,6 +3356,7 @@ export function PrizeSkoutDashboard() {
       if (!response.ok || !data.ok || !data.task)
         throw new Error(data.error ?? "The workflow could not be added to the Management desk.");
       setCpObj((current) => (current ? { ...current, manager_task_id: data.task!.id } : current));
+      window.dispatchEvent(new CustomEvent("prizeskout:manager-task-created"));
       const manual = steps.filter((step) => step.execution === "manual_fallback").length;
       const approvals = steps.filter((step) => step.approval_required === true).length;
       setCpOperationMessage(
@@ -3785,6 +3793,14 @@ export function PrizeSkoutDashboard() {
           );
         } else {
           const risky = b.coupons.filter((coupon) => coupon.risk === "review");
+          setCpObj((current) =>
+            current
+              ? {
+                  ...current,
+                  coupon_candidates: risky,
+                }
+              : current,
+          );
           setCpOperationMessage(
             risky.length
               ? `${risky.length} coupon${risky.length === 1 ? "" : "s"} need review: ${risky.map((coupon) => `${coupon.code} (${coupon.discount_label}) puts ${coupon.products_below_floor} verified products below your active floor`).join("; ")}. This is a read-only safety check; no coupon was changed.`
@@ -3893,7 +3909,11 @@ export function PrizeSkoutDashboard() {
                 : op === "cost_attention"
                   ? `${matches.length} product${matches.length === 1 ? " does" : "s do"} not have a verified platform cost and cannot be safely auto-repriced.`
                   : `${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
-            : "No matching products were found. Try a product name, SKU, or a broader request.",
+            : op === "cost_attention"
+              ? "Every product currently has verified cost information. There is nothing to review."
+              : op === "low_stock"
+                ? "No products currently need stock attention."
+                : "No matching products were found. Try a product name, SKU, or a broader request.",
         );
       }
       if (op === "sync_catalog") setCpOperationProducts(matchCopilotProducts(operation, products));
@@ -4052,6 +4072,19 @@ export function PrizeSkoutDashboard() {
       setCpOperationStatus("failed");
       setCpOperationMessage(error instanceof Error ? error.message : "The Zid action failed.");
     }
+  };
+
+  const updateCreateProductDraft = (field: string, value: unknown) => {
+    if (!cpObj || String(cpObj.operation) !== "create_product_draft") return;
+    const next = { ...cpObj, [field]: value };
+    const ready = Boolean(String(next.product_name ?? "").trim()) && Number(next.product_price) > 0;
+    setCpObj(next);
+    setCpOperationStatus(ready ? "ready" : "failed");
+    setCpOperationMessage(
+      ready
+        ? "Product details are ready. Review them and confirm when everything looks right."
+        : "Add a product name and a selling price greater than zero to continue.",
+    );
   };
 
   const prepareCreatedProductPublish = async (sku: string) => {
@@ -4964,8 +4997,14 @@ export function PrizeSkoutDashboard() {
   const submitManagerCommand = (prompt: string, requestedRole: "cfo" | "manager" = "cfo") => {
     if (!prompt.trim() || cpPhase === "loading") return;
     setAssistantDrawerInput(prompt.trim());
-    setAssistantDrawerOpen(true);
     setCpInput(prompt.trim());
+    if (requestedRole === "manager") {
+      setAssistantDrawerOpen(false);
+      setTab("manager");
+      showToast("AI Store Manager is preparing and assigning the work.");
+    } else {
+      setAssistantDrawerOpen(true);
+    }
     void runCopilot(prompt.trim(), requestedRole);
   };
   const assistantNudge = (targetTab: Tab) => (
@@ -5918,18 +5957,27 @@ export function PrizeSkoutDashboard() {
                 >
                   <span
                     style={{
-                      color: selectedProduct.floor_breached ? "#DC2626" : GN,
+                      color:
+                        selectedProduct.cost_confidence !== "verified"
+                          ? "#B45309"
+                          : selectedProduct.floor_breached
+                            ? "#DC2626"
+                            : GN,
                       fontWeight: 800,
                     }}
                   >
-                    {selectedProduct.floor_breached
-                      ? "Action recommended: below margin floor"
-                      : "Margin is currently healthy"}
+                    {selectedProduct.cost_confidence !== "verified"
+                      ? "Cost needed before margin can be checked"
+                      : selectedProduct.floor_breached
+                        ? "Price review needed"
+                        : "No pricing action needed"}
                   </span>
                   <span
                     style={{ color: "var(--muted)", fontSize: 12, textTransform: "capitalize" }}
                   >
-                    {selectedProduct.status.replace(/_/g, " ")}
+                    {selectedProduct.cost_confidence !== "verified"
+                      ? "Action needed"
+                      : selectedProduct.status.replace(/_/g, " ")}
                   </span>
                 </div>
               </div>
@@ -5942,7 +5990,23 @@ export function PrizeSkoutDashboard() {
                   marginTop: 18,
                 }}
               >
-                {[
+                {(selectedProduct.cost_confidence !== "verified"
+                  ? [
+                      [
+                        "Current price",
+                        `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
+                      ],
+                      ["Cost status", "Not verified"],
+                      [
+                        "Inventory",
+                        selectedProduct.inventory_is_infinite
+                          ? "Always available"
+                          : selectedProduct.inventory_quantity == null
+                            ? "Quantity unavailable"
+                            : `${selectedProduct.inventory_quantity.toLocaleString()} in stock`,
+                      ],
+                    ]
+                  : [
                   [
                     "Current price",
                     `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
@@ -5979,7 +6043,7 @@ export function PrizeSkoutDashboard() {
                       ? "—"
                       : `${(selectedProduct.preview.projected_margin_at_allowed * 100).toFixed(1)}%`,
                   ],
-                ].map(([label, value]) => (
+                ]).map(([label, value]) => (
                   <div
                     key={label}
                     style={{
@@ -6024,7 +6088,72 @@ export function PrizeSkoutDashboard() {
                 </div>
               )}
 
-              <div style={{ marginTop: 22, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+              {selectedProduct.cost_confidence !== "verified" && (
+                <div
+                  style={{
+                    marginTop: 22,
+                    borderTop: "1px solid var(--border)",
+                    paddingTop: 20,
+                  }}
+                >
+                  <h3 style={{ margin: "0 0 5px", fontSize: 17 }}>Add the product cost</h3>
+                  <p style={{ margin: "0 0 14px", color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
+                    PrizeSkout needs a verified cost before it can calculate margin or recommend a safe price. Adding the cost will prepare a reviewable change. Nothing is sent to {selectedProduct.source_platform} without your confirmation.
+                  </p>
+                  <label style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>
+                    Product cost ({selectedProduct.currency})
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={productCostDraft}
+                    onChange={(event) => setProductCostDraft(event.target.value)}
+                    placeholder="Enter the cost"
+                    style={{
+                      width: "100%",
+                      marginTop: 7,
+                      boxSizing: "border-box",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10,
+                      padding: "12px 13px",
+                      background: "var(--surface2)",
+                      color: "var(--text)",
+                      fontFamily: MONO,
+                      fontSize: 18,
+                      fontWeight: 700,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!Number.isFinite(Number(productCostDraft)) || Number(productCostDraft) <= 0}
+                    onClick={() => {
+                      const cost = Number(productCostDraft);
+                      if (!Number.isFinite(cost) || cost <= 0) return;
+                      const prompt = `Change the cost of product SKU ${selectedProduct.sku} to ${selectedProduct.currency} ${cost}`;
+                      setSelectedProduct(null);
+                      setTab("rules");
+                      void runCopilot(prompt);
+                    }}
+                    style={{
+                      width: "100%",
+                      marginTop: 14,
+                      border: 0,
+                      borderRadius: 9,
+                      padding: "12px 16px",
+                      background: Number(productCostDraft) > 0 ? OG : "var(--muted)",
+                      color: "white",
+                      fontFamily: "inherit",
+                      fontWeight: 800,
+                      cursor: Number(productCostDraft) > 0 ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    Review cost change
+                  </button>
+                </div>
+              )}
+
+              <div style={{ display: selectedProduct.cost_confidence === "verified" ? "block" : "none", marginTop: 22, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
                 <h3 style={{ margin: "0 0 5px", fontSize: 17 }}>Review price update</h3>
                 <p
                   style={{
@@ -7367,14 +7496,14 @@ export function PrizeSkoutDashboard() {
                                 Recommended price
                               </div>
                               <div
-                                style={{ fontSize: 20, fontWeight: 800, marginTop: 3, color: GN }}
+                                style={{ fontSize: 20, fontWeight: 800, marginTop: 3, color: product.cost_confidence === "verified" ? GN : "#B45309" }}
                               >
-                                {product.recommended_price.toLocaleString(undefined, {
-                                  maximumFractionDigits: 2,
-                                })}{" "}
-                                <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                                  {product.currency}
-                                </span>
+                                {product.cost_confidence === "verified" ? (
+                                  <>
+                                    {product.recommended_price.toLocaleString(undefined, { maximumFractionDigits: 2 })}{" "}
+                                    <span style={{ fontSize: 11, color: "var(--muted)" }}>{product.currency}</span>
+                                  </>
+                                ) : "Cost needed"}
                               </div>
                             </div>
                             <div>
@@ -7395,7 +7524,7 @@ export function PrizeSkoutDashboard() {
                                   color: product.floor_breached ? "#DC2626" : GN,
                                 }}
                               >
-                                {margin == null ? "—" : `${margin.toFixed(1)}%`}
+                                {product.cost_confidence !== "verified" || margin == null ? "Not available" : `${margin.toFixed(1)}%`}
                               </div>
                             </div>
                           </div>
@@ -7411,15 +7540,20 @@ export function PrizeSkoutDashboard() {
                           >
                             <span
                               style={{
-                                color: product.floor_breached ? "#DC2626" : GN,
+                                color: product.cost_confidence !== "verified" ? "#B45309" : product.floor_breached ? "#DC2626" : GN,
                                 fontWeight: 700,
                               }}
                             >
-                              {product.floor_breached ? "Below margin floor" : "Margin healthy"}
+                              {product.cost_confidence !== "verified"
+                                ? "Cost needed"
+                                : product.floor_breached
+                                  ? "Below margin floor"
+                                  : "Margin healthy"}
                             </span>
                             <span style={{ color: "var(--muted)", textTransform: "capitalize" }}>
-                              Recommendation: {product.decision_action.replace(/_/g, " ")} ·{" "}
-                              {product.status.replace(/_/g, " ")}
+                              {product.cost_confidence !== "verified"
+                                ? "Add cost to unlock a safe recommendation"
+                                : `Recommendation: ${product.decision_action.replace(/_/g, " ")} · ${product.status.replace(/_/g, " ")}`}
                             </span>
                           </div>
                           <div
@@ -9305,65 +9439,63 @@ export function PrizeSkoutDashboard() {
                           style={{
                             border: "1px solid var(--border)",
                             borderRadius: 12,
-                            padding: "14px 15px",
+                            padding: "16px",
                             background: "var(--surface2)",
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
-                            gap: 12,
                           }}
                         >
-                          <div>
-                            <small style={{ color: "var(--muted)" }}>Product</small>
-                            <div style={{ fontWeight: 800, marginTop: 3 }}>
-                              {String(cpObj.product_name ?? "Name required")}
+                          <div style={{ marginBottom: 14 }}>
+                            <strong>Complete the product details</strong>
+                            <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 12.5 }}>
+                              Name and selling price are required. Everything else can be added now or later.
                             </div>
                           </div>
-                          <div>
-                            <small style={{ color: "var(--muted)" }}>SKU</small>
-                            <div style={{ fontWeight: 800, marginTop: 3 }}>
-                              {cpObj.product_sku
-                                ? String(cpObj.product_sku)
-                                : "Generated from name"}
-                            </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 12 }}>
+                            {[
+                              ["Product name", "product_name", "text", "Example: Wireless charger", true],
+                              ["SKU", "product_sku", "text", "Generated if left blank", false],
+                              ["Selling price", "product_price", "number", "0.00", true],
+                              ["Cost", "product_cost", "number", "Optional", false],
+                              ["Stock", "product_quantity", "number", "Optional", false],
+                            ].map(([label, field, type, placeholder, required]) => (
+                              <label key={String(field)} style={{ display: "grid", gap: 6, fontSize: 12.5, color: "var(--muted)" }}>
+                                <span>{label}{required ? " *" : ""}</span>
+                                <input
+                                  type={String(type)}
+                                  min={type === "number" ? "0" : undefined}
+                                  step={field === "product_quantity" ? "1" : type === "number" ? "0.01" : undefined}
+                                  value={String(cpObj[String(field)] ?? "")}
+                                  placeholder={String(placeholder)}
+                                  onChange={(event) =>
+                                    updateCreateProductDraft(
+                                      String(field),
+                                      type === "number"
+                                        ? event.target.value === ""
+                                          ? null
+                                          : Number(event.target.value)
+                                        : event.target.value,
+                                    )
+                                  }
+                                  style={{
+                                    border: "1px solid var(--border)",
+                                    borderRadius: 9,
+                                    padding: "10px 11px",
+                                    background: "var(--surface)",
+                                    color: "var(--text)",
+                                    fontFamily: "inherit",
+                                    fontSize: 14,
+                                  }}
+                                />
+                              </label>
+                            ))}
                           </div>
-                          <div>
-                            <small style={{ color: "var(--muted)" }}>Price</small>
-                            <div style={{ fontWeight: 800, marginTop: 3 }}>
-                              SAR {Number(cpObj.product_price ?? 0).toLocaleString()}
-                            </div>
-                          </div>
-                          <div>
-                            <small style={{ color: "var(--muted)" }}>Cost</small>
-                            <div style={{ fontWeight: 800, marginTop: 3 }}>
-                              {cpObj.product_cost == null
-                                ? "Not supplied"
-                                : `SAR ${Number(cpObj.product_cost).toLocaleString()}`}
-                            </div>
-                          </div>
-                          <div>
-                            <small style={{ color: "var(--muted)" }}>Stock</small>
-                            <div style={{ fontWeight: 800, marginTop: 3 }}>
-                              {cpObj.product_infinite === true
-                                ? "Unlimited"
-                                : cpObj.product_quantity == null
-                                  ? "Not supplied"
-                                  : Number(cpObj.product_quantity).toLocaleString()}
-                            </div>
-                          </div>
-                          <div>
-                            <small style={{ color: "var(--muted)" }}>After approval</small>
-                            <div
-                              style={{
-                                fontWeight: 800,
-                                marginTop: 3,
-                                color: cpObj.publish_product === true ? GN : "#B45309",
-                              }}
-                            >
-                              {cpObj.publish_product === true
-                                ? "Live in storefront"
-                                : "Unpublished draft"}
-                            </div>
-                          </div>
+                          <label style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 14, fontSize: 13.5, cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              checked={cpObj.publish_product === true}
+                              onChange={(event) => updateCreateProductDraft("publish_product", event.target.checked)}
+                            />
+                            Publish to the storefront after approval
+                          </label>
                         </div>
                       )}
                     {String(cpObj.operation) === "product_change" &&
@@ -9478,6 +9610,74 @@ export function PrizeSkoutDashboard() {
                           ))}
                         </div>
                       )}
+                    {String(cpObj.operation) === "coupon_risk" &&
+                      Array.isArray(cpObj.coupon_candidates) &&
+                      cpObj.coupon_candidates.length > 0 && (
+                        <div style={{ display: "grid", gap: 10 }}>
+                          {(cpObj.coupon_candidates as Array<{
+                            code: string;
+                            discount_label: string;
+                            products_below_floor: number;
+                          }>).map((coupon) => (
+                            <div
+                              key={coupon.code}
+                              style={{
+                                border: "1px solid color-mix(in srgb,#DC2626 28%,var(--border))",
+                                borderRadius: 12,
+                                padding: "14px 15px",
+                                background: "color-mix(in srgb,#DC2626 5%,var(--surface))",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: 14,
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <div>
+                                <strong>{coupon.code}</strong>
+                                <div style={{ marginTop: 4, fontSize: 12.5, color: "var(--muted)" }}>
+                                  {coupon.discount_label} discount puts {coupon.products_below_floor} verified product{coupon.products_below_floor === 1 ? "" : "s"} below your protection floor.
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCpObj((current) =>
+                                    current
+                                      ? {
+                                          ...current,
+                                          operation: "coupon_change",
+                                          coupon_mode: "disable",
+                                          coupon_code: coupon.code,
+                                          coupon_name: coupon.code,
+                                          requires_confirmation: true,
+                                          risk_level: "sensitive_write",
+                                          coupon_candidates: null,
+                                        }
+                                      : current,
+                                  );
+                                  setCpOperationStatus("ready");
+                                  setCpOperationMessage(
+                                    `Ready to disable ${coupon.code}. The coupon is still active. Confirm below to apply the change in Zid.`,
+                                  );
+                                }}
+                                style={{
+                                  border: 0,
+                                  borderRadius: 9,
+                                  padding: "10px 14px",
+                                  background: OG,
+                                  color: "white",
+                                  fontFamily: "inherit",
+                                  fontWeight: 800,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Disable safely
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     {[
                       "change_order_status",
                       "create_product_draft",
@@ -9517,6 +9717,9 @@ export function PrizeSkoutDashboard() {
                               "This will permanently remove the product. Please check it carefully before continuing."
                             ) : cpOperationStatus === "complete" ? (
                               "The change was checked against Zid."
+                            ) : String(cpObj.operation) === "create_product_draft" &&
+                              (!String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0) ? (
+                              "Complete the required fields above. Nothing will be sent to Zid until the product is ready and you confirm."
                             ) : (
                               "Nothing has changed yet. Continue when the product and details look right."
                             )
@@ -9542,6 +9745,9 @@ export function PrizeSkoutDashboard() {
                             cpOperationStatus === "publishing" ||
                             cpOperationStatus === "running" ||
                             cpOperationStatus === "complete" ||
+                            (String(cpObj.operation) === "create_product_draft" &&
+                              (!String(cpObj.product_name ?? "").trim() ||
+                                Number(cpObj.product_price) <= 0)) ||
                             (cpOperationStatus === "failed" &&
                               Array.isArray(cpObj.product_candidates) &&
                               cpObj.product_candidates.length > 0)
@@ -9550,13 +9756,22 @@ export function PrizeSkoutDashboard() {
                             border: 0,
                             borderRadius: 9,
                             padding: "10px 14px",
-                            background: cpOperationStatus === "complete" ? GN : OG,
+                            background:
+                              String(cpObj.operation) === "create_product_draft" &&
+                              (!String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0)
+                                ? "var(--muted)"
+                                : cpOperationStatus === "complete"
+                                  ? GN
+                                  : OG,
                             color: "white",
                             fontFamily: "inherit",
                             fontWeight: 800,
                             cursor:
                               cpOperationStatus === "publishing" || cpOperationStatus === "running"
                                 ? "wait"
+                                : String(cpObj.operation) === "create_product_draft" &&
+                                    (!String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0)
+                                  ? "not-allowed"
                                 : cpOperationStatus === "complete"
                                   ? "default"
                                   : "pointer",
@@ -9580,9 +9795,11 @@ export function PrizeSkoutDashboard() {
                                         : String(cpObj.operation) === "category_assign"
                                           ? "Assign category"
                                           : String(cpObj.operation) === "create_product_draft"
-                                            ? cpObj.publish_product === true
-                                              ? "Create and publish"
-                                              : "Create draft"
+                                            ? !String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0
+                                              ? "Add required details"
+                                              : cpObj.publish_product === true
+                                                ? "Create and publish"
+                                                : "Create draft"
                                             : String(cpObj.product_mode) === "duplicate"
                                               ? cpObj.publish_duplicate === true
                                                 ? "Create and publish"
@@ -9766,15 +9983,16 @@ export function PrizeSkoutDashboard() {
                                 <strong
                                   style={{
                                     color:
-                                      (product.preview?.floor_breached ?? product.floor_breached)
+                                      product.cost_confidence !== "verified"
+                                        ? "#B45309"
+                                        : (product.preview?.floor_breached ?? product.floor_breached)
                                         ? "#DC2626"
                                         : GN,
                                   }}
                                 >
-                                  → {product.currency}{" "}
-                                  {(
-                                    product.preview?.allowed_price ?? product.current_price
-                                  ).toLocaleString()}
+                                  {product.cost_confidence === "verified"
+                                    ? `→ ${product.currency} ${(product.preview?.allowed_price ?? product.current_price).toLocaleString()}`
+                                    : "Add cost"}
                                 </strong>
                               </div>
                               <div style={{ fontSize: 11, marginTop: 6, color: "var(--muted)" }}>
@@ -14226,6 +14444,7 @@ export function PrizeSkoutDashboard() {
               </div>
             )}
             {cpObj?._type === "operation" &&
+              cpObj.requires_confirmation === true &&
               cpOperationStatus !== "complete" &&
               cpOperationStatus !== "failed" && (
                 <button
