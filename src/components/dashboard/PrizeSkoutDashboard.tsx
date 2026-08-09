@@ -41,6 +41,13 @@ import { compactConversation, resolveProductReferences } from "@/lib/copilot-und
 import { workflowStepLabel } from "@/lib/merchant-language";
 
 type Tab = "today" | "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
+const DASHBOARD_TABS: readonly Tab[] = ["today", "analytics", "manager", "promotions", "rules", "vault", "history", "settings"];
+
+function dashboardTabFromUrl(): Tab {
+  if (typeof window === "undefined") return "today";
+  const workspace = new URLSearchParams(window.location.search).get("workspace");
+  return DASHBOARD_TABS.includes(workspace as Tab) ? (workspace as Tab) : "today";
+}
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
@@ -1843,7 +1850,8 @@ function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
 }
 
 export function PrizeSkoutDashboard() {
-  const [tab, setTab] = useState<Tab>("today");
+  const [tab, setTab] = useState<Tab>(dashboardTabFromUrl);
+  const tabHistoryReadyRef = useRef(false);
   const [theme, setTheme] = useState<Theme>("light");
   const [demoMode, setDemoMode] = useState(false);
   const [currency, setCurrency] = useState<DisplayCurrency>(() => {
@@ -1855,6 +1863,24 @@ export function PrizeSkoutDashboard() {
   const [lang, setLang] = useState<Lang>("en");
   const [isDesktop, setIsDesktop] = useState(true);
   const [feed, setFeed] = useState<FeedRow[]>([]);
+
+  useEffect(() => {
+    const syncFromHistory = () => setTab(dashboardTabFromUrl());
+    window.addEventListener("popstate", syncFromHistory);
+    return () => window.removeEventListener("popstate", syncFromHistory);
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("workspace") === tab) {
+      tabHistoryReadyRef.current = true;
+      return;
+    }
+    url.searchParams.set("workspace", tab);
+    const method = tabHistoryReadyRef.current ? "pushState" : "replaceState";
+    window.history[method]({}, "", `${url.pathname}${url.search}${url.hash}`);
+    tabHistoryReadyRef.current = true;
+  }, [tab]);
   type HeroStats = {
     has_activity: boolean;
     profits_protected_this_month: number;
@@ -4852,54 +4878,31 @@ export function PrizeSkoutDashboard() {
     {
       id: "analytics" as Tab,
       group: ui.groups.understand,
-      label: ui.overview,
-      sub: ui.moneyProducts,
-      tip: "Revenue Protection Hub — your main dashboard: imported products, live pricing, contract vault, promotions, and the CFO Copilot, all in one place.",
-    },
-    {
-      id: "manager" as Tab,
-      group: ui.groups.understand,
-      label: ui.manager,
-      sub: ui.delegateApprove,
-      tip: "Store Manager — your daily brief, delegated backend work, approvals, exceptions, and verified outcomes in one management desk.",
-    },
-    {
-      id: "promotions" as Tab,
-      group: ui.groups.plan,
-      label:
-        lang === "ar"
-          ? "محاكي العروض"
-          : lang === "fr"
-            ? "Simulateur de promotions"
-            : "Promo Simulator",
-      sub:
-        lang === "ar"
-          ? "اختبار الربحية"
-          : lang === "fr"
-            ? "Tester la rentabilité"
-            : "Model profitability",
-      tip: "Promo Simulator — test discount, platform funding, fees, demand sensitivity, and margin impact before approving a campaign.",
-    },
-    {
-      id: "rules" as Tab,
-      group: ui.groups.plan,
-      label: t.navR,
-      sub: t.navRs,
-      tip: "Margin Policy Engine — the price guardrails PrizeSkout enforces automatically, like never going below a set margin on a category.",
+      label: lang === "ar" ? "المال" : lang === "fr" ? "Finance" : "Money",
+      sub: lang === "ar" ? "الأرباح والمدفوعات" : lang === "fr" ? "Profit et paiements" : "Profit and payouts",
+      tip: "Review profit, margins, payouts, recovery, and the CFO Copilot in one place.",
     },
     {
       id: "vault" as Tab,
+      group: ui.groups.understand,
+      label: lang === "ar" ? "المنتجات" : lang === "fr" ? "Produits" : "Products",
+      sub: lang === "ar" ? "الكتالوج والأسعار" : lang === "fr" ? "Catalogue et prix" : "Catalogue and prices",
+      tip: "Review your catalogue, product costs, competitor prices, and connected product data.",
+    },
+    {
+      id: "manager" as Tab,
+      activeTabs: ["manager", "promotions", "rules"] as Tab[],
       group: ui.groups.plan,
-      label: t.navV,
-      sub: t.navVs,
-      tip: "Integration Vault — where you connect delivery apps and POS systems (Talabat, Zid, Jahez, etc.) so PrizeSkout can read and adjust prices.",
+      label: lang === "ar" ? "الأتمتة" : lang === "fr" ? "Automatisation" : "Automation",
+      sub: lang === "ar" ? "الإدارة والحماية" : lang === "fr" ? "Gérer et protéger" : "Manage and protect",
+      tip: "Delegate store work, test promotions, and manage protection rules.",
     },
     {
       id: "history" as Tab,
       group: ui.groups.records,
-      label: t.navH,
-      sub: t.navHs,
-      tip: "Payout & Repricing History — every commission audit, price change, and payout check PrizeSkout has run for you, kept for the record.",
+      label: lang === "ar" ? "النشاط" : lang === "fr" ? "Activité" : "Activity",
+      sub: lang === "ar" ? "القرارات والنتائج" : lang === "fr" ? "Décisions et résultats" : "Decisions and outcomes",
+      tip: "Review completed changes, checks, decisions, and supporting evidence.",
     },
   ];
 
@@ -5054,7 +5057,7 @@ export function PrizeSkoutDashboard() {
           </div>
           <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {navDefs.map((n, index) => {
-              const on = tab === n.id;
+              const on = n.activeTabs?.includes(tab) ?? tab === n.id;
               return (
                 <Fragment key={n.id}>
                   {(index === 0 || navDefs[index - 1]?.group !== n.group) && (
@@ -5441,7 +5444,7 @@ export function PrizeSkoutDashboard() {
               }}
             >
               {navDefs.map((n) => {
-                const on = tab === n.id;
+                const on = n.activeTabs?.includes(tab) ?? tab === n.id;
                 return (
                   <button
                     key={n.id}
@@ -5774,6 +5777,46 @@ export function PrizeSkoutDashboard() {
             );
           }}
         />
+        {(["manager", "promotions", "rules"] as Tab[]).includes(tab) && (
+          <nav
+            aria-label="Automation workspaces"
+            style={{
+              display: "flex",
+              gap: 8,
+              padding: "12px 30px 0",
+              overflowX: "auto",
+            }}
+          >
+            {[
+              ["manager", lang === "ar" ? "مدير المتجر بالذكاء الاصطناعي" : lang === "fr" ? "Gestionnaire IA" : "AI Store Manager"],
+              ["promotions", lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator"],
+              ["rules", lang === "ar" ? "قواعد الحماية" : lang === "fr" ? "Règles de protection" : "Protection Rules"],
+            ].map(([destination, label]) => {
+              const active = tab === destination;
+              return (
+                <button
+                  key={destination}
+                  type="button"
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => setTab(destination as Tab)}
+                  style={{
+                    border: `1px solid ${active ? OG : "var(--border)"}`,
+                    borderRadius: 999,
+                    padding: "9px 14px",
+                    background: active ? OG : "var(--surface)",
+                    color: active ? "white" : "var(--text)",
+                    fontFamily: "inherit",
+                    fontWeight: 800,
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+        )}
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
         {selectedProduct && (
           <div
@@ -6203,60 +6246,6 @@ export function PrizeSkoutDashboard() {
               ))}
             </div>
 
-            <div
-              style={{
-                border: "1px solid var(--border)",
-                borderRadius: 15,
-                padding: "18px 20px",
-                background: "var(--surface)",
-                boxShadow: "var(--shadow)",
-              }}
-            >
-              <div style={{ marginBottom: 12 }}>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>Where do you want to go?</h2>
-                <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: 12.5 }}>
-                  Start with today&apos;s work below, or open the part of your business you want to review.
-                </p>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 9 }}>
-                {[
-                  ["Your money", "Profit, margins, payouts and recovery", "analytics" as Tab, ""],
-                  ["Your products", "Catalogue, competitor prices and repricing", "analytics" as Tab, "imported-products"],
-                  ["Automation", "Margin rules, approvals and safe actions", "rules" as Tab, ""],
-                  ["History", "Completed changes, checks and evidence", "history" as Tab, ""],
-                ].map(([label, detail, destination, targetId]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => {
-                      setTab(destination as Tab);
-                      if (targetId) {
-                        window.setTimeout(
-                          () => document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" }),
-                          60,
-                        );
-                      }
-                    }}
-                    style={{
-                      textAlign: "start",
-                      border: "1px solid var(--border)",
-                      borderRadius: 11,
-                      padding: "13px 14px",
-                      background: "var(--surface2)",
-                      color: "var(--text)",
-                      fontFamily: "inherit",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <strong style={{ display: "block", fontSize: 13.5 }}>{label} →</strong>
-                    <span style={{ display: "block", marginTop: 4, color: "var(--muted)", fontSize: 11.5, lineHeight: 1.4 }}>
-                      {detail}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <MerchantOperatingLoop lang={lang} onAskCopilot={submitManagerCommand} onContinueSetup={reviewProductsMissingCosts} />
 
             <button
@@ -6307,7 +6296,6 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {assistantNudge("analytics")}
             <MerchantOperatingLoop
               lang={lang}
               onContinueSetup={reviewProductsMissingCosts}
@@ -8806,7 +8794,6 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {assistantNudge("promotions")}
             {importedProducts.length > 0 ? (
               <PromotionProfitabilityWorkspace
                 products={importedProducts.map((product) => ({
@@ -11274,7 +11261,6 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {assistantNudge("vault")}
             {/* Inbound */}
             <div data-tour="inbound" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -11630,7 +11616,6 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            {assistantNudge("history")}
             <MerchantOperatingLoop lang={lang} mode="history" />
 
             <div
@@ -13014,7 +12999,6 @@ export function PrizeSkoutDashboard() {
             className="ps-db-section"
             style={{ padding: "28px 30px 48px", animation: "pk-in .3s ease" }}
           >
-            <div style={{ marginBottom: 18 }}>{assistantNudge("settings")}</div>
             <SettingsTabs />
           </section>
         )}
@@ -13431,7 +13415,7 @@ export function PrizeSkoutDashboard() {
             {/* Nav items */}
             <nav style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {navDefs.map((n) => {
-                const on = tab === n.id;
+                const on = n.activeTabs?.includes(tab) ?? tab === n.id;
                 return (
                   <div
                     key={n.id}

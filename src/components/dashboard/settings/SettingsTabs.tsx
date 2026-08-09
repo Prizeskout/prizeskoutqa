@@ -150,6 +150,14 @@ function StoreAccessTab() {
 
 const TABS = ["Store Access", "Channels", "Competitor Radar", "Product Images", "Margin Rules", "Locations", "Notifications"] as const;
 type Tab = (typeof TABS)[number];
+type SettingsGroup = "Business" | "Connections" | "Protection" | "Catalogue";
+
+const SETTINGS_GROUPS: Record<SettingsGroup, readonly Tab[]> = {
+  Business: ["Store Access", "Locations"],
+  Connections: ["Channels", "Competitor Radar"],
+  Protection: ["Margin Rules", "Notifications"],
+  Catalogue: ["Product Images"],
+};
 
 const TAB_LABEL_KEYS: Record<Tab, string> = {
   "Store Access": "storeAccess",
@@ -172,14 +180,46 @@ const TAB_TIPS: Record<Tab, string> = {
 };
 
 export function SettingsTabs() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [active, setActive] = useState<Tab>("Store Access");
+  const activeGroup = (Object.entries(SETTINGS_GROUPS) as [SettingsGroup, readonly Tab[]][]).find(([, tabs]) => tabs.includes(active))?.[0] ?? "Business";
+  const groupLabel = (group: SettingsGroup) => {
+    const language = i18n.language;
+    const labels: Record<SettingsGroup, [string, string, string]> = {
+      Business: ["Business", "النشاط التجاري", "Entreprise"],
+      Connections: ["Connections", "الاتصالات", "Connexions"],
+      Protection: ["Protection", "الحماية", "Protection"],
+      Catalogue: ["Catalogue", "الكتالوج", "Catalogue"],
+    };
+    return language.startsWith("ar") ? labels[group][1] : language.startsWith("fr") ? labels[group][2] : labels[group][0];
+  };
 
   return (
     <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", WebkitOverflowScrolling: "touch" as never }}>
+        {(Object.keys(SETTINGS_GROUPS) as SettingsGroup[]).map((group) => {
+          const isActive = group === activeGroup;
+          return (
+            <button
+              key={group}
+              type="button"
+              onClick={() => setActive(SETTINGS_GROUPS[group][0])}
+              style={{
+                padding: "10px 14px", borderRadius: 999, fontSize: 13, fontWeight: 750,
+                color: isActive ? "#fff" : "var(--text)", cursor: "pointer",
+                background: isActive ? "var(--accent)" : "var(--surface)",
+                border: `1px solid ${isActive ? "var(--accent)" : "var(--border)"}`,
+                whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              {groupLabel(group)}
+            </button>
+          );
+        })}
+      </div>
       <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--border)", marginBottom: 24,
         overflowX: "auto", WebkitOverflowScrolling: "touch" as never, scrollbarWidth: "none" as never }}>
-        {TABS.map((tab) => {
+        {SETTINGS_GROUPS[activeGroup].map((tab) => {
           const isActive = tab === active;
           return (
             <button

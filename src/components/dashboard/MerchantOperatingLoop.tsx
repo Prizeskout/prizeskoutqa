@@ -820,6 +820,7 @@ function Items({
   onUpdate: (item: Item, action: string, value?: string) => void;
   onAsk?: (prompt: string) => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
   if (!items.length)
     return (
       <div
@@ -843,7 +844,7 @@ function Items({
         overflow: "hidden",
       }}
     >
-      {items.map((item) => (
+      {items.slice(0, showAll ? items.length : 3).map((item) => (
         <article
           id={`attention-${item.id}`}
           key={item.id}
@@ -889,47 +890,6 @@ function Items({
                 </button>
               )}
               <button
-                onClick={() =>
-                  void navigator.clipboard.writeText(
-                    `${location.origin}${location.pathname}#attention-${item.id}`,
-                  )
-                }
-                style={smallButton}
-              >
-                Copy link
-              </button>
-              <button
-                disabled={busy === item.id}
-                onClick={() => onUpdate(item, "assign", "Merchant owner")}
-                style={smallButton}
-              >
-                Assign
-              </button>
-              <button
-                disabled={busy === item.id}
-                onClick={() => onUpdate(item, "request_approval", "Finance approver")}
-                style={smallButton}
-              >
-                Request approval
-              </button>
-              <button
-                disabled={busy === item.id}
-                onClick={() => onUpdate(item, "snooze", "1")}
-                style={smallButton}
-              >
-                Snooze
-              </button>
-              <button
-                disabled={busy === item.id}
-                onClick={() => {
-                  const reason = window.prompt("Why are you dismissing this item?");
-                  if (reason?.trim()) onUpdate(item, "dismiss", reason.trim());
-                }}
-                style={smallButton}
-              >
-                Dismiss
-              </button>
-              <button
                 disabled={busy === item.id}
                 onClick={() => {
                   const note = window.prompt(
@@ -942,10 +902,60 @@ function Items({
               >
                 Resolve
               </button>
+              <details style={{ position: "relative" }}>
+                <summary style={{ ...smallButton, listStyle: "none", cursor: "pointer" }}>More</summary>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 6,
+                    flexWrap: "wrap",
+                    marginTop: 7,
+                    padding: 8,
+                    border: "1px solid var(--border)",
+                    borderRadius: 9,
+                    background: "var(--surface2)",
+                  }}
+                >
+                  <button
+                    onClick={() => void navigator.clipboard.writeText(`${location.origin}${location.pathname}#attention-${item.id}`)}
+                    style={smallButton}
+                  >
+                    Copy link
+                  </button>
+                  <button disabled={busy === item.id} onClick={() => onUpdate(item, "assign", "Merchant owner")} style={smallButton}>
+                    Assign
+                  </button>
+                  <button disabled={busy === item.id} onClick={() => onUpdate(item, "request_approval", "Finance approver")} style={smallButton}>
+                    Request approval
+                  </button>
+                  <button disabled={busy === item.id} onClick={() => onUpdate(item, "snooze", "1")} style={smallButton}>
+                    Snooze
+                  </button>
+                  <button
+                    disabled={busy === item.id}
+                    onClick={() => {
+                      const reason = window.prompt("Why are you dismissing this item?");
+                      if (reason?.trim()) onUpdate(item, "dismiss", reason.trim());
+                    }}
+                    style={smallButton}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </details>
             </div>
           )}
         </article>
       ))}
+      {items.length > 3 && (
+        <button
+          type="button"
+          onClick={() => setShowAll((current) => !current)}
+          style={{ ...smallButton, margin: 12 }}
+        >
+          {showAll ? "Show fewer" : `View all ${items.length}`}
+        </button>
+      )}
     </div>
   );
 }
