@@ -2547,7 +2547,7 @@ export function PrizeSkoutDashboard() {
   useEffect(() => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
-    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, { headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" } })
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { store_name?: string | null } | null) => {
         if (d?.store_name) setStoreName(d.store_name);
@@ -2624,7 +2624,7 @@ export function PrizeSkoutDashboard() {
     if (tab !== "vault" && tab !== "today" && tab !== "analytics") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
-    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`)
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, { headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" } })
       .then((r) => (r.ok ? r.json() : null))
       .then(
         (
@@ -5041,6 +5041,19 @@ export function PrizeSkoutDashboard() {
     return await result;
   };
   const runPreparedManagerTask = (prompt: string) => runPrizeSkoutAssistant(prompt);
+  const startOauthConnection = async (path: string) => {
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) { showToast("Please complete onboarding first."); return; }
+    try {
+      const response = await fetch("/api/onboarding/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode }) });
+      const session = await response.json() as { token?: string };
+      if (!response.ok || !session.token) throw new Error();
+      window.location.href = `${path}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
+    } catch {
+      showToast("PrizeSkout could not verify this connection request.");
+    }
+  };
   const assistantNudge = (targetTab: Tab) => (
     <div
       style={{
@@ -11669,14 +11682,7 @@ export function PrizeSkoutDashboard() {
                       )}
                       {canConnect && !isConnected && (
                         <button
-                          onClick={() => {
-                            const mid = localStorage.getItem("ps_merchant_id");
-                            if (mid) {
-                              window.location.href = `${ig.oauthPath}?merchant_id=${encodeURIComponent(mid)}`;
-                            } else {
-                              showToast("Please complete onboarding first.");
-                            }
-                          }}
+                          onClick={() => { if (ig.oauthPath) void startOauthConnection(ig.oauthPath); }}
                           className="ps-ig-btn"
                           style={{
                             cursor: "pointer",
@@ -11808,12 +11814,7 @@ export function PrizeSkoutDashboard() {
                         ) : o.oauthPath ? (
                           <button
                             type="button"
-                            onClick={() => {
-                              const mid = localStorage.getItem("ps_merchant_id");
-                              if (mid)
-                                window.location.href = `${o.oauthPath}?merchant_id=${encodeURIComponent(mid)}`;
-                              else showToast("Please complete onboarding first.");
-                            }}
+                            onClick={() => { if (o.oauthPath) void startOauthConnection(o.oauthPath); }}
                             style={{
                               fontSize: 11,
                               fontWeight: 700,

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
+import { assertSafePublicHttpsUrl, safePublicFetch } from "@/server/safe-outbound-url";
 
 /**
  * Developer console server functions.
@@ -266,7 +267,7 @@ export const createWebhookEndpoint = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: CreateWebhookInput) => {
     const url = String(input?.url ?? "").trim();
-    if (!/^https?:\/\//i.test(url)) throw new Error("URL must start with http(s)://");
+    assertSafePublicHttpsUrl(url);
     const description = String(input?.description ?? "").trim().slice(0, 240) || null;
     const events = Array.isArray(input?.events) ? input.events.slice(0, 20) : [];
     return { url: url.slice(0, 500), description, events };
@@ -420,7 +421,7 @@ export const retryWebhookDelivery = createServerFn({ method: "POST" })
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10_000);
-      const res = await fetch(endpoint.url, {
+      const res = await safePublicFetch(endpoint.url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

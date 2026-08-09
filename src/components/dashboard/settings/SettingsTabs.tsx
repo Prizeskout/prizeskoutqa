@@ -20,7 +20,7 @@ function BusinessNameCard() {
 
   useEffect(() => {
     if (!merchantId) { setLoaded(true); return; }
-    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(merchantId)}`)
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(merchantId)}`, { headers: { "X-PrizeSkout-Access-Code": code } })
       .then(r => r.ok ? r.json() : null)
       .then((d: { store_name?: string | null } | null) => { if (d?.store_name) setName(d.store_name); })
       .catch(() => {})
@@ -33,7 +33,7 @@ function BusinessNameCard() {
     try {
       const res = await fetch("/api/register-code", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchant_id: merchantId, code, store_name: name.trim() }),
+        body: JSON.stringify({ merchant_id: merchantId, access_code: code, store_name: name.trim() }),
       });
       if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2200); }
     } finally { setSaving(false); }

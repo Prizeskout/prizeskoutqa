@@ -13,11 +13,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getPublicOrigin } from "@/server/public-origin";
 import { KEETA_AUTHORIZE_URL } from "@/server/core/keeta-client";
+import { verifyMerchantBootstrap } from "@/server/merchant-bootstrap";
 
 export const Route = createFileRoute("/api/auth/keeta")({
   server: {
     handlers: {
-      GET: ({ request }) => {
+      GET: async ({ request }) => {
         const appId = process.env.KEETA_APP_ID;
         if (!appId) {
           return new Response(
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/api/auth/keeta")({
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
         }
+        const allowed = await verifyMerchantBootstrap(merchantId, url.searchParams.get("onboarding_token") ?? "");
+        if (!allowed) return new Response(JSON.stringify({ error: "Unauthorized merchant connection request." }), { status: 401, headers: { "Content-Type": "application/json" } });
 
         // Optional return path after OAuth (only internal paths allowed)
         const rawReturn = url.searchParams.get("return_to") ?? "";

@@ -102,7 +102,7 @@ export function ChannelsTab() {
       : "";
     if (!merchantId) { setLoading(false); return; }
 
-    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(merchantId)}`)
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(merchantId)}`, { headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" } })
       .then(r => r.ok ? r.json() : null)
       .then((data: { channels?: { platform: string; status: string }[] } | null) => {
         if (!data?.channels) return;
@@ -116,7 +116,7 @@ export function ChannelsTab() {
       .finally(() => setLoading(false));
   }, []);
 
-  function handleConnect(platform: string) {
+  async function handleConnect(platform: string) {
     const merchantId = typeof window !== "undefined"
       ? (localStorage.getItem("ps_merchant_id") ?? "")
       : "";
@@ -125,7 +125,11 @@ export function ChannelsTab() {
       return;
     }
     if (OAUTH_PLATFORMS.has(platform)) {
-      window.location.href = `/api/auth/${platform}?merchant_id=${encodeURIComponent(merchantId)}`;
+      const accessCode = localStorage.getItem("ps_access_code") ?? "";
+      const response = await fetch("/api/onboarding/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode }) });
+      const session = await response.json() as { token?: string };
+      if (!response.ok || !session.token) { alert("PrizeSkout could not verify this connection request."); return; }
+      window.location.href = `/api/auth/${platform}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
     } else if (platform in BYOK_PLATFORMS) {
       setByokPlatform(platform); setByokFields({}); setByokStatus("idle"); setByokError(null);
     }

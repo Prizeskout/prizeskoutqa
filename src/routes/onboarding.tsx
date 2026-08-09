@@ -48,12 +48,6 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, tim
   }
 }
 
-function makeAccessCode(region: string): string {
-  const rc = REGION_CODE[region] ?? "QA";
-  const n  = String(Math.floor(1000 + Math.random() * 9000));
-  return `PSK-${rc}-${n}`;
-}
-
 function inputStyle(focus?: boolean): React.CSSProperties {
   return {
     width: "100%",
@@ -339,12 +333,14 @@ function EcommCard({
 
 function Step2({
   merchantId,
+  onboardingToken,
   sallaConnected, zidConnected,
   talabat, setTalabat,
   jahez, setJahez,
   onNext, onBack,
 }: {
   merchantId: string;
+  onboardingToken: string;
   sallaConnected: boolean;
   zidConnected: boolean;
   talabat: Record<string,string>; setTalabat: (v:Record<string,string>) => void;
@@ -353,10 +349,10 @@ function Step2({
 }) {
   const [validationError,setValidationError]=useState("");
   function connectSalla() {
-    window.location.href = `/api/auth/salla?merchant_id=${encodeURIComponent(merchantId)}&return_to=%2Fonboarding`;
+    window.location.href = `/api/auth/salla?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(onboardingToken)}&return_to=%2Fonboarding`;
   }
   function connectZid() {
-    window.location.href = `/api/auth/zid?merchant_id=${encodeURIComponent(merchantId)}&return_to=%2Fonboarding`;
+    window.location.href = `/api/auth/zid?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(onboardingToken)}&return_to=%2Fonboarding`;
   }
   const updateTalabat=(key:string,value:string)=>setTalabat({...talabat,[key]:value});
   const updateJahez=(key:string,value:string)=>setJahez({...jahez,[key]:value});
@@ -614,7 +610,7 @@ function RestoreForm({ onCancel }: { onCancel: () => void }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Restore dashboard access</h2>
-        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Enter the store access code you received when you first connected. It looks like PSK-QA-0000.</p>
+        <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>Enter the secure store access code you received when you first connected.</p>
       </div>
 
       <div>
@@ -623,7 +619,7 @@ function RestoreForm({ onCancel }: { onCancel: () => void }) {
           type="text"
           value={code}
           onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
-          placeholder="PSK-QA-0000"
+          placeholder="PSK-QA-SECURE-CODE"
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           onKeyDown={e => { if (e.key === "Enter") handleRestore(); }}
@@ -679,6 +675,7 @@ function OnboardingPage() {
 
   // Step 2 — merchant_id generated when advancing from Step 1
   const [merchantId,     setMerchantId]     = useState("");
+  const [onboardingToken,setOnboardingToken]= useState("");
   const [sallaConnected, setSallaConnected] = useState(false);
   const [zidConnected,   setZidConnected]   = useState(false);
 
@@ -722,6 +719,7 @@ function OnboardingPage() {
     sessionStorage.removeItem("ps_ob_email");
     sessionStorage.removeItem("ps_ob_region");
     sessionStorage.removeItem("ps_ob_currency");
+    sessionStorage.removeItem("ps_ob_capability");
     setMerchantId(""); setStoreName(""); setEmail(""); setRegion(""); setCurrency("");
     setSallaConnected(false); setZidConnected(false);
     setTalabat({});setJahez({});
@@ -739,6 +737,7 @@ function OnboardingPage() {
     setRegion(sessionStorage.getItem("ps_ob_region") ?? landingDefault?.[0] ?? "");
     setCurrency(sessionStorage.getItem("ps_ob_currency") ?? landingDefault?.[1] ?? "");
     setMerchantId(localStorage.getItem("ps_merchant_id") ?? "");
+    setOnboardingToken(sessionStorage.getItem("ps_ob_capability") ?? "");
     setExistingSetup(localStorage.getItem("ps_connected") === "true");
   }, []);
 
@@ -761,32 +760,38 @@ function OnboardingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleStep1Next() {
+  async function handleStep1Next() {
     // Persist form data so it survives the OAuth redirect
     sessionStorage.setItem("ps_ob_storeName", storeName);
     sessionStorage.setItem("ps_ob_email",     email);
     sessionStorage.setItem("ps_ob_region",    region);
     sessionStorage.setItem("ps_ob_currency",  currency);
 
-    // Ensure merchant_id exists before showing OAuth buttons
-    let mid = localStorage.getItem("ps_merchant_id") ?? "";
-    if (!mid) {
-      mid = crypto.randomUUID();
-      localStorage.setItem("ps_merchant_id", mid);
+    try {
+      let mid = localStorage.getItem("ps_merchant_id") ?? "";
+      let token = sessionStorage.getItem("ps_ob_capability") ?? "";
+      if (!mid || !token) {
+        const response = await fetchWithTimeout("/api/onboarding/session", { method: "POST" });
+        const session = await response.json() as { merchant_id?: string; token?: string };
+        if (!response.ok || !session.merchant_id || !session.token) throw new Error("Could not start a secure onboarding session.");
+        mid = session.merchant_id;
+        token = session.token;
+        localStorage.setItem("ps_merchant_id", mid);
+        sessionStorage.setItem("ps_ob_capability", token);
+      }
+      setMerchantId(mid);
+      setOnboardingToken(token);
+      setStep(1);
+    } catch (error) {
+      setFinishError(error instanceof Error ? error.message : "Could not start onboarding.");
     }
-    setMerchantId(mid);
-    setStep(1);
   }
 
   async function handleFinish() {
     setFinishing(true);setFinishError("");
-    let mid = merchantId || localStorage.getItem("ps_merchant_id") || "";
-    if (!mid) {
-      mid = crypto.randomUUID();
-      localStorage.setItem("ps_merchant_id", mid);
-      setMerchantId(mid);
-    }
-    const code = makeAccessCode(region);
+    const mid = merchantId || localStorage.getItem("ps_merchant_id") || "";
+    const token = onboardingToken || sessionStorage.getItem("ps_ob_capability") || "";
+    if (!mid || !token) { setFinishError("Your secure onboarding session expired. Go back and try again."); setFinishing(false); return; }
 
     // Register the access code before channel credentials. The channel
     // endpoint verifies this mapping and rejects unregistered callers.
@@ -797,24 +802,27 @@ function OnboardingPage() {
       const registration=await fetchWithTimeout("/api/register-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ merchant_id: mid, code, email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined }),
+      body: JSON.stringify({ merchant_id: mid, onboarding_token: token, region_code: REGION_CODE[region] ?? "QA", email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined }),
       });
       if(!registration.ok)throw new Error("PrizeSkout could not secure your onboarding session. Please try again.");
+      const registrationData = await registration.json() as { code?: string };
+      const code = registrationData.code ?? "";
+      if (!code) throw new Error("PrizeSkout did not issue an access code. Please try again.");
       for(const [platform,credentials] of [["talabat",talabat],["jahez",jahez]] as const){
         if(!Object.keys(credentials).length)continue;
         const response=await fetchWithTimeout("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials})});
         const result=await response.json() as {ok?:boolean;error?:string};
         if(!response.ok||!result.ok)throw new Error(result.error??`PrizeSkout could not configure ${platform}.`);
       }
+      localStorage.setItem("ps_access_code", code);
+      localStorage.setItem("ps_connected", "true");
+      setAccessCode(code);
     }catch(error){
       const message=error instanceof DOMException&&error.name==="AbortError"
         ? "The connection took too long. Nothing was lost. Please try again."
         : error instanceof Error?error.message:"Setup could not be completed.";
       setFinishError(message);setFinishing(false);return;
     }
-    localStorage.setItem("ps_access_code", code);
-    localStorage.setItem("ps_connected", "true");
-
     // Create the Supabase account in the background so the merchant can use
     // email access immediately after onboarding without needing the code.
     // intent:"signup" is what allows email-bridge to create a brand-new
@@ -828,7 +836,6 @@ function OnboardingPage() {
       }).catch(() => {});
     }
 
-    setAccessCode(code);
     setStep(3);
     setFinishing(false);
   }
@@ -898,6 +905,7 @@ function OnboardingPage() {
         ) : step === 1 ? (
           <Step2
             merchantId={merchantId}
+            onboardingToken={onboardingToken}
             sallaConnected={sallaConnected}
             zidConnected={zidConnected}
             talabat={talabat} setTalabat={setTalabat}

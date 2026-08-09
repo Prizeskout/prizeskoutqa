@@ -31,6 +31,7 @@
 
 import { createHmac } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { safePublicFetch } from "@/server/safe-outbound-url";
 import { createNotification } from "./notifications";
 import { backgroundTask } from "./cf-ctx";
 
@@ -113,7 +114,7 @@ async function postOnce(
   headers: Record<string, string>,
 ): Promise<{ status: number | null; ok: boolean; responseText: string | null; error: string | null }> {
   try {
-    const res = await fetch(url, {
+    const res = await safePublicFetch(url, {
       method: "POST",
       headers,
       body,

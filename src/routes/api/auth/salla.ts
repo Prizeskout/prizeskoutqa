@@ -12,6 +12,7 @@
 
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getPublicOrigin } from "@/server/public-origin";
+import { verifyMerchantBootstrap } from "@/server/merchant-bootstrap";
 
 const SALLA_AUTH_URL = "https://accounts.salla.sa/oauth2/auth";
 
@@ -25,7 +26,7 @@ const SCOPES = [
 export const Route = createFileRoute("/api/auth/salla")({
   server: {
     handlers: {
-      GET: ({ request }) => {
+      GET: async ({ request }) => {
         const clientId = process.env.SALLA_CLIENT_ID;
         if (!clientId) {
           return new Response(
@@ -42,6 +43,8 @@ export const Route = createFileRoute("/api/auth/salla")({
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
         }
+        const allowed = await verifyMerchantBootstrap(merchantId, url.searchParams.get("onboarding_token") ?? "");
+        if (!allowed) return new Response(JSON.stringify({ error: "Unauthorized merchant connection request." }), { status: 401, headers: { "Content-Type": "application/json" } });
 
         // Optional return path after OAuth (only internal paths allowed)
         const rawReturn = url.searchParams.get("return_to") ?? "";

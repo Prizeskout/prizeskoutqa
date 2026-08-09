@@ -30,6 +30,9 @@ export const Route = createFileRoute("/api/channels/status")({
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
         }
+        const accessCodeValue = request.headers.get("x-prizeskout-access-code")?.trim().toUpperCase() ?? "";
+        const { data: authorizedCode } = await supabaseAdmin.from("ps_access_codes").select("merchant_id").eq("code", accessCodeValue).maybeSingle();
+        if (!authorizedCode || authorizedCode.merchant_id !== merchantId) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
 
         const [{ data, error }, { data: accessCode }] = await Promise.all([
           supabaseAdmin

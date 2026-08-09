@@ -231,7 +231,7 @@ function AccessPage() {
               leftIcon={<KeyRound size={16} />}
               value={code}
               onChange={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
-              placeholder="PSK-QA-0000"
+              placeholder="PSK-QA-SECURE-CODE"
             />
           </div>
           {error && <ErrorBox message={error} />}

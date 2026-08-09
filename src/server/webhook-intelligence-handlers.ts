@@ -25,6 +25,7 @@
 
 import { createHmac } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertSafePublicHttpsUrl, safePublicFetch } from "@/server/safe-outbound-url";
 import {
   computeMargin, breakevenPrice, minViablePrice,
   landedCost as computeLandedCost, r2, r4, type ChannelCosts,
@@ -501,7 +502,7 @@ async function deliverOne(
 
   const t0 = Date.now();
   try {
-    const res = await fetch(sub.endpoint_url, {
+    const res = await safePublicFetch(sub.endpoint_url, {
       method: "POST", headers, body,
       signal: AbortSignal.timeout(10000),
     });
@@ -717,7 +718,7 @@ export async function handleWiSubscribe(req: Request, ctx: V1Context): Promise<V
 
   const endpoint_url = (body.endpoint_url as string | undefined)?.trim();
   if (!endpoint_url) return err("missing_endpoint_url", "'endpoint_url' is required.", 400);
-  try { new URL(endpoint_url); } catch {
+  try { assertSafePublicHttpsUrl(endpoint_url); } catch {
     return err("invalid_endpoint_url", "'endpoint_url' must be a valid HTTPS URL.", 400);
   }
 

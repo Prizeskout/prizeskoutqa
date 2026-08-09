@@ -62,6 +62,7 @@ import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.s
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/catalog'
 import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
+import { Route as ApiOnboardingSessionRouteImport } from './routes/api/onboarding/session'
 import { Route as ApiDisputeVoucherRouteImport } from './routes/api/dispute/voucher'
 import { Route as ApiCopilotStoreRouteImport } from './routes/api/copilot/store'
 import { Route as ApiCopilotImagesRouteImport } from './routes/api/copilot/images'
@@ -358,6 +359,11 @@ const ApiRepricingApplyRoute = ApiRepricingApplyRouteImport.update({
   path: '/api/repricing/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOnboardingSessionRoute = ApiOnboardingSessionRouteImport.update({
+  id: '/api/onboarding/session',
+  path: '/api/onboarding/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDisputeVoucherRoute = ApiDisputeVoucherRouteImport.update({
   id: '/api/dispute/voucher',
   path: '/api/dispute/voucher',
@@ -572,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/api/copilot/images': typeof ApiCopilotImagesRoute
   '/api/copilot/store': typeof ApiCopilotStoreRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
+  '/api/onboarding/session': typeof ApiOnboardingSessionRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -653,6 +660,7 @@ export interface FileRoutesByTo {
   '/api/copilot/images': typeof ApiCopilotImagesRoute
   '/api/copilot/store': typeof ApiCopilotStoreRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
+  '/api/onboarding/session': typeof ApiOnboardingSessionRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -738,6 +746,7 @@ export interface FileRoutesById {
   '/api/copilot/images': typeof ApiCopilotImagesRoute
   '/api/copilot/store': typeof ApiCopilotStoreRoute
   '/api/dispute/voucher': typeof ApiDisputeVoucherRoute
+  '/api/onboarding/session': typeof ApiOnboardingSessionRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
@@ -824,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/copilot/images'
     | '/api/copilot/store'
     | '/api/dispute/voucher'
+    | '/api/onboarding/session'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -905,6 +915,7 @@ export interface FileRouteTypes {
     | '/api/copilot/images'
     | '/api/copilot/store'
     | '/api/dispute/voucher'
+    | '/api/onboarding/session'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -989,6 +1000,7 @@ export interface FileRouteTypes {
     | '/api/copilot/images'
     | '/api/copilot/store'
     | '/api/dispute/voucher'
+    | '/api/onboarding/session'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
     | '/api/webhooks/$platform'
@@ -1056,6 +1068,7 @@ export interface RootRouteChildren {
   ApiCopilotImagesRoute: typeof ApiCopilotImagesRoute
   ApiCopilotStoreRoute: typeof ApiCopilotStoreRoute
   ApiDisputeVoucherRoute: typeof ApiDisputeVoucherRoute
+  ApiOnboardingSessionRoute: typeof ApiOnboardingSessionRoute
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
@@ -1448,6 +1461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRepricingApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/onboarding/session': {
+      id: '/api/onboarding/session'
+      path: '/api/onboarding/session'
+      fullPath: '/api/onboarding/session'
+      preLoaderRoute: typeof ApiOnboardingSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dispute/voucher': {
       id: '/api/dispute/voucher'
       path: '/api/dispute/voucher'
@@ -1822,6 +1842,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCopilotImagesRoute: ApiCopilotImagesRoute,
   ApiCopilotStoreRoute: ApiCopilotStoreRoute,
   ApiDisputeVoucherRoute: ApiDisputeVoucherRoute,
+  ApiOnboardingSessionRoute: ApiOnboardingSessionRoute,
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,

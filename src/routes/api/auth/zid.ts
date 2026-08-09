@@ -12,6 +12,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { getPublicOrigin } from "@/server/public-origin";
+import { verifyMerchantBootstrap } from "@/server/merchant-bootstrap";
 
 const ZID_AUTH_URL = "https://oauth.zid.sa/oauth/authorize";
 
@@ -23,7 +24,7 @@ const SCOPES = "embedded_apps_tokens_write";
 export const Route = createFileRoute("/api/auth/zid")({
   server: {
     handlers: {
-      GET: ({ request }) => {
+      GET: async ({ request }) => {
         const clientId = process.env.ZID_CLIENT_ID;
         if (!clientId) {
           return new Response(
@@ -40,6 +41,8 @@ export const Route = createFileRoute("/api/auth/zid")({
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
         }
+        const allowed = await verifyMerchantBootstrap(merchantId, url.searchParams.get("onboarding_token") ?? "");
+        if (!allowed) return new Response(JSON.stringify({ error: "Unauthorized merchant connection request." }), { status: 401, headers: { "Content-Type": "application/json" } });
 
         // Optional return path after OAuth (only internal paths allowed)
         const rawReturn = url.searchParams.get("return_to") ?? "";
