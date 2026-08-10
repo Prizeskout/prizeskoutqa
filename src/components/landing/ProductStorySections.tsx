@@ -185,7 +185,6 @@ function ProfitStory({ lang }: { lang: Lang }) {
             <div className="copilot-proof"><span>{tx(lang, ["Known costs", "التكاليف المعروفة"])} <b>100%</b></span><i><em /></i></div>
           </div>
         </div>
-        <DemoCursor label={tx(lang, ["Explain this order", "اشرح هذا الطلب"])} />
       </Reveal>
     </section>
   );
@@ -240,7 +239,6 @@ function DecisionStory({ lang }: { lang: Lang }) {
             <b>12%</b>
             <em>{tx(lang, ["Projected return +9.2%", "العائد المتوقع +9.2%"])}</em>
           </div>
-          <DemoCursor label={tx(lang, ["Choose safer scenario", "اختر السيناريو الآمن"])} />
         </div>
       </Reveal>
     </section>
@@ -288,7 +286,6 @@ function ProtectionStory({ lang }: { lang: Lang }) {
           <i />
           <span>24%</span>
         </div>
-        <DemoCursor label={tx(lang, ["Review & approve", "راجع ووافق"])} />
       </Reveal>
     </section>
   );
@@ -344,7 +341,6 @@ function ManagerStory({ lang }: { lang: Lang }) {
           </span>
           <button>{tx(lang, ["Approve connected updates", "وافق على التحديثات المتصلة"])}</button>
         </div>
-        <DemoCursor label={tx(lang, ["Approve plan", "وافق على الخطة"])} />
       </Reveal>
     </section>
   );
@@ -415,7 +411,6 @@ function RecoveryStory({ lang }: { lang: Lang }) {
             <button>{tx(lang, ["Review case", "راجع الحالة"])}</button>
           </footer>
         </div>
-        <DemoCursor label={tx(lang, ["Review case", "راجع الحالة"])} />
       </Reveal>
     </section>
   );
@@ -470,6 +465,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [interacting, setInteracting] = useState(false);
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -478,10 +474,10 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    if (!playing || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => setActive((current) => (current + 1) % caps.length), 6200);
+    if (!playing || interacting || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => setActive((current) => (current + 1) % caps.length), 4800);
     return () => window.clearInterval(timer);
-  }, [playing]);
+  }, [playing, interacting]);
   return (
     <section className="pss-section capability-showroom" ref={sectionRef}>
       <Intro
@@ -503,8 +499,10 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
             type="button"
             className={`capability-card ${cls} ${active === i ? "is-active" : ""}`}
             key={title[0]}
-            onMouseEnter={() => setActive(i)}
-            onFocus={() => setActive(i)}
+            onMouseEnter={() => { setActive(i); setInteracting(true); }}
+            onMouseLeave={() => setInteracting(false)}
+            onFocus={() => { setActive(i); setInteracting(true); }}
+            onBlur={() => setInteracting(false)}
             onClick={() => setActive(i)}
             aria-pressed={active === i}
           >
@@ -512,6 +510,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
             <h3>{tx(lang, title)}</h3>
             <p>{tx(lang, body)}</p>
             <CapabilityDemo kind={cls} lang={lang} />
+            <span className="capability-state" aria-hidden="true"><i />{tx(lang,["See it work","شاهد كيف تعمل"])}</span>
             <i className="capability-progress" aria-hidden="true" />
           </button>
         ))}
@@ -901,16 +900,5 @@ function FinalCta({ lang }: { lang: Lang }) {
         <a href="/contact">{tx(lang, ["Book a demo", "احجز عرضاً توضيحياً"])}</a>
       </div>
     </section>
-  );
-}
-function DemoCursor({ label }: { label: string }) {
-  return (
-    <div className="pss-cursor" aria-hidden="true">
-      <svg viewBox="0 0 30 38">
-        <path d="M3 2.5 26 24l-10.3 1.5L10.5 35 3 2.5Z" />
-      </svg>
-      <span>{label}</span>
-      <i />
-    </div>
   );
 }

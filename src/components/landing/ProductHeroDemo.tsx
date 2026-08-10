@@ -80,7 +80,6 @@ export function ProductHeroDemo({lang,market}:{lang:DemoLanguage;market:LandingM
       </aside>
       <article className={`phd-workspace phd-${stage.id} phd-action-${phase}`}>
         <div className="phd-appbar"><div><i/><i/><i/></div><span>PrizeSkout · Bayt Burger</span><em>{lang==="ar"?"مباشر":"LIVE"}</em></div>
-        {!reduceMotion&&<div className={`phd-cursor phase-${phase}`} style={{left:`${cursor[0]}%`,top:`${cursor[1]}%`}} aria-hidden="true"><svg viewBox="0 0 30 38"><path d="M3 2.5 26 24l-10.3 1.5L10.5 35 3 2.5Z"/></svg><span>{t(cursor[2])}</span><i/></div>}
         <div className="phd-copy"><div><small>{t(stage.eyebrow)}</small><h3>{t(stage.title)}</h3><p>{t(stage.body)}</p></div><span className="phd-live"><i/>{lang==="ar"?"يعمل الآن":"Working now"}</span></div>
         {panel}
         <div className="phd-activity"><span>{phase===0?"01":phase===1?"02":"03"}</span><b>{t(cursor[2])}</b><i>{phase<2?(lang==="ar"?"جارٍ التنفيذ":"in progress"):(lang==="ar"?"تم":"complete")}</i></div>
