@@ -206,6 +206,7 @@ function DecisionStory({ lang }: { lang: Lang }) {
       <Reveal className="decision-grid">
         <div className="radar-card">
           <small>COMPETITOR RADAR</small>
+          <span className="decision-live"><i /> LIVE MARKET SCAN</span>
           <h3>{tx(lang, ["Market check complete", "اكتمل فحص السوق"])}</h3>
           <div className="price-compare">
             <span>
@@ -224,6 +225,7 @@ function DecisionStory({ lang }: { lang: Lang }) {
         </div>
         <div className="sim-card">
           <small>PROMOTION SIMULATOR</small>
+          <span className="decision-live"><i /> TESTING SCENARIO</span>
           <h3>{tx(lang, ["More orders. Less profit?", "طلبات أكثر، وربح أقل؟"])}</h3>
           <div className="discount-track">
             <i />
@@ -259,6 +261,8 @@ function ProtectionStory({ lang }: { lang: Lang }) {
         ]}
       />
       <Reveal className="protection-console">
+        <div className="protection-status" aria-hidden="true"><i /><span>LIVE MARGIN MONITOR</span></div>
+        <div className="protection-scan" aria-hidden="true" />
         <div className="policy-line">
           <span>{tx(lang, ["PROTECTED FLOOR", "الحد المحمي"])}</span>
           <strong>18%</strong>
@@ -277,7 +281,10 @@ function ProtectionStory({ lang }: { lang: Lang }) {
           <i>→</i>
           <small>{tx(lang, ["PROTECTED", "المحمي"])}</small>
           <strong>{money(50.6,2)}</strong>
-          <button>{tx(lang, ["Approve protected change", "وافق على التغيير المحمي"])}</button>
+          <button type="button">
+            <span>{tx(lang, ["Approve protected change", "وافق على التغيير المحمي"])}</span>
+            <b>{tx(lang, ["Protected and ready", "محمي وجاهز"])}</b>
+          </button>
         </div>
         <div className="margin-gauge">
           <span>14%</span>
@@ -305,6 +312,7 @@ function ManagerStory({ lang }: { lang: Lang }) {
         ]}
       />
       <Reveal className="manager-console">
+        <div className="manager-live" aria-hidden="true"><i /> SHOP MANAGER WORKING</div>
         <div className="manager-prompt">
           <small>{tx(lang, ["YOU ASKED", "طلبت"])}</small>
           <p>
@@ -321,7 +329,7 @@ function ManagerStory({ lang }: { lang: Lang }) {
             ["Margin policy", "سياسة الهامش"],
             ["Channel requirements", "متطلبات القنوات"],
           ].map((x, i) => (
-            <div key={x[0]} style={{ animationDelay: `${i * 0.35}s` }}>
+            <div key={x[0]} style={{ "--task-index": i } as React.CSSProperties}>
               <span>✓</span>
               <b>{tx(lang, x as Pair)}</b>
               <small>{tx(lang, ["Checked and ready", "تم الفحص وهو جاهز"])}</small>
@@ -339,7 +347,10 @@ function ManagerStory({ lang }: { lang: Lang }) {
           <span>
             POS <em className="soon">{tx(lang, ["Coming soon", "قريباً"])}</em>
           </span>
-          <button>{tx(lang, ["Approve connected updates", "وافق على التحديثات المتصلة"])}</button>
+          <button type="button">
+            <span>{tx(lang, ["Approve connected updates", "وافق على التحديثات المتصلة"])}</span>
+            <b>{tx(lang, ["Plan ready for approval", "الخطة جاهزة للموافقة"])}</b>
+          </button>
         </div>
       </Reveal>
     </section>
