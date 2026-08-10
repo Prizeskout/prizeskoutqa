@@ -19,13 +19,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | AI Store Manager & Revenue Protection" },
+      { title: "PrizeSkout | Margin Intelligence" },
       {
         name: "description",
         content:
           "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.",
       },
-      { property: "og:title", content: "PrizeSkout | AI Store Manager & Revenue Protection" },
+      { property: "og:title", content: "PrizeSkout | Margin Intelligence" },
       {
         property: "og:description",
         content:
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: "https://prizeskout.qa/" },
       { property: "og:site_name", content: "PrizeSkout" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "PrizeSkout | AI Store Manager & Revenue Protection" },
+      { name: "twitter:title", content: "PrizeSkout | Margin Intelligence" },
       {
         name: "twitter:description",
         content:

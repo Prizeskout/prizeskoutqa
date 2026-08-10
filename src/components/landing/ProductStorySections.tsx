@@ -28,7 +28,6 @@ export function ProductStorySections({ lang, market }: { lang: Lang; market: Lan
       <RecoveryStory lang={lang} />
       <ManagerStory lang={lang} />
       <PlatformMatrix lang={lang} />
-      <OperatingDay lang={lang} />
       <TrustStrip lang={lang} />
       <DetailedPricing lang={lang} />
       <Faq lang={lang} />
@@ -510,6 +509,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
             type="button"
             className={`capability-card ${cls} ${active === i ? "is-active" : ""}`}
             key={title[0]}
+            id={`feature-${cls}`}
             style={{ "--cap-index": i } as React.CSSProperties}
             onMouseEnter={() => { setActive(i); setInteracting(true); }}
             onMouseLeave={() => setInteracting(false)}
@@ -523,7 +523,6 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
             <p>{tx(lang, body)}</p>
             <CapabilityDemo kind={cls} lang={lang} />
             <span className="capability-state" aria-hidden="true"><i />{tx(lang,["See it work","شاهد كيف تعمل"])}</span>
-            <i className="capability-progress" aria-hidden="true" />
           </button>
         ))}
       </Reveal>

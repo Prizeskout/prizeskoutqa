@@ -10,7 +10,7 @@ import { getGeoSuggestion } from "@/server/geo-suggest.functions";
 import appCss from "../styles.css?url";
 
 
-const SITE_TITLE = "PrizeSkout | AI Store Manager & Revenue Protection";
+const SITE_TITLE = "PrizeSkout | Margin Intelligence";
 const SITE_DESCRIPTION =
   "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.";
 
