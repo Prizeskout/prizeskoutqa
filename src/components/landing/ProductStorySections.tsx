@@ -499,6 +499,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
             type="button"
             className={`capability-card ${cls} ${active === i ? "is-active" : ""}`}
             key={title[0]}
+            style={{ "--cap-index": i } as React.CSSProperties}
             onMouseEnter={() => { setActive(i); setInteracting(true); }}
             onMouseLeave={() => setInteracting(false)}
             onFocus={() => { setActive(i); setInteracting(true); }}
