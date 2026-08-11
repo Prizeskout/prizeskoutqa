@@ -86,7 +86,6 @@ export function ProductHeroDemo({lang,market}:{lang:DemoLanguage;market:LandingM
         <div className="phd-result"><span>✓</span><div><small>{lang==="ar"?"النتيجة":"OUTCOME"}</small><strong>{t(stage.outcome)}</strong></div><em>{t(stage.action)}</em></div>
       </article>
     </div>
-    <div className="phd-progress" aria-hidden="true"><span key={`${active}-${playing}`} style={{animationDuration:playing?`${stage.duration??3600}ms`:"0ms"}}/></div>
   </section>
 }
 
