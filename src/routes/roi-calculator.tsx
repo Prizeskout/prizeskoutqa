@@ -378,11 +378,11 @@ function ResultCard({ result }: { result: Result }) {
           e.currentTarget.style.boxShadow = "0 12px 30px rgba(234,88,12,0.35)";
         }}
       >
-        Start a 14-day trial
+        Get started with PrizeSkout
         <ArrowRight size={14} />
       </Link>
       <p style={{ fontSize: 11, color: "#6B6B6B", textAlign: "center", marginTop: 10 }}>
-        No card required. Live data on day one.
+        Connect your store and start protecting your margins.
       </p>
     </div>
   );

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/signup")({
       {
         name: "description",
         content:
-          "Start your 14-day free trial of PrizeSkout commerce intelligence.",
+          "Create your PrizeSkout commerce intelligence account.",
       },
     ],
   }),
@@ -150,7 +150,7 @@ function SignupPage() {
         Create your account
       </h1>
       <p style={{ fontSize: 13, color: "#6B6B6B", marginTop: 6, margin: "6px 0 0 0" }}>
-        Start your 14-day free trial. No credit card required.
+        Create your PrizeSkout account.
       </p>
 
       <form

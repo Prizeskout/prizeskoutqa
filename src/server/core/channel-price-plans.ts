@@ -1,5 +1,6 @@
 import {supabaseAdmin} from "@/integrations/supabase/client.server";
 import {pushPriceToSourcePlatform} from "./platform-sync";
+import {getValidSallaAccessToken} from "./salla-token";
 import {getValidTalabatAccessToken, updateTalabatPrice} from "./talabat-client";
 import type {ChannelPriceRow} from "@/lib/channel-price-planner";
 import {createNotification} from "@/server/notifications";
@@ -74,7 +75,8 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
       const {data:evt}=await supabaseAdmin.from("ps_ingest_events").select("item_id,currency").eq("id",row.ingest_event_id).eq("account_id",accountId).maybeSingle();
       if(!evt?.item_id){results.push({...pick(row),status:"failed",reason:"Source product could not be found."});continue;}
       const meta=(ch.metadata??{}) as Record<string,unknown>;
-      const push=await pushPriceToSourcePlatform(row.channel,{bearer_token:ch.bearer_token,manager_token:ch.manager_token??null,store_id:String(meta.store_id??"")||null},evt.item_id,row.planned_price,evt.currency??"SAR");
+      const bearerToken=row.channel==="salla"?await getValidSallaAccessToken(ch):ch.bearer_token;
+      const push=await pushPriceToSourcePlatform(row.channel,{bearer_token:bearerToken,manager_token:ch.manager_token??null,store_id:String(meta.store_id??"")||null},evt.item_id,row.planned_price,evt.currency??"SAR");
       if(push.success){
         await supabaseAdmin.from("ps_ingest_events").update({current_retail_price:row.planned_price,status:"repriced"}).eq("id",row.ingest_event_id).eq("account_id",accountId);
       }

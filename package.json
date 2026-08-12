@@ -16,6 +16,7 @@
     "verify-copilot-prompts": "tsx scripts/verify-copilot-prompts.mts",
     "verify-product-images": "tsx --env-file=.env.local scripts/verify-product-images.mts",
     "verify-store-manager-ui": "tsx --env-file=.env.local scripts/verify-store-manager-ui.mts",
+    "verify-salla-contract": "tsx scripts/verify-salla-contract.mts",
     "test:e2e": "tsx --env-file=.env.local scripts/e2e-app.mts",
     "typecheck": "tsc --noEmit --pretty false",
     "load:wedge": "tsx scripts/load-wedge.mts"
@@ -103,6 +104,7 @@
     "pg": "^8.22.0",
     "playwright": "^1.61.0",
     "prettier": "^3.7.3",
+    "tsx": "^4.23.12",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.5"

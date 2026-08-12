@@ -22,6 +22,7 @@ import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { writeAuditLog, channelConnectSummary } from "./govern";
 import { syncPlatformCatalog } from "./platform-sync";
 import { getPublicOrigin } from "@/server/public-origin";
+import { getValidSallaAccessToken } from "./salla-token";
 
 // ---------------------------------------------------------------------------
 // Webhook helpers
@@ -57,6 +58,12 @@ async function registerPlatformWebhook(
   };
 
   try {
+    const configuredSallaSecret = platform === "salla"
+      ? process.env.SALLA_WEBHOOK_SECRET?.trim()
+      : undefined;
+    if (platform === "salla" && !configuredSallaSecret) {
+      return { ok: false, message: "SALLA_WEBHOOK_SECRET is not configured" };
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
 
@@ -66,7 +73,7 @@ async function registerPlatformWebhook(
         await fetch("https://api.salla.dev/admin/v2/webhooks/subscribe", {
           method: "POST",
           headers,
-          body: JSON.stringify({ event, url: webhookUrl, secret: webhookSecret }),
+          body: JSON.stringify({ event, url: webhookUrl, secret: configuredSallaSecret }),
           signal: controller.signal,
         });
       }
@@ -378,7 +385,7 @@ export async function handleChannelSync(
 
   const { data: channel } = await supabaseAdmin
     .from("ps_merchant_channels")
-    .select("bearer_token, manager_token, status, metadata")
+    .select("id, bearer_token, manager_token, status, metadata")
     .eq("account_id", ctx.accountId)
     .eq("merchant_id", merchant_id)
     .eq("platform", platform)
@@ -389,10 +396,14 @@ export async function handleChannelSync(
 
   const region = (body.region as string | undefined) ?? "QA";
 
+  const bearerToken = platform === "salla"
+    ? await getValidSallaAccessToken(channel)
+    : channel.bearer_token ?? "";
+
   const result = await syncPlatformCatalog({
     platform,
     creds: {
-      bearer_token: channel.bearer_token ?? "",
+      bearer_token: bearerToken,
       manager_token: channel.manager_token,
       store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
     },

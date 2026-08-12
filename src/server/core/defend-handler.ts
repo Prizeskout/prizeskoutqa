@@ -19,6 +19,7 @@ import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { writeAuditLog, dispatchSummary } from "./govern";
 import { CIRCUIT_OPEN_BACKOFF_SECONDS } from "./decide-engine";
 import { pushPriceToSourcePlatform } from "./platform-sync";
+import { getValidSallaAccessToken } from "./salla-token";
 import { keetaApiCall, getValidKeetaAccessToken } from "./keeta-client";
 import { getValidTalabatAccessToken, updateTalabatPrice } from "./talabat-client";
 import { getValidDeliverooAccessToken, updateDeliverooPrice } from "./deliveroo-client";
@@ -563,7 +564,7 @@ export async function dispatchToAggregators(
     if (ingestEvent && (SOURCE_PLATFORMS as readonly string[]).includes(ingestEvent.source_platform)) {
       const { data: channelCreds } = await supabaseAdmin
         .from("ps_merchant_channels")
-        .select("bearer_token, manager_token")
+        .select("id, bearer_token, manager_token, metadata")
         .eq("account_id", accountId)
         .eq("merchant_id", merchantId)
         .eq("platform", ingestEvent.source_platform)
@@ -571,10 +572,13 @@ export async function dispatchToAggregators(
         .maybeSingle();
 
       if (channelCreds && ingestEvent.item_id && channelCreds.bearer_token) {
+        const bearerToken = ingestEvent.source_platform === "salla"
+          ? await getValidSallaAccessToken(channelCreds)
+          : channelCreds.bearer_token;
         const pushResult = await pushPriceToSourcePlatform(
           ingestEvent.source_platform,
           {
-            bearer_token: channelCreds.bearer_token,
+            bearer_token: bearerToken,
             manager_token: channelCreds.manager_token,
           },
           ingestEvent.item_id,

@@ -147,7 +147,7 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
         } catch { /* non-fatal — we'll use the merchant_id from the token response */ }
 
         // 3. Persist channel in ps_merchant_channels
-        const webhookSecret = generateWebhookSecret();
+        const webhookSecret = process.env.SALLA_WEBHOOK_SECRET?.trim() || generateWebhookSecret();
         const now           = new Date().toISOString();
         const expiresAt     = tokens.expires_in
           ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
@@ -188,7 +188,7 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
 
         // 4. Register Salla webhooks so real-time product events flow into the pipeline
         try {
-          const webhookUrl    = `${url.origin}/api/webhooks/salla`;
+          const webhookUrl    = `${getPublicOrigin(request)}/api/webhooks/salla`;
           const sallaHeaders  = {
             "Content-Type": "application/json",
             Accept: "application/json",

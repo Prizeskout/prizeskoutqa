@@ -38,7 +38,23 @@ export async function getStoreManager(accountId:string){
   if(missing.length){
     const {data,error}=await supabaseAdmin.from("ps_store_manager_policies" as never).upsert(missing as never,{onConflict:"account_id,policy_key"}).select("*");if(error)throw error;policyRows=[...policyRows,...((data??[]) as any[])];
   }
-  return {available:true,setup_required:false,profile:profile.data??defaultProfile,policies:policyRows,tasks:tasks.data??[]};
+  let sallaOperations:Record<string,unknown>|null=null;
+  const {data:sallaChannel}=await supabaseAdmin.from("ps_merchant_channels").select("id,account_id").eq("platform","salla").eq("merchant_id",accountId).eq("status","connected").maybeSingle();
+  if(sallaChannel){
+    const [orders,exceptions,shipments,entities,failedEvents]=await Promise.all([
+      supabaseAdmin.from("ps_salla_orders" as never).select("external_order_id,status,payment_status,currency,total,paid_total,refunded_total,invoiced_total,reconciliation_status,reconciliation_delta,updated_at").eq("channel_id",sallaChannel.id).order("updated_at",{ascending:false}).limit(50),
+      supabaseAdmin.from("ps_salla_orders" as never).select("external_order_id,currency,total,paid_total,refunded_total,invoiced_total,reconciliation_delta,updated_at").eq("channel_id",sallaChannel.id).eq("reconciliation_status","exception").order("updated_at",{ascending:false}).limit(25),
+      supabaseAdmin.from("ps_salla_shipments" as never).select("external_shipment_id,external_order_id,status,company_name,tracking_number,updated_at").eq("channel_id",sallaChannel.id).order("updated_at",{ascending:false}).limit(50),
+      supabaseAdmin.from("ps_salla_store_entities" as never).select("entity_type",{count:"exact",head:true}).eq("channel_id",sallaChannel.id).is("deleted_at",null),
+      supabaseAdmin.from("ps_salla_webhook_events" as never).select("event_name,error_message,created_at").eq("channel_id",sallaChannel.id).eq("status","failed").order("created_at",{ascending:false}).limit(20),
+    ]);
+    const missing=orders.error&&(orders.error.code==="42P01"||orders.error.code==="PGRST205");
+    if(!missing){
+      for(const result of [orders,exceptions,shipments,entities,failedEvents])if(result.error)throw new Error(result.error.message);
+      sallaOperations={internal_account_id:sallaChannel.account_id,orders:orders.data??[],exceptions:exceptions.data??[],shipments:shipments.data??[],active_entity_count:entities.count??0,failed_events:failedEvents.data??[]};
+    }
+  }
+  return {available:true,setup_required:false,profile:profile.data??defaultProfile,policies:policyRows,tasks:tasks.data??[],salla_operations:sallaOperations};
 }
 
 export async function saveStoreManagerProfile(accountId:string,input:{operatingMode:string;dailyBriefEnabled:boolean;dailyBriefHour:number;timezone:string;language:string}){

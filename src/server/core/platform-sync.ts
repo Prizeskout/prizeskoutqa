@@ -13,6 +13,16 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide, REGIONAL_COMMISSION, REGIONAL_VAT } from "./decide-engine";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
 import { zidCustomerPricePatch } from "@/lib/channel-bridge";
+import {
+  buildSallaPriceUpdate,
+  SALLA_API_BASE,
+  sallaHasNextPage,
+  sallaPriceAmount,
+  sallaPriceCurrency,
+  sallaProductCost,
+  sallaProductQuantity,
+  type SallaProductPage,
+} from "./salla-contract";
 
 type PlatformCreds = {
   bearer_token: string;
@@ -74,23 +84,12 @@ async function fetchSallaProducts(creds: PlatformCreds): Promise<PlatformProduct
 
   while (true) {
     const resp = await fetch(
-      `https://api.salla.dev/admin/v2/products?page=${page}&per_page=50`,
+      `${SALLA_API_BASE}/products?page=${page}&per_page=50`,
       { headers: { Authorization: `Bearer ${creds.bearer_token}`, Accept: "application/json" } },
     );
     if (!resp.ok) break;
 
-    const json = await resp.json() as {
-      data?: Array<{
-        id: string | number;
-        sku?: string;
-        name?: string;
-        arabic_name?: string;
-        price?: { amount?: number; currency?: string };
-        cost?: number;
-        quantity?: number;
-      }>;
-      cursor?: { next?: string | null };
-    };
+    const json = await resp.json() as SallaProductPage;
 
     const items = json.data ?? [];
     for (const item of items) {
@@ -99,17 +98,16 @@ async function fetchSallaProducts(creds: PlatformCreds): Promise<PlatformProduct
         sku: item.sku ?? String(item.id),
         name_en: item.name ?? "",
         name_ar: item.arabic_name ?? item.name ?? "",
-        price: item.price?.amount ?? 0,
-        cost: item.cost ?? null,
-        currency: item.price?.currency ?? "SAR",
-        in_stock: (item.quantity ?? 1) > 0,
-        quantity: item.quantity ?? null,
-        is_infinite: false,
+        price: sallaPriceAmount(item.price),
+        cost: sallaProductCost(item),
+        currency: sallaPriceCurrency(item.price),
+        in_stock: item.unlimited_quantity === true || (sallaProductQuantity(item) ?? 1) > 0,
+        quantity: sallaProductQuantity(item),
+        is_infinite: item.unlimited_quantity === true,
       });
     }
 
-    // Salla uses cursor-based pagination
-    if (!json.cursor?.next || items.length < 50) break;
+    if (!sallaHasNextPage(json, page)) break;
     page++;
     if (page > 20) break; // safety cap: 1,000 products max per sync
   }
@@ -249,9 +247,9 @@ export async function pushPriceToSourcePlatform(
     };
 
     if (platform === "salla") {
-      // Salla: PUT /admin/v2/products/{id} with price block
-      url = `https://api.salla.dev/admin/v2/products/${externalId}`;
-      body = { price: { amount: newPrice, currency } };
+      // Salla expects a numeric price on the product update endpoint.
+      url = `${SALLA_API_BASE}/products/${externalId}`;
+      body = buildSallaPriceUpdate(newPrice);
     } else if (platform === "foodics") {
       // Foodics: PUT /v2.1/products/{id}
       url = `https://api-v2.foodics.com/v2.1/products/${externalId}`;
@@ -304,7 +302,7 @@ export async function fetchLiveProductPrice(
     if(platform==="zid"){
       url=`https://api.zid.sa/v1/products/${externalId}/`;
       headers={...headers,...zidHeaders(creds)};
-    }else if(platform==="salla") url=`https://api.salla.dev/admin/v2/products/${externalId}`;
+    }else if(platform==="salla") url=`${SALLA_API_BASE}/products/${externalId}`;
     else if(platform==="foodics") url=`https://api-v2.foodics.com/v2.1/products/${externalId}`;
     else return {success:false,price:null,httpStatus:400,message:`Unknown source platform: ${platform}`};
     const response=await fetch(url,{headers,signal:controller.signal});

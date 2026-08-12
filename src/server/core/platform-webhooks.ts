@@ -27,6 +27,8 @@ import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
 import { signRequest } from "./keeta-client";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { handleSallaAppEvent, isSallaAppEvent } from "./salla-easy-mode";
+import { isSallaOperationalEvent, processSallaOperationalEvent } from "./salla-store-events";
 
 // ---------------------------------------------------------------------------
 // Event allow-lists — only pricing-relevant events trigger the pipeline
@@ -62,7 +64,7 @@ function verifyZidBasicAuth(authHeader: string | null, storedSecret: string | nu
 // ---------------------------------------------------------------------------
 // HMAC-SHA-256 verification (Web Crypto — runtime-agnostic)
 // ---------------------------------------------------------------------------
-async function verifyHmac(rawBody: string, secret: string, header: string | null): Promise<boolean> {
+export async function verifyHmac(rawBody: string, secret: string, header: string | null): Promise<boolean> {
   if (!header || !secret) return false;
 
   const received = header.startsWith("sha256=") ? header.slice(7) : header;
@@ -319,21 +321,44 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
 // ---------------------------------------------------------------------------
 export async function handleSallaWebhook(request: Request): Promise<Response> {
   const rawBody = await request.text();
+  const webhookSecret = process.env.SALLA_WEBHOOK_SECRET?.trim() ?? "";
+  if (!webhookSecret) return err("Salla webhook verification is not configured", 503);
+  const sig = request.headers.get("x-salla-signature");
+  if (!await verifyHmac(rawBody, webhookSecret, sig)) {
+    return err("Invalid signature", 401);
+  }
+
   let payload: Record<string, unknown>;
   try { payload = JSON.parse(rawBody); } catch { return err("Invalid JSON", 400); }
 
   const storeId = String(payload.merchant ?? "");
   if (!storeId) return err("Missing merchant identifier", 400);
 
+  const event = String(payload.event ?? "");
+  if (isSallaAppEvent(event)) {
+    try {
+      return ok(await handleSallaAppEvent(payload));
+    } catch (error) {
+      console.error("[salla-easy-mode] app event failed", { event, store_id: storeId, error });
+      return err("Failed to process Salla app event", 500);
+    }
+  }
+
   const channel = await findChannel("salla", storeId);
   if (!channel) return ok({ received: true, processed: false, reason: "merchant_not_connected" });
 
-  const sig = request.headers.get("x-salla-signature");
-  if (!await verifyHmac(rawBody, channel.webhook_secret ?? "", sig)) {
-    return err("Invalid signature", 401);
+  if (isSallaOperationalEvent(event)) {
+    try {
+      const operational = await processSallaOperationalEvent(channel, payload, rawBody);
+      if (!SALLA_PRICE_EVENTS.has(event)) {
+        return ok({ received: true, processed: true, operational });
+      }
+    } catch (error) {
+      console.error("[salla-store-events] operational event failed", { event, store_id: storeId, error });
+      return err("Failed to process Salla store event", 500);
+    }
   }
 
-  const event = String(payload.event ?? "");
   if (!SALLA_PRICE_EVENTS.has(event)) {
     return ok({ received: true, processed: false, reason: "event_not_subscribed" });
   }

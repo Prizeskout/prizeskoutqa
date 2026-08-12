@@ -14,6 +14,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { fetchLiveProductPrice, pushPriceToSourcePlatform } from "@/server/core/platform-sync";
+import { getValidSallaAccessToken } from "@/server/core/salla-token";
 import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
 import { recordPendingJahezPropagation } from "@/server/core/zid-jahez-bridge";
 
@@ -87,7 +88,7 @@ export const Route = createFileRoute("/api/repricing/apply")({
         // 3. Get connected channel credentials for this platform
         const { data: channel } = await supabaseAdmin
           .from("ps_merchant_channels")
-          .select("bearer_token, manager_token, platform, metadata")
+          .select("id, bearer_token, manager_token, platform, metadata")
           .eq("account_id", accountId)
           .eq("platform", source_platform)
           .eq("status", "connected")
@@ -100,11 +101,15 @@ export const Route = createFileRoute("/api/repricing/apply")({
           }, 400);
         }
 
+        const sourceBearerToken = source_platform === "salla"
+          ? await getValidSallaAccessToken(channel)
+          : channel.bearer_token;
+
         // 4. Push the new price to the platform
         const result = await pushPriceToSourcePlatform(
           source_platform,
           {
-            bearer_token: channel.bearer_token,
+            bearer_token: sourceBearerToken,
             manager_token: channel.manager_token ?? null,
             store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
           },
@@ -121,14 +126,14 @@ export const Route = createFileRoute("/api/repricing/apply")({
         let verificationMessage:string|undefined;
         if(result.success){
           const readback=await fetchLiveProductPrice(source_platform,{
-            bearer_token:channel.bearer_token,manager_token:channel.manager_token??null,
+            bearer_token:sourceBearerToken,manager_token:channel.manager_token??null,
             store_id:String((channel.metadata as Record<string,unknown>|null)?.store_id??"")||null,
           },item_id);
           livePrice=readback.price;
           confirmed=readback.success&&livePrice!=null&&Math.abs(livePrice-targetPrice)<0.005;
           if(!confirmed){
             const rollback=await pushPriceToSourcePlatform(source_platform,{
-              bearer_token:channel.bearer_token,manager_token:channel.manager_token??null,
+              bearer_token:sourceBearerToken,manager_token:channel.manager_token??null,
               store_id:String((channel.metadata as Record<string,unknown>|null)?.store_id??"")||null,
             },item_id,currentPrice,currency??"SAR");
             rolledBack=rollback.success;

@@ -576,7 +576,7 @@ function MarginLandingPage() {
                 marginBottom: 16,
               }}
             >
-              Start free — no card required
+              Start protecting your margins
             </div>
             <h2
               style={{

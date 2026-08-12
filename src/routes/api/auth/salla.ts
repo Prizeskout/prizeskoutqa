@@ -13,15 +13,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getPublicOrigin } from "@/server/public-origin";
 import { verifyMerchantBootstrap } from "@/server/merchant-bootstrap";
+import { sallaScopeString } from "@/server/core/salla-contract";
 
 const SALLA_AUTH_URL = "https://accounts.salla.sa/oauth2/auth";
-
-const SCOPES = [
-  "offline_access",   // refresh token
-  "orders.read",      // order-level payout data for dispute agent
-  "products.read",    // catalog ingest
-  "products.write",   // margin-safe price push
-].join(" ");
 
 export const Route = createFileRoute("/api/auth/salla")({
   server: {
@@ -60,7 +54,7 @@ export const Route = createFileRoute("/api/auth/salla")({
           client_id:     clientId,
           redirect_uri:  redirectUri,
           response_type: "code",
-          scope:         SCOPES,
+          scope:         sallaScopeString(),
           state:         nonce,
         });
 
