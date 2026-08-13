@@ -5807,7 +5807,7 @@ export function PrizeSkoutDashboard() {
               title="Contact support"
               aria-label="Contact support"
               style={{
-                display: "flex",
+                display: "none",
                 alignItems: "center",
                 gap: 8,
                 justifyContent: "center",
@@ -14307,19 +14307,13 @@ export function PrizeSkoutDashboard() {
           );
         })()}
 
-      {/* GLOBAL CFO COPILOT + STORE MANAGER */}
-      {!assistantDrawerOpen && (
+      {/* Persistent support chat launcher */}
+      {!supportOpen && (
         <button
           type="button"
-          aria-label={tr("Open CFO Copilot and Shop Manager", "افتح المساعد المالي ومدير المتجر", "Ouvrir le copilote financier et le gestionnaire de boutique")}
-          onClick={() => {
-            setAssistantDrawerOpen(false);
-            setTab("rules");
-            window.setTimeout(
-              () => document.querySelector('[data-tour="copilot"]')?.scrollIntoView({ behavior: "smooth", block: "start" }),
-              0,
-            );
-          }}
+          data-tour="support"
+          aria-label={tr("Open support chat", "افتح محادثة الدعم", "Ouvrir le chat d’assistance")}
+          onClick={() => setSupportOpen(true)}
           style={{
             position: "fixed",
             insetInlineEnd: 24,
@@ -14340,7 +14334,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">✦</span> {tr("CFO Copilot and Shop Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
+          <span aria-hidden="true">●</span> {tr("Support chat", "محادثة الدعم", "Chat d’assistance")}
         </button>
       )}
       {assistantDrawerOpen && (
