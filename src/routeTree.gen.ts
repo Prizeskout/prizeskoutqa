@@ -48,12 +48,9 @@ import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
-import { Route as AdminSystemRouteImport } from './routes/admin.system'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
-import { Route as AdminLiveAccessRouteImport } from './routes/admin.live-access'
-import { Route as AdminCodesRouteImport } from './routes/admin.codes'
-import { Route as AdminChannelsRouteImport } from './routes/admin.channels'
-import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
 import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
 import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.quickstart'
@@ -288,34 +285,19 @@ const ApiRegisterCodeRoute = ApiRegisterCodeRouteImport.update({
   path: '/api/register-code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminSystemRoute = AdminSystemRouteImport.update({
-  id: '/system',
-  path: '/system',
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperationsRoute = AdminOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMerchantsRoute = AdminMerchantsRouteImport.update({
   id: '/merchants',
   path: '/merchants',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLiveAccessRoute = AdminLiveAccessRouteImport.update({
-  id: '/live-access',
-  path: '/live-access',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCodesRoute = AdminCodesRouteImport.update({
-  id: '/codes',
-  path: '/codes',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminChannelsRoute = AdminChannelsRouteImport.update({
-  id: '/channels',
-  path: '/channels',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAuditRoute = AdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
 const DocsGuidesWebhooksRoute = DocsGuidesWebhooksRouteImport.update({
@@ -537,12 +519,9 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
-  '/admin/audit': typeof AdminAuditRoute
-  '/admin/channels': typeof AdminChannelsRoute
-  '/admin/codes': typeof AdminCodesRoute
-  '/admin/live-access': typeof AdminLiveAccessRoute
   '/admin/merchants': typeof AdminMerchantsRoute
-  '/admin/system': typeof AdminSystemRoute
+  '/admin/operations': typeof AdminOperationsRoute
+  '/admin/support': typeof AdminSupportRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -619,12 +598,9 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
-  '/admin/audit': typeof AdminAuditRoute
-  '/admin/channels': typeof AdminChannelsRoute
-  '/admin/codes': typeof AdminCodesRoute
-  '/admin/live-access': typeof AdminLiveAccessRoute
   '/admin/merchants': typeof AdminMerchantsRoute
-  '/admin/system': typeof AdminSystemRoute
+  '/admin/operations': typeof AdminOperationsRoute
+  '/admin/support': typeof AdminSupportRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -705,12 +681,9 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
-  '/admin/audit': typeof AdminAuditRoute
-  '/admin/channels': typeof AdminChannelsRoute
-  '/admin/codes': typeof AdminCodesRoute
-  '/admin/live-access': typeof AdminLiveAccessRoute
   '/admin/merchants': typeof AdminMerchantsRoute
-  '/admin/system': typeof AdminSystemRoute
+  '/admin/operations': typeof AdminOperationsRoute
+  '/admin/support': typeof AdminSupportRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -792,12 +765,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
-    | '/admin/audit'
-    | '/admin/channels'
-    | '/admin/codes'
-    | '/admin/live-access'
     | '/admin/merchants'
-    | '/admin/system'
+    | '/admin/operations'
+    | '/admin/support'
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
@@ -874,12 +844,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
-    | '/admin/audit'
-    | '/admin/channels'
-    | '/admin/codes'
-    | '/admin/live-access'
     | '/admin/merchants'
-    | '/admin/system'
+    | '/admin/operations'
+    | '/admin/support'
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
@@ -959,12 +926,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
-    | '/admin/audit'
-    | '/admin/channels'
-    | '/admin/codes'
-    | '/admin/live-access'
     | '/admin/merchants'
-    | '/admin/system'
+    | '/admin/operations'
+    | '/admin/support'
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
@@ -1363,11 +1327,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRegisterCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/system': {
-      id: '/admin/system'
-      path: '/system'
-      fullPath: '/admin/system'
-      preLoaderRoute: typeof AdminSystemRouteImport
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations': {
+      id: '/admin/operations'
+      path: '/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AdminOperationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/merchants': {
@@ -1375,34 +1346,6 @@ declare module '@tanstack/react-router' {
       path: '/merchants'
       fullPath: '/admin/merchants'
       preLoaderRoute: typeof AdminMerchantsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/live-access': {
-      id: '/admin/live-access'
-      path: '/live-access'
-      fullPath: '/admin/live-access'
-      preLoaderRoute: typeof AdminLiveAccessRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/codes': {
-      id: '/admin/codes'
-      path: '/codes'
-      fullPath: '/admin/codes'
-      preLoaderRoute: typeof AdminCodesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/channels': {
-      id: '/admin/channels'
-      path: '/channels'
-      fullPath: '/admin/channels'
-      preLoaderRoute: typeof AdminChannelsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/audit': {
-      id: '/admin/audit'
-      path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
     '/docs/guides/webhooks': {
@@ -1675,22 +1618,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
-  AdminAuditRoute: typeof AdminAuditRoute
-  AdminChannelsRoute: typeof AdminChannelsRoute
-  AdminCodesRoute: typeof AdminCodesRoute
-  AdminLiveAccessRoute: typeof AdminLiveAccessRoute
   AdminMerchantsRoute: typeof AdminMerchantsRoute
-  AdminSystemRoute: typeof AdminSystemRoute
+  AdminOperationsRoute: typeof AdminOperationsRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminAuditRoute: AdminAuditRoute,
-  AdminChannelsRoute: AdminChannelsRoute,
-  AdminCodesRoute: AdminCodesRoute,
-  AdminLiveAccessRoute: AdminLiveAccessRoute,
   AdminMerchantsRoute: AdminMerchantsRoute,
-  AdminSystemRoute: AdminSystemRoute,
+  AdminOperationsRoute: AdminOperationsRoute,
+  AdminSupportRoute: AdminSupportRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

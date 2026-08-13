@@ -11,15 +11,21 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { X, Mail, LifeBuoy } from "lucide-react";
+import { X, Mail, LifeBuoy, Bot, Send } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { submitContactMessage } from "@/server/contact.functions";
+import { askSupportAgent } from "@/server/platform-admin.functions";
 
 const SUPPORT_EMAIL = "support@prizeskout.qa";
 
 export function ContactSupportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const submit = useServerFn(submitContactMessage);
+  const ask = useServerFn(askSupportAgent);
+  const [mode, setMode] = useState<"chat" | "ticket">("chat");
+  const [chatInput, setChatInput] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chat, setChat] = useState<Array<{role:"user"|"assistant";content:string}>>([{role:"assistant",content:"Hi — I’m PrizeSkout Support. How can I help with your store, margins, channels, or payouts?"}]);
   const [name, setName]       = useState("");
   const [email, setEmail]     = useState("");
   const [message, setMessage] = useState("");
@@ -62,6 +68,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
       setBusy(false);
     }
   };
+  const handleChat=async(e:React.FormEvent)=>{e.preventDefault();const text=chatInput.trim();if(!text||chatBusy)return;const history=chat.slice(-10);setChat(x=>[...x,{role:"user",content:text}]);setChatInput("");setChatBusy(true);try{const r=await ask({data:{message:text,history,locale:document.documentElement.lang||"en"}});setChat(x=>[...x,{role:"assistant",content:r.answer}])}catch{setChat(x=>[...x,{role:"assistant",content:"I can’t answer right now. Please create a support ticket and our team will help."}])}finally{setChatBusy(false)}};
 
   return (
     <>
@@ -92,10 +99,10 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
             </div>
             <div>
               <h2 id="contact-support-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--ps-text, #1A1A18)" }}>
-                Contact support
+                PrizeSkout support
               </h2>
               <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--ps-muted, #6B6B6B)" }}>
-                We read every message and reply within one business day.
+                Get an answer now or contact our team.
               </p>
             </div>
           </div>
@@ -111,6 +118,8 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
           </button>
         </div>
 
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,padding:4,borderRadius:10,background:"var(--ps-hover,#F4F4F2)",marginBottom:14}}>{([['chat','Ask support',Bot],['ticket','Human support',Mail]] as const).map(([id,label,Icon])=><button key={id} type="button" onClick={()=>setMode(id)} style={{display:'flex',justifyContent:'center',alignItems:'center',gap:6,padding:8,border:0,borderRadius:7,background:mode===id?'#fff':'transparent',color:mode===id?'#EF681A':'#666',fontWeight:700,cursor:'pointer'}}><Icon size={14}/>{label}</button>)}</div>
+        {mode==='chat'?<div><div aria-live="polite" style={{height:290,overflow:'auto',display:'flex',flexDirection:'column',gap:9,padding:'2px 2px 12px'}}>{chat.map((x,i)=><div key={i} style={{alignSelf:x.role==='user'?'flex-end':'flex-start',maxWidth:'86%',padding:'9px 11px',borderRadius:11,background:x.role==='user'?'#EF681A':'var(--ps-hover,#F3F3F1)',color:x.role==='user'?'#fff':'var(--ps-text,#222)',fontSize:13,lineHeight:1.5,whiteSpace:'pre-wrap'}}>{x.content}</div>)}{chatBusy&&<small>Support is typing…</small>}</div><form onSubmit={handleChat} style={{display:'flex',gap:8}}><input autoFocus value={chatInput} onChange={e=>setChatInput(e.target.value)} placeholder="Ask a question…" style={{...inputStyle,flex:1}}/><button type="submit" aria-label="Send" disabled={chatBusy} style={{width:40,border:0,borderRadius:9,background:'#EF681A',color:'#fff',display:'grid',placeItems:'center'}}><Send size={15}/></button></form><button type="button" onClick={()=>{setMode('ticket');setMessage(chat.filter(x=>x.role==='user').map(x=>x.content).join('\n'))}} style={{width:'100%',marginTop:12,border:0,background:'transparent',color:'#EF681A',fontSize:12,fontWeight:700,cursor:'pointer'}}>Still need help? Create a human support ticket</button></div>:<>
         <a
           href={`mailto:${SUPPORT_EMAIL}`}
           style={{
@@ -157,6 +166,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
             {busy ? "Sending…" : "Send message"}
           </button>
         </form>
+        </>}
       </div>
     </>
   );
