@@ -49,6 +49,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminSignInRouteImport } from './routes/admin.sign-in'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
@@ -290,6 +291,11 @@ const AdminSupportRoute = AdminSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSignInRoute = AdminSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOperationsRoute = AdminOperationsRouteImport.update({
   id: '/operations',
   path: '/operations',
@@ -521,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
+  '/admin/sign-in': typeof AdminSignInRoute
   '/admin/support': typeof AdminSupportRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
@@ -600,6 +607,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
+  '/admin/sign-in': typeof AdminSignInRoute
   '/admin/support': typeof AdminSupportRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
@@ -683,6 +691,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
+  '/admin/sign-in': typeof AdminSignInRoute
   '/admin/support': typeof AdminSupportRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
@@ -767,6 +776,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin/merchants'
     | '/admin/operations'
+    | '/admin/sign-in'
     | '/admin/support'
     | '/api/register-code'
     | '/api/restore'
@@ -846,6 +856,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin/merchants'
     | '/admin/operations'
+    | '/admin/sign-in'
     | '/admin/support'
     | '/api/register-code'
     | '/api/restore'
@@ -928,6 +939,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/admin/merchants'
     | '/admin/operations'
+    | '/admin/sign-in'
     | '/admin/support'
     | '/api/register-code'
     | '/api/restore'
@@ -1334,6 +1346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSupportRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/sign-in': {
+      id: '/admin/sign-in'
+      path: '/sign-in'
+      fullPath: '/admin/sign-in'
+      preLoaderRoute: typeof AdminSignInRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/operations': {
       id: '/admin/operations'
       path: '/operations'
@@ -1620,6 +1639,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminMerchantsRoute: typeof AdminMerchantsRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
+  AdminSignInRoute: typeof AdminSignInRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -1627,6 +1647,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminMerchantsRoute: AdminMerchantsRoute,
   AdminOperationsRoute: AdminOperationsRoute,
+  AdminSignInRoute: AdminSignInRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
