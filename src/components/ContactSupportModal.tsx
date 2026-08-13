@@ -25,6 +25,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
   const [mode, setMode] = useState<"chat" | "ticket">("chat");
   const [chatInput, setChatInput] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
+  const [conversationId, setConversationId] = useState<string | undefined>();
   const [chat, setChat] = useState<Array<{role:"user"|"assistant";content:string}>>([{role:"assistant",content:"Hi — I’m PrizeSkout Support. How can I help with your store, margins, channels, or payouts?"}]);
   const [name, setName]       = useState("");
   const [email, setEmail]     = useState("");
@@ -68,7 +69,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
       setBusy(false);
     }
   };
-  const handleChat=async(e:React.FormEvent)=>{e.preventDefault();const text=chatInput.trim();if(!text||chatBusy)return;const history=chat.slice(-10);setChat(x=>[...x,{role:"user",content:text}]);setChatInput("");setChatBusy(true);try{const r=await ask({data:{message:text,history,locale:document.documentElement.lang||"en"}});setChat(x=>[...x,{role:"assistant",content:r.answer}])}catch{setChat(x=>[...x,{role:"assistant",content:"I can’t answer right now. Please create a support ticket and our team will help."}])}finally{setChatBusy(false)}};
+  const handleChat=async(e:React.FormEvent)=>{e.preventDefault();const text=chatInput.trim();if(!text||chatBusy)return;const history=chat.slice(-10);setChat(x=>[...x,{role:"user",content:text}]);setChatInput("");setChatBusy(true);try{const r=await ask({data:{message:text,history,locale:document.documentElement.lang||"en",email:user?.email||undefined,conversationId}});if(r.conversationId)setConversationId(r.conversationId);setChat(x=>[...x,{role:"assistant",content:r.answer}])}catch{setChat(x=>[...x,{role:"assistant",content:"I can’t answer right now. Please create a support ticket and our team will help."}])}finally{setChatBusy(false)}};
 
   return (
     <>
