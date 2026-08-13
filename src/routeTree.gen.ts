@@ -52,6 +52,7 @@ import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSignInRouteImport } from './routes/admin.sign-in'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
+import { Route as AdminCallbackRouteImport } from './routes/admin.callback'
 import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
 import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
 import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.quickstart'
@@ -306,6 +307,11 @@ const AdminMerchantsRoute = AdminMerchantsRouteImport.update({
   path: '/merchants',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCallbackRoute = AdminCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AdminRoute,
+} as any)
 const DocsGuidesWebhooksRoute = DocsGuidesWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
@@ -525,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/admin/callback': typeof AdminCallbackRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/sign-in': typeof AdminSignInRoute
@@ -605,6 +612,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/admin/callback': typeof AdminCallbackRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/sign-in': typeof AdminSignInRoute
@@ -689,6 +697,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/admin/callback': typeof AdminCallbackRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/sign-in': typeof AdminSignInRoute
@@ -774,6 +783,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
+    | '/admin/callback'
     | '/admin/merchants'
     | '/admin/operations'
     | '/admin/sign-in'
@@ -854,6 +864,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
+    | '/admin/callback'
     | '/admin/merchants'
     | '/admin/operations'
     | '/admin/sign-in'
@@ -937,6 +948,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/roi-calculator'
     | '/signup'
+    | '/admin/callback'
     | '/admin/merchants'
     | '/admin/operations'
     | '/admin/sign-in'
@@ -1367,6 +1379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMerchantsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/callback': {
+      id: '/admin/callback'
+      path: '/callback'
+      fullPath: '/admin/callback'
+      preLoaderRoute: typeof AdminCallbackRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/docs/guides/webhooks': {
       id: '/docs/guides/webhooks'
       path: '/webhooks'
@@ -1637,6 +1656,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminCallbackRoute: typeof AdminCallbackRoute
   AdminMerchantsRoute: typeof AdminMerchantsRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminSignInRoute: typeof AdminSignInRoute
@@ -1645,6 +1665,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCallbackRoute: AdminCallbackRoute,
   AdminMerchantsRoute: AdminMerchantsRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminSignInRoute: AdminSignInRoute,
