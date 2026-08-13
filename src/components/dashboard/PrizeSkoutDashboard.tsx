@@ -14312,7 +14312,7 @@ export function PrizeSkoutDashboard() {
         <button
           type="button"
           data-tour="support"
-          aria-label={tr("Open support chat", "افتح محادثة الدعم", "Ouvrir le chat d’assistance")}
+          aria-label={tr("Open support", "افتح الدعم", "Ouvrir l’assistance")}
           onClick={() => setSupportOpen(true)}
           style={{
             position: "fixed",
@@ -14334,7 +14334,7 @@ export function PrizeSkoutDashboard() {
             gap: 8,
           }}
         >
-          <span aria-hidden="true">●</span> {tr("Support chat", "محادثة الدعم", "Chat d’assistance")}
+          <span aria-hidden="true">●</span> {tr("Support", "الدعم", "Assistance")}
         </button>
       )}
       {assistantDrawerOpen && (
