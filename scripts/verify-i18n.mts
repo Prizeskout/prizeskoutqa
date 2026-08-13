@@ -17,7 +17,7 @@ import { readFileSync } from "fs";
 const { localizeReason } = await import("../src/locales/reasons.ts");
 
 const PG_URL =
-  "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+  requireDatabaseUrl();
 
 const BASE = "https://prizeskout.qa";
 
@@ -106,6 +106,7 @@ for (const [lng, bcp] of Object.entries(LOCALE_MAP)) {
 // -- 4. Source-code audit: reason_code + reason_params in handleDynprice ------
 console.log("\n=== 4. reason_code + reason_params in handleDynprice ===");
 import { readFileSync as readFS } from "fs";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 const handlerSrc = readFS(
   new URL("../src/server/v1-handlers.ts", import.meta.url),
   "utf-8",

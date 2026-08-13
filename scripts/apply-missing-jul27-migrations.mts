@@ -8,9 +8,10 @@
 // the CREATE they extend).
 import pg from "pg";
 import { readFileSync } from "fs";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 const { Client } = pg;
-const PG_URL = "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+const PG_URL = requireDatabaseUrl();
 
 const MIGRATIONS = [
   "20260727000000_marketplace_contract_terms.sql",

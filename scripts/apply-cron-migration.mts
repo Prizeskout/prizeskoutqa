@@ -9,8 +9,9 @@
 import pg from "pg";
 import { readFileSync } from "fs";
 import { createClient } from "@supabase/supabase-js";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
-const DB  = "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+const DB  = requireDatabaseUrl();
 const WORKER = "https://prizeskout.qa";
 const ANON   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zmhla2N2bWNibnRqbmR2aHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzczNjYsImV4cCI6MjA5NTE1MzM2Nn0.Xz_3vvq_EY_jYBkXggC-7U_CdUSDLwroLTbyVlxfGMo";
 const SVC    = process.env.SUPABASE_SERVICE_ROLE_KEY!;

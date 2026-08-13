@@ -1,10 +1,11 @@
 import pg from "pg";
 import { readFileSync } from "fs";
 import { randomUUID } from "crypto";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 const { Client } = pg;
 const PG_URL =
-  "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+  requireDatabaseUrl();
 
 const sql = readFileSync(
   new URL(

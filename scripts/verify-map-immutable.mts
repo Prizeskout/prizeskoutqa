@@ -11,10 +11,11 @@
  */
 
 import pg from "pg";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 const { Client } = pg;
 
 const PG_URL =
-  "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+  requireDatabaseUrl();
 
 function mkClient() {
   return new Client({ connectionString: PG_URL });

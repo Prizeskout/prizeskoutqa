@@ -34,3 +34,6 @@ dist-ssr
 .env.local
 .env.*
 !.env.example
+
+# Supabase CLI local state (may contain connection details)
+supabase/.temp/

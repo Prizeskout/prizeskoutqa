@@ -1,8 +1,9 @@
 import pg from "pg";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 const { Client } = pg;
 const client = new Client({
-  connectionString: "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres",
+  connectionString: requireDatabaseUrl(),
 });
 await client.connect();
 

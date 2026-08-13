@@ -16,10 +16,11 @@
  */
 import pg from "pg";
 import { createClient } from "@supabase/supabase-js";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const PG_URL       = "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+const PG_URL       = requireDatabaseUrl();
 const USER_ID      = "bed12406-2798-47f7-a30c-5de559e90d6d";
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY);

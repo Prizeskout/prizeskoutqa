@@ -5,9 +5,10 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import pg from "pg";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 const DB_URL =
-  "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+  requireDatabaseUrl();
 
 const sql = readFileSync(
   resolve("supabase/migrations/20260621010000_embed_api.sql"),

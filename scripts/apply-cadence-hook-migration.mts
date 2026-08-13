@@ -2,13 +2,14 @@ import pg from "pg";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 const { Client } = pg;
 const __dir = dirname(fileURLToPath(import.meta.url));
 
 const client = new Client({
   connectionString:
-    "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres",
+    requireDatabaseUrl(),
 });
 
 await client.connect();

@@ -15,13 +15,14 @@
 import pg from "pg";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
+import { requireDatabaseUrl } from "./lib/require-database-url";
 
 // ── Connection config ────────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zmhla2N2bWNibnRqbmR2aHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzczNjYsImV4cCI6MjA5NTE1MzM2Nn0.Xz_3vvq_EY_jYBkXggC-7U_CdUSDLwroLTbyVlxfGMo";
 // Direct postgres superuser connection (bypasses RLS AND privilege checks)
-const PG_URL       = "postgresql://postgres.itfhekcvmcbntjndvhzg:bEnABIcvtD2KSlpw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres";
+const PG_URL       = requireDatabaseUrl();
 
 const USER_ID      = "bed12406-2798-47f7-a30c-5de559e90d6d";
 
