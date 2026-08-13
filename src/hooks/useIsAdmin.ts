@@ -12,18 +12,17 @@ export function useIsAdmin() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return false;
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
       if (error) {
         console.error("Failed to check admin role", error);
         return false;
       }
-      return !!data;
+      return data === true;
     },
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 }
