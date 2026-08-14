@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Bot, LifeBuoy, Mail, Send, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, ChevronRight, HelpCircle, LifeBuoy, Mail, Search, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { submitContactMessage } from "@/server/contact.functions";
 import { askSupportAgent } from "@/server/platform-admin.functions";
+import { HELP_ARTICLES, HELP_CATEGORIES, type HelpArticle } from "@/lib/help-center-data";
 
 const SUPPORT_EMAIL = "support@prizeskout.qa";
 type ChatMessage = { role: "user" | "assistant"; content: string; suggestedRoute?: string; escalate?: boolean; suggestions?: string[] };
@@ -13,7 +14,9 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
   const { user } = useAuth();
   const submit = useServerFn(submitContactMessage);
   const ask = useServerFn(askSupportAgent);
-  const [mode, setMode] = useState<"chat" | "ticket">("chat");
+  const [mode, setMode] = useState<"chat" | "ticket" | "help">("chat");
+  const [helpSearch, setHelpSearch] = useState("");
+  const [helpArticle, setHelpArticle] = useState<HelpArticle>();
   const [chatInput, setChatInput] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
   const [conversationId, setConversationId] = useState<string>();
@@ -88,8 +91,8 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
         <button type="button" onClick={onClose} aria-label="Close" style={iconButton}><X size={14}/></button>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, padding: 4, borderRadius: 10, background: "var(--ps-hover,#F4F4F2)", marginBottom: 14 }}>
-        {([ ["chat", "Chat with Noura", Bot], ["ticket", "Human support", Mail] ] as const).map(([id, label, Icon]) => <button key={id} type="button" onClick={() => setMode(id)} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, padding: 8, border: 0, borderRadius: 7, background: mode === id ? "#fff" : "transparent", color: mode === id ? "#EF681A" : "#666", fontWeight: 700, cursor: "pointer" }}><Icon size={14}/>{label}</button>)}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5, padding: 4, borderRadius: 10, background: "var(--ps-hover,#F4F4F2)", marginBottom: 14 }}>
+        {([ ["chat", "Noura", Bot], ["ticket", "Human", Mail], ["help", "Help", HelpCircle] ] as const).map(([id, label, Icon]) => <button key={id} type="button" onClick={() => setMode(id)} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, padding: 8, border: 0, borderRadius: 7, background: mode === id ? "#fff" : "transparent", color: mode === id ? "#EF681A" : "#666", fontWeight: 700, cursor: "pointer" }}><Icon size={14}/>{label}</button>)}
       </div>
 
       {mode === "chat" ? <div>
@@ -104,7 +107,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
         </div>
         <form onSubmit={(event) => { event.preventDefault(); void sendChat(chatInput); }} style={{ display: "flex", gap: 8 }}><input autoFocus value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Ask Noura a question…" style={{ ...inputStyle, flex: 1 }}/><button type="submit" aria-label="Send" disabled={chatBusy || !chatInput.trim()} style={{ width: 42, border: 0, borderRadius: 9, background: "#EF681A", color: "#fff", display: "grid", placeItems: "center", cursor: "pointer" }}><Send size={15}/></button></form>
         <button type="button" onClick={openHumanSupport} style={{ ...textButton, width: "100%", textAlign: "center", marginTop: 12 }}>Talk to the human support team</button>
-      </div> : <>
+      </div> : mode === "help" ? <HelpCenter search={helpSearch} onSearch={setHelpSearch} article={helpArticle} onArticle={setHelpArticle} onAsk={(article) => { setMode("chat"); void sendChat(`Help me with: ${article.title}`); }} /> : <>
         <a href={`mailto:${SUPPORT_EMAIL}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, padding: "9px 12px", borderRadius: 9, border: "1px solid var(--ps-border,#E5E2DB)", background: "var(--ps-hover,#FAFAF9)", color: "var(--ps-text,#1A1A18)", fontSize: 12.5, fontWeight: 600, textDecoration: "none" }}><Mail size={14}/>Email us directly at {SUPPORT_EMAIL}</a>
         <form onSubmit={handleTicket} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Field label="Name"><input value={name} onChange={(event) => setName(event.target.value)} required style={inputStyle}/></Field>
@@ -116,6 +119,26 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
     </div>
   </>;
 }
+
+function HelpCenter({ search, onSearch, article, onArticle, onAsk }: { search: string; onSearch: (value: string) => void; article?: HelpArticle; onArticle: (article?: HelpArticle) => void; onAsk: (article: HelpArticle) => void }) {
+  if (article) return <div style={{ minHeight: 390 }}>
+    <button type="button" onClick={() => onArticle(undefined)} style={{ ...textButton, margin: "0 0 14px" }}><ArrowLeft size={12} style={{ display: "inline", verticalAlign: "-2px" }}/> All help</button>
+    <div style={{ fontSize: 10.5, color: "#EF681A", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>{article.category}</div>
+    <h3 style={{ margin: "6px 0 8px", fontSize: 20 }}>{article.title}</h3>
+    <p style={{ margin: "0 0 16px", color: "var(--ps-muted,#666)", fontSize: 13, lineHeight: 1.55 }}>{article.summary}</p>
+    <ol style={{ paddingInlineStart: 21, margin: 0, display: "grid", gap: 11, fontSize: 13, lineHeight: 1.55 }}>{article.body.map((paragraph) => <li key={paragraph}>{paragraph}</li>)}</ol>
+    <div style={{ display: "flex", gap: 9, marginTop: 20, flexWrap: "wrap" }}>{article.route && <a href={article.route} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "8px 11px", borderRadius: 8, background: "#EF681A", color: "#fff", fontSize: 12, fontWeight: 800, textDecoration: "none" }}>Open screen <ArrowRight size={12}/></a>}<button type="button" onClick={() => onAsk(article)} style={{ padding: "8px 11px", border: "1px solid var(--ps-border,#ddd)", borderRadius: 8, background: "#fff", color: "#EF681A", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>Ask Noura</button></div>
+  </div>;
+
+  const query = search.trim().toLowerCase();
+  const matches = query ? HELP_ARTICLES.filter((item) => `${item.title} ${item.summary} ${item.category} ${item.keywords.join(" ")}`.toLowerCase().includes(query)) : [];
+  return <div style={{ minHeight: 390 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderRadius: 10, background: "var(--ps-hover,#F4F4F2)", marginBottom: 12 }}><Search size={16} color="#6B6B6B"/><input autoFocus type="search" value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Search for help" style={{ border: 0, outline: 0, background: "transparent", width: "100%", fontSize: 14 }}/></div>
+    <div style={{ maxHeight: 345, overflowY: "auto" }}>{query ? <>{matches.map((item) => <HelpRow key={item.id} title={item.title} detail={item.category} onClick={() => onArticle(item)}/>) }{!matches.length && <div style={{ padding: 28, textAlign: "center", color: "#777", fontSize: 13 }}>No article matched. Ask Noura or contact human support.</div>}</> : HELP_CATEGORIES.map((category) => { const articles = HELP_ARTICLES.filter((item) => item.category === category); return <div key={category} style={{ marginBottom: 5 }}><div style={{ padding: "10px 4px 5px", fontSize: 11, color: "#777", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".05em" }}>{category}</div>{articles.map((item) => <HelpRow key={item.id} title={item.title} detail={item.summary} onClick={() => onArticle(item)}/>)}</div>; })}</div>
+  </div>;
+}
+
+function HelpRow({ title, detail, onClick }: { title: string; detail: string; onClick: () => void }) { return <button type="button" onClick={onClick} style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center", padding: "11px 5px", border: 0, borderBottom: "1px solid var(--ps-border,#eee)", background: "transparent", textAlign: "left", cursor: "pointer" }}><span><b style={{ display: "block", fontSize: 13 }}>{title}</b><small style={{ display: "block", marginTop: 3, color: "#777", lineHeight: 1.35 }}>{detail}</small></span><ChevronRight size={16} color="#777"/></button>; }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12, fontWeight: 600, color: "var(--ps-muted,#6B6B6B)" }}>{label}{children}</label>; }
 const inputStyle: React.CSSProperties = { padding: "9px 11px", borderRadius: 8, border: "1px solid var(--ps-border,#E5E2DB)", background: "var(--ps-surface-2,#fff)", color: "var(--ps-text,#1A1A18)", fontSize: 13, outline: "none", minWidth: 0 };
