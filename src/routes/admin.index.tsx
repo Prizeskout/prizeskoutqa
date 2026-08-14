@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, BrainCircuit, HandCoins, Headphones, PlugZap, RefreshCw, TriangleAlert, Users } from "lucide-react";
+import { ArrowRight, Award, BrainCircuit, HandCoins, Headphones, PlugZap, RefreshCw, TriangleAlert, Users } from "lucide-react";
 import { getPlatformOverview } from "@/server/platform-admin.functions";
 
 export const Route = createFileRoute("/admin/")({ component: Overview });
@@ -12,6 +12,7 @@ function Overview() {
   const refresh = useCallback(async () => { setLoading(true); setError(""); try { setData(await fn()); setUpdated(new Date()); } catch (e) { setError(e instanceof Error ? e.message : "Could not load platform data."); } finally { setLoading(false); } }, [fn]);
   useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 60_000); return () => window.clearInterval(timer); }, [refresh]);
   const cards = [
+    { label: "Verified outcomes", value: data?.outcomes?.verifiedCount, icon: Award, to: "/admin/merchants", detail: formatVerified(data?.outcomes?.verifiedByCurrency) },
     { label: "Merchants", value: data?.users, icon: Users, to: "/admin/merchants", detail: "Registered platform accounts" },
     { label: "Connected channels", value: data?.channels, icon: PlugZap, to: "/admin/merchants", detail: "Live commerce connections" },
     { label: "Decisions in 24h", value: data?.actions, icon: BrainCircuit, to: "/admin/operations", detail: "Automation decisions processed" },
@@ -26,6 +27,8 @@ function Overview() {
     <div className="admin-card" style={{ overflow: "hidden" }}>{loading && !data ? <LoadingRows/> : (data?.audit ?? []).map((x: any) => <div className="admin-row" key={`${x.trace_id}-${x.created_at}`} style={{ padding: "12px 16px", borderBottom: "1px solid #F0F1F3", fontSize: 12 }}><b>{x.event_type?.replaceAll("_", " ")}</b><span>{x.summary_en || `${x.source_platform || "PrizeSkout"} → ${x.target_channel || "internal"}`}</span><time style={{ color: "#6B7280" }}>{new Date(x.created_at).toLocaleString()}</time></div>)}{data && !data.audit.length && <Empty text="No platform activity has been recorded yet."/>}</div>
   </>;
 }
+
+function formatVerified(values?:Record<string,number>){const entries=Object.entries(values??{});if(!entries.length)return "No verified value recorded yet";return entries.slice(0,2).map(([currency,value])=>`${currency} ${value.toLocaleString(undefined,{maximumFractionDigits:0})}`).join(" · ")+(entries.length>2?" · more":"")}
 
 export function Title({ title, sub, actions }: { title: string; sub: string; actions?: React.ReactNode }) { return <div className="admin-title-row"><div><h1 style={{ margin: 0, fontSize: 24 }}>{title}</h1><p style={{ margin: "6px 0 0", fontSize: 13, color: "#6B7280" }}>{sub}</p></div>{actions && <div className="admin-actions">{actions}</div>}</div>; }
 export function Empty({ text = "No records found." }: { text?: string }) { return <div style={{ padding: 35, textAlign: "center", color: "#8A8A8A", fontSize: 13 }}>{text}</div>; }

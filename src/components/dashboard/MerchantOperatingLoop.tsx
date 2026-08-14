@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { confidenceLabel, merchantStatus } from "../../lib/merchant-language";
 import { fetchWithTimeout } from "../../lib/fetch-with-timeout";
+import { OutcomeProofPanel, type OutcomeProof } from "./OutcomeProofPanel";
 
 type Item = {
   id: string;
@@ -67,6 +68,7 @@ type Experience = {
     retrieved_at?: string;
   } | null;
   settings: { automation_level: string; weekly_review_enabled: boolean; progressive_mode: boolean };
+  outcome_proof: OutcomeProof;
   manager: {
     available: boolean;
     setup_required: boolean;
@@ -426,6 +428,8 @@ export function MerchantOperatingLoop({
           />
         ))}
       </div>
+
+      <OutcomeProofPanel proof={data?.outcome_proof}/>
 
       <div id="attention-inbox" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
         <div

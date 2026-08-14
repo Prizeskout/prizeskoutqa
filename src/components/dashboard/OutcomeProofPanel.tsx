@@ -1,0 +1,22 @@
+import { CheckCircle2, Clock3, FileCheck2, ShieldCheck, TrendingUp } from "lucide-react";
+
+export type OutcomeProof = {
+  entries: Array<{id:string;outcome_type:string;status:string;source_type:string;title:string;amount:number;currency:string;evidence_strength:string;verified_at:string|null;occurred_at:string}>;
+  totals: Record<string,Record<string,number>>;
+  verified_count:number;
+  actioned_count:number;
+  approval_rate:number;
+  time_to_first_value_hours:number|null;
+};
+
+export function OutcomeProofPanel({proof}:{proof?:OutcomeProof}){
+  const currencies=Object.entries(proof?.totals??{}),primary=currencies[0],verified=primary?.[1]?.verified??0,protectedValue=(primary?.[1]?.protected??0)+(primary?.[1]?.recovered??0),identified=primary?.[1]?.identified??0,recent=(proof?.entries??[]).slice(0,5);
+  const money=(value:number)=>primary?`${primary[0]} ${value.toLocaleString(undefined,{maximumFractionDigits:2})}`:value.toLocaleString();
+  return <section style={{border:"1px solid color-mix(in srgb,#10B981 28%,var(--border))",borderRadius:14,padding:17,background:"linear-gradient(135deg,color-mix(in srgb,#10B981 6%,var(--surface)),var(--surface))"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,flexWrap:"wrap"}}><div><div style={{display:"flex",alignItems:"center",gap:7,color:"#087F5B",fontSize:10.5,fontWeight:900,textTransform:"uppercase",letterSpacing:".08em"}}><ShieldCheck size={15}/>Outcome proof</div><h3 style={{margin:"6px 0 3px",fontSize:19}}>What PrizeSkout has delivered</h3><p style={{margin:0,color:"var(--muted)",fontSize:12.5}}>Traceable financial outcomes, separated from estimates and pending opportunities.</p></div><span style={{padding:"6px 9px",borderRadius:99,background:"#DCFCE7",color:"#166534",fontSize:10.5,fontWeight:850}}>{proof?.verified_count??0} verified</span></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:9,marginTop:15}}><ProofMetric icon={CheckCircle2} label="Verified value" value={money(verified)} note="Read back or recovery confirmed"/><ProofMetric icon={TrendingUp} label="Protected or recovered" value={money(protectedValue)} note="Executed outcomes"/><ProofMetric icon={FileCheck2} label="Value identified" value={money(identified)} note="Not claimed as recovered"/><ProofMetric icon={Clock3} label="Time to first value" value={proof?.time_to_first_value_hours==null?"Building evidence":proof.time_to_first_value_hours<24?`${Math.max(1,Math.round(proof.time_to_first_value_hours))} hours`:`${Math.round(proof.time_to_first_value_hours/24)} days`} note={`${Math.round((proof?.approval_rate??0)*100)}% action rate`}/></div>
+    <details style={{marginTop:13}}><summary style={{cursor:"pointer",fontSize:12,fontWeight:800,color:"#087F5B"}}>View evidence trail ({proof?.entries.length??0})</summary><div style={{marginTop:9,borderTop:"1px solid var(--border)"}}>{recent.map(item=><div key={item.id} style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",gap:10,padding:"10px 2px",borderBottom:"1px solid var(--border)",fontSize:11.5}}><div><b>{item.title}</b><div style={{color:"var(--muted)",marginTop:3}}>{item.source_type.replaceAll("_"," ")} · {item.evidence_strength} evidence · {new Date(item.occurred_at).toLocaleDateString()}</div></div><div style={{textAlign:"right"}}><b>{item.currency} {Number(item.amount).toLocaleString()}</b><div style={{marginTop:3,color:item.status==="verified"?"#087F5B":"#B45309",fontWeight:800}}>{item.status.replaceAll("_"," ")}</div></div></div>)}{!recent.length&&<div style={{padding:15,color:"var(--muted)",fontSize:12}}>PrizeSkout will add proof here after it identifies or verifies a financial outcome.</div>}</div></details>
+    {currencies.length>1&&<div style={{marginTop:9,fontSize:10.5,color:"var(--muted)"}}>Values are not converted across currencies. Each currency remains independently auditable.</div>}
+  </section>;
+}
+function ProofMetric({icon:Icon,label,value,note}:{icon:any;label:string;value:string;note:string}){return <div style={{padding:11,border:"1px solid var(--border)",borderRadius:10,background:"var(--surface)"}}><Icon size={14} color="#10B981"/><div style={{fontSize:10,color:"var(--muted)",textTransform:"uppercase",fontWeight:800,marginTop:7}}>{label}</div><div style={{fontSize:17,fontWeight:900,marginTop:3}}>{value}</div><div style={{fontSize:10.5,color:"var(--muted)",marginTop:2}}>{note}</div></div>}

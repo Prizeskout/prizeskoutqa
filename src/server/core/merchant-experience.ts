@@ -43,15 +43,20 @@ export async function getMerchantExperience(accountId:string){
   }
   const now=new Date().toISOString(),weekAgo=new Date(Date.now()-7*86400000).toISOString();
   await supabaseAdmin.from("ps_attention_items").update({status:"open",snoozed_until:null}).eq("account_id",accountId).eq("status","snoozed").lte("snoozed_until",now);
-  const [items,ledger,settings,recentResolved,profitSnapshot]=await Promise.all([
+  const [items,ledger,settings,recentResolved,profitSnapshot,proofs,firstEngagement]=await Promise.all([
     supabaseAdmin.from("ps_attention_items").select("*").eq("account_id",accountId).order("updated_at",{ascending:false}).limit(100),
     supabaseAdmin.from("ps_value_ledger").select("*").eq("account_id",accountId).order("occurred_at",{ascending:false}).limit(200),
     supabaseAdmin.from("ps_merchant_experience_settings").select("*").eq("account_id",accountId).maybeSingle(),
     supabaseAdmin.from("ps_attention_items").select("id").eq("account_id",accountId).eq("status","resolved").gte("resolved_at",weekAgo),
     supabaseAdmin.from("ps_zid_profit_snapshots").select("summary,created_at").eq("account_id",accountId).order("created_at",{ascending:false}).limit(1).maybeSingle(),
+    supabaseAdmin.from("ps_outcome_proofs" as never).select("id,outcome_type,status,source_type,source_id,title,amount,currency,evidence_strength,before_state,after_state,evidence,approved_at,executed_at,verified_at,occurred_at").eq("account_id",accountId).order("occurred_at",{ascending:false}).limit(100),
+    supabaseAdmin.from("ps_merchant_engagement_events").select("created_at").eq("account_id",accountId).order("created_at",{ascending:true}).limit(1).maybeSingle(),
   ]);
   const entries=ledger.data??[],totals=entries.reduce<Record<string,number>>((sum,row)=>{sum[row.category]=(sum[row.category]??0)+Number(row.amount);return sum;},{});
-  return {items:items.data??[],ledger:entries,totals,recent_resolved:recentResolved.data?.length??0,profit_brief:profitSnapshot.data?.summary??null,settings:settings.data??{account_id:accountId,automation_level:"recommend",weekly_review_enabled:true,progressive_mode:true}};
+  const proofEntries=(proofs.data??[]) as any[],verified=proofEntries.filter(row=>row.status==="verified"),actioned=proofEntries.filter(row=>["merchant_approved","executed","verified"].includes(row.status));
+  const proofTotals=proofEntries.reduce<Record<string,Record<string,number>>>((all,row)=>{const currency=String(row.currency);all[currency]??={identified:0,protected:0,recovered:0,verified:0};all[currency][row.outcome_type]=(all[currency][row.outcome_type]??0)+Number(row.amount);if(row.status==="verified")all[currency].verified+=Number(row.amount);return all;},{});
+  const firstProof=proofEntries.length?proofEntries[proofEntries.length-1]:null,startedAt=firstEngagement.data?.created_at;
+  return {items:items.data??[],ledger:entries,totals,recent_resolved:recentResolved.data?.length??0,profit_brief:profitSnapshot.data?.summary??null,settings:settings.data??{account_id:accountId,automation_level:"recommend",weekly_review_enabled:true,progressive_mode:true},outcome_proof:{entries:proofEntries,totals:proofTotals,verified_count:verified.length,actioned_count:actioned.length,approval_rate:proofEntries.length?actioned.length/proofEntries.length:0,time_to_first_value_hours:firstProof&&startedAt?Math.max(0,(new Date(firstProof.occurred_at).getTime()-new Date(startedAt).getTime())/3600000):null}};
 }
 
 export async function updateAttention(accountId:string,input:{id:string;action:string;value?:string}){
