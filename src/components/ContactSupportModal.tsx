@@ -17,7 +17,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
   const [chatInput, setChatInput] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
   const [conversationId, setConversationId] = useState<string>();
-  const [chat, setChat] = useState<ChatMessage[]>([{ role: "assistant", content: "Hi — I’m Noura, your PrizeSkout support guide. How can I help?" }]);
+  const [chat, setChat] = useState<ChatMessage[]>([{ role: "assistant", content: "Hi, I’m Noura, your PrizeSkout support guide. How can I help?" }]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -31,7 +31,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
     setMessage("");
     if (!conversationId && chat.length === 1) {
       const firstName = (displayName || user?.email?.split("@")[0] || "").split(" ")[0];
-      setChat([{ role: "assistant", content: `Hi${firstName ? ` ${firstName}` : ""} — I’m Noura, your PrizeSkout support guide. How can I help?` }]);
+      setChat([{ role: "assistant", content: `Hi${firstName ? ` ${firstName}` : ""}, I’m Noura, your PrizeSkout support guide. How can I help?` }]);
     }
   }, [open, user, conversationId, chat.length]);
 

@@ -141,7 +141,7 @@ export function ProductDetailPage(props: ProductDetailProps) {
               Get API keys <ArrowRight size={14} />
             </Link>
             <Link
-              to="/api-reference"
+              to="/contact"
               style={{
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.10)",
@@ -153,7 +153,7 @@ export function ProductDetailPage(props: ProductDetailProps) {
                 textDecoration: "none",
               }}
             >
-              View endpoints
+              Contact support
             </Link>
           </div>
         </div>

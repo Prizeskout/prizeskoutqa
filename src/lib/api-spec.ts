@@ -1,5 +1,5 @@
 // Single source of truth for the public API documentation.
-// Drives the /docs reference UI and the /api/v1/$ test-mode dispatcher.
+// Drives the /api/v1/$ test-mode dispatcher.
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 

@@ -271,7 +271,7 @@ async function handle(request: Request, splat: string) {
       {
         error: {
           code: "not_found",
-          message: `No endpoint matches ${request.method} ${fullPath}. See https://prizeskout.com/docs for the full reference.`,
+          message: `No endpoint matches ${request.method} ${fullPath}. Contact https://prizeskout.qa/contact for integration support.`,
         },
       },
       404,

@@ -52,7 +52,7 @@ function SandboxBanner() {
           </span>
         </div>
         <Link
-          to="/api-reference"
+          to="/contact"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -63,7 +63,7 @@ function SandboxBanner() {
             whiteSpace: "nowrap",
           }}
         >
-          {t("layout.openApiExplorer")} <ArrowRight size={12} aria-hidden />
+          {t("topbar.contactSupport")} <ArrowRight size={12} aria-hidden />
         </Link>
       </div>
     </div>

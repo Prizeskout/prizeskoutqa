@@ -338,7 +338,7 @@ function HeroSection({ dark }: { dark: boolean }) {
         <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
           {t("landing.hero.ctaPrimary")}
         </a>
-        <a href="/api-docs.html" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
+        <a href="/contact" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 22px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>
           {t("landing.hero.ctaSecondary")}
         </a>
         <span style={{ fontSize: 12.5, color: "var(--lp-muted-2)", marginLeft: 6 }}>QFC-licensed · Qatar</span>
@@ -698,7 +698,7 @@ function DeployCTA({ dark }: { dark: boolean }) {
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginTop: 0 }}>
             <a href="/onboarding" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: BG, background: OG, border: "none", borderRadius: 9, padding: "13px 24px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>{t("landing.infra.deploy.cta1")}</a>
-            <a href="/docs" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 24px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>{t("landing.infra.deploy.cta2")}</a>
+            <a href="/contact" style={{ fontFamily: "inherit", fontSize: 14, fontWeight: 500, color: "var(--lp-text-2)", background: "transparent", border: "1px solid var(--lp-border-em)", borderRadius: 9, padding: "13px 24px", cursor: "pointer", textDecoration: "none", display: "inline-block" }}>Contact support</a>
           </div>
         </div>
       </div>
@@ -770,9 +770,7 @@ function LandingFooter() {
             <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: "0.14em", color: "transparent", marginBottom: 16, userSelect: "none" }}>_</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {[
-                { label: t("footer.links.sdkDocs"), href: "/api-docs.html" },
-                { label: t("footer.links.authentication"), href: "/api-docs.html#auth" },
-                { label: t("footer.links.webhooks"), href: "/api-docs.html#webhooks" },
+                { label: t("footer.links.support"), href: "/contact" },
                 { label: t("footer.links.status"), href: null },
                 { label: t("footer.links.marginCalculator"), href: "/roi-calculator" },
               ].map(({ label, href }) => (

@@ -189,7 +189,7 @@ export const Route = createFileRoute("/api/public/v1/webhooks/test-signature")({
                     : "Within the recommended 5-minute replay window.",
               },
               comparison,
-              docs: "https://prizeskout.qa/docs/guides/webhooks#verify",
+              support: "https://prizeskout.qa/contact",
             },
             null,
             2,

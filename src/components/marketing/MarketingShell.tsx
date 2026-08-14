@@ -46,10 +46,7 @@ function FA({ label, children }: { label: string; children?: React.ReactNode }) 
 type FooterTo =
   | "/contact"
   | "/legal"
-  | "/docs/changelog"
   | "/roi-calculator"
-  | "/docs"
-  | "/api-reference"
   | "/products/pricing"
   | "/products/competitors"
   | "/products/promotions"
@@ -196,9 +193,7 @@ function Footer() {
             <h4 style={COL_HEAD}>{t("footer.columns.developers")}</h4>
             <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-              <a href="/api-docs.html" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>{t("footer.links.sdkDocs")}</a>
-              <a href="/api-docs.html#auth" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>{t("footer.links.authentication")}</a>
-              <a href="/api-docs.html#webhooks" style={FL} onMouseEnter={e=>(e.currentTarget.style.color="#F5F6FA")} onMouseLeave={e=>(e.currentTarget.style.color="#9BA1B0")}>{t("footer.links.webhooks")}</a>
+              <FL_Link label={t("footer.links.support")} to="/contact" />
               <FA label={t("footer.links.status")} />
               <FL_Link label={t("footer.links.marginCalculator")} to="/roi-calculator" />
             </div>

@@ -1,5 +1,5 @@
 // ============================================================================
-// Real handlers for the /v1/competitors/* endpoints documented in /docs.
+// Real handlers for the /v1/competitors/* endpoints.
 //
 // Tenancy: per-user (auth.uid via the API key's user_id). The competitor_*
 // tables are scoped by user_id, so we filter on ctx.userId.
