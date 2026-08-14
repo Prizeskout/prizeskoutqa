@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, BarChart3, Headphones, LogOut, Menu, ShieldCheck, Users, Workflow, X } from "lucide-react";
+import { ArrowLeft, BarChart3, ChevronLeft, ChevronRight, Headphones, LogOut, Menu, ShieldCheck, Users, Workflow, X } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,18 +15,20 @@ function AdminShell() {
   const path = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const publicAdminRoute = path === "/admin/sign-in" || path === "/admin/callback";
   useEffect(() => { setMenuOpen(false); }, [path]);
+  useEffect(() => { setCollapsed(window.localStorage.getItem("prizeskout-admin-sidebar") === "collapsed"); }, []);
   useEffect(() => { if (!publicAdminRoute && !authLoading && !user) void navigate({ to: "/admin/sign-in", replace: true }); }, [publicAdminRoute, authLoading, user, navigate]);
   if (publicAdminRoute) return <Outlet/>;
   if (authLoading || isLoading || !user) return <Gate text="Checking administrator access…"/>;
   if (!admin) return <Gate text="This account does not have platform administrator access." email={user.email} denied/>;
   return <div className="admin-shell">
     {menuOpen && <button className="admin-sidebar-backdrop" aria-label="Close navigation" onClick={() => setMenuOpen(false)}/>}
-    <aside className={`admin-sidebar${menuOpen ? " open" : ""}`}>
-      <div style={{ padding: "24px 20px", borderBottom: "1px solid #263142", display: "flex", justifyContent: "space-between" }}><div><b style={{ fontSize: 18 }}>PrizeSkout</b><div style={{ fontSize: 10, color: "#9CA3AF", letterSpacing: 1.5, marginTop: 3 }}>PLATFORM ADMIN</div></div><button className="admin-mobile-only" onClick={() => setMenuOpen(false)} aria-label="Close menu" style={bareButton}><X size={18}/></button></div>
-      <nav style={{ padding: 12, flex: 1 }}>{nav.map(({ to, label, icon: Icon }) => { const active = to === "/admin" ? path === "/admin" || path === "/admin/" : path.startsWith(to); return <Link key={to} to={to} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 4, borderRadius: 8, textDecoration: "none", fontSize: 14, fontWeight: active ? 700 : 500, color: active ? "#fff" : "#AAB2C0", background: active ? "#EA580C" : "transparent" }}><Icon size={17}/>{label}</Link>; })}</nav>
-      <div style={{ padding: 14, borderTop: "1px solid #263142" }}><Link to="/dashboard/revenue-hub" style={{ display: "flex", gap: 8, alignItems: "center", color: "#AAB2C0", textDecoration: "none", fontSize: 12 }}><ArrowLeft size={14}/>Merchant product</Link><div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, fontSize: 11, color: "#7F8A9B" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>{user.email}</span><button aria-label="Sign out" onClick={() => void supabase.auth.signOut().then(() => location.assign("/admin/sign-in"))} style={bareButton}><LogOut size={14}/></button></div></div>
+    <aside className={`admin-sidebar${menuOpen ? " open" : ""}${collapsed ? " collapsed" : ""}`}>
+      <div className="admin-brand" style={{ padding: "24px 20px", borderBottom: "1px solid #263142", display: "flex", justifyContent: "space-between", alignItems: "center" }}><div className="admin-brand-copy"><b style={{ fontSize: 18 }}>PrizeSkout</b><div style={{ fontSize: 10, color: "#9CA3AF", letterSpacing: 1.5, marginTop: 3 }}>PLATFORM ADMIN</div></div><button className="admin-mobile-only" onClick={() => setMenuOpen(false)} aria-label="Close menu" style={bareButton}><X size={18}/></button><button className="admin-desktop-only" onClick={() => setCollapsed(value => { const next=!value; window.localStorage.setItem("prizeskout-admin-sidebar",next?"collapsed":"expanded"); return next; })} aria-label={collapsed?"Expand sidebar":"Collapse sidebar"} title={collapsed?"Expand sidebar":"Collapse sidebar"} style={bareButton}>{collapsed?<ChevronRight size={18}/>:<ChevronLeft size={18}/>}</button></div>
+      <nav style={{ padding: 12, flex: 1 }}>{nav.map(({ to, label, icon: Icon }) => { const active = to === "/admin" ? path === "/admin" || path === "/admin/" : path.startsWith(to); return <Link className="admin-nav-link" title={collapsed?label:undefined} aria-label={collapsed?label:undefined} key={to} to={to} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 4, borderRadius: 8, textDecoration: "none", fontSize: 14, fontWeight: active ? 700 : 500, color: active ? "#fff" : "#AAB2C0", background: active ? "#EA580C" : "transparent" }}><Icon size={17}/><span className="admin-nav-label">{label}</span></Link>; })}</nav>
+      <div className="admin-sidebar-footer" style={{ padding: 14, borderTop: "1px solid #263142" }}><Link title={collapsed?"Merchant product":undefined} to="/dashboard/revenue-hub" style={{ display: "flex", justifyContent:collapsed?"center":undefined, gap: 8, alignItems: "center", color: "#AAB2C0", textDecoration: "none", fontSize: 12 }}><ArrowLeft size={14}/><span className="admin-sidebar-copy">Merchant product</span></Link><div style={{ display: "flex", justifyContent:collapsed?"center":undefined, alignItems: "center", gap: 8, marginTop: 14, fontSize: 11, color: "#7F8A9B" }}><span className="admin-sidebar-copy" style={{ overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>{user.email}</span><button aria-label="Sign out" title="Sign out" onClick={() => void supabase.auth.signOut().then(() => location.assign("/admin/sign-in"))} style={bareButton}><LogOut size={14}/></button></div></div>
     </aside>
     <main className="admin-main"><header className="admin-topbar"><button className="admin-mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Open navigation" style={{ ...bareButton, marginRight: 10 }}><Menu size={20}/></button><ShieldCheck size={18} color="#EA580C"/><b style={{ marginLeft: 9 }}>Revenue Protection Operations</b><span style={{ marginLeft: "auto", fontSize: 12, color: "#6B7280" }}>Live platform data</span></header><div className="admin-content"><Outlet/></div></main>
   </div>;
