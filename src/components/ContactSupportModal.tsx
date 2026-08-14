@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, Bot, ChevronRight, HelpCircle, LifeBuoy, Mail, Search, Send, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronRight, HelpCircle, LifeBuoy, Mail, Minus, Search, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { submitContactMessage } from "@/server/contact.functions";
@@ -25,13 +25,39 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const [ticketSent, setTicketSent] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const storageKey = `prizeskout-support-workspace:${user?.id || "guest"}`;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(storageKey) || "null") as {
+        mode?: "chat" | "ticket" | "help"; helpSearch?: string; helpArticleId?: string;
+        chatInput?: string; conversationId?: string; chat?: ChatMessage[]; message?: string;
+      } | null;
+      if (saved?.mode) setMode(saved.mode);
+      if (typeof saved?.helpSearch === "string") setHelpSearch(saved.helpSearch);
+      if (saved?.helpArticleId) setHelpArticle(HELP_ARTICLES.find((item) => item.id === saved.helpArticleId));
+      if (typeof saved?.chatInput === "string") setChatInput(saved.chatInput);
+      if (saved?.conversationId) setConversationId(saved.conversationId);
+      if (Array.isArray(saved?.chat) && saved.chat.length) setChat(saved.chat);
+      if (typeof saved?.message === "string") setMessage(saved.message);
+    } catch { /* Ignore invalid local state and start fresh. */ }
+    setRestored(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!restored || typeof window === "undefined") return;
+    window.localStorage.setItem(storageKey, JSON.stringify({ mode, helpSearch, helpArticleId: helpArticle?.id, chatInput, conversationId, chat, message }));
+  }, [restored, storageKey, mode, helpSearch, helpArticle?.id, chatInput, conversationId, chat, message]);
 
   useEffect(() => {
     if (!open) return;
     const displayName = String(user?.user_metadata?.display_name || "");
-    setName(displayName);
-    setEmail(user?.email || "");
-    setMessage("");
+    setName((current) => current || displayName);
+    setEmail((current) => current || user?.email || "");
     if (!conversationId && chat.length === 1) {
       const firstName = (displayName || user?.email?.split("@")[0] || "").split(" ")[0];
       setChat([{ role: "assistant", content: `Hi${firstName ? ` ${firstName}` : ""}, I’m Noura, your PrizeSkout support guide. How can I help?` }]);
@@ -40,15 +66,17 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setMinimized(true); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
+  const closeSupport = () => { setMinimized(false); onClose(); };
+
   const conversationForTicket = () => chat.filter((item) => item.role === "user").map((item) => item.content).join("\n");
-  const openHumanSupport = () => { setMode("ticket"); setMessage(conversationForTicket()); };
+  const openHumanSupport = () => { setTicketSent(false); setMode("ticket"); setMessage((current) => current || conversationForTicket()); };
 
   const sendChat = async (text: string) => {
     if (!text.trim() || chatBusy) return;
@@ -77,18 +105,18 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
     setBusy(true);
     try {
       await submit({ data: { name: name.trim(), email: email.trim(), message: message.trim(), company: null } });
-      toast.success("Message sent — we’ll get back to you shortly.");
-      onClose();
+      setMessage("");
+      setTicketSent(true);
     } catch (error) { toast.error(error instanceof Error ? error.message : "Could not send your message."); }
     finally { setBusy(false); }
   };
 
-  return <>
-    <div aria-hidden onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 400 }} />
-    <div role="dialog" aria-modal="true" aria-labelledby="noura-title" style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 401, width: "min(460px,calc(100vw - 24px))", maxHeight: "calc(100vh - 24px)", overflowY: "auto", boxSizing: "border-box", background: "var(--ps-card,#fff)", border: "1px solid var(--ps-border,#E5E2DB)", borderRadius: 18, boxShadow: "0 24px 64px rgba(0,0,0,.25)", padding: 22 }}>
+  if (minimized) return <button type="button" onClick={() => setMinimized(false)} aria-label="Restore support conversation" style={{ position: "fixed", insetInlineEnd: 20, bottom: 20, zIndex: 401, display: "flex", alignItems: "center", gap: 9, padding: "12px 17px", border: 0, borderRadius: 999, background: "#EF681A", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.22)", fontWeight: 800, cursor: "pointer" }}><LifeBuoy size={17}/><span>Noura support</span><small style={{ opacity: .82 }}>Continue</small></button>;
+
+  return <div role="dialog" aria-modal="false" aria-labelledby="noura-title" style={{ position: "fixed", insetInlineEnd: 20, bottom: 20, zIndex: 401, width: "min(460px,calc(100vw - 24px))", maxHeight: "calc(100vh - 40px)", overflowY: "auto", boxSizing: "border-box", background: "var(--ps-card,#fff)", border: "1px solid var(--ps-border,#E5E2DB)", borderRadius: 18, boxShadow: "0 24px 64px rgba(0,0,0,.25)", padding: 22 }}>
       <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}><div style={{ width: 38, height: 38, borderRadius: 11, background: "rgba(239,104,26,.12)", color: "#EF681A", display: "grid", placeItems: "center" }}><LifeBuoy size={18}/></div><div><h2 id="noura-title" style={{ margin: 0, fontSize: 16 }}>Noura · PrizeSkout Support</h2><p style={{ margin: "3px 0 0", fontSize: 12, color: "var(--ps-muted,#6B6B6B)" }}>Get an answer now or contact our team.</p></div></div>
-        <button type="button" onClick={onClose} aria-label="Close" style={iconButton}><X size={14}/></button>
+        <div style={{ display: "flex", gap: 6 }}><button type="button" onClick={() => setMinimized(true)} aria-label="Minimize support" title="Minimize" style={iconButton}><Minus size={14}/></button><button type="button" onClick={closeSupport} aria-label="Close support" title="Close" style={iconButton}><X size={14}/></button></div>
       </header>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5, padding: 4, borderRadius: 10, background: "var(--ps-hover,#F4F4F2)", marginBottom: 14 }}>
@@ -107,7 +135,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
         </div>
         <form onSubmit={(event) => { event.preventDefault(); void sendChat(chatInput); }} style={{ display: "flex", gap: 8 }}><input autoFocus value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Ask Noura a question…" style={{ ...inputStyle, flex: 1 }}/><button type="submit" aria-label="Send" disabled={chatBusy || !chatInput.trim()} style={{ width: 42, border: 0, borderRadius: 9, background: "#EF681A", color: "#fff", display: "grid", placeItems: "center", cursor: "pointer" }}><Send size={15}/></button></form>
         <button type="button" onClick={openHumanSupport} style={{ ...textButton, width: "100%", textAlign: "center", marginTop: 12 }}>Talk to the human support team</button>
-      </div> : mode === "help" ? <HelpCenter search={helpSearch} onSearch={setHelpSearch} article={helpArticle} onArticle={setHelpArticle} onAsk={(article) => { setMode("chat"); void sendChat(`Help me with: ${article.title}`); }} /> : <>
+      </div> : mode === "help" ? <HelpCenter search={helpSearch} onSearch={setHelpSearch} article={helpArticle} onArticle={setHelpArticle} onAsk={(article) => { setMode("chat"); void sendChat(`Help me with: ${article.title}`); }} /> : ticketSent ? <TicketSent onChat={() => { setTicketSent(false); setMode("chat"); }} onHelp={() => { setTicketSent(false); setMode("help"); }} onAnother={() => setTicketSent(false)} onMinimize={() => setMinimized(true)}/> : <>
         <a href={`mailto:${SUPPORT_EMAIL}`} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, padding: "9px 12px", borderRadius: 9, border: "1px solid var(--ps-border,#E5E2DB)", background: "var(--ps-hover,#FAFAF9)", color: "var(--ps-text,#1A1A18)", fontSize: 12.5, fontWeight: 600, textDecoration: "none" }}><Mail size={14}/>Email us directly at {SUPPORT_EMAIL}</a>
         <form onSubmit={handleTicket} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Field label="Name"><input value={name} onChange={(event) => setName(event.target.value)} required style={inputStyle}/></Field>
@@ -116,8 +144,18 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
           <button type="submit" disabled={busy} style={{ padding: "10px 16px", borderRadius: 9, border: 0, background: "#EF681A", color: "#fff", fontSize: 13, fontWeight: 700, cursor: busy ? "wait" : "pointer", opacity: busy ? .7 : 1 }}>{busy ? "Sending…" : "Send message"}</button>
         </form>
       </>}
-    </div>
-  </>;
+    </div>;
+}
+
+function TicketSent({ onChat, onHelp, onAnother, onMinimize }: { onChat: () => void; onHelp: () => void; onAnother: () => void; onMinimize: () => void }) {
+  return <div aria-live="polite" style={{ minHeight: 330, display: "flex", flexDirection: "column", justifyContent: "center", gap: 13 }}>
+    <div style={{ padding: 16, borderRadius: 12, border: "1px solid #A7E7BD", background: "#ECFDF3", color: "#087A33" }}><div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 800 }}><CheckCircle2 size={19}/>Message sent</div><p style={{ margin: "7px 0 0", fontSize: 13, lineHeight: 1.5 }}>Our support team will get back to you shortly. You can keep using PrizeSkout while you wait.</p></div>
+    <div style={{ fontSize: 12, fontWeight: 800 }}>What would you like to do next?</div>
+    <button type="button" onClick={onChat} style={actionButton}>Continue with Noura <ArrowRight size={14}/></button>
+    <button type="button" onClick={onHelp} style={actionButton}>Browse the Help Center <ArrowRight size={14}/></button>
+    <button type="button" onClick={onAnother} style={actionButton}>Send another message <ArrowRight size={14}/></button>
+    <button type="button" onClick={onMinimize} style={{ ...textButton, alignSelf: "center", marginTop: 4 }}>Minimize and continue working</button>
+  </div>;
 }
 
 function HelpCenter({ search, onSearch, article, onArticle, onAsk }: { search: string; onSearch: (value: string) => void; article?: HelpArticle; onArticle: (article?: HelpArticle) => void; onAsk: (article: HelpArticle) => void }) {
@@ -145,3 +183,4 @@ const inputStyle: React.CSSProperties = { padding: "9px 11px", borderRadius: 8, 
 const iconButton: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 7, border: "1px solid var(--ps-border,#E5E2DB)", background: "transparent", color: "var(--ps-muted,#6B6B6B)", cursor: "pointer" };
 const textButton: React.CSSProperties = { display: "inline-block", marginTop: 7, border: 0, background: "transparent", padding: 0, color: "#EF681A", fontSize: 11.5, fontWeight: 800, cursor: "pointer" };
 const suggestionButton: React.CSSProperties = { display: "block", marginTop: 6, padding: "6px 9px", border: "1px solid var(--ps-border,#E5E2DB)", borderRadius: 99, background: "#fff", color: "var(--ps-text,#222)", fontSize: 11, cursor: "pointer", textAlign: "left" };
+const actionButton: React.CSSProperties = { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "10px 12px", border: "1px solid var(--ps-border,#E5E2DB)", borderRadius: 9, background: "var(--ps-surface-2,#fff)", color: "var(--ps-text,#222)", fontSize: 12.5, fontWeight: 700, cursor: "pointer" };
