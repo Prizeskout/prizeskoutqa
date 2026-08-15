@@ -78,7 +78,7 @@ function Intro({
 
 function CommerceNetwork({ lang }: { lang: Lang }) {
   return (
-    <section className="pss-network" id="integrations">
+    <section className="pss-network pss-story-section" id="integrations">
       <span id="feature-integrations" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
@@ -138,7 +138,7 @@ function Node({ cls, label, detail }: { cls: string; label: string; detail: stri
 function ProfitStory({ lang }: { lang: Lang }) {
   const { money, localized } = useMarketMoney();
   return (
-    <section className="pss-section" id="platform">
+    <section className="pss-section pss-story-section" id="platform">
       <span id="feature-profit" className="pss-anchor" aria-hidden="true" />
       <span id="feature-cfo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
@@ -194,7 +194,7 @@ function ProfitStory({ lang }: { lang: Lang }) {
 function DecisionStory({ lang }: { lang: Lang }) {
   const { money, localized } = useMarketMoney();
   return (
-    <section className="pss-section tint">
+    <section className="pss-section pss-story-section tint">
       <span id="feature-radar" className="pss-anchor" aria-hidden="true" />
       <span id="feature-promo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
@@ -253,7 +253,7 @@ function DecisionStory({ lang }: { lang: Lang }) {
 function ProtectionStory({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   return (
-    <section className="pss-section dark">
+    <section className="pss-section pss-story-section dark">
       <span id="feature-policy" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
@@ -305,7 +305,7 @@ function ProtectionStory({ lang }: { lang: Lang }) {
 function ManagerStory({ lang }: { lang: Lang }) {
   const { localized } = useMarketMoney();
   return (
-    <section className="pss-section">
+    <section className="pss-section pss-story-section">
       <span id="feature-manager" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
@@ -365,7 +365,7 @@ function ManagerStory({ lang }: { lang: Lang }) {
 function RecoveryStory({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   return (
-    <section className="pss-section tint">
+    <section className="pss-section pss-story-section tint">
       <span id="feature-audit" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
