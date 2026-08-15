@@ -27,7 +27,6 @@ export function ProductStorySections({ lang, market }: { lang: Lang; market: Lan
       <DecisionStory lang={lang} />
       <RecoveryStory lang={lang} />
       <ManagerStory lang={lang} />
-      <PlatformMatrix lang={lang} />
       <TrustStrip lang={lang} />
       <DetailedPricing lang={lang} />
       <Faq lang={lang} />
@@ -80,6 +79,7 @@ function Intro({
 function CommerceNetwork({ lang }: { lang: Lang }) {
   return (
     <section className="pss-network" id="integrations">
+      <span id="feature-integrations" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
         center
@@ -139,6 +139,8 @@ function ProfitStory({ lang }: { lang: Lang }) {
   const { money, localized } = useMarketMoney();
   return (
     <section className="pss-section" id="platform">
+      <span id="feature-profit" className="pss-anchor" aria-hidden="true" />
+      <span id="feature-cfo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["SEE", "اعرف"]}
@@ -193,6 +195,8 @@ function DecisionStory({ lang }: { lang: Lang }) {
   const { money, localized } = useMarketMoney();
   return (
     <section className="pss-section tint">
+      <span id="feature-radar" className="pss-anchor" aria-hidden="true" />
+      <span id="feature-promo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["COMPETITOR RADAR + PROMOTION SIMULATOR", "رادار المنافسين + محاكي العروض"]}
@@ -250,6 +254,7 @@ function ProtectionStory({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   return (
     <section className="pss-section dark">
+      <span id="feature-policy" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["PROTECT", "الحماية"]}
@@ -301,6 +306,7 @@ function ManagerStory({ lang }: { lang: Lang }) {
   const { localized } = useMarketMoney();
   return (
     <section className="pss-section">
+      <span id="feature-manager" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["OPERATE", "شغّل"]}
@@ -360,6 +366,7 @@ function RecoveryStory({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   return (
     <section className="pss-section tint">
+      <span id="feature-audit" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["RECOVER", "استرد"]}
