@@ -21,15 +21,10 @@ function useMarketMoney() {
 export function ProductStorySections({ lang, market }: { lang: Lang; market: LandingMarket }) {
   return (
     <MarketContext.Provider value={market}><div className="pss" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <CommerceNetwork lang={lang} />
       <ProfitStory lang={lang} />
       <ProtectionStory lang={lang} />
-      <DecisionStory lang={lang} />
       <RecoveryStory lang={lang} />
-      <ManagerStory lang={lang} />
-      <TrustStrip lang={lang} />
       <DetailedPricing lang={lang} />
-      <Faq lang={lang} />
       <FinalCta lang={lang} />
     </div></MarketContext.Provider>
   );
@@ -255,6 +250,8 @@ function ProtectionStory({ lang }: { lang: Lang }) {
   return (
     <section className="pss-section pss-story-section dark">
       <span id="feature-policy" className="pss-anchor" aria-hidden="true" />
+      <span id="feature-radar" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
+      <span id="feature-promo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["PROTECT", "الحماية"]}
@@ -367,6 +364,7 @@ function RecoveryStory({ lang }: { lang: Lang }) {
   return (
     <section className="pss-section pss-story-section tint">
       <span id="feature-audit" className="pss-anchor" aria-hidden="true" />
+      <span id="feature-manager" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["RECOVER", "استرد"]}

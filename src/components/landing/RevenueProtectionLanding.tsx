@@ -76,17 +76,18 @@ export function RevenueProtectionLanding(){
 
     <section className="rpl-hero" id="product">
       <div className="eyebrow">{tr("PROFIT PROTECTION FOR RESTAURANTS & MODERN COMMERCE","حماية إيرادات التجارة الحديثة")}</div>
-      <h1>{tr("Every order.","كل طلب.")}<br/><span>{tr("Your margin, defended.","هامشك محمي.")}</span></h1>
-      <p>{tr("PrizeSkout protects your margins across delivery apps and connected stores - tracking prices, commissions, payouts and promotions so revenue doesn't disappear between the sale and your bank account.","يراقب PrizeSkout كل سعر وعرض وعمولة ودفعة عبر قنوات مبيعاتك، ليحمي أرباحك تلقائياً ويسترد الإيرادات التي كان يجب ألا تضيع.")}</p>
+      <h1>{tr("You see the sale.","أنت ترى المبيعات.")}<br/><span>{tr("PrizeSkout shows what you actually made.","يوضح لك PrizeSkout ما ربحته فعلياً.")}</span></h1>
+      <p>{tr("Connect your delivery apps and commerce channels. PrizeSkout reveals your true profit after commissions, fees, promotions and product costs. It then helps protect your margins and catch payout discrepancies before they compound.","اربط تطبيقات التوصيل وقنوات التجارة الخاصة بك. يكشف PrizeSkout ربحك الحقيقي بعد العمولات والرسوم والعروض الترويجية وتكاليف المنتجات. ثم يساعدك على حماية هوامش أرباحك واكتشاف فروقات المدفوعات قبل أن تتراكم.")}</p>
       <div className="rpl-ctas"><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a><a href="#platform">{tr("See how it works","شاهد كيف يعمل")}</a></div>
       <ProductHeroDemo lang={lang} market={selectedCountry as LandingMarket}/>
     </section>
 
-    <section className="rpl-credentials" aria-label={tr("PrizeSkout credentials","اعتمادات PrizeSkout")}>
+    <aside className="rpl-credentials" id="integrations" aria-label={tr("PrizeSkout credentials","اعتمادات PrizeSkout")}>
+      <span id="feature-integrations" aria-hidden="true" />
       <div><span>{tr("Backed by","بدعم من")}</span><img className="qstp-credential" src={qstpLogo} alt="Qatar Science and Technology Park"/></div>
       <i aria-hidden="true" />
       <div><span>{tr("Licensed by","مرخص من")}</span><img className="qfc-credential" src={QFC_LOGO} alt="Qatar Financial Centre"/><b>04412</b></div>
-    </section>
+    </aside>
 
     <ProductStorySections lang={lang} market={selectedCountry as LandingMarket}/>
     {false&&<>
