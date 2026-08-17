@@ -21,11 +21,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getPublicOrigin } from "@/server/public-origin";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { backgroundTask } from "@/server/cf-ctx";
+import { resolveZidTenant } from "@/server/core/zid-install";
+import { registerZidWebhooks } from "@/server/core/zid-webhooks";
 
 const ZID_TOKEN_URL    = "https://oauth.zid.sa/oauth/token";
 const ZID_AUTH_URL     = "https://oauth.zid.sa/oauth/authorize";
 const ZID_STORE_URL    = "https://api.zid.sa/v1/managers/account/store";
-const ZID_WEBHOOK_URL  = "https://api.zid.sa/v1/managers/webhooks";
 const ZID_EMBED_TOKEN_URL = "https://api.zid.sa/v1/managers/embedded-apps-token";
 
 // Zid determines granted scopes from the partner dashboard selection.
@@ -110,7 +111,7 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         if (!code && !cookieVal) {
           const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
           const nonce       = crypto.randomUUID().replace(/-/g, "");
-          const merchantId  = crypto.randomUUID();
+          const merchantId  = "marketplace";
           const params = new URLSearchParams({
             client_id:     clientId,
             redirect_uri:  redirectUri,
@@ -147,8 +148,9 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
             return errorPage("Session expired. Please try connecting again.");
           }
         } else {
-          // Path B: marketplace-initiated install — generate a fresh merchant_id
-          merchantId = crypto.randomUUID();
+          // Path B: marketplace-initiated install. The store ID discovered
+          // after token exchange resolves the stable PrizeSkout tenant.
+          merchantId = "marketplace";
         }
         const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
@@ -212,6 +214,11 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           return errorPage("Zid did not return the store identity. Please reconnect the app.");
         }
 
+        // A Zid store owns one PrizeSkout tenant. Reinstallations reuse the
+        // existing tenant instead of generating duplicate merchant accounts.
+        const tenant = await resolveZidTenant(storeId, merchantId);
+        merchantId = tenant.merchantId;
+
         // Zid appends this registered UUID to the embedded Application URL.
         const embeddedToken = crypto.randomUUID();
         try {
@@ -245,8 +252,8 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           .from("ps_merchant_channels")
           .upsert(
             {
-              account_id:       merchantId,
-              licensee_id:      merchantId,
+              account_id:       tenant.accountId,
+              licensee_id:      tenant.licenseeId,
               merchant_id:      merchantId,
               platform:         "zid",
               bearer_token:     bearerToken,
@@ -279,33 +286,15 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         // Zid uses Basic Auth on inbound webhooks: Authorization: Basic base64("prizeskout:<secret>")
         try {
           const webhookUrl = `${url.origin}/api/webhooks/zid`;
-          const whHeaders: Record<string, string> = {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${bearerToken}`,
-          };
-          if (storeToken) whHeaders["X-MANAGER-TOKEN"] = storeToken;
-
-          const webhookRes = await fetch(ZID_WEBHOOK_URL, {
-            method: "POST",
-            headers: whHeaders,
-            body: JSON.stringify({
-              event:       "product.update",
-              target_url:  webhookUrl,
-              original_id: "prizeskout",
-              username:    "prizeskout",
-              password:    webhookSecret,
-            }),
-          });
-
-          if (webhookRes.ok) {
+          const registration = await registerZidWebhooks({ bearerToken, managerToken: storeToken, webhookUrl, webhookSecret });
+          if (registration.ok) {
             await supabaseAdmin
               .from("ps_merchant_channels")
               .update({ webhook_registered_at: now })
               .eq("id", row.id);
           } else {
-            const webhookError = await webhookRes.text().catch(() => "");
-            console.error("[zid-oauth] webhook registration failed", webhookRes.status, webhookError.slice(0, 300));
+            console.error("[zid-oauth] webhook registration failed", registration.message);
+            await supabaseAdmin.from("ps_merchant_channels").update({ error_message: registration.message.slice(0, 400) }).eq("id", row.id);
           }
         } catch { /* non-fatal */ }
 
@@ -313,8 +302,8 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         backgroundTask(syncPlatformCatalog({
           platform:   "zid",
           creds:      { bearer_token: bearerToken, manager_token: storeToken, store_id: storeId || null },
-          accountId:  merchantId,
-          licenseeId: merchantId,
+          accountId:  tenant.accountId,
+          licenseeId: tenant.licenseeId,
           merchantId,
           region:     "SA",
         }).catch(async (error) => {

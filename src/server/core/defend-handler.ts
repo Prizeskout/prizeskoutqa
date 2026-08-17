@@ -23,6 +23,7 @@ import { getValidSallaAccessToken } from "./salla-token";
 import { getValidTalabatAccessToken, updateTalabatPrice } from "./talabat-client";
 import { getValidDeliverooAccessToken, updateDeliverooPrice } from "./deliveroo-client";
 import { publishKeetaPrice } from "./keeta-operations";
+import { getValidZidCredentials } from "./zid-token";
 
 const SOURCE_PLATFORMS = ["salla", "foodics", "zid"] as const;
 
@@ -601,14 +602,15 @@ export async function dispatchToAggregators(
         .maybeSingle();
 
       if (channelCreds && ingestEvent.item_id && channelCreds.bearer_token) {
+        const zidCredentials = ingestEvent.source_platform === "zid" ? await getValidZidCredentials(channelCreds) : null;
         const bearerToken = ingestEvent.source_platform === "salla"
           ? await getValidSallaAccessToken(channelCreds)
-          : channelCreds.bearer_token;
+          : zidCredentials?.bearerToken ?? channelCreds.bearer_token;
         const pushResult = await pushPriceToSourcePlatform(
           ingestEvent.source_platform,
           {
             bearer_token: bearerToken,
-            manager_token: channelCreds.manager_token,
+            manager_token: zidCredentials?.managerToken ?? channelCreds.manager_token,
           },
           ingestEvent.item_id,
           newPrice,

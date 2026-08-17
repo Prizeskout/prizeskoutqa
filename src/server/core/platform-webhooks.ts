@@ -40,7 +40,8 @@ import { constantTimeTokenMatch, parseTalabatCallback, talabatStaticToken } from
 // Zid: event name is product.update (singular) per Zid webhook event list
 const SALLA_PRICE_EVENTS   = new Set(["product.price.updated", "product.created"]);
 const FOODICS_PRICE_EVENTS = new Set(["products.updated", "product.updated"]);
-const ZID_PRICE_EVENTS     = new Set(["product.update"]);
+const ZID_PRODUCT_EVENTS = new Set(["product.create", "product.update", "product.publish", "product.delete"]);
+const ZID_ORDER_EVENTS = new Set(["order.create", "order.status.update", "order.payment_status.update"]);
 
 // ---------------------------------------------------------------------------
 // Zid Basic Auth verification
@@ -469,29 +470,106 @@ export async function handleZidWebhook(request: Request): Promise<Response> {
   }
 
   const event = String(payload.event ?? "");
-  if (!ZID_PRICE_EVENTS.has(event)) {
+  if (!ZID_PRODUCT_EVENTS.has(event) && !ZID_ORDER_EVENTS.has(event)) {
     return ok({ received: true, processed: false, reason: "event_not_subscribed" });
   }
 
   const data = payload.data as Record<string, unknown> | undefined ?? {};
-  const price = (data.price as number | undefined) ?? 0;
-  const sku = String(data.sku ?? data.id ?? "");
-  if (!sku || price <= 0) return ok({ received: true, processed: false, reason: "insufficient_price_data" });
-
-  return runPipeline({
-    channel,
-    platform: "zid",
-    externalId: String(data.id ?? ""),
-    sku,
-    nameEn: String(data.name ?? ""),
-    nameAr: String(data.name_ar ?? data.name ?? ""),
-    price,
-    baseCost: (data.cost_price as number | undefined) ?? price * 0.6,
-    currency: String(data.currency ?? "SAR"),
-    inStock: ((data.quantity as number | undefined) ?? 1) > 0,
-    region: "SA",
-    rawPayload: payload,
+  const externalOrderId = ZID_ORDER_EVENTS.has(event) ? String(data.id ?? data.order_id ?? data.orderId ?? "") : null;
+  const eventKey = await zidEventKey(event, storeId, data, rawBody);
+  const zidDb = supabaseAdmin as any;
+  const { error: eventInsertError } = await zidDb.from("ps_zid_webhook_events").insert({
+    channel_id: channel.id, account_id: channel.account_id, event_name: event,
+    event_key: eventKey, store_id: storeId, external_order_id: externalOrderId || null,
+    payload,
   });
+  if (eventInsertError?.code === "23505") return ok({ received: true, processed: true, idempotency_replay: true });
+  if (eventInsertError) return err("Failed to persist Zid webhook", 500);
+
+  if (ZID_ORDER_EVENTS.has(event)) {
+    if (!externalOrderId) {
+      await markZidWebhook(zidDb, channel.id, eventKey, "failed", "Missing order identifier");
+      return ok({ received: true, processed: false, reason: "missing_order_identifier" });
+    }
+    const order = normalizeZidOrder(data);
+    const { error: orderError } = await zidDb.from("ps_zid_orders").upsert({
+      channel_id: channel.id, account_id: channel.account_id, external_order_id: externalOrderId,
+      order_code: order.orderCode, status: order.status, payment_status: order.paymentStatus,
+      currency: order.currency, total: order.total, items: order.items, raw_order: data,
+      occurred_at: order.occurredAt, updated_at: new Date().toISOString(),
+    }, { onConflict: "channel_id,external_order_id" });
+    if (orderError) {
+      await markZidWebhook(zidDb, channel.id, eventKey, "failed", orderError.message);
+      return err("Failed to persist Zid order", 500);
+    }
+    await markZidWebhook(zidDb, channel.id, eventKey, "processed");
+    return ok({ received: true, processed: true, order_id: externalOrderId });
+  }
+
+  if (event === "product.delete" || event === "product.publish") {
+    await markZidWebhook(zidDb, channel.id, eventKey, "processed");
+    return ok({ received: true, processed: true });
+  }
+
+  const price = zidNumber(data.price ?? data.selling_price);
+  const baseCost = zidNumber(data.cost_price ?? data.cost);
+  const sku = String(data.sku ?? data.id ?? "");
+  if (!sku || price <= 0 || baseCost <= 0) {
+    await markZidWebhook(zidDb, channel.id, eventKey, "processed");
+    return ok({ received: true, processed: false, reason: baseCost <= 0 ? "verified_cost_required" : "insufficient_price_data" });
+  }
+
+  const response = await runPipeline({
+    channel, platform: "zid", externalId: String(data.id ?? ""), sku,
+    nameEn: zidLocalizedText(data.name, "en"),
+    nameAr: zidLocalizedText(data.name_ar ?? data.name, "ar"),
+    price, baseCost, currency: String(data.currency ?? "SAR"),
+    inStock: zidNumber(data.quantity ?? 1) > 0, region: "SA", rawPayload: payload,
+  });
+  await markZidWebhook(zidDb, channel.id, eventKey, response.ok ? "processed" : "failed", response.ok ? undefined : "Pricing pipeline failed");
+  return response;
+}
+
+export function zidNumber(value: unknown): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : 0; }
+  if (value && typeof value === "object") return zidNumber((value as Record<string, unknown>).amount);
+  return 0;
+}
+
+export function zidLocalizedText(value: unknown, locale: "en" | "ar"): string {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object") return "";
+  const record = value as Record<string, unknown>;
+  return String(record[locale] ?? record.en ?? record.ar ?? record.name ?? "");
+}
+
+export function normalizeZidOrder(data: Record<string, unknown>) {
+  const payment = data.payment_status && typeof data.payment_status === "object" ? data.payment_status as Record<string, unknown> : {};
+  const currencyValue = data.currency && typeof data.currency === "object" ? (data.currency as Record<string, unknown>).code : data.currency;
+  return {
+    orderCode: String(data.code ?? data.order_number ?? data.id ?? "") || null,
+    status: String(data.status ?? data.order_status ?? "") || null,
+    paymentStatus: String(payment.name ?? payment.code ?? data.payment_status ?? "") || null,
+    currency: String(currencyValue ?? "SAR"),
+    total: zidNumber(data.total ?? data.order_total ?? data.grand_total) || null,
+    items: Array.isArray(data.products) ? data.products : Array.isArray(data.items) ? data.items : [],
+    occurredAt: String(data.updated_at ?? data.created_at ?? data.date ?? "") || null,
+  };
+}
+
+async function zidEventKey(event: string, storeId: string, data: Record<string, unknown>, rawBody: string): Promise<string> {
+  const nativeId = data.id ?? data.order_id ?? data.product_id;
+  const nativeTime = data.updated_at ?? data.created_at ?? data.date;
+  if (nativeId && nativeTime) return `${event}:${storeId}:${String(nativeId)}:${String(nativeTime)}`;
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawBody)));
+  const hash = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${event}:${storeId}:${hash}`;
+}
+
+async function markZidWebhook(db: any, channelId: string, eventKey: string, status: "processed" | "failed", errorMessage?: string) {
+  await db.from("ps_zid_webhook_events").update({ status, error_message: errorMessage ?? null, processed_at: new Date().toISOString() })
+    .eq("channel_id", channelId).eq("event_key", eventKey);
 }
 
 const ZID_APP_MARKET_EVENTS = new Set([
@@ -499,12 +577,6 @@ const ZID_APP_MARKET_EVENTS = new Set([
   "app.market.application.authorized",
   "app.market.application.uninstall",
 ]);
-
-// SHA-256 fingerprint of the Partner Dashboard webhook token. Keeping only the
-// fingerprint lets non-Cloudflare runtimes validate the shared token without
-// placing the recoverable secret in source control.
-const ZID_WEBHOOK_SECRET_SHA256 =
-  "584f95985897592798b706b817e92688bc0b800ef8e29a2595689588a9225152";
 
 async function secretsMatch(actual: string | null, expected: string): Promise<boolean> {
   if (!actual) return false;
@@ -519,15 +591,6 @@ async function secretsMatch(actual: string | null, expected: string): Promise<bo
   let difference = 0;
   for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
   return difference === 0;
-}
-
-async function secretMatchesHash(actual: string | null, expectedHash: string): Promise<boolean> {
-  if (!actual) return false;
-  const digest = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(actual)),
-  );
-  const actualHash = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  return secretsMatch(actualHash, expectedHash);
 }
 
 function zidLifecycleStoreId(payload: Record<string, unknown>): string {
@@ -550,11 +613,10 @@ function zidLifecycleStoreId(payload: Record<string, unknown>): string {
 // Partner Dashboard application lifecycle events. These are distinct from
 // per-store product.update events registered after OAuth.
 export async function handleZidAppMarketWebhook(request: Request): Promise<Response> {
-  const expectedSecret = process.env.ZID_WEBHOOK_SECRET;
+  const expectedSecret = process.env.ZID_WEBHOOK_SECRET?.trim();
+  if (!expectedSecret) return err("Zid lifecycle webhook verification is not configured", 503);
   const suppliedSecret = request.headers.get("x-prizeskout-webhook-token");
-  const authenticated = expectedSecret
-    ? await secretsMatch(suppliedSecret, expectedSecret)
-    : await secretMatchesHash(suppliedSecret, ZID_WEBHOOK_SECRET_SHA256);
+  const authenticated = await secretsMatch(suppliedSecret, expectedSecret);
   if (!authenticated) return err("Invalid credentials", 401);
 
   let payload: Record<string, unknown>;

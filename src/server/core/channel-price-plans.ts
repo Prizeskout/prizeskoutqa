@@ -4,6 +4,7 @@ import {getValidSallaAccessToken} from "./salla-token";
 import {getValidTalabatAccessToken, updateTalabatPrice} from "./talabat-client";
 import type {ChannelPriceRow} from "@/lib/channel-price-planner";
 import {createNotification} from "@/server/notifications";
+import {getValidZidCredentials} from "./zid-token";
 
 export type SavedChannelPricePlan={id:string;account_id:string;name:string;status:"draft"|"approved"|"publishing"|"partially_published"|"published"|"cancelled";channel_config:unknown[];rows:unknown[];approved_by:string|null;approved_at:string|null;published_at:string|null;created_at:string;updated_at:string};
 export type PublishRowResult={sku:string;name:string;channel:string;planned_price:number;status:"queued"|"published"|"skipped"|"failed";reason:string};
@@ -75,8 +76,9 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
       const {data:evt}=await supabaseAdmin.from("ps_ingest_events").select("item_id,currency").eq("id",row.ingest_event_id).eq("account_id",accountId).maybeSingle();
       if(!evt?.item_id){results.push({...pick(row),status:"failed",reason:"Source product could not be found."});continue;}
       const meta=(ch.metadata??{}) as Record<string,unknown>;
-      const bearerToken=row.channel==="salla"?await getValidSallaAccessToken(ch):ch.bearer_token;
-      const push=await pushPriceToSourcePlatform(row.channel,{bearer_token:bearerToken,manager_token:ch.manager_token??null,store_id:String(meta.store_id??"")||null},evt.item_id,row.planned_price,evt.currency??"SAR");
+      const zidCredentials=row.channel==="zid"?await getValidZidCredentials(ch):null;
+      const bearerToken=row.channel==="salla"?await getValidSallaAccessToken(ch):(zidCredentials?.bearerToken??ch.bearer_token);
+      const push=await pushPriceToSourcePlatform(row.channel,{bearer_token:bearerToken,manager_token:zidCredentials?.managerToken??ch.manager_token??null,store_id:String(meta.store_id??"")||null},evt.item_id,row.planned_price,evt.currency??"SAR");
       if(push.success){
         await supabaseAdmin.from("ps_ingest_events").update({current_retail_price:row.planned_price,status:"repriced"}).eq("id",row.ingest_event_id).eq("account_id",accountId);
       }

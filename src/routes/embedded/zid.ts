@@ -8,7 +8,7 @@ function escapeScriptValue(value: string): string {
 function page(body: string, status = 200): Response {
   return new Response(
     `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PrizeSkout</title></head><body style="font-family:system-ui;padding:32px">${body}</body></html>`,
-    { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
+    { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "frame-ancestors https://*.zid.sa" } },
   );
 }
 
@@ -61,7 +61,7 @@ export const Route = createFileRoute("/embedded/zid")({
             localStorage.setItem("ps_access_code", ${escapeScriptValue(access.code)});
             location.replace("/dashboard/revenue-hub");
           </script></body></html>`,
-          { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
+          { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "frame-ancestors https://*.zid.sa" } },
         );
       },
     },

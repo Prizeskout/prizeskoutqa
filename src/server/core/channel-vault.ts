@@ -24,6 +24,8 @@ import { syncPlatformCatalog } from "./platform-sync";
 import { getPublicOrigin } from "@/server/public-origin";
 import { getValidSallaAccessToken } from "./salla-token";
 import { registerSallaWebhooks } from "./salla-webhooks";
+import { getValidZidCredentials } from "./zid-token";
+import { registerZidWebhooks } from "./zid-webhooks";
 
 // ---------------------------------------------------------------------------
 // Webhook helpers
@@ -40,7 +42,7 @@ function generateWebhookSecret(): string {
 const PLATFORM_WEBHOOK_EVENTS: Record<string, string[]> = {
   salla:   [],
   foodics: ["products.updated", "product.updated"],
-  zid:     ["product.update"],
+  zid:     [],
 };
 
 async function registerPlatformWebhook(
@@ -80,24 +82,9 @@ async function registerPlatformWebhook(
         signal: controller.signal,
       });
     } else if (platform === "zid") {
-      // Zid: uses Basic Auth (not HMAC). Register username+password so Zid sends
-      // Authorization: Basic base64(prizeskout:<secret>) on every webhook call.
-      // Endpoint is /v1/managers/webhooks; one call per event; field is target_url not url.
-      if (managerToken) headers["X-MANAGER-TOKEN"] = managerToken;
-      for (const event of events) {
-        await fetch("https://api.zid.sa/v1/managers/webhooks", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            event,
-            target_url: webhookUrl,
-            original_id: "prizeskout",
-            username: "prizeskout",
-            password: webhookSecret,
-          }),
-          signal: controller.signal,
-        });
-      }
+      clearTimeout(timeout);
+      if (!managerToken) return { ok: false, message: "Zid manager token is missing" };
+      return registerZidWebhooks({ bearerToken, managerToken, webhookUrl, webhookSecret });
     }
 
     clearTimeout(timeout);
@@ -393,15 +380,16 @@ export async function handleChannelSync(
 
   const region = (body.region as string | undefined) ?? "QA";
 
+  const zidCredentials = platform === "zid" ? await getValidZidCredentials(channel) : null;
   const bearerToken = platform === "salla"
     ? await getValidSallaAccessToken(channel)
-    : channel.bearer_token ?? "";
+    : zidCredentials?.bearerToken ?? channel.bearer_token ?? "";
 
   const result = await syncPlatformCatalog({
     platform,
     creds: {
       bearer_token: bearerToken,
-      manager_token: channel.manager_token,
+      manager_token: zidCredentials?.managerToken ?? channel.manager_token,
       store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
     },
     accountId: ctx.accountId,
