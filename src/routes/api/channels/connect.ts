@@ -31,6 +31,8 @@ import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement,
 import { confirmZidJahezPropagation, getZidJahezBridgeSettings, listZidJahezPropagationEvents, saveZidJahezBridgeSettings } from "@/server/core/zid-jahez-bridge";
 import { createStoreManagerTask, getStoreManager, saveStoreManagerPolicy, saveStoreManagerProfile, transitionStoreManagerTask } from "@/server/core/store-manager";
 import { runScrape } from "@/server/scrape-runner";
+import { getValidTalabatAccessToken, updateTalabatOrder } from "@/server/core/talabat-client";
+import type { TalabatOrderUpdateStatus, TalabatTransportType } from "@/server/core/talabat-contract";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -58,7 +60,7 @@ export const Route = createFileRoute("/api/channels/connect")({
 
         try {
           if (platform === "talabat") {
-            const { client_id, client_secret, vendor_id, chain_id, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, environment } = body;
+            const { client_id, client_secret, vendor_id, chain_id, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, environment, contract_currency } = body;
             if (!client_id || !client_secret || !vendor_id || !chain_id || !commission_rate_pct) {
               return resp({ error: "Talabat requires client_id, client_secret, vendor_id, chain_id, and commission_rate_pct." }, 400);
             }
@@ -68,6 +70,7 @@ export const Route = createFileRoute("/api/channels/connect")({
               vatOnFeesPct: vat_on_fees_pct, paymentFeePct: payment_fee_pct,
               fixedOrderFee: fixed_order_fee, deliveryContribution: delivery_contribution,
               environment: environment === "sandbox" ? "sandbox" : "production",
+              contractCurrency: contract_currency,
             });
             return result.ok
               ? resp({
@@ -75,7 +78,9 @@ export const Route = createFileRoute("/api/channels/connect")({
                   platform,
                   status: "connected",
                   environment: environment === "sandbox" ? "sandbox" : "production",
-                  webhook_url: `${new URL(request.url).origin}/api/webhooks/talabat?token=${result.webhookToken}`,
+                  order_webhook_url: `${new URL(request.url).origin}/api/webhooks/talabat?kind=order`,
+                  assortment_webhook_url: `${new URL(request.url).origin}/api/webhooks/talabat?kind=catalog`,
+                  webhook_token: result.webhookToken,
                 }, 200)
               : resp({ ok: false, error: result.message }, 200);
           }
@@ -125,6 +130,44 @@ export const Route = createFileRoute("/api/channels/connect")({
             const policy=await getMerchantMarginPolicy(merchant_id);
             const versions=await listMerchantMarginPolicyVersions(merchant_id);
             return resp({ ok: true, policy, versions }, 200);
+          }
+
+          if (platform === "talabat_order") {
+            const raw = body as unknown as Record<string, unknown>;
+            const orderId = String(raw.order_id ?? "");
+            const requestedStatus = String(raw.order_status ?? "") as TalabatOrderUpdateStatus;
+            if (!orderId || !["READY_FOR_PICKUP","DISPATCHED","CANCELLED","UPDATE_CART"].includes(requestedStatus)) {
+              return resp({ error: "Talabat requires order_id and a supported order_status." }, 400);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const db = supabaseAdmin as any;
+            const { data: channel } = await db.from("ps_merchant_channels")
+              .select("id,manager_token,bearer_token,metadata")
+              .eq("account_id", merchant_id).eq("merchant_id", merchant_id)
+              .eq("platform", "talabat").eq("status", "connected").maybeSingle();
+            if (!channel) return resp({ error: "Talabat is not connected." }, 409);
+            const { data: storedOrder } = await db.from("ps_talabat_orders")
+              .select("items,transport_type")
+              .eq("channel_id", channel.id).eq("external_order_id", orderId).maybeSingle();
+            const items = Array.isArray(raw.items) ? raw.items : Array.isArray(storedOrder?.items) ? storedOrder.items : [];
+            const metadata = (channel.metadata ?? {}) as Record<string, unknown>;
+            const chainId = String(metadata.chain_id ?? "");
+            if (!chainId) return resp({ error: "Talabat Chain ID is missing." }, 409);
+            const token = await getValidTalabatAccessToken(channel);
+            if (!token.accessToken) return resp({ error: token.error ?? "Talabat authentication failed." }, 502);
+            const result = await updateTalabatOrder({
+              chainId,
+              orderId,
+              status: requestedStatus,
+              transportType: String(storedOrder?.transport_type ?? raw.transport_type ?? "") as TalabatTransportType,
+              cancellationReason: typeof raw.cancellation_reason === "string" ? raw.cancellation_reason : undefined,
+              items,
+              accessToken: token.accessToken,
+              environment: metadata.environment === "sandbox" ? "sandbox" : "production",
+            });
+            return result.ok
+              ? resp({ ok: true, platform, order: result.data }, 200)
+              : resp({ ok: false, error: result.message, upstream_status: result.httpStatus }, result.httpStatus >= 400 && result.httpStatus < 600 ? result.httpStatus : 502);
           }
 
           if (platform === "zid_jahez_bridge") {

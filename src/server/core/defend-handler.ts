@@ -136,6 +136,9 @@ type ChannelCreds = {
   manager_token?: string | null;
   id?: string;
   metadata?: Record<string, unknown> | null;
+  account_id?: string;
+  licensee_id?: string;
+  merchant_id?: string;
 };
 
 async function getChannelCreds(accountId: string, merchantId: string, channel: string): Promise<ChannelCreds | null> {
@@ -249,7 +252,13 @@ async function callAggregatorApi(
       };
     }
 
-    const result = await updateTalabatPrice({ chainId, vendorId, sku, newPrice, accessToken: token.accessToken, environment: metadata.environment === "sandbox" ? "sandbox" : "production" });
+    const result = await updateTalabatPrice({
+      chainId, vendorId, sku, newPrice, accessToken: token.accessToken,
+      environment: metadata.environment === "sandbox" ? "sandbox" : "production",
+      tracking: creds.id&&creds.account_id&&creds.licensee_id&&creds.merchant_id
+        ? {channelId:creds.id,accountId:creds.account_id,licenseeId:creds.licensee_id,merchantId:creds.merchant_id}
+        : undefined,
+    });
     return {
       success: result.ok,
       httpStatus: result.httpStatus,
@@ -451,7 +460,7 @@ export async function dispatchToAggregators(
     // ------------------------------------------------------------------
     // Attempt dispatch
     // ------------------------------------------------------------------
-    const creds = { bearer_token: ch.bearer_token, manager_token: ch.manager_token, id: ch.id, metadata: ch.metadata as Record<string, unknown> | null };
+    const creds = { bearer_token: ch.bearer_token, manager_token: ch.manager_token, id: ch.id, metadata: ch.metadata as Record<string, unknown> | null, account_id:accountId, licensee_id:licenseeId, merchant_id:merchantId };
     const callResult = await callAggregatorApi(channel, creds, sku, locationId, newPrice, currency);
 
     let dispatchStatus: string;

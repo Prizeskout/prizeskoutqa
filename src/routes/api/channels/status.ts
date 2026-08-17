@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/channels/status")({
         const [{ data, error }, { data: accessCode }] = await Promise.all([
           supabaseAdmin
             .from("ps_merchant_channels")
-            .select("platform, status, connected_at, metadata")
+            .select("platform, status, connected_at, metadata, webhook_secret")
             .eq("account_id", merchantId)
             .neq("status", "revoked"),
           // A merchant can hold more than one access code (e.g. re-registered
@@ -63,9 +63,9 @@ export const Route = createFileRoute("/api/channels/status")({
           );
         }
 
-        const statusMap: Record<string, { status: string; connected_at: string | null; metadata: Record<string, unknown> | null }> = {};
+        const statusMap: Record<string, { status: string; connected_at: string | null; metadata: Record<string, unknown> | null; webhook_secret?: string | null }> = {};
         for (const row of data ?? []) {
-          statusMap[row.platform] = { status: row.status, connected_at: row.connected_at, metadata: row.metadata as Record<string, unknown> | null };
+          statusMap[row.platform] = { status: row.status, connected_at: row.connected_at, metadata: row.metadata as Record<string, unknown> | null, webhook_secret: row.webhook_secret };
         }
 
         // metadata (which holds refresh_token for OAuth channels) is
@@ -82,6 +82,7 @@ export const Route = createFileRoute("/api/channels/status")({
             const needsShopId = row?.status === "connected" && !row?.metadata?.shop_id;
             return { ...base, needs_shop_id: needsShopId };
           }
+          if (p === "talabat") return { ...base, environment: row?.metadata?.environment === "sandbox" ? "sandbox" : "production", webhook_token_configured: !!row?.webhook_secret };
           return base;
         });
 

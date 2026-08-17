@@ -121,7 +121,10 @@ const SOURCE_PLATFORMS = ["salla", "foodics", "zid"] as const;
 // model, where there's no static token a caller could paste (every call,
 // including the token exchange itself, needs a live per-request signature).
 // Keeta only ever connects via the OAuth flow in src/routes/api/auth/keeta*.
-const VALID_PLATFORMS = ["salla", "foodics", "zid", "talabat", "jahez", "snoonu", "deliveroo"] as const;
+// Talabat is intentionally excluded: it requires client_id/client_secret plus
+// chain/vendor IDs and environment selection, handled by the dedicated
+// /api/channels/connect flow. Accepting it here created unusable channel rows.
+const VALID_PLATFORMS = ["salla", "foodics", "zid", "jahez", "snoonu", "deliveroo"] as const;
 type Platform = (typeof VALID_PLATFORMS)[number];
 
 function err(code: string, message: string, status: number, extra?: Record<string, unknown>): V1Result {
@@ -445,8 +448,6 @@ async function probeChannelAuth(platform: Platform, bearerToken: string, manager
     } else if (platform === "zid") {
       url = "https://api.zid.sa/v1/profile/";
       if (managerToken) headers["X-MANAGER-TOKEN"] = managerToken;
-    } else if (platform === "talabat") {
-      url = "https://api.talabat.com/merchant/v1/profile";
     } else if (platform === "jahez") {
       url = "https://merchant-api.jahez.net/v2/profile";
     } else if (platform === "snoonu") {

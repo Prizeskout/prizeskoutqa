@@ -3,7 +3,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { JAHEZ_BASE } from "./byok-connect";
-import { exchangeTalabatToken, talabatBaseUrl, type TalabatEnvironment } from "./talabat-client";
+import { getValidTalabatAccessToken, talabatBaseUrl } from "./talabat-client";
 
 type PushResult = {
   ok: boolean;
@@ -17,7 +17,7 @@ type PushResult = {
 async function getChannel(merchantId: string, platform: string) {
   const { data } = await supabaseAdmin
     .from("ps_merchant_channels")
-    .select("bearer_token, manager_token, metadata, status")
+    .select("id,account_id,licensee_id,merchant_id,bearer_token,manager_token,metadata,status")
     .eq("account_id", merchantId)
     .eq("platform", platform)
     .eq("status", "connected")
@@ -30,39 +30,12 @@ async function getChannel(merchantId: string, platform: string) {
 // Returns a job_id (async); job_status will be QUEUED then COMPLETED.
 
 async function getTalabatToken(channel: {
+  id: string;
   manager_token: string | null;
   bearer_token: string | null;
   metadata: Record<string, unknown> | null;
 }): Promise<string | null> {
-  const meta = channel.metadata as Record<string, string> | null;
-
-  // Reuse cached token if not expired (with 60s buffer)
-  if (meta?.access_token && meta.access_token_expires_at) {
-    const expiresAt = new Date(meta.access_token_expires_at).getTime();
-    if (Date.now() < expiresAt - 60_000) return meta.access_token;
-  }
-
-  if (!channel.manager_token || !channel.bearer_token) return null;
-
-  const environment: TalabatEnvironment = meta?.environment === "sandbox" ? "sandbox" : "production";
-  const result = await exchangeTalabatToken(channel.manager_token, channel.bearer_token, environment);
-  if (!result.ok || !result.data?.access_token) return null;
-
-  // Update cached token in DB (fire-and-forget)
-  const expiresAt = new Date(Date.now() + result.data.expires_in * 1000).toISOString();
-  await supabaseAdmin
-    .from("ps_merchant_channels")
-    .update({
-      metadata: {
-        ...(meta ?? {}),
-        access_token: result.data.access_token,
-        access_token_expires_at: expiresAt,
-      },
-    })
-    .eq("account_id", meta?.vendor_id ?? "")
-    .then(() => {});
-
-  return result.data.access_token;
+  return (await getValidTalabatAccessToken(channel)).accessToken;
 }
 
 export async function pushTalabatPrice(
@@ -104,6 +77,20 @@ export async function pushTalabatPrice(
   }
 
   const data = await res.json().catch(() => ({})) as { job_id?: string; job_status?: string };
+  if (!data.job_id) return { ok: false, platform: "talabat", message: "Talabat accepted the update without returning a job ID" };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabaseAdmin as any).from("ps_talabat_catalog_jobs").upsert({
+    channel_id: channel.id,
+    account_id: channel.account_id,
+    licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id,
+    environment: meta?.environment === "sandbox" ? "sandbox" : "production",
+    job_id: data.job_id,
+    operation: "update_products",
+    status: data.job_status ?? "QUEUED",
+    requested_products: items,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "channel_id,job_id" });
   return { ok: true, platform: "talabat", jobId: data.job_id };
 }
 

@@ -497,7 +497,8 @@ function Step3({
   );
 }
 
-function AccessCodeScreen({ code, talabatWebhookUrl, onEnter }: { code: string; talabatWebhookUrl?: string; onEnter: () => void }) {
+type TalabatWebhookSetup={orderUrl:string;assortmentUrl:string;token:string};
+function AccessCodeScreen({ code, talabatWebhookSetup, onEnter }: { code: string; talabatWebhookSetup?: TalabatWebhookSetup; onEnter: () => void }) {
   const [copied, setCopied] = useState(false);
 
   async function copyCode() {
@@ -567,7 +568,7 @@ function AccessCodeScreen({ code, talabatWebhookUrl, onEnter }: { code: string; 
 
       <PrimaryBtn onClick={onEnter}>Enter Command Room →</PrimaryBtn>
 
-      {talabatWebhookUrl&&<div style={{margin:"24px auto 0",maxWidth:520,padding:16,border:"1px solid rgba(255,255,255,.1)",borderRadius:12,textAlign:"left"}}><b style={{display:"block",color:"#E7E8EA",fontSize:13}}>Finish Talabat sandbox setup</b><p style={{color:"#7B8290",fontSize:12,lineHeight:1.6}}>Copy this URL into both the Order Webhook and Assortment Webhook fields in Talabat Partner Portal. Treat it like a secret.</p><button type="button" onClick={()=>navigator.clipboard.writeText(talabatWebhookUrl)} style={{width:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"10px 12px",border:"1px solid rgba(239,104,26,.3)",borderRadius:8,background:"rgba(239,104,26,.08)",color:OG,fontFamily:MONO,cursor:"pointer"}}>{talabatWebhookUrl}</button></div>}
+      {talabatWebhookSetup&&<div style={{margin:"24px auto 0",maxWidth:560,padding:16,border:"1px solid rgba(255,255,255,.1)",borderRadius:12,textAlign:"left"}}><b style={{display:"block",color:"#E7E8EA",fontSize:13}}>Finish Talabat webhook setup</b><p style={{color:"#7B8290",fontSize:12,lineHeight:1.6}}>Enter each URL in its matching Partner Portal field, then configure the static token as the webhook Authorization token. The token is shown only during setup.</p>{[["ORDER WEBHOOK",talabatWebhookSetup.orderUrl],["ASSORTMENT WEBHOOK",talabatWebhookSetup.assortmentUrl],["AUTHORIZATION TOKEN",talabatWebhookSetup.token]].map(([label,value])=><div key={label} style={{marginTop:10}}><small style={{display:"block",marginBottom:5,color:"#7B8290",fontFamily:MONO}}>{label}</small><button type="button" onClick={()=>navigator.clipboard.writeText(value)} style={{width:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"10px 12px",border:"1px solid rgba(239,104,26,.3)",borderRadius:8,background:"rgba(239,104,26,.08)",color:OG,fontFamily:MONO,cursor:"pointer"}}>{value}</button></div>)}</div>}
 
       <div style={{ marginTop: 22, fontSize: 11.5, color: "#3A3D46", fontFamily: MONO }}>
         You can also find this code in Settings → Store Access
@@ -662,7 +663,7 @@ function OnboardingPage() {
   const [step, setStep]               = useState(0);
   const [restoreMode, setRestoreMode] = useState(false);
   const [accessCode, setAccessCode]   = useState("");
-  const [talabatWebhookUrl,setTalabatWebhookUrl]=useState("");
+  const [talabatWebhookSetup,setTalabatWebhookSetup]=useState<TalabatWebhookSetup>();
   const navigate = useNavigate();
 
   // Step 1 — storage-backed values start empty (matching what the server
@@ -814,10 +815,10 @@ function OnboardingPage() {
       if (!code) throw new Error("PrizeSkout did not issue an access code. Please try again.");
       for(const [platform,credentials] of [["talabat",talabat],["jahez",jahez]] as const){
         if(!Object.keys(credentials).length)continue;
-        const response=await fetchWithTimeout("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials})});
-        const result=await response.json() as {ok?:boolean;error?:string;webhook_url?:string};
+        const response=await fetchWithTimeout("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials,...(platform==="talabat"?{contract_currency:currency}:{})})});
+        const result=await response.json() as {ok?:boolean;error?:string;order_webhook_url?:string;assortment_webhook_url?:string;webhook_token?:string};
         if(!response.ok||!result.ok)throw new Error(result.error??`PrizeSkout could not configure ${platform}.`);
-        if(platform==="talabat"&&result.webhook_url){localStorage.setItem("ps_talabat_webhook_url",result.webhook_url);setTalabatWebhookUrl(result.webhook_url);}
+        if(platform==="talabat"&&result.order_webhook_url&&result.assortment_webhook_url&&result.webhook_token){setTalabatWebhookSetup({orderUrl:result.order_webhook_url,assortmentUrl:result.assortment_webhook_url,token:result.webhook_token});}
       }
       localStorage.setItem("ps_access_code", code);
       localStorage.setItem("ps_connected", "true");
@@ -929,7 +930,7 @@ function OnboardingPage() {
         ) : (
           <AccessCodeScreen
             code={accessCode}
-            talabatWebhookUrl={talabatWebhookUrl}
+            talabatWebhookSetup={talabatWebhookSetup}
             onEnter={() => navigate({ to: "/dashboard/revenue-hub" })}
           />
         )}

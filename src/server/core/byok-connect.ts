@@ -12,7 +12,7 @@
 //          only holds setKeetaShopId(), the post-connect shop-ID capture step.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { exchangeTalabatToken, type TalabatEnvironment } from "./talabat-client";
+import { exchangeTalabatToken, verifyTalabatVendorAccess, type TalabatEnvironment } from "./talabat-client";
 
 export const JAHEZ_BASE   = "https://integration-api.jahez.net";
 
@@ -42,6 +42,7 @@ export async function connectTalabat(params: {
   fixedOrderFee?: string;
   deliveryContribution?: string;
   environment?: TalabatEnvironment;
+  contractCurrency?: string;
 }): Promise<{ ok: boolean; message?: string; webhookToken?: string }> {
   const { merchantId, clientId, clientSecret, vendorId, chainId, commissionRatePct } = params;
   const now = new Date().toISOString();
@@ -92,6 +93,7 @@ export async function connectTalabat(params: {
   // a clear message instead of silently sitting in the DB until the first
   // real dispatch attempt fails.
   const environment = params.environment === "sandbox" ? "sandbox" : "production";
+  const contractCurrency = /^[A-Z]{3}$/.test(params.contractCurrency ?? "") ? params.contractCurrency : "QAR";
   const tokenResult = await exchangeTalabatToken(clientId, clientSecret, environment);
   if (!tokenResult.ok || !tokenResult.data?.access_token) {
     // Confirmed live against Talabat's real token endpoint: invalid
@@ -109,7 +111,25 @@ export async function connectTalabat(params: {
     };
   }
 
-  const webhookToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
+  const vendorProbe = await verifyTalabatVendorAccess({
+    chainId,
+    vendorId,
+    accessToken: tokenResult.data.access_token,
+    environment,
+  });
+  if (!vendorProbe.ok) {
+    const invalidVendor = [400,403,404].includes(vendorProbe.httpStatus);
+    return {
+      ok: false,
+      message: invalidVendor
+        ? "Talabat authenticated the credentials, but the Chain ID or Vendor ID is not accessible. Use the sandbox vendor identifiers downloaded from Partner Portal."
+        : `Talabat authentication succeeded, but vendor verification failed: ${vendorProbe.message ?? "unknown error"}.`,
+    };
+  }
+
+  const { data: existingChannel } = await db().select("webhook_secret")
+    .eq("account_id", merchantId).eq("merchant_id", merchantId).eq("platform", "talabat").maybeSingle();
+  const webhookToken = existingChannel?.webhook_secret || Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
   const { error } = await db()
     .upsert(
       {
@@ -139,6 +159,7 @@ export async function connectTalabat(params: {
           commercial_terms_source: "merchant_contract",
           commercial_terms_updated_at: now,
           environment,
+          contract_currency: contractCurrency,
         },
       },
       { onConflict: "account_id,merchant_id,platform" },

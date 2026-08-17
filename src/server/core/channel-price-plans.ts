@@ -5,8 +5,8 @@ import {getValidTalabatAccessToken, updateTalabatPrice} from "./talabat-client";
 import type {ChannelPriceRow} from "@/lib/channel-price-planner";
 import {createNotification} from "@/server/notifications";
 
-export type SavedChannelPricePlan={id:string;account_id:string;name:string;status:"draft"|"approved"|"partially_published"|"published"|"cancelled";channel_config:unknown[];rows:unknown[];approved_by:string|null;approved_at:string|null;published_at:string|null;created_at:string;updated_at:string};
-export type PublishRowResult={sku:string;name:string;channel:string;planned_price:number;status:"published"|"skipped"|"failed";reason:string};
+export type SavedChannelPricePlan={id:string;account_id:string;name:string;status:"draft"|"approved"|"publishing"|"partially_published"|"published"|"cancelled";channel_config:unknown[];rows:unknown[];approved_by:string|null;approved_at:string|null;published_at:string|null;created_at:string;updated_at:string};
+export type PublishRowResult={sku:string;name:string;channel:string;planned_price:number;status:"queued"|"published"|"skipped"|"failed";reason:string};
 export async function listChannelPricePlans(accountId:string){
   const {data,error}=await supabaseAdmin.from("ps_channel_price_plans").select("*").eq("account_id",accountId).order("created_at",{ascending:false}).limit(50);
   if(error&&error.code!=="42P01")throw error;
@@ -38,7 +38,7 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
   const rows=(plan.rows??[]) as ChannelPriceRow[];
   const results:PublishRowResult[]=[];
 
-  const {data:channels}=await supabaseAdmin.from("ps_merchant_channels").select("id,platform,bearer_token,manager_token,metadata,status").eq("account_id",accountId).in("platform",["zid","salla","foodics","talabat"]);
+  const {data:channels}=await supabaseAdmin.from("ps_merchant_channels").select("id,account_id,licensee_id,merchant_id,platform,bearer_token,manager_token,metadata,status").eq("account_id",accountId).in("platform",["zid","salla","foodics","talabat"]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byPlatform=new Map(((channels??[]) as any[]).map(c=>[c.platform as string,c]));
 
@@ -60,8 +60,8 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
       const chainId=String(meta.chain_id??"");
       const vendorId=String(meta.vendor_id??"");
       if(!chainId||!vendorId){results.push({...pick(row),status:"failed",reason:"Talabat chain/vendor id is missing from the connection."});continue;}
-      const push=await updateTalabatPrice({chainId,vendorId,sku:row.sku,newPrice:row.planned_price,accessToken:talabatToken,environment:meta.environment==="sandbox"?"sandbox":"production"});
-      results.push({...pick(row),status:push.ok?"published":"failed",reason:push.ok?"Queued with Talabat for live update.":(push.message??"Talabat rejected the update.")});
+      const push=await updateTalabatPrice({chainId,vendorId,sku:row.sku,newPrice:row.planned_price,accessToken:talabatToken,environment:meta.environment==="sandbox"?"sandbox":"production",tracking:{channelId:ch.id,accountId:ch.account_id,licenseeId:ch.licensee_id,merchantId:ch.merchant_id,sourcePlanId:id}});
+      results.push({...pick(row),status:push.ok?"queued":"failed",reason:push.ok?"Accepted by Talabat; awaiting catalog completion callback.":(push.message??"Talabat rejected the update.")});
       continue;
     }
 
@@ -88,8 +88,9 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
   }
 
   const anyPublished=results.some(r=>r.status==="published");
-  const anyUnpublished=results.some(r=>r.status!=="published");
-  const newStatus=anyPublished?(anyUnpublished?"partially_published":"published"):plan.status;
+  const anyQueued=results.some(r=>r.status==="queued");
+  const anyUnpublished=results.some(r=>!["published","queued"].includes(r.status));
+  const newStatus=anyQueued?"publishing":anyPublished?(anyUnpublished?"partially_published":"published"):plan.status;
 
   const update:{status:string;updated_at:string;published_at?:string}={status:newStatus,updated_at:new Date().toISOString()};
   if(anyPublished)update.published_at=new Date().toISOString();

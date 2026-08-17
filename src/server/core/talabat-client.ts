@@ -35,6 +35,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { buildTalabatOrderUpdate, validateTalabatOrderUpdate, type TalabatOrderUpdateStatus, type TalabatTransportType } from "./talabat-contract";
 
 export const TALABAT_BASE = "https://talabat.partner.deliveryhero.io/v2";
 export const TALABAT_SANDBOX_BASE = "https://sandbox.partner.deliveryhero.io/v2";
@@ -148,6 +149,13 @@ export async function updateTalabatPrice(params: {
   newPrice: number;
   accessToken: string;
   environment?: TalabatEnvironment;
+  tracking?: {
+    channelId: string;
+    accountId: string;
+    licenseeId: string;
+    merchantId: string;
+    sourcePlanId?: string;
+  };
 }): Promise<TalabatCallResult> {
   const { chainId, vendorId, sku, newPrice, accessToken, environment = "production" } = params;
   const start = Date.now();
@@ -174,12 +182,96 @@ export async function updateTalabatPrice(params: {
       const text = await resp.text().catch(() => "");
       return { ok: false, httpStatus: resp.status, message: text.slice(0, 400) || `HTTP ${resp.status}`, durationMs };
     }
-    const data = await resp.json().catch(() => null) as unknown;
+    const data = await resp.json().catch(() => null) as { job_id?: string; job_status?: string } | null;
+    if (!data?.job_id) return { ok: false, httpStatus: resp.status, message: "Talabat accepted the request without returning a job_id.", durationMs };
+    if (params.tracking) {
+      // New table is intentionally accessed through an untyped boundary until
+      // generated Supabase types include the hardening migration.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin as any).from("ps_talabat_catalog_jobs").upsert({
+        channel_id: params.tracking.channelId,
+        account_id: params.tracking.accountId,
+        licensee_id: params.tracking.licenseeId,
+        merchant_id: params.tracking.merchantId,
+        environment,
+        job_id: data.job_id,
+        operation: "update_products",
+        source_plan_id: params.tracking.sourcePlanId ?? null,
+        status: data.job_status ?? "QUEUED",
+        requested_products: [{ sku, price: newPrice }],
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "channel_id,job_id" });
+    }
     return { ok: true, httpStatus: resp.status, data, durationMs };
   } catch (e) {
     const durationMs = Date.now() - start;
     const isTimeout = e instanceof Error && e.name === "AbortError";
     return { ok: false, httpStatus: isTimeout ? 504 : 500, message: isTimeout ? "ERR_TALABAT_TIMEOUT" : String(e), durationMs };
+  }
+}
+
+export async function verifyTalabatVendorAccess(params: {
+  chainId: string;
+  vendorId: string;
+  accessToken: string;
+  environment?: TalabatEnvironment;
+}): Promise<TalabatCallResult> {
+  const { chainId, vendorId, accessToken, environment = "production" } = params;
+  const start = Date.now();
+  try {
+    const url = new URL(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/catalog`);
+    url.searchParams.set("page", "1");
+    url.searchParams.set("page_size", "1");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(url, { headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` }, signal: controller.signal });
+    clearTimeout(timeout);
+    const durationMs = Date.now() - start;
+    if (!response.ok) {
+      const message = await response.text().catch(() => "");
+      return { ok: false, httpStatus: response.status, message: message.slice(0, 400) || `HTTP ${response.status}`, durationMs };
+    }
+    return { ok: true, httpStatus: response.status, data: await response.json().catch(() => null), durationMs };
+  } catch (error) {
+    const timeout = error instanceof Error && error.name === "AbortError";
+    return { ok: false, httpStatus: timeout ? 504 : 500, message: timeout ? "ERR_TALABAT_TIMEOUT" : String(error), durationMs: Date.now() - start };
+  }
+}
+
+export async function updateTalabatOrder(params: {
+  chainId: string;
+  orderId: string;
+  status: TalabatOrderUpdateStatus;
+  transportType?: TalabatTransportType;
+  cancellationReason?: string;
+  items: unknown[];
+  accessToken: string;
+  environment?: TalabatEnvironment;
+}): Promise<TalabatCallResult> {
+  const { chainId, orderId, status, transportType, cancellationReason, items, accessToken, environment = "production" } = params;
+  const start = Date.now();
+  const validationError = validateTalabatOrderUpdate({ orderId, status, transportType, cancellationReason, items });
+  if (validationError) return { ok: false, httpStatus: 422, message: validationError, durationMs: 0 };
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const resp = await fetch(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/orders/${encodeURIComponent(orderId)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify(buildTalabatOrderUpdate({ orderId, status, cancellationReason, items })),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const durationMs = Date.now() - start;
+    if (!resp.ok) {
+      const message = await resp.text().catch(() => "");
+      return { ok: false, httpStatus: resp.status, message: message.slice(0, 400) || `HTTP ${resp.status}`, durationMs };
+    }
+    return { ok: true, httpStatus: resp.status, data: await resp.json().catch(() => null), durationMs };
+  } catch (error) {
+    const timeout = error instanceof Error && error.name === "AbortError";
+    return { ok: false, httpStatus: timeout ? 504 : 500, message: timeout ? "ERR_TALABAT_TIMEOUT" : String(error), durationMs: Date.now() - start };
   }
 }
 
