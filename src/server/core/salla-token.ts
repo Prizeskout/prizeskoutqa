@@ -71,14 +71,14 @@ export async function getValidSallaAccessToken(channel: RefreshableSallaChannel)
       expires_at: tokenExpiry(tokens),
       refreshed_at: new Date().toISOString(),
     };
-    const { error } = await supabaseAdmin.from("ps_merchant_channels").update({
+    const { data: saved, error } = await supabaseAdmin.from("ps_merchant_channels").update({
       bearer_token: tokens.access_token,
       metadata: nextMetadata as Json,
       last_verified_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       error_message: null,
-    }).eq("id", channel.id).filter("metadata->>refresh_lock", "eq", lease);
-    if (error) throw new Error("Unable to persist the rotated Salla token.");
+    }).eq("id", channel.id).filter("metadata->>refresh_lock", "eq", lease).select("id").maybeSingle();
+    if (error || !saved) throw new Error("Unable to persist the rotated Salla token.");
     return tokens.access_token;
   } catch (error) {
     await supabaseAdmin.from("ps_merchant_channels").update({

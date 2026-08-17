@@ -23,6 +23,7 @@ import { writeAuditLog, channelConnectSummary } from "./govern";
 import { syncPlatformCatalog } from "./platform-sync";
 import { getPublicOrigin } from "@/server/public-origin";
 import { getValidSallaAccessToken } from "./salla-token";
+import { registerSallaWebhooks } from "./salla-webhooks";
 
 // ---------------------------------------------------------------------------
 // Webhook helpers
@@ -37,7 +38,7 @@ function generateWebhookSecret(): string {
 // Salla: product.updated is deprecated → use product.price.updated (verified in Salla docs)
 // Zid:   uses product.update (singular) per their webhook events list
 const PLATFORM_WEBHOOK_EVENTS: Record<string, string[]> = {
-  salla:   ["product.price.updated", "product.created"],
+  salla:   [],
   foodics: ["products.updated", "product.updated"],
   zid:     ["product.update"],
 };
@@ -68,15 +69,8 @@ async function registerPlatformWebhook(
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     if (platform === "salla") {
-      // Salla: one registration call per event; endpoint is /webhooks/subscribe
-      for (const event of events) {
-        await fetch("https://api.salla.dev/admin/v2/webhooks/subscribe", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ event, url: webhookUrl, secret: configuredSallaSecret }),
-          signal: controller.signal,
-        });
-      }
+      clearTimeout(timeout);
+      return registerSallaWebhooks(bearerToken, webhookUrl);
     } else if (platform === "foodics") {
       // Foodics: registers all events in one call
       await fetch("https://api-v2.foodics.com/v2.1/webhooks", {

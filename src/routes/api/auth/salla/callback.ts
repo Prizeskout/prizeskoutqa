@@ -11,6 +11,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { getPublicOrigin } from "@/server/public-origin";
+import { registerSallaWebhooks } from "@/server/core/salla-webhooks";
 
 const SALLA_TOKEN_URL = "https://accounts.salla.sa/oauth2/token";
 
@@ -58,11 +59,6 @@ function errorPage(message: string): Response {
   );
 }
 
-function generateWebhookSecret(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 export const Route = createFileRoute("/api/auth/salla/callback")({
   server: {
     handlers: {
@@ -72,6 +68,10 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
 
         if (!clientId || !clientSecret) {
           return errorPage("Salla OAuth is not configured. Set SALLA_CLIENT_ID and SALLA_CLIENT_SECRET.");
+        }
+        const webhookSecret = process.env.SALLA_WEBHOOK_SECRET?.trim();
+        if (!webhookSecret) {
+          return errorPage("Salla webhook verification is not configured. Set SALLA_WEBHOOK_SECRET from the Salla Partner Portal.");
         }
 
         const url    = new URL(request.url);
@@ -147,7 +147,6 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
         } catch { /* non-fatal — we'll use the merchant_id from the token response */ }
 
         // 3. Persist channel in ps_merchant_channels
-        const webhookSecret = process.env.SALLA_WEBHOOK_SECRET?.trim() || generateWebhookSecret();
         const now           = new Date().toISOString();
         const expiresAt     = tokens.expires_in
           ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
@@ -188,24 +187,18 @@ export const Route = createFileRoute("/api/auth/salla/callback")({
 
         // 4. Register Salla webhooks so real-time product events flow into the pipeline
         try {
-          const webhookUrl    = `${getPublicOrigin(request)}/api/webhooks/salla`;
-          const sallaHeaders  = {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${tokens.access_token}`,
-          };
-          for (const event of ["product.price.updated", "product.created"]) {
-            await fetch("https://api.salla.dev/admin/v2/webhooks/subscribe", {
-              method: "POST",
-              headers: sallaHeaders,
-              body: JSON.stringify({ event, url: webhookUrl, secret: webhookSecret }),
-            });
-          }
-          await supabaseAdmin
-            .from("ps_merchant_channels")
-            .update({ webhook_registered_at: now })
-            .eq("id", row.id);
-        } catch { /* non-fatal */ }
+          const webhookUrl = `${getPublicOrigin(request)}/api/webhooks/salla`;
+          const registration = await registerSallaWebhooks(tokens.access_token, webhookUrl);
+          await supabaseAdmin.from("ps_merchant_channels").update({
+            webhook_registered_at: registration.ok ? now : null,
+            error_message: registration.ok ? null : registration.message.slice(0, 400),
+          }).eq("id", row.id);
+        } catch (error) {
+          await supabaseAdmin.from("ps_merchant_channels").update({
+            webhook_registered_at: null,
+            error_message: `Salla webhook registration failed: ${String(error).slice(0, 350)}`,
+          }).eq("id", row.id);
+        }
 
         // 5. Kick off initial catalog sync in the background
         syncPlatformCatalog({

@@ -18,6 +18,7 @@
     "verify-store-manager-ui": "tsx --env-file=.env.local scripts/verify-store-manager-ui.mts",
     "verify-salla-contract": "tsx scripts/verify-salla-contract.mts",
     "verify-talabat-contract": "tsx scripts/verify-talabat-contract.mts",
+    "verify-keeta-contract": "tsx scripts/verify-keeta-contract.mts",
     "test:e2e": "tsx --env-file=.env.local scripts/e2e-app.mts",
     "typecheck": "tsc --noEmit --pretty false",
     "load:wedge": "tsx scripts/load-wedge.mts"

@@ -26,6 +26,8 @@ import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
 import { signRequest } from "./keeta-client";
+import { parseKeetaWebhook } from "./keeta-contract";
+import { reconcileKeetaOrder } from "./keeta-operations";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
 import { handleSallaAppEvent, isSallaAppEvent } from "./salla-easy-mode";
 import { isSallaOperationalEvent, processSallaOperationalEvent } from "./salla-store-events";
@@ -338,7 +340,7 @@ export async function handleSallaWebhook(request: Request): Promise<Response> {
   const event = String(payload.event ?? "");
   if (isSallaAppEvent(event)) {
     try {
-      return ok(await handleSallaAppEvent(payload));
+      return ok(await handleSallaAppEvent(payload, new URL(request.url).origin));
     } catch (error) {
       console.error("[salla-easy-mode] app event failed", { event, store_id: storeId, error });
       return err("Failed to process Salla app event", 500);
@@ -613,10 +615,14 @@ export async function handleKeetaWebhook(request: Request): Promise<Response> {
   let payload: Record<string, unknown>;
   try { payload = JSON.parse(rawBody); } catch { return err("Invalid JSON", 400); }
 
-  const shopId = payload.shopId;
-  if (shopId === undefined || shopId === null) return err("Missing shopId", 400);
+  let envelope: ReturnType<typeof parseKeetaWebhook>;
+  try { envelope = parseKeetaWebhook(payload); }
+  catch (error) { return err(error instanceof Error ? error.message : "Invalid callback", 400); }
 
-  const channel = await findChannel("keeta", String(shopId));
+  const configuredAppId = process.env.KEETA_APP_ID;
+  if (!configuredAppId || envelope.appId !== configuredAppId) return err("Invalid appId", 401);
+
+  const channel = await findChannel("keeta", envelope.shopId);
   if (!channel) return ok({ received: true, processed: false, reason: "merchant_not_connected" });
 
   const webhookUrl = `${new URL(request.url).origin}/api/webhooks/keeta`;
@@ -624,7 +630,46 @@ export async function handleKeetaWebhook(request: Request): Promise<Response> {
     return err("Invalid signature", 401);
   }
 
-  return ok({ received: true, event_id: payload.eventId ?? null, processed: false, reason: "order_events_not_yet_wired_to_pipeline" });
+  // Keeta messageId is the platform's replay key. Store the verified raw
+  // envelope before acknowledging it; duplicate delivery is successful but
+  // never processed twice.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabaseAdmin as any;
+  const { error: insertError } = await db.from("ps_keeta_webhook_events").insert({
+    channel_id: channel.id,
+    account_id: channel.account_id,
+    licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id,
+    event_id: envelope.eventId,
+    message_id: envelope.messageId,
+    shop_id: envelope.shopId,
+    occurred_at: /^\d+$/.test(envelope.timestamp)
+      ? new Date(Number(envelope.timestamp) * (envelope.timestamp.length <= 10 ? 1000 : 1)).toISOString()
+      : null,
+    status: "received",
+    payload,
+    message: envelope.message,
+  });
+  if (insertError?.code === "23505") {
+    return ok({ received: true, replay: true, event_id: envelope.eventId });
+  }
+  if (insertError) {
+    console.error("[keeta-webhook] persistence failed", insertError.message);
+    return err("Webhook persistence failed", 500);
+  }
+  try {
+    const reconciliation = await reconcileKeetaOrder(channel, envelope.shopId, envelope.message, "webhook", envelope.messageId);
+    await db.from("ps_keeta_webhook_events").update({
+      status: reconciliation.processed ? "processed" : "received",
+      processed_at: reconciliation.processed ? new Date().toISOString() : null,
+    }).eq("channel_id", channel.id).eq("message_id", envelope.messageId);
+    return ok({ received: true, replay: false, event_id: envelope.eventId, ...reconciliation });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await db.from("ps_keeta_webhook_events").update({ status: "failed", error_message: message.slice(0, 500) })
+      .eq("channel_id", channel.id).eq("message_id", envelope.messageId);
+    return err("Order reconciliation failed", 500);
+  }
 }
 
 // Talabat WebhookKeyAuth: Partner API sends the Vendor Portal static token

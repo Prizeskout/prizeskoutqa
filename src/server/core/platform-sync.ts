@@ -87,7 +87,10 @@ async function fetchSallaProducts(creds: PlatformCreds): Promise<PlatformProduct
       `${SALLA_API_BASE}/products?page=${page}&per_page=50`,
       { headers: { Authorization: `Bearer ${creds.bearer_token}`, Accept: "application/json" } },
     );
-    if (!resp.ok) break;
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      throw new Error(`Salla catalog request failed with HTTP ${resp.status}${detail ? `: ${detail.slice(0, 300)}` : ""}`);
+    }
 
     const json = await resp.json() as SallaProductPage;
 
@@ -109,7 +112,7 @@ async function fetchSallaProducts(creds: PlatformCreds): Promise<PlatformProduct
 
     if (!sallaHasNextPage(json, page)) break;
     page++;
-    if (page > 20) break; // safety cap: 1,000 products max per sync
+    if (page > 10_000) throw new Error("Salla catalog pagination exceeded the safety limit.");
   }
 
   return products;

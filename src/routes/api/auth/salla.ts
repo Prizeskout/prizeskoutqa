@@ -40,6 +40,23 @@ export const Route = createFileRoute("/api/auth/salla")({
         const allowed = await verifyMerchantBootstrap(merchantId, url.searchParams.get("onboarding_token") ?? "");
         if (!allowed) return new Response(JSON.stringify({ error: "Unauthorized merchant connection request." }), { status: 401, headers: { "Content-Type": "application/json" } });
 
+        // Salla permits only Easy Mode for published App Store applications.
+        // Custom Mode remains available solely when explicitly enabled for a
+        // development/demo-store test.
+        const oauthMode = process.env.SALLA_OAUTH_MODE?.trim().toLowerCase() || "easy";
+        if (oauthMode !== "custom") {
+          const appId = process.env.SALLA_APP_ID?.trim();
+          if (!appId) {
+            return new Response(JSON.stringify({ error: "SALLA_APP_ID is required for Salla Easy Mode installation." }), {
+              status: 503, headers: { "Content-Type": "application/json" },
+            });
+          }
+          return new Response(null, {
+            status: 302,
+            headers: { Location: `https://s.salla.sa/apps/install/${encodeURIComponent(appId)}` },
+          });
+        }
+
         // Optional return path after OAuth (only internal paths allowed)
         const rawReturn = url.searchParams.get("return_to") ?? "";
         const returnTo  = rawReturn.startsWith("/") && !rawReturn.startsWith("//") ? rawReturn : "";

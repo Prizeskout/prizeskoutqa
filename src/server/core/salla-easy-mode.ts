@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { backgroundTask } from "@/server/cf-ctx";
 import { syncPlatformCatalog } from "./platform-sync";
+import { registerSallaWebhooks } from "./salla-webhooks";
 
 type SallaWebhookPayload = {
   event?: unknown;
@@ -151,7 +152,7 @@ async function updateLifecycleMetadata(
     .eq("id", channel.id);
 }
 
-export async function handleSallaAppEvent(payload: SallaWebhookPayload): Promise<Record<string, unknown>> {
+export async function handleSallaAppEvent(payload: SallaWebhookPayload, webhookOrigin?: string): Promise<Record<string, unknown>> {
   const event = String(payload.event ?? "");
   const merchantId = String(payload.merchant ?? "");
   if (!merchantId) throw new Error("Missing merchant identifier");
@@ -190,6 +191,17 @@ export async function handleSallaAppEvent(payload: SallaWebhookPayload): Promise
       })
       .eq("id", channel.id);
     if (error) throw new Error("Unable to save Salla authorization");
+
+    if (webhookOrigin) {
+      backgroundTask((async () => {
+        const registration = await registerSallaWebhooks(accessToken, `${webhookOrigin}/api/webhooks/salla`);
+        await supabaseAdmin.from("ps_merchant_channels").update({
+          webhook_registered_at: registration.ok ? new Date().toISOString() : null,
+          error_message: registration.ok ? null : registration.message.slice(0, 400),
+          updated_at: new Date().toISOString(),
+        }).eq("id", channel.id);
+      })());
+    }
 
     backgroundTask(syncPlatformCatalog({
       platform: "salla",

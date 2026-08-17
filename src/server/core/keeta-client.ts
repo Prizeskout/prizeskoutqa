@@ -29,13 +29,14 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { canonicalKeetaParams, type KeetaFlatValue } from "./keeta-contract";
 
 export const KEETA_API_BASE      = "https://open.mykeeta.com/api/open";
 export const KEETA_AUTHORIZE_URL = "https://merchant.mykeeta.com/m/web/openapi/authorize";
 
 const REFRESH_BUFFER_SECONDS = 24 * 3600; // proactively refresh once <24h remain of the 90-day token
 
-type FlatValue = string | number | boolean;
+type FlatValue = KeetaFlatValue;
 
 // ---------------------------------------------------------------------------
 // Signature
@@ -53,8 +54,7 @@ export async function signRequest(
   params: Record<string, FlatValue>,
   appSecret: string,
 ): Promise<string> {
-  const sortedKeys = Object.keys(params).filter((k) => k !== "sig").sort();
-  const sortedParamStr = sortedKeys.map((k) => `${k}=${params[k]}`).join("&");
+  const sortedParamStr = canonicalKeetaParams(params);
   return sha256Hex(`${url}?${sortedParamStr}${appSecret}`);
 }
 

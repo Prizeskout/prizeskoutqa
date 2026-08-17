@@ -12,12 +12,16 @@ import { isSallaAppEvent } from "../src/server/core/salla-easy-mode";
 import { sallaTokenNeedsRefresh } from "../src/server/core/salla-token";
 import { verifyHmac } from "../src/server/core/platform-webhooks";
 import { isSallaOperationalEvent, sallaEventKey } from "../src/server/core/salla-store-events";
+import { SALLA_SUBSCRIBED_EVENTS } from "../src/server/core/salla-webhooks";
 
 const scopes = sallaScopeString().split(" ");
 assert.deepEqual(scopes, [
   "offline_access",
+  "settings.read",
   "orders.read",
   "products.read_write",
+  "categories.read",
+  "brands.read",
   "webhooks.read_write",
 ]);
 assert.equal(scopes.includes("products.write"), false);
@@ -54,6 +58,9 @@ assert.equal(isSallaOperationalEvent("shipment.updated"), true);
 assert.equal(isSallaOperationalEvent("category.updated"), true);
 assert.equal(isSallaOperationalEvent("brand.deleted"), true);
 assert.equal(isSallaOperationalEvent("communication.whatsapp.send"), false);
+for (const event of ["order.created", "invoice.created", "shipment.updated", "product.price.updated", "product.quantity.low"]) {
+  assert.equal(SALLA_SUBSCRIBED_EVENTS.includes(event as never), true, `${event} must be registered`);
+}
 const eventPayload = { event: "order.created", merchant: 123, created_at: "2026-08-12T00:00:00Z", data: { id: 99 } };
 const firstKey = await sallaEventKey(eventPayload, JSON.stringify(eventPayload));
 const secondKey = await sallaEventKey(eventPayload, JSON.stringify(eventPayload));

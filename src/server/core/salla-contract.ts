@@ -2,8 +2,11 @@ export const SALLA_API_BASE = "https://api.salla.dev/admin/v2";
 
 export const SALLA_REQUIRED_SCOPES = [
   "offline_access",
+  "settings.read",
   "orders.read",
   "products.read_write",
+  "categories.read",
+  "brands.read",
   "webhooks.read_write",
 ] as const;
 

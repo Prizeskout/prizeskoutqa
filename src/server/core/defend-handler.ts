@@ -20,9 +20,9 @@ import { writeAuditLog, dispatchSummary } from "./govern";
 import { CIRCUIT_OPEN_BACKOFF_SECONDS } from "./decide-engine";
 import { pushPriceToSourcePlatform } from "./platform-sync";
 import { getValidSallaAccessToken } from "./salla-token";
-import { keetaApiCall, getValidKeetaAccessToken } from "./keeta-client";
 import { getValidTalabatAccessToken, updateTalabatPrice } from "./talabat-client";
 import { getValidDeliverooAccessToken, updateDeliverooPrice } from "./deliveroo-client";
+import { publishKeetaPrice } from "./keeta-operations";
 
 const SOURCE_PLATFORMS = ["salla", "foodics", "zid"] as const;
 
@@ -176,7 +176,26 @@ async function callAggregatorApi(
         durationMs: Date.now() - start,
       };
     }
+    if (!creds.id) {
+      return { success: false, httpStatus: 500, message: "ERR_KEETA_CHANNEL_ID_MISSING", durationMs: Date.now() - start };
+    }
 
+    const result = await publishKeetaPrice({
+      id: creds.id,
+      account_id: creds.account_id ?? "",
+      licensee_id: creds.licensee_id ?? "",
+      merchant_id: creds.merchant_id ?? "",
+      bearer_token: creds.bearer_token ?? null,
+      metadata: creds.metadata ?? null,
+    }, sku, newPrice);
+    return {
+      success: result.ok,
+      httpStatus: result.httpStatus,
+      message: result.message,
+      durationMs: result.durationMs,
+    };
+
+    /* c8 ignore start -- re-enabled with the catalog-import milestone
     const token: { accessToken: string | null; error?: string } = creds.id
       ? await getValidKeetaAccessToken({ id: creds.id, bearer_token: creds.bearer_token ?? null, metadata: creds.metadata ?? null })
       : { accessToken: creds.bearer_token ?? null };
@@ -221,6 +240,7 @@ async function callAggregatorApi(
       message: result.message,
       durationMs: result.durationMs,
     };
+    c8 ignore stop */
   }
 
   // Talabat, like Keeta, doesn't fit the shared fetch() pattern below —
