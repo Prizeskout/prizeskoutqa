@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileKey2, Plus, ScanText, ShieldCheck } from "lucide-react";
 import { extractPdfTextWithPages, renderPdfPagesForOcr, type OcrPageImage } from "@/lib/pdf-text";
+import { readApiJson } from "@/lib/api-error";
 
 export type ContractTerm = {
   id:string; platform:string; contract_name:string; commission_rate_pct:number;
@@ -64,8 +65,8 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
     const merchant_id=localStorage.getItem("ps_merchant_id")??"";
     const access_code=localStorage.getItem("ps_access_code")??"";
     const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id,access_code,platform:"contract_terms",...payload})});
-    const data=await response.json();
-    if(!response.ok||!data.ok) throw new Error(data.error??"Contract request failed.");
+    const data=await readApiJson<Record<string,any>&{ok?:boolean;error?:string;action?:string;support_reference?:string}>(response,"PrizeSkout could not complete the contract request.");
+    if(!data.ok) throw new Error("PrizeSkout could not complete the contract request. Please review the agreement and try again.");
     return data;
   };
 

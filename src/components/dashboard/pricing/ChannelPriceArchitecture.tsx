@@ -5,6 +5,7 @@ import type {ContractTerm} from "@/components/dashboard/payout/ContractIntellige
 import {ZidJahezBridgeSettings} from "./ZidJahezBridgeSettings";
 import type {ZidJahezBridgeSettings as BridgeSettings} from "@/server/core/zid-jahez-bridge";
 import type {SavedChannelPricePlan,PublishRowResult} from "@/server/core/channel-price-plans";
+import {readApiJson} from "@/lib/api-error";
 
 const CHANNELS:PriceChannel[]=["in_store","zid","salla","foodics","talabat","snoonu","jahez","keeta"];
 const PUBLISH_CAPABILITY:Record<PriceChannel,"linked_product"|"sku"|"manual">={in_store:"manual",zid:"linked_product",salla:"linked_product",foodics:"linked_product",talabat:"sku",snoonu:"manual",jahez:"manual",keeta:"manual"};
@@ -45,7 +46,7 @@ export function ChannelPriceArchitecture({products,contract,currency}:{products:
     const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
       merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"channel_price_plans",...payload,
     })});
-    const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error??"Channel plan request failed.");return data;
+    const data=await readApiJson<Record<string,any>&{ok?:boolean;error?:string;action?:string;support_reference?:string}>(response,"PrizeSkout could not complete the channel-plan request.");if(!data.ok)throw new Error("PrizeSkout could not complete the channel-plan request. Please review the plan and try again.");return data;
   };
   const load=()=>call({action:"list"}).then(data=>setPlans(data.plans??[])).catch(err=>setError(err instanceof Error?err.message:"Could not load price plans."));
   useEffect(()=>{load();},[]);

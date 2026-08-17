@@ -4,6 +4,7 @@ import { Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardSubtitle, CardTitle, PrimaryButton } from "./primitives";
 import type { RoiModelCategory } from "@/lib/roi-model";
+import { safeClientErrorMessage } from "@/lib/api-error";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,7 +109,7 @@ export function RoiModelTab() {
     }
     const { error } = await supabase.from("roi_model_categories").delete().eq("id", row.id);
     if (error) {
-      setError(`Failed to delete: ${error.message}`);
+      setError(safeClientErrorMessage(error, "The category could not be removed. Try again; your other settings were not changed."));
       return;
     }
     setRows((prev) => prev.filter((r) => r.id !== row.id));
@@ -163,9 +164,7 @@ export function RoiModelTab() {
           )
           .select();
         if (insertErr) {
-          setError(insertErr.message.includes("duplicate")
-            ? "A category with that name already exists."
-            : `Failed to add category: ${insertErr.message}`);
+          setError(safeClientErrorMessage(insertErr, "The category could not be added. Review it and try again."));
           return;
         }
         insertedRows = (data ?? []) as unknown as RoiModelCategory[];
@@ -190,7 +189,7 @@ export function RoiModelTab() {
         );
         const updateErr = updateResults.find((res) => res.error)?.error;
         if (updateErr) {
-          setError(`Failed to update: ${updateErr.message}`);
+          setError(safeClientErrorMessage(updateErr, "The changes could not be saved. Try again; the previous settings remain active."));
           return;
         }
       }

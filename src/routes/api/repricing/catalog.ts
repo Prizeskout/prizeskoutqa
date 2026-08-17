@@ -33,7 +33,7 @@ export type RepricingProduct = {
   commission_rate: number;
   cost_confidence: "verified" | "estimated" | "unknown";
   base_cost: number | null;
-  preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; policy_version:number; outcome:"safe"|"blocked_missing_cost"|"within_limit"|"over_limit" };
+  preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; policy_version:number; outcome:"safe"|"blocked_missing_cost"|"blocked_missing_economics"|"within_limit"|"over_limit" };
 };
 
 function json(data: unknown, status = 200) {
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         const wantsPreview=previewFloor>0&&previewFloor<1&&previewMaxIncrease>=0&&previewMaxIncrease<=1;
 
         if (!merchantId || !accessCode) {
-          return json({ error: "merchant_id and access_code are required" }, 400);
+          return json({ error: "Your PrizeSkout session is incomplete.", action: "Open the dashboard again and retry." }, 400);
         }
 
         // Validate access code
@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           .maybeSingle() as { data: { merchant_id: string } | null };
 
         if (!codeRow || codeRow.merchant_id !== merchantId) {
-          return json({ error: "Invalid access code" }, 403);
+          return json({ error: "Your PrizeSkout session has expired.", action: "Sign in or reopen PrizeSkout from your connected platform." }, 403);
         }
 
         const accountId = merchantId;
@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           .order("created_at", { ascending: false });
 
         if (decideErr) {
-          return json({ error: "Failed to load recommendations" }, 500);
+          return json({ error: "We could not load your price recommendations.", action: "Refresh the page and try again. No prices were changed." }, 500);
         }
 
         // The catalog is the source of truth for what was synced. A product
@@ -95,7 +95,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, inventory_status, raw_payload")
           .eq("account_id", accountId)
           .order("created_at",{ascending:false});
-        if(ingestError)return json({error:"Failed to load synced catalog"},500);
+        if(ingestError)return json({error:"We could not load your synced products.",action:"Refresh the page or sync the connected store again. No prices were changed."},500);
 
         const decisionByEvent=new Map<string,(typeof decideRows)[number]>();
         for(const row of decideRows??[])if(!decisionByEvent.has(row.ingest_event_id))decisionByEvent.set(row.ingest_event_id,row);
@@ -107,9 +107,12 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           const productKey=`${evt.source_platform}:${evt.item_id}`;
           if(seenProducts.has(productKey))continue;
           seenProducts.add(productKey);
-          const decision=decisionByEvent.get(evt.id);
           const rawPayload = evt.raw_payload as Record<string, unknown> | null;
           const costSource = String(rawPayload?.cost_source ?? "unknown");
+          const missingEconomics = rawPayload?.economics_source === "approved_contract_required";
+          // Never reuse a historical recommendation after a refresh establishes
+          // that approved channel terms are currently unavailable.
+          const decision=missingEconomics ? undefined : decisionByEvent.get(evt.id);
 
           const currentPrice=Number(evt.current_retail_price??0);
           const economics=decision?{region:"SA",baseCost:Number(decision.base_cost),commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),paymentFeeRate:Number(decision.payment_fee_rate??0),fixedOrderFee:Number(decision.fixed_order_fee??0),promotionContributionRate:Number(decision.promotion_contribution_rate??0),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:effectiveFloor}:null;
@@ -133,7 +136,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             recommended_price: requiredPrice ?? currentPrice,
             net_margin_pct: currentAnalysis?.netMarginPct??(decision?Number(decision.net_margin_pct):null),
             floor_breached: currentAnalysis?.floorBreached??Boolean(decision?.floor_breached),
-            decision_action: decision?.decision_action ?? "blocked_missing_cost",
+            decision_action: decision?.decision_action ?? (missingEconomics ? "blocked_missing_economics" : "blocked_missing_cost"),
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
             inventory_status: evt.inventory_status ?? "unknown",
@@ -148,7 +151,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             base_cost: costSource === "platform_catalog" && decision
               ? Number(decision.base_cost)
               : null,
-            preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"over_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:"blocked_missing_cost"},
+            preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"over_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,policy_version:activePolicy.version,outcome:missingEconomics?"blocked_missing_economics":"blocked_missing_cost"},
           });
         }
 

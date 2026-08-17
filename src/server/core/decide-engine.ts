@@ -12,7 +12,8 @@
 // =============================================================================
 
 export const REGIONAL_COMMISSION: Record<string, number> = {
-  QA: 0.22,
+  // Scenario ceiling only. Live repricing must use approved merchant terms.
+  QA: 0.19,
   AE: 0.25,
   SA: 0.21,
   KW: 0.20,

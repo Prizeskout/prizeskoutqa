@@ -24,11 +24,11 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
-import { dispatchToAggregators } from "./defend-handler";
 import { signRequest } from "./keeta-client";
 import { parseKeetaWebhook } from "./keeta-contract";
 import { reconcileKeetaOrder } from "./keeta-operations";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { handleSallaAppEvent, isSallaAppEvent } from "./salla-easy-mode";
 import { isSallaOperationalEvent, processSallaOperationalEvent } from "./salla-store-events";
 import { constantTimeTokenMatch, parseTalabatCallback, talabatStaticToken } from "./talabat-contract";
@@ -166,7 +166,6 @@ type PipelineInput = {
 
 async function runPipeline(p: PipelineInput): Promise<Response> {
   const region = VALID_REGIONS.includes(p.region) ? p.region : "SA";
-
   // Include price in the idempotency key so a real price change always re-processes
   const idempotencyKey = `webhook:${p.platform}:${p.channel.merchant_id}:${p.externalId}:${p.price}`;
 
@@ -210,6 +209,15 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
 
   if (insertErr || !ingestRow) return err("Failed to persist ingest event", 500);
 
+  const economics = await resolveAuthoritativeEconomics({
+    accountId: p.channel.account_id,
+    merchantId: p.channel.merchant_id,
+    channel: p.platform,
+  });
+  if (!economics) {
+    return ok({ received: true, processed: false, reason: "approved_economics_required", ingest_event_id: ingestRow.id });
+  }
+
   // 2. Decide
   const marginFloorPct = await getMerchantMarginFloor(p.channel.account_id);
   const decideOutput = decide({
@@ -217,9 +225,15 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
     baseCost: p.baseCost,
     currentRetailPrice: p.price,
     marginFloorPct,
+    commissionRate: economics.commissionRate,
+    vatRate: economics.vatRate,
+    paymentFeeRate: economics.paymentFeeRate,
+    fixedOrderFee: economics.fixedOrderFee,
+    promotionContributionRate: economics.promotionContributionRate,
+    logisticsSubsidy: economics.logisticsSubsidy,
   });
 
-  const { data: decideRow } = await supabaseAdmin
+  const { error: decideInsertError } = await supabaseAdmin
     .from("ps_decide_results")
     .insert({
       ingest_event_id: ingestRow.id,
@@ -232,6 +246,10 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
       current_retail_price: p.price,
       commission_rate: decideOutput.commissionRate,
       vat_rate: decideOutput.vatRate,
+      payment_fee_rate: economics.paymentFeeRate,
+      fixed_order_fee: economics.fixedOrderFee,
+      promotion_contribution_rate: economics.promotionContributionRate,
+      economics_version_id: economics.id,
       logistics_subsidy: decideOutput.logisticsSubsidy,
       margin_floor_pct: decideOutput.marginFloorPct,
       net_margin: decideOutput.netMargin,
@@ -239,9 +257,8 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
       floor_breached: decideOutput.floorBreached,
       recommended_price: decideOutput.recommendedPrice,
       decision_action: decideOutput.decisionAction,
-    })
-    .select("id")
-    .single();
+    });
+  if (decideInsertError) return err("Failed to persist pricing decision", 500);
 
   await supabaseAdmin
     .from("ps_ingest_events")
@@ -276,36 +293,7 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
     summaryAr: summaries.ar,
   });
 
-  // 4. Defend — dispatch to aggregators if floor breached
-  let dispatchResult = null;
-  if (decideOutput.floorBreached && decideOutput.recommendedPrice !== null && decideRow) {
-    dispatchResult = await dispatchToAggregators({
-      ingestEventId: ingestRow.id,
-      decideResultId: decideRow.id,
-      accountId: p.channel.account_id,
-      licenseeId: p.channel.licensee_id,
-      merchantId: p.channel.merchant_id,
-      sku: p.sku,
-      region,
-      oldPrice: p.price,
-      newPrice: decideOutput.recommendedPrice,
-      currency: p.currency,
-      auditSnapshot: {
-        ingested_base_cost: p.baseCost,
-        platform_commission_applied: decideOutput.commissionRate,
-        logistics_subsidy_offset: decideOutput.logisticsSubsidy,
-        guaranteed_net_margin_floor: decideOutput.marginFloorPct,
-        net_margin_pct: decideOutput.netMarginPct,
-        decision_action: decideOutput.decisionAction,
-        webhook_source: p.platform,
-      },
-    });
-    await supabaseAdmin
-      .from("ps_ingest_events")
-      .update({ status: "dispatched" })
-      .eq("id", ingestRow.id);
-  }
-
+  // Publishing remains behind the merchant-controlled repricing flow.
   return ok({
     received: true,
     ingest_event_id: ingestRow.id,
@@ -313,7 +301,7 @@ async function runPipeline(p: PipelineInput): Promise<Response> {
     sku: p.sku,
     floor_breached: decideOutput.floorBreached,
     decision_action: decideOutput.decisionAction,
-    ...(dispatchResult ? { dispatch: dispatchResult } : {}),
+    policy_control: { outcome: decideOutput.floorBreached ? "waiting_for_controlled_publish" : "no_change" },
   });
 }
 

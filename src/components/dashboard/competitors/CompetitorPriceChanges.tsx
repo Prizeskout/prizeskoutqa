@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import type { InsightWindow } from "@/server/ai-insights.functions";
 import { FreshnessPill } from "@/components/dashboard/FreshnessPill";
+import { safeClientErrorMessage } from "@/lib/api-error";
 
 type ScrapeRow = {
   product: string | null;
@@ -60,7 +61,7 @@ export function CompetitorPriceChanges() {
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) {
-          setError(error.message);
+          setError(safeClientErrorMessage(error, "Competitor price changes could not be loaded. Refresh the page to try again."));
           setRows([]);
         } else {
           setRows((data ?? []) as ScrapeRow[]);

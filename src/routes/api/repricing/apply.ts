@@ -17,6 +17,7 @@ import { fetchLiveProductPrice, pushPriceToSourcePlatform } from "@/server/core/
 import { getValidSallaAccessToken } from "@/server/core/salla-token";
 import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
 import { recordPendingJahezPropagation } from "@/server/core/zid-jahez-bridge";
+import { toMerchantError } from "@/server/merchant-errors";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -42,10 +43,10 @@ export const Route = createFileRoute("/api/repricing/apply")({
         const targetPrice   = Number(body?.target_price);
 
         if (!merchantId || !accessCode || !ingestEventId) {
-          return json({ error: "merchant_id, access_code, and ingest_event_id are required" }, 400);
+          return json({ error: "Your PrizeSkout session or selected product is incomplete.", action: "Refresh the dashboard, select the product again, and retry." }, 400);
         }
         if (isNaN(targetPrice) || targetPrice <= 0) {
-          return json({ error: "target_price must be a positive number" }, 400);
+          return json({ error: "Enter a price greater than zero.", action: "Review the new selling price and try again." }, 400);
         }
 
         // 1. Validate access code — confirm the caller owns this merchant_id
@@ -67,14 +68,14 @@ export const Route = createFileRoute("/api/repricing/apply")({
         const codeRow = codeResult.data as { merchant_id: string } | null;
 
         if (!codeRow || codeRow.merchant_id !== merchantId) {
-          return json({ error: "Invalid access code" }, 403);
+          return json({ error: "Your PrizeSkout session has expired.", action: "Sign in or reopen PrizeSkout from your connected platform." }, 403);
         }
 
         // 2. Fetch the ingest event (ownership check via account_id)
         const evt = eventResult.data;
 
         if (!evt?.item_id || !evt?.source_platform) {
-          return json({ error: "Product not found for this account" }, 404);
+          return json({ error: "We could not find that product in your latest catalogue.", action: "Sync the connected store, then select the product again." }, 404);
         }
 
         const currentPrice=Number(evt.current_retail_price??0);
@@ -137,7 +138,7 @@ export const Route = createFileRoute("/api/repricing/apply")({
               store_id:String((channel.metadata as Record<string,unknown>|null)?.store_id??"")||null,
             },item_id,currentPrice,currency??"SAR");
             rolledBack=rollback.success;
-            verificationMessage=readback.message??`Expected ${targetPrice}, received ${livePrice??"no live price"}.`;
+            verificationMessage=readback.message??"The platform did not return the expected live price.";
           }
         }
 
@@ -154,9 +155,16 @@ export const Route = createFileRoute("/api/repricing/apply")({
             .eq("account_id", accountId);
           if(source_platform==="zid"&&evt.sku){
             try{downstreamPropagation=await recordPendingJahezPropagation({accountId,ingestEventId,sku:evt.sku,price:targetPrice,zidLivePrice:livePrice??targetPrice});}
-            catch(error){downstreamWarning=error instanceof Error?error.message:"Could not create Jahez propagation record.";}
+            catch(error){downstreamWarning=toMerchantError(error,"prepare the Jahez follow-up").error;}
           }
         }
+
+        const friendlyFailure = !result.success
+          ? toMerchantError(new Error(result.message ?? `Platform returned HTTP ${result.httpStatus}`), "publish this price")
+          : null;
+        const friendlyConfirmation = result.success && !confirmed
+          ? toMerchantError(new Error(verificationMessage ?? "Live price confirmation failed"), "confirm the new live price")
+          : null;
 
         return json({
           ok: result.success&&confirmed,
@@ -171,7 +179,13 @@ export const Route = createFileRoute("/api/repricing/apply")({
           action_id:`PS-ACT-${Date.now().toString(36).toUpperCase()}`,
           downstream:downstreamPropagation?{channel:"jahez_via_mazeed",status:"pending",event_id:downstreamPropagation.id,message:"Confirmed in Zid. Waiting for independent Jahez verification."}:null,
           downstream_warning:downstreamWarning,
-          message:confirmed?"Price updated and confirmed live":result.success?`Live confirmation failed. ${rolledBack?"The original price was restored.":"Automatic rollback could not be confirmed."} ${verificationMessage??""}`:result.message??"Platform rejected the price update",
+          message: confirmed
+            ? "The price was updated and confirmed on the live store."
+            : result.success
+              ? `The platform accepted the request, but PrizeSkout could not confirm the live price. ${rolledBack ? "The original price was restored." : "We could not confirm that the original price was restored; please check the platform."}`
+              : friendlyFailure?.error,
+          action: friendlyFailure?.action ?? friendlyConfirmation?.action,
+          support_reference: friendlyFailure?.support_reference ?? friendlyConfirmation?.support_reference,
         });
       },
     },

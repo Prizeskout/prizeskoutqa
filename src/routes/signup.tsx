@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate, useRouter, redirect } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { humanizeAuthError } from "@/lib/api-error";
 import {
   PasswordStrength,
   evaluatePassword,
@@ -113,7 +114,7 @@ function SignupPage() {
     });
     if (signUpError) {
       setSubmitting(false);
-      setError(signUpError.message);
+      setError(humanizeAuthError(signUpError, "sign_up"));
       return;
     }
 

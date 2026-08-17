@@ -108,7 +108,7 @@ interface ImportedProduct {
     maximum_increase_pct: number;
     margin_floor_pct: number;
     policy_version: number;
-    outcome: "safe" | "blocked_missing_cost" | "within_limit" | "over_limit";
+    outcome: "safe" | "blocked_missing_cost" | "blocked_missing_economics" | "within_limit" | "over_limit";
   };
 }
 
@@ -10786,6 +10786,7 @@ export function PrizeSkoutDashboard() {
                       .map((p) => ({ p, v: p.preview }));
                   const affected = previews.filter((x) => x.v?.floor_breached),
                     blocked = previews.filter((x) => x.v?.outcome === "blocked_missing_cost"),
+                    termsRequired = previews.filter((x) => x.v?.outcome === "blocked_missing_economics"),
                     over = previews.filter((x) => x.v?.outcome === "over_limit");
                   return (
                     <div
@@ -10810,6 +10811,7 @@ export function PrizeSkoutDashboard() {
                           ["Earning below target", affected.length],
                           ["Need a larger increase", over.length],
                           ["Cost needs confirmation", blocked.length],
+                          ["Channel terms needed", termsRequired.length],
                           ["Unavailable excluded", unavailable.length],
                         ].map(([label, value]) => (
                           <div
@@ -10856,7 +10858,7 @@ export function PrizeSkoutDashboard() {
                             {previews
                               .filter(
                                 (x) =>
-                                  x.v?.floor_breached || x.v?.outcome === "blocked_missing_cost",
+                                  x.v?.floor_breached || x.v?.outcome === "blocked_missing_cost" || x.v?.outcome === "blocked_missing_economics",
                               )
                               .slice(0, 8)
                               .map(({ p, v }) => (
@@ -10894,6 +10896,8 @@ export function PrizeSkoutDashboard() {
                                   >
                                     {v?.outcome === "blocked_missing_cost"
                                       ? "Confirm product cost first"
+                                      : v?.outcome === "blocked_missing_economics"
+                                        ? "Approve this channel's contract terms first"
                                       : v?.outcome === "over_limit"
                                         ? "Active policy caps this increase; market acceptance is not established"
                                         : v?.outcome === "within_limit"

@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from "react";
 import { CheckCircle, ChevronDown, Upload } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { safeClientErrorMessage } from "@/lib/api-error";
 
 const STORES = [
   "Carrefour - Doha Festival City",
@@ -149,7 +150,7 @@ export function SubmitObservation() {
       });
 
       if (insertError) {
-        setError(insertError.message);
+        setError(safeClientErrorMessage(insertError, "The observation could not be submitted. Review the details and try again."));
         setSubmitting(false);
         return;
       }
@@ -170,7 +171,7 @@ export function SubmitObservation() {
         setSubmitted(false);
       }, 3000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to submit observation.");
+      setError(safeClientErrorMessage(e, "The observation could not be submitted. Please try again."));
       setSubmitting(false);
     }
   };

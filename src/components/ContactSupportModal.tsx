@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { submitContactMessage } from "@/server/contact.functions";
 import { askSupportAgent } from "@/server/platform-admin.functions";
 import { HELP_ARTICLES, HELP_CATEGORIES, type HelpArticle } from "@/lib/help-center-data";
+import { safeClientErrorMessage } from "@/lib/api-error";
 
 const SUPPORT_EMAIL = "support@prizeskout.qa";
 type ChatMessage = { role: "user" | "assistant"; content: string; suggestedRoute?: string; escalate?: boolean; suggestions?: string[] };
@@ -107,7 +108,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
       await submit({ data: { name: name.trim(), email: email.trim(), message: message.trim(), company: null } });
       setMessage("");
       setTicketSent(true);
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not send your message."); }
+    } catch (error) { toast.error(safeClientErrorMessage(error, "Your message could not be sent. Please try again or email support@prizeskout.qa.")); }
     finally { setBusy(false); }
   };
 

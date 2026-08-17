@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { evaluatePolicyControl } from "../src/server/core/margin-policy.ts";
+import { REGIONAL_COMMISSION } from "../src/server/core/decide-engine.ts";
+
+assert.equal(REGIONAL_COMMISSION.QA,.19,"Qatar scenario ceiling must be 19%, never the old 22% guess");
 
 const base={currentPrice:100,recommendedPrice:110,floorBreached:true,maxPriceIncreasePct:.15} as const;
 assert.equal(evaluatePolicyControl({...base,approvalMode:"recommend_only"}).mayAutoApply,false);

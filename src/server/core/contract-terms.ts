@@ -137,10 +137,13 @@ export async function approveContractTerm(accountId: string, id: string, reviewe
 }
 
 async function publishEconomicsVersion(accountId:string,term:ContractTerm,reviewedBy:string){
+  const {data:account}=await supabaseAdmin.from("accounts_v2").select("region").eq("id",accountId).maybeSingle();
+  const region=String(account?.region??"QA").toUpperCase();
   const {data:latest}=await supabaseAdmin.from("ps_economics_versions").select("version").eq("account_id",accountId).eq("merchant_id",accountId).eq("channel",term.platform).order("version",{ascending:false}).limit(1).maybeSingle();
   const now=new Date().toISOString();
   await supabaseAdmin.from("ps_economics_versions").update({status:"retired",effective_to:now}).eq("account_id",accountId).eq("merchant_id",accountId).eq("channel",term.platform).eq("status","approved").is("effective_to",null);
-  await supabaseAdmin.from("ps_economics_versions").insert({account_id:accountId,merchant_id:accountId,channel:term.platform,region:"SA",version:(latest?.version??0)+1,effective_from:`${term.effective_from}T00:00:00.000Z`,effective_to:term.effective_to?`${term.effective_to}T23:59:59.999Z`:null,commission_rate:term.commission_rate_pct/100,vat_rate:term.vat_on_fees_pct/100,payment_fee_rate:term.payment_fee_pct/100,fixed_order_fee:term.fixed_order_fee,logistics_subsidy:term.delivery_contribution,promotion_contribution_rate:0,margin_floor_pct:await getMerchantMarginFloor(accountId),source_contract_id:term.id,status:"approved",approved_by:reviewedBy,approved_at:now});
+  const {error}=await supabaseAdmin.from("ps_economics_versions").insert({account_id:accountId,merchant_id:accountId,channel:term.platform,region,version:(latest?.version??0)+1,effective_from:`${term.effective_from}T00:00:00.000Z`,effective_to:term.effective_to?`${term.effective_to}T23:59:59.999Z`:null,commission_rate:term.commission_rate_pct/100,vat_rate:term.vat_on_fees_pct/100,payment_fee_rate:term.payment_fee_pct/100,fixed_order_fee:term.fixed_order_fee,logistics_subsidy:term.delivery_contribution,promotion_contribution_rate:0,margin_floor_pct:await getMerchantMarginFloor(accountId),source_contract_id:term.id,status:"approved",approved_by:reviewedBy,approved_at:now});
+  if(error)throw new Error(`Could not publish approved economics: ${error.message}`);
 }
 
 export async function getApprovedContractTerm(accountId: string, platform: string, asOf?: string): Promise<ContractTerm | null> {

@@ -10,6 +10,7 @@ import {
   LegalFooter,
 } from "@/components/auth/AuthShared";
 import { supabase } from "@/integrations/supabase/client";
+import { humanizeAuthError } from "@/lib/api-error";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: () => { throw redirect({ to: "/access" }); },
@@ -43,11 +44,7 @@ function LoginPage() {
     });
     setSubmitting(false);
     if (signInError) {
-      setError(
-        signInError.message === "Invalid login credentials"
-          ? "Email or password is incorrect."
-          : signInError.message,
-      );
+      setError(humanizeAuthError(signInError, "sign_in"));
       return;
     }
     await router.invalidate();

@@ -10,8 +10,9 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { decide, REGIONAL_COMMISSION, REGIONAL_VAT } from "./decide-engine";
+import { decide } from "./decide-engine";
 import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { zidCustomerPricePatch } from "@/lib/channel-bridge";
 import {
   buildSallaPriceUpdate,
@@ -333,6 +334,7 @@ export type SyncCatalogResult = {
   items_stored: number;
   items_below_floor: number;
   items_requiring_cost: number;
+  items_requiring_economics: number;
   errors: number;
 };
 
@@ -370,14 +372,14 @@ export async function syncPlatformCatalog(params: {
     throw error;
   }
 
-  const commissionRate = REGIONAL_COMMISSION[region] ?? 0.22;
-  const vatRate = REGIONAL_VAT[region] ?? 0;
+  const economics = await resolveAuthoritativeEconomics({ accountId, merchantId, channel: platform });
   const marginFloorPct = await getMerchantMarginFloor(accountId);
 
   let stored = 0;
   let belowFloor = 0;
   let errors = 0;
   let costRequired = 0;
+  let economicsRequired = 0;
 
   for (const product of products) {
     if (!product.sku || product.price <= 0) continue;
@@ -418,12 +420,25 @@ export async function syncPlatformCatalog(params: {
         stored++; costRequired++;
         continue;
       }
+      if (!economics) {
+        await supabaseAdmin.from("ps_ingest_events").update({
+          status: "received",
+          raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
+        }).eq("id", existing.id);
+        stored++; economicsRequired++;
+        continue;
+      }
       const baseCost = product.cost;
       const decideOutput = decide({
         region,
         baseCost,
         currentRetailPrice: product.price,
-        vatRate,
+        commissionRate: economics.commissionRate,
+        vatRate: economics.vatRate,
+        paymentFeeRate: economics.paymentFeeRate,
+        fixedOrderFee: economics.fixedOrderFee,
+        promotionContributionRate: economics.promotionContributionRate,
+        logisticsSubsidy: economics.logisticsSubsidy,
         marginFloorPct,
       });
       await supabaseAdmin.from("ps_decide_results").insert({
@@ -435,8 +450,12 @@ export async function syncPlatformCatalog(params: {
         sku: product.sku,
         base_cost: baseCost,
         current_retail_price: product.price,
-        commission_rate: commissionRate,
-        vat_rate: vatRate,
+        commission_rate: economics.commissionRate,
+        vat_rate: economics.vatRate,
+        payment_fee_rate: economics.paymentFeeRate,
+        fixed_order_fee: economics.fixedOrderFee,
+        promotion_contribution_rate: economics.promotionContributionRate,
+        economics_version_id: economics.id,
         logistics_subsidy: 0,
         margin_floor_pct: marginFloorPct,
         net_margin: decideOutput.netMargin,
@@ -473,7 +492,7 @@ export async function syncPlatformCatalog(params: {
         base_cost: product.cost ?? 0,
         current_retail_price: product.price,
         currency: product.currency,
-        vat_rate: vatRate,
+        vat_rate: economics?.vatRate ?? 0,
         raw_payload: {
           source: "platform_sync",
           external_id: product.external_id,
@@ -493,13 +512,26 @@ export async function syncPlatformCatalog(params: {
       stored++; costRequired++;
       continue;
     }
+    if (!economics) {
+      await supabaseAdmin.from("ps_ingest_events").update({
+        status: "received",
+        raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
+      }).eq("id", ingestRow.id);
+      stored++; economicsRequired++;
+      continue;
+    }
 
     // 2. Run decide engine on each item
     const decideOutput = decide({
       region,
       baseCost: product.cost,
       currentRetailPrice: product.price,
-      vatRate,
+      commissionRate: economics.commissionRate,
+      vatRate: economics.vatRate,
+      paymentFeeRate: economics.paymentFeeRate,
+      fixedOrderFee: economics.fixedOrderFee,
+      promotionContributionRate: economics.promotionContributionRate,
+      logisticsSubsidy: economics.logisticsSubsidy,
       marginFloorPct,
     });
 
@@ -512,8 +544,12 @@ export async function syncPlatformCatalog(params: {
       sku: product.sku,
       base_cost: product.cost,
       current_retail_price: product.price,
-      commission_rate: commissionRate,
-      vat_rate: vatRate,
+      commission_rate: economics.commissionRate,
+      vat_rate: economics.vatRate,
+      payment_fee_rate: economics.paymentFeeRate,
+      fixed_order_fee: economics.fixedOrderFee,
+      promotion_contribution_rate: economics.promotionContributionRate,
+      economics_version_id: economics.id,
       logistics_subsidy: 0,
       margin_floor_pct: marginFloorPct,
       net_margin: decideOutput.netMargin,
@@ -563,6 +599,7 @@ export async function syncPlatformCatalog(params: {
     items_stored: stored,
     items_below_floor: belowFloor,
     items_requiring_cost: costRequired,
+    items_requiring_economics: economicsRequired,
     errors,
   };
 }

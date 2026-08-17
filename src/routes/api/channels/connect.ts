@@ -33,6 +33,7 @@ import { createStoreManagerTask, getStoreManager, saveStoreManagerPolicy, saveSt
 import { runScrape } from "@/server/scrape-runner";
 import { getValidTalabatAccessToken, updateTalabatOrder } from "@/server/core/talabat-client";
 import type { TalabatOrderUpdateStatus, TalabatTransportType } from "@/server/core/talabat-contract";
+import { toMerchantError } from "@/server/merchant-errors";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -187,13 +188,13 @@ export const Route = createFileRoute("/api/channels/connect")({
                 });
                 return resp({ ok: true, settings }, 200);
               } catch (error) {
-                return resp({ error: error instanceof Error ? error.message : "Could not save Zid–Jahez settings." }, 400);
+                return merchantFailure(error, "save the Zid–Jahez settings");
               }
             }
             if(body.action==="confirm_propagation"){
               const observed=Number(body.observed_price);
               try{return resp({ok:true,event:await confirmZidJahezPropagation(merchant_id,body.id,observed,body.verified_by)},200);}
-              catch(error){return resp({error:error instanceof Error?error.message:"Could not verify Jahez propagation."},400);}
+              catch(error){return merchantFailure(error,"verify the Jahez price update");}
             }
             return resp({ error: "Unsupported Zid–Jahez bridge action." }, 400);
           }
@@ -700,7 +701,7 @@ export const Route = createFileRoute("/api/channels/connect")({
             if(body.action==="record_submission"){
               if(!body.id||!body.submission_reference?.trim()||!body.submitted_by?.trim())return resp({error:"Case id, platform reference, and submitter are required."},400);
               try{return resp({ok:true,case:await recordRecoverySubmission(merchant_id,body.id,body.submission_reference.trim().slice(0,200),body.submitted_by.trim().slice(0,160))},200);}
-              catch(err){return resp({error:err instanceof Error?err.message:"Could not record submission."},400);}
+              catch(err){return merchantFailure(err,"record this recovery submission");}
             }
             return resp({error:"Unsupported recovery-case action."},400);
           }
@@ -721,22 +722,22 @@ export const Route = createFileRoute("/api/channels/connect")({
             if(body.action==="approve"){
               if(!body.id||!["finance","operations"].includes(body.approval_role)||!body.reviewer?.trim())return resp({error:"Scenario id, approval role, and reviewer are required."},400);
               try{return resp({ok:true,scenario:await approvePromotionScenario(merchant_id,body.id,body.approval_role as "finance"|"operations",body.reviewer.trim().slice(0,160))},200);}
-              catch(err){return resp({error:err instanceof Error?err.message:"Could not approve campaign."},400);}
+              catch(err){return merchantFailure(err,"approve this campaign");}
             }
             if(body.action==="activate"){
               const marginFloor=Number(body.margin_floor_pct);
               try{return resp({ok:true,group:await activateGroupPolicy(merchant_id,marginFloor)},200);}
-              catch(err){return resp({error:err instanceof Error?err.message:"Could not activate group policy."},400);}
+              catch(err){return merchantFailure(err,"activate the group policy");}
             }
             if(body.action==="prepare_launch"){
               if(!body.id||!Array.isArray(raw.target_channels))return resp({error:"Scenario id and target channels are required."},400);
               try{return resp({ok:true,scenario:await preparePromotionLaunch(merchant_id,body.id,(raw.target_channels as unknown[]).filter(value=>typeof value==="string") as string[])},200);}
-              catch(err){return resp({error:err instanceof Error?err.message:"Could not prepare campaign launch."},400);}
+              catch(err){return merchantFailure(err,"prepare the campaign launch");}
             }
             if(body.action==="confirm_channel_launch"){
               if(!body.id||!body.target_channel?.trim()||!body.partner_campaign_id?.trim())return resp({error:"Scenario id, target channel, and partner campaign id are required."},400);
               try{return resp({ok:true,scenario:await confirmPromotionChannelLaunch(merchant_id,body.id,body.target_channel,body.partner_campaign_id.trim().slice(0,200))},200);}
-              catch(err){return resp({error:err instanceof Error?err.message:"Could not confirm channel launch."},400);}
+              catch(err){return merchantFailure(err,"confirm the campaign launch");}
             }
             if(body.action==="update"){
               if(!body.id)return resp({error:"Scenario id is required."},400);
@@ -774,7 +775,7 @@ export const Route = createFileRoute("/api/channels/connect")({
                 const {plan,results}=await publishChannelPricePlan(merchant_id,body.id);
                 return resp({ok:true,plan,results},200);
               }catch(err){
-                return resp({error:err instanceof Error?err.message:"Could not publish plan."},400);
+                return merchantFailure(err,"publish this approved price plan");
               }
             }
             return resp({error:"Unsupported channel-price-plan action."},400);
@@ -820,8 +821,8 @@ export const Route = createFileRoute("/api/channels/connect")({
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
         } catch (err) {
-          console.error("[connect] unhandled error:", err);
-          return resp({ ok: false, error: "Unexpected error. Please try again." }, 500);
+          const friendly = toMerchantError(err, "complete this request");
+          return resp({ ok: false, ...friendly }, friendly.retryable ? 503 : 400);
         }
       },
     },
@@ -833,4 +834,8 @@ function resp(body: unknown, status: number) {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function merchantFailure(error: unknown, context: string, status = 400) {
+  return resp({ ok: false, ...toMerchantError(error, context) }, status);
 }
