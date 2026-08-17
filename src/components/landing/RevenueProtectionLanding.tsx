@@ -82,8 +82,7 @@ export function RevenueProtectionLanding(){
       <ProductHeroDemo lang={lang} market={selectedCountry as LandingMarket}/>
     </section>
 
-    <aside className="rpl-credentials" id="integrations" aria-label={tr("PrizeSkout credentials","اعتمادات PrizeSkout")}>
-      <span id="feature-integrations" aria-hidden="true" />
+    <aside className="rpl-credentials" aria-label={tr("PrizeSkout credentials","اعتمادات PrizeSkout")}>
       <div><span>{tr("Backed by","بدعم من")}</span><img className="qstp-credential" src={qstpLogo} alt="Qatar Science and Technology Park"/></div>
       <i aria-hidden="true" />
       <div><span>{tr("Licensed by","مرخص من")}</span><img className="qfc-credential" src={QFC_LOGO} alt="Qatar Financial Centre"/><b>04412</b></div>

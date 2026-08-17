@@ -21,11 +21,23 @@ function useMarketMoney() {
 export function ProductStorySections({ lang, market }: { lang: Lang; market: LandingMarket }) {
   return (
     <MarketContext.Provider value={market}><div className="pss" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <ProfitStory lang={lang} />
-      <ProtectionStory lang={lang} />
-      <RecoveryStory lang={lang} />
-      <DetailedPricing lang={lang} />
-      <FinalCta lang={lang} />
+      <section className="pss-chapter pss-chapter-network" aria-label={tx(lang, ["Connected commerce", "التجارة المتصلة"])}>
+        <CommerceNetwork lang={lang} />
+      </section>
+      <section className="pss-chapter" aria-label={tx(lang, ["Profit intelligence", "ذكاء الأرباح"])}>
+        <ProfitStory lang={lang} />
+      </section>
+      <section className="pss-chapter" aria-label={tx(lang, ["PrizeSkout capabilities", "قدرات PrizeSkout"])}>
+        <PlatformMatrix lang={lang} />
+      </section>
+      <section className="pss-chapter pss-chapter-outcomes" aria-label={tx(lang, ["Protect and recover", "الحماية والاسترداد"])}>
+        <ProtectionStory lang={lang} />
+        <RecoveryStory lang={lang} />
+      </section>
+      <section className="pss-chapter pss-chapter-convert" aria-label={tx(lang, ["Plans and next step", "الخطط والخطوة التالية"])}>
+        <DetailedPricing lang={lang} />
+        <FinalCta lang={lang} />
+      </section>
     </div></MarketContext.Provider>
   );
 }
@@ -73,7 +85,7 @@ function Intro({
 
 function CommerceNetwork({ lang }: { lang: Lang }) {
   return (
-    <section className="pss-network pss-story-section" id="integrations">
+    <article className="pss-network pss-story-section" id="integrations">
       <span id="feature-integrations" className="pss-anchor" aria-hidden="true" />
       <Intro
         lang={lang}
@@ -115,7 +127,7 @@ function CommerceNetwork({ lang }: { lang: Lang }) {
         <i className="flow f3" />
         <i className="flow f4" />
       </Reveal>
-    </section>
+    </article>
   );
 }
 function Node({ cls, label, detail }: { cls: string; label: string; detail: string }) {
@@ -133,7 +145,7 @@ function Node({ cls, label, detail }: { cls: string; label: string; detail: stri
 function ProfitStory({ lang }: { lang: Lang }) {
   const { money, localized } = useMarketMoney();
   return (
-    <section className="pss-section pss-story-section" id="platform">
+    <article className="pss-section pss-story-section" id="platform">
       <span id="feature-profit" className="pss-anchor" aria-hidden="true" />
       <span id="feature-cfo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
@@ -182,7 +194,7 @@ function ProfitStory({ lang }: { lang: Lang }) {
           </div>
         </div>
       </Reveal>
-    </section>
+    </article>
   );
 }
 
@@ -248,10 +260,8 @@ function DecisionStory({ lang }: { lang: Lang }) {
 function ProtectionStory({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   return (
-    <section className="pss-section pss-story-section dark">
+    <article className="pss-section pss-story-section dark">
       <span id="feature-policy" className="pss-anchor" aria-hidden="true" />
-      <span id="feature-radar" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
-      <span id="feature-promo" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["PROTECT", "الحماية"]}
@@ -295,7 +305,7 @@ function ProtectionStory({ lang }: { lang: Lang }) {
           <span>24%</span>
         </div>
       </Reveal>
-    </section>
+    </article>
   );
 }
 
@@ -362,9 +372,8 @@ function ManagerStory({ lang }: { lang: Lang }) {
 function RecoveryStory({ lang }: { lang: Lang }) {
   const { money } = useMarketMoney();
   return (
-    <section className="pss-section pss-story-section tint">
+    <article className="pss-section pss-story-section tint">
       <span id="feature-audit" className="pss-anchor" aria-hidden="true" />
-      <span id="feature-manager" className="pss-anchor pss-anchor-secondary" aria-hidden="true" />
       <Intro
         lang={lang}
         kicker={["RECOVER", "استرد"]}
@@ -427,7 +436,7 @@ function RecoveryStory({ lang }: { lang: Lang }) {
           </footer>
         </div>
       </Reveal>
-    </section>
+    </article>
   );
 }
 
@@ -494,7 +503,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
     return () => window.clearInterval(timer);
   }, [playing, interacting]);
   return (
-    <section className="pss-section capability-showroom" ref={sectionRef}>
+    <article className="pss-section capability-showroom" ref={sectionRef}>
       <Intro
         lang={lang}
         center
@@ -514,7 +523,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
             type="button"
             className={`capability-card ${cls} ${active === i ? "is-active" : ""}`}
             key={title[0]}
-            id={`feature-${cls}`}
+            id={["radar", "promo", "manager"].includes(cls) ? `feature-${cls}` : undefined}
             style={{ "--cap-index": i } as React.CSSProperties}
             onMouseEnter={() => { setActive(i); setInteracting(true); }}
             onMouseLeave={() => setInteracting(false)}
@@ -531,7 +540,7 @@ function PlatformMatrix({ lang }: { lang: Lang }) {
           </button>
         ))}
       </Reveal>
-    </section>
+    </article>
   );
 }
 
@@ -666,7 +675,7 @@ function DetailedPricing({ lang }: { lang: Lang }) {
       ] as Pair[] },
   ];
   return (
-    <section className="pss-section pss-pricing" id="pricing">
+    <article className="pss-section pss-pricing" id="pricing">
       <Intro
         lang={lang}
         center
@@ -702,7 +711,7 @@ function DetailedPricing({ lang }: { lang: Lang }) {
           return <section key={plan.id}><h4>{plan.name}</h4><ul>{details.features.map(feature => <li key={feature}>✓ {feature}</li>)}</ul></section>;
         })}
       </div>}
-    </section>
+    </article>
   );
 }
 
@@ -892,7 +901,7 @@ function Faq({ lang }: { lang: Lang }) {
 
 function FinalCta({ lang }: { lang: Lang }) {
   return (
-    <section className="pss-final">
+    <article className="pss-final">
       <div className="final-status">
         <span>✓ {tx(lang, ["Connected", "متصل"])}</span>
         <span>✓ {tx(lang, ["Margin protected", "الهامش محمي"])}</span>
@@ -915,6 +924,6 @@ function FinalCta({ lang }: { lang: Lang }) {
         <a href="/onboarding">{tx(lang, ["Connect your store", "اربط متجرك"])}</a>
         <a href="/contact">{tx(lang, ["Book a demo", "احجز عرضاً توضيحياً"])}</a>
       </div>
-    </section>
+    </article>
   );
 }
