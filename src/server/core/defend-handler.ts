@@ -249,7 +249,7 @@ async function callAggregatorApi(
       };
     }
 
-    const result = await updateTalabatPrice({ chainId, vendorId, sku, newPrice, accessToken: token.accessToken });
+    const result = await updateTalabatPrice({ chainId, vendorId, sku, newPrice, accessToken: token.accessToken, environment: metadata.environment === "sandbox" ? "sandbox" : "production" });
     return {
       success: result.ok,
       httpStatus: result.httpStatus,

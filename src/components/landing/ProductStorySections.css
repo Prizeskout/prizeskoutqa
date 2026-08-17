@@ -163,6 +163,15 @@
   .pss-story-section .pss-intro.center p{margin-inline:0}
   .pss-story-section .pss-intro h2{font-size:clamp(34px,3.2vw,48px)}
   .pss-story-section>.network-canvas,.pss-story-section>.story-frame,.pss-story-section>.decision-grid,.pss-story-section>.protection-console,.pss-story-section>.manager-console,.pss-story-section>.recovery-frame{width:100%;min-width:0}
+  /* Alternate the narrative axis instead of repeating headline-left/demo-right.
+     The first chapter leads from the left; the next enters from the right.
+     Multi-story chapters continue the left/right cadence internally. */
+  .pss-chapter-profit>.pss-story-section,
+  .pss-chapter-outcomes>.pss-story-section:first-child{grid-template-columns:minmax(0,.66fr) minmax(260px,.34fr)}
+  .pss-chapter-profit>.pss-story-section>.pss-intro,
+  .pss-chapter-outcomes>.pss-story-section:first-child>.pss-intro{grid-column:2;grid-row:1}
+  .pss-chapter-profit>.pss-story-section>.story-frame,
+  .pss-chapter-outcomes>.pss-story-section:first-child>.protection-console{grid-column:1;grid-row:1}
   .pss-pricing{padding-block:72px}
   .pss-faq{padding-block:68px;gap:48px}
   .pss-final{padding-block:82px}

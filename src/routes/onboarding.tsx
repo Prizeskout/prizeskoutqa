@@ -401,6 +401,7 @@ function Step2({
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="ob-credential-group"><h3>Talabat Partner API</h3><p>PrizeSkout exchanges your Client ID and Client Secret for short-lived Talabat access tokens.</p><div className="ob-credential-grid">
+            <div><FieldLabel>Environment</FieldLabel><select value={talabat.environment??"sandbox"} onChange={event=>updateTalabat("environment",event.target.value)} style={{width:"100%",height:42,border:"1px solid #D8DEE8",borderRadius:9,padding:"0 12px",background:"#fff",color:NAVY}}><option value="sandbox">Sandbox (testing)</option><option value="production">Production</option></select></div>
             <div><FieldLabel>Client ID</FieldLabel><FocusInput value={talabat.client_id??""} onChange={v=>updateTalabat("client_id",v)} placeholder="From Talabat Partner Portal" /></div>
             <div><FieldLabel>Client Secret</FieldLabel><FocusInput value={talabat.client_secret??""} onChange={v=>updateTalabat("client_secret",v)} type="password" /></div>
             <div><FieldLabel>Vendor ID</FieldLabel><FocusInput value={talabat.vendor_id??""} onChange={v=>updateTalabat("vendor_id",v)} /></div>
@@ -496,7 +497,7 @@ function Step3({
   );
 }
 
-function AccessCodeScreen({ code, onEnter }: { code: string; onEnter: () => void }) {
+function AccessCodeScreen({ code, talabatWebhookUrl, onEnter }: { code: string; talabatWebhookUrl?: string; onEnter: () => void }) {
   const [copied, setCopied] = useState(false);
 
   async function copyCode() {
@@ -565,6 +566,8 @@ function AccessCodeScreen({ code, onEnter }: { code: string; onEnter: () => void
       </div>
 
       <PrimaryBtn onClick={onEnter}>Enter Command Room →</PrimaryBtn>
+
+      {talabatWebhookUrl&&<div style={{margin:"24px auto 0",maxWidth:520,padding:16,border:"1px solid rgba(255,255,255,.1)",borderRadius:12,textAlign:"left"}}><b style={{display:"block",color:"#E7E8EA",fontSize:13}}>Finish Talabat sandbox setup</b><p style={{color:"#7B8290",fontSize:12,lineHeight:1.6}}>Copy this URL into both the Order Webhook and Assortment Webhook fields in Talabat Partner Portal. Treat it like a secret.</p><button type="button" onClick={()=>navigator.clipboard.writeText(talabatWebhookUrl)} style={{width:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"10px 12px",border:"1px solid rgba(239,104,26,.3)",borderRadius:8,background:"rgba(239,104,26,.08)",color:OG,fontFamily:MONO,cursor:"pointer"}}>{talabatWebhookUrl}</button></div>}
 
       <div style={{ marginTop: 22, fontSize: 11.5, color: "#3A3D46", fontFamily: MONO }}>
         You can also find this code in Settings → Store Access
@@ -659,6 +662,7 @@ function OnboardingPage() {
   const [step, setStep]               = useState(0);
   const [restoreMode, setRestoreMode] = useState(false);
   const [accessCode, setAccessCode]   = useState("");
+  const [talabatWebhookUrl,setTalabatWebhookUrl]=useState("");
   const navigate = useNavigate();
 
   // Step 1 — storage-backed values start empty (matching what the server
@@ -811,8 +815,9 @@ function OnboardingPage() {
       for(const [platform,credentials] of [["talabat",talabat],["jahez",jahez]] as const){
         if(!Object.keys(credentials).length)continue;
         const response=await fetchWithTimeout("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:mid,access_code:code,platform,...credentials})});
-        const result=await response.json() as {ok?:boolean;error?:string};
+        const result=await response.json() as {ok?:boolean;error?:string;webhook_url?:string};
         if(!response.ok||!result.ok)throw new Error(result.error??`PrizeSkout could not configure ${platform}.`);
+        if(platform==="talabat"&&result.webhook_url){localStorage.setItem("ps_talabat_webhook_url",result.webhook_url);setTalabatWebhookUrl(result.webhook_url);}
       }
       localStorage.setItem("ps_access_code", code);
       localStorage.setItem("ps_connected", "true");
@@ -924,6 +929,7 @@ function OnboardingPage() {
         ) : (
           <AccessCodeScreen
             code={accessCode}
+            talabatWebhookUrl={talabatWebhookUrl}
             onEnter={() => navigate({ to: "/dashboard/revenue-hub" })}
           />
         )}

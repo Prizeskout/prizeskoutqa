@@ -60,7 +60,7 @@ export async function publishChannelPricePlan(accountId:string,id:string):Promis
       const chainId=String(meta.chain_id??"");
       const vendorId=String(meta.vendor_id??"");
       if(!chainId||!vendorId){results.push({...pick(row),status:"failed",reason:"Talabat chain/vendor id is missing from the connection."});continue;}
-      const push=await updateTalabatPrice({chainId,vendorId,sku:row.sku,newPrice:row.planned_price,accessToken:talabatToken});
+      const push=await updateTalabatPrice({chainId,vendorId,sku:row.sku,newPrice:row.planned_price,accessToken:talabatToken,environment:meta.environment==="sandbox"?"sandbox":"production"});
       results.push({...pick(row),status:push.ok?"published":"failed",reason:push.ok?"Queued with Talabat for live update.":(push.message??"Talabat rejected the update.")});
       continue;
     }

@@ -3,7 +3,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { JAHEZ_BASE } from "./byok-connect";
-import { exchangeTalabatToken, TALABAT_BASE } from "./talabat-client";
+import { exchangeTalabatToken, talabatBaseUrl, type TalabatEnvironment } from "./talabat-client";
 
 type PushResult = {
   ok: boolean;
@@ -44,7 +44,8 @@ async function getTalabatToken(channel: {
 
   if (!channel.manager_token || !channel.bearer_token) return null;
 
-  const result = await exchangeTalabatToken(channel.manager_token, channel.bearer_token);
+  const environment: TalabatEnvironment = meta?.environment === "sandbox" ? "sandbox" : "production";
+  const result = await exchangeTalabatToken(channel.manager_token, channel.bearer_token, environment);
   if (!result.ok || !result.data?.access_token) return null;
 
   // Update cached token in DB (fire-and-forget)
@@ -83,7 +84,7 @@ export async function pushTalabatPrice(
   if (!token) return { ok: false, platform: "talabat", message: "Token exchange failed" };
 
   const res = await fetch(
-    `${TALABAT_BASE}/chains/${chainId}/vendors/${vendorId}/catalog`,
+    `${talabatBaseUrl(meta?.environment === "sandbox" ? "sandbox" : "production")}/chains/${chainId}/vendors/${vendorId}/catalog`,
     {
       method: "PUT",
       headers: {

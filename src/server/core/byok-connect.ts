@@ -12,9 +12,8 @@
 //          only holds setKeetaShopId(), the post-connect shop-ID capture step.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { exchangeTalabatToken } from "./talabat-client";
+import { exchangeTalabatToken, type TalabatEnvironment } from "./talabat-client";
 
-export const TALABAT_BASE = "https://talabat.partner.deliveryhero.io/v2";
 export const JAHEZ_BASE   = "https://integration-api.jahez.net";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +41,8 @@ export async function connectTalabat(params: {
   paymentFeePct?: string;
   fixedOrderFee?: string;
   deliveryContribution?: string;
-}): Promise<{ ok: boolean; message?: string }> {
+  environment?: TalabatEnvironment;
+}): Promise<{ ok: boolean; message?: string; webhookToken?: string }> {
   const { merchantId, clientId, clientSecret, vendorId, chainId, commissionRatePct } = params;
   const now = new Date().toISOString();
 
@@ -91,7 +91,8 @@ export async function connectTalabat(params: {
   // reporting "connected" — a wrong client_id/client_secret fails here with
   // a clear message instead of silently sitting in the DB until the first
   // real dispatch attempt fails.
-  const tokenResult = await exchangeTalabatToken(clientId, clientSecret);
+  const environment = params.environment === "sandbox" ? "sandbox" : "production";
+  const tokenResult = await exchangeTalabatToken(clientId, clientSecret, environment);
   if (!tokenResult.ok || !tokenResult.data?.access_token) {
     // Confirmed live against Talabat's real token endpoint: invalid
     // credentials come back as 400 invalid_request/invalid_client, not
@@ -108,6 +109,7 @@ export async function connectTalabat(params: {
     };
   }
 
+  const webhookToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
   const { error } = await db()
     .upsert(
       {
@@ -123,6 +125,7 @@ export async function connectTalabat(params: {
         connected_at:     now,
         last_verified_at: now,
         updated_at:       now,
+        webhook_secret:   webhookToken,
         metadata: {
           vendor_id: vendorId,
           chain_id: chainId,
@@ -135,13 +138,14 @@ export async function connectTalabat(params: {
           delivery_contribution: deliveryContribution,
           commercial_terms_source: "merchant_contract",
           commercial_terms_updated_at: now,
+          environment,
         },
       },
       { onConflict: "account_id,merchant_id,platform" },
     );
 
   if (error) return { ok: false, message: "Failed to save credentials. Please try again." };
-  return { ok: true };
+  return { ok: true, webhookToken };
 }
 
 export async function connectJahez(params: {

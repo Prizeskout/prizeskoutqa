@@ -14,13 +14,14 @@ import {
   handleFoodicsWebhook,
   handleZidWebhook,
   handleKeetaWebhook,
+  handleTalabatWebhook,
 } from "@/server/core/platform-webhooks";
 
-const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta"]);
+const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta", "talabat"]);
 
 function notFound(platform: string): Response {
   return new Response(
-    JSON.stringify({ error: `Unknown platform: ${platform}. Supported: salla, foodics, zid, keeta.` }),
+    JSON.stringify({ error: `Unknown platform: ${platform}. Supported: salla, foodics, zid, keeta, talabat.` }),
     { status: 404, headers: { "Content-Type": "application/json" } },
   );
 }
@@ -39,6 +40,7 @@ async function handle(request: Request, platform: string): Promise<Response> {
   if (platform === "foodics") return handleFoodicsWebhook(request);
   if (platform === "zid")     return handleZidWebhook(request);
   if (platform === "keeta")   return handleKeetaWebhook(request);
+  if (platform === "talabat") return handleTalabatWebhook(request);
 
   return notFound(platform);
 }

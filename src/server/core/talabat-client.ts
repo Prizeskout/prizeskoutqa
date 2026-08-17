@@ -37,6 +37,12 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const TALABAT_BASE = "https://talabat.partner.deliveryhero.io/v2";
+export const TALABAT_SANDBOX_BASE = "https://sandbox.partner.deliveryhero.io/v2";
+export type TalabatEnvironment = "production" | "sandbox";
+
+export function talabatBaseUrl(environment: TalabatEnvironment = "production"): string {
+  return environment === "sandbox" ? TALABAT_SANDBOX_BASE : TALABAT_BASE;
+}
 
 const REFRESH_BUFFER_SECONDS = 300; // refresh once <5min remain on the short-lived JWT
 
@@ -53,13 +59,14 @@ type TalabatTokenResponse = { access_token: string; token_type: string; expires_
 export async function exchangeTalabatToken(
   clientId: string,
   clientSecret: string,
+  environment: TalabatEnvironment = "production",
 ): Promise<TalabatCallResult<TalabatTokenResponse>> {
   const start = Date.now();
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
 
-    const resp = await fetch(`${TALABAT_BASE}/oauth/token`, {
+    const resp = await fetch(`${talabatBaseUrl(environment)}/oauth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
       body: new URLSearchParams({
@@ -103,6 +110,7 @@ export async function getValidTalabatAccessToken(
   channel: TalabatChannelRow,
 ): Promise<{ accessToken: string | null; error?: string }> {
   const metadata = channel.metadata ?? {};
+  const environment: TalabatEnvironment = metadata.environment === "sandbox" ? "sandbox" : "production";
   const cachedToken = typeof metadata.access_token === "string" ? metadata.access_token : null;
   const expiresAt = typeof metadata.token_expires_at === "string" ? Date.parse(metadata.token_expires_at) : NaN;
 
@@ -115,7 +123,7 @@ export async function getValidTalabatAccessToken(
     return { accessToken: null, error: "Talabat client_id/client_secret missing." };
   }
 
-  const result = await exchangeTalabatToken(clientId, clientSecret);
+  const result = await exchangeTalabatToken(clientId, clientSecret, environment);
   if (!result.ok || !result.data?.access_token) {
     return { accessToken: null, error: result.message ?? "Talabat token exchange failed." };
   }
@@ -139,10 +147,11 @@ export async function updateTalabatPrice(params: {
   sku: string;
   newPrice: number;
   accessToken: string;
+  environment?: TalabatEnvironment;
 }): Promise<TalabatCallResult> {
-  const { chainId, vendorId, sku, newPrice, accessToken } = params;
+  const { chainId, vendorId, sku, newPrice, accessToken, environment = "production" } = params;
   const start = Date.now();
-  const url = `${TALABAT_BASE}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/catalog`;
+  const url = `${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/catalog`;
 
   try {
     const controller = new AbortController();
@@ -218,14 +227,15 @@ export async function getTalabatOrders(params: {
   accessToken: string;
   startTime: string; // ISO 8601
   endTime: string;   // ISO 8601
+  environment?: TalabatEnvironment;
 }): Promise<TalabatCallResult<TalabatOrder[]>> {
-  const { chainId, vendorId, accessToken, startTime, endTime } = params;
+  const { chainId, vendorId, accessToken, startTime, endTime, environment = "production" } = params;
   const start = Date.now();
   const allOrders: TalabatOrder[] = [];
 
   try {
     for (let page = 1; page <= ORDERS_MAX_PAGES; page++) {
-      const url = new URL(`${TALABAT_BASE}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/orders`);
+      const url = new URL(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/orders`);
       url.searchParams.set("start_time", startTime);
       url.searchParams.set("end_time", endTime);
       url.searchParams.set("page", String(page));

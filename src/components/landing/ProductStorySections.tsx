@@ -24,7 +24,7 @@ export function ProductStorySections({ lang, market }: { lang: Lang; market: Lan
       <section className="pss-chapter pss-chapter-network" aria-label={tx(lang, ["Connected commerce", "التجارة المتصلة"])}>
         <CommerceNetwork lang={lang} />
       </section>
-      <section className="pss-chapter" aria-label={tx(lang, ["Profit intelligence", "ذكاء الأرباح"])}>
+      <section className="pss-chapter pss-chapter-profit" aria-label={tx(lang, ["Profit intelligence", "ذكاء الأرباح"])}>
         <ProfitStory lang={lang} />
       </section>
       <section className="pss-chapter" aria-label={tx(lang, ["PrizeSkout capabilities", "قدرات PrizeSkout"])}>

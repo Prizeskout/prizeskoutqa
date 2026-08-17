@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/channels/connect")({
 
         try {
           if (platform === "talabat") {
-            const { client_id, client_secret, vendor_id, chain_id, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution } = body;
+            const { client_id, client_secret, vendor_id, chain_id, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, environment } = body;
             if (!client_id || !client_secret || !vendor_id || !chain_id || !commission_rate_pct) {
               return resp({ error: "Talabat requires client_id, client_secret, vendor_id, chain_id, and commission_rate_pct." }, 400);
             }
@@ -67,9 +67,16 @@ export const Route = createFileRoute("/api/channels/connect")({
               vendorId: vendor_id, chainId: chain_id, commissionRatePct: commission_rate_pct,
               vatOnFeesPct: vat_on_fees_pct, paymentFeePct: payment_fee_pct,
               fixedOrderFee: fixed_order_fee, deliveryContribution: delivery_contribution,
+              environment: environment === "sandbox" ? "sandbox" : "production",
             });
             return result.ok
-              ? resp({ ok: true, platform, status: "connected" }, 200)
+              ? resp({
+                  ok: true,
+                  platform,
+                  status: "connected",
+                  environment: environment === "sandbox" ? "sandbox" : "production",
+                  webhook_url: `${new URL(request.url).origin}/api/webhooks/talabat?token=${result.webhookToken}`,
+                }, 200)
               : resp({ ok: false, error: result.message }, 200);
           }
 

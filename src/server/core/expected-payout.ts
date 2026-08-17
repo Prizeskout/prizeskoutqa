@@ -180,6 +180,7 @@ export async function getTalabatExpectedPayout(
     accessToken: token.accessToken,
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
+    environment: metadata.environment === "sandbox" ? "sandbox" : "production",
   });
 
   if (!ordersResult.ok || !ordersResult.data) {

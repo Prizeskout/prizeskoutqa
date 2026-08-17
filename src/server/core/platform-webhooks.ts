@@ -626,6 +626,95 @@ export async function handleKeetaWebhook(request: Request): Promise<Response> {
   return ok({ received: true, event_id: payload.eventId ?? null, processed: false, reason: "order_events_not_yet_wired_to_pipeline" });
 }
 
+// Talabat Partner API order callbacks do not document a request-signature
+// scheme. Each connection therefore gets an unguessable 256-bit receiver
+// token, supplied in the webhook URL configured in Partner Portal.
+export async function handleTalabatWebhook(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const suppliedToken = request.headers.get("x-prizeskout-webhook-token") ?? url.searchParams.get("token");
+  if (!suppliedToken) return err("Missing webhook token", 401);
+
+  let payload: Record<string, unknown>;
+  try { payload = await request.json() as Record<string, unknown>; }
+  catch { return err("Invalid JSON", 400); }
+
+  const vendor = payload.vendor && typeof payload.vendor === "object"
+    ? payload.vendor as Record<string, unknown>
+    : {};
+  const vendorId = String(payload.vendor_id ?? payload.vendorId ?? vendor.id ?? vendor.store_id ?? "");
+  if (!vendorId) return err("Missing vendor identifier", 400);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabaseAdmin as any;
+  const { data: candidates } = await db
+    .from("ps_merchant_channels")
+    .select("id,account_id,licensee_id,merchant_id,webhook_secret,metadata")
+    .eq("platform", "talabat")
+    .eq("status", "connected")
+    .contains("metadata", { vendor_id: vendorId });
+  const channel = (candidates ?? []).find((row: { webhook_secret: string | null }) => row.webhook_secret === suppliedToken);
+  if (!channel) return err("Invalid webhook token", 401);
+
+  const eventName = String(payload.event ?? payload.status ?? payload.order_status ?? payload.type ?? "order.updated");
+  const order = payload.order && typeof payload.order === "object"
+    ? payload.order as Record<string, unknown>
+    : payload;
+  const orderId = String(order.order_id ?? order.id ?? order.order_code ?? payload.order_id ?? "");
+  const eventId = String(payload.event_id ?? payload.eventId ?? payload.id ?? "");
+  const occurredAt = String(payload.timestamp ?? payload.occurred_at ?? payload.created_at ?? new Date().toISOString());
+  const eventKey = eventId || `${orderId || "vendor"}:${eventName}:${occurredAt}`;
+
+  const { data: inserted, error: eventError } = await db.from("ps_talabat_webhook_events").insert({
+    channel_id: channel.id,
+    account_id: channel.account_id,
+    licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id,
+    event_name: eventName,
+    event_key: eventKey,
+    external_order_id: orderId || null,
+    occurred_at: occurredAt,
+    environment: channel.metadata?.environment === "sandbox" ? "sandbox" : "production",
+    payload,
+    status: "processed",
+    processed_at: new Date().toISOString(),
+  }).select("id").maybeSingle();
+
+  if (eventError?.code === "23505") return ok({ received: true, processed: false, duplicate: true, event_key: eventKey });
+  if (eventError) {
+    console.error("[talabat-webhook] event persistence failed", eventError.message);
+    return err("Failed to persist webhook", 500);
+  }
+
+  if (orderId) {
+    const payment = order.payment && typeof order.payment === "object" ? order.payment as Record<string, unknown> : {};
+    const items = Array.isArray(order.products) ? order.products : Array.isArray(order.items) ? order.items : [];
+    const status = String(order.status ?? payload.status ?? payload.order_status ?? eventName);
+    const subtotal = Number(payment.sub_total ?? order.sub_total ?? order.subtotal ?? 0);
+    const total = Number(payment.order_total ?? order.order_total ?? order.total ?? 0);
+    await db.from("ps_talabat_orders").upsert({
+      channel_id: channel.id,
+      account_id: channel.account_id,
+      licensee_id: channel.licensee_id,
+      merchant_id: channel.merchant_id,
+      external_order_id: orderId,
+      order_code: String(order.order_code ?? "") || null,
+      vendor_id: vendorId,
+      status,
+      currency: String(payment.currency ?? order.currency ?? "QAR"),
+      subtotal: Number.isFinite(subtotal) ? subtotal : null,
+      total: Number.isFinite(total) ? total : null,
+      delivery_type: String(order.delivery_type ?? payload.delivery_type ?? "") || null,
+      items,
+      raw_order: order,
+      last_event_id: inserted?.id ?? null,
+      occurred_at: occurredAt,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "channel_id,external_order_id" });
+  }
+
+  return ok({ received: true, processed: true, event_key: eventKey, order_id: orderId || null });
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
