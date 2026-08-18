@@ -19,6 +19,7 @@
     "verify-salla-contract": "tsx scripts/verify-salla-contract.mts",
     "verify-talabat-contract": "tsx scripts/verify-talabat-contract.mts",
     "verify-keeta-contract": "tsx scripts/verify-keeta-contract.mts",
+    "verify-shadow-intelligence": "tsx scripts/verify-shadow-intelligence.mts",
     "verify-zid-contract": "tsx scripts/verify-zid-contract.mts",
     "verify-merchant-errors": "tsx scripts/verify-merchant-errors.mts",
     "test:e2e": "tsx --env-file=.env.local scripts/e2e-app.mts",

@@ -70,6 +70,7 @@ import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWeeklyMarginDigestRouteImport } from './routes/api/public/hooks/weekly-margin-digest'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
+import { Route as ApiPublicHooksShadowIntelligenceRouteImport } from './routes/api/public/hooks/shadow-intelligence'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/public/hooks/map-monitor'
 import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/public/hooks/group-expire'
@@ -391,6 +392,12 @@ const ApiPublicHooksWebhookIntelligenceRetryRoute =
     path: '/api/public/hooks/webhook-intelligence-retry',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksShadowIntelligenceRoute =
+  ApiPublicHooksShadowIntelligenceRouteImport.update({
+    id: '/api/public/hooks/shadow-intelligence',
+    path: '/api/public/hooks/shadow-intelligence',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   id: '/api/public/hooks/scrape-all',
   path: '/api/public/hooks/scrape-all',
@@ -527,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
@@ -599,6 +607,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
@@ -675,6 +684,7 @@ export interface FileRoutesById {
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
+  '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
@@ -752,6 +762,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/group-expire'
     | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/shadow-intelligence'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/hooks/weekly-margin-digest'
@@ -824,6 +835,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/group-expire'
     | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/shadow-intelligence'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/hooks/weekly-margin-digest'
@@ -899,6 +911,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/group-expire'
     | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
+    | '/api/public/hooks/shadow-intelligence'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/hooks/weekly-margin-digest'
@@ -956,6 +969,7 @@ export interface RootRouteChildren {
   ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
   ApiPublicHooksMapMonitorRoute: typeof ApiPublicHooksMapMonitorRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
+  ApiPublicHooksShadowIntelligenceRoute: typeof ApiPublicHooksShadowIntelligenceRoute
   ApiPublicHooksWebhookIntelligenceRetryRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
   ApiPublicHooksWeeklyMarginDigestRoute: typeof ApiPublicHooksWeeklyMarginDigestRoute
@@ -1393,6 +1407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/shadow-intelligence': {
+      id: '/api/public/hooks/shadow-intelligence'
+      path: '/api/public/hooks/shadow-intelligence'
+      fullPath: '/api/public/hooks/shadow-intelligence'
+      preLoaderRoute: typeof ApiPublicHooksShadowIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/scrape-all': {
       id: '/api/public/hooks/scrape-all'
       path: '/api/public/hooks/scrape-all'
@@ -1626,6 +1647,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,
   ApiPublicHooksMapMonitorRoute: ApiPublicHooksMapMonitorRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
+  ApiPublicHooksShadowIntelligenceRoute: ApiPublicHooksShadowIntelligenceRoute,
   ApiPublicHooksWebhookIntelligenceRetryRoute:
     ApiPublicHooksWebhookIntelligenceRetryRoute,
   ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
