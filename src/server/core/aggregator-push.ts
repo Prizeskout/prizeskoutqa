@@ -3,7 +3,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { JAHEZ_BASE } from "./byok-connect";
-import { getValidTalabatAccessToken, talabatBaseUrl } from "./talabat-client";
+import { getValidTalabatAccessToken, updateTalabatPrice } from "./talabat-client";
 
 type PushResult = {
   ok: boolean;
@@ -56,42 +56,17 @@ export async function pushTalabatPrice(
   });
   if (!token) return { ok: false, platform: "talabat", message: "Token exchange failed" };
 
-  const res = await fetch(
-    `${talabatBaseUrl(meta?.environment === "sandbox" ? "sandbox" : "production")}/chains/${chainId}/vendors/${vendorId}/catalog`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        products: items.map(({ sku, price, active = true }) => ({ sku, price, active })),
-      }),
-    },
-  ).catch(() => null);
-
-  if (!res) return { ok: false, platform: "talabat", message: "Network error" };
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    return { ok: false, platform: "talabat", message: `HTTP ${res.status}: ${text.slice(0, 200)}` };
+  let lastJobId:string|undefined;
+  for(const item of items){
+    const result=await updateTalabatPrice({
+      chainId,vendorId,sku:item.sku,newPrice:item.price,accessToken:token,
+      environment:meta?.environment==="sandbox"?"sandbox":"production",
+      tracking:{channelId:channel.id,accountId:channel.account_id,licenseeId:channel.licensee_id,merchantId:channel.merchant_id},
+    });
+    if(!result.ok)return {ok:false,platform:"talabat",message:result.message??`HTTP ${result.httpStatus}`};
+    lastJobId=(result.data as {job_id?:string}|undefined)?.job_id;
   }
-
-  const data = await res.json().catch(() => ({})) as { job_id?: string; job_status?: string };
-  if (!data.job_id) return { ok: false, platform: "talabat", message: "Talabat accepted the update without returning a job ID" };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabaseAdmin as any).from("ps_talabat_catalog_jobs").upsert({
-    channel_id: channel.id,
-    account_id: channel.account_id,
-    licensee_id: channel.licensee_id,
-    merchant_id: channel.merchant_id,
-    environment: meta?.environment === "sandbox" ? "sandbox" : "production",
-    job_id: data.job_id,
-    operation: "update_products",
-    status: data.job_status ?? "QUEUED",
-    requested_products: items,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "channel_id,job_id" });
-  return { ok: true, platform: "talabat", jobId: data.job_id };
+  return {ok:true,platform:"talabat",jobId:lastJobId};
 }
 
 // ── Jahez ─────────────────────────────────────────────────────────────────────

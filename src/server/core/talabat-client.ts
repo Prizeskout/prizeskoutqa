@@ -188,7 +188,7 @@ export async function updateTalabatPrice(params: {
       // New table is intentionally accessed through an untyped boundary until
       // generated Supabase types include the hardening migration.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseAdmin as any).from("ps_talabat_catalog_jobs").upsert({
+      await supabaseAdmin.from("ps_talabat_catalog_jobs").upsert({
         channel_id: params.tracking.channelId,
         account_id: params.tracking.accountId,
         licensee_id: params.tracking.licenseeId,
@@ -235,6 +235,80 @@ export async function verifyTalabatVendorAccess(params: {
   } catch (error) {
     const timeout = error instanceof Error && error.name === "AbortError";
     return { ok: false, httpStatus: timeout ? 504 : 500, message: timeout ? "ERR_TALABAT_TIMEOUT" : String(error), durationMs: Date.now() - start };
+  }
+}
+
+export async function getTalabatCatalogJob(params: {
+  chainId: string;
+  jobId: string;
+  accessToken: string;
+  environment?: TalabatEnvironment;
+}): Promise<TalabatCallResult<{job_id?:string;job_status?:string;status?:string}>> {
+  const {chainId,jobId,accessToken,environment="production"}=params;
+  const start=Date.now();
+  try{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),8000);
+    const response=await fetch(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/catalog/jobs/${encodeURIComponent(jobId)}`,{
+      headers:{Accept:"application/json",Authorization:`Bearer ${accessToken}`},signal:controller.signal,
+    });
+    clearTimeout(timeout);
+    if(!response.ok){
+      const message=await response.text().catch(()=>"");
+      return {ok:false,httpStatus:response.status,message:message.slice(0,400)||`HTTP ${response.status}`,durationMs:Date.now()-start};
+    }
+    return {ok:true,httpStatus:response.status,data:await response.json().catch(()=>({})),durationMs:Date.now()-start};
+  }catch(error){
+    const timedOut=error instanceof Error&&error.name==="AbortError";
+    return {ok:false,httpStatus:timedOut?504:500,message:timedOut?"ERR_TALABAT_TIMEOUT":String(error),durationMs:Date.now()-start};
+  }
+}
+
+function findCatalogSku(value:unknown,sku:string):Record<string,unknown>|null{
+  if(Array.isArray(value)){
+    for(const entry of value){const found=findCatalogSku(entry,sku);if(found)return found;}
+    return null;
+  }
+  if(!value||typeof value!=="object")return null;
+  const row=value as Record<string,unknown>;
+  if(String(row.sku??row.SKU??"")===sku)return row;
+  for(const child of Object.values(row)){
+    if(child&&typeof child==="object"){
+      const found=findCatalogSku(child,sku);if(found)return found;
+    }
+  }
+  return null;
+}
+
+export async function readTalabatCatalogPrice(params:{
+  chainId:string;vendorId:string;sku:string;accessToken:string;environment?:TalabatEnvironment;
+}):Promise<TalabatCallResult<{sku:string;price:number}>>{
+  const {chainId,vendorId,sku,accessToken,environment="production"}=params;
+  const start=Date.now();
+  try{
+    for(let page=1;page<=20;page++){
+      const url=new URL(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/catalog`);
+      url.searchParams.set("page",String(page));url.searchParams.set("page_size","500");
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),8000);
+      const response=await fetch(url,{headers:{Accept:"application/json",Authorization:`Bearer ${accessToken}`},signal:controller.signal});
+      clearTimeout(timeout);
+      if(!response.ok){
+        const message=await response.text().catch(()=>"");
+        return {ok:false,httpStatus:response.status,message:message.slice(0,400)||`HTTP ${response.status}`,durationMs:Date.now()-start};
+      }
+      const payload=await response.json().catch(()=>null);
+      const product=findCatalogSku(payload,sku);
+      const price=Number(product?.price??product?.unit_price);
+      if(product&&Number.isFinite(price))return {ok:true,httpStatus:200,data:{sku,price},durationMs:Date.now()-start};
+      const pageData=payload&&typeof payload==="object"&&!Array.isArray(payload)?payload as Record<string,unknown>:{};
+      const totalPages=Number(pageData.total_pages??pageData.totalPages??page);
+      if(!Number.isFinite(totalPages)||page>=totalPages)break;
+    }
+    return {ok:false,httpStatus:404,message:`Talabat catalogue did not return a price for SKU ${sku}.`,durationMs:Date.now()-start};
+  }catch(error){
+    const timedOut=error instanceof Error&&error.name==="AbortError";
+    return {ok:false,httpStatus:timedOut?504:500,message:timedOut?"ERR_TALABAT_TIMEOUT":String(error),durationMs:Date.now()-start};
   }
 }
 

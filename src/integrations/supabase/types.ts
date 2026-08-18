@@ -78,6 +78,7 @@ export type Database = {
       ps_dispatch_queue: MutableTable<{
         id:string;account_id:string;licensee_id:string;ingest_event_id:string;decide_result_id:string
         merchant_id:string;channel:string;sku:string;old_price:number;target_price:number;currency:string
+        region:string;parent_dispatch_id:string|null;dedupe_key:string
         economics_version_id:string;state:string;priority:number;attempts:number;max_attempts:number
         available_at:string|null;lease_owner:string|null;lease_expires_at:string|null;upstream_job_id:string|null
         last_error:string|null;accepted_at:string|null;confirmed_at:string|null;rollback_reason:string|null
@@ -85,6 +86,55 @@ export type Database = {
       }>
       ps_channel_rate_limits: MutableTable<{
         account_id:string;channel:string;max_concurrency:number;requests_per_minute:number
+      }>
+      ps_talabat_webhook_events: MutableTable<{
+        id:string;channel_id:string;account_id:string;licensee_id:string;merchant_id:string
+        environment:string;event_name:string;event_key:string;callback_kind:string
+        external_order_id:string|null;job_id:string|null;occurred_at:string|null;status:string
+        payload:Json;payload_hash:string|null;error_message:string|null;processed_at:string|null;created_at:string
+      }>
+      ps_talabat_orders: MutableTable<{
+        id:string;channel_id:string;account_id:string;licensee_id:string;merchant_id:string
+        external_order_id:string;order_code:string|null;vendor_id:string;chain_id:string|null
+        country_code:string|null;order_type:string|null;transport_type:string|null;status:string|null
+        currency:string;subtotal:number|null;total:number|null;tax_total:number|null;delivery_fee:number|null
+        service_fee:number|null;discount_total:number|null;payment_type:string|null;delivery_type:string|null
+        cancellation:Json|null;promotion_status:string|null;items:Json;raw_order:Json
+        last_event_id:string|null;occurred_at:string|null;sys_updated_at:string|null;created_at:string;updated_at:string
+      }>
+      ps_talabat_catalog_jobs: MutableTable<{
+        id:string;channel_id:string;account_id:string;licensee_id:string;merchant_id:string
+        environment:string;job_id:string;operation:string;source_plan_id:string|null;status:string
+        requested_products:Json;download_url:string|null;callback_payload:Json|null
+        completed_at:string|null;created_at:string;updated_at:string
+      }>
+      ps_keeta_webhook_events: MutableTable<{
+        id:string;channel_id:string;account_id:string;licensee_id:string;merchant_id:string
+        event_id:string;message_id:string;shop_id:string;occurred_at:string|null;status:string
+        payload:Json;message:Json;error_message:string|null;processed_at:string|null;created_at:string
+      }>
+      ps_keeta_orders: MutableTable<{
+        id:string;channel_id:string;account_id:string;licensee_id:string;merchant_id:string
+        external_order_id:string;order_code:string|null;shop_id:string;status:string|null;currency:string|null
+        subtotal:number|null;discount_total:number|null;delivery_fee:number|null;tax_total:number|null;total:number|null
+        items:Json;raw_order:Json;source:string;last_message_id:string|null;occurred_at:string|null
+        created_at:string;updated_at:string
+      }>
+      ps_keeta_catalog_items: MutableTable<{
+        id:string;channel_id:string;account_id:string;licensee_id:string;merchant_id:string;shop_id:string
+        spu_open_item_code:string;sku_open_item_code:string;name:string|null;currency:string|null
+        price:number|null;status:string|null;native_spu:Json;native_sku:Json;source_hash:string
+        synced_at:string;created_at:string;updated_at:string
+      }>
+      ps_zid_webhook_events: MutableTable<{
+        id:string;channel_id:string;account_id:string;event_name:string;event_key:string;store_id:string
+        external_order_id:string|null;status:string;payload:Json;error_message:string|null
+        created_at:string;processed_at:string|null
+      }>
+      ps_zid_orders: MutableTable<{
+        id:string;channel_id:string;account_id:string;external_order_id:string;order_code:string|null
+        status:string|null;payment_status:string|null;currency:string;total:number|null;items:Json
+        raw_order:Json;occurred_at:string|null;created_at:string;updated_at:string
       }>
       ps_latency_spans: MutableTable<{
         id:number;trace_id:string;account_id:string;stage:string;duration_ms:number
@@ -4415,6 +4465,10 @@ export type Database = {
       }
     }
     Functions: {
+      ps_lease_dispatch_jobs: {
+        Args: { p_owner: string; p_limit?: number }
+        Returns: Database["public"]["Tables"]["ps_dispatch_queue"]["Row"][]
+      }
       current_account_for_user: {
         Args: { _user_id: string }
         Returns: {

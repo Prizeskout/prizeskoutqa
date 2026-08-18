@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { getValidKeetaAccessToken, keetaApiCall } from "./keeta-client";
 
 type ObjectMap = Record<string, unknown>;
@@ -61,17 +62,17 @@ export async function reconcileKeetaOrder(
   if (!normalized) return { processed: false, reason: "not_an_order_event" };
   const occurredAt = normalized.occurred_at && !Number.isNaN(Date.parse(normalized.occurred_at))
     ? new Date(normalized.occurred_at).toISOString() : null;
-  const { error } = await (supabaseAdmin as any).from("ps_keeta_orders").upsert({
+  const { error } = await supabaseAdmin.from("ps_keeta_orders").upsert({
     channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
     merchant_id: channel.merchant_id, shop_id: shopId, ...normalized, occurred_at: occurredAt,
-    raw_order: message, source, last_message_id: messageId ?? null, updated_at: new Date().toISOString(),
+    items: normalized.items as Json, raw_order: message as Json, source, last_message_id: messageId ?? null, updated_at: new Date().toISOString(),
   }, { onConflict: "channel_id,external_order_id" });
   if (error) throw error;
   return { processed: true, externalOrderId: normalized.external_order_id };
 }
 
 export async function importKeetaCatalog(channel: KeetaChannel, shopId: string, spuList: unknown[]) {
-  const rows: ObjectMap[] = [];
+  const rows: Database["public"]["Tables"]["ps_keeta_catalog_items"]["Insert"][] = [];
   for (const rawSpu of spuList) {
     const spu = object(rawSpu);
     const spuCode = text(spu.openItemCode, spu.spuOpenItemCode, spu.id);
@@ -84,13 +85,13 @@ export async function importKeetaCatalog(channel: KeetaChannel, shopId: string, 
         channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
         merchant_id: channel.merchant_id, shop_id: shopId, spu_open_item_code: spuCode,
         sku_open_item_code: skuCode, name: text(spu.name, sku.name), currency: text(sku.currency, spu.currency),
-        price: number(sku.price), status: text(spu.status, sku.status), native_spu: spu, native_sku: sku,
+        price: number(sku.price), status: text(spu.status, sku.status), native_spu: spu as Json, native_sku: sku as Json,
         source_hash: await sha256({ spu, sku }), synced_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       });
     }
   }
   if (!rows.length) return { imported: 0 };
-  const { error } = await (supabaseAdmin as any).from("ps_keeta_catalog_items")
+  const { error } = await supabaseAdmin.from("ps_keeta_catalog_items")
     .upsert(rows, { onConflict: "channel_id,sku_open_item_code" });
   if (error) throw error;
   return { imported: rows.length };
@@ -99,10 +100,14 @@ export async function importKeetaCatalog(channel: KeetaChannel, shopId: string, 
 export async function publishKeetaPrice(channel: KeetaChannel, skuCode: string, price: number) {
   const shopId = text(channel.metadata?.shop_id);
   if (!shopId) return { ok: false, httpStatus: 422, message: "ERR_KEETA_SHOP_ID_MISSING", durationMs: 0 };
-  const { data: cached, error } = await (supabaseAdmin as any).from("ps_keeta_catalog_items")
-    .select("id,native_spu,sku_open_item_code").eq("channel_id", channel.id)
+  const { data: cached, error } = await supabaseAdmin.from("ps_keeta_catalog_items")
+    .select("id,native_spu,sku_open_item_code,synced_at").eq("channel_id", channel.id)
     .eq("sku_open_item_code", skuCode).maybeSingle();
   if (error || !cached) return { ok: false, httpStatus: 409, message: "ERR_KEETA_CATALOG_NOT_SYNCED", durationMs: 0 };
+  const syncedAt=Date.parse(String(cached.synced_at??""));
+  if(!Number.isFinite(syncedAt)||Date.now()-syncedAt>15*60_000){
+    return {ok:false,httpStatus:409,message:"ERR_KEETA_CATALOG_STALE: refresh the Keeta menu before publishing a price.",durationMs:0};
+  }
 
   const spu = structuredClone(object(cached.native_spu));
   const skus = array(spu.skuList ?? spu.skus).map(raw => {
@@ -121,8 +126,8 @@ export async function publishKeetaPrice(channel: KeetaChannel, skuCode: string, 
     accessToken: token.accessToken, complexFields: { spuList: [spu] },
   });
   if (result.ok) {
-    await (supabaseAdmin as any).from("ps_keeta_catalog_items").update({
-      native_spu: spu, price, source_hash: await sha256(spu), updated_at: new Date().toISOString(),
+    await supabaseAdmin.from("ps_keeta_catalog_items").update({
+      native_spu: spu as Json, price, source_hash: await sha256(spu), updated_at: new Date().toISOString(),
     }).eq("id", cached.id);
   }
   return result;

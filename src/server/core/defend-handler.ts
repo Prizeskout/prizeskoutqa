@@ -145,13 +145,18 @@ type ChannelCreds = {
 async function getChannelCreds(accountId: string, merchantId: string, channel: string): Promise<ChannelCreds | null> {
   const { data } = await supabaseAdmin
     .from("ps_merchant_channels")
-    .select("bearer_token, manager_token, status")
+    .select("id,account_id,licensee_id,merchant_id,bearer_token,manager_token,metadata,status")
     .eq("account_id", accountId)
     .eq("merchant_id", merchantId)
     .eq("platform", channel)
     .eq("status", "connected")
     .maybeSingle();
-  return data ?? null;
+  return data ? {
+    ...data,
+    metadata: data.metadata && typeof data.metadata === "object" && !Array.isArray(data.metadata)
+      ? data.metadata as Record<string, unknown>
+      : null,
+  } : null;
 }
 
 async function callAggregatorApi(
@@ -348,9 +353,11 @@ async function callAggregatorApi(
     // "no route matched" error, which doesn't confirm or rule anything out.
     // This needs a real merchant's credentials to actually confirm; treat
     // dispatch failures for Jahez as unproven until then.
-    url = `https://integration-api.jahez.net/v2/branch/${locationId ?? "default"}/items/update`;
-    headers["Authorization"] = `Bearer ${creds.bearer_token ?? ""}`;
-    body = { item_code: sku, new_price: newPrice, currency };
+    return {
+      success:false,httpStatus:503,
+      message:"ERR_JAHEZ_PARTNER_ACTIVATION_REQUIRED: automatic Jahez publishing is unavailable until PrizeSkout is approved and the API contract is verified.",
+      durationMs:Date.now()-start,
+    };
   } else if (channel === "snoonu") {
     // CONFIRMED BROKEN, NOT YET FIXED: partner-api.snoonu.com does not
     // exist (DNS failure, verified directly) — same defect class as the

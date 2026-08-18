@@ -1,0 +1,43 @@
+name: Integration contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "20 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  deterministic-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify-margin-policy
+      - run: npm run verify-talabat-contract
+      - run: npm run typecheck
+
+  live-margin-contract:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      VERIFY_MARGIN_WORKER_URL: ${{ secrets.VERIFY_MARGIN_WORKER_URL }}
+      VERIFY_MARGIN_USER_ID: ${{ secrets.VERIFY_MARGIN_USER_ID }}
+      VERIFY_MARGIN_LICENSEE_ID: ${{ secrets.VERIFY_MARGIN_LICENSEE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify required test-environment secrets
+        run: test -n "$SUPABASE_URL" && test -n "$SUPABASE_SERVICE_ROLE_KEY" && test -n "$VERIFY_MARGIN_WORKER_URL" && test -n "$VERIFY_MARGIN_USER_ID" && test -n "$VERIFY_MARGIN_LICENSEE_ID"
+      - run: npx tsx scripts/verify-margin.mts

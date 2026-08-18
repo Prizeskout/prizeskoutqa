@@ -32,6 +32,7 @@ import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { handleSallaAppEvent, isSallaAppEvent } from "./salla-easy-mode";
 import { isSallaOperationalEvent, processSallaOperationalEvent } from "./salla-store-events";
 import { constantTimeTokenMatch, parseTalabatCallback, talabatStaticToken } from "./talabat-contract";
+import { reconcileTalabatConfirmationByJobId } from "./dispatch-queue";
 
 // ---------------------------------------------------------------------------
 // Event allow-lists — only pricing-relevant events trigger the pipeline
@@ -465,11 +466,11 @@ export async function handleZidWebhook(request: Request): Promise<Response> {
   const data = payload.data as Record<string, unknown> | undefined ?? {};
   const externalOrderId = ZID_ORDER_EVENTS.has(event) ? String(data.id ?? data.order_id ?? data.orderId ?? "") : null;
   const eventKey = await zidEventKey(event, storeId, data, rawBody);
-  const zidDb = supabaseAdmin as any;
+  const zidDb = supabaseAdmin;
   const { error: eventInsertError } = await zidDb.from("ps_zid_webhook_events").insert({
     channel_id: channel.id, account_id: channel.account_id, event_name: event,
     event_key: eventKey, store_id: storeId, external_order_id: externalOrderId || null,
-    payload,
+    payload: payload as Json,
   });
   if (eventInsertError?.code === "23505") return ok({ received: true, processed: true, idempotency_replay: true });
   if (eventInsertError) return err("Failed to persist Zid webhook", 500);
@@ -483,7 +484,7 @@ export async function handleZidWebhook(request: Request): Promise<Response> {
     const { error: orderError } = await zidDb.from("ps_zid_orders").upsert({
       channel_id: channel.id, account_id: channel.account_id, external_order_id: externalOrderId,
       order_code: order.orderCode, status: order.status, payment_status: order.paymentStatus,
-      currency: order.currency, total: order.total, items: order.items, raw_order: data,
+      currency: order.currency, total: order.total, items: order.items as Json, raw_order: data as Json,
       occurred_at: order.occurredAt, updated_at: new Date().toISOString(),
     }, { onConflict: "channel_id,external_order_id" });
     if (orderError) {
@@ -555,7 +556,7 @@ async function zidEventKey(event: string, storeId: string, data: Record<string, 
   return `${event}:${storeId}:${hash}`;
 }
 
-async function markZidWebhook(db: any, channelId: string, eventKey: string, status: "processed" | "failed", errorMessage?: string) {
+async function markZidWebhook(db: typeof supabaseAdmin, channelId: string, eventKey: string, status: "processed" | "failed", errorMessage?: string) {
   await db.from("ps_zid_webhook_events").update({ status, error_message: errorMessage ?? null, processed_at: new Date().toISOString() })
     .eq("channel_id", channelId).eq("event_key", eventKey);
 }
@@ -684,7 +685,7 @@ export async function handleKeetaWebhook(request: Request): Promise<Response> {
   // envelope before acknowledging it; duplicate delivery is successful but
   // never processed twice.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabaseAdmin as any;
+  const db = supabaseAdmin;
   const { error: insertError } = await db.from("ps_keeta_webhook_events").insert({
     channel_id: channel.id,
     account_id: channel.account_id,
@@ -697,8 +698,8 @@ export async function handleKeetaWebhook(request: Request): Promise<Response> {
       ? new Date(Number(envelope.timestamp) * (envelope.timestamp.length <= 10 ? 1000 : 1)).toISOString()
       : null,
     status: "received",
-    payload,
-    message: envelope.message,
+    payload: payload as Json,
+    message: envelope.message as Json,
   });
   if (insertError?.code === "23505") {
     return ok({ received: true, replay: true, event_id: envelope.eventId });
@@ -741,7 +742,7 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
   if (kind === "catalog" && !jobId) return err("Missing job_id", 400);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabaseAdmin as any;
+  const db = supabaseAdmin;
   const { data: candidates } = await db
     .from("ps_merchant_channels")
     .select("id,account_id,licensee_id,merchant_id,webhook_secret,metadata")
@@ -751,6 +752,8 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
   const channel = (candidates ?? []).find((row: { webhook_secret: string | null }) =>
     constantTimeTokenMatch(suppliedToken, row.webhook_secret ?? ""));
   if (!channel) return err("Invalid webhook token", 401);
+  const channelMetadata = channel.metadata && typeof channel.metadata === "object" && !Array.isArray(channel.metadata)
+    ? channel.metadata as Record<string, Json | undefined> : {};
 
   const { data: inserted, error: eventError } = await db.from("ps_talabat_webhook_events").insert({
     channel_id: channel.id,
@@ -764,8 +767,8 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
     job_id: kind === "catalog" ? jobId : null,
     occurred_at: occurredAt,
     payload_hash: payloadHash,
-    environment: channel.metadata?.environment === "sandbox" ? "sandbox" : "production",
-    payload,
+    environment: channelMetadata.environment === "sandbox" ? "sandbox" : "production",
+    payload: payload as Json,
     status: "processed",
     processed_at: new Date().toISOString(),
   }).select("id").maybeSingle();
@@ -782,11 +785,11 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
       account_id: channel.account_id,
       licensee_id: channel.licensee_id,
       merchant_id: channel.merchant_id,
-      environment: channel.metadata?.environment === "sandbox" ? "sandbox" : "production",
+      environment: channelMetadata.environment === "sandbox" ? "sandbox" : "production",
       job_id: jobId,
       status,
       download_url: typeof payload.download_url === "string" ? payload.download_url : null,
-      callback_payload: payload,
+      callback_payload: payload as Json,
       completed_at: ["COMPLETED", "FAILED"].includes(status) ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     }, { onConflict: "channel_id,job_id" }).select("source_plan_id").maybeSingle();
@@ -801,6 +804,10 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
         ...(pending ? {} : { published_at: new Date().toISOString() }),
         updated_at: new Date().toISOString(),
       }).eq("id", catalogJob.source_plan_id);
+    }
+    if (status === "COMPLETED") {
+      try { await reconcileTalabatConfirmationByJobId(jobId); }
+      catch (error) { console.error("[talabat-webhook] dispatch confirmation failed", { job_id: jobId, error }); }
     }
   } else {
     const payment = payload.payment && typeof payload.payment === "object" ? payload.payment as Record<string, unknown> : {};
@@ -819,7 +826,7 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
       chain_id: String(client.chain_id ?? "") || null,
       country_code: String(client.country_code ?? "") || null,
       status,
-      currency: String(payment.currency ?? channel.metadata?.contract_currency ?? "QAR"),
+      currency: String(payment.currency ?? channelMetadata.contract_currency ?? "QAR"),
       subtotal: Number.isFinite(subtotal) ? subtotal : null,
       total: Number.isFinite(total) ? total : null,
       order_type: String(payload.order_type ?? "") || null,
@@ -830,10 +837,10 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
       delivery_fee: numeric(payment.delivery_fee),
       service_fee: numeric(payment.service_fee),
       discount_total: numeric(payment.discount),
-      cancellation: payload.cancellation ?? null,
+      cancellation: (payload.cancellation ?? null) as Json,
       promotion_status: String(payload.promotion_status ?? "") || null,
-      items,
-      raw_order: payload,
+      items: items as Json,
+      raw_order: payload as Json,
       last_event_id: inserted?.id ?? null,
       occurred_at: occurredAt,
       sys_updated_at: String(sys.updated_at ?? "") || null,
