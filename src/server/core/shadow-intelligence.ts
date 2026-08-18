@@ -22,6 +22,7 @@ type ShadowDatabase = {
         Row: { id:string; decide_result_id:string; model_version_id:string };
         Insert: {
           account_id:string; licensee_id:string; merchant_id:string; region:string;
+          source_platform?:string|null;
           ingest_event_id:string; decide_result_id:string; model_version_id:string; sku:string;
           observed_price:number; candidate_price:number; predicted_margin:number;
           predicted_margin_pct:number; predicted_demand_change_pct:number|null;
@@ -68,6 +69,12 @@ export async function runShadowIntelligence(limitPerAccount=100) {
     if(error)throw error;
     if(!decisions?.length)continue;
 
+    const ingestIds=decisions.map(decision=>decision.ingest_event_id);
+    const {data:ingestEvents,error:ingestError}=await supabaseAdmin.from("ps_ingest_events")
+      .select("id,source_platform").in("id",ingestIds);
+    if(ingestError)throw ingestError;
+    const sourceByIngest=new Map((ingestEvents??[]).map(event=>[event.id,event.source_platform]));
+
     const decisionIds=decisions.map(decision=>decision.id);
     const {data:existing,error:existingError}=await shadowDb.from("ps_shadow_predictions")
       .select("decide_result_id").eq("model_version_id",model.id).in("decide_result_id",decisionIds);
@@ -85,6 +92,7 @@ export async function runShadowIntelligence(limitPerAccount=100) {
       return {
         account_id:decision.account_id,licensee_id:decision.licensee_id,merchant_id:decision.merchant_id,
         region:decision.region,ingest_event_id:decision.ingest_event_id,decide_result_id:decision.id,
+        source_platform:sourceByIngest.get(decision.ingest_event_id)??null,
         model_version_id:model.id,sku:decision.sku,observed_price:prediction.observedPrice,
         candidate_price:prediction.candidatePrice,predicted_margin:prediction.predictedMargin,
         predicted_margin_pct:prediction.predictedMarginPct,predicted_demand_change_pct:null,

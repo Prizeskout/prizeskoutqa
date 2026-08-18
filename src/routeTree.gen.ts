@@ -76,6 +76,7 @@ import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/public/hooks/group-expire'
 import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/public/hooks/flash-start'
 import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
+import { Route as ApiPublicHooksEconomicEvidenceRouteImport } from './routes/api/public/hooks/economic-evidence'
 import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/public/hooks/dispatch-queue'
 import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
 import { Route as ApiPublicHooksCopilotSchedulesRouteImport } from './routes/api/public/hooks/copilot-schedules'
@@ -426,6 +427,12 @@ const ApiPublicHooksFlashEndRoute = ApiPublicHooksFlashEndRouteImport.update({
   path: '/api/public/hooks/flash-end',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksEconomicEvidenceRoute =
+  ApiPublicHooksEconomicEvidenceRouteImport.update({
+    id: '/api/public/hooks/economic-evidence',
+    path: '/api/public/hooks/economic-evidence',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDispatchQueueRoute =
   ApiPublicHooksDispatchQueueRouteImport.update({
     id: '/api/public/hooks/dispatch-queue',
@@ -529,6 +536,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
+  '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -602,6 +610,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
+  '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -679,6 +688,7 @@ export interface FileRoutesById {
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
+  '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
@@ -757,6 +767,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
+    | '/api/public/hooks/economic-evidence'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -830,6 +841,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
+    | '/api/public/hooks/economic-evidence'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -906,6 +918,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
+    | '/api/public/hooks/economic-evidence'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
@@ -964,6 +977,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCopilotSchedulesRoute: typeof ApiPublicHooksCopilotSchedulesRoute
   ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
   ApiPublicHooksDispatchQueueRoute: typeof ApiPublicHooksDispatchQueueRoute
+  ApiPublicHooksEconomicEvidenceRoute: typeof ApiPublicHooksEconomicEvidenceRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
   ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
@@ -1449,6 +1463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFlashEndRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/economic-evidence': {
+      id: '/api/public/hooks/economic-evidence'
+      path: '/api/public/hooks/economic-evidence'
+      fullPath: '/api/public/hooks/economic-evidence'
+      preLoaderRoute: typeof ApiPublicHooksEconomicEvidenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/dispatch-queue': {
       id: '/api/public/hooks/dispatch-queue'
       path: '/api/public/hooks/dispatch-queue'
@@ -1642,6 +1663,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksDispatchConfirmationRoute:
     ApiPublicHooksDispatchConfirmationRoute,
   ApiPublicHooksDispatchQueueRoute: ApiPublicHooksDispatchQueueRoute,
+  ApiPublicHooksEconomicEvidenceRoute: ApiPublicHooksEconomicEvidenceRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
   ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,
