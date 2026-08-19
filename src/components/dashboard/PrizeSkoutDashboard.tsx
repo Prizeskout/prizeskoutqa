@@ -2182,7 +2182,7 @@ export function PrizeSkoutDashboard() {
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [productFilter, setProductFilter] = useState<
-    "all" | "risk" | "verified_risk" | "missing_cost" | "healthy" | "repriced"
+    "all" | "risk" | "verified" | "verified_risk" | "missing_cost" | "out_of_stock" | "healthy" | "repriced"
   >("all");
   const [productSort, setProductSort] = useState<"risk" | "name" | "price">("risk");
   const [productPage, setProductPage] = useState(1);
@@ -3191,6 +3191,8 @@ export function PrizeSkoutDashboard() {
             product.inventory_status !== "out_of_stock"
           );
         if (productFilter === "missing_cost") return product.cost_confidence !== "verified";
+        if (productFilter === "verified") return product.cost_confidence === "verified";
+        if (productFilter === "out_of_stock") return product.inventory_status === "out_of_stock";
         if (productFilter === "healthy") return !product.floor_breached;
         if (productFilter === "repriced") return product.status === "repriced";
         return true;
@@ -3315,6 +3317,13 @@ export function PrizeSkoutDashboard() {
           ?.scrollIntoView({ behavior: "smooth", block: "start" }),
       0,
     );
+  };
+
+  const openCatalogFilter = (filter: typeof productFilter) => {
+    setProductSearch("");
+    setProductFilter(filter);
+    setProductPage(1);
+    window.setTimeout(() => document.getElementById("imported-products")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   };
 
   // Channel pricing gap — a headline number for what Channel Price
@@ -6681,17 +6690,17 @@ export function PrizeSkoutDashboard() {
           >
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
               {[
-                ["Catalog items", importedProducts.length, "Products received"],
-                ["Costs confirmed", storeOpportunity.verified, "Safe for calculation"],
-                ["Costs missing", storeOpportunity.estimated + storeOpportunity.unknown, "Merchant input required"],
-                ["Out of stock", importedProducts.filter(product => product.inventory_status === "out_of_stock").length, "Unavailable products"],
-                ["Connected sources", SYNC_CAPABLE_PLATFORMS.filter(platform => channelStatuses[platform] === "connected").length, "Stores feeding this catalog"],
-              ].map(([label, value, note]) => (
-                <div key={String(label)} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+                { label: "Catalog items", value: importedProducts.length, note: "Products received", action: () => openCatalogFilter("all") },
+                { label: "Costs confirmed", value: storeOpportunity.verified, note: "Safe for calculation", action: () => openCatalogFilter("verified") },
+                { label: "Costs missing", value: storeOpportunity.estimated + storeOpportunity.unknown, note: "Merchant input required", action: () => openCatalogFilter("missing_cost") },
+                { label: "Out of stock", value: importedProducts.filter(product => product.inventory_status === "out_of_stock").length, note: "Unavailable products", action: () => openCatalogFilter("out_of_stock") },
+                { label: "Connected sources", value: SYNC_CAPABLE_PLATFORMS.filter(platform => channelStatuses[platform] === "connected").length, note: "Stores feeding this catalog", action: () => setTab("vault") },
+              ].map(({ label, value, note, action }) => (
+                <button type="button" key={label} onClick={action} aria-label={`${label}: ${value}. ${note}`} style={{ background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 18px", textAlign: "left", fontFamily: "inherit", cursor: "pointer", transition: "transform .16s ease,border-color .16s ease,box-shadow .16s ease" }} onMouseEnter={event => { event.currentTarget.style.transform = "translateY(-2px)"; event.currentTarget.style.borderColor = OG; event.currentTarget.style.boxShadow = "var(--shadow)"; }} onMouseLeave={event => { event.currentTarget.style.transform = "none"; event.currentTarget.style.borderColor = "var(--border)"; event.currentTarget.style.boxShadow = "none"; }}>
                   <div style={{ color: "var(--muted)", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</div>
                   <div style={{ fontFamily: DISPLAY, fontSize: 28, fontWeight: 800, marginTop: 6 }}>{value}</div>
                   <div style={{ color: "var(--muted)", fontSize: 11.5, marginTop: 2 }}>{note}</div>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -6710,7 +6719,9 @@ export function PrizeSkoutDashboard() {
                 <input value={productSearch} onChange={event => setProductSearch(event.target.value)} placeholder="Search product, SKU, or channel…" aria-label="Search catalog" style={{ flex: "1 1 260px", minWidth: 0, border: "1px solid var(--border)", borderRadius: 9, background: "var(--surface)", color: "var(--text)", padding: "10px 12px", fontFamily: "inherit" }} />
                 <select value={productFilter} onChange={event => setProductFilter(event.target.value as typeof productFilter)} aria-label="Filter catalog" style={{ border: "1px solid var(--border)", borderRadius: 9, background: "var(--surface)", color: "var(--text)", padding: "10px 12px", fontFamily: "inherit" }}>
                   <option value="all">All products</option>
+                  <option value="verified">Costs confirmed</option>
                   <option value="missing_cost">Cost missing</option>
+                  <option value="out_of_stock">Out of stock</option>
                   <option value="risk">Needs attention</option>
                   <option value="healthy">Ready</option>
                   <option value="repriced">Price changed</option>
@@ -14802,7 +14813,7 @@ export function PrizeSkoutDashboard() {
           style={{
             position: "fixed",
             insetInlineEnd: 24,
-            bottom: 88,
+            bottom: toast ? 220 : 88,
             zIndex: 310,
             border: 0,
             borderRadius: 999,
@@ -14817,6 +14828,7 @@ export function PrizeSkoutDashboard() {
             display: "flex",
             alignItems: "center",
             gap: 8,
+            transition: "bottom .2s ease",
           }}
         >
           <span aria-hidden="true">●</span> {tr("Support", "الدعم", "Assistance")}
@@ -15106,7 +15118,7 @@ export function PrizeSkoutDashboard() {
             position: "fixed",
             bottom: 24,
             insetInlineEnd: 24,
-            zIndex: 80,
+            zIndex: 320,
             background: "var(--surface)",
             border: `1px solid color-mix(in srgb,${GN} 35%,var(--border))`,
             borderRadius: 13,
