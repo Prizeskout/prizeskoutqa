@@ -4196,7 +4196,23 @@ export function PrizeSkoutDashboard() {
             warnings: string[];
           };
           error?: string;
+          candidates?: Array<{
+            id: string;
+            name: string;
+            sku: string;
+            is_published: boolean;
+          }>;
         };
+        if (data.candidates?.length) {
+          setCpObj((current) =>
+            current ? { ...current, product_candidates: data.candidates } : current,
+          );
+          setCpOperationStatus("failed");
+          setCpOperationMessage(
+            data.error ?? "Choose the intended product below before I change anything.",
+          );
+          return true;
+        }
         if (!response.ok || !data.preview)
           throw new Error(data.error ?? "Could not inspect the Zid test store.");
         const p = data.preview;
@@ -10542,20 +10558,19 @@ export function PrizeSkoutDashboard() {
                             <button
                               key={candidate.id || candidate.sku}
                               onClick={() => {
-                                setCpObj((current) =>
-                                  current
-                                    ? {
-                                        ...current,
-                                        query: candidate.sku,
-                                        sku: candidate.sku,
-                                        product_candidates: null,
-                                      }
-                                    : current,
-                                );
-                                setCpOperationStatus("ready");
+                                const selectedOperation = {
+                                  ...cpObj,
+                                  query: candidate.sku,
+                                  sku: candidate.sku,
+                                  product_candidates: null,
+                                  approval_token: null,
+                                };
+                                setCpObj(selectedOperation);
+                                setCpOperationStatus("running");
                                 setCpOperationMessage(
                                   `Selected ${candidate.name} — SKU ${candidate.sku}. Review it, then continue.`,
                                 );
+                                void prepareCopilotOperation(selectedOperation);
                               }}
                               style={{
                                 border: "1px solid var(--border)",
@@ -10768,7 +10783,10 @@ export function PrizeSkoutDashboard() {
                                 ? "Checked in Zid"
                                 : String(cpObj.operation) === "product_change" &&
                                     !String(cpObj.approval_token ?? "").trim()
-                                  ? "Retry product preview"
+                                  ? Array.isArray(cpObj.product_candidates) &&
+                                    cpObj.product_candidates.length > 0
+                                    ? "Choose a product above"
+                                    : "Retry product preview"
                                   : String(cpObj.operation) === "image_job"
                                     ? "Approve image upload"
                                   : String(cpObj.operation) === "reverse_refund"

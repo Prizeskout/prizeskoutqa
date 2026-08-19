@@ -103,8 +103,15 @@ export const Route=createFileRoute("/api/copilot/store")({server:{handlers:{POST
   }
   if(body?.action==="preview_product_change"){
     if(!body.product_request)return json({error:"product_request is required"},400);
-    try{return json({ok:true,preview:await previewZidProductChange(merchantId,headers,body.product_request)});}
-    catch(error){return json({error:error instanceof Error?error.message:"Could not preview the Zid product change."},422);}
+    try{
+      const productRequest={...body.product_request};
+      if(productRequest.scope!=="matching"&&!productRequest.sku&&productRequest.query){
+        const product=await findExactProduct(productRequest.query);
+        productRequest.sku=String(product.sku??"");
+      }
+      return json({ok:true,preview:await previewZidProductChange(merchantId,headers,productRequest)});
+    }
+    catch(error){return json(matchErrorPayload(error),422);}
   }
   if(body?.action==="apply_product_change"){
     if(!body.approval_token)return json({error:"An unexpired approval token is required."},400);
