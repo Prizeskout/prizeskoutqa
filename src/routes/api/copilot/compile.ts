@@ -206,7 +206,7 @@ Use only the capability IDs supplied below. If no connected capability can perfo
 CAPABILITIES:\n${STORE_MANAGER_CAPABILITIES.map(item=>`${item.id}: ${item.label}; ${item.risk}; ${item.availability}; approval=${item.approval}; readback=${item.readback}`).join("\n")}
 TESTED PLAYBOOKS (reuse when relevant):\n${STORE_MANAGER_PLAYBOOKS.map(item=>`${item.id}: ${item.title}; ${item.capabilities.join(" -> ")}; outcome=${item.outcome}`).join("\n")}`;
 
-const FOLLOW_UP = /\b(it|them|those|that|same|next|now|then|go ahead|do it|proceed|continue|use recommended|push live|publish live)\b/i;
+const FOLLOW_UP = /\b(it|them|those|that|same|next|now|then|yes|yep|approved?|confirm(?:ed)?|go ahead|do it|proceed|continue|create it|make it|use recommended|push live|publish live)\b/i;
 
 // "Find Sony A7S III and show its recommendation" names a specific product
 // by model code and never says "product"/"catalog"/"sku" — so the
@@ -235,6 +235,35 @@ function isOperationalRequest(text: string): boolean {
     || /\b(reprice|repricing|push live|publish live|live updates?)\b/i.test(text)
     || /(?:منتج|المنتج|منتجات|سعر|تكلفة|مخزون|انشر|نشر|غي[ّ]?ر|عد[ّ]?ل|احذف|انسخ|كرر|ابحث|قسيمة|كوبون)/u.test(text)
     || (FIND_VERB.test(text) && MODEL_CODE.test(text));
+}
+
+function recoverPendingCouponFromConversation(
+  prompt: string,
+  conversation: Array<{ role: "user" | "assistant"; text: string }> = [],
+): Record<string, unknown> | null {
+  if (!/^(?:please\s+)?(?:create|make|do|proceed|go ahead|create it|do it)(?:\s+(?:it|that|this))?[.!?]*$/i.test(prompt.trim())) return null;
+  const transcript = conversation.slice(-12).map(item => item.text).join("\n");
+  if (!/\b(?:coupon|discount code)\b/i.test(transcript)) return null;
+  const named = transcript.match(/\b(?:coupon|discount code)\s+(?:called|named)\s*[“”"']([^“”"'\n]{1,80})[“”"']/i)
+    ?? transcript.match(/\b(?:coupon|discount code)\s+(?:called|named)\s+([^.,\n]{1,80})/i);
+  const discount = transcript.match(/(\d+(?:\.\d+)?)\s*%\s*(?:off|discount)/i);
+  if (!named?.[1] || !discount?.[1]) return null;
+  const code = named[1].trim();
+  const discountPct = Number(discount[1]);
+  if (!(discountPct > 0 && discountPct <= 100)) return null;
+  const platform = /\bzid\b/i.test(transcript) ? "zid" : /\bsalla\b/i.test(transcript) ? "salla" : "all";
+  return {
+    type: "operation",
+    operation: {
+      _type: "operation", operation: "coupon_change", coupon_mode: "create",
+      coupon_code: code, coupon_name: code, coupon_discount_pct: discountPct,
+      platform, scope: /\ball\b[^.\n]{0,30}\bproducts?\b|\bproducts?\b[^.\n]{0,30}\ball\b/i.test(transcript) ? "all" : "matching",
+      risk_level: "sensitive_write", requires_confirmation: true,
+      summary: `Create the ${platform.toUpperCase()} coupon “${code}” with a ${discountPct}% discount.`,
+      plan: ["Review the coupon code, discount and product scope.", "Check the proposed discount against verified product costs and the active margin floor.", "Wait for explicit merchant approval.", `Create the approved coupon in ${platform.toUpperCase()}.`, "Read the coupon back from the store and show the confirmed result."],
+      warnings: [], confidence: 0.99,
+    },
+  };
 }
 
 export function deterministicZidInsight(prompt:string,prior?:Record<string,unknown>):Record<string,unknown>|null{
@@ -416,6 +445,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
           }catch(error){return json({error:`The Store Manager could not prepare a reliable workflow: ${error instanceof Error?error.message:String(error)}`},502);}
         }
 
+        const recoveredCoupon = recoverPendingCouponFromConversation(normalizedPrompt, body?.context?.conversation);
+        if (recoveredCoupon) return json(recoveredCoupon);
         const deterministicInsight=deterministicZidInsight(normalizedPrompt,body?.context?.previous_operation);
         if(deterministicInsight)return json(deterministicInsight);
 
@@ -424,7 +455,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
         }
         const t0 = Date.now();
         const hasOperationContext = Boolean(body?.context?.previous_operation);
-        const operationMode = isOperationalRequest(normalizedPrompt) || (hasOperationContext && FOLLOW_UP.test(normalizedPrompt));
+        const conversationHasOperation = Boolean(body?.context?.conversation?.some(item => isOperationalRequest(item.text)));
+        const operationMode = isOperationalRequest(normalizedPrompt) || ((hasOperationContext || conversationHasOperation) && FOLLOW_UP.test(normalizedPrompt));
         const chatMode = !operationMode && isQuestion(normalizedPrompt);
 
         try {

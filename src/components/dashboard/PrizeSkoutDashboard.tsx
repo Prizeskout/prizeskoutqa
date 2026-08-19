@@ -57,6 +57,7 @@ import {
 import { compactConversation, resolveProductReferences } from "@/lib/copilot-understanding";
 import { workflowStepLabel } from "@/lib/merchant-language";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
+import { simulatePromotion } from "@/lib/promotion-profitability";
 
 type Tab =
   | "today"
@@ -2252,6 +2253,10 @@ export function PrizeSkoutDashboard() {
   const [productOriginalPrice, setProductOriginalPrice] = useState<number | null>(null);
   const [cpPhase, setCpPhase] = useState<"idle" | "loading" | "result">("idle");
   const [cpInput, setCpInput] = useState("");
+  const [cpImageAttachments, setCpImageAttachments] = useState<File[]>([]);
+  const [cpDocumentAttachments, setCpDocumentAttachments] = useState<File[]>([]);
+  const cpImagePreviews = useMemo(() => cpImageAttachments.map(file => ({ file, url: URL.createObjectURL(file) })), [cpImageAttachments]);
+  useEffect(() => () => cpImagePreviews.forEach(item => URL.revokeObjectURL(item.url)), [cpImagePreviews]);
   type CopilotThreadMessage = {
     role: "user" | "assistant";
     text: string;
@@ -3661,7 +3666,22 @@ export function PrizeSkoutDashboard() {
     setCpThread(messages);
     cpConversationRef.current = compactConversation(messages);
     setCpPhase(messages.length ? "result" : "idle");
-    setCpObj(null); setCpChatMessage(null); setCpOperationMessage(null); setCpError(null);
+    const latestAction = [...messages].reverse().find(item => ["task", "approval", "execution", "evidence", "error"].includes(item.messageType ?? ""));
+    const latestTask = latestAction && ["task", "approval", "error"].includes(latestAction.messageType ?? "") ? [...messages].reverse().find(item => item.metadata?.operation && typeof item.metadata.operation === "object") : undefined;
+    const restoredOperation = latestTask?.metadata?.operation as Record<string, unknown> | undefined;
+    if (restoredOperation) {
+      cpPendingDraftRef.current = restoredOperation;
+      setCpObj(restoredOperation);
+      setCpPrompt(latestTask?.text ?? String(restoredOperation.summary ?? "Restored task"));
+      setCpOperationStatus("idle");
+      setCpOperationMessage("This task was restored from the conversation. Open it below to refresh its live details before approving.");
+    } else {
+      setCpObj(null);
+      cpPendingDraftRef.current = null;
+      setCpOperationMessage(null);
+    }
+    if (latestAction?.messageType === "evidence" && latestAction.metadata?.kind === "payout_reconciliation" && latestAction.metadata.result && typeof latestAction.metadata.result === "object") setAuditResult(latestAction.metadata.result as ReturnType<typeof reconcile>);
+    setCpChatMessage(null); setCpError(null);
   };
 
   useEffect(() => {
@@ -3719,6 +3739,89 @@ export function PrizeSkoutDashboard() {
     setCpStoreActionResult(null);
     setCpInput("");
     try {
+      if (cpDocumentAttachments.length) {
+        const platform = ["talabat", "snoonu", "jahez", "keeta", "salla", "zid"].find(value => prompt.toLowerCase().includes(value)) ?? payoutUploadPlatform;
+        const contract = approvedContracts.find(term => term.status === "approved" && term.platform === platform) ?? null;
+        const rate = Number(contract?.commission_rate_pct ?? payoutUploadRate);
+        if (!(rate > 0 && rate < 100)) throw new Error(`I need the approved ${platform.toUpperCase()} commission rate before auditing these documents.`);
+        const documents: ClassifiedDocument[] = [];
+        for (const file of cpDocumentAttachments) {
+          const outcome = await uploadOneFile(file, localStorage.getItem("ps_merchant_id") ?? "", localStorage.getItem("ps_access_code") ?? "", rate, platform, prompt);
+          if (!outcome.ok) throw new Error(`${file.name}: ${outcome.error}`);
+          documents.push({ id: `${Date.now()}-${documents.length}`, file_name: file.name, document_type: classifyResult(outcome.result), result: outcome.result, description: prompt, platform_guess: outcome.result.classification?.ok ? outcome.result.classification.classification.platform : platform });
+        }
+        const normalized = documents.map(document => ({ ...document, result: { ...document.result, platform, commission_rate_pct: rate } }));
+        const audit = reconcile(normalized, rate, contract ? { source: "approved_contract", platform, contractId: contract.id, contractName: contract.contract_name, reviewedBy: contract.reviewed_by, effectiveFrom: contract.effective_from, effectiveTo: contract.effective_to } : { source: "merchant_entered", platform });
+        setPayoutDocuments(normalized); setAuditResult(audit); setPayoutData(normalized.length === 1 ? normalized[0].result as PayoutCheckData : null); setAuditSaved(false);
+        const metrics = { documents: normalized.length, platform: platform.toUpperCase(), expected_payout: audit.ledgerTotals?.expected_net ?? null, actual_received: audit.fourWay.stages.find(stage => stage.id === "merchant_receipt")?.amount ?? null, variance: audit.fourWay.unresolvedVariance, findings: audit.findings.length, assurance: audit.assurance?.opinion ?? "review_required" };
+        const reply = `I audited ${normalized.length} ${platform.toUpperCase()} payout document${normalized.length === 1 ? "" : "s"}. Review the reconciliation result below before saving it to history or opening recovery work.`;
+        const operation: Record<string, unknown> = { _type: "operation", operation: "payout_document_audit", platform, summary: reply, requires_confirmation: false, risk_level: "read", metrics };
+        setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply); setCpDocumentAttachments([]);
+        appendCpThread("assistant", reply, "evidence", { kind: "payout_reconciliation", operation, metrics, result: audit });
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
+        return true;
+      }
+      if (cpImageAttachments.length) {
+        const haystack = prompt.toLowerCase();
+        const directMatches = importedProducts.filter(product => product.source_platform === "zid" && [product.sku, product.name_en, product.name_ar].filter(Boolean).some(value => haystack.includes(String(value).toLowerCase())));
+        const contextualSku = directMatches.length === 1 ? directMatches[0].sku : directMatches.length === 0 && previousProducts.length === 1 ? previousProducts[0].sku : "";
+        if (!contextualSku) throw new Error(directMatches.length > 1 ? "More than one product matches this instruction. Include the exact SKU with the image." : "Tell me the exact Zid product name or SKU that should receive this image.");
+        const form = new FormData();
+        form.set("merchant_id", localStorage.getItem("ps_merchant_id") ?? "");
+        form.set("access_code", localStorage.getItem("ps_access_code") ?? "");
+        form.set("product_query", contextualSku);
+        form.set("alt_text", prompt);
+        cpImageAttachments.forEach(file => form.append("images", file));
+        const uploadedResponse = await fetchWithTimeout("/api/copilot/images", { method: "POST", body: form }, 30_000);
+        const uploaded = await uploadedResponse.json() as { ok?: boolean; job?: { id: string; title: string; status: string; items?: Array<Record<string, unknown>> }; error?: string };
+        if (!uploadedResponse.ok || !uploaded.ok || !uploaded.job) throw new Error(uploaded.error ?? "The image could not be prepared.");
+        if (uploaded.job.status !== "matched") throw new Error("The image was stored privately, but its product match needs attention in Settings → Product Images.");
+        const previewResponse = await fetchWithTimeout("/api/copilot/images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: localStorage.getItem("ps_merchant_id") ?? "", access_code: localStorage.getItem("ps_access_code") ?? "", action: "preview", job_id: uploaded.job.id }) }, 30_000);
+        const preview = await previewResponse.json() as { ok?: boolean; preview?: { approval_token: string; expires_at: string; job: Record<string, unknown> }; error?: string };
+        if (!previewResponse.ok || !preview.ok || !preview.preview) throw new Error(preview.error ?? "The image approval preview could not be prepared.");
+        const operation: Record<string, unknown> = { _type: "operation", operation: "image_job", platform: "zid", query: contextualSku, requires_confirmation: true, risk_level: "reversible_write", summary: `Add ${cpImageAttachments.length} approved image${cpImageAttachments.length === 1 ? "" : "s"} to ${contextualSku}.`, image_job_id: uploaded.job.id, image_approval_token: preview.preview.approval_token, image_approval_expires_at: preview.preview.expires_at };
+        setCpObj(operation); cpPendingDraftRef.current = operation; setCpPhase("result"); setCpOperationStatus("ready");
+        setCpOperationMessage("The image is stored privately, matched to the exact product, and ready for your approval. Existing gallery images will be preserved.");
+        setCpImageAttachments([]);
+        const reply = String(operation.summary);
+        appendCpThread("assistant", reply, "approval", { kind: "operation", operation, files: cpImageAttachments.map(file => ({ name: file.name, size: file.size, type: file.type })) });
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
+        return true;
+      }
+      if (/\b(?:run|check|pull|calculate|show)\b[\s\S]{0,40}\b(?:payout|settlement)\b|\b(?:payout|settlement)\b[\s\S]{0,40}\b(?:check|calculation|expected)\b/i.test(prompt)) {
+        const days = /\b7\s*days?\b|\bweek\b/i.test(prompt) ? 7 : 30;
+        const response = await fetchWithTimeout("/api/channels/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: localStorage.getItem("ps_merchant_id") ?? "", access_code: localStorage.getItem("ps_access_code") ?? "", platform: "talabat_expected_payout", window_days: days }) }, 30_000);
+        const result = await response.json() as PayoutCheckData & { ok?: boolean; error?: string };
+        if (!response.ok || !result.ok) throw new Error(result.error ?? "The automatic payout check could not run.");
+        setPayoutData(result); setPayoutDocuments([]); setAuditResult(null);
+        const metrics = { period: `${days} days`, platform: "TALABAT", orders: result.order_count, sales: result.sub_total_sum, expected_payout: result.expected_payout, claims_ready_payout: result.claims_ready_payout ?? null, confidence: result.payout_confidence ?? "estimate" };
+        const reply = `I completed the ${days}-day Talabat payout check. This is the expected payout from connected order evidence; upload the platform statement and bank settlement evidence here for full reconciliation.`;
+        const operation: Record<string, unknown> = { _type: "operation", operation: "automatic_payout_check", platform: "talabat", summary: reply, requires_confirmation: false, risk_level: "read", metrics };
+        setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply);
+        appendCpThread("assistant", reply, "evidence", { kind: "payout_check", operation, metrics, result });
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
+        return true;
+      }
+      if (/\b(?:simulate|model|test|calculate)\b[\s\S]{0,40}\b(?:promotion|campaign|discount)\b/i.test(prompt)) {
+        const discountMatch = prompt.match(/(?:discount|promotion|campaign)[^\d]{0,20}(\d+(?:\.\d+)?)\s*%|(\d+(?:\.\d+)?)\s*%[^.]{0,25}(?:discount|promotion|campaign)/i);
+        const liftMatch = prompt.match(/(?:lift|increase in orders|more orders)[^\d-]{0,20}(-?\d+(?:\.\d+)?)\s*%/i);
+        const ordersMatch = prompt.match(/(?:baseline|normally|usual(?:ly)?)\D{0,20}(\d+)\s*orders?|(?:baseline orders?)\D{0,10}(\d+)/i);
+        const daysMatch = prompt.match(/(?:for|over|duration)\s+(\d+)\s*days?/i);
+        if (!discountMatch || !liftMatch || !ordersMatch || !daysMatch) {
+          const reply = "I can run that promotion simulation here. Tell me the discount percentage, expected order lift, normal baseline orders for the same period, and campaign duration in days. I will use the approved channel agreement, verified product costs, and your active margin floor.";
+          setCpChatMessage(reply); setCpPhase("result"); appendCpThread("assistant", reply); cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]); return false;
+        }
+        const platform = ["talabat", "snoonu", "jahez", "keeta", "salla", "zid"].find(value => prompt.toLowerCase().includes(value)) ?? importedProducts[0]?.source_platform ?? "zid";
+        const contract = approvedContracts.find(term => term.status === "approved" && term.platform === platform);
+        if (!contract || [contract.commission_rate_pct, contract.promotion_funding_platform_pct, contract.vat_on_fees_pct, contract.payment_fee_pct, contract.fixed_order_fee].some(value => value == null) || !["gross_before_discount", "net_after_discount"].includes(String(contract.commission_base))) throw new Error(`Complete and approve the ${platform.toUpperCase()} commercial terms before simulating this campaign.`);
+        const scoped = importedProducts.filter(product => product.source_platform === platform && (prompt.toLowerCase().includes("all") || [product.sku, product.name_en, product.name_ar].some(value => value && prompt.toLowerCase().includes(String(value).toLowerCase()))));
+        if (!scoped.length) throw new Error(`Name a ${platform.toUpperCase()} product or say “all ${platform.toUpperCase()} products.”`);
+        const simulation = simulatePromotion(scoped.map(product => ({ sku: product.sku, name: product.name_en || product.name_ar, current_price: product.current_price, net_margin_pct: product.net_margin_pct, source_platform: product.source_platform, unit_cost: product.base_cost, cost_confidence: product.cost_confidence })), { discount_pct: Number(discountMatch[1] ?? discountMatch[2]), platform_funding_pct: Number(contract.promotion_funding_platform_pct), commission_pct: Number(contract.commission_rate_pct), vat_on_fees_pct: Number(contract.vat_on_fees_pct), payment_fee_pct: Number(contract.payment_fee_pct), fixed_order_fee: Number(contract.fixed_order_fee), commission_base: contract.commission_base as "gross_before_discount" | "net_after_discount", expected_conversion_lift_pct: Number(liftMatch[1]), baseline_orders: Number(ordersMatch[1] ?? ordersMatch[2]), duration_days: Number(daysMatch[1]), minimum_margin_pct: persistedGlobalFloor });
+        const metrics = { products: simulation.products.length, eligible: simulation.eligible_products, expected_orders: simulation.expected_orders, baseline_contribution: simulation.baseline_contribution, campaign_contribution: simulation.campaign_contribution, incremental_contribution: simulation.incremental_contribution, margin_floor: `${persistedGlobalFloor}%`, decision: simulation.profitable ? "safe for review" : "not approval ready" };
+        const reply = simulation.profitable ? "The promotion beats the baseline, every included product meets the active margin floor, and the evidence is ready for review." : "The promotion is not ready for approval. Review the result below: it either misses the baseline, breaches a product margin floor, or lacks verified cost evidence.";
+        const operation: Record<string, unknown> = { _type: "operation", operation: "promotion_simulation", platform, summary: reply, requires_confirmation: false, risk_level: "read", metrics };
+        setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply); appendCpThread("assistant", reply, "evidence", { kind: "promotion_simulation", operation, metrics, result: simulation }); cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]); return true;
+      }
       const res = await fetchWithTimeout(
         "/api/copilot/compile",
         {
@@ -3844,6 +3947,8 @@ export function PrizeSkoutDashboard() {
     setCpConversationTitle("Current conversation");
     setCpThread([]);
     setCpInput("");
+    setCpImageAttachments([]);
+    setCpDocumentAttachments([]);
     setCpPrompt("");
     setCpObj(null);
     setCpChatMessage(null);
@@ -4015,6 +4120,12 @@ export function PrizeSkoutDashboard() {
         setCpOperationMessage(
           `${data.message} Mobile ${data.customer.mobile || "not supplied"}; email ${data.customer.email || "not supplied"}; ${data.customer.points} loyalty points; ${data.customer.orders} orders${data.customer.last_order_date ? `; last order ${new Date(data.customer.last_order_date).toLocaleDateString()}` : ""}. Personal details are masked.`,
         );
+      } else if (op === "image_job") {
+        const response = await fetchWithTimeout("/api/copilot/images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: localStorage.getItem("ps_merchant_id") ?? "", access_code: localStorage.getItem("ps_access_code") ?? "", action: "preview", job_id: operation.image_job_id }) }, 30_000);
+        const data = await response.json() as { ok?: boolean; preview?: { approval_token: string; expires_at: string }; error?: string };
+        if (!response.ok || !data.ok || !data.preview) throw new Error(data.error ?? "The image approval could not be refreshed.");
+        setCpObj(current => current ? { ...current, image_approval_token: data.preview!.approval_token, image_approval_expires_at: data.preview!.expires_at } : current);
+        setCpOperationMessage("The exact image and current gallery were refreshed. Existing images will be preserved. Approve when ready.");
       } else if (
         [
           "product_image_upload",
@@ -4474,6 +4585,21 @@ export function PrizeSkoutDashboard() {
   const executeCopilotStoreWrite = async () => {
     if (!cpObj || cpOperationStatus === "publishing") return;
     const operation = String(cpObj.operation ?? "");
+    if (operation === "image_job") {
+      setCpOperationStatus("publishing");
+      try {
+        const response = await fetchWithTimeout("/api/copilot/images", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: localStorage.getItem("ps_merchant_id") ?? "", access_code: localStorage.getItem("ps_access_code") ?? "", action: "apply", approval_token: cpObj.image_approval_token }) }, 30_000);
+        const result = await response.json() as { ok?: boolean; confirmed?: boolean; message?: string; error?: string; results?: Array<Record<string, unknown>> };
+        if (!response.ok || !result.ok) throw new Error(result.error ?? result.message ?? "The image upload could not be verified.");
+        setCpStoreActionResult({ confirmed: Boolean(result.confirmed), action_id: String(cpObj.image_job_id ?? ""), message: result.message ?? "Image upload completed." });
+        setCpOperationStatus("complete"); setCpOperationMessage(result.message ?? "The image was uploaded and verified in Zid.");
+        appendCpThread("assistant", result.message ?? "Done. The image was uploaded and verified in Zid.", "execution", { kind: "execution", operation, status: result.confirmed ? "confirmed" : "completed_with_warning", action_id: cpObj.image_job_id ?? null, result });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "The image upload failed.";
+        setCpOperationStatus("failed"); setCpOperationMessage(message); appendCpThread("assistant", message, "error", { kind: "execution", operation, status: "failed" });
+      }
+      return;
+    }
     if (
       ![
         "change_order_status",
@@ -10179,6 +10305,7 @@ export function PrizeSkoutDashboard() {
                                     "create_product_draft",
                                     "product_change",
                                     "product_image_upload",
+                                    "image_job",
                                     "variant_create",
                                     "schedule_product_action",
                                     "coupon_change",
@@ -10534,6 +10661,7 @@ export function PrizeSkoutDashboard() {
                       "create_product_draft",
                       "product_change",
                       "product_image_upload",
+                      "image_job",
                       "variant_create",
                       "schedule_product_action",
                       "coupon_change",
@@ -10561,6 +10689,7 @@ export function PrizeSkoutDashboard() {
                             "product_change",
                             "create_product_draft",
                             "product_image_upload",
+                            "image_job",
                             "variant_create",
                             "schedule_product_action",
                           ].includes(String(cpObj.operation)) ? (
@@ -10640,6 +10769,8 @@ export function PrizeSkoutDashboard() {
                                 : String(cpObj.operation) === "product_change" &&
                                     !String(cpObj.approval_token ?? "").trim()
                                   ? "Retry product preview"
+                                  : String(cpObj.operation) === "image_job"
+                                    ? "Approve image upload"
                                   : String(cpObj.operation) === "reverse_refund"
                                     ? "Confirm refund"
                                     : String(cpObj.operation) === "loyalty_adjust"
@@ -11357,28 +11488,34 @@ export function PrizeSkoutDashboard() {
                     </div>
                     <div aria-label="Conversation history" style={{ maxHeight: 260, overflowY: "auto", display: "grid", gap: 8, padding: "2px 2px 10px" }}>
                       {cpThread.map((message, index) => {
-                        const structured = message.role === "assistant" && ["task", "approval", "execution", "error"].includes(message.messageType ?? "");
+                        const structured = message.role === "assistant" && ["task", "approval", "execution", "evidence", "error"].includes(message.messageType ?? "");
                         const savedOperation = message.metadata?.operation && typeof message.metadata.operation === "object" ? message.metadata.operation as Record<string, unknown> : null;
                         const isCurrentOperation = Boolean(savedOperation && cpObj && String(savedOperation.operation ?? "") === String(cpObj.operation ?? "") && String(savedOperation.summary ?? "") === String(cpObj.summary ?? ""));
                         const isApproval = message.messageType === "approval";
                         const isExecution = message.messageType === "execution";
+                        const isEvidence = message.messageType === "evidence";
+                        const metrics = message.metadata?.metrics && typeof message.metadata.metrics === "object" ? message.metadata.metrics as Record<string, unknown> : null;
+                        const taskCanOpen = Boolean(savedOperation && !isEvidence);
                         const status = String(message.metadata?.status ?? (isApproval ? "Waiting for your approval" : isExecution ? "Completed" : "Prepared"));
                         return (
                           <div key={`${message.role}-${index}`} style={{ justifySelf: message.role === "user" ? "end" : "start", width: structured ? "min(100%,720px)" : "auto", maxWidth: structured ? "96%" : "86%", padding: structured ? 0 : "9px 12px", borderRadius: 11, background: message.role === "user" ? OG : "var(--surface2)", color: message.role === "user" ? "#fff" : "var(--text)", border: message.role === "assistant" ? `1px solid ${isApproval ? "color-mix(in srgb,#F59E0B 45%,var(--border))" : isExecution ? "color-mix(in srgb,#10B981 40%,var(--border))" : "var(--border)"}` : "none", fontSize: 12.5, lineHeight: 1.5, whiteSpace: "pre-wrap", overflow: "hidden" }}>
                             {!structured ? message.text : <>
                               <div style={{ padding: "12px 14px", background: isApproval ? "color-mix(in srgb,#F59E0B 8%,var(--surface))" : isExecution ? "color-mix(in srgb,#10B981 7%,var(--surface))" : "var(--surface2)" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                                  <strong>{isApproval ? "Approval required" : isExecution ? "Task completed" : message.messageType === "error" ? "Task needs attention" : "Task prepared"}</strong>
+                                  <strong>{isApproval ? "Approval required" : isExecution ? "Task completed" : isEvidence ? "Payout reconciliation result" : message.messageType === "error" ? "Task needs attention" : "Task prepared"}</strong>
                                   <span style={{ fontSize: 10.5, fontWeight: 850, color: isExecution ? GN : isApproval ? "#A16207" : "var(--muted)", textTransform: "uppercase" }}>{status.replaceAll("_", " ")}</span>
                                 </div>
                                 <div style={{ marginTop: 7, color: "var(--text)" }}>{message.text}</div>
                                 {savedOperation && <div style={{ marginTop: 7, fontSize: 11.5, color: "var(--muted)" }}>{String(savedOperation.platform ?? "connected store").toUpperCase()} · {String(savedOperation.operation ?? "task").replaceAll("_", " ")}</div>}
+                                {metrics && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 7, marginTop: 10 }}>{Object.entries(metrics).map(([label, value]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "8px 9px", background: "var(--surface)" }}><div style={{ fontSize: 9.5, color: "var(--muted)", textTransform: "uppercase" }}>{label.replaceAll("_", " ")}</div><strong style={{ display: "block", marginTop: 3 }}>{value == null ? "Not evidenced" : typeof value === "number" ? value.toLocaleString("en-US", { maximumFractionDigits: 2 }) : String(value).replaceAll("_", " ")}</strong></div>)}</div>}
                               </div>
                               {(savedOperation || isExecution) && <div style={{ display: "flex", gap: 8, padding: "10px 12px", background: "var(--surface)", flexWrap: "wrap" }}>
-                                {savedOperation && <button type="button" onClick={() => { setCpObj(savedOperation); setCpPrompt(message.text); setCpPhase("result"); setCpOperationStatus("running"); void prepareCopilotOperation(savedOperation); }} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>{isCurrentOperation ? "Refresh details" : "Open task"}</button>}
+                                {taskCanOpen && <button type="button" onClick={() => { setCpObj(savedOperation!); setCpPrompt(message.text); setCpPhase("result"); setCpOperationStatus("running"); void prepareCopilotOperation(savedOperation!); }} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>{isCurrentOperation ? "Refresh details" : "Open task"}</button>}
                                 {isApproval && isCurrentOperation && cpOperationStatus === "ready" && <button type="button" onClick={() => void executeCopilotStoreWrite()} style={{ border: 0, borderRadius: 8, padding: "8px 11px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: "pointer" }}>Approve and run</button>}
                                 {isApproval && <button type="button" onClick={() => { setCpInput(`Change this task: `); }} style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: "7px 8px" }}>Request changes</button>}
                                 {isExecution && <button type="button" onClick={() => setCpInput("Using the completed task above, ")} style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: "7px 8px" }}>Continue from this result</button>}
+                                {isEvidence && message.metadata?.kind === "payout_reconciliation" && <button type="button" disabled={savingAudit || auditSaved} onClick={() => void handleSaveAudit()} style={{ border: 0, borderRadius: 8, padding: "8px 11px", background: auditSaved ? GN : OG, color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: savingAudit || auditSaved ? "default" : "pointer" }}>{auditSaved ? "Saved to history" : savingAudit ? "Saving…" : "Save audit to history"}</button>}
+                                {isEvidence && <button type="button" onClick={() => setCpInput(message.metadata?.kind === "promotion_simulation" ? "Change this promotion simulation: " : "Explain this result and tell me what needs attention: ")} style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: "7px 8px" }}>{message.metadata?.kind === "promotion_simulation" ? "Adjust simulation" : "Explain result"}</button>}
                               </div>}
                             </>}
                           </div>
@@ -11386,11 +11523,15 @@ export function PrizeSkoutDashboard() {
                       })}
                     </div>
                   </div>
+                  {cpImagePreviews.length > 0 && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{cpImagePreviews.map(({ file, url }) => <div key={`${file.name}-${file.lastModified}`} style={{ width: 92, border: "1px solid var(--border)", borderRadius: 9, padding: 6, background: "var(--surface)" }}><img src={url} alt="Attached product preview" style={{ width: "100%", height: 66, objectFit: "cover", borderRadius: 6 }} /><div title={file.name} style={{ fontSize: 9.5, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</div><button type="button" onClick={() => setCpImageAttachments(current => current.filter(item => item !== file))} style={{ border: 0, background: "transparent", color: "#B42318", fontSize: 9.5, padding: "3px 0", cursor: "pointer" }}>Remove</button></div>)}</div>}
+                  {cpDocumentAttachments.length > 0 && <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{cpDocumentAttachments.map(file => <div key={`${file.name}-${file.lastModified}`} style={{ display: "flex", gap: 7, alignItems: "center", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 9px", background: "var(--surface)", fontSize: 11 }}><span>📄 {file.name}</span><button type="button" onClick={() => setCpDocumentAttachments(current => current.filter(item => item !== file))} style={{ border: 0, background: "transparent", color: "#B42318", cursor: "pointer" }}>×</button></div>)}</div>}
                   <div style={{ display: "flex", gap: 9, alignItems: "flex-end", padding: 8, border: `1.5px solid color-mix(in srgb,${OG} 30%,var(--border))`, borderRadius: 13, background: "var(--surface)" }}>
+                    <label title="Attach product images" style={{ flex: "0 0 auto", width: 38, height: 38, display: "grid", placeItems: "center", border: "1px solid var(--border)", borderRadius: 9, cursor: cpPhase === "loading" ? "not-allowed" : "pointer", color: OG, fontWeight: 900, fontSize: 20 }}>+<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={cpPhase === "loading"} onChange={event => { const files = Array.from(event.target.files ?? []).filter(file => ["image/jpeg", "image/png", "image/webp"].includes(file.type) && file.size <= 10 * 1024 * 1024).slice(0, 20); setCpImageAttachments(files); event.target.value = ""; }} style={{ display: "none" }} /></label>
+                    <label title="Attach payout documents" style={{ flex: "0 0 auto", width: 38, height: 38, display: "grid", placeItems: "center", border: "1px solid var(--border)", borderRadius: 9, cursor: cpPhase === "loading" ? "not-allowed" : "pointer", color: "var(--text)", fontSize: 16 }}>📄<input type="file" multiple accept=".csv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={cpPhase === "loading"} onChange={event => { setCpDocumentAttachments(Array.from(event.target.files ?? []).slice(0, 12)); event.target.value = ""; }} style={{ display: "none" }} /></label>
                     <textarea value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void runCopilot(cpInput); } }} rows={2} disabled={cpPhase === "loading"} placeholder="Ask a follow-up, add another instruction, or ask what was completed…" aria-label="Continue this chat" style={{ flex: 1, minWidth: 0, resize: "vertical", border: 0, outline: 0, padding: "8px 9px", background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 14, lineHeight: 1.45 }} />
                     <button type="button" onClick={() => void runCopilot(cpInput)} disabled={cpPhase === "loading" || !cpInput.trim()} style={{ flex: "0 0 auto", border: 0, borderRadius: 9, padding: "10px 15px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: cpPhase === "loading" || !cpInput.trim() ? "not-allowed" : "pointer", opacity: cpPhase === "loading" || !cpInput.trim() ? .55 : 1 }}>{cpPhase === "loading" ? "Working…" : "Send"}</button>
                   </div>
-                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Enter sends. Shift + Enter adds a new line. Follow-ups retain the current task, product scope, and approval context.</div>
+                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Enter sends. Shift + Enter adds a new line. Attach JPG, PNG or WebP product images up to 10 MB each, and name the exact product or SKU in your message.</div>
                 </div>
               )}
             </div>
