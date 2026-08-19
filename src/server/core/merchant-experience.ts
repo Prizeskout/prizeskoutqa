@@ -78,6 +78,6 @@ export async function saveExperienceSettings(accountId:string,input:{automationL
   if(!allowed.includes(input.automationLevel))throw new Error("Invalid automation level.");
   const {data,error}=await supabaseAdmin.from("ps_merchant_experience_settings").upsert({account_id:accountId,automation_level:input.automationLevel,weekly_review_enabled:input.weeklyReview,progressive_mode:input.progressiveMode},{onConflict:"account_id"}).select("*").single();if(error)throw error;
   const policy=await getMerchantMarginPolicy(accountId),approvalMode:ApprovalMode=input.automationLevel==="auto_protect"?"auto_within_limit":input.automationLevel==="approve"?"approval_every_change":"recommend_only";
-  if(policy.approvalMode!==approvalMode){const activated=await activateMerchantMarginPolicy(accountId,{marginFloorPct:policy.marginFloorPct,maxPriceIncreasePct:policy.maxPriceIncreasePct,approvalMode,activatedBy:"Merchant automation controls"});if(!activated.ok)throw new Error(activated.error??"Protection policy could not be updated.");}
+  if(policy.approvalMode!==approvalMode){const activated=await activateMerchantMarginPolicy(accountId,{marginFloorPct:policy.marginFloorPct,minimumContributionAmount:policy.minimumContributionAmount,maxPriceIncreasePct:policy.maxPriceIncreasePct,approvalMode,overrides:policy.overrides,activatedBy:"Merchant automation controls"});if(!activated.ok)throw new Error(activated.error??"Protection policy could not be updated.");}
   return data;
 }

@@ -21,6 +21,7 @@
     "verify-keeta-contract": "tsx scripts/verify-keeta-contract.mts",
     "verify-shadow-intelligence": "tsx scripts/verify-shadow-intelligence.mts",
     "verify-economic-evidence": "tsx scripts/verify-economic-evidence.mts",
+    "verify-payout-authority": "tsx scripts/verify-payout-authority.mts",
     "verify-zid-contract": "tsx scripts/verify-zid-contract.mts",
     "verify-merchant-errors": "tsx scripts/verify-merchant-errors.mts",
     "test:e2e": "tsx --env-file=.env.local scripts/e2e-app.mts",

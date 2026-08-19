@@ -98,9 +98,16 @@ export function CommissionAuditPanel({
 
   const summary = summarizeAudit(result, documentCount);
   const assurance = result.assurance;
+  const auditPlatforms = new Set(documents.map(doc => (doc.result.platform || doc.platform_guess || "").toLowerCase()).filter(Boolean));
+  const documentStarts = documents.map(doc => doc.result.period_start).filter((value): value is string => !!value).sort();
+  const documentEnds = documents.map(doc => doc.result.period_end ?? doc.result.period_start).filter((value): value is string => !!value).sort();
+  const evidencedStart = documentStarts[0] ?? result.coverage?.start;
+  const evidencedEnd = documentEnds[documentEnds.length - 1] ?? result.coverage?.end;
   const contractCoversAudit = Boolean(approvedContract
-    && (!result.coverage?.start || approvedContract.effective_from <= result.coverage.start)
-    && (!approvedContract.effective_to || !result.coverage?.end || approvedContract.effective_to >= result.coverage.end));
+    && auditPlatforms.size === 1
+    && auditPlatforms.has(approvedContract.platform.toLowerCase())
+    && (!evidencedStart || approvedContract.effective_from <= evidencedStart)
+    && (!approvedContract.effective_to || !evidencedEnd || approvedContract.effective_to >= evidencedEnd));
   const effectiveAssertions = (assurance?.assertions ?? []).map(assertion =>
     assertion.id === "authorization" && contractCoversAudit
       ? { ...assertion, status:"passed" as const, detail:`Reviewed ${approvedContract?.contract_name} covers the audit period; ${approvedContract?.commission_rate_pct}% commission was approved by ${approvedContract?.reviewed_by}.` }

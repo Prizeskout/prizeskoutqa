@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
-import {getMerchantMarginFloor} from "./merchant-pricing-config";
+import {resolveMerchantMarginPolicy} from "./merchant-pricing-config";
 
 export type ContractTerm = {
   id: string;
@@ -142,7 +142,8 @@ async function publishEconomicsVersion(accountId:string,term:ContractTerm,review
   const {data:latest}=await supabaseAdmin.from("ps_economics_versions").select("version").eq("account_id",accountId).eq("merchant_id",accountId).eq("channel",term.platform).order("version",{ascending:false}).limit(1).maybeSingle();
   const now=new Date().toISOString();
   await supabaseAdmin.from("ps_economics_versions").update({status:"retired",effective_to:now}).eq("account_id",accountId).eq("merchant_id",accountId).eq("channel",term.platform).eq("status","approved").is("effective_to",null);
-  const {error}=await supabaseAdmin.from("ps_economics_versions").insert({account_id:accountId,merchant_id:accountId,channel:term.platform,region,version:(latest?.version??0)+1,effective_from:`${term.effective_from}T00:00:00.000Z`,effective_to:term.effective_to?`${term.effective_to}T23:59:59.999Z`:null,commission_rate:term.commission_rate_pct/100,vat_rate:term.vat_on_fees_pct/100,payment_fee_rate:term.payment_fee_pct/100,fixed_order_fee:term.fixed_order_fee,logistics_subsidy:term.delivery_contribution,promotion_contribution_rate:0,margin_floor_pct:await getMerchantMarginFloor(accountId),source_contract_id:term.id,status:"approved",approved_by:reviewedBy,approved_at:now});
+  const channelPolicy=await resolveMerchantMarginPolicy(accountId,term.platform);
+  const {error}=await supabaseAdmin.from("ps_economics_versions").insert({account_id:accountId,merchant_id:accountId,channel:term.platform,region,version:(latest?.version??0)+1,effective_from:`${term.effective_from}T00:00:00.000Z`,effective_to:term.effective_to?`${term.effective_to}T23:59:59.999Z`:null,commission_rate:term.commission_rate_pct/100,vat_rate:term.vat_on_fees_pct/100,payment_fee_rate:term.payment_fee_pct/100,fixed_order_fee:term.fixed_order_fee,logistics_subsidy:term.delivery_contribution,promotion_contribution_rate:0,margin_floor_pct:channelPolicy.marginFloorPct,source_contract_id:term.id,status:"approved",approved_by:reviewedBy,approved_at:now});
   if(error)throw new Error(`Could not publish approved economics: ${error.message}`);
 }
 

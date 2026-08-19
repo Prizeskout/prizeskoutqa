@@ -143,7 +143,9 @@ interface Rule {
   rollbackOnReject: boolean;
   stopOnStaleCost: boolean;
   approvalMode: ApprovalMode;
+  minimumContribution: number;
 }
+type ChannelPolicyDraft={channel:string;servicePath:string;floor:number;minimumContribution:number;maxChangePct:number;approvalMode:ApprovalMode};
 interface ImportedProduct {
   ingest_event_id: string;
   sku: string;
@@ -176,13 +178,16 @@ interface ImportedProduct {
     allowed_increase_pct: number;
     maximum_increase_pct: number;
     margin_floor_pct: number;
+    minimum_contribution_amount: number;
+    policy_scope: "global"|"channel";
     policy_version: number;
     outcome:
       | "safe"
       | "blocked_missing_cost"
       | "blocked_missing_economics"
       | "within_limit"
-      | "over_limit";
+      | "over_limit"
+      | "cannot_reach_target_within_limit";
   };
 }
 
@@ -2272,10 +2277,14 @@ export function PrizeSkoutDashboard() {
       rollbackOnReject: true,
       stopOnStaleCost: true,
       approvalMode: "recommend_only",
+      minimumContribution: 0,
     },
   ]);
   const [persistedGlobalFloor, setPersistedGlobalFloor] = useState(18);
   const [persistedMaxIncrease, setPersistedMaxIncrease] = useState(15);
+  const [persistedMinimumContribution,setPersistedMinimumContribution]=useState(0);
+  const [channelPolicyDrafts,setChannelPolicyDrafts]=useState<ChannelPolicyDraft[]>([]);
+  const [persistedChannelPolicies,setPersistedChannelPolicies]=useState<ChannelPolicyDraft[]>([]);
   const [persistedApprovalMode, setPersistedApprovalMode] =
     useState<ApprovalMode>("recommend_only");
   const [policyVersion, setPolicyVersion] = useState(1);
@@ -2345,6 +2354,7 @@ export function PrizeSkoutDashboard() {
   const [payoutData, setPayoutData] = useState<PayoutCheckData | null>(null);
   const [payoutError, setPayoutError] = useState<string | null>(null);
   const [payoutUploadRate, setPayoutUploadRate] = useState("");
+  const [payoutUploadPlatform, setPayoutUploadPlatform] = useState("talabat");
   // First-run welcome check — auto-runs the Talabat payout check the moment
   // a merchant with Talabat connected has never had one recorded, so there's
   // something concrete to show in the first minute instead of an empty card
@@ -2352,6 +2362,7 @@ export function PrizeSkoutDashboard() {
   const autoPayoutCheckAttempted = useRef(false);
   const [welcomeAuditBanner, setWelcomeAuditBanner] = useState(false);
   const [approvedContract, setApprovedContract] = useState<ContractTerm | null>(null);
+  const [approvedContracts, setApprovedContracts] = useState<ContractTerm[]>([]);
 
   // Commission Audit — populated whenever an upload batch includes at least
   // one daily-log document (even a batch of one, see commission-audit.ts).
@@ -2787,6 +2798,8 @@ export function PrizeSkoutDashboard() {
               marginFloorPct: number;
               maxPriceIncreasePct: number;
               approvalMode: ApprovalMode;
+              minimumContributionAmount:number;
+              overrides:Array<{channel:string;servicePath:string;marginFloorPct:number;minimumContributionAmount:number;maxPriceIncreasePct:number;approvalMode:ApprovalMode}>;
               version: number;
             };
             versions?: typeof policyVersions;
@@ -2798,6 +2811,9 @@ export function PrizeSkoutDashboard() {
           setPersistedGlobalFloor(pct);
           setPersistedMaxIncrease(maxIncrease);
           setPersistedApprovalMode(d.policy.approvalMode);
+          setPersistedMinimumContribution(d.policy.minimumContributionAmount??0);
+          const overrides=(d.policy.overrides??[]).map(item=>({channel:item.channel,servicePath:item.servicePath,floor:Math.round(item.marginFloorPct*100),minimumContribution:item.minimumContributionAmount,maxChangePct:Math.round(item.maxPriceIncreasePct*100),approvalMode:item.approvalMode}));
+          setChannelPolicyDrafts(overrides);setPersistedChannelPolicies(overrides);
           setPolicyVersion(d.policy.version);
           setPolicyVersions(d.versions ?? []);
           setRules((prev) =>
@@ -2806,6 +2822,7 @@ export function PrizeSkoutDashboard() {
               floor: pct,
               maxChangePct: maxIncrease,
               approvalMode: d.policy!.approvalMode,
+              minimumContribution:d.policy!.minimumContributionAmount??0,
               status: "active",
               active: true,
             })),
@@ -3083,6 +3100,8 @@ export function PrizeSkoutDashboard() {
         access_code: ac,
         preview_floor: String(rule.floor / 100),
         preview_max_increase: String(rule.maxChangePct / 100),
+        preview_minimum_contribution:String(rule.minimumContribution),
+        preview_channel_overrides:JSON.stringify(channelPolicyDrafts.map(item=>({channel:item.channel,marginFloorPct:item.floor/100,minimumContributionAmount:item.minimumContribution,maxPriceIncreasePct:item.maxChangePct/100}))),
       });
       const response = await fetch(`/api/repricing/catalog?${params}`),
         data = response.ok ? ((await response.json()) as { products?: ImportedProduct[] }) : null;
@@ -3126,15 +3145,19 @@ export function PrizeSkoutDashboard() {
           platform: "margin_floor",
           action: "set",
           margin_floor_pct: rule.floor / 100,
+          minimum_contribution_amount:rule.minimumContribution,
           max_price_increase_pct: rule.maxChangePct / 100,
           approval_mode: rule.approvalMode,
           activated_by: storeName || "merchant",
+          channel_overrides:channelPolicyDrafts.map(item=>({channel:item.channel,service_path:item.servicePath,margin_floor_pct:item.floor/100,minimum_contribution_amount:item.minimumContribution,max_price_increase_pct:item.maxChangePct/100,approval_mode:item.approvalMode})),
         }),
       });
       const data = (await response.json()) as { policy?: { version: number }; error?: string };
       if (!response.ok) throw new Error(data.error || "Activation failed");
       setPersistedGlobalFloor(rule.floor);
       setPersistedMaxIncrease(rule.maxChangePct);
+      setPersistedMinimumContribution(rule.minimumContribution);
+      setPersistedChannelPolicies(channelPolicyDrafts);
       setPersistedApprovalMode(rule.approvalMode);
       setPolicyVersion(data.policy?.version ?? policyVersion + 1);
       setRules((current) =>
@@ -3340,27 +3363,23 @@ export function PrizeSkoutDashboard() {
     if (!importedProducts.length) return { gap: 0, count: 0 };
     const relevantChannels: PriceChannel[] = ["in_store"];
     for (const p of ["zid", "salla", "foodics"] as const) {
-      if (channelStatuses[p] === "connected" && !relevantChannels.includes(p))
+      if (channelStatuses[p] === "connected" && approvedContracts.some(term => term.platform === p) && !relevantChannels.includes(p))
         relevantChannels.push(p);
     }
-    if (channelStatuses.talabat === "connected") relevantChannels.push("talabat");
+    if (channelStatuses.talabat === "connected" && approvedContracts.some(term => term.platform === "talabat")) relevantChannels.push("talabat");
     if (relevantChannels.length < 2) return { gap: 0, count: 0 }; // nothing beyond in_store to compare against
 
-    const economicsFor = (channel: PriceChannel): ChannelEconomics => ({
-      channel,
-      commission_pct:
-        channel === "in_store"
-          ? 0
-          : channel === approvedContract?.platform
-            ? approvedContract.commission_rate_pct
-            : 19,
-      vat_on_fees_pct:
-        channel === approvedContract?.platform ? approvedContract.vat_on_fees_pct : 0,
-      payment_fee_pct:
-        channel === approvedContract?.platform ? approvedContract.payment_fee_pct : 0,
-      fixed_fee: channel === approvedContract?.platform ? approvedContract.fixed_order_fee : 0,
-      minimum_margin_pct: 18,
-    });
+    const economicsFor = (channel: PriceChannel): ChannelEconomics => {
+      const contract = approvedContracts.find(term => term.platform === channel);
+      return {
+        channel,
+        commission_pct: channel === "in_store" ? 0 : contract?.commission_rate_pct ?? 0,
+        vat_on_fees_pct: contract?.vat_on_fees_pct ?? 0,
+        payment_fee_pct: contract?.payment_fee_pct ?? 0,
+        fixed_fee: contract?.fixed_order_fee ?? 0,
+        minimum_margin_pct: 18,
+      };
+    };
     const products: ChannelPriceProduct[] = importedProducts.map((p) => ({
       sku: p.sku,
       name: p.name_en || p.name_ar || p.sku,
@@ -3377,7 +3396,7 @@ export function PrizeSkoutDashboard() {
       gap: underpriced.reduce((sum, r) => sum + (r.consumer_difference ?? 0), 0),
       count: new Set(underpriced.map((r) => r.sku)).size,
     };
-  }, [importedProducts, channelStatuses, approvedContract]);
+  }, [importedProducts, channelStatuses, approvedContracts]);
 
   const productPageCount = Math.max(1, Math.ceil(filteredProducts.length / productPageSize));
   const visibleProducts = filteredProducts.slice(
@@ -4658,6 +4677,7 @@ export function PrizeSkoutDashboard() {
         rollbackOnReject: true,
         stopOnStaleCost: Boolean(cpObj.stop_on_stale_cost),
         approvalMode: "recommend_only",
+        minimumContribution: 0,
       },
     ]);
     showToast("Rule draft created. Preview its impact before activation.");
@@ -5132,15 +5152,30 @@ export function PrizeSkoutDashboard() {
       )
       .map((it) => it.classifiedDoc);
     if (classified.length === 0) return;
-    const rate = Number(payoutUploadRate) || 0;
-    setPayoutDocuments(classified);
+    const platforms = new Set(classified.map(doc => (doc.platform_guess || doc.result.platform || payoutUploadPlatform).toLowerCase()));
+    if (platforms.size > 1) {
+      setPayoutError("Run separate payout checks for each platform so the correct agreement and fee rules are applied.");
+      return;
+    }
+    const auditPlatform = [...platforms][0] ?? payoutUploadPlatform;
+    const contract = approvedContracts.find(term => term.status === "approved" && term.platform === auditPlatform) ?? null;
+    const rate = contract?.commission_rate_pct ?? (Number(payoutUploadRate) || 0);
+    const normalized = classified.map(doc => ({
+      ...doc,
+      result: { ...doc.result, platform:auditPlatform, commission_rate_pct:rate },
+    }));
+    setPayoutDocuments(normalized);
     setAuditSaved(false);
     if (classified.length === 1 && classified[0].document_type !== "merchant_received") {
       setPayoutData(classified[0].result as PayoutCheckData);
     } else {
       setPayoutData(null);
     }
-    setAuditResult(reconcile(classified, rate));
+    setAuditResult(reconcile(normalized, rate, contract ? {
+      source:"approved_contract", platform:auditPlatform, contractId:contract.id,
+      contractName:contract.contract_name, reviewedBy:contract.reviewed_by,
+      effectiveFrom:contract.effective_from, effectiveTo:contract.effective_to,
+    } : { source:"merchant_entered", platform:auditPlatform }));
   };
 
   const handleSaveAudit = async () => {
@@ -5255,7 +5290,9 @@ export function PrizeSkoutDashboard() {
   const marginPolicyDirty =
     rules[0].floor !== persistedGlobalFloor ||
     rules[0].maxChangePct !== persistedMaxIncrease ||
-    rules[0].approvalMode !== persistedApprovalMode;
+    rules[0].approvalMode !== persistedApprovalMode ||
+    rules[0].minimumContribution !== persistedMinimumContribution ||
+    JSON.stringify(channelPolicyDrafts)!==JSON.stringify(persistedChannelPolicies);
 
   const navDefs: Array<{
     id: SidebarNavId;
@@ -6385,7 +6422,7 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
 
-              {selectedProduct.preview?.outcome === "over_limit" && (
+              {["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") && (
                 <div
                   style={{
                     marginTop: 14,
@@ -6400,10 +6437,10 @@ export function PrizeSkoutDashboard() {
                 >
                   <strong>The target price is not approved for publishing.</strong> Reaching the
                   margin target would require a{" "}
-                  {(selectedProduct.preview.required_increase_pct * 100).toFixed(1)}% increase,
-                  while active policy v{selectedProduct.preview.policy_version} allows{" "}
-                  {(selectedProduct.preview.maximum_increase_pct * 100).toFixed(1)}%. PrizeSkout has
-                  prefilled the highest currently permitted price instead.{" "}
+                  {((selectedProduct.preview?.required_increase_pct??0) * 100).toFixed(1)}% increase,
+                  while active policy v{selectedProduct.preview?.policy_version} allows{" "}
+                  {((selectedProduct.preview?.maximum_increase_pct??0) * 100).toFixed(1)}%. PrizeSkout has
+                  stopped this recommendation instead of presenting a partial correction as protected.{" "}
                   <strong>Market acceptance has not been established.</strong> This target is based
                   on costs and charges, so review demand and comparable prices before approving a
                   large increase.
@@ -6511,8 +6548,8 @@ export function PrizeSkoutDashboard() {
                     lineHeight: 1.55,
                   }}
                 >
-                  {selectedProduct.preview?.outcome === "over_limit"
-                    ? `The highest price allowed by your active policy is prefilled. It will improve the margin, but it will not reach the full target.`
+                  {["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"")
+                    ? `This product cannot reach the full target within the active increase limit. Change and preview the policy or leave the price unchanged.`
                     : `The price that reaches your active margin target is prefilled. Review it before sending it to ${selectedProduct.source_platform}.`}
                 </p>
                 <label
@@ -6657,7 +6694,7 @@ export function PrizeSkoutDashboard() {
                     <button
                       type="button"
                       disabled={
-                        productPushStatus === "pushing" || productPushStatus === "reverting"
+                        productPushStatus === "pushing" || productPushStatus === "reverting" || ["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"")
                       }
                       onClick={pushSelectedProductPrice}
                       style={{
@@ -6666,12 +6703,12 @@ export function PrizeSkoutDashboard() {
                         color: "#fff",
                         borderRadius: 9,
                         padding: "11px 16px",
-                        cursor: productPushStatus === "pushing" ? "wait" : "pointer",
+                        cursor: productPushStatus === "pushing" ? "wait" : ["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") ? "not-allowed" : "pointer",
                         fontFamily: "inherit",
                         fontWeight: 800,
                       }}
                     >
-                      {productPushStatus === "pushing"
+                      {["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") ? "Blocked by active increase limit" : productPushStatus === "pushing"
                         ? productPushStage === "sending"
                           ? "Sending"
                           : "Verifying"
@@ -8399,7 +8436,14 @@ export function PrizeSkoutDashboard() {
                   items={stagedItems}
                   platforms={PAYOUT_UPLOAD_PLATFORMS}
                   rate={payoutUploadRate}
+                  rateAuthorityLabel={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform)
+                    ? `Approved contract · ${approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform)?.contract_name}` : null}
                   onRateChange={setPayoutUploadRate}
+                  onPlatformChange={(platform) => {
+                    setPayoutUploadPlatform(platform);
+                    const contract = approvedContracts.find(term => term.status === "approved" && term.platform === platform);
+                    setPayoutUploadRate(contract ? String(contract.commission_rate_pct) : "");
+                  }}
                   onAddFile={addFileItems}
                   onAddManual={addManualItem}
                   onCorrectType={correctStagedDocumentType}
@@ -8444,7 +8488,7 @@ export function PrizeSkoutDashboard() {
                       currency={currency}
                       documentCount={payoutDocuments.length}
                       documents={payoutDocuments}
-                      approvedContract={approvedContract}
+                      approvedContract={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform) ?? null}
                     />
                     <div>
                       <button
@@ -8565,8 +8609,11 @@ export function PrizeSkoutDashboard() {
 
               {policyTab === "contract" && (
                 <ContractIntelligenceVault
+                  connectedPlatforms={Object.entries(channelStatuses).filter(([,status]) => status === "connected").map(([platform]) => platform)}
+                  onTermsChanged={(terms) => setApprovedContracts(terms.filter(term => term.status === "approved"))}
                   onApproved={(term) => {
                     setApprovedContract(term);
+                    setApprovedContracts(current => [term, ...current.filter(item => item.platform !== term.platform)]);
                     setPayoutUploadRate(String(term.commission_rate_pct));
                   }}
                 />
@@ -11193,6 +11240,35 @@ export function PrizeSkoutDashboard() {
                       </option>
                     </select>
                   </label>
+                  <label style={{ fontSize: 12, fontWeight: 800 }}>
+                    Minimum cash contribution per sale
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                      <input aria-label="Minimum cash contribution" type="number" min={0} step={0.5} value={rules[0].minimumContribution}
+                        onChange={(e)=>editRule(0,{minimumContribution:Math.max(0,Number(e.target.value))})}
+                        style={{width:"100%",padding:10,border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}/>
+                      <strong>{currency}</strong>
+                    </div>
+                    <span style={{display:"block",fontSize:10.5,fontWeight:500,color:"var(--muted)",marginTop:4}}>Both the cash amount and percentage target must be met.</span>
+                  </label>
+                </div>
+                <div style={{marginTop:18,borderTop:"1px solid var(--border)",paddingTop:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+                    <div><strong style={{fontSize:13.5}}>Channel-specific targets</strong><div style={{fontSize:11.5,color:"var(--muted)",marginTop:3}}>Channels without an override inherit the global policy.</div></div>
+                    <select aria-label="Add channel policy" defaultValue="" onChange={e=>{const channel=e.target.value;if(!channel)return;setChannelPolicyDrafts(current=>current.some(item=>item.channel===channel)?current:[...current,{channel,servicePath:"default",floor:rules[0].floor,minimumContribution:rules[0].minimumContribution,maxChangePct:rules[0].maxChangePct,approvalMode:rules[0].approvalMode}]);e.target.value="";}}
+                      style={{padding:"8px 10px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}>
+                      <option value="">Add channel override…</option>
+                      {["salla","zid","talabat","jahez","keeta","snoonu","deliveroo"].filter(channel=>!channelPolicyDrafts.some(item=>item.channel===channel)).map(channel=><option key={channel} value={channel}>{channel.toUpperCase()}</option>)}
+                    </select>
+                  </div>
+                  {channelPolicyDrafts.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:10,marginTop:12}}>{channelPolicyDrafts.map((item,index)=><div key={`${item.channel}:${item.servicePath}`} style={{border:"1px solid var(--border)",borderRadius:10,padding:12,background:"var(--surface2)"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><strong>{item.channel.toUpperCase()}</strong><button type="button" onClick={()=>setChannelPolicyDrafts(current=>current.filter((_,i)=>i!==index))} style={{border:0,background:"transparent",color:"#B42318",cursor:"pointer",fontWeight:800}}>Remove</button></div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:9}}>
+                      <label style={{fontSize:10.5,fontWeight:800}}>Target %<input type="number" min={1} max={99} value={item.floor} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,floor:Number(e.target.value)}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}/></label>
+                      <label style={{fontSize:10.5,fontWeight:800}}>Minimum {currency}<input type="number" min={0} step={0.5} value={item.minimumContribution} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,minimumContribution:Number(e.target.value)}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}/></label>
+                      <label style={{fontSize:10.5,fontWeight:800}}>Max increase %<input type="number" min={0} max={100} value={item.maxChangePct} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,maxChangePct:Number(e.target.value)}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}/></label>
+                      <label style={{fontSize:10.5,fontWeight:800}}>Handling<select value={item.approvalMode} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,approvalMode:e.target.value as ApprovalMode}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}><option value="recommend_only">Suggestions only</option><option value="approval_every_change">Approval every time</option><option value="auto_within_limit">Automatic within limit</option></select></label>
+                    </div>
+                  </div>)}</div>}
                 </div>
                 <div
                   style={{
@@ -11206,7 +11282,7 @@ export function PrizeSkoutDashboard() {
                 >
                   Protection now: keep at least{" "}
                   <strong style={{ color: "var(--text)" }}>{persistedGlobalFloor}%</strong> from
-                  each sale and never increase a price by more than{" "}
+                  each sale, keep at least <strong style={{color:"var(--text)"}}>{currency} {persistedMinimumContribution.toFixed(2)}</strong>, and never increase a price by more than{" "}
                   <strong style={{ color: "var(--text)" }}>{persistedMaxIncrease}%</strong>. Changes
                   you make here do nothing until you start the new settings.
                 </div>
@@ -11300,7 +11376,7 @@ export function PrizeSkoutDashboard() {
                     termsRequired = previews.filter(
                       (x) => x.v?.outcome === "blocked_missing_economics",
                     ),
-                    over = previews.filter((x) => x.v?.outcome === "over_limit");
+                    over = previews.filter((x) => ["over_limit","cannot_reach_target_within_limit"].includes(x.v?.outcome??""));
                   return (
                     <div
                       style={{
@@ -11413,7 +11489,7 @@ export function PrizeSkoutDashboard() {
                                       ? "Confirm product cost first"
                                       : v?.outcome === "blocked_missing_economics"
                                         ? "Approve this channel's contract terms first"
-                                        : v?.outcome === "over_limit"
+                                        : ["over_limit","cannot_reach_target_within_limit"].includes(v?.outcome??"")
                                           ? "Active policy caps this increase; market acceptance is not established"
                                           : v?.outcome === "within_limit"
                                             ? "Within your active limit; review before publishing"

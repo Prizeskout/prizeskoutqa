@@ -17,11 +17,10 @@ import { type V1Context, type V1Result } from "@/server/v1-handlers";
 import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
-import { getMerchantMarginFloor } from "./merchant-pricing-config";
 import { createNotification } from "@/server/notifications";
 import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { enqueueDispatch } from "./dispatch-queue";
-import { getMerchantMarginPolicy } from "./merchant-pricing-config";
+import { resolveMerchantMarginPolicy } from "./merchant-pricing-config";
 import { evaluatePolicyControl } from "./margin-policy";
 import {measured} from "./latency";
 
@@ -212,12 +211,13 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
   // ------------------------------------------------------------------
   // 5. Decide — run margin engine
   // ------------------------------------------------------------------
-  const economics = await resolveAuthoritativeEconomics({accountId:ctx.accountId,merchantId:body.merchant_id,channel:"talabat"});
+  const targetChannel="talabat";
+  const economics = await resolveAuthoritativeEconomics({accountId:ctx.accountId,merchantId:body.merchant_id,channel:targetChannel});
   if(!economics){
     await supabaseAdmin.from("ps_ingest_events").update({status:"failed"}).eq("id",ingestEventId);
     return err("economics_not_approved","An effective, approved Talabat economics version is required before PrizeSkout can calculate or publish a price.",409);
   }
-  const policy=await getMerchantMarginPolicy(ctx.accountId);
+  const policy=await resolveMerchantMarginPolicy(ctx.accountId,targetChannel);
   const marginFloorPct = policy.marginFloorPct;
   const decideOutput = await measured({traceId:idempotencyKey,accountId:ctx.accountId,stage:"decide"},async()=>decide({
     region,
@@ -230,6 +230,7 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
     promotionContributionRate:economics.promotionContributionRate,
     logisticsSubsidy:economics.logisticsSubsidy,
     marginFloorPct,
+    minimumContributionAmount:policy.minimumContributionAmount,
   }));
 
   const { data: decideRow } = await supabaseAdmin
@@ -251,13 +252,17 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
       promotion_contribution_rate:economics.promotionContributionRate,
       economics_version_id:economics.id,
       margin_policy_version:policy.version,
+      minimum_contribution_amount:policy.minimumContributionAmount,
+      contribution_amount:decideOutput.netMargin,
+      margin_policy_scope:policy.scope,
+      margin_policy_channel:policy.channel,
       margin_floor_pct: decideOutput.marginFloorPct,
       net_margin: decideOutput.netMargin,
       net_margin_pct: decideOutput.netMarginPct,
       floor_breached: decideOutput.floorBreached,
       recommended_price: decideOutput.recommendedPrice,
       decision_action: decideOutput.decisionAction,
-    })
+    } as never)
     .select("id")
     .single();
 
@@ -319,7 +324,7 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
   let dispatchTriggered = false;
   let dispatchResult: Awaited<ReturnType<typeof dispatchToAggregators>> | null = null;
 
-  const policyControl=evaluatePolicyControl({approvalMode:policy.approvalMode,maxPriceIncreasePct:policy.maxPriceIncreasePct,currentPrice:fin.current_retail_price,recommendedPrice:decideOutput.recommendedPrice,floorBreached:decideOutput.floorBreached});
+  const policyControl=evaluatePolicyControl({approvalMode:policy.approvalMode,maxPriceIncreasePct:policy.maxPriceIncreasePct,currentPrice:fin.current_retail_price,recommendedPrice:decideOutput.recommendedPrice,floorBreached:decideOutput.floorBreached,evidenceReady:Boolean(economics.id)});
   const {increasePct:proposedIncreasePct,withinIncreaseLimit,mayAutoApply}=policyControl;
   if (decideOutput.floorBreached && decideOutput.recommendedPrice !== null && decideRow && mayAutoApply) {
     dispatchTriggered = true;
@@ -347,10 +352,10 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
         approval_mode:policy.approvalMode,
         max_price_increase_pct:policy.maxPriceIncreasePct,
       },
-      channel:"talabat",
+      channel:targetChannel,
       economicsVersionId:economics.id,
     }));
-    dispatchResult={channels_attempted:queued?1:0,results:queued?[{channel:"talabat",status:"queued",dispatch_id:queued.id}]:[]};
+    dispatchResult={channels_attempted:queued?1:0,results:queued?[{channel:targetChannel,status:"queued",dispatch_id:queued.id}]:[]};
     await supabaseAdmin.from("ps_ingest_events").update({ status: "dispatched" }).eq("id", ingestEventId);
   }
 

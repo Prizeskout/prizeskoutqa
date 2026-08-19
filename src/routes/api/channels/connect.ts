@@ -120,9 +120,15 @@ export const Route = createFileRoute("/api/channels/connect")({
             if (body.action === "set") {
               const result = await activateMerchantMarginPolicy(merchant_id,{
                 marginFloorPct:Number(body.margin_floor_pct),
+                minimumContributionAmount:Number(body.minimum_contribution_amount??0),
                 maxPriceIncreasePct:Number(body.max_price_increase_pct),
                 approvalMode:body.approval_mode as ApprovalMode,
                 activatedBy:(body.activated_by||"merchant").slice(0,160),
+                overrides:Array.isArray(body.channel_overrides)?body.channel_overrides.map((item:any)=>({
+                  channel:String(item.channel??"").toLowerCase(),servicePath:String(item.service_path??"default").toLowerCase(),
+                  marginFloorPct:Number(item.margin_floor_pct),minimumContributionAmount:Number(item.minimum_contribution_amount??0),
+                  maxPriceIncreasePct:Number(item.max_price_increase_pct),approvalMode:item.approval_mode as ApprovalMode,
+                })):[],
               });
               return result.ok
                 ? resp({ ok: true, policy:result.policy }, 200)

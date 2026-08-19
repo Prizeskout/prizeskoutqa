@@ -37,8 +37,16 @@ type ContractExtraction={
 };
 
 const inputStyle = { width:"100%", boxSizing:"border-box" as const, border:"1px solid var(--border)", borderRadius:8, padding:"9px 10px", background:"var(--surface)", color:"var(--text)", fontFamily:"inherit" };
+const FINANCIAL_PLATFORMS = ["salla","zid","talabat","jahez","keeta","snoonu","deliveroo"] as const;
+const STOREFRONT_PLATFORMS = new Set(["salla","zid"]);
 
-export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:ContractTerm)=>void }) {
+function percentageLabel(platform:string) {
+  if (platform === "salla") return "Marketplace commission % (enter 0 if none)";
+  if (platform === "zid") return "Marketplace commission % (Mazeed, if used)";
+  return "Marketplace commission %";
+}
+
+export function ContractIntelligenceVault({ onApproved, onTermsChanged, connectedPlatforms = [] }: { onApproved:(term:ContractTerm)=>void; onTermsChanged?:(terms:ContractTerm[])=>void; connectedPlatforms?:string[] }) {
   const [terms,setTerms]=useState<ContractTerm[]>([]);
   const [open,setOpen]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -50,7 +58,7 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
   const [reviewId,setReviewId]=useState<string|null>(null);
   const [scanNotice,setScanNotice]=useState<string|null>(null);
   const [form,setForm]=useState({
-    contract_name:"", source_platform:"talabat", commission_rate_pct:"19", vat_on_fees_pct:"0",
+    contract_name:"", source_platform:"talabat", commission_rate_pct:"0", vat_on_fees_pct:"0",
     payment_fee_pct:"0", fixed_order_fee:"0", delivery_contribution:"0",
     commission_base:"unknown",promotion_funding_platform_pct:"",
     refund_liability:"unknown",cancellation_liability:"unknown",
@@ -73,6 +81,7 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
   const load=()=>call({action:"list"}).then(data=>{
     const loaded=(data.terms??[]) as ContractTerm[];
     setTerms(loaded);
+    onTermsChanged?.(loaded);
     const current=loaded.find(term=>term.status==="approved");
     if(current)onApproved(current);
   }).catch(err=>setError(err instanceof Error?err.message:"Could not load contracts."));
@@ -168,6 +177,35 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
   };
 
   const approved=terms.filter(t=>t.status==="approved");
+  const configurePlatform=(platform:string)=>{
+    const current=terms.find(term=>term.platform===platform&&term.status==="approved");
+    setForm(form=>({
+      ...form,source_platform:platform,
+      contract_name:current?.contract_name??"",
+      commission_rate_pct:current?String(current.commission_rate_pct):"0",
+      vat_on_fees_pct:current?String(current.vat_on_fees_pct):"0",
+      payment_fee_pct:current?String(current.payment_fee_pct):"0",
+      fixed_order_fee:current?String(current.fixed_order_fee):"0",
+      delivery_contribution:current?String(current.delivery_contribution):"0",
+      commission_base:current?.commission_base??"unknown",
+      promotion_funding_platform_pct:current?.promotion_funding_platform_pct==null?"":String(current.promotion_funding_platform_pct),
+      refund_liability:current?.refund_liability??"unknown",
+      cancellation_liability:current?.cancellation_liability??"unknown",
+      settlement_frequency:current?.settlement_frequency??"",
+      settlement_days:current?.settlement_days==null?"":String(current.settlement_days),
+      dispute_deadline_days:current?.dispute_deadline_days==null?"":String(current.dispute_deadline_days),
+      advertising_commitment:current?.advertising_commitment==null?"":String(current.advertising_commitment),
+      minimum_spend:current?.minimum_spend==null?"":String(current.minimum_spend),
+      currency:current?.currency??(STOREFRONT_PLATFORMS.has(platform)?"SAR":"QAR"),
+      coverage_legal_entity:current?.coverage_legal_entity??"",
+      coverage_brands:current?.coverage_brands.join(", ")??"",
+      coverage_branches:current?.coverage_branches.join(", ")??"",
+      effective_from:current?.effective_from??new Date().toISOString().slice(0,10),
+      effective_to:current?.effective_to??"",
+      notes:current?.notes??"",
+    }));
+    setOpen(true);setError(null);
+  };
   return <section style={{border:"1px solid var(--border)",borderRadius:14,overflow:"hidden",background:"var(--surface)"}}>
     <div style={{padding:"17px 19px",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap",background:"var(--surface2)"}}>
       <div style={{display:"flex",gap:11,alignItems:"center"}}>
@@ -177,15 +215,31 @@ export function ContractIntelligenceVault({ onApproved }: { onApproved:(term:Con
       <button onClick={()=>setOpen(v=>!v)} style={{border:0,borderRadius:9,padding:"9px 12px",background:"#14213D",color:"#fff",fontWeight:800,fontFamily:"inherit",cursor:"pointer",display:"flex",gap:7,alignItems:"center"}}><Plus size={15}/>{open?"Close":"Add contract terms"}</button>
     </div>
     <div style={{padding:"16px 19px",display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{padding:"10px 12px",border:"1px solid color-mix(in srgb,#A16207 25%,var(--border))",borderRadius:9,background:"color-mix(in srgb,#A16207 5%,var(--surface))",fontSize:12,color:"var(--muted)",lineHeight:1.5}}>
+        A connected store may provide catalogue access only. Financial terms, settlement reports and bank evidence are separate checks; PrizeSkout will not assume they are available from the connection.
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:9}}>
+        {[...FINANCIAL_PLATFORMS].sort((a,b)=>Number(connectedPlatforms.includes(b))-Number(connectedPlatforms.includes(a))).map(platform=>{
+          const contract=approved.find(term=>term.platform===platform);
+          const draft=terms.find(term=>term.platform===platform&&term.status==="draft");
+          const connected=connectedPlatforms.includes(platform);
+          return <div key={platform} style={{border:"1px solid var(--border)",borderRadius:10,padding:"11px 12px",background:"var(--surface2)",display:"flex",flexDirection:"column",gap:7}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center"}}><strong>{platform.toUpperCase()}</strong><span style={{fontSize:10.5,fontWeight:800,color:connected?"#087F5B":"var(--muted)"}}>{connected?"STORE CONNECTED":"NOT CONNECTED"}</span></div>
+            <div style={{fontSize:11.5,fontWeight:700,color:contract?"#087F5B":draft?"#A16207":"#B42318"}}>{contract?"Financial terms approved":draft?"Financial terms awaiting review":"Financial terms missing"}</div>
+            <div style={{fontSize:11,color:"var(--muted)"}}>{contract?`${contract.commission_rate_pct}% marketplace · ${contract.payment_fee_pct}% payment processing · from ${contract.effective_from}`:STOREFRONT_PLATFORMS.has(platform)?"Record payment processing and any marketplace commission separately.":"Record the marketplace commission and every settlement deduction."}</div>
+            <button type="button" onClick={()=>configurePlatform(platform)} style={{alignSelf:"flex-start",border:"1px solid var(--border)",borderRadius:7,padding:"6px 9px",background:"var(--surface)",color:"var(--text)",fontSize:11.5,fontWeight:800,cursor:"pointer",fontFamily:"inherit"}}>{contract?"Review or replace terms":"Configure financial terms"}</button>
+          </div>;
+        })}
+      </div>
       {approved.length>0&&<div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{approved.map(term=><span key={term.id} style={{display:"inline-flex",gap:7,alignItems:"center",padding:"7px 10px",border:"1px solid color-mix(in srgb,#087F5B 30%,var(--border))",borderRadius:999,fontSize:12,color:"#087F5B",fontWeight:800}}><ShieldCheck size={14}/>{term.platform.toUpperCase()} · {term.commission_rate_pct}% · from {term.effective_from}</span>)}</div>}
       {!terms.length&&!open&&<div style={{fontSize:13,color:"#A16207",padding:"10px 12px",border:"1px solid color-mix(in srgb,#A16207 30%,var(--border))",borderRadius:9,background:"color-mix(in srgb,#A16207 6%,var(--surface))"}}>No approved agreement yet. Until you add and approve one, PrizeSkout will treat any terms you enter as unconfirmed.</div>}
       {open&&<div style={{borderTop:"1px solid var(--border)",paddingTop:14}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(175px,1fr))",gap:10}}>
           <label style={{fontSize:11.5,fontWeight:800}}>Contract name<input style={inputStyle} value={form.contract_name} onChange={e=>setForm({...form,contract_name:e.target.value})} placeholder="Talabat partner agreement 2026"/></label>
-          <label style={{fontSize:11.5,fontWeight:800}}>Platform<select style={inputStyle} value={form.source_platform} onChange={e=>setForm({...form,source_platform:e.target.value})}>{["talabat","snoonu","jahez","keeta","deliveroo","zid","salla"].map(v=><option key={v} value={v}>{v.toUpperCase()}</option>)}</select></label>
-          <label style={{fontSize:11.5,fontWeight:800}}>Commission %<input type="number" style={inputStyle} value={form.commission_rate_pct} onChange={e=>setForm({...form,commission_rate_pct:e.target.value})}/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Platform<select style={inputStyle} value={form.source_platform} onChange={e=>configurePlatform(e.target.value)}>{FINANCIAL_PLATFORMS.map(v=><option key={v} value={v}>{v.toUpperCase()}</option>)}</select></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>{percentageLabel(form.source_platform)}<input type="number" style={inputStyle} value={form.commission_rate_pct} onChange={e=>setForm({...form,commission_rate_pct:e.target.value})}/><span style={{display:"block",fontSize:10.5,fontWeight:500,color:"var(--muted)",marginTop:3}}>Charge for marketplace/order generation—not the merchant’s target margin.</span></label>
           <label style={{fontSize:11.5,fontWeight:800}}>VAT on fees %<input type="number" style={inputStyle} value={form.vat_on_fees_pct} onChange={e=>setForm({...form,vat_on_fees_pct:e.target.value})}/></label>
-          <label style={{fontSize:11.5,fontWeight:800}}>Payment fee %<input type="number" style={inputStyle} value={form.payment_fee_pct} onChange={e=>setForm({...form,payment_fee_pct:e.target.value})}/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Payment-processing fee %<input type="number" style={inputStyle} value={form.payment_fee_pct} onChange={e=>setForm({...form,payment_fee_pct:e.target.value})}/><span style={{display:"block",fontSize:10.5,fontWeight:500,color:"var(--muted)",marginTop:3}}>Card or gateway percentage; keep separate from marketplace commission.</span></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Fixed fee / order<input type="number" style={inputStyle} value={form.fixed_order_fee} onChange={e=>setForm({...form,fixed_order_fee:e.target.value})}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Delivery contribution<input type="number" style={inputStyle} value={form.delivery_contribution} onChange={e=>setForm({...form,delivery_contribution:e.target.value})}/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Commission calculation base<select style={inputStyle} value={form.commission_base} onChange={e=>setForm({...form,commission_base:e.target.value})}><option value="unknown">Not established</option><option value="gross_before_discount">Gross before discount</option><option value="net_after_discount">Net after discount</option><option value="eligible_sales">Contract-defined eligible sales</option></select></label>

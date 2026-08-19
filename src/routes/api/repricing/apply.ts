@@ -15,7 +15,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { fetchLiveProductPrice, pushPriceToSourcePlatform } from "@/server/core/platform-sync";
 import { getValidSallaAccessToken } from "@/server/core/salla-token";
-import { getMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
+import { resolveMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
+import { decide } from "@/server/core/decide-engine";
 import { recordPendingJahezPropagation } from "@/server/core/zid-jahez-bridge";
 import { toMerchantError } from "@/server/merchant-errors";
 
@@ -51,7 +52,7 @@ export const Route = createFileRoute("/api/repricing/apply")({
 
         // 1. Validate access code — confirm the caller owns this merchant_id
         const accountId = merchantId;
-        const [codeResult, eventResult, policy] = await Promise.all([
+        const [codeResult, eventResult] = await Promise.all([
           supabaseAdmin
             .from("ps_access_codes" as never)
             .select("merchant_id")
@@ -59,11 +60,10 @@ export const Route = createFileRoute("/api/repricing/apply")({
             .maybeSingle(),
           supabaseAdmin
             .from("ps_ingest_events")
-            .select("id, item_id, source_platform, currency, sku, item_name_en, current_retail_price")
+            .select("id, item_id, source_platform, currency, sku, item_name_en, current_retail_price, raw_payload")
             .eq("id", ingestEventId)
             .eq("account_id", accountId)
             .maybeSingle(),
-          getMerchantMarginPolicy(accountId),
         ]);
         const codeRow = codeResult.data as { merchant_id: string } | null;
 
@@ -76,6 +76,17 @@ export const Route = createFileRoute("/api/repricing/apply")({
 
         if (!evt?.item_id || !evt?.source_platform) {
           return json({ error: "We could not find that product in your latest catalogue.", action: "Sync the connected store, then select the product again." }, 404);
+        }
+
+        const policy=await resolveMerchantMarginPolicy(accountId,evt.source_platform);
+        const {data:decision}=await supabaseAdmin.from("ps_decide_results").select("base_cost,commission_rate,vat_rate,payment_fee_rate,fixed_order_fee,promotion_contribution_rate,logistics_subsidy,economics_version_id").eq("account_id",accountId).eq("ingest_event_id",ingestEventId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+        const rawPayload=evt.raw_payload as Record<string,unknown>|null;
+        if(!decision?.economics_version_id||rawPayload?.cost_source!=="platform_catalog"){
+          return json({ok:false,error:"This price cannot be published until the product cost and approved channel agreement are both verified."},409);
+        }
+        const targetAnalysis=decide({region:"SA",baseCost:Number(decision.base_cost),currentRetailPrice:targetPrice,commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),paymentFeeRate:Number(decision.payment_fee_rate??0),fixedOrderFee:Number(decision.fixed_order_fee??0),promotionContributionRate:Number(decision.promotion_contribution_rate??0),logisticsSubsidy:Number(decision.logistics_subsidy??0),marginFloorPct:policy.marginFloorPct,minimumContributionAmount:policy.minimumContributionAmount});
+        if(targetAnalysis.floorBreached){
+          return json({ok:false,error:`This price would keep ${(targetAnalysis.netMarginPct*100).toFixed(1)}% and ${targetAnalysis.netMargin.toFixed(2)} in contribution. The active ${policy.scope} policy requires at least ${(policy.marginFloorPct*100).toFixed(1)}% and ${policy.minimumContributionAmount.toFixed(2)}. No price was changed.`},409);
         }
 
         const currentPrice=Number(evt.current_retail_price??0);

@@ -125,6 +125,17 @@ export type AuditAssurance = {
   assertions: AuditAssertion[];
   limitations: string[];
   engineVersion: "revenue-assurance-v1";
+  rateAuthority?: AuditRateAuthority;
+};
+
+export type AuditRateAuthority = {
+  source: "approved_contract" | "merchant_entered";
+  platform?: string | null;
+  contractId?: string | null;
+  contractName?: string | null;
+  reviewedBy?: string | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
 };
 
 export type FourWayStage = {
@@ -613,6 +624,7 @@ function computeMerchantReceivedFindings(
 export function reconcile(
   docs: ClassifiedDocument[],
   commissionRatePct: number,
+  rateAuthority: AuditRateAuthority = { source: "merchant_entered" },
 ): {
   ledger: LedgerRow[];
   ledgerTotals: LedgerRow | null;
@@ -745,15 +757,42 @@ export function reconcile(
   const exactPeriodCheck = findings.some(f => f.id.startsWith("period-cross-check-") || (
     f.id.startsWith("received-vs-statement-") && !f.id.includes("partial") && !f.id.includes("disjoint")
   ));
+  const evidencedStarts = docs.map(doc => doc.result.period_start).filter((value): value is string => !!value).sort();
+  const evidencedEnds = docs.map(doc => doc.result.period_end ?? doc.result.period_start).filter((value): value is string => !!value).sort();
+  const evidencedCoverage = evidencedStarts.length && evidencedEnds.length
+    ? { start:evidencedStarts[0], end:evidencedEnds[evidencedEnds.length - 1] }
+    : coverage;
+  const documentPlatforms = new Set(docs.map(doc => (doc.result.platform || doc.platform_guess || "").toLowerCase()).filter(Boolean));
+  const contractMatchesPlatform = documentPlatforms.size === 1
+    && !!rateAuthority.platform
+    && documentPlatforms.has(rateAuthority.platform.toLowerCase());
+  const contractCoversPeriod = rateAuthority.source === "approved_contract"
+    && contractMatchesPlatform
+    && (!evidencedCoverage?.start || !rateAuthority.effectiveFrom || rateAuthority.effectiveFrom <= evidencedCoverage.start)
+    && (!evidencedCoverage?.end || !rateAuthority.effectiveTo || rateAuthority.effectiveTo >= evidencedCoverage.end);
   const assertions: AuditAssertion[] = [
     { id: "completeness", label: "Completeness", status: dailyDocs.length && !dateCollisions.length ? "passed" : dailyDocs.length ? "partial" : "missing", detail: dailyDocs.length ? (dateCollisions.length ? `${dateCollisions.length} duplicate date(s) quarantined from the calculation.` : "Daily activity supplied without duplicate dates.") : "Order-level or daily sales evidence is missing." },
     { id: "accuracy", label: "Accuracy", status: dailyDocs.length && statementDocs.length ? "partial" : "missing", detail: dailyDocs.length && statementDocs.length ? "Aggregate figures were cross-checked; individual fees, refunds and taxes were not recomputed." : "Activity and platform settlement evidence are both required." },
     { id: "cutoff", label: "Cut-off", status: exactPeriodCheck ? "passed" : coverage ? "partial" : "missing", detail: exactPeriodCheck ? "At least one like-for-like period was compared." : "No complete like-for-like settlement period was proven." },
-    { id: "authorization", label: "Contract terms", status: "missing", detail: "The agreed commission rate is merchant-entered; no signed contract or versioned rate card is attached." },
+    { id: "authorization", label: "Contract terms", status: contractCoversPeriod ? "passed" : "missing", detail: contractCoversPeriod
+      ? `${rateAuthority.contractName ?? "Reviewed contract"} authorizes the ${rate}% rate for this audit period${rateAuthority.reviewedBy ? `; approved by ${rateAuthority.reviewedBy}.` : "."}`
+      : rateAuthority.source === "approved_contract"
+        ? !contractMatchesPlatform
+          ? "The selected approved contract does not match the platform evidenced by this audit. The rate is not authorized for this conclusion."
+          : "The selected approved contract does not cover the complete audit period. The rate is not authorized for this conclusion."
+        : "The configured commission rate is merchant-entered; no approved, effective-dated contract is attached to this calculation." },
     { id: "occurrence", label: "Occurrence", status: dailyDocs.length ? "partial" : "missing", detail: dailyDocs.length ? "Aggregated activity exists, but individual orders and cancellations are not vouched." : "No underlying transaction evidence supplied." },
     { id: "settlement", label: "Bank settlement", status: receivedDocs.some(d => d.result.evidence_level === "document_supported") ? "partial" : "missing", detail: receivedDocs.some(d => d.result.evidence_level === "document_supported") ? "The bank-issued evidence fingerprint is recorded; the file remains with the merchant and its contents still require review." : receivedDocs.length ? "Deposit is manually asserted and has no evidence fingerprint." : "No bank settlement evidence supplied." },
   ];
   const evidenceScore = Math.round(assertions.reduce((n, a) => n + (a.status === "passed" ? 1 : a.status === "partial" ? 0.5 : 0), 0) / assertions.length * 100);
+  // A mathematically corroborated difference is not claim-ready unless the
+  // rate used to calculate it is authorized by an approved contract covering
+  // the audit period. Keep the amount visible as estimated exposure instead.
+  if (!contractCoversPeriod) {
+    for (const finding of findings) {
+      if (finding.recoverability === "claims_ready") finding.recoverability = "estimated";
+    }
+  }
   const claimsReadyAmount = round2(findings.filter(f => f.recoverability === "claims_ready").reduce((n, f) => n + (f.amount ?? 0), 0));
   const estimatedExposure = round2(findings.filter(f => f.recoverability === "estimated").reduce((n, f) => n + (f.amount ?? 0), 0));
   const limitations = assertions.filter(a => a.status !== "passed").map(a => a.detail);
@@ -765,7 +804,7 @@ export function reconcile(
     : opinion === "reconciled_with_limitations" ? "Reconciled with limitations" : "Reconciled";
   const assurance: AuditAssurance = {
     opinion, opinionLabel, evidenceScore, claimsReadyAmount, estimatedExposure,
-    assertions, limitations, engineVersion: "revenue-assurance-v1",
+    assertions, limitations, engineVersion: "revenue-assurance-v1", rateAuthority,
   };
 
   const statementAmount = statementDocs.reduce((sum,doc)=>sum+(doc.result.expected_payout??0),0);

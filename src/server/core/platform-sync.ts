@@ -11,7 +11,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide } from "./decide-engine";
-import { getMerchantMarginFloor } from "./merchant-pricing-config";
+import { resolveMerchantMarginPolicy } from "./merchant-pricing-config";
 import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { zidCustomerPricePatch } from "@/lib/channel-bridge";
 import {
@@ -373,7 +373,8 @@ export async function syncPlatformCatalog(params: {
   }
 
   const economics = await resolveAuthoritativeEconomics({ accountId, merchantId, channel: platform });
-  const marginFloorPct = await getMerchantMarginFloor(accountId);
+  const policy = await resolveMerchantMarginPolicy(accountId,platform);
+  const marginFloorPct = policy.marginFloorPct;
 
   let stored = 0;
   let belowFloor = 0;
@@ -440,6 +441,7 @@ export async function syncPlatformCatalog(params: {
         promotionContributionRate: economics.promotionContributionRate,
         logisticsSubsidy: economics.logisticsSubsidy,
         marginFloorPct,
+        minimumContributionAmount:policy.minimumContributionAmount,
       });
       await supabaseAdmin.from("ps_decide_results").insert({
         ingest_event_id: existing.id,
@@ -458,12 +460,17 @@ export async function syncPlatformCatalog(params: {
         economics_version_id: economics.id,
         logistics_subsidy: 0,
         margin_floor_pct: marginFloorPct,
+        minimum_contribution_amount:policy.minimumContributionAmount,
+        contribution_amount:decideOutput.netMargin,
+        margin_policy_version:policy.version,
+        margin_policy_scope:policy.scope,
+        margin_policy_channel:policy.channel,
         net_margin: decideOutput.netMargin,
         net_margin_pct: decideOutput.netMarginPct,
         floor_breached: decideOutput.floorBreached,
         recommended_price: decideOutput.recommendedPrice,
         decision_action: decideOutput.decisionAction,
-      });
+      } as never);
       await supabaseAdmin
         .from("ps_ingest_events")
         .update({ status: "decided" })
@@ -533,6 +540,7 @@ export async function syncPlatformCatalog(params: {
       promotionContributionRate: economics.promotionContributionRate,
       logisticsSubsidy: economics.logisticsSubsidy,
       marginFloorPct,
+      minimumContributionAmount:policy.minimumContributionAmount,
     });
 
     await supabaseAdmin.from("ps_decide_results").insert({
@@ -552,12 +560,17 @@ export async function syncPlatformCatalog(params: {
       economics_version_id: economics.id,
       logistics_subsidy: 0,
       margin_floor_pct: marginFloorPct,
+      minimum_contribution_amount:policy.minimumContributionAmount,
+      contribution_amount:decideOutput.netMargin,
+      margin_policy_version:policy.version,
+      margin_policy_scope:policy.scope,
+      margin_policy_channel:policy.channel,
       net_margin: decideOutput.netMargin,
       net_margin_pct: decideOutput.netMarginPct,
       floor_breached: decideOutput.floorBreached,
       recommended_price: decideOutput.recommendedPrice,
       decision_action: decideOutput.decisionAction,
-    });
+    } as never);
 
     await supabaseAdmin
       .from("ps_ingest_events")

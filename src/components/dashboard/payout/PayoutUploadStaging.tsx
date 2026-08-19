@@ -56,12 +56,14 @@ const inputStyle = {
 };
 
 export function PayoutUploadStaging({
-  items, platforms, rate, onRateChange, onAddFile, onAddManual, onCorrectType, onToggleNetSales, onRemove, onRunAudit,
+  items, platforms, rate, rateAuthorityLabel, onRateChange, onPlatformChange, onAddFile, onAddManual, onCorrectType, onToggleNetSales, onRemove, onRunAudit,
 }: {
   items: StagedItem[];
   platforms: { value: string; label: string }[];
   rate: string;
+  rateAuthorityLabel?: string | null;
   onRateChange: (v: string) => void;
+  onPlatformChange?: (platform: string) => void;
   onAddFile: (files: FileList, description: string, platform: string) => void;
   onAddManual: (description: string, amount: string, periodStart: string, periodEnd: string, platform: string, evidence: {
     transactionDate: string; bankReference: string; depositType: string; currency: string; fileName?: string; sha256?: string;
@@ -138,7 +140,7 @@ export function PayoutUploadStaging({
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <select value={platform} onChange={e => setPlatform(e.target.value)}
+          <select value={platform} onChange={e => { setPlatform(e.target.value); onPlatformChange?.(e.target.value); }}
             aria-label="Platform" style={inputStyle}>
             {platforms.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
@@ -147,6 +149,9 @@ export function PayoutUploadStaging({
             <>
               <input type="number" min="0" max="99" step="0.1" value={rate} onChange={e => onRateChange(e.target.value)}
                 placeholder="Commission rate %" style={{ ...inputStyle, width: 150 }} />
+              <span style={{ fontSize:11.5, fontWeight:700, color:rateAuthorityLabel ? "#087F5B" : "#B45309" }}>
+                {rateAuthorityLabel ?? "Merchant-entered rate · unverified"}
+              </span>
               <input ref={fileInputRef} type="file" multiple accept={canAddFile} style={{ display: "none" }} onChange={handleFileChange} />
               <button type="button" onClick={handleAddFile}
                 style={{ cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#fff", background: OG,
@@ -190,7 +195,7 @@ export function PayoutUploadStaging({
         </div>
         <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
           {mode === "file"
-            ? "Add a platform settlement statement, sales or order report, and your agreed commission. A bank receipt is optional but needed to confirm what was actually received."
+            ? "Add records for one platform and one audit period. An approved contract is required before any difference can be treated as claim-ready; a typed rate supports estimates only."
             : "No bank connection is requested or supported. A selected evidence file stays on this device; PrizeSkout records only its SHA-256 fingerprint. Without one, the deposit remains manually asserted."}
         </span>
       </div>
