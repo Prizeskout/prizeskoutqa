@@ -224,6 +224,7 @@ function isOperationalRequest(text: string): boolean {
   return (product.test(text) && operation.test(text))
     || /\b(what|how much)\b.*\b(keep|kept|profit|contribution)\b|\b(loss[- ]making|unprofitable)\b.*\border/i.test(text)
     || /\b(check|review|show|which|are|is)\b.*\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss)|\b(coupon|coupons|discount code|promotion|promotions)\b.*\b(safe|risk|margin|profit|loss)/i.test(text)
+    || /\b(create|add|replace|disable|deactivate|enable|activate|delete|remove)\b.*\b(coupon|discount code)\b|\b(coupon|discount code)\b.*\b(create|add|replace|disable|deactivate|enable|activate|delete|remove)\b/i.test(text)
     || /\b(show|list|summari[sz]e|check|review)\b.*\b(order|orders)\b/i.test(text)
     || /\b(vat|tax|returns?|refunds?)\b/i.test(text)
     || /\b(mark|move|change|set)\b.*\border\b|\border\b.*\b(ready|preparing|delivered|cancelled)\b/i.test(text)
@@ -241,6 +242,12 @@ export function deterministicZidInsight(prompt:string,prior?:Record<string,unkno
   const canonicalPrompt=prompt.replace(/[`]/g,"").replace(/\bprodcut\b/gi,"product").replace(/\bpublsh\b/gi,"publish").replace(/\bcatelogue\b/gi,"catalogue").replace(/[٠-٩]/g,digit=>String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))).replace(/(?:أنشئ|انشئ|إنشاء)/g,"create").replace(/أضف/g,"add").replace(/منتج/g,"product").replace(/باسم/g,"named").replace(/بسعر/g,"price at").replace(/(?:ريال سعودي|ريال|ر\.س)/g,"SAR").replace(/(?:وانشره|انشره|انشر)/g," publish ");
   const text=canonicalPrompt.toLowerCase();
   const priorSku=String(prior?.created_product_sku??prior?.sku??prior?.query??"").trim();
+  const catalogueList=/\b(?:show|list|display|view)\b[\s\S]*\b(?:latest|recent|current|all)?\s*(?:products?|catalog|catalogue|items?)\b/i.test(canonicalPrompt)
+    || /\b(?:show|list|display|view)\b[\s\S]*\b(?:zid|salla|foodics)\b[\s\S]*\b(?:products?|catalog|catalogue|items?)\b/i.test(canonicalPrompt);
+  if(catalogueList){
+    const requestedPlatform=canonicalPrompt.match(/\b(zid|salla|foodics)\b/i)?.[1]?.toLowerCase()??"all";
+    return {type:"operation",operation:{_type:"operation",operation:"list_products",platform:requestedPlatform,query:null,category:null,sku:null,scope:"matching",risk_level:"read",requires_confirmation:false,plan:[`Load the latest ${requestedPlatform} catalogue available to PrizeSkout.`,`Filter the result to ${requestedPlatform}.`,"Return the current products without changing the store."],summary:`Show the latest ${requestedPlatform} products currently available to PrizeSkout.`}};
+  }
   if(/\b(?:find|show|list)\b.*\bproducts?\b.*\b(?:incomplete information|missing information|incomplete data|missing data|missing cost|unverified cost)\b/i.test(canonicalPrompt)){
     return {type:"operation",operation:{_type:"operation",operation:"cost_attention",platform:"zid",query:null,category:null,sku:null,scope:"matching",risk_level:"read",requires_confirmation:false,plan:["Load the latest connected store catalogue.","Identify products with missing or unverified cost information.","Return a read only review list without changing the store."],summary:"Find products that need verified cost information before protected automation can use them."}};
   }
@@ -254,18 +261,23 @@ export function deterministicZidInsight(prompt:string,prior?:Record<string,unkno
   if(prior&&/^\s*(?:what did you (?:just )?change|what happened|show (?:me )?(?:the )?(?:last )?(?:change|result|receipt))[?!.]?\s*$/i.test(canonicalPrompt)){
     return {type:"chat",message:`Last operation: ${String(prior.summary??prior.operation??"store action")}${priorSku?`. Product: ${priorSku}`:""}. ${prior.last_execution_complete===true?"It completed; the verified result remains in the action card and Activity & Evidence history.":"It has not been approved or sent to Zid yet."}`};
   }
-  const couponCreateIntent=/\b(?:create|add)\s+(?:a\s+)?(?:new\s+)?(?:coupon|discount code)\b/i.test(canonicalPrompt);
+  const couponCreateIntent=/\b(?:create|add)\b[^.\n]{0,40}\b(?:coupon|discount code)\b/i.test(canonicalPrompt);
   if(couponCreateIntent){
     const explicitName=canonicalPrompt.match(/\b(?:name\s+is|named|called|coupon\s+code\s+is|code\s+is)\s*[“"]?([\p{L}\p{N}._-]+)[”"]?/iu)?.[1];
     const positionalName=canonicalPrompt.match(/\b(?:coupon|discount code)\s+([\p{L}\p{N}._-]+)\s+(?=for|with|at|on|giving|offering)/iu)?.[1];
     const reserved=new Set(["for","with","customers","customer","on","at","percentage","discount"]);
     const couponName=(explicitName??(positionalName&&!reserved.has(positionalName.toLocaleLowerCase("und"))?positionalName:null))?.trim();
-    const pctText=canonicalPrompt.match(/\b(?:percentage|discount(?:\s+of)?|value(?:\s+of)?)\s*(\d+(?:\.\d+)?)\s*%?/i)?.[1]??canonicalPrompt.match(/(\d+(?:\.\d+)?)\s*%/)?.[1];
+    const replacedCode=canonicalPrompt.match(/\breplace\s+([A-Z0-9_-]+)(?:\s*\([^)]*\))?/i)?.[1]?.toUpperCase()??null;
+    const explicitReplacementPct=canonicalPrompt.match(/\b(?:new|replacement)\s+(?:discount|percentage|rate)?[^\d]{0,12}(\d+(?:\.\d+)?)\s*%/i)?.[1];
+    const pctText=explicitReplacementPct??canonicalPrompt.match(/\b(?:percentage|discount(?:\s+of)?|value(?:\s+of)?)\s*(\d+(?:\.\d+)?)\s*%?/i)?.[1]??(!replacedCode?canonicalPrompt.match(/(\d+(?:\.\d+)?)\s*%/)?.[1]:undefined);
     const dateMatch=canonicalPrompt.match(/\b(?:on|from|starting(?:\s+on)?)\s+(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/i);
     const isoDateMatch=canonicalPrompt.match(/\b(?:on|from|starting(?:\s+on)?)\s+(\d{4})-(\d{2})-(\d{2})\b/i);
     const couponStartDate=isoDateMatch?`${isoDateMatch[1]}-${isoDateMatch[2]}-${isoDateMatch[3]}`:dateMatch?`${dateMatch[3]}-${dateMatch[2].padStart(2,"0")}-${dateMatch[1].padStart(2,"0")}`:null;
     const discount=Number(pctText);
     if(couponName&&discount>0&&discount<=100){const couponCode=couponName.replace(/[^\p{L}\p{N}._-]+/gu,"-").toUpperCase();return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:"create",coupon_code:couponCode,coupon_name:couponName,coupon_discount_pct:discount,coupon_start_date:couponStartDate,risk_level:"sensitive_write",requires_confirmation:true,summary:`Create ${discount}% coupon ${couponName}${couponStartDate?` starting ${couponStartDate}`:""}.`,warnings:[]}};}
+    const missing=[!couponName?"the new coupon code":"",!(discount>0&&discount<=100)?(replacedCode?"the replacement discount percentage":"the discount percentage"):""].filter(Boolean);
+    const request=missing.length===2?`${missing[0]} and ${missing[1]}`:missing[0];
+    return {type:"clarification",message:`I can prepare ${replacedCode?`a replacement for ${replacedCode}`:"the coupon"}, but ${replacedCode?"“better” is not a precise financial instruction and ":""}I still need ${request}. What should I use? I will check the proposed discount against verified product costs and the active margin floor before asking for approval.`,draft_operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:"create",coupon_code:couponName?.replace(/[^\p{L}\p{N}._-]+/gu,"-").toUpperCase()??null,coupon_name:couponName??null,coupon_discount_pct:discount>0&&discount<=100?discount:null,replaces_coupon_code:replacedCode,risk_level:"sensitive_write",requires_confirmation:true,summary:replacedCode?`Prepare a reviewed replacement for coupon ${replacedCode}.`:"Prepare a reviewed coupon.",warnings:[replacedCode?"Creating the replacement does not disable the old coupon; that requires a separately approved action.":"Creating a coupon requires explicit approval and a post-write readback."]}};
   }
   const couponAction=canonicalPrompt.match(/^\s*(disable|deactivate|enable|activate|delete|remove)\s+(?:coupon|discount code)\s+([A-Z0-9_-]+)[.!]?\s*$/i);
   if(couponAction){const verb=couponAction[1].toLowerCase(),mode=/enable|activate/.test(verb)?"enable":/delete|remove/.test(verb)?"delete":"disable";return {type:"operation",operation:{_type:"operation",operation:"coupon_change",platform:"zid",coupon_mode:mode,coupon_code:couponAction[2].toUpperCase(),risk_level:mode==="delete"?"permanent_write":"reversible_write",requires_confirmation:true,summary:`${mode} coupon ${couponAction[2].toUpperCase()}.`,warnings:mode==="delete"?["Deleting a coupon is permanent."]:[]}};}
@@ -458,6 +470,14 @@ export const Route = createFileRoute("/api/copilot/compile")({
             const allowed = ["sync_catalog", "list_products", "find_products", "preview_reprice", "publish_prices", "protect_margin", "low_stock", "cost_attention", "list_orders", "profit_brief", "tax_summary", "returns_impact", "coupon_risk", "change_order_status", "create_product_draft", "product_change", "product_image_upload", "variant_create", "schedule_product_action", "coupon_change", "category_assign", "customer_search", "loyalty_adjust", "reverse_refund", "seed_test_store", "cleanup_test_store"];
             if (!allowed.includes(operation)) {
               return json({ error: "The requested commerce operation is not supported yet." }, 422);
+            }
+            // A catalogue-list request is a collection query, never a product-name
+            // search. Models sometimes copy words such as "latest" or "current"
+            // into `query`, which makes the UI search for a product with that name.
+            if(operation==="list_products"){
+              rule.query=null;
+              rule.sku=null;
+              rule.scope="matching";
             }
             if(typeof rule.clarification_question==="string"&&rule.clarification_question.trim()){
               return json({type:"clarification",message:rule.clarification_question.trim(),draft_operation:rule,latency_ms});

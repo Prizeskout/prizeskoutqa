@@ -2252,12 +2252,19 @@ export function PrizeSkoutDashboard() {
   const [productOriginalPrice, setProductOriginalPrice] = useState<number | null>(null);
   const [cpPhase, setCpPhase] = useState<"idle" | "loading" | "result">("idle");
   const [cpInput, setCpInput] = useState("");
+  const [cpThread, setCpThread] = useState<Array<{ role: "user" | "assistant"; text: string }>>([]);
+  const [cpConversations, setCpConversations] = useState<Array<{ id: string; title: string; last_message_at: string }>>([]);
+  const [cpConversationTitle, setCpConversationTitle] = useState("Current conversation");
+  const [cpPersistenceAvailable, setCpPersistenceAvailable] = useState(false);
   const [assistantDrawerOpen, setAssistantDrawerOpen] = useState(false);
   const [assistantDrawerInput, setAssistantDrawerInput] = useState("");
   const [cpPrompt, setCpPrompt] = useState("");
   const [cpObj, setCpObj] = useState<Record<string, unknown> | null>(null);
   const [cpChatMessage, setCpChatMessage] = useState<string | null>(null);
   const cpConversationRef = useRef<Array<{ role: "user" | "assistant"; text: string }>>([]);
+  const cpConversationIdRef = useRef<string | null>(null);
+  const cpPersistenceQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const cpConversationRestoredRef = useRef(false);
   const cpPendingDraftRef = useRef<Record<string, unknown> | null>(null);
   const [cpOperationProducts, setCpOperationProducts] = useState<ImportedProduct[]>([]);
   const [cpOperationStatus, setCpOperationStatus] = useState<
@@ -3609,10 +3616,65 @@ export function PrizeSkoutDashboard() {
     }
   };
 
+  function copilotPersistenceRequest(payload: Record<string, unknown>) {
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) return Promise.resolve(null);
+    return fetch("/api/channels/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode, platform: "copilot_threads", ...payload }) }).then(async response => ({ response, data: await response.json() as Record<string, any> }));
+  }
+
+  function queueCopilotMessage(role: "user" | "assistant", text: string, messageType = "text", metadata: Record<string, unknown> = {}) {
+    cpPersistenceQueueRef.current = cpPersistenceQueueRef.current.then(async () => {
+      let conversationId = cpConversationIdRef.current;
+      if (!conversationId) {
+        const created = await copilotPersistenceRequest({ action: "create", title: role === "user" ? text.slice(0, 100) : cpConversationTitle, context: { page: tab, language: lang } });
+        if (!created?.response.ok || created.data.available === false || !created.data.conversation?.id) { setCpPersistenceAvailable(false); return; }
+        conversationId = String(created.data.conversation.id);
+        cpConversationIdRef.current = conversationId;
+        setCpConversationTitle(String(created.data.conversation.title ?? "Current conversation"));
+        setCpConversations(current => [{ id: conversationId!, title: String(created.data.conversation.title ?? "Current conversation"), last_message_at: new Date().toISOString() }, ...current.filter(item => item.id !== conversationId)].slice(0, 30));
+        setCpPersistenceAvailable(true);
+      }
+      const saved = await copilotPersistenceRequest({ action: "message", id: conversationId, role, content: text, message_type: messageType, metadata });
+      if (!saved?.response.ok || saved.data.available === false) setCpPersistenceAvailable(false);
+      else setCpPersistenceAvailable(true);
+    }).catch(() => setCpPersistenceAvailable(false));
+  }
+
+  const appendCpThread = (role: "user" | "assistant", text: string, messageType = "text", metadata: Record<string, unknown> = {}) => {
+    setCpThread((current) => [...current, { role, text }].slice(-20));
+    queueCopilotMessage(role, text, messageType, metadata);
+  };
+
+  const openCopilotConversation = async (id: string) => {
+    const result = await copilotPersistenceRequest({ action: "get", id });
+    if (!result?.response.ok || result.data.available === false || !result.data.conversation) return;
+    const messages = (Array.isArray(result.data.messages) ? result.data.messages : []).filter((item: Record<string, unknown>) => item.role === "user" || item.role === "assistant").map((item: Record<string, unknown>) => ({ role: item.role as "user" | "assistant", text: String(item.content ?? "") })).filter((item: { text: string }) => item.text).slice(-20);
+    cpConversationIdRef.current = id;
+    setCpConversationTitle(String(result.data.conversation.title ?? "Current conversation"));
+    setCpThread(messages);
+    cpConversationRef.current = compactConversation(messages);
+    setCpPhase(messages.length ? "result" : "idle");
+    setCpObj(null); setCpChatMessage(null); setCpOperationMessage(null); setCpError(null);
+  };
+
+  useEffect(() => {
+    if (cpConversationRestoredRef.current) return;
+    cpConversationRestoredRef.current = true;
+    void (async () => {
+      const result = await copilotPersistenceRequest({ action: "list" });
+      if (!result?.response.ok || result.data.available === false) return;
+      const conversations = (Array.isArray(result.data.conversations) ? result.data.conversations : []) as Array<{ id: string; title: string; last_message_at: string }>;
+      setCpPersistenceAvailable(true);
+      setCpConversations(conversations);
+      if (conversations[0]?.id) await openCopilotConversation(conversations[0].id);
+    })().catch(() => setCpPersistenceAvailable(false));
+  }, []);
+
   const runCopilot = async (text: string, requestedRole: "cfo" | "manager" | "auto" = "auto") => {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return false;
-    const previousOperation = cpObj?._type === "operation" ? cpObj : cpPendingDraftRef.current;
+    const previousOperation = cpObj && (cpObj._type === "operation" || cpObj._type === "manager_workflow") ? cpObj : cpPendingDraftRef.current;
     const previousProducts = cpOperationProducts.map((product) => ({
       name: product.name_en || product.name_ar,
       sku: product.sku,
@@ -3637,6 +3699,7 @@ export function PrizeSkoutDashboard() {
       platform: product.source_platform,
     }));
     setCpPhase("loading");
+    appendCpThread("user", prompt);
     setCpPrompt(prompt);
     setApplied(false);
     setCpError(null);
@@ -3695,27 +3758,34 @@ export function PrizeSkoutDashboard() {
         /* non-JSON body */
       }
       if (!res.ok) {
+        const failureMessage = data.error ?? `Server error (${res.status}) — the route may still be deploying. Try again in a moment.`;
         setCpError(
-          data.error ??
-            `Server error (${res.status}) — the route may still be deploying. Try again in a moment.`,
+          failureMessage,
         );
+        appendCpThread("assistant", failureMessage);
         setCpPhase("idle");
         return false;
       }
       cpConversationRef.current = conversation;
       if (data.type === "workflow" && data.workflow) {
         cpPendingDraftRef.current = null;
-        const workflow = { ...data.workflow, _type: "manager_workflow" };
+        const workflow: Record<string, unknown> = { ...data.workflow, _type: "manager_workflow" };
         setCpObj(workflow);
         setCpChatMessage(null);
         setCpPhase("result");
+        const workflowReply = `Prepared task: ${String(workflow.title ?? "Store management workflow")}. ${String(workflow.summary ?? "Review the steps and approvals below.")}`;
+        appendCpThread("assistant", workflowReply);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: workflowReply }]);
         return await prepareManagerWorkflow(workflow);
       } else if (data.type === "operation" && data.operation) {
         cpPendingDraftRef.current = null;
-        const operation = { ...data.operation, _type: "operation" };
+        const operation: Record<string, unknown> = { ...data.operation, _type: "operation" };
         setCpObj(operation);
         setCpChatMessage(null);
         setCpPhase("result");
+        const operationReply = String(operation.summary ?? "I prepared the requested store operation for review.");
+        appendCpThread("assistant", operationReply);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: operationReply }]);
         return await prepareCopilotOperation(operation);
       } else if (data.type === "clarification" && data.message) {
         cpPendingDraftRef.current =
@@ -3727,6 +3797,7 @@ export function PrizeSkoutDashboard() {
           ...conversation,
           { role: "assistant", text: data.message },
         ]);
+        appendCpThread("assistant", data.message);
         return false;
       } else if (data.type === "chat" && data.message) {
         setCpChatMessage(data.message);
@@ -3736,11 +3807,15 @@ export function PrizeSkoutDashboard() {
           ...conversation,
           { role: "assistant", text: data.message },
         ]);
+        appendCpThread("assistant", data.message);
         return true;
       } else if (data.rule) {
         setCpObj(data.rule);
         setCpChatMessage(null);
         setCpPhase("result");
+        const ruleReply = String(data.rule.summary ?? "I compiled the requested rule as a draft for review.");
+        appendCpThread("assistant", ruleReply);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: ruleReply }]);
         return true;
       } else {
         setCpError(data.error ?? "Unexpected response — try rephrasing your request.");
@@ -3748,14 +3823,32 @@ export function PrizeSkoutDashboard() {
         return false;
       }
     } catch (error) {
-      setCpError(
-        error instanceof Error
-          ? error.message
-          : "Request failed. Check your connection and try again.",
-      );
+      const failureMessage = error instanceof Error ? error.message : "Request failed. Check your connection and try again.";
+      setCpError(failureMessage);
+      appendCpThread("assistant", failureMessage);
       setCpPhase("idle");
       return false;
     }
+  };
+
+  const startNewCopilotConversation = () => {
+    cpConversationRef.current = [];
+    cpConversationIdRef.current = null;
+    cpPendingDraftRef.current = null;
+    setCpConversationTitle("Current conversation");
+    setCpThread([]);
+    setCpInput("");
+    setCpPrompt("");
+    setCpObj(null);
+    setCpChatMessage(null);
+    setCpOperationProducts([]);
+    setCpOperationMessage(null);
+    setCpOperationStatus("idle");
+    setCpActionResults([]);
+    setCpOrders([]);
+    setCpStoreActionResult(null);
+    setCpError(null);
+    setCpPhase("idle");
   };
 
   const prepareManagerWorkflow = async (workflow: Record<string, unknown>) => {
@@ -3793,6 +3886,7 @@ export function PrizeSkoutDashboard() {
       if (!response.ok || !data.ok || !data.task)
         throw new Error(data.error ?? "The workflow could not be added to the Management desk.");
       setCpObj((current) => (current ? { ...current, manager_task_id: data.task!.id } : current));
+      if (cpConversationIdRef.current) void copilotPersistenceRequest({ action: "link_task", id: cpConversationIdRef.current, task_id: data.task.id });
       window.dispatchEvent(new CustomEvent("prizeskout:manager-task-created"));
       const manual = steps.filter((step) => step.execution === "manual_fallback").length;
       const approvals = steps.filter((step) => step.approval_required === true).length;
@@ -4347,11 +4441,15 @@ export function PrizeSkoutDashboard() {
                 ? `${matches.length} product${matches.length === 1 ? " needs" : "s need"} stock attention. Out-of-stock products are excluded from pricing actions. This is a read-only result.`
                 : op === "cost_attention"
                   ? `${matches.length} product${matches.length === 1 ? " does" : "s do"} not have a verified platform cost and cannot be safely auto-repriced.`
+                  : op === "list_products"
+                    ? `${matches.length} ${String(operation.platform ?? "connected")} product${matches.length === 1 ? " is" : "s are"} currently available to PrizeSkout. This is a read-only result.`
                   : `${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
             : op === "cost_attention"
               ? "Every product currently has verified cost information. There is nothing to review."
               : op === "low_stock"
                 ? "No products currently need stock attention."
+                : op === "list_products"
+                  ? `No ${String(operation.platform ?? "connected")} products are currently available to PrizeSkout. Check that the channel is connected, run a catalogue sync, and try again.`
                 : "No matching products were found. Try a product name, SKU, or a broader request.",
         );
       }
@@ -11228,6 +11326,28 @@ export function PrizeSkoutDashboard() {
                     </div>
                   </div>
                 )}
+              {cpThread.length > 0 && cpPhase !== "idle" && (
+                <div style={{ display: "grid", gap: 12, marginTop: 4 }}>
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}><strong style={{ fontSize: 13.5 }}>Continue this chat</strong><span style={{ fontSize: 10, color: cpPersistenceAvailable ? GN : "var(--muted)", fontWeight: 800 }}>{cpPersistenceAvailable ? "SAVED" : "THIS SESSION"}</span></div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>{cpConversations.length > 1 && <select aria-label="Open saved conversation" value={cpConversationIdRef.current ?? ""} onChange={event => void openCopilotConversation(event.target.value)} disabled={cpPhase === "loading"} style={{ maxWidth: 220, border: "1px solid var(--border)", borderRadius: 7, padding: "6px 8px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 11.5 }}><option value="">{cpConversationTitle}</option>{cpConversations.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select>}<button type="button" onClick={startNewCopilotConversation} disabled={cpPhase === "loading"} style={{ border: 0, background: "transparent", color: "var(--muted)", fontFamily: "inherit", fontSize: 12, fontWeight: 750, cursor: cpPhase === "loading" ? "not-allowed" : "pointer" }}>New chat</button></div>
+                    </div>
+                    <div aria-label="Conversation history" style={{ maxHeight: 260, overflowY: "auto", display: "grid", gap: 8, padding: "2px 2px 10px" }}>
+                      {cpThread.map((message, index) => (
+                        <div key={`${message.role}-${index}`} style={{ justifySelf: message.role === "user" ? "end" : "start", maxWidth: "86%", padding: "9px 12px", borderRadius: 11, background: message.role === "user" ? OG : "var(--surface2)", color: message.role === "user" ? "#fff" : "var(--text)", border: message.role === "assistant" ? "1px solid var(--border)" : "none", fontSize: 12.5, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                          {message.text}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 9, alignItems: "flex-end", padding: 8, border: `1.5px solid color-mix(in srgb,${OG} 30%,var(--border))`, borderRadius: 13, background: "var(--surface)" }}>
+                    <textarea value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void runCopilot(cpInput); } }} rows={2} disabled={cpPhase === "loading"} placeholder="Ask a follow-up, add another instruction, or ask what was completed…" aria-label="Continue this chat" style={{ flex: 1, minWidth: 0, resize: "vertical", border: 0, outline: 0, padding: "8px 9px", background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 14, lineHeight: 1.45 }} />
+                    <button type="button" onClick={() => void runCopilot(cpInput)} disabled={cpPhase === "loading" || !cpInput.trim()} style={{ flex: "0 0 auto", border: 0, borderRadius: 9, padding: "10px 15px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: cpPhase === "loading" || !cpInput.trim() ? "not-allowed" : "pointer", opacity: cpPhase === "loading" || !cpInput.trim() ? .55 : 1 }}>{cpPhase === "loading" ? "Working…" : "Send"}</button>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Enter sends. Shift + Enter adds a new line. Follow-ups retain the current task, product scope, and approval context.</div>
+                </div>
+              )}
             </div>
 
             {/* Margin Policy v1: one understandable, enforceable store policy. */}

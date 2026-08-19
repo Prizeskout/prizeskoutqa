@@ -31,6 +31,7 @@ import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/s
 import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement, updateAttention } from "@/server/core/merchant-experience";
 import { confirmZidJahezPropagation, getZidJahezBridgeSettings, listZidJahezPropagationEvents, saveZidJahezBridgeSettings } from "@/server/core/zid-jahez-bridge";
 import { createStoreManagerTask, getStoreManager, saveStoreManagerPolicy, saveStoreManagerProfile, transitionStoreManagerTask } from "@/server/core/store-manager";
+import { addCopilotMessage, archiveCopilotConversation, createCopilotConversation, getCopilotConversation, linkCopilotTask, listCopilotConversations } from "@/server/core/copilot-conversations";
 import { runScrape } from "@/server/scrape-runner";
 import { getValidTalabatAccessToken, updateTalabatOrder } from "@/server/core/talabat-client";
 import type { TalabatOrderUpdateStatus, TalabatTransportType } from "@/server/core/talabat-contract";
@@ -274,6 +275,17 @@ export const Route = createFileRoute("/api/channels/connect")({
             if(body.action==="manager_task_create"){const raw=body as unknown as Record<string,unknown>;return resp({ok:true,task:await createStoreManagerTask(merchant_id,{title:body.title,detail:body.detail,taskType:body.task_type,priority:body.priority,dueAt:body.due_at,approvalRequired:body.approval_required!=="false",riskLevel:String(raw.risk_level??"read_only"),workflow:raw.workflow&&typeof raw.workflow==="object"?raw.workflow as Record<string,unknown>:undefined})},200);}
             if(body.action==="manager_task_transition")return resp({ok:true,task:await transitionStoreManagerTask(merchant_id,{id:body.id,toStatus:body.to_status,actor:body.actor||"Merchant",note:body.value})},200);
             return resp({error:"Unsupported merchant experience action."},400);
+          }
+
+          if(platform==="copilot_threads"){
+            const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="list")return resp({ok:true,...await listCopilotConversations(merchant_id)},200);
+            if(body.action==="get")return resp({ok:true,...await getCopilotConversation(merchant_id,body.id)},200);
+            if(body.action==="create")return resp({ok:true,...await createCopilotConversation(merchant_id,body.title||"PrizeSkout conversation",raw.context&&typeof raw.context==="object"?raw.context as Record<string,unknown>:undefined)},200);
+            if(body.action==="message")return resp({ok:true,...await addCopilotMessage(merchant_id,{conversationId:body.id,role:body.role,content:body.content,messageType:body.message_type,taskId:body.task_id||null,metadata:raw.metadata&&typeof raw.metadata==="object"?raw.metadata as Record<string,unknown>:undefined})},200);
+            if(body.action==="link_task")return resp({ok:true,...await linkCopilotTask(merchant_id,body.id,body.task_id)},200);
+            if(body.action==="archive")return resp({ok:true,...await archiveCopilotConversation(merchant_id,body.id)},200);
+            return resp({error:"Unsupported Copilot conversation action."},400);
           }
 
           if(platform==="competitor_radar"){
