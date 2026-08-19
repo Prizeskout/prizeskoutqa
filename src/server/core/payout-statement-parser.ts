@@ -112,6 +112,8 @@ export function parseTalabatPayoutStatementCsv(
   const ordersIdx = idx("orders count");
   const totalPayoutIdx = idx("total payout");
   const grossSalesIdx = idx("gross sales");
+  const settlementReferenceIdx=header.findIndex(value=>["settlement reference","settlement id","payout reference","payout id"].includes(value));
+  const currencyIdx=idx("currency");
 
   if (earningsRangeIdx === -1 || ordersIdx === -1 || totalPayoutIdx === -1 || grossSalesIdx === -1) {
     return { ok: false, error: "Couldn't find the expected Talabat payout columns (Earnings Range, Orders Count, Total Payout, Gross Sales) in that file." };
@@ -157,6 +159,7 @@ export function parseTalabatPayoutStatementCsv(
   let rowsParsed = 0;
   const extraSums = new Map<string, number>(extraColumns.map(c => [c.label, 0]));
   let explainerSum = 0;
+  const settlementRows:NonNullable<ExpectedPayoutResult["settlement_rows"]>=[];
 
   for (let i = 2; i < lines.length; i++) {
     const cells = parseCsvLine(lines[i]);
@@ -167,6 +170,7 @@ export function parseTalabatPayoutStatementCsv(
     if (!range || gross <= 0) continue;
 
     rowsParsed++;
+    if(settlementReferenceIdx!==-1){const reference=(cells[settlementReferenceIdx]??"").trim();if(reference)settlementRows.push({settlement_reference:reference,order_id:null,amount:Math.round(stated*100)/100,currency:currencyIdx!==-1?(cells[currencyIdx]??"").trim().toUpperCase()||"UNKNOWN":"UNKNOWN"});}
     orderCount += orders;
     grossSales += gross;
     totalPayout += stated;
@@ -232,5 +236,6 @@ export function parseTalabatPayoutStatementCsv(
     extra_line_items: extra_line_items.length > 0 ? extra_line_items : undefined,
     unexplained_charge,
     charge_explainers,
+    ...(settlementRows.length?{settlement_rows:settlementRows}:{}),
   };
 }

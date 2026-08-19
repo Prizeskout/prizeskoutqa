@@ -13,6 +13,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide } from "./decide-engine";
 import { resolveMerchantMarginPolicy } from "./merchant-pricing-config";
 import { resolveAuthoritativeEconomics } from "./economics-resolver";
+import { pricingEvidenceWindow } from "./pricing-evidence";
 import { zidCustomerPricePatch } from "@/lib/channel-bridge";
 import {
   buildSallaPriceUpdate,
@@ -381,6 +382,7 @@ export async function syncPlatformCatalog(params: {
   let errors = 0;
   let costRequired = 0;
   let economicsRequired = 0;
+  const evidenceWindow=pricingEvidenceWindow();
 
   for (const product of products) {
     if (!product.sku || product.price <= 0) continue;
@@ -410,6 +412,11 @@ export async function syncPlatformCatalog(params: {
             external_id: product.external_id,
             platform,
             cost_source: product.cost == null ? "missing_requires_verified_cost" : "platform_catalog",
+            cost_observed_at: product.cost == null ? null : evidenceWindow.costObservedAt,
+            cost_evidence_expires_at: product.cost == null ? null : evidenceWindow.costEvidenceExpiresAt,
+            cost_currency: product.currency,
+            cost_sku: product.sku,
+            cost_item_id: product.external_id,
             quantity: product.quantity,
             is_infinite: product.is_infinite,
           },
@@ -417,14 +424,14 @@ export async function syncPlatformCatalog(params: {
         })
         .eq("id", existing.id);
       if (product.cost == null) {
-        await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost",quantity:product.quantity,is_infinite:product.is_infinite}}).eq("id",existing.id);
+        await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost",cost_currency:product.currency,cost_sku:product.sku,cost_item_id:product.external_id,quantity:product.quantity,is_infinite:product.is_infinite}}).eq("id",existing.id);
         stored++; costRequired++;
         continue;
       }
       if (!economics) {
         await supabaseAdmin.from("ps_ingest_events").update({
           status: "received",
-          raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
+          raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", cost_observed_at:evidenceWindow.costObservedAt,cost_evidence_expires_at:evidenceWindow.costEvidenceExpiresAt,cost_currency:product.currency,cost_sku:product.sku,cost_item_id:product.external_id,economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
         }).eq("id", existing.id);
         stored++; economicsRequired++;
         continue;
@@ -458,13 +465,17 @@ export async function syncPlatformCatalog(params: {
         fixed_order_fee: economics.fixedOrderFee,
         promotion_contribution_rate: economics.promotionContributionRate,
         economics_version_id: economics.id,
-        logistics_subsidy: 0,
+        logistics_subsidy: economics.logisticsSubsidy,
         margin_floor_pct: marginFloorPct,
         minimum_contribution_amount:policy.minimumContributionAmount,
         contribution_amount:decideOutput.netMargin,
         margin_policy_version:policy.version,
         margin_policy_scope:policy.scope,
         margin_policy_channel:policy.channel,
+        cost_observed_at:evidenceWindow.costObservedAt,
+        cost_evidence_expires_at:evidenceWindow.costEvidenceExpiresAt,
+        decision_expires_at:evidenceWindow.decisionExpiresAt,
+        evidence_channel:platform,evidence_item_id:product.external_id,evidence_currency:product.currency,
         net_margin: decideOutput.netMargin,
         net_margin_pct: decideOutput.netMarginPct,
         floor_breached: decideOutput.floorBreached,
@@ -505,6 +516,11 @@ export async function syncPlatformCatalog(params: {
           external_id: product.external_id,
           platform,
           cost_source: product.cost == null ? "missing_requires_verified_cost" : "platform_catalog",
+          cost_observed_at: product.cost == null ? null : evidenceWindow.costObservedAt,
+          cost_evidence_expires_at: product.cost == null ? null : evidenceWindow.costEvidenceExpiresAt,
+          cost_currency: product.currency,
+          cost_sku: product.sku,
+          cost_item_id: product.external_id,
           quantity: product.quantity,
           is_infinite: product.is_infinite,
         },
@@ -522,7 +538,7 @@ export async function syncPlatformCatalog(params: {
     if (!economics) {
       await supabaseAdmin.from("ps_ingest_events").update({
         status: "received",
-        raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
+        raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", cost_observed_at:evidenceWindow.costObservedAt,cost_evidence_expires_at:evidenceWindow.costEvidenceExpiresAt,cost_currency:product.currency,cost_sku:product.sku,cost_item_id:product.external_id,economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
       }).eq("id", ingestRow.id);
       stored++; economicsRequired++;
       continue;
@@ -558,13 +574,17 @@ export async function syncPlatformCatalog(params: {
       fixed_order_fee: economics.fixedOrderFee,
       promotion_contribution_rate: economics.promotionContributionRate,
       economics_version_id: economics.id,
-      logistics_subsidy: 0,
+      logistics_subsidy: economics.logisticsSubsidy,
       margin_floor_pct: marginFloorPct,
       minimum_contribution_amount:policy.minimumContributionAmount,
       contribution_amount:decideOutput.netMargin,
       margin_policy_version:policy.version,
       margin_policy_scope:policy.scope,
       margin_policy_channel:policy.channel,
+      cost_observed_at:evidenceWindow.costObservedAt,
+      cost_evidence_expires_at:evidenceWindow.costEvidenceExpiresAt,
+      decision_expires_at:evidenceWindow.decisionExpiresAt,
+      evidence_channel:platform,evidence_item_id:product.external_id,evidence_currency:product.currency,
       net_margin: decideOutput.netMargin,
       net_margin_pct: decideOutput.netMarginPct,
       floor_breached: decideOutput.floorBreached,

@@ -100,8 +100,8 @@ export function parseAggregatorDailyCsv(
   commissionRatePct: number,
   platform: string,
 ): ExpectedPayoutResult {
-  if (!(commissionRatePct > 0 && commissionRatePct < 100)) {
-    return { ok: false, error: "Commission rate must be between 0 and 100." };
+  if (!(commissionRatePct >= 0 && commissionRatePct < 100)) {
+    return { ok: false, error: "Commission rate must be at least 0 and below 100." };
   }
 
   // Strip a UTF-8 BOM if present — Talabat's own export includes one.
@@ -114,10 +114,16 @@ export function parseAggregatorDailyCsv(
   const header = parseCsvLine(lines[0]);
   const dateIdx      = findColumn(header, ["Date"], ["date"]);
   const ordersIdx    = findColumn(header, ["Orders"], ["order"], ["cancel"]);
+  const orderIdIdx   = findColumn(header, ["Order ID","Order Number","Transaction ID"], ["order id","order number","transaction id"]);
   const salesIdx     = findColumn(header, ["Sales", "GMV", "Revenue", "Total Sales"], ["sales", "gmv", "revenue"], ["cancel"]);
   const cancelledIdx = findColumn(header, ["Cancelled"], ["cancel"]);
+  const statusIdx    = findColumn(header,["Status","Order Status","Transaction Status"],["status"]);
+  const refundIdx    = findColumn(header,["Refund Amount","Refunded Amount"],["refund"]);
+  const settlementRefIdx=findColumn(header,["Settlement Reference","Settlement ID","Payout Reference","Payout ID"],["settlement reference","settlement id","payout reference","payout id"]);
+  const settledAmountIdx=findColumn(header,["Settlement Amount","Net Payout","Paid Amount","Net Amount"],["settlement amount","net payout","paid amount","net amount"]);
+  const currencyIdx=findColumn(header,["Currency"],["currency"]);
 
-  if (dateIdx === -1 || ordersIdx === -1 || salesIdx === -1) {
+  if (dateIdx === -1 || (ordersIdx === -1 && orderIdIdx === -1) || salesIdx === -1) {
     return { ok: false, error: "Couldn't find date, orders, and sales/GMV columns in that file. CSV only for now — if this is a real export and it's not matching, the column names may differ from what we expect." };
   }
 
@@ -140,28 +146,45 @@ export function parseAggregatorDailyCsv(
   // parsed twice within a batch) sum rather than overwrite — the audit
   // engine merges several of these per-day maps across files the same way.
   const byDate = new Map<string, { orders: number; sales: number; cancelled: number }>();
+  const transactionRows:NonNullable<ExpectedPayoutResult["transaction_rows"]>=[];
+  const settlementRows:NonNullable<ExpectedPayoutResult["settlement_rows"]>=[];
+  const parsedCurrencies=new Set<string>();
+  const idCounts=new Map<string,number>();
+  if(orderIdIdx!==-1)for(const cells of dataCells){const id=(cells[orderIdIdx]??"").trim();if(id)idCounts.set(id,(idCounts.get(id)??0)+1);}
+  const duplicateOrderIds=[...idCounts].filter(([,count])=>count>1).map(([id])=>id);
 
   for (const cells of dataCells) {
     const date = cells[dateIdx];
-    const orders = parseLocaleNumber(cells[ordersIdx]);
-    const sales = parseLocaleNumber(cells[salesIdx]);
-    const cancelled = cancelledIdx !== -1 ? parseLocaleNumber(cells[cancelledIdx]) : 0;
+    const orders = orderIdIdx!==-1?1:parseLocaleNumber(cells[ordersIdx]);
+    const rawSales = parseLocaleNumber(cells[salesIdx]);
+    const orderId=orderIdIdx!==-1?(cells[orderIdIdx]??"").trim():"";
+    if(orderId&&idCounts.get(orderId)!>1)continue;
+    const status=statusIdx!==-1?(cells[statusIdx]??"").trim().toLowerCase():"not supplied";
+    const refund=refundIdx!==-1?parseLocaleNumber(cells[refundIdx]):0;
+    const cancelledStatus=/cancel|reject|void|failed/.test(status);
+    const pendingStatus=/pending|prepar|dispatch|ready|open|new/.test(status);
+    const eligible=!cancelledStatus&&!pendingStatus;
+    const sales=orderIdIdx!==-1?(eligible?Math.max(0,rawSales-(Number.isFinite(refund)?refund:0)):0):rawSales;
+    const cancelled = cancelledIdx !== -1 ? parseLocaleNumber(cells[cancelledIdx]) : orderIdIdx!==-1&&cancelledStatus?1:0;
+    const eligibleOrders=orderIdIdx!==-1?(eligible?1:0):orders;
     if (!date || !Number.isFinite(orders) || !Number.isFinite(sales)) {
       rowsSkipped++;
       continue;
     }
 
     salesSum += sales;
-    orderCount += orders;
+    orderCount += eligibleOrders;
     if (Number.isFinite(cancelled)) cancelledSum += cancelled;
     if (!firstDate || date < firstDate) firstDate = date;
     if (!lastDate || date > lastDate) lastDate = date;
 
     const existing = byDate.get(date) ?? { orders: 0, sales: 0, cancelled: 0 };
-    existing.orders += orders;
+    existing.orders += eligibleOrders;
     existing.sales += sales;
     if (Number.isFinite(cancelled)) existing.cancelled += cancelled;
     byDate.set(date, existing);
+    if(orderId)transactionRows.push({order_id:orderId,date,gross_sales:Math.round(rawSales*100)/100,refund_amount:Number.isFinite(refund)?Math.round(refund*100)/100:0,status,eligible});
+    if(orderId&&settlementRefIdx!==-1&&settledAmountIdx!==-1){const reference=(cells[settlementRefIdx]??"").trim(),amount=parseLocaleNumber(cells[settledAmountIdx]),currency=currencyIdx!==-1?(cells[currencyIdx]??"").trim().toUpperCase():"UNKNOWN";if(reference&&Number.isFinite(amount)){settlementRows.push({settlement_reference:reference,order_id:orderId,amount:Math.round(amount*100)/100,currency:currency||"UNKNOWN"});parsedCurrencies.add(currency||"UNKNOWN");}}
   }
 
   if (orderCount === 0) {
@@ -183,13 +206,14 @@ export function parseAggregatorDailyCsv(
       date,
       orders: v.orders,
       sales: Math.round(v.sales * 100) / 100,
-      ...(cancelledIdx !== -1 ? { cancelled: v.cancelled } : {}),
+      ...(cancelledIdx !== -1||orderIdIdx!==-1 ? { cancelled: v.cancelled } : {}),
     }));
 
   return {
     ok: true,
     source: "upload",
     platform,
+    currency:parsedCurrencies.size===1?[...parsedCurrencies][0]:parsedCurrencies.size>1?"MIXED":undefined,
     order_count: orderCount,
     sub_total_sum: Math.round(salesSum * 100) / 100,
     commission_rate_pct: commissionRatePct,
@@ -199,6 +223,8 @@ export function parseAggregatorDailyCsv(
     rows_skipped: rowsSkipped,
     rows_total: rowsTotal,
     daily_rows,
-    ...(cancelledIdx !== -1 ? { cancelled_orders_total: cancelledSum } : {}),
+    ...(transactionRows.length?{transaction_rows:transactionRows,duplicate_order_ids:duplicateOrderIds}:{}),
+    ...(settlementRows.length?{settlement_rows:settlementRows}:{}),
+    ...(cancelledIdx !== -1||orderIdIdx!==-1 ? { cancelled_orders_total: cancelledSum } : {}),
   };
 }

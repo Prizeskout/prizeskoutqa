@@ -19,6 +19,7 @@ import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { approveContractTerm, listContractTerms, saveContractDraft } from "@/server/core/contract-terms";
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
+import {persistSettlementReconciliation} from "@/server/core/settlement-reconciliation-ledger";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
 import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
@@ -420,6 +421,7 @@ export const Route = createFileRoute("/api/channels/connect")({
                 platform: platformGuess,
                 bank_transaction_date: body.bank_transaction_date,
                 bank_reference: (body.bank_reference ?? "").trim().slice(0, 120),
+                settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null,
                 deposit_type: body.deposit_type ?? "regular_payout",
                 currency: body.currency ?? "QAR",
                 evidence_file_name: hasDocumentEvidence ? body.evidence_file_name.slice(0, 200) : undefined,
@@ -468,8 +470,10 @@ export const Route = createFileRoute("/api/channels/connect")({
                 net_sales_override_docs: (raw.net_sales_override_docs as SavePayoutAuditInput["net_sales_override_docs"]) ?? null,
               };
               const result = await savePayoutAudit(merchant_id, input);
+              let reconciliation:null|Awaited<ReturnType<typeof persistSettlementReconciliation>>=null;
+              if(result.ok&&result.id){try{reconciliation=await persistSettlementReconciliation(merchant_id,result.id,input.documents,rate,input.period_start,input.period_end);}catch(error){console.error("settlement reconciliation persistence failed",error);}}
               return result.ok
-                ? resp({ ok: true }, 200)
+                ? resp({ ok: true, reconciliation }, 200)
                 : resp({ ok: false, error: result.error }, 400);
             }
 
@@ -560,10 +564,14 @@ export const Route = createFileRoute("/api/channels/connect")({
               }
               const optionalNumbers = [
                 body.promotion_funding_platform_pct, body.settlement_days,
+                body.settlement_weekday, body.settlement_cutoff_hour, body.settlement_reserve_days,
+                body.minimum_payout_threshold,
                 body.dispute_deadline_days, body.advertising_commitment, body.minimum_spend,
               ].filter(value=>value !== "" && value != null).map(Number);
               if (!optionalNumbers.every(value=>Number.isFinite(value)&&value>=0)
-                || (body.promotion_funding_platform_pct !== "" && Number(body.promotion_funding_platform_pct)>100)) {
+                || (body.promotion_funding_platform_pct !== "" && Number(body.promotion_funding_platform_pct)>100)
+                || (body.settlement_weekday !== "" && body.settlement_weekday != null && Number(body.settlement_weekday)>6)
+                || (body.settlement_cutoff_hour !== "" && body.settlement_cutoff_hour != null && Number(body.settlement_cutoff_hour)>23)) {
                 return resp({ error: "An optional contract obligation contains an invalid value." }, 400);
               }
               const term = await saveContractDraft(merchant_id, {
@@ -585,6 +593,16 @@ export const Route = createFileRoute("/api/channels/connect")({
                   ? body.cancellation_liability as "merchant"|"platform"|"shared"|"conditional" : "unknown",
                 settlement_frequency: body.settlement_frequency?.trim().slice(0, 100) || null,
                 settlement_days: body.settlement_days === "" || body.settlement_days == null ? null : Number(body.settlement_days),
+                settlement_day_basis: ["calendar_days","business_days"].includes(body.settlement_day_basis) ? body.settlement_day_basis as "calendar_days"|"business_days" : null,
+                settlement_schedule_type: ["daily","weekly","twice_monthly","monthly"].includes(body.settlement_schedule_type) ? body.settlement_schedule_type as "daily"|"weekly"|"twice_monthly"|"monthly" : null,
+                settlement_weekday: body.settlement_weekday === "" || body.settlement_weekday == null ? null : Number(body.settlement_weekday),
+                settlement_month_days: typeof body.settlement_month_days === "string" ? body.settlement_month_days.split(",").map(Number).filter(v=>Number.isInteger(v)&&v>=1&&v<=31) : [],
+                settlement_cutoff_hour: body.settlement_cutoff_hour === "" || body.settlement_cutoff_hour == null ? null : Number(body.settlement_cutoff_hour),
+                settlement_timezone: body.settlement_timezone?.trim().slice(0,100) || null,
+                settlement_weekend_days: typeof body.settlement_weekend_days === "string" ? body.settlement_weekend_days.split(",").map(Number).filter(v=>Number.isInteger(v)&&v>=0&&v<=6) : [],
+                settlement_holidays: typeof body.settlement_holidays === "string" ? body.settlement_holidays.split(",").map(v=>v.trim()).filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)) : [],
+                settlement_reserve_days: body.settlement_reserve_days === "" || body.settlement_reserve_days == null ? 0 : Number(body.settlement_reserve_days),
+                minimum_payout_threshold: body.minimum_payout_threshold === "" || body.minimum_payout_threshold == null ? null : Number(body.minimum_payout_threshold),
                 dispute_deadline_days: body.dispute_deadline_days === "" || body.dispute_deadline_days == null ? null : Number(body.dispute_deadline_days),
                 advertising_commitment: body.advertising_commitment === "" || body.advertising_commitment == null ? null : Number(body.advertising_commitment),
                 minimum_spend: body.minimum_spend === "" || body.minimum_spend == null ? null : Number(body.minimum_spend),
@@ -651,6 +669,16 @@ export const Route = createFileRoute("/api/channels/connect")({
                       cancellation_liability: term.cancellation_liability,
                       settlement_frequency: term.settlement_frequency,
                       settlement_days: term.settlement_days,
+                      settlement_day_basis: term.settlement_day_basis,
+                      settlement_schedule_type: term.settlement_schedule_type,
+                      settlement_weekday: term.settlement_weekday,
+                      settlement_month_days: term.settlement_month_days,
+                      settlement_cutoff_hour: term.settlement_cutoff_hour,
+                      settlement_timezone: term.settlement_timezone,
+                      settlement_weekend_days: term.settlement_weekend_days,
+                      settlement_holidays: term.settlement_holidays,
+                      settlement_reserve_days: term.settlement_reserve_days,
+                      minimum_payout_threshold: term.minimum_payout_threshold,
                       dispute_deadline_days: term.dispute_deadline_days,
                       contract_currency: term.currency,
                       contract_coverage_legal_entity: term.coverage_legal_entity,

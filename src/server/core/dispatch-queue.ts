@@ -1,8 +1,22 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { dispatchToAggregators, type DispatchToAggregatorsParams } from "./defend-handler";
 import { getTalabatCatalogJob, getValidTalabatAccessToken, readTalabatCatalogPrice, type TalabatEnvironment } from "./talabat-client";
+import { resolveMerchantMarginPolicy } from "./merchant-pricing-config";
+import { publicationEvidenceBlockers } from "./pricing-evidence";
 
 const backoffMs=(attempt:number)=>Math.min(15*60_000,Math.round(2**attempt*1000*(.75+Math.random()*.5)));
+
+async function queuedEvidenceBlockers(job:Record<string,unknown>){
+  const accountId=String(job.account_id),merchantId=String(job.merchant_id),channel=String(job.channel);
+  const [{data:decision},{data:event},policy]=await Promise.all([
+    (supabaseAdmin as any).from("ps_decide_results").select("economics_version_id,margin_policy_version,cost_observed_at,cost_evidence_expires_at,decision_expires_at,evidence_channel,evidence_item_id,evidence_currency").eq("id",String(job.decide_result_id)).eq("account_id",accountId).maybeSingle(),
+    supabaseAdmin.from("ps_ingest_events").select("item_id,sku,currency").eq("id",String(job.ingest_event_id)).eq("account_id",accountId).maybeSingle(),
+    resolveMerchantMarginPolicy(accountId,channel),
+  ]);
+  if(!decision||!event)return ["decision_or_event_missing"];
+  const {data:economics}=await (supabaseAdmin as any).from("ps_economics_versions").select("id,account_id,merchant_id,channel,status,effective_from,effective_to,source_contract_id").eq("id",decision.economics_version_id).maybeSingle();
+  return publicationEvidenceBlockers({activePolicyVersion:policy.version,decisionPolicyVersion:decision.margin_policy_version==null?null:Number(decision.margin_policy_version),decisionExpiresAt:decision.decision_expires_at,costObservedAt:decision.cost_observed_at,costEvidenceExpiresAt:decision.cost_evidence_expires_at,sourcePlatform:channel,itemId:event.item_id??event.sku,currency:event.currency,evidenceChannel:decision.evidence_channel,evidenceItemId:decision.evidence_item_id,evidenceCurrency:decision.evidence_currency,decisionEconomicsVersionId:decision.economics_version_id?String(decision.economics_version_id):null,accountId,merchantId,economics:economics?{id:String(economics.id),accountId:String(economics.account_id),merchantId:String(economics.merchant_id),channel:String(economics.channel),status:String(economics.status),effectiveFrom:String(economics.effective_from),effectiveTo:economics.effective_to?String(economics.effective_to):null,sourceContractId:economics.source_contract_id?String(economics.source_contract_id):null}:null});
+}
 
 export async function enqueueDispatch(params:DispatchToAggregatorsParams & {channel:string;economicsVersionId:string}){
   const dedupeKey=`dispatch:${params.ingestEventId}:${params.channel}:${params.newPrice}`;
@@ -27,6 +41,12 @@ export async function processDispatchQueue(workerId:string,limit=10){
   for(const job of jobs){
     const id=String(job.id); const attempts=Number(job.attempts);
     try{
+      const evidenceBlockers=await queuedEvidenceBlockers(job);
+      if(evidenceBlockers.length){
+        await supabaseAdmin.from("ps_dispatch_queue").update({state:"dead_letter",last_error:`Publication evidence invalid: ${evidenceBlockers.join(", ")}`,lease_owner:null,lease_expires_at:null,updated_at:new Date().toISOString()}).eq("id",id).eq("lease_owner",workerId);
+        results.push({id,state:"dead_letter"});
+        continue;
+      }
       const dispatch=await dispatchToAggregators({ingestEventId:String(job.ingest_event_id),decideResultId:String(job.decide_result_id),accountId:String(job.account_id),licenseeId:String(job.licensee_id),merchantId:String(job.merchant_id),sku:String(job.sku),region:String(job.region),oldPrice:Number(job.old_price),newPrice:Number(job.target_price),currency:String(job.currency),auditSnapshot:{economics_version_id:job.economics_version_id,queue_id:id}});
       const acceptedResult=dispatch.results.find(r=>r.status==="success");
       const accepted=Boolean(acceptedResult);

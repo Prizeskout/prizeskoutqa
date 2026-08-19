@@ -18,11 +18,12 @@ import { decide, VALID_REGIONS } from "./decide-engine";
 import { writeAuditLog, ingestSummary } from "./govern";
 import { dispatchToAggregators } from "./defend-handler";
 import { createNotification } from "@/server/notifications";
-import { resolveAuthoritativeEconomics } from "./economics-resolver";
+import { resolveAuthoritativeEconomics, resolveVerifiedCost } from "./economics-resolver";
 import { enqueueDispatch } from "./dispatch-queue";
 import { resolveMerchantMarginPolicy } from "./merchant-pricing-config";
 import { evaluatePolicyControl } from "./margin-policy";
 import {measured} from "./latency";
+import {PLATFORM_COST_TTL_MS,pricingEvidenceWindow} from "./pricing-evidence";
 
 const VALID_PLATFORMS = ["foodics", "salla", "zid", "sap", "microsoft"] as const;
 
@@ -218,6 +219,11 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
     return err("economics_not_approved","An effective, approved Talabat economics version is required before PrizeSkout can calculate or publish a price.",409);
   }
   const policy=await resolveMerchantMarginPolicy(ctx.accountId,targetChannel);
+  const verifiedCost=await resolveVerifiedCost({accountId:ctx.accountId,merchantId:body.merchant_id,sku:body.data.sku});
+  const costEvidenceMatches=Boolean(verifiedCost&&verifiedCost.currency.toUpperCase()===currency.toUpperCase()&&Math.abs(Number(verifiedCost.amount)-fin.base_cost)<0.00005);
+  const evidenceWindow=pricingEvidenceWindow();
+  const verifiedCostExpiresAt=verifiedCost?.effective_to??(verifiedCost?new Date(Date.parse(verifiedCost.effective_from)+PLATFORM_COST_TTL_MS).toISOString():null);
+  const costEvidenceReady=costEvidenceMatches&&Boolean(verifiedCostExpiresAt&&Date.parse(verifiedCostExpiresAt)>Date.now());
   const marginFloorPct = policy.marginFloorPct;
   const decideOutput = await measured({traceId:idempotencyKey,accountId:ctx.accountId,stage:"decide"},async()=>decide({
     region,
@@ -256,6 +262,10 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
       contribution_amount:decideOutput.netMargin,
       margin_policy_scope:policy.scope,
       margin_policy_channel:policy.channel,
+      cost_observed_at:costEvidenceReady?verifiedCost!.effective_from:null,
+      cost_evidence_expires_at:costEvidenceReady?verifiedCostExpiresAt:null,
+      decision_expires_at:evidenceWindow.decisionExpiresAt,
+      evidence_channel:targetChannel,evidence_item_id:body.data.item_id??body.data.sku,evidence_currency:currency,
       margin_floor_pct: decideOutput.marginFloorPct,
       net_margin: decideOutput.netMargin,
       net_margin_pct: decideOutput.netMarginPct,
@@ -324,7 +334,7 @@ export async function handleSyncIngest(request: Request, ctx: V1Context): Promis
   let dispatchTriggered = false;
   let dispatchResult: Awaited<ReturnType<typeof dispatchToAggregators>> | null = null;
 
-  const policyControl=evaluatePolicyControl({approvalMode:policy.approvalMode,maxPriceIncreasePct:policy.maxPriceIncreasePct,currentPrice:fin.current_retail_price,recommendedPrice:decideOutput.recommendedPrice,floorBreached:decideOutput.floorBreached,evidenceReady:Boolean(economics.id)});
+  const policyControl=evaluatePolicyControl({approvalMode:policy.approvalMode,maxPriceIncreasePct:policy.maxPriceIncreasePct,currentPrice:fin.current_retail_price,recommendedPrice:decideOutput.recommendedPrice,floorBreached:decideOutput.floorBreached,evidenceReady:Boolean(economics.id&&economics.sourceContractId&&costEvidenceReady)});
   const {increasePct:proposedIncreasePct,withinIncreaseLimit,mayAutoApply}=policyControl;
   if (decideOutput.floorBreached && decideOutput.recommendedPrice !== null && decideRow && mayAutoApply) {
     dispatchTriggered = true;

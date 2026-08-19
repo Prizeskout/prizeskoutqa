@@ -181,10 +181,13 @@ interface ImportedProduct {
     minimum_contribution_amount: number;
     policy_scope: "global"|"channel";
     policy_version: number;
+    approval_mode: ApprovalMode;
+    evidence_blockers: string[];
     outcome:
       | "safe"
       | "blocked_missing_cost"
       | "blocked_missing_economics"
+      | "blocked_stale_evidence"
       | "within_limit"
       | "over_limit"
       | "cannot_reach_target_within_limit";
@@ -1413,6 +1416,16 @@ type PayoutResultLike = {
   sub_total_sum: number;
   commission_rate_pct?: number | null;
   expected_payout: number;
+  estimated_payout?: number | null;
+  claims_ready_payout?: number | null;
+  claims_ready_order_count?: number | null;
+  payout_confidence?: "claims_ready" | "estimated" | "insufficient_evidence" | null;
+  accounting_blockers?: string[] | null;
+  excluded_cancelled_orders?: number | null;
+  excluded_pending_orders?: number | null;
+  unknown_status_orders?: number | null;
+  duplicate_order_ids?: string[] | null;
+  refund_total?: number | null;
   source?: string | null;
   platform?: string | null;
   rows_skipped?: number | null;
@@ -1458,6 +1471,10 @@ type PayoutResultLike = {
         fixed_order_fee: number;
         delivery_contribution: number;
         expected_net: number;
+        lifecycle_status?: string;
+        eligibility?: "eligible" | "cancelled" | "refunded" | "pending" | "unknown";
+        refund_amount?: number;
+        claims_ready?: boolean;
         order_date: string | null;
         expected_settlement_date: string | null;
       }[]
@@ -1631,6 +1648,14 @@ function PayoutResultDetail({
         ))}
       </div>
 
+      {data.source === "live" && data.payout_confidence && (
+        <div style={{ background: data.payout_confidence === "claims_ready" ? "rgba(16,185,129,.08)" : "rgba(245,158,11,.08)", border: `1px solid ${data.payout_confidence === "claims_ready" ? "rgba(16,185,129,.35)" : "rgba(245,158,11,.4)"}`, borderRadius: 12, padding: "14px 16px", fontSize: 12.5 }}>
+          <div style={{ fontWeight: 900 }}>{data.payout_confidence === "claims_ready" ? "Claims-ready expected payout" : "Estimated payout — accounting evidence remains open"}</div>
+          <div style={{ marginTop: 5, color: "var(--muted)" }}>Claims-ready subset: {currency} {fmtMoney(data.claims_ready_payout ?? 0, currency)} across {data.claims_ready_order_count ?? 0} order(s). Estimated complete payout: {currency} {fmtMoney(data.estimated_payout ?? data.expected_payout, currency)}.</div>
+          {!!data.accounting_blockers?.length && <ul style={{ margin: "8px 0 0", paddingInlineStart: 18, color: "var(--muted)" }}>{data.accounting_blockers.map(item => <li key={item}>{item}</li>)}</ul>}
+        </div>
+      )}
+
       {data.source === "live" && data.deduction_breakdown && (
         <div
           style={{
@@ -1758,7 +1783,9 @@ function PayoutResultDetail({
                       <div style={{ fontSize: 12.5, fontWeight: 700 }}>{line.product_name}</div>
                       <div style={{ fontSize: 10.5, color: "var(--muted)" }}>
                         {line.sku ? `${line.sku} · ` : ""}
-                        {line.order_id}
+                        {line.order_id} · {line.lifecycle_status ?? "status not evidenced"}
+                        {(line.refund_amount ?? 0) > 0 ? ` · refund ${currency} ${fmtMoney(line.refund_amount ?? 0, currency)}` : ""}
+                        {` · ${line.claims_ready ? "claims-ready" : "estimated"}`}
                       </div>
                     </td>
                     {[
@@ -2123,6 +2150,18 @@ function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
 }
 
 export function PrizeSkoutDashboard() {
+  const priceActionKeysRef = useRef(new Map<string,string>());
+  const priceActionKey = (eventId:string,targetPrice:number,purpose="publish") => {
+    const signature=`${purpose}:${eventId}:${targetPrice}`;
+    const existing=priceActionKeysRef.current.get(signature);
+    if(existing)return existing;
+    const created=`price:${crypto.randomUUID()}`;
+    priceActionKeysRef.current.set(signature,created);
+    return created;
+  };
+  const clearPriceActionKey = (eventId:string,targetPrice:number,purpose="publish") => {
+    priceActionKeysRef.current.delete(`${purpose}:${eventId}:${targetPrice}`);
+  };
   const [tab, setTab] = useState<Tab>(dashboardTabFromUrl);
   const [sidebarNav, setSidebarNav] = useState<SidebarNavId>(() =>
     sidebarNavFromTab(dashboardTabFromUrl()),
@@ -2373,6 +2412,7 @@ export function PrizeSkoutDashboard() {
   const [auditResult, setAuditResult] = useState<ReturnType<typeof reconcile> | null>(null);
   const [savingAudit, setSavingAudit] = useState(false);
   const [auditSaved, setAuditSaved] = useState(false);
+  const [settlementRun,setSettlementRun]=useState<{status:string;summary:{counts?:Record<string,number>;claims_ready_amount?:number;exceptions?:number}}|null>(null);
 
   // Staged items — the incremental "add one at a time, describe it, then
   // Run Audit" flow. Each item is added (uploaded/entered) independently;
@@ -3462,6 +3502,8 @@ export function PrizeSkoutDashboard() {
             access_code: accessCode,
             ingest_event_id: selectedProduct.ingest_event_id,
             target_price: targetPrice,
+            idempotency_key: priceActionKey(selectedProduct.ingest_event_id,targetPrice),
+            approval_confirmed: true,
           }),
         },
         30_000,
@@ -3472,6 +3514,7 @@ export function PrizeSkoutDashboard() {
         message?: string;
         downstream?: { channel: string; status: string; message: string } | null;
       };
+      clearPriceActionKey(selectedProduct.ingest_event_id,targetPrice);
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Price update failed");
       setImportedProducts((products) =>
@@ -3518,11 +3561,14 @@ export function PrizeSkoutDashboard() {
             access_code: accessCode,
             ingest_event_id: selectedProduct.ingest_event_id,
             target_price: productOriginalPrice,
+            idempotency_key: priceActionKey(selectedProduct.ingest_event_id,productOriginalPrice,"restore"),
+            approval_confirmed: true,
           }),
         },
         30_000,
       );
       const result = (await response.json()) as { ok?: boolean; error?: string; message?: string };
+      clearPriceActionKey(selectedProduct.ingest_event_id,productOriginalPrice,"restore");
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Revert failed");
       setImportedProducts((products) =>
@@ -4554,6 +4600,8 @@ export function PrizeSkoutDashboard() {
             access_code: accessCode,
             ingest_event_id: product.ingest_event_id,
             target_price: Math.round(targetPrice * 100) / 100,
+            idempotency_key: priceActionKey(product.ingest_event_id,Math.round(targetPrice*100)/100,"copilot"),
+            approval_confirmed: true,
           }),
         });
         const result = (await response.json()) as {
@@ -4565,6 +4613,7 @@ export function PrizeSkoutDashboard() {
           rolled_back?: boolean;
           action_id?: string;
         };
+        clearPriceActionKey(product.ingest_event_id,Math.round(targetPrice*100)/100,"copilot");
         if (!response.ok || !result.ok) {
           const message = result.error ?? result.message ?? "Rejected";
           failures.push(`${product.name_en || product.sku}: ${message}`);
@@ -4754,6 +4803,7 @@ export function PrizeSkoutDashboard() {
     setAuditResult(null);
     setStagedItems([]);
     setAuditSaved(false);
+    setSettlementRun(null);
     try {
       const res = await fetch("/api/channels/connect", {
         method: "POST",
@@ -4987,6 +5037,7 @@ export function PrizeSkoutDashboard() {
     evidence: {
       transactionDate: string;
       bankReference: string;
+      settlementReference:string;
       depositType: string;
       currency: string;
       fileName?: string;
@@ -5041,6 +5092,7 @@ export function PrizeSkoutDashboard() {
           upload_platform: platform,
           bank_transaction_date: evidence.transactionDate,
           bank_reference: evidence.bankReference,
+          settlement_reference:evidence.settlementReference,
           deposit_type: evidence.depositType,
           currency: evidence.currency,
           evidence_file_name: evidence.fileName,
@@ -5057,6 +5109,7 @@ export function PrizeSkoutDashboard() {
         classification?: PayoutCheckClassification;
         bank_transaction_date?: string;
         bank_reference?: string;
+        settlement_reference?:string|null;
         deposit_type?: string;
         currency?: string;
         evidence_file_name?: string;
@@ -5093,6 +5146,7 @@ export function PrizeSkoutDashboard() {
                     period_end: data.period_end,
                     bank_transaction_date: data.bank_transaction_date,
                     bank_reference: data.bank_reference,
+                    settlement_reference:data.settlement_reference,
                     deposit_type: data.deposit_type,
                     currency: data.currency,
                     evidence_file_name: data.evidence_file_name,
@@ -5166,6 +5220,7 @@ export function PrizeSkoutDashboard() {
     }));
     setPayoutDocuments(normalized);
     setAuditSaved(false);
+    setSettlementRun(null);
     if (classified.length === 1 && classified[0].document_type !== "merchant_received") {
       setPayoutData(classified[0].result as PayoutCheckData);
     } else {
@@ -5212,8 +5267,8 @@ export function PrizeSkoutDashboard() {
           net_sales_override_docs: auditResult.netSalesOverrideDocs ?? null,
         }),
       });
-      const data = (await res.json()) as { ok?: boolean };
-      if (res.ok && data.ok) setAuditSaved(true);
+      const data = (await res.json()) as { ok?: boolean;reconciliation?:{status:string;summary:{counts?:Record<string,number>;claims_ready_amount?:number;exceptions?:number}}|null };
+      if (res.ok && data.ok) {setAuditSaved(true);setSettlementRun(data.reconciliation??null);}
       else showToast("Could not save that audit. Please try again.");
     } catch {
       showToast("Could not save that audit. Please try again.");
@@ -6694,7 +6749,7 @@ export function PrizeSkoutDashboard() {
                     <button
                       type="button"
                       disabled={
-                        productPushStatus === "pushing" || productPushStatus === "reverting" || ["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"")
+                        productPushStatus === "pushing" || productPushStatus === "reverting" || selectedProduct.preview?.approval_mode === "recommend_only" || ["over_limit","cannot_reach_target_within_limit","blocked_stale_evidence"].includes(selectedProduct.preview?.outcome??"")
                       }
                       onClick={pushSelectedProductPrice}
                       style={{
@@ -6703,12 +6758,12 @@ export function PrizeSkoutDashboard() {
                         color: "#fff",
                         borderRadius: 9,
                         padding: "11px 16px",
-                        cursor: productPushStatus === "pushing" ? "wait" : ["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") ? "not-allowed" : "pointer",
+                        cursor: productPushStatus === "pushing" ? "wait" : selectedProduct.preview?.approval_mode === "recommend_only" || ["over_limit","cannot_reach_target_within_limit","blocked_stale_evidence"].includes(selectedProduct.preview?.outcome??"") ? "not-allowed" : "pointer",
                         fontFamily: "inherit",
                         fontWeight: 800,
                       }}
                     >
-                      {["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") ? "Blocked by active increase limit" : productPushStatus === "pushing"
+                      {selectedProduct.preview?.approval_mode === "recommend_only" ? "Suggestion only — update in platform" : selectedProduct.preview?.outcome === "blocked_stale_evidence" ? "Refresh evidence before publishing" : ["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") ? "Blocked by active increase limit" : productPushStatus === "pushing"
                         ? productPushStage === "sending"
                           ? "Sending"
                           : "Verifying"
@@ -8514,6 +8569,9 @@ export function PrizeSkoutDashboard() {
                             ? t.payoutDownloadingPdf
                             : t.payoutSaveAudit}
                       </button>
+                      {auditSaved&&settlementRun&&<div style={{marginTop:9,padding:"9px 12px",border:"1px solid var(--border)",borderRadius:9,fontSize:12,color:"var(--muted)",background:"var(--surface2)"}}>
+                        Settlement ledger: <strong style={{color:"var(--text)"}}>{settlementRun.status.replaceAll("_"," ")}</strong> · {settlementRun.summary.exceptions??0} exception(s) · claim-ready {currency} {(settlementRun.summary.claims_ready_amount??0).toFixed(2)}. Aggregate or unreferenced evidence remains quarantined.
+                      </div>}
                     </div>
                   </>
                 )}

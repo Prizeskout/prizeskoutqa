@@ -32,6 +32,10 @@ export type PayoutResultLike = {
   extra_line_items?: { label: string; value: number }[] | null;
   unexplained_charge?: { label: string; amount: number } | null;
   daily_rows?: { date: string; orders: number; sales: number; cancelled?: number }[] | null;
+  transaction_rows?: { order_id:string; date:string; gross_sales:number; refund_amount:number; status:string; eligible:boolean; claims_ready?:boolean }[] | null;
+  settlement_rows?: { settlement_reference:string; order_id:string|null; amount:number; currency:string }[] | null;
+  settlement_reference?: string|null;
+  duplicate_order_ids?: string[] | null;
   cancelled_orders_total?: number | null;
   charge_explainers?: { label: string; value: number }[] | null;
   // "merchant_received" documents only — what the merchant typed as the
@@ -642,7 +646,25 @@ export function reconcile(
   const dailyDocs = docs.filter(d => d.document_type === "daily_log" && (d.result.daily_rows?.length ?? 0) > 0);
   const statementDocs = docs.filter(d => d.document_type === "statement");
   const transactionDocs = docs.filter(d => d.document_type === "platform_transaction");
-  const receivedDocs = docs.filter(d => d.document_type === "merchant_received");
+  const receivedCandidates = docs.filter(d => d.document_type === "merchant_received");
+  const receiptGroups=new Map<string,ClassifiedDocument[]>();
+  const unkeyedReceipts:ClassifiedDocument[]=[];
+  for(const doc of receivedCandidates){
+    const result=doc.result;
+    const key=result.evidence_sha256?`sha:${result.evidence_sha256}`:result.bank_reference?`bank:${result.bank_reference.trim().toLowerCase()}`:null;
+    if(!key){unkeyedReceipts.push(doc);continue;}
+    const group=receiptGroups.get(key)??[];group.push(doc);receiptGroups.set(key,group);
+  }
+  const duplicateReceiptGroups=[...receiptGroups.values()].filter(group=>group.length>1);
+  const conflictingReceiptGroups=duplicateReceiptGroups.filter(group=>new Set(group.map(doc=>`${doc.result.received_amount??""}:${(doc.result.currency??"").toUpperCase()}:${doc.result.bank_transaction_date??""}`)).size>1);
+  const receivedDocs=[...unkeyedReceipts,...[...receiptGroups.values()].filter(group=>group.length===1||!conflictingReceiptGroups.includes(group)).map(group=>group[0])];
+  const transactionContributions=new Map<string,Array<{docId:string;row:NonNullable<PayoutResultLike["transaction_rows"]>[number]}>>();
+  for(const doc of transactionDocs)for(const row of doc.result.transaction_rows??[]){
+    const entries=transactionContributions.get(row.order_id)??[];entries.push({docId:doc.id,row});transactionContributions.set(row.order_id,entries);
+  }
+  const duplicateTransactionIds=new Set<string>();
+  for(const doc of transactionDocs)for(const id of doc.result.duplicate_order_ids??[])duplicateTransactionIds.add(id);
+  for(const [id,entries]of transactionContributions)if(entries.length>1)duplicateTransactionIds.add(id);
 
   const byDate = new Map<string, { orders: number; sales: number }>();
   const sources = new Map<string, Set<string>>();
@@ -716,6 +738,11 @@ export function reconcile(
   const dateCollisions = [...sources.entries()].filter(([, s]) => s.size > 1).map(([d]) => d).sort();
 
   const findings: Finding[] = [];
+  if(duplicateReceiptGroups.length)findings.push({id:"duplicate-bank-evidence",severity:conflictingReceiptGroups.length?"critical":"warning",title:conflictingReceiptGroups.length?"Conflicting bank reference reuse quarantined":"Duplicate bank evidence counted once",detail:conflictingReceiptGroups.length?`${conflictingReceiptGroups.length} bank reference or evidence fingerprint group(s) contain conflicting amount, currency, or date details and were excluded from settlement matching.`:`${duplicateReceiptGroups.length} repeated bank evidence group(s) were deduplicated so the same deposit cannot satisfy more than one settlement.`,evidence_level:"single_source",recoverability:"unquantified",assertion:"settlement"});
+  const evidencedCurrencies=new Set(docs.map(doc=>doc.result.currency?.trim().toUpperCase()).filter((value):value is string=>!!value));
+  const mixedCurrencies=evidencedCurrencies.size>1;
+  if(mixedCurrencies)findings.push({id:"mixed-currency-evidence",severity:"critical",title:"Mixed currencies cannot be reconciled together",detail:`This audit contains ${[...evidencedCurrencies].join(", ")}. Split the evidence by currency or provide an approved conversion record; no cross-currency variance is claims-ready.`,evidence_level:"single_source",recoverability:"unquantified",assertion:"accuracy"});
+  if(duplicateTransactionIds.size)findings.push({id:"duplicate-platform-order-ids",severity:"critical",title:"Duplicate platform order IDs quarantined",detail:`${duplicateTransactionIds.size} platform order ID(s) occurred more than once and were excluded from transaction-level calculations: ${[...duplicateTransactionIds].slice(0,10).join(", ")}${duplicateTransactionIds.size>10?"â€¦":""}.`,evidence_level:"single_source",recoverability:"unquantified",assertion:"completeness"});
   const dupFinding = computeDuplicateDateFinding(dateCollisions);
   if (dupFinding) findings.push(dupFinding);
 
@@ -742,7 +769,7 @@ export function reconcile(
     findings.push(...periodResult.findings);
     crossCheckWindows.push(...periodResult.windows);
   }
-  if (receivedDocs.length > 0 && statementDocs.length > 0) {
+  if (receivedDocs.length > 0 && statementDocs.length > 0 && !mixedCurrencies && conflictingReceiptGroups.length===0) {
     const receivedResult = computeMerchantReceivedFindings(receivedDocs, statementDocs);
     findings.push(...receivedResult.findings);
     crossCheckWindows.push(...receivedResult.windows);
@@ -788,7 +815,7 @@ export function reconcile(
   // A mathematically corroborated difference is not claim-ready unless the
   // rate used to calculate it is authorized by an approved contract covering
   // the audit period. Keep the amount visible as estimated exposure instead.
-  if (!contractCoversPeriod) {
+  if (!contractCoversPeriod||mixedCurrencies||conflictingReceiptGroups.length>0) {
     for (const finding of findings) {
       if (finding.recoverability === "claims_ready") finding.recoverability = "estimated";
     }
@@ -808,8 +835,14 @@ export function reconcile(
   };
 
   const statementAmount = statementDocs.reduce((sum,doc)=>sum+(doc.result.expected_payout??0),0);
-  const transactionExpected = transactionDocs.reduce((sum,doc)=>sum+(doc.result.expected_payout??0),0);
-  const receivedAmount = receivedDocs.reduce((sum,doc)=>sum+(doc.result.received_amount??0),0);
+  const uniqueTransactionRows=[...transactionContributions].filter(([id,entries])=>!duplicateTransactionIds.has(id)&&entries.length===1).map(([,entries])=>entries[0].row);
+  const transactionExpected = uniqueTransactionRows.length
+    ? round2(uniqueTransactionRows.filter(row=>row.eligible).reduce((sum,row)=>sum+Math.max(0,row.gross_sales-row.refund_amount)*(1-rate/100),0))
+    : transactionDocs.reduce((sum,doc)=>sum+(doc.result.expected_payout??0),0);
+  const transactionGross=uniqueTransactionRows.length
+    ? round2(uniqueTransactionRows.filter(row=>row.eligible).reduce((sum,row)=>sum+Math.max(0,row.gross_sales-row.refund_amount),0))
+    : transactionDocs.reduce((sum,doc)=>sum+(doc.result.sub_total_sum??0),0);
+  const receivedAmount = mixedCurrencies?0:receivedDocs.reduce((sum,doc)=>sum+(doc.result.received_amount??0),0);
   const documentaryReceipt = receivedDocs.some(doc=>doc.result.evidence_level==="document_supported");
   const merchantAssertionOnly = receivedDocs.length>0&&!documentaryReceipt;
   const statementCoverage = statementDocs.find(doc=>doc.result.period_start&&doc.result.period_end);
@@ -821,23 +854,23 @@ export function reconcile(
   // export. That intermediate stage therefore stays explicitly missing.
   const stages:FourWayStage[]=[
     {id:"order_activity",label:"POS / order activity",status:dailyDocs.length?(ledger.length?"partial":"missing"):"missing",amount:ledgerTotals?.sales??null,evidenceIds:dailyDocs.map(doc=>doc.id),evidenceBasis:dailyDocs.length?"Daily activity supplied; aggregate rows are not order-level vouching.":"No order activity supplied.",coverage},
-    {id:"platform_transactions",label:"Platform transactions",status:transactionDocs.length?"partial":"missing",amount:transactionDocs.length?round2(transactionExpected):null,evidenceIds:transactionDocs.map(doc=>doc.id),evidenceBasis:transactionDocs.length?"Platform transaction export supplied; matching remains aggregate unless order IDs are present.":"No separately identified platform transaction export was supplied.",coverage:stageCoverage(transactionDocs.find(doc=>doc.result.period_start&&doc.result.period_end))},
+    {id:"platform_transactions",label:"Platform transactions",status:transactionDocs.length?(uniqueTransactionRows.length&&!duplicateTransactionIds.size?"verified":"partial"):"missing",amount:transactionDocs.length?round2(transactionExpected):null,evidenceIds:transactionDocs.map(doc=>doc.id),evidenceBasis:uniqueTransactionRows.length?`${uniqueTransactionRows.length} unique platform order ID(s) retained; duplicates were quarantined.`:transactionDocs.length?"Platform transaction export supplied, but no usable order IDs were retained.":"No separately identified platform transaction export was supplied.",coverage:stageCoverage(transactionDocs.find(doc=>doc.result.period_start&&doc.result.period_end))},
     {id:"platform_settlement",label:"Platform settlement",status:statementDocs.length?"verified":"missing",amount:statementDocs.length?round2(statementAmount):null,evidenceIds:statementDocs.map(doc=>doc.id),evidenceBasis:statementDocs.length?"Platform-issued settlement statement parsed.":"No platform settlement statement supplied.",coverage:stageCoverage(statementCoverage)},
-    {id:"merchant_receipt",label:"Merchant settlement evidence",status:documentaryReceipt?"partial":merchantAssertionOnly?"asserted":"missing",amount:receivedDocs.length?round2(receivedAmount):null,evidenceIds:receivedDocs.map(doc=>doc.id),evidenceBasis:documentaryReceipt?"Bank-generated evidence fingerprint recorded; content review remains pending.":merchantAssertionOnly?"Merchant-entered receipt only; no supporting document.":"No merchant settlement evidence supplied.",coverage:stageCoverage(receiptCoverage)},
+    {id:"merchant_receipt",label:"Merchant settlement evidence",status:mixedCurrencies||conflictingReceiptGroups.length?"partial":documentaryReceipt?"partial":merchantAssertionOnly?"asserted":"missing",amount:receivedDocs.length&&!mixedCurrencies?round2(receivedAmount):null,evidenceIds:receivedDocs.map(doc=>doc.id),evidenceBasis:mixedCurrencies?"Mixed currencies were not summed.":conflictingReceiptGroups.length?"Conflicting bank reference reuse was quarantined.":documentaryReceipt?"Bank-generated evidence fingerprint recorded; content review remains pending.":merchantAssertionOnly?"Merchant-entered receipt only; no supporting document.":"No merchant settlement evidence supplied.",coverage:stageCoverage(receiptCoverage)},
   ];
   const tolerance=(a:number|null,b:number|null)=>a!=null&&b!=null&&Math.abs(a-b)<=Math.max(1,Math.abs(a)*0.0005);
   const orderToTransactionVariance=ledgerTotals&&transactionDocs.length
-    ? round2((transactionDocs.reduce((sum,doc)=>sum+(doc.result.sub_total_sum??0),0))-ledgerTotals.sales):null;
+    ? round2(transactionGross-ledgerTotals.sales):null;
   const transactionToSettlementVariance=transactionDocs.length&&statementDocs.length
     ? round2(statementAmount-transactionExpected):null;
   const links:FourWayReconciliation["links"]=[
-    {from:"order_activity",to:"platform_transactions",status:orderToTransactionVariance==null?"not_testable":Math.abs(orderToTransactionVariance)<=1?"matched":"unmatched",variance:orderToTransactionVariance,explanation:orderToTransactionVariance==null?"A separately identified platform transaction export is required for order-to-platform matching.":"Aggregate eligible sales compared; order-ID matching is not available from daily totals."},
+    {from:"order_activity",to:"platform_transactions",status:orderToTransactionVariance==null?"not_testable":Math.abs(orderToTransactionVariance)<=1?"matched":"unmatched",variance:orderToTransactionVariance,explanation:orderToTransactionVariance==null?"A separately identified platform transaction export is required for order-to-platform matching.":uniqueTransactionRows.length?"Quarantined duplicate IDs, then compared unique eligible platform transactions with the activity ledger total.":"Aggregate eligible sales compared; order-ID matching is not available from daily totals."},
     {from:"platform_transactions",to:"platform_settlement",status:transactionToSettlementVariance==null?"not_testable":Math.abs(transactionToSettlementVariance)<=1?"matched":"unmatched",variance:transactionToSettlementVariance,explanation:transactionToSettlementVariance==null?"Both platform transactions and a settlement statement are required.":"Expected transaction net compared with platform-reported settlement; inspect fee findings for the variance."},
-    {from:"platform_settlement",to:"merchant_receipt",status:statementDocs.length&&receivedDocs.length?(tolerance(statementAmount,receivedAmount)?"matched":"unmatched"):"not_testable",variance:statementDocs.length&&receivedDocs.length?round2(receivedAmount-statementAmount):null,explanation:statementDocs.length&&receivedDocs.length?"Compared like-for-like evidence where periods permit; inspect cross-check windows for cut-off limitations.":"Both a platform statement and merchant settlement evidence are required."},
+    {from:"platform_settlement",to:"merchant_receipt",status:mixedCurrencies||conflictingReceiptGroups.length?"not_testable":statementDocs.length&&receivedDocs.length?(tolerance(statementAmount,receivedAmount)?"matched":"unmatched"):"not_testable",variance:!mixedCurrencies&&!conflictingReceiptGroups.length&&statementDocs.length&&receivedDocs.length?round2(receivedAmount-statementAmount):null,explanation:mixedCurrencies?"Mixed currencies require separate reconciliation or an approved conversion record.":conflictingReceiptGroups.length?"Conflicting reuse of bank references or evidence fingerprints must be resolved first.":statementDocs.length&&receivedDocs.length?"Compared like-for-like evidence where periods permit; inspect cross-check windows for cut-off limitations.":"Both a platform statement and merchant settlement evidence are required."},
   ];
   const fourWay:FourWayReconciliation={
     stages,links,documentaryReceipt,merchantAssertionOnly,
-    unresolvedVariance:statementDocs.length&&receivedDocs.length?round2(receivedAmount-statementAmount):null,
+    unresolvedVariance:!mixedCurrencies&&!conflictingReceiptGroups.length&&statementDocs.length&&receivedDocs.length?round2(receivedAmount-statementAmount):null,
   };
 
   return { ledger, ledgerTotals, findings, coverage, crossCheckWindows, netSalesOverrideDocs, assurance, fourWay };

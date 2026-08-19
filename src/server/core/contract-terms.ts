@@ -17,6 +17,16 @@ export type ContractTerm = {
   cancellation_liability: "merchant"|"platform"|"shared"|"conditional"|"unknown";
   settlement_frequency: string | null;
   settlement_days: number | null;
+  settlement_day_basis: "calendar_days"|"business_days"|null;
+  settlement_schedule_type: "daily"|"weekly"|"twice_monthly"|"monthly"|null;
+  settlement_weekday: number|null;
+  settlement_month_days: number[];
+  settlement_cutoff_hour: number|null;
+  settlement_timezone: string|null;
+  settlement_weekend_days: number[];
+  settlement_holidays: string[];
+  settlement_reserve_days: number;
+  minimum_payout_threshold: number|null;
   dispute_deadline_days: number | null;
   advertising_commitment: number | null;
   minimum_spend: number | null;
@@ -59,7 +69,7 @@ async function fallbackTerms(accountId: string): Promise<ContractTerm[]> {
 
 export async function listContractTerms(accountId: string): Promise<ContractTerm[]> {
   const { data, error } = await table()
-    .select("id, platform, contract_name, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, commission_base, promotion_funding_platform_pct, refund_liability, cancellation_liability, settlement_frequency, settlement_days, dispute_deadline_days, advertising_commitment, minimum_spend, currency, coverage_legal_entity, coverage_brands, coverage_branches, effective_from, effective_to, status, source_file_name, source_sha256, notes, reviewed_by, approved_at, created_at, extraction_json, extraction_model, extraction_confidence, extracted_at")
+    .select("id, platform, contract_name, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, commission_base, promotion_funding_platform_pct, refund_liability, cancellation_liability, settlement_frequency, settlement_days, settlement_day_basis, settlement_schedule_type, settlement_weekday, settlement_month_days, settlement_cutoff_hour, settlement_timezone, settlement_weekend_days, settlement_holidays, settlement_reserve_days, minimum_payout_threshold, dispute_deadline_days, advertising_commitment, minimum_spend, currency, coverage_legal_entity, coverage_brands, coverage_branches, effective_from, effective_to, status, source_file_name, source_sha256, notes, reviewed_by, approved_at, created_at, extraction_json, extraction_model, extraction_confidence, extracted_at")
     .eq("account_id", accountId)
     .order("effective_from", { ascending: false });
   if (missingTable(error)) return fallbackTerms(accountId);

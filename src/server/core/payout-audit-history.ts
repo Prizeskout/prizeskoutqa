@@ -41,8 +41,8 @@ export type SavePayoutAuditInput = {
   net_sales_override_docs: string[] | null;
 };
 
-export async function savePayoutAudit(accountId: string, audit: SavePayoutAuditInput): Promise<{ ok: boolean; error?: string }> {
-  const { error } = await supabaseAdmin.from("ps_payout_audits").insert({
+export async function savePayoutAudit(accountId: string, audit: SavePayoutAuditInput): Promise<{ ok: boolean; id?:string; error?: string }> {
+  const {data,error } = await supabaseAdmin.from("ps_payout_audits").insert({
     account_id: accountId,
     commission_rate_pct: audit.commission_rate_pct,
     document_count: audit.documents.length,
@@ -56,9 +56,9 @@ export async function savePayoutAudit(accountId: string, audit: SavePayoutAuditI
     four_way: audit.four_way,
     cross_check_windows: audit.cross_check_windows,
     net_sales_override_docs: audit.net_sales_override_docs,
-  });
+  }).select("id").single();
   if (error) return { ok: false, error: "Could not save that audit." };
-  return { ok: true };
+  return { ok: true,id:data.id };
 }
 
 export async function getAuditHistory(accountId: string, limit = 30): Promise<PayoutAuditRecord[]> {

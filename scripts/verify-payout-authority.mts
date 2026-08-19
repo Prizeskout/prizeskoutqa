@@ -75,4 +75,13 @@ const wrongPlatform = reconcile(documents, 10, {
 assert.equal(wrongPlatform.assurance.assertions.find(a => a.id === "authorization")?.status, "missing");
 assert.match(wrongPlatform.assurance.assertions.find(a => a.id === "authorization")?.detail ?? "", /does not match the platform/);
 
+const evidenced:ClassifiedDocument={...documents[1],result:{...documents[1].result,currency:"SAR",evidence_sha256:"same-bank-file"}};
+const duplicate=reconcile([documents[0],evidenced,{...evidenced,id:"receipt-copy",file_name:"bank receipt copy"}],10);
+assert.ok(duplicate.findings.some(f=>f.id==="duplicate-bank-evidence"));
+assert.equal(duplicate.fourWay.stages.find(stage=>stage.id==="merchant_receipt")?.amount,70);
+
+const mixed=reconcile([{...documents[0],result:{...documents[0].result,currency:"SAR"}},{...documents[1],result:{...documents[1].result,currency:"USD",evidence_sha256:"usd-receipt"}}],10);
+assert.ok(mixed.findings.some(f=>f.id==="mixed-currency-evidence"));
+assert.equal(mixed.fourWay.links.find(link=>link.from==="platform_settlement")?.status,"not_testable");
+
 console.log("Payout authority verification passed.");

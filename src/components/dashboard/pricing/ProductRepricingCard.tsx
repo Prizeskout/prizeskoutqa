@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, Check, AlertTriangle, Loader2, RotateCcw, Edit3 } from "lucide-react";
 import { toast } from "sonner";
 import type { RepricingProduct } from "@/routes/api/repricing/catalog";
@@ -54,6 +54,7 @@ export function ProductRepricingCard({
   const [lastPrice, setLastPrice] = useState<number | null>(
     alreadyRepriced ? product.current_price : null,
   );
+  const actionKeyRef = useRef<{ signature: string; key: string } | null>(null);
 
   const overridePrice = overrideRaw !== "" ? parseFloat(overrideRaw) : null;
   const targetPrice =
@@ -69,6 +70,8 @@ export function ProductRepricingCard({
 
   const qualifiesForAutoApply =
     autoApplyThreshold !== null && confidencePct !== null && confidencePct >= autoApplyThreshold;
+  const suggestionsOnly = product.preview?.approval_mode === "recommend_only";
+  const staleEvidence = product.preview?.outcome === "blocked_stale_evidence";
 
   async function handleApply() {
     const merchantId =
@@ -87,6 +90,10 @@ export function ProductRepricingCard({
     }
 
     setPushStatus("pushing");
+    const signature = `${product.ingest_event_id}:${targetPrice}`;
+    if (actionKeyRef.current?.signature !== signature) {
+      actionKeyRef.current = { signature, key: `price:${crypto.randomUUID()}` };
+    }
     try {
       const res = await fetch("/api/repricing/apply", {
         method: "POST",
@@ -96,6 +103,8 @@ export function ProductRepricingCard({
           access_code: accessCode,
           ingest_event_id: product.ingest_event_id,
           target_price: targetPrice,
+          idempotency_key: actionKeyRef.current.key,
+          approval_confirmed: true,
         }),
       });
       const data = (await res.json()) as {
@@ -107,6 +116,7 @@ export function ProductRepricingCard({
       };
 
       if (data.ok) {
+        actionKeyRef.current = null;
         setPushStatus("pushed");
         setLastPrice(targetPrice);
         const label =
@@ -117,6 +127,7 @@ export function ProductRepricingCard({
         setShowOverride(false);
         setOverrideRaw("");
       } else {
+        actionKeyRef.current = null;
         setPushStatus("failed");
         toast.error(data.error ?? data.message ?? "Push failed — try again.");
       }
@@ -474,7 +485,8 @@ export function ProductRepricingCard({
               <button
                 type="button"
                 onClick={handleApply}
-                disabled={pushStatus === "pushing"}
+                disabled={pushStatus === "pushing" || suggestionsOnly || staleEvidence}
+                title={suggestionsOnly ? "Your active policy is Suggestions only. Update this price in the platform or change the policy." : staleEvidence ? "Refresh the connected catalogue before publishing this recommendation." : undefined}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -486,8 +498,8 @@ export function ProductRepricingCard({
                   border: "none",
                   backgroundColor: pushStatus === "pushing" ? "#9A9A9A" : "#EA580C",
                   color: "#FFFFFF",
-                  cursor: pushStatus === "pushing" ? "wait" : "pointer",
-                  opacity: pushStatus === "pushing" ? 0.7 : 1,
+                  cursor: pushStatus === "pushing" ? "wait" : suggestionsOnly || staleEvidence ? "not-allowed" : "pointer",
+                  opacity: pushStatus === "pushing" || suggestionsOnly || staleEvidence ? 0.7 : 1,
                   transition: "opacity 150ms, background-color 150ms",
                 }}
               >
@@ -497,7 +509,7 @@ export function ProductRepricingCard({
                     Pushing…
                   </>
                 ) : (
-                  `Push to ${platformLabel(product.source_platform)}`
+                  suggestionsOnly ? "Suggestion only" : staleEvidence ? "Refresh evidence" : `Push to ${platformLabel(product.source_platform)}`
                 )}
               </button>
             </>

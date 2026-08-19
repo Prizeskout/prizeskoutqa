@@ -9,6 +9,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decide as calculateMargin } from "@/server/core/decide-engine";
 import { getMerchantMarginPolicy, resolveMerchantMarginPolicy } from "@/server/core/merchant-pricing-config";
+import { publicationEvidenceBlockers } from "@/server/core/pricing-evidence";
 
 export type RepricingProduct = {
   ingest_event_id: string;
@@ -33,7 +34,7 @@ export type RepricingProduct = {
   commission_rate: number;
   cost_confidence: "verified" | "estimated" | "unknown";
   base_cost: number | null;
-  preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; minimum_contribution_amount:number; policy_version:number; policy_scope:"global"|"channel"; outcome:"safe"|"blocked_missing_cost"|"blocked_missing_economics"|"within_limit"|"cannot_reach_target_within_limit" };
+  preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; minimum_contribution_amount:number; policy_version:number; policy_scope:"global"|"channel"; approval_mode:"recommend_only"|"auto_within_limit"|"approval_every_change"; evidence_blockers:string[]; outcome:"safe"|"blocked_missing_cost"|"blocked_missing_economics"|"blocked_stale_evidence"|"within_limit"|"cannot_reach_target_within_limit" };
 };
 
 function json(data: unknown, status = 200) {
@@ -78,9 +79,9 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         // Use the complete economics snapshot that produced the decision. This
         // keeps the preview consistent with the active contract, including
         // payment fees, fixed fees and merchant-funded promotions.
-        const { data: decideRows, error: decideErr } = await supabaseAdmin
+        const { data: decideRows, error: decideErr } = await (supabaseAdmin as any)
           .from("ps_decide_results")
-          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, payment_fee_rate, fixed_order_fee, promotion_contribution_rate, logistics_subsidy, floor_breached, decision_action, ingest_event_id, created_at")
+          .select("id, sku, base_cost, current_retail_price, recommended_price, net_margin_pct, margin_floor_pct, commission_rate, vat_rate, payment_fee_rate, fixed_order_fee, promotion_contribution_rate, logistics_subsidy, floor_breached, decision_action, ingest_event_id, economics_version_id, margin_policy_version, cost_observed_at, cost_evidence_expires_at, decision_expires_at, evidence_channel, evidence_item_id, evidence_currency, created_at")
           .eq("account_id", accountId)
           .order("created_at", { ascending: false });
 
@@ -93,14 +94,17 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         // visible so the merchant can fix it.
         const { data: ingestRows, error:ingestError } = await supabaseAdmin
           .from("ps_ingest_events")
-          .select("id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, inventory_status, raw_payload")
+          .select("id, merchant_id, sku, item_name_en, item_name_ar, source_platform, item_id, current_retail_price, currency, status, inventory_status, raw_payload")
           .eq("account_id", accountId)
           .order("created_at",{ascending:false});
         if(ingestError)return json({error:"We could not load your synced products.",action:"Refresh the page or sync the connected store again. No prices were changed."},500);
         const channels=[...new Set((ingestRows??[]).map(row=>row.source_platform).filter((value):value is string=>!!value))];
         const policies=new Map((await Promise.all(channels.map(async channel=>[channel,await resolveMerchantMarginPolicy(accountId,channel)] as const))));
+        const economicsIds=[...new Set<string>((decideRows??[]).map((row:any)=>String(row.economics_version_id??"")).filter((value:string)=>!!value))];
+        const {data:economicsRows}=economicsIds.length?await (supabaseAdmin as any).from("ps_economics_versions").select("id,account_id,merchant_id,channel,status,effective_from,effective_to,source_contract_id").in("id",economicsIds):{data:[]};
+        const economicsById=new Map((economicsRows??[]).map((row:any)=>[String(row.id),row]));
 
-        const decisionByEvent=new Map<string,(typeof decideRows)[number]>();
+        const decisionByEvent=new Map<string,any>();
         for(const row of decideRows??[])if(!decisionByEvent.has(row.ingest_event_id))decisionByEvent.set(row.ingest_event_id,row);
         const seenProducts=new Set<string>();
 
@@ -132,6 +136,8 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           const projectedAllowed=allowedPrice&&economics?calculateMargin({...economics,currentRetailPrice:allowedPrice}):null;
           const requiredIncrease=requiredPrice&&currentPrice>0?(requiredPrice-currentPrice)/currentPrice:0;
           const allowedIncrease=allowedPrice&&currentPrice>0?(allowedPrice-currentPrice)/currentPrice:0;
+          const economicsRow:any=decision?.economics_version_id?economicsById.get(String(decision.economics_version_id)):null;
+          const evidenceBlockers=decision?publicationEvidenceBlockers({activePolicyVersion:resolvedPolicy.version,decisionPolicyVersion:decision.margin_policy_version==null?null:Number(decision.margin_policy_version),decisionExpiresAt:decision.decision_expires_at,costObservedAt:decision.cost_observed_at,costEvidenceExpiresAt:decision.cost_evidence_expires_at,sourcePlatform:evt.source_platform??"",itemId:evt.item_id,currency:evt.currency??"SAR",evidenceChannel:decision.evidence_channel,evidenceItemId:decision.evidence_item_id,evidenceCurrency:decision.evidence_currency,decisionEconomicsVersionId:decision.economics_version_id?String(decision.economics_version_id):null,accountId,merchantId:evt.merchant_id??accountId,economics:economicsRow?{id:String(economicsRow.id),accountId:String(economicsRow.account_id),merchantId:String(economicsRow.merchant_id),channel:String(economicsRow.channel),status:String(economicsRow.status),effectiveFrom:String(economicsRow.effective_from),effectiveTo:economicsRow.effective_to?String(economicsRow.effective_to):null,sourceContractId:economicsRow.source_contract_id?String(economicsRow.source_contract_id):null}:null}):[];
           products.push({
             ingest_event_id: evt.id,
             decide_result_id: decision?.id??null,
@@ -159,7 +165,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             base_cost: costSource === "platform_catalog" && decision
               ? Number(decision.base_cost)
               : null,
-            preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,outcome:!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"cannot_reach_target_within_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,outcome:missingEconomics?"blocked_missing_economics":"blocked_missing_cost"},
+            preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,approval_mode:resolvedPolicy.approvalMode,evidence_blockers:evidenceBlockers,outcome:evidenceBlockers.length?"blocked_stale_evidence":!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"cannot_reach_target_within_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,approval_mode:resolvedPolicy.approvalMode,evidence_blockers:evidenceBlockers,outcome:missingEconomics?"blocked_missing_economics":"blocked_missing_cost"},
           });
         }
 

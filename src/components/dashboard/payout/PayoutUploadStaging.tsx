@@ -66,7 +66,7 @@ export function PayoutUploadStaging({
   onPlatformChange?: (platform: string) => void;
   onAddFile: (files: FileList, description: string, platform: string) => void;
   onAddManual: (description: string, amount: string, periodStart: string, periodEnd: string, platform: string, evidence: {
-    transactionDate: string; bankReference: string; depositType: string; currency: string; fileName?: string; sha256?: string;
+    transactionDate: string; bankReference: string; settlementReference:string; depositType: string; currency: string; fileName?: string; sha256?: string;
   }) => void;
   onCorrectType: (id: string, newType: DocumentType) => void;
   onToggleNetSales: (id: string, value: boolean) => void;
@@ -81,6 +81,7 @@ export function PayoutUploadStaging({
   const [manualEnd, setManualEnd] = useState("");
   const [transactionDate, setTransactionDate] = useState("");
   const [bankReference, setBankReference] = useState("");
+  const [settlementReference,setSettlementReference]=useState("");
   const [depositType, setDepositType] = useState("regular_payout");
   const [manualCurrency, setManualCurrency] = useState("QAR");
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
@@ -104,10 +105,10 @@ export function PayoutUploadStaging({
       sha256 = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
     }
     onAddManual(description, manualAmount, manualStart, manualEnd, platform, {
-      transactionDate, bankReference, depositType, currency: manualCurrency, fileName: evidenceFile?.name, sha256,
+      transactionDate, bankReference, settlementReference, depositType, currency: manualCurrency, fileName: evidenceFile?.name, sha256,
     });
     setDescription(""); setManualAmount(""); setManualStart(""); setManualEnd("");
-    setTransactionDate(""); setBankReference(""); setEvidenceFile(null);
+    setTransactionDate(""); setBankReference(""); setSettlementReference(""); setEvidenceFile(null);
   };
 
   const doneCount = items.filter(it => it.status === "done").length;
@@ -170,6 +171,7 @@ export function PayoutUploadStaging({
                 aria-label="Bank transaction date" title="Bank transaction date" style={{ ...inputStyle, width: 155 }} />
               <input value={bankReference} onChange={e => setBankReference(e.target.value)}
                 placeholder="Bank reference" style={{ ...inputStyle, width: 150 }} />
+              <input value={settlementReference} onChange={e=>setSettlementReference(e.target.value)} placeholder="Platform settlement reference" style={{...inputStyle,width:210}} />
               <select value={depositType} onChange={e => setDepositType(e.target.value)} aria-label="Deposit type" style={{ ...inputStyle, width: 165 }}>
                 <option value="regular_payout">Regular payout</option>
                 <option value="adjustment">Adjustment</option>

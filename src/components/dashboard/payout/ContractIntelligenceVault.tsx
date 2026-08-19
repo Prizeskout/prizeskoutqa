@@ -12,6 +12,9 @@ export type ContractTerm = {
   refund_liability:"merchant"|"platform"|"shared"|"conditional"|"unknown";
   cancellation_liability:"merchant"|"platform"|"shared"|"conditional"|"unknown";
   settlement_frequency:string|null;settlement_days:number|null;dispute_deadline_days:number|null;
+  settlement_day_basis:"calendar_days"|"business_days"|null;settlement_schedule_type:"daily"|"weekly"|"twice_monthly"|"monthly"|null;
+  settlement_weekday:number|null;settlement_month_days:number[];settlement_cutoff_hour:number|null;settlement_timezone:string|null;
+  settlement_weekend_days:number[];settlement_holidays:string[];settlement_reserve_days:number;minimum_payout_threshold:number|null;
   advertising_commitment:number|null;minimum_spend:number|null;currency:string|null;
   coverage_legal_entity:string|null;coverage_brands:string[];coverage_branches:string[];
   status:"draft"|"approved"|"superseded"; source_file_name:string|null;
@@ -63,6 +66,9 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
     commission_base:"unknown",promotion_funding_platform_pct:"",
     refund_liability:"unknown",cancellation_liability:"unknown",
     settlement_frequency:"",settlement_days:"",dispute_deadline_days:"",
+    settlement_day_basis:"",settlement_schedule_type:"",settlement_weekday:"",settlement_month_days:"",
+    settlement_cutoff_hour:"",settlement_timezone:"",settlement_weekend_days:"",settlement_holidays:"",
+    settlement_reserve_days:"0",minimum_payout_threshold:"",
     advertising_commitment:"",minimum_spend:"",currency:"QAR",
     coverage_legal_entity:"",coverage_brands:"",coverage_branches:"",
     effective_from:new Date().toISOString().slice(0,10), effective_to:"", notes:"",
@@ -193,6 +199,16 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
       cancellation_liability:current?.cancellation_liability??"unknown",
       settlement_frequency:current?.settlement_frequency??"",
       settlement_days:current?.settlement_days==null?"":String(current.settlement_days),
+      settlement_day_basis:current?.settlement_day_basis??"",
+      settlement_schedule_type:current?.settlement_schedule_type??"",
+      settlement_weekday:current?.settlement_weekday==null?"":String(current.settlement_weekday),
+      settlement_month_days:current?.settlement_month_days?.join(", ")??"",
+      settlement_cutoff_hour:current?.settlement_cutoff_hour==null?"":String(current.settlement_cutoff_hour),
+      settlement_timezone:current?.settlement_timezone??"",
+      settlement_weekend_days:current?.settlement_weekend_days?.join(", ")??"",
+      settlement_holidays:current?.settlement_holidays?.join(", ")??"",
+      settlement_reserve_days:String(current?.settlement_reserve_days??0),
+      minimum_payout_threshold:current?.minimum_payout_threshold==null?"":String(current.minimum_payout_threshold),
       dispute_deadline_days:current?.dispute_deadline_days==null?"":String(current.dispute_deadline_days),
       advertising_commitment:current?.advertising_commitment==null?"":String(current.advertising_commitment),
       minimum_spend:current?.minimum_spend==null?"":String(current.minimum_spend),
@@ -248,6 +264,16 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
           <label style={{fontSize:11.5,fontWeight:800}}>Cancellation liability<select style={inputStyle} value={form.cancellation_liability} onChange={e=>setForm({...form,cancellation_liability:e.target.value})}>{["unknown","merchant","platform","shared","conditional"].map(v=><option key={v} value={v}>{v==="unknown"?"Not established":v}</option>)}</select></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Settlement frequency<input style={inputStyle} value={form.settlement_frequency} onChange={e=>setForm({...form,settlement_frequency:e.target.value})} placeholder="Weekly on Thursday"/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Settlement lag (days)<input type="number" style={inputStyle} value={form.settlement_days} onChange={e=>setForm({...form,settlement_days:e.target.value})} placeholder="Not established"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Lag basis<select style={inputStyle} value={form.settlement_day_basis} onChange={e=>setForm({...form,settlement_day_basis:e.target.value})}><option value="">Not established</option><option value="calendar_days">Calendar days</option><option value="business_days">Business days</option></select></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Payout schedule<select style={inputStyle} value={form.settlement_schedule_type} onChange={e=>setForm({...form,settlement_schedule_type:e.target.value})}><option value="">Not established</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="twice_monthly">Twice monthly</option><option value="monthly">Monthly</option></select></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Weekly payout day (0 Sun–6 Sat)<input type="number" min="0" max="6" style={inputStyle} value={form.settlement_weekday} onChange={e=>setForm({...form,settlement_weekday:e.target.value})} placeholder="For weekly schedules"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Monthly payout dates<input style={inputStyle} value={form.settlement_month_days} onChange={e=>setForm({...form,settlement_month_days:e.target.value})} placeholder="1, 15"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Daily cutoff hour (0–23)<input type="number" min="0" max="23" style={inputStyle} value={form.settlement_cutoff_hour} onChange={e=>setForm({...form,settlement_cutoff_hour:e.target.value})} placeholder="17"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Settlement timezone<input style={inputStyle} value={form.settlement_timezone} onChange={e=>setForm({...form,settlement_timezone:e.target.value})} placeholder="Asia/Riyadh"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Weekend days (0 Sun–6 Sat)<input style={inputStyle} value={form.settlement_weekend_days} onChange={e=>setForm({...form,settlement_weekend_days:e.target.value})} placeholder="5, 6"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Settlement holidays<input style={inputStyle} value={form.settlement_holidays} onChange={e=>setForm({...form,settlement_holidays:e.target.value})} placeholder="2026-09-23, 2026-12-18"/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Reserve delay (days)<input type="number" min="0" style={inputStyle} value={form.settlement_reserve_days} onChange={e=>setForm({...form,settlement_reserve_days:e.target.value})}/></label>
+          <label style={{fontSize:11.5,fontWeight:800}}>Minimum payout threshold<input type="number" min="0" style={inputStyle} value={form.minimum_payout_threshold} onChange={e=>setForm({...form,minimum_payout_threshold:e.target.value})} placeholder="Not established"/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Dispute deadline (days)<input type="number" style={inputStyle} value={form.dispute_deadline_days} onChange={e=>setForm({...form,dispute_deadline_days:e.target.value})} placeholder="Not established"/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Advertising commitment<input type="number" style={inputStyle} value={form.advertising_commitment} onChange={e=>setForm({...form,advertising_commitment:e.target.value})} placeholder="Not established"/></label>
           <label style={{fontSize:11.5,fontWeight:800}}>Minimum spend<input type="number" style={inputStyle} value={form.minimum_spend} onChange={e=>setForm({...form,minimum_spend:e.target.value})} placeholder="Not established"/></label>
