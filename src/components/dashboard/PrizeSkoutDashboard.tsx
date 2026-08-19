@@ -2252,7 +2252,13 @@ export function PrizeSkoutDashboard() {
   const [productOriginalPrice, setProductOriginalPrice] = useState<number | null>(null);
   const [cpPhase, setCpPhase] = useState<"idle" | "loading" | "result">("idle");
   const [cpInput, setCpInput] = useState("");
-  const [cpThread, setCpThread] = useState<Array<{ role: "user" | "assistant"; text: string }>>([]);
+  type CopilotThreadMessage = {
+    role: "user" | "assistant";
+    text: string;
+    messageType?: "text" | "task" | "approval" | "execution" | "evidence" | "error";
+    metadata?: Record<string, unknown>;
+  };
+  const [cpThread, setCpThread] = useState<CopilotThreadMessage[]>([]);
   const [cpConversations, setCpConversations] = useState<Array<{ id: string; title: string; last_message_at: string }>>([]);
   const [cpConversationTitle, setCpConversationTitle] = useState("Current conversation");
   const [cpPersistenceAvailable, setCpPersistenceAvailable] = useState(false);
@@ -3641,15 +3647,15 @@ export function PrizeSkoutDashboard() {
     }).catch(() => setCpPersistenceAvailable(false));
   }
 
-  const appendCpThread = (role: "user" | "assistant", text: string, messageType = "text", metadata: Record<string, unknown> = {}) => {
-    setCpThread((current) => [...current, { role, text }].slice(-20));
+  const appendCpThread = (role: "user" | "assistant", text: string, messageType: CopilotThreadMessage["messageType"] = "text", metadata: Record<string, unknown> = {}) => {
+    setCpThread((current) => [...current, { role, text, messageType, metadata }].slice(-40));
     queueCopilotMessage(role, text, messageType, metadata);
   };
 
   const openCopilotConversation = async (id: string) => {
     const result = await copilotPersistenceRequest({ action: "get", id });
     if (!result?.response.ok || result.data.available === false || !result.data.conversation) return;
-    const messages = (Array.isArray(result.data.messages) ? result.data.messages : []).filter((item: Record<string, unknown>) => item.role === "user" || item.role === "assistant").map((item: Record<string, unknown>) => ({ role: item.role as "user" | "assistant", text: String(item.content ?? "") })).filter((item: { text: string }) => item.text).slice(-20);
+    const messages = (Array.isArray(result.data.messages) ? result.data.messages : []).filter((item: Record<string, unknown>) => item.role === "user" || item.role === "assistant").map((item: Record<string, unknown>) => ({ role: item.role as "user" | "assistant", text: String(item.content ?? ""), messageType: String(item.message_type ?? "text") as CopilotThreadMessage["messageType"], metadata: item.metadata && typeof item.metadata === "object" ? item.metadata as Record<string, unknown> : {} })).filter((item: { text: string }) => item.text).slice(-40);
     cpConversationIdRef.current = id;
     setCpConversationTitle(String(result.data.conversation.title ?? "Current conversation"));
     setCpThread(messages);
@@ -3774,7 +3780,7 @@ export function PrizeSkoutDashboard() {
         setCpChatMessage(null);
         setCpPhase("result");
         const workflowReply = `Prepared task: ${String(workflow.title ?? "Store management workflow")}. ${String(workflow.summary ?? "Review the steps and approvals below.")}`;
-        appendCpThread("assistant", workflowReply);
+        appendCpThread("assistant", workflowReply, "task", { kind: "workflow", workflow });
         cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: workflowReply }]);
         return await prepareManagerWorkflow(workflow);
       } else if (data.type === "operation" && data.operation) {
@@ -3784,7 +3790,7 @@ export function PrizeSkoutDashboard() {
         setCpChatMessage(null);
         setCpPhase("result");
         const operationReply = String(operation.summary ?? "I prepared the requested store operation for review.");
-        appendCpThread("assistant", operationReply);
+        appendCpThread("assistant", operationReply, operation.requires_confirmation ? "approval" : "task", { kind: "operation", operation });
         cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: operationReply }]);
         return await prepareCopilotOperation(operation);
       } else if (data.type === "clarification" && data.message) {
@@ -3825,7 +3831,7 @@ export function PrizeSkoutDashboard() {
     } catch (error) {
       const failureMessage = error instanceof Error ? error.message : "Request failed. Check your connection and try again.";
       setCpError(failureMessage);
-      appendCpThread("assistant", failureMessage);
+        appendCpThread("assistant", failureMessage, "error");
       setCpPhase("idle");
       return false;
     }
@@ -4607,9 +4613,25 @@ export function PrizeSkoutDashboard() {
           : (result.message ?? "The Zid action completed."),
       );
       setCpOperationStatus("complete");
+      appendCpThread(
+        "assistant",
+        ["product_change", "create_product_draft"].includes(operation)
+          ? "Done. I completed the approved change and checked the result in Zid."
+          : (result.message ?? "Done. The approved action completed."),
+        "execution",
+        {
+          kind: "execution",
+          operation,
+          status: result.confirmed ?? result.ok ? "confirmed" : "completed_with_warning",
+          action_id: result.action_id ?? null,
+          result,
+        },
+      );
     } catch (error) {
       setCpOperationStatus("failed");
-      setCpOperationMessage(error instanceof Error ? error.message : "The Zid action failed.");
+      const message = error instanceof Error ? error.message : "The Zid action failed.";
+      setCpOperationMessage(message);
+      appendCpThread("assistant", message, "error", { kind: "execution", operation, status: "failed" });
     }
   };
 
@@ -11334,11 +11356,34 @@ export function PrizeSkoutDashboard() {
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>{cpConversations.length > 1 && <select aria-label="Open saved conversation" value={cpConversationIdRef.current ?? ""} onChange={event => void openCopilotConversation(event.target.value)} disabled={cpPhase === "loading"} style={{ maxWidth: 220, border: "1px solid var(--border)", borderRadius: 7, padding: "6px 8px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontSize: 11.5 }}><option value="">{cpConversationTitle}</option>{cpConversations.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select>}<button type="button" onClick={startNewCopilotConversation} disabled={cpPhase === "loading"} style={{ border: 0, background: "transparent", color: "var(--muted)", fontFamily: "inherit", fontSize: 12, fontWeight: 750, cursor: cpPhase === "loading" ? "not-allowed" : "pointer" }}>New chat</button></div>
                     </div>
                     <div aria-label="Conversation history" style={{ maxHeight: 260, overflowY: "auto", display: "grid", gap: 8, padding: "2px 2px 10px" }}>
-                      {cpThread.map((message, index) => (
-                        <div key={`${message.role}-${index}`} style={{ justifySelf: message.role === "user" ? "end" : "start", maxWidth: "86%", padding: "9px 12px", borderRadius: 11, background: message.role === "user" ? OG : "var(--surface2)", color: message.role === "user" ? "#fff" : "var(--text)", border: message.role === "assistant" ? "1px solid var(--border)" : "none", fontSize: 12.5, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-                          {message.text}
-                        </div>
-                      ))}
+                      {cpThread.map((message, index) => {
+                        const structured = message.role === "assistant" && ["task", "approval", "execution", "error"].includes(message.messageType ?? "");
+                        const savedOperation = message.metadata?.operation && typeof message.metadata.operation === "object" ? message.metadata.operation as Record<string, unknown> : null;
+                        const isCurrentOperation = Boolean(savedOperation && cpObj && String(savedOperation.operation ?? "") === String(cpObj.operation ?? "") && String(savedOperation.summary ?? "") === String(cpObj.summary ?? ""));
+                        const isApproval = message.messageType === "approval";
+                        const isExecution = message.messageType === "execution";
+                        const status = String(message.metadata?.status ?? (isApproval ? "Waiting for your approval" : isExecution ? "Completed" : "Prepared"));
+                        return (
+                          <div key={`${message.role}-${index}`} style={{ justifySelf: message.role === "user" ? "end" : "start", width: structured ? "min(100%,720px)" : "auto", maxWidth: structured ? "96%" : "86%", padding: structured ? 0 : "9px 12px", borderRadius: 11, background: message.role === "user" ? OG : "var(--surface2)", color: message.role === "user" ? "#fff" : "var(--text)", border: message.role === "assistant" ? `1px solid ${isApproval ? "color-mix(in srgb,#F59E0B 45%,var(--border))" : isExecution ? "color-mix(in srgb,#10B981 40%,var(--border))" : "var(--border)"}` : "none", fontSize: 12.5, lineHeight: 1.5, whiteSpace: "pre-wrap", overflow: "hidden" }}>
+                            {!structured ? message.text : <>
+                              <div style={{ padding: "12px 14px", background: isApproval ? "color-mix(in srgb,#F59E0B 8%,var(--surface))" : isExecution ? "color-mix(in srgb,#10B981 7%,var(--surface))" : "var(--surface2)" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                                  <strong>{isApproval ? "Approval required" : isExecution ? "Task completed" : message.messageType === "error" ? "Task needs attention" : "Task prepared"}</strong>
+                                  <span style={{ fontSize: 10.5, fontWeight: 850, color: isExecution ? GN : isApproval ? "#A16207" : "var(--muted)", textTransform: "uppercase" }}>{status.replaceAll("_", " ")}</span>
+                                </div>
+                                <div style={{ marginTop: 7, color: "var(--text)" }}>{message.text}</div>
+                                {savedOperation && <div style={{ marginTop: 7, fontSize: 11.5, color: "var(--muted)" }}>{String(savedOperation.platform ?? "connected store").toUpperCase()} · {String(savedOperation.operation ?? "task").replaceAll("_", " ")}</div>}
+                              </div>
+                              {(savedOperation || isExecution) && <div style={{ display: "flex", gap: 8, padding: "10px 12px", background: "var(--surface)", flexWrap: "wrap" }}>
+                                {savedOperation && <button type="button" onClick={() => { setCpObj(savedOperation); setCpPrompt(message.text); setCpPhase("result"); setCpOperationStatus("running"); void prepareCopilotOperation(savedOperation); }} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>{isCurrentOperation ? "Refresh details" : "Open task"}</button>}
+                                {isApproval && isCurrentOperation && cpOperationStatus === "ready" && <button type="button" onClick={() => void executeCopilotStoreWrite()} style={{ border: 0, borderRadius: 8, padding: "8px 11px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: "pointer" }}>Approve and run</button>}
+                                {isApproval && <button type="button" onClick={() => { setCpInput(`Change this task: `); }} style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: "7px 8px" }}>Request changes</button>}
+                                {isExecution && <button type="button" onClick={() => setCpInput("Using the completed task above, ")} style={{ border: 0, background: "transparent", color: OG, fontFamily: "inherit", fontWeight: 800, cursor: "pointer", padding: "7px 8px" }}>Continue from this result</button>}
+                              </div>}
+                            </>}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 9, alignItems: "flex-end", padding: 8, border: `1.5px solid color-mix(in srgb,${OG} 30%,var(--border))`, borderRadius: 13, background: "var(--surface)" }}>
