@@ -1,4 +1,18 @@
 import { Fragment, useState, useEffect, useMemo, useRef } from "react";
+import {
+  BadgePercent,
+  Bell,
+  Bot,
+  ChartNoAxesCombined,
+  CircleDollarSign,
+  MessageSquareText,
+  PackageSearch,
+  PlugZap,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  WalletCards,
+  type LucideIcon,
+} from "lucide-react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
@@ -41,8 +55,60 @@ import { compactConversation, resolveProductReferences } from "@/lib/copilot-und
 import { workflowStepLabel } from "@/lib/merchant-language";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 
-type Tab = "today" | "analytics" | "manager" | "promotions" | "rules" | "vault" | "history" | "settings";
-const DASHBOARD_TABS: readonly Tab[] = ["today", "analytics", "manager", "promotions", "rules", "vault", "history", "settings"];
+type Tab =
+  | "today"
+  | "analytics"
+  | "manager"
+  | "promotions"
+  | "rules"
+  | "vault"
+  | "history"
+  | "settings";
+type SidebarNavId =
+  | "catalog"
+  | "margin"
+  | "alerts"
+  | "recovery"
+  | "promotions"
+  | "defend"
+  | "manager"
+  | "copilot"
+  | "integrations"
+  | "settings";
+
+const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
+  catalog: "vault",
+  margin: "analytics",
+  alerts: "today",
+  recovery: "analytics",
+  promotions: "promotions",
+  defend: "rules",
+  manager: "manager",
+  copilot: "rules",
+  integrations: "vault",
+  settings: "settings",
+};
+
+function sidebarNavFromTab(tab: Tab): SidebarNavId {
+  if (tab === "vault") return "catalog";
+  if (tab === "analytics") return "margin";
+  if (tab === "today") return "alerts";
+  if (tab === "promotions") return "promotions";
+  if (tab === "rules") return "defend";
+  if (tab === "manager") return "manager";
+  if (tab === "settings") return "settings";
+  return "alerts";
+}
+const DASHBOARD_TABS: readonly Tab[] = [
+  "today",
+  "analytics",
+  "manager",
+  "promotions",
+  "rules",
+  "vault",
+  "history",
+  "settings",
+];
 
 function dashboardTabFromUrl(): Tab {
   if (typeof window === "undefined") return "today";
@@ -108,7 +174,12 @@ interface ImportedProduct {
     maximum_increase_pct: number;
     margin_floor_pct: number;
     policy_version: number;
-    outcome: "safe" | "blocked_missing_cost" | "blocked_missing_economics" | "within_limit" | "over_limit";
+    outcome:
+      | "safe"
+      | "blocked_missing_cost"
+      | "blocked_missing_economics"
+      | "within_limit"
+      | "over_limit";
   };
 }
 
@@ -1047,9 +1118,191 @@ const T = {
 };
 
 const DASHBOARD_UI = {
-  en: { groups:{start:"Start",understand:"Understand",plan:"Plan & automate",records:"Records"},today:"Today",startHere:"Start here",overview:"Business Overview",moneyProducts:"Money & products",manager:"Store Manager",delegateApprove:"Delegate & approve",todaySub:"Your priorities, store health, and next best actions",managerSub:"Delegate store operations, approve protected actions, and review verified outcomes",promoSub:"Model discount economics and margin risk before approving a campaign",useAssistants:"Use CFO Copilot or Store Manager.",delegateAsk:"Delegate or ask →",assistant:{today:["Need an explanation or want PrizeSkout to handle store work?","What needs my attention today?","What did I actually keep from orders this month?","Prepare my highest-priority store tasks"],analytics:["Want to understand a risk or make a catalogue change?","Show products losing money","What did I actually keep from orders this month?"],manager:["Delegate store operations or review the work already in progress.","What needs my attention today?","Find products with incomplete information","Prepare my highest-priority store tasks"],promotions:["Want help testing a campaign or understanding its margin risk?","Check whether my active coupon is safe","What discount can I afford without breaching margin?"],rules:["Want help choosing or applying safe protection rules?","Explain my active margin protection","Protect a 20% margin on all products"],vault:["Need to sync or inspect a connected store?","Pull my latest catalogue","Show products that need inventory attention"],history:["Want a recent action or payout result explained?","What did you just change?","Summarize my latest payout check"],settings:["Want help understanding your protection settings?","Explain my active margin protection","Check whether my active coupon is safe"]}},
-  ar: { groups:{start:"ابدأ",understand:"افهم أعمالك",plan:"خطط وأتمت",records:"السجلات"},today:"اليوم",startHere:"ابدأ من هنا",overview:"نظرة عامة على الأعمال",moneyProducts:"الأموال والمنتجات",manager:"مدير المتجر",delegateApprove:"فوّض ووافق",todaySub:"أولوياتك وصحة متجرك وأفضل الخطوات التالية",managerSub:"فوّض عمليات المتجر ووافق على الإجراءات المحمية وراجع النتائج المؤكدة",promoSub:"اختبر أثر الخصومات على الربح والهامش قبل الموافقة على الحملة",useAssistants:"استخدم المساعد المالي أو مدير المتجر.",delegateAsk:"فوّض أو اسأل ←",assistant:{today:["هل تريد شرحاً أو تريد من PrizeSkout تنفيذ أعمال المتجر؟","ما الذي يحتاج إلى انتباهي اليوم؟","كم احتفظت فعلياً من الطلبات هذا الشهر؟","جهّز أهم مهام المتجر"],analytics:["هل تريد فهم مخاطرة أو إجراء تعديل في الكتالوج؟","اعرض المنتجات التي تخسر المال","كم احتفظت فعلياً من الطلبات هذا الشهر؟"],manager:["فوّض عمليات المتجر أو راجع العمل الجاري.","ما الذي يحتاج إلى انتباهي اليوم؟","ابحث عن المنتجات ذات المعلومات الناقصة","جهّز أهم مهام المتجر"],promotions:["هل تريد مساعدة في اختبار حملة أو فهم مخاطرها على الهامش؟","تحقق إن كان كوبوني الحالي آمناً","ما الخصم الذي أستطيع تقديمه دون تجاوز حد الهامش؟"],rules:["هل تريد مساعدة في اختيار قواعد حماية آمنة؟","اشرح حماية الهامش الحالية","احمِ هامشاً بنسبة 20% لكل المنتجات"],vault:["هل تريد مزامنة متجر متصل أو فحصه؟","اسحب أحدث كتالوج لدي","اعرض المنتجات التي تحتاج إلى مراجعة المخزون"],history:["هل تريد شرح إجراء أو نتيجة مدفوعات حديثة؟","ما الذي غيّرته للتو؟","لخّص أحدث فحص للمدفوعات"],settings:["هل تريد فهم إعدادات الحماية؟","اشرح حماية الهامش الحالية","تحقق إن كان كوبوني الحالي آمناً"]}},
-  fr: { groups:{start:"Commencer",understand:"Comprendre",plan:"Planifier et automatiser",records:"Historique"},today:"Aujourd’hui",startHere:"Commencer ici",overview:"Vue d’ensemble",moneyProducts:"Finances et produits",manager:"Gestionnaire de boutique",delegateApprove:"Déléguer et valider",todaySub:"Vos priorités, la santé de votre boutique et les prochaines actions",managerSub:"Déléguez les opérations, validez les actions protégées et contrôlez les résultats",promoSub:"Mesurez la rentabilité et le risque de marge avant de valider une campagne",useAssistants:"Utilisez le copilote financier ou le gestionnaire de boutique.",delegateAsk:"Déléguer ou demander →",assistant:{today:["Besoin d’une explication ou envie de confier une tâche à PrizeSkout ?","Qu’est-ce qui demande mon attention aujourd’hui ?","Combien ai-je réellement conservé sur les commandes ce mois-ci ?","Préparer mes tâches prioritaires"],analytics:["Vous voulez comprendre un risque ou modifier le catalogue ?","Afficher les produits qui perdent de l’argent","Combien ai-je réellement conservé ce mois-ci ?"],manager:["Déléguez les opérations ou examinez le travail en cours.","Qu’est-ce qui demande mon attention aujourd’hui ?","Trouver les produits aux informations incomplètes","Préparer mes tâches prioritaires"],promotions:["Besoin d’aide pour tester une campagne ou son risque de marge ?","Vérifier si mon coupon actif est rentable","Quelle remise puis-je offrir sans passer sous ma marge minimale ?"],rules:["Besoin d’aide pour choisir des règles de protection sûres ?","Expliquer ma protection de marge active","Protéger une marge de 20 % sur tous les produits"],vault:["Besoin de synchroniser ou d’examiner une boutique connectée ?","Importer mon dernier catalogue","Afficher les produits dont le stock demande une vérification"],history:["Besoin d’expliquer une action ou un versement récent ?","Qu’avez-vous modifié à l’instant ?","Résumer mon dernier contrôle de versement"],settings:["Besoin de comprendre vos réglages de protection ?","Expliquer ma protection de marge active","Vérifier si mon coupon actif est rentable"]}},
+  en: {
+    groups: {
+      start: "Start",
+      understand: "Understand",
+      plan: "Plan & automate",
+      records: "Records",
+    },
+    today: "Today",
+    startHere: "Start here",
+    overview: "Business Overview",
+    moneyProducts: "Money & products",
+    manager: "Store Manager",
+    delegateApprove: "Delegate & approve",
+    todaySub: "Your priorities, store health, and next best actions",
+    managerSub:
+      "Delegate store operations, approve protected actions, and review verified outcomes",
+    promoSub: "Model discount economics and margin risk before approving a campaign",
+    useAssistants: "Use CFO Copilot or Store Manager.",
+    delegateAsk: "Delegate or ask →",
+    assistant: {
+      today: [
+        "Need an explanation or want PrizeSkout to handle store work?",
+        "What needs my attention today?",
+        "What did I actually keep from orders this month?",
+        "Prepare my highest-priority store tasks",
+      ],
+      analytics: [
+        "Want to understand a risk or make a catalogue change?",
+        "Show products losing money",
+        "What did I actually keep from orders this month?",
+      ],
+      manager: [
+        "Delegate store operations or review the work already in progress.",
+        "What needs my attention today?",
+        "Find products with incomplete information",
+        "Prepare my highest-priority store tasks",
+      ],
+      promotions: [
+        "Want help testing a campaign or understanding its margin risk?",
+        "Check whether my active coupon is safe",
+        "What discount can I afford without breaching margin?",
+      ],
+      rules: [
+        "Want help choosing or applying safe protection rules?",
+        "Explain my active margin protection",
+        "Protect a 20% margin on all products",
+      ],
+      vault: [
+        "Need to sync or inspect a connected store?",
+        "Pull my latest catalogue",
+        "Show products that need inventory attention",
+      ],
+      history: [
+        "Want a recent action or payout result explained?",
+        "What did you just change?",
+        "Summarize my latest payout check",
+      ],
+      settings: [
+        "Want help understanding your protection settings?",
+        "Explain my active margin protection",
+        "Check whether my active coupon is safe",
+      ],
+    },
+  },
+  ar: {
+    groups: { start: "ابدأ", understand: "افهم أعمالك", plan: "خطط وأتمت", records: "السجلات" },
+    today: "اليوم",
+    startHere: "ابدأ من هنا",
+    overview: "نظرة عامة على الأعمال",
+    moneyProducts: "الأموال والمنتجات",
+    manager: "مدير المتجر",
+    delegateApprove: "فوّض ووافق",
+    todaySub: "أولوياتك وصحة متجرك وأفضل الخطوات التالية",
+    managerSub: "فوّض عمليات المتجر ووافق على الإجراءات المحمية وراجع النتائج المؤكدة",
+    promoSub: "اختبر أثر الخصومات على الربح والهامش قبل الموافقة على الحملة",
+    useAssistants: "استخدم المساعد المالي أو مدير المتجر.",
+    delegateAsk: "فوّض أو اسأل ←",
+    assistant: {
+      today: [
+        "هل تريد شرحاً أو تريد من PrizeSkout تنفيذ أعمال المتجر؟",
+        "ما الذي يحتاج إلى انتباهي اليوم؟",
+        "كم احتفظت فعلياً من الطلبات هذا الشهر؟",
+        "جهّز أهم مهام المتجر",
+      ],
+      analytics: [
+        "هل تريد فهم مخاطرة أو إجراء تعديل في الكتالوج؟",
+        "اعرض المنتجات التي تخسر المال",
+        "كم احتفظت فعلياً من الطلبات هذا الشهر؟",
+      ],
+      manager: [
+        "فوّض عمليات المتجر أو راجع العمل الجاري.",
+        "ما الذي يحتاج إلى انتباهي اليوم؟",
+        "ابحث عن المنتجات ذات المعلومات الناقصة",
+        "جهّز أهم مهام المتجر",
+      ],
+      promotions: [
+        "هل تريد مساعدة في اختبار حملة أو فهم مخاطرها على الهامش؟",
+        "تحقق إن كان كوبوني الحالي آمناً",
+        "ما الخصم الذي أستطيع تقديمه دون تجاوز حد الهامش؟",
+      ],
+      rules: [
+        "هل تريد مساعدة في اختيار قواعد حماية آمنة؟",
+        "اشرح حماية الهامش الحالية",
+        "احمِ هامشاً بنسبة 20% لكل المنتجات",
+      ],
+      vault: [
+        "هل تريد مزامنة متجر متصل أو فحصه؟",
+        "اسحب أحدث كتالوج لدي",
+        "اعرض المنتجات التي تحتاج إلى مراجعة المخزون",
+      ],
+      history: [
+        "هل تريد شرح إجراء أو نتيجة مدفوعات حديثة؟",
+        "ما الذي غيّرته للتو؟",
+        "لخّص أحدث فحص للمدفوعات",
+      ],
+      settings: [
+        "هل تريد فهم إعدادات الحماية؟",
+        "اشرح حماية الهامش الحالية",
+        "تحقق إن كان كوبوني الحالي آمناً",
+      ],
+    },
+  },
+  fr: {
+    groups: {
+      start: "Commencer",
+      understand: "Comprendre",
+      plan: "Planifier et automatiser",
+      records: "Historique",
+    },
+    today: "Aujourd’hui",
+    startHere: "Commencer ici",
+    overview: "Vue d’ensemble",
+    moneyProducts: "Finances et produits",
+    manager: "Gestionnaire de boutique",
+    delegateApprove: "Déléguer et valider",
+    todaySub: "Vos priorités, la santé de votre boutique et les prochaines actions",
+    managerSub: "Déléguez les opérations, validez les actions protégées et contrôlez les résultats",
+    promoSub: "Mesurez la rentabilité et le risque de marge avant de valider une campagne",
+    useAssistants: "Utilisez le copilote financier ou le gestionnaire de boutique.",
+    delegateAsk: "Déléguer ou demander →",
+    assistant: {
+      today: [
+        "Besoin d’une explication ou envie de confier une tâche à PrizeSkout ?",
+        "Qu’est-ce qui demande mon attention aujourd’hui ?",
+        "Combien ai-je réellement conservé sur les commandes ce mois-ci ?",
+        "Préparer mes tâches prioritaires",
+      ],
+      analytics: [
+        "Vous voulez comprendre un risque ou modifier le catalogue ?",
+        "Afficher les produits qui perdent de l’argent",
+        "Combien ai-je réellement conservé ce mois-ci ?",
+      ],
+      manager: [
+        "Déléguez les opérations ou examinez le travail en cours.",
+        "Qu’est-ce qui demande mon attention aujourd’hui ?",
+        "Trouver les produits aux informations incomplètes",
+        "Préparer mes tâches prioritaires",
+      ],
+      promotions: [
+        "Besoin d’aide pour tester une campagne ou son risque de marge ?",
+        "Vérifier si mon coupon actif est rentable",
+        "Quelle remise puis-je offrir sans passer sous ma marge minimale ?",
+      ],
+      rules: [
+        "Besoin d’aide pour choisir des règles de protection sûres ?",
+        "Expliquer ma protection de marge active",
+        "Protéger une marge de 20 % sur tous les produits",
+      ],
+      vault: [
+        "Besoin de synchroniser ou d’examiner une boutique connectée ?",
+        "Importer mon dernier catalogue",
+        "Afficher les produits dont le stock demande une vérification",
+      ],
+      history: [
+        "Besoin d’expliquer une action ou un versement récent ?",
+        "Qu’avez-vous modifié à l’instant ?",
+        "Résumer mon dernier contrôle de versement",
+      ],
+      settings: [
+        "Besoin de comprendre vos réglages de protection ?",
+        "Expliquer ma protection de marge active",
+        "Vérifier si mon coupon actif est rentable",
+      ],
+    },
+  },
 } as const;
 
 function parseIntent(text: string): Record<string, unknown> {
@@ -1784,19 +2037,26 @@ type TourStepDef = TourStep & { tab?: Tab };
 
 const FIRST_VALUE_EN = {
   welcomeTitle: "Reach your first useful result",
-  welcomeBody: "In about two minutes, you will confirm your live data, find the work that matters, and see where to set your first protection rule.",
+  welcomeBody:
+    "In about two minutes, you will confirm your live data, find the work that matters, and see where to set your first protection rule.",
   dataTitle: "Confirm what PrizeSkout can see",
-  dataBody: "These figures come from your connected channels. Check the products, activity, and channel status before acting on any recommendation.",
+  dataBody:
+    "These figures come from your connected channels. Check the products, activity, and channel status before acting on any recommendation.",
   copilotTitle: "Ask about your own numbers",
-  copilotBody: "CFO Copilot starts with your store context. Try a suggested question, then review the records behind its answer before making a decision.",
+  copilotBody:
+    "CFO Copilot starts with your store context. Try a suggested question, then review the records behind its answer before making a decision.",
   priorityTitle: "Work from priorities, not noise",
-  priorityBody: "Your daily brief groups money risks, missing information, and approvals into a clear queue. Start with the highest priority item.",
+  priorityBody:
+    "Your daily brief groups money risks, missing information, and approvals into a clear queue. Start with the highest priority item.",
   protectionTitle: "Choose your first protection rule",
-  protectionBody: "Set the minimum margin your store should protect. PrizeSkout keeps proposed actions inside your controls and asks for approval where required.",
+  protectionBody:
+    "Set the minimum margin your store should protect. PrizeSkout keeps proposed actions inside your controls and asks for approval where required.",
   sourceTitle: "Know the source of every result",
-  sourceBody: "Connected stores, platform credentials, and imported reports determine what PrizeSkout can verify. Missing data is shown instead of being guessed.",
+  sourceBody:
+    "Connected stores, platform credentials, and imported reports determine what PrizeSkout can verify. Missing data is shown instead of being guessed.",
   completeTitle: "Your workspace is ready",
-  completeBody: "You now know where to verify data, ask questions, review priorities, and set protection. Continue with the first item that needs your attention.",
+  completeBody:
+    "You now know where to verify data, ask questions, review priorities, and set protection. Continue with the first item that needs your attention.",
 };
 const tourAccountKey = (kind: "done" | "step") => {
   const merchant = localStorage.getItem("ps_merchant_id") || "browser";
@@ -1806,7 +2066,11 @@ const tourAccountKey = (kind: "done" | "step") => {
 function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
   const en = t === T.en;
   return [
-    { id: "welcome", title: en ? FIRST_VALUE_EN.welcomeTitle : t.tourWelcomeTitle, body: en ? FIRST_VALUE_EN.welcomeBody : t.tourWelcomeBody },
+    {
+      id: "welcome",
+      title: en ? FIRST_VALUE_EN.welcomeTitle : t.tourWelcomeTitle,
+      body: en ? FIRST_VALUE_EN.welcomeBody : t.tourWelcomeBody,
+    },
     {
       id: "copilot",
       tab: "today",
@@ -1852,6 +2116,9 @@ function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
 
 export function PrizeSkoutDashboard() {
   const [tab, setTab] = useState<Tab>(dashboardTabFromUrl);
+  const [sidebarNav, setSidebarNav] = useState<SidebarNavId>(() =>
+    sidebarNavFromTab(dashboardTabFromUrl()),
+  );
   const tabHistoryReadyRef = useRef(false);
   const [theme, setTheme] = useState<Theme>("light");
   const [demoMode, setDemoMode] = useState(false);
@@ -1870,6 +2137,10 @@ export function PrizeSkoutDashboard() {
     window.addEventListener("popstate", syncFromHistory);
     return () => window.removeEventListener("popstate", syncFromHistory);
   }, []);
+
+  useEffect(() => {
+    if (SIDEBAR_NAV_TABS[sidebarNav] !== tab) setSidebarNav(sidebarNavFromTab(tab));
+  }, [sidebarNav, tab]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -2338,7 +2609,11 @@ export function PrizeSkoutDashboard() {
   // finishes. Keep the first-run screen alive until the initial value report
   // is ready instead of leaving reviewers on a permanently empty dashboard.
   useEffect(() => {
-    if ((tab !== "today" && tab !== "analytics") || channelStatuses.zid !== "connected" || importedProducts.length > 0)
+    if (
+      (tab !== "today" && tab !== "analytics") ||
+      channelStatuses.zid !== "connected" ||
+      importedProducts.length > 0
+    )
       return;
     let cancelled = false;
     let attempts = 0;
@@ -2547,7 +2822,9 @@ export function PrizeSkoutDashboard() {
   useEffect(() => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
-    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, { headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" } })
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, {
+      headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" },
+    })
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { store_name?: string | null } | null) => {
         if (d?.store_name) setStoreName(d.store_name);
@@ -2624,7 +2901,9 @@ export function PrizeSkoutDashboard() {
     if (tab !== "vault" && tab !== "today" && tab !== "analytics") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
-    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, { headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" } })
+    fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, {
+      headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" },
+    })
       .then((r) => (r.ok ? r.json() : null))
       .then(
         (
@@ -2992,15 +3271,22 @@ export function PrizeSkoutDashboard() {
     setTab("analytics");
     setProductSearch("");
     setProductSort("risk");
-    const hasMissingCosts = importedProducts.some((product) => product.cost_confidence !== "verified");
+    const hasMissingCosts = importedProducts.some(
+      (product) => product.cost_confidence !== "verified",
+    );
     setProductFilter(hasMissingCosts ? "missing_cost" : "all");
     setProductPage(1);
     if (!hasMissingCosts) {
-      showToast("Refreshing product costs. The daily brief may be based on an earlier catalogue check.");
+      showToast(
+        "Refreshing product costs. The daily brief may be based on an earlier catalogue check.",
+      );
       void syncAllCatalogs();
     }
     window.setTimeout(
-      () => document.getElementById("imported-products")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      () =>
+        document
+          .getElementById("imported-products")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" }),
       0,
     );
   };
@@ -3108,16 +3394,20 @@ export function PrizeSkoutDashboard() {
     showToast(`Sending the approved price to ${selectedProduct.source_platform}.`);
     const verificationTimer = window.setTimeout(() => setProductPushStage("verifying"), 1200);
     try {
-      const response = await fetchWithTimeout("/api/repricing/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchant_id: merchantId,
-          access_code: accessCode,
-          ingest_event_id: selectedProduct.ingest_event_id,
-          target_price: targetPrice,
-        }),
-      }, 30_000);
+      const response = await fetchWithTimeout(
+        "/api/repricing/apply",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchant_id: merchantId,
+            access_code: accessCode,
+            ingest_event_id: selectedProduct.ingest_event_id,
+            target_price: targetPrice,
+          }),
+        },
+        30_000,
+      );
       const result = (await response.json()) as {
         ok?: boolean;
         error?: string;
@@ -3160,16 +3450,20 @@ export function PrizeSkoutDashboard() {
       return showToast("Reopen PrizeSkout from Zid to restore your merchant session.");
     setProductPushStatus("reverting");
     try {
-      const response = await fetchWithTimeout("/api/repricing/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchant_id: merchantId,
-          access_code: accessCode,
-          ingest_event_id: selectedProduct.ingest_event_id,
-          target_price: productOriginalPrice,
-        }),
-      }, 30_000);
+      const response = await fetchWithTimeout(
+        "/api/repricing/apply",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchant_id: merchantId,
+            access_code: accessCode,
+            ingest_event_id: selectedProduct.ingest_event_id,
+            target_price: productOriginalPrice,
+          }),
+        },
+        30_000,
+      );
       const result = (await response.json()) as { ok?: boolean; error?: string; message?: string };
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Revert failed");
@@ -3214,13 +3508,11 @@ export function PrizeSkoutDashboard() {
       ...cpConversationRef.current,
       { role: "user", text: prompt },
     ]);
-    const catalogContext = importedProducts
-      .slice(0, 100)
-      .map((product) => ({
-        name: product.name_en || product.name_ar,
-        sku: product.sku,
-        platform: product.source_platform,
-      }));
+    const catalogContext = importedProducts.slice(0, 100).map((product) => ({
+      name: product.name_en || product.name_ar,
+      sku: product.sku,
+      platform: product.source_platform,
+    }));
     setCpPhase("loading");
     setCpPrompt(prompt);
     setApplied(false);
@@ -3235,31 +3527,35 @@ export function PrizeSkoutDashboard() {
     setCpStoreActionResult(null);
     setCpInput("");
     try {
-      const res = await fetchWithTimeout("/api/copilot/compile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          requested_role: requestedRole,
-          context: {
-            previous_operation: previousOperation ?? undefined,
-            products: previousProducts.length ? previousProducts : catalogContext,
-            conversation,
-            current_page: tab,
-            language: lang,
-            currency: "SAR",
-            connected_channels: [
-              ...new Set(
-                importedProducts.map((product) => product.source_platform).filter(Boolean),
-              ),
-            ],
-            pending_approval:
-              previousOperation && previousOperation.requires_confirmation
-                ? previousOperation
-                : null,
-          },
-        }),
-      }, 25_000);
+      const res = await fetchWithTimeout(
+        "/api/copilot/compile",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt,
+            requested_role: requestedRole,
+            context: {
+              previous_operation: previousOperation ?? undefined,
+              products: previousProducts.length ? previousProducts : catalogContext,
+              conversation,
+              current_page: tab,
+              language: lang,
+              currency: "SAR",
+              connected_channels: [
+                ...new Set(
+                  importedProducts.map((product) => product.source_platform).filter(Boolean),
+                ),
+              ],
+              pending_approval:
+                previousOperation && previousOperation.requires_confirmation
+                  ? previousOperation
+                  : null,
+            },
+          }),
+        },
+        25_000,
+      );
       let data: {
         type?: string;
         rule?: Record<string, unknown>;
@@ -3329,7 +3625,11 @@ export function PrizeSkoutDashboard() {
         return false;
       }
     } catch (error) {
-      setCpError(error instanceof Error ? error.message : "Request failed. Check your connection and try again.");
+      setCpError(
+        error instanceof Error
+          ? error.message
+          : "Request failed. Check your connection and try again.",
+      );
       setCpPhase("idle");
       return false;
     }
@@ -3341,25 +3641,27 @@ export function PrizeSkoutDashboard() {
       const steps = Array.isArray(workflow.steps)
         ? (workflow.steps as Array<Record<string, unknown>>)
         : [];
-      const response = await fetchWithTimeout("/api/channels/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
-          access_code: localStorage.getItem("ps_access_code") ?? "",
-          platform: "merchant_experience",
-          action: "manager_task_create",
-          title: String(workflow.title ?? "Store management workflow"),
-          detail: String(workflow.summary ?? "Prepared by the Store Manager."),
-          task_type: "manager_workflow",
-          priority: String(workflow.priority ?? "medium"),
-          approval_required: String(
-            steps.some((step) => step.approval_required === true),
-          ),
-          risk_level: String(workflow.risk_level ?? "read_only"),
-          workflow,
-        }),
-      }, 12_000);
+      const response = await fetchWithTimeout(
+        "/api/channels/connect",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
+            access_code: localStorage.getItem("ps_access_code") ?? "",
+            platform: "merchant_experience",
+            action: "manager_task_create",
+            title: String(workflow.title ?? "Store management workflow"),
+            detail: String(workflow.summary ?? "Prepared by the Store Manager."),
+            task_type: "manager_workflow",
+            priority: String(workflow.priority ?? "medium"),
+            approval_required: String(steps.some((step) => step.approval_required === true)),
+            risk_level: String(workflow.risk_level ?? "read_only"),
+            workflow,
+          }),
+        },
+        12_000,
+      );
       const data = (await response.json()) as {
         ok?: boolean;
         task?: { id: string };
@@ -4916,42 +5218,84 @@ export function PrizeSkoutDashboard() {
     rules[0].maxChangePct !== persistedMaxIncrease ||
     rules[0].approvalMode !== persistedApprovalMode;
 
-  const navDefs = [
+  const navDefs: Array<{
+    id: SidebarNavId;
+    tab: Tab;
+    label: string;
+    icon: LucideIcon;
+    tip: string;
+    badge?: number;
+  }> = [
     {
-      id: "today" as Tab,
-      group: ui.groups.start,
-      label: ui.today,
-      sub: ui.startHere,
-      tip: "Today shows the work that matters now, the health of your store, and clear paths to every PrizeSkout tool.",
+      id: "catalog",
+      tab: "vault",
+      label: "Catalog",
+      icon: PackageSearch,
+      tip: "Review products, costs, prices, and catalogue evidence.",
     },
     {
-      id: "analytics" as Tab,
-      group: ui.groups.understand,
-      label: lang === "ar" ? "المال" : lang === "fr" ? "Finance" : "Money",
-      sub: lang === "ar" ? "الأرباح والمدفوعات" : lang === "fr" ? "Profit et paiements" : "Profit and payouts",
-      tip: "Review profit, margins, payouts, recovery, and the CFO Copilot in one place.",
+      id: "margin",
+      tab: "analytics",
+      label: "Margin Intelligence",
+      icon: ChartNoAxesCombined,
+      tip: "Review true profit and margin performance across channels.",
     },
     {
-      id: "vault" as Tab,
-      group: ui.groups.understand,
-      label: lang === "ar" ? "المنتجات" : lang === "fr" ? "Produits" : "Products",
-      sub: lang === "ar" ? "الكتالوج والأسعار" : lang === "fr" ? "Catalogue et prix" : "Catalogue and prices",
-      tip: "Review your catalogue, product costs, competitor prices, and connected product data.",
+      id: "alerts",
+      tab: "today",
+      label: "Alerts",
+      icon: Bell,
+      tip: "See the work and risks that need attention now.",
+      badge: historyAttentionCount,
     },
     {
-      id: "manager" as Tab,
-      activeTabs: ["manager", "promotions", "rules"] as Tab[],
-      group: ui.groups.plan,
-      label: lang === "ar" ? "الأتمتة" : lang === "fr" ? "Automatisation" : "Automation",
-      sub: lang === "ar" ? "الإدارة والحماية" : lang === "fr" ? "Gérer et protéger" : "Manage and protect",
-      tip: "Delegate store work, test promotions, and manage protection rules.",
+      id: "recovery",
+      tab: "analytics",
+      label: "Payout Recovery",
+      icon: WalletCards,
+      tip: "Check payouts, investigate discrepancies, and manage recovery evidence.",
     },
     {
-      id: "history" as Tab,
-      group: ui.groups.records,
-      label: lang === "ar" ? "النشاط" : lang === "fr" ? "Activité" : "Activity",
-      sub: lang === "ar" ? "القرارات والنتائج" : lang === "fr" ? "Décisions et résultats" : "Decisions and outcomes",
-      tip: "Review completed changes, checks, decisions, and supporting evidence.",
+      id: "promotions",
+      tab: "promotions",
+      label: "Promotion Simulator",
+      icon: BadgePercent,
+      tip: "Test promotion economics before approving a campaign.",
+    },
+    {
+      id: "defend",
+      tab: "rules",
+      label: "Defend Loop",
+      icon: ShieldCheck,
+      tip: "Set and review the guardrails that protect merchant margins.",
+    },
+    {
+      id: "manager",
+      tab: "manager",
+      label: "AI Store Manager",
+      icon: Bot,
+      tip: "Delegate store work and review protected actions.",
+    },
+    {
+      id: "copilot",
+      tab: "rules",
+      label: "CFO Copilot",
+      icon: CircleDollarSign,
+      tip: "Ask questions about profit, fees, payouts, and risk.",
+    },
+    {
+      id: "integrations",
+      tab: "vault",
+      label: "Integrations",
+      icon: PlugZap,
+      tip: "Connect and inspect commerce and delivery channels.",
+    },
+    {
+      id: "settings",
+      tab: "settings",
+      label: "Settings",
+      icon: SettingsIcon,
+      tip: "Manage business, policy, and connection settings.",
     },
   ];
 
@@ -4959,38 +5303,46 @@ export function PrizeSkoutDashboard() {
     tab === "today"
       ? ui.todaySub
       : tab === "analytics"
-      ? t.subA
-      : tab === "manager"
-        ? lang === "ar" ? "العمل الذي يتولاه PrizeSkout والقرارات التي تحتاج موافقتك" : lang === "fr" ? "Travail pris en charge par PrizeSkout et décisions à valider" : "Work PrizeSkout is handling and decisions that need your approval"
-        : tab === "promotions"
-          ? ui.promoSub
-          : tab === "rules"
-            ? t.subR
-            : tab === "settings"
-              ? t.settingsSub
-              : tab === "history"
-                ? t.subH
-                : t.subV;
+        ? t.subA
+        : tab === "manager"
+          ? lang === "ar"
+            ? "العمل الذي يتولاه PrizeSkout والقرارات التي تحتاج موافقتك"
+            : lang === "fr"
+              ? "Travail pris en charge par PrizeSkout et décisions à valider"
+              : "Work PrizeSkout is handling and decisions that need your approval"
+          : tab === "promotions"
+            ? ui.promoSub
+            : tab === "rules"
+              ? t.subR
+              : tab === "settings"
+                ? t.settingsSub
+                : tab === "history"
+                  ? t.subH
+                  : t.subV;
   const headerTitle =
     tab === "today"
       ? ui.today
       : tab === "analytics"
-      ? t.navA
-      : tab === "manager"
-        ? lang === "ar" ? "المهام" : lang === "fr" ? "Tâches" : "Tasks"
-        : tab === "promotions"
+        ? t.navA
+        : tab === "manager"
           ? lang === "ar"
-            ? "محاكي العروض"
+            ? "المهام"
             : lang === "fr"
-              ? "Simulateur de promotions"
-              : "Promo Simulator"
-          : tab === "rules"
-            ? t.navR
-            : tab === "settings"
-              ? t.settingsLabel
-              : tab === "history"
-                ? t.navH
-                : t.navV;
+              ? "Tâches"
+              : "Tasks"
+          : tab === "promotions"
+            ? lang === "ar"
+              ? "محاكي العروض"
+              : lang === "fr"
+                ? "Simulateur de promotions"
+                : "Promo Simulator"
+            : tab === "rules"
+              ? t.navR
+              : tab === "settings"
+                ? t.settingsLabel
+                : tab === "history"
+                  ? t.navH
+                  : t.navV;
 
   const md = modal != null ? disputes[modal] : null;
 
@@ -5003,6 +5355,11 @@ export function PrizeSkoutDashboard() {
   const openAssistantDrawer = (prompt = "") => {
     setAssistantDrawerInput(prompt);
     setAssistantDrawerOpen(true);
+  };
+  const openSidebarDestination = (item: (typeof navDefs)[number]) => {
+    setSidebarNav(item.id);
+    setTab(item.tab);
+    if (item.id === "copilot") openAssistantDrawer();
   };
   const submitAssistantDrawer = () => {
     const prompt = assistantDrawerInput.trim();
@@ -5027,7 +5384,10 @@ export function PrizeSkoutDashboard() {
     if (!prompt.trim() || cpPhase === "loading") return false;
     setAssistantDrawerOpen(false);
     setCpInput(prompt.trim());
-    const managementIntent = /\b(?:prepare|delegate|assign|handle|manage|organize|organise|follow up|highest priority|store tasks?|workflow)\b/i.test(prompt);
+    const managementIntent =
+      /\b(?:prepare|delegate|assign|handle|manage|organize|organise|follow up|highest priority|store tasks?|workflow)\b/i.test(
+        prompt,
+      );
     setTab(managementIntent ? "manager" : "rules");
     if (managementIntent) showToast("PrizeSkout is preparing and assigning the work.");
     const result = runCopilot(prompt.trim(), managementIntent ? "manager" : "auto");
@@ -5044,10 +5404,17 @@ export function PrizeSkoutDashboard() {
   const startOauthConnection = async (path: string) => {
     const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
     const accessCode = localStorage.getItem("ps_access_code") ?? "";
-    if (!merchantId || !accessCode) { showToast("Please complete onboarding first."); return; }
+    if (!merchantId || !accessCode) {
+      showToast("Please complete onboarding first.");
+      return;
+    }
     try {
-      const response = await fetch("/api/onboarding/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode }) });
-      const session = await response.json() as { token?: string };
+      const response = await fetch("/api/onboarding/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode }),
+      });
+      const session = (await response.json()) as { token?: string };
       if (!response.ok || !session.token) throw new Error();
       window.location.href = `${path}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
     } catch {
@@ -5130,231 +5497,89 @@ export function PrizeSkoutDashboard() {
           >
             Prize<span style={{ color: OG }}>skout</span>
           </div>
-          <div
-            style={{
-              fontSize: 12.5,
-              fontWeight: 700,
-              letterSpacing: "1.6px",
-              color: "var(--muted)",
-              margin: "30px 6px 12px",
-            }}
+          <nav
+            aria-label="PrizeSkout workspaces"
+            style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 30 }}
           >
-            {t.cp}
-          </div>
-          <nav style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {navDefs.map((n, index) => {
-              const on = n.activeTabs?.includes(tab) ?? tab === n.id;
+            {navDefs.map((item) => {
+              const active = sidebarNav === item.id;
+              const Icon = item.icon;
               return (
-                <Fragment key={n.id}>
-                  {(index === 0 || navDefs[index - 1]?.group !== n.group) && (
-                    <div
-                      style={{
-                        margin: index === 0 ? "0 6px 1px" : "9px 6px 1px",
-                        color: "var(--muted)",
-                        fontSize: 9.5,
-                        fontWeight: 850,
-                        letterSpacing: ".1em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {n.group}
-                    </div>
-                  )}
-                  <div
-                  role="button"
-                  tabIndex={0}
-                  aria-current={on ? "page" : undefined}
-                  onClick={() => setTab(n.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setTab(n.id);
-                    }
-                  }}
-                  data-demo-tip={n.tip}
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => openSidebarDestination(item)}
+                  data-demo-tip={item.tip}
                   style={{
                     cursor: "pointer",
+                    width: "100%",
+                    minHeight: 39,
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
-                    padding: "13px 14px",
-                    borderRadius: 12,
-                    background: on ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
-                    border: `1px solid ${on ? `color-mix(in srgb,${OG} 30%,transparent)` : "transparent"}`,
-                    transition: "background .2s,border-color .2s",
+                    gap: 11,
+                    padding: "8px 10px",
+                    borderRadius: 9,
+                    border: 0,
+                    background: active
+                      ? `color-mix(in srgb,${OG} 9%,var(--surface))`
+                      : "transparent",
+                    color: active ? "var(--text)" : "var(--muted)",
+                    fontFamily: "inherit",
+                    textAlign: "start",
+                    transition: "background .15s,color .15s",
                   }}
                 >
-                  <span
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      flex: "0 0 7px",
-                      background: on ? OG : "color-mix(in srgb,var(--muted) 45%,transparent)",
-                    }}
-                  />
-                  <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
-                      {n.label}
-                    </span>
-                    <span
-                      style={{ fontSize: 13.5, color: on ? "var(--accent-text)" : "var(--muted)" }}
-                    >
-                      {n.sub}
-                    </span>
+                  <Icon size={16} strokeWidth={1.8} color={active ? OG : "currentColor"} />
+                  <span style={{ flex: 1, fontSize: 13.5, fontWeight: active ? 750 : 600 }}>
+                    {item.label}
                   </span>
-                  </div>
-                </Fragment>
+                  {!!item.badge && (
+                    <span
+                      aria-label={`${item.badge} items need attention`}
+                      style={{
+                        minWidth: 20,
+                        height: 20,
+                        paddingInline: 5,
+                        borderRadius: 999,
+                        display: "grid",
+                        placeItems: "center",
+                        background: OG,
+                        color: "#fff",
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                </button>
               );
             })}
           </nav>
           <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
-            {/* Settings */}
-            <div
-              role="button"
-              tabIndex={0}
-              aria-current={tab === "settings" ? "page" : undefined}
-              onClick={() => setTab("settings")}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  setTab("settings");
-                }
-              }}
-              data-demo-tip="Settings — connect channels, set margin floors, manage outlet locations, and edit your business name."
+            <button
+              type="button"
+              onClick={() => setSupportOpen(true)}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 10px",
-                borderRadius: 10,
-                cursor: "pointer",
-                color: tab === "settings" ? "var(--text)" : "var(--muted)",
-                background: tab === "settings" ? "var(--border)" : "transparent",
-                transition: "background .15s,color .15s",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.color = "var(--text)";
-                (e.currentTarget as HTMLDivElement).style.background = "var(--border)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.color =
-                  tab === "settings" ? "var(--text)" : "var(--muted)";
-                (e.currentTarget as HTMLDivElement).style.background =
-                  tab === "settings" ? "var(--border)" : "transparent";
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-              <span style={{ fontSize: 14.5, fontWeight: 500 }}>{t.settingsLabel}</span>
-            </div>
-            {/* Back to site */}
-            <a
-              href="/"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 10px",
-                borderRadius: 10,
-                textDecoration: "none",
+                border: 0,
+                background: "transparent",
                 color: "var(--muted)",
-                transition: "background .15s,color .15s",
-                marginBottom: 8,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.color = "var(--text)";
-                (e.currentTarget as HTMLAnchorElement).style.background = "var(--border)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.color = "var(--muted)";
-                (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
-              }}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-              <span style={{ fontSize: 14.5, fontWeight: 500 }}>{t.backToSite}</span>
-            </a>
-            <div style={{ height: 1, background: "var(--border)", marginBottom: 8 }} />
-            <div
-              role="status"
-              onClick={() => setTab("vault")}
-              title={
-                defendHealth
-                  ? `Checked ${new Date(defendHealth.checked_at).toLocaleTimeString()}`
-                  : "Checking live operational signals"
-              }
-              style={{
-                border: `1px solid color-mix(in srgb,${defendHealth?.state === "active" ? GN : defendHealth?.state === "degraded" ? "#DC2626" : defendHealth?.state === "idle" ? "#B45309" : "#64748B"} 30%,transparent)`,
-                background: `color-mix(in srgb,${defendHealth?.state === "active" ? GN : defendHealth?.state === "degraded" ? "#DC2626" : defendHealth?.state === "idle" ? "#B45309" : "#64748B"} 7%,var(--surface))`,
-                borderRadius: 12,
-                padding: "13px 14px",
+                borderRadius: 9,
+                padding: "9px 10px",
                 display: "flex",
-                gap: 11,
-                alignItems: "flex-start",
+                alignItems: "center",
+                gap: 10,
+                fontFamily: "inherit",
+                fontSize: 12.5,
+                fontWeight: 600,
                 cursor: "pointer",
               }}
             >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background:
-                    defendHealth?.state === "active"
-                      ? GN
-                      : defendHealth?.state === "degraded"
-                        ? "#DC2626"
-                        : defendHealth?.state === "idle"
-                          ? "#B45309"
-                          : "#475569",
-                  marginTop: 5,
-                  animation: defendHealth?.state === "active" ? "pk-pulse 2s infinite" : "none",
-                }}
-              />
-              <span style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <span
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color:
-                      defendHealth?.state === "active"
-                        ? GN
-                        : defendHealth?.state === "degraded"
-                          ? "#DC2626"
-                          : defendHealth?.state === "idle"
-                            ? "#B45309"
-                            : "#475569",
-                  }}
-                >
-                  {defendHealth?.label ?? "Checking Defend Loop"}
-                </span>
-                <span style={{ fontSize: 11.5, lineHeight: 1.45, color: "var(--muted)" }}>
-                  {defendHealth?.detail ?? "Checking your connected sales channels…"}
-                </span>
-              </span>
-            </div>
+              <MessageSquareText size={15} strokeWidth={1.8} />
+              Give Feedback
+            </button>
             <div style={{ display: "flex", alignItems: "center", gap: 11, paddingInline: 4 }}>
               <span
                 style={{
@@ -5530,11 +5755,11 @@ export function PrizeSkoutDashboard() {
               }}
             >
               {navDefs.map((n) => {
-                const on = n.activeTabs?.includes(tab) ?? tab === n.id;
+                const on = sidebarNav === n.id;
                 return (
                   <button
                     key={n.id}
-                    onClick={() => setTab(n.id)}
+                    onClick={() => openSidebarDestination(n)}
                     style={{
                       cursor: "pointer",
                       whiteSpace: "nowrap",
@@ -5549,31 +5774,10 @@ export function PrizeSkoutDashboard() {
                       flexShrink: 0,
                     }}
                   >
-                    {n.sub}
+                    {n.label}
                   </button>
                 );
               })}
-              <button
-                onClick={() => setTab("settings")}
-                style={{
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  padding: "10px 14px",
-                  borderRadius: 999,
-                  border: `1px solid ${tab === "settings" ? `color-mix(in srgb,${OG} 40%,transparent)` : "var(--border)"}`,
-                  background:
-                    tab === "settings"
-                      ? `color-mix(in srgb,${OG} 8%,var(--surface))`
-                      : "transparent",
-                  color: tab === "settings" ? "var(--text)" : "var(--muted)",
-                  fontSize: 14.5,
-                  fontWeight: 700,
-                  fontFamily: "inherit",
-                  flexShrink: 0,
-                }}
-              >
-                {t.settingsLabel}
-              </button>
             </div>
           </div>
         )}
@@ -5767,7 +5971,11 @@ export function PrizeSkoutDashboard() {
               type="button"
               onClick={() => {
                 const savedStep = Number(localStorage.getItem(tourAccountKey("step")));
-                setTourStep(Number.isInteger(savedStep) && savedStep >= 0 && savedStep < tourSteps.length ? savedStep : 0);
+                setTourStep(
+                  Number.isInteger(savedStep) && savedStep >= 0 && savedStep < tourSteps.length
+                    ? savedStep
+                    : 0,
+                );
                 setTourActive(true);
               }}
               title={t.tourReplayLabel}
@@ -5874,8 +6082,22 @@ export function PrizeSkoutDashboard() {
           >
             {[
               ["manager", lang === "ar" ? "المهام" : lang === "fr" ? "Tâches" : "Tasks"],
-              ["promotions", lang === "ar" ? "محاكي العروض" : lang === "fr" ? "Simulateur de promotions" : "Promo Simulator"],
-              ["rules", lang === "ar" ? "قواعد الحماية" : lang === "fr" ? "Règles de protection" : "Protection Rules"],
+              [
+                "promotions",
+                lang === "ar"
+                  ? "محاكي العروض"
+                  : lang === "fr"
+                    ? "Simulateur de promotions"
+                    : "Promo Simulator",
+              ],
+              [
+                "rules",
+                lang === "ar"
+                  ? "قواعد الحماية"
+                  : lang === "fr"
+                    ? "Règles de protection"
+                    : "Protection Rules",
+              ],
             ].map(([destination, label]) => {
               const active = tab === destination;
               return (
@@ -6053,43 +6275,44 @@ export function PrizeSkoutDashboard() {
                       ],
                     ]
                   : [
-                  [
-                    "Current price",
-                    `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
-                  ],
-                  [
-                    "Current contribution margin",
-                    selectedProduct.preview
-                      ? `${(selectedProduct.preview.current_margin_pct * 100).toFixed(1)}%`
-                      : selectedProduct.net_margin_pct == null
-                        ? "—"
-                        : `${(selectedProduct.net_margin_pct * 100).toFixed(1)}%`,
-                  ],
-                  [
-                    `Price required for ${((selectedProduct.preview?.margin_floor_pct ?? selectedProduct.margin_floor_pct ?? 0.18) * 100).toFixed(0)}% target`,
-                    selectedProduct.preview?.required_price == null
-                      ? "Unavailable"
-                      : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.required_price, selectedProduct.currency)}`,
-                  ],
-                  [
-                    "Required increase",
-                    selectedProduct.preview?.required_price == null
-                      ? "—"
-                      : `${(selectedProduct.preview.required_increase_pct * 100).toFixed(1)}%`,
-                  ],
-                  [
-                    "Highest price allowed now",
-                    selectedProduct.preview?.allowed_price == null
-                      ? "Unavailable"
-                      : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.allowed_price, selectedProduct.currency)}`,
-                  ],
-                  [
-                    "Margin at allowed price",
-                    selectedProduct.preview?.projected_margin_at_allowed == null
-                      ? "—"
-                      : `${(selectedProduct.preview.projected_margin_at_allowed * 100).toFixed(1)}%`,
-                  ],
-                ]).map(([label, value]) => (
+                      [
+                        "Current price",
+                        `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
+                      ],
+                      [
+                        "Current contribution margin",
+                        selectedProduct.preview
+                          ? `${(selectedProduct.preview.current_margin_pct * 100).toFixed(1)}%`
+                          : selectedProduct.net_margin_pct == null
+                            ? "—"
+                            : `${(selectedProduct.net_margin_pct * 100).toFixed(1)}%`,
+                      ],
+                      [
+                        `Price required for ${((selectedProduct.preview?.margin_floor_pct ?? selectedProduct.margin_floor_pct ?? 0.18) * 100).toFixed(0)}% target`,
+                        selectedProduct.preview?.required_price == null
+                          ? "Unavailable"
+                          : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.required_price, selectedProduct.currency)}`,
+                      ],
+                      [
+                        "Required increase",
+                        selectedProduct.preview?.required_price == null
+                          ? "—"
+                          : `${(selectedProduct.preview.required_increase_pct * 100).toFixed(1)}%`,
+                      ],
+                      [
+                        "Highest price allowed now",
+                        selectedProduct.preview?.allowed_price == null
+                          ? "Unavailable"
+                          : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.allowed_price, selectedProduct.currency)}`,
+                      ],
+                      [
+                        "Margin at allowed price",
+                        selectedProduct.preview?.projected_margin_at_allowed == null
+                          ? "—"
+                          : `${(selectedProduct.preview.projected_margin_at_allowed * 100).toFixed(1)}%`,
+                      ],
+                    ]
+                ).map(([label, value]) => (
                   <div
                     key={label}
                     style={{
@@ -6143,10 +6366,27 @@ export function PrizeSkoutDashboard() {
                   }}
                 >
                   <h3 style={{ margin: "0 0 5px", fontSize: 17 }}>Add the product cost</h3>
-                  <p style={{ margin: "0 0 14px", color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
-                    PrizeSkout needs a verified cost before it can calculate margin or recommend a safe price. Adding the cost will prepare a reviewable change. Nothing is sent to {selectedProduct.source_platform} without your confirmation.
+                  <p
+                    style={{
+                      margin: "0 0 14px",
+                      color: "var(--muted)",
+                      fontSize: 13.5,
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    PrizeSkout needs a verified cost before it can calculate margin or recommend a
+                    safe price. Adding the cost will prepare a reviewable change. Nothing is sent to{" "}
+                    {selectedProduct.source_platform} without your confirmation.
                   </p>
-                  <label style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      color: "var(--muted)",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     Product cost ({selectedProduct.currency})
                   </label>
                   <input
@@ -6172,7 +6412,9 @@ export function PrizeSkoutDashboard() {
                   />
                   <button
                     type="button"
-                    disabled={!Number.isFinite(Number(productCostDraft)) || Number(productCostDraft) <= 0}
+                    disabled={
+                      !Number.isFinite(Number(productCostDraft)) || Number(productCostDraft) <= 0
+                    }
                     onClick={() => {
                       const cost = Number(productCostDraft);
                       if (!Number.isFinite(cost) || cost <= 0) return;
@@ -6199,7 +6441,14 @@ export function PrizeSkoutDashboard() {
                 </div>
               )}
 
-              <div style={{ display: selectedProduct.cost_confidence === "verified" ? "block" : "none", marginTop: 22, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+              <div
+                style={{
+                  display: selectedProduct.cost_confidence === "verified" ? "block" : "none",
+                  marginTop: 22,
+                  borderTop: "1px solid var(--border)",
+                  paddingTop: 20,
+                }}
+              >
                 <h3 style={{ margin: "0 0 5px", fontSize: 17 }}>Review price update</h3>
                 <p
                   style={{
@@ -6407,11 +6656,15 @@ export function PrizeSkoutDashboard() {
                 [
                   "Connected channels",
                   String(defendHealth?.connected_channels ?? 0),
-                  defendHealth?.connected_channels ? "Sharing live store data" : "Connect your first sales channel",
+                  defendHealth?.connected_channels
+                    ? "Sharing live store data"
+                    : "Connect your first sales channel",
                 ],
                 [
                   "Tracked products",
-                  catalogLoading ? "Checking…" : String(heroStats?.tracked_products ?? importedProducts.length),
+                  catalogLoading
+                    ? "Checking…"
+                    : String(heroStats?.tracked_products ?? importedProducts.length),
                   "Products PrizeSkout can review",
                 ],
                 [
@@ -6439,16 +6692,32 @@ export function PrizeSkoutDashboard() {
                     boxShadow: "var(--shadow)",
                   }}
                 >
-                  <div style={{ fontSize: 10.5, fontWeight: 800, color: "var(--muted)", textTransform: "uppercase" }}>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: "var(--muted)",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     {label}
                   </div>
                   <div style={{ marginTop: 5, fontSize: 22, fontWeight: 850 }}>{value}</div>
-                  <div style={{ marginTop: 3, fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}>{note}</div>
+                  <div
+                    style={{ marginTop: 3, fontSize: 11, color: "var(--muted)", lineHeight: 1.4 }}
+                  >
+                    {note}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <MerchantOperatingLoop lang={lang} onAskCopilot={runPrizeSkoutAssistant} onRunTask={runPreparedManagerTask} onContinueSetup={reviewProductsMissingCosts} />
+            <MerchantOperatingLoop
+              lang={lang}
+              onAskCopilot={runPrizeSkoutAssistant}
+              onRunTask={runPreparedManagerTask}
+              onContinueSetup={reviewProductsMissingCosts}
+            />
 
             <button
               type="button"
@@ -6482,7 +6751,12 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            <MerchantOperatingLoop lang={lang} onAskCopilot={runPrizeSkoutAssistant} onRunTask={runPreparedManagerTask} onContinueSetup={reviewProductsMissingCosts} />
+            <MerchantOperatingLoop
+              lang={lang}
+              onAskCopilot={runPrizeSkoutAssistant}
+              onRunTask={runPreparedManagerTask}
+              onContinueSetup={reviewProductsMissingCosts}
+            />
           </section>
         )}
 
@@ -7570,14 +7844,25 @@ export function PrizeSkoutDashboard() {
                                 Recommended price
                               </div>
                               <div
-                                style={{ fontSize: 20, fontWeight: 800, marginTop: 3, color: product.cost_confidence === "verified" ? GN : "#B45309" }}
+                                style={{
+                                  fontSize: 20,
+                                  fontWeight: 800,
+                                  marginTop: 3,
+                                  color: product.cost_confidence === "verified" ? GN : "#B45309",
+                                }}
                               >
                                 {product.cost_confidence === "verified" ? (
                                   <>
-                                    {product.recommended_price.toLocaleString(undefined, { maximumFractionDigits: 2 })}{" "}
-                                    <span style={{ fontSize: 11, color: "var(--muted)" }}>{product.currency}</span>
+                                    {product.recommended_price.toLocaleString(undefined, {
+                                      maximumFractionDigits: 2,
+                                    })}{" "}
+                                    <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                                      {product.currency}
+                                    </span>
                                   </>
-                                ) : "Cost needed"}
+                                ) : (
+                                  "Cost needed"
+                                )}
                               </div>
                             </div>
                             <div>
@@ -7598,7 +7883,9 @@ export function PrizeSkoutDashboard() {
                                   color: product.floor_breached ? "#DC2626" : GN,
                                 }}
                               >
-                                {product.cost_confidence !== "verified" || margin == null ? "Not available" : `${margin.toFixed(1)}%`}
+                                {product.cost_confidence !== "verified" || margin == null
+                                  ? "Not available"
+                                  : `${margin.toFixed(1)}%`}
                               </div>
                             </div>
                           </div>
@@ -7614,7 +7901,12 @@ export function PrizeSkoutDashboard() {
                           >
                             <span
                               style={{
-                                color: product.cost_confidence !== "verified" ? "#B45309" : product.floor_breached ? "#DC2626" : GN,
+                                color:
+                                  product.cost_confidence !== "verified"
+                                    ? "#B45309"
+                                    : product.floor_breached
+                                      ? "#DC2626"
+                                      : GN,
                                 fontWeight: 700,
                               }}
                             >
@@ -9520,23 +9812,53 @@ export function PrizeSkoutDashboard() {
                           <div style={{ marginBottom: 14 }}>
                             <strong>Complete the product details</strong>
                             <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 12.5 }}>
-                              Name and selling price are required. Leave stock blank to use unlimited stock.
+                              Name and selling price are required. Leave stock blank to use
+                              unlimited stock.
                             </div>
                           </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 12 }}>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))",
+                              gap: 12,
+                            }}
+                          >
                             {[
-                              ["Product name", "product_name", "text", "Example: Wireless charger", true],
+                              [
+                                "Product name",
+                                "product_name",
+                                "text",
+                                "Example: Wireless charger",
+                                true,
+                              ],
                               ["SKU", "product_sku", "text", "Generated if left blank", false],
                               ["Selling price", "product_price", "number", "0.00", true],
                               ["Cost", "product_cost", "number", "Optional", false],
                               ["Stock", "product_quantity", "number", "Unlimited if blank", false],
                             ].map(([label, field, type, placeholder, required]) => (
-                              <label key={String(field)} style={{ display: "grid", gap: 6, fontSize: 12.5, color: "var(--muted)" }}>
-                                <span>{label}{required ? " *" : ""}</span>
+                              <label
+                                key={String(field)}
+                                style={{
+                                  display: "grid",
+                                  gap: 6,
+                                  fontSize: 12.5,
+                                  color: "var(--muted)",
+                                }}
+                              >
+                                <span>
+                                  {label}
+                                  {required ? " *" : ""}
+                                </span>
                                 <input
                                   type={String(type)}
                                   min={type === "number" ? "0" : undefined}
-                                  step={field === "product_quantity" ? "1" : type === "number" ? "0.01" : undefined}
+                                  step={
+                                    field === "product_quantity"
+                                      ? "1"
+                                      : type === "number"
+                                        ? "0.01"
+                                        : undefined
+                                  }
                                   value={String(cpObj[String(field)] ?? "")}
                                   placeholder={String(placeholder)}
                                   onChange={(event) =>
@@ -9562,11 +9884,22 @@ export function PrizeSkoutDashboard() {
                               </label>
                             ))}
                           </div>
-                          <label style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 14, fontSize: 13.5, cursor: "pointer" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 9,
+                              marginTop: 14,
+                              fontSize: 13.5,
+                              cursor: "pointer",
+                            }}
+                          >
                             <input
                               type="checkbox"
                               checked={cpObj.publish_product === true}
-                              onChange={(event) => updateCreateProductDraft("publish_product", event.target.checked)}
+                              onChange={(event) =>
+                                updateCreateProductDraft("publish_product", event.target.checked)
+                              }
                             />
                             Publish to the storefront after approval
                           </label>
@@ -9688,11 +10021,13 @@ export function PrizeSkoutDashboard() {
                       Array.isArray(cpObj.coupon_candidates) &&
                       cpObj.coupon_candidates.length > 0 && (
                         <div style={{ display: "grid", gap: 10 }}>
-                          {(cpObj.coupon_candidates as Array<{
-                            code: string;
-                            discount_label: string;
-                            products_below_floor: number;
-                          }>).map((coupon) => (
+                          {(
+                            cpObj.coupon_candidates as Array<{
+                              code: string;
+                              discount_label: string;
+                              products_below_floor: number;
+                            }>
+                          ).map((coupon) => (
                             <div
                               key={coupon.code}
                               style={{
@@ -9709,8 +10044,13 @@ export function PrizeSkoutDashboard() {
                             >
                               <div>
                                 <strong>{coupon.code}</strong>
-                                <div style={{ marginTop: 4, fontSize: 12.5, color: "var(--muted)" }}>
-                                  {coupon.discount_label} discount puts {coupon.products_below_floor} verified product{coupon.products_below_floor === 1 ? "" : "s"} below your protection floor.
+                                <div
+                                  style={{ marginTop: 4, fontSize: 12.5, color: "var(--muted)" }}
+                                >
+                                  {coupon.discount_label} discount puts{" "}
+                                  {coupon.products_below_floor} verified product
+                                  {coupon.products_below_floor === 1 ? "" : "s"} below your
+                                  protection floor.
                                 </div>
                               </div>
                               <button
@@ -9792,7 +10132,8 @@ export function PrizeSkoutDashboard() {
                             ) : cpOperationStatus === "complete" ? (
                               "The change was checked against Zid."
                             ) : String(cpObj.operation) === "create_product_draft" &&
-                              (!String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0) ? (
+                              (!String(cpObj.product_name ?? "").trim() ||
+                                Number(cpObj.product_price) <= 0) ? (
                               "Complete the required fields above. Nothing will be sent to Zid until the product is ready and you confirm."
                             ) : (
                               "Nothing has changed yet. Continue when the product and details look right."
@@ -9832,7 +10173,8 @@ export function PrizeSkoutDashboard() {
                             padding: "10px 14px",
                             background:
                               String(cpObj.operation) === "create_product_draft" &&
-                              (!String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0)
+                              (!String(cpObj.product_name ?? "").trim() ||
+                                Number(cpObj.product_price) <= 0)
                                 ? "var(--muted)"
                                 : cpOperationStatus === "complete"
                                   ? GN
@@ -9844,11 +10186,12 @@ export function PrizeSkoutDashboard() {
                               cpOperationStatus === "publishing" || cpOperationStatus === "running"
                                 ? "wait"
                                 : String(cpObj.operation) === "create_product_draft" &&
-                                    (!String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0)
+                                    (!String(cpObj.product_name ?? "").trim() ||
+                                      Number(cpObj.product_price) <= 0)
                                   ? "not-allowed"
-                                : cpOperationStatus === "complete"
-                                  ? "default"
-                                  : "pointer",
+                                  : cpOperationStatus === "complete"
+                                    ? "default"
+                                    : "pointer",
                           }}
                         >
                           {cpOperationStatus === "publishing"
@@ -9869,7 +10212,8 @@ export function PrizeSkoutDashboard() {
                                         : String(cpObj.operation) === "category_assign"
                                           ? "Assign category"
                                           : String(cpObj.operation) === "create_product_draft"
-                                            ? !String(cpObj.product_name ?? "").trim() || Number(cpObj.product_price) <= 0
+                                            ? !String(cpObj.product_name ?? "").trim() ||
+                                              Number(cpObj.product_price) <= 0
                                               ? "Add required details"
                                               : cpObj.publish_product === true
                                                 ? "Create and publish"
@@ -10059,9 +10403,10 @@ export function PrizeSkoutDashboard() {
                                     color:
                                       product.cost_confidence !== "verified"
                                         ? "#B45309"
-                                        : (product.preview?.floor_breached ?? product.floor_breached)
-                                        ? "#DC2626"
-                                        : GN,
+                                        : (product.preview?.floor_breached ??
+                                            product.floor_breached)
+                                          ? "#DC2626"
+                                          : GN,
                                   }}
                                 >
                                   {product.cost_confidence === "verified"
@@ -10786,7 +11131,9 @@ export function PrizeSkoutDashboard() {
                       .map((p) => ({ p, v: p.preview }));
                   const affected = previews.filter((x) => x.v?.floor_breached),
                     blocked = previews.filter((x) => x.v?.outcome === "blocked_missing_cost"),
-                    termsRequired = previews.filter((x) => x.v?.outcome === "blocked_missing_economics"),
+                    termsRequired = previews.filter(
+                      (x) => x.v?.outcome === "blocked_missing_economics",
+                    ),
                     over = previews.filter((x) => x.v?.outcome === "over_limit");
                   return (
                     <div
@@ -10858,7 +11205,9 @@ export function PrizeSkoutDashboard() {
                             {previews
                               .filter(
                                 (x) =>
-                                  x.v?.floor_breached || x.v?.outcome === "blocked_missing_cost" || x.v?.outcome === "blocked_missing_economics",
+                                  x.v?.floor_breached ||
+                                  x.v?.outcome === "blocked_missing_cost" ||
+                                  x.v?.outcome === "blocked_missing_economics",
                               )
                               .slice(0, 8)
                               .map(({ p, v }) => (
@@ -10898,11 +11247,11 @@ export function PrizeSkoutDashboard() {
                                       ? "Confirm product cost first"
                                       : v?.outcome === "blocked_missing_economics"
                                         ? "Approve this channel's contract terms first"
-                                      : v?.outcome === "over_limit"
-                                        ? "Active policy caps this increase; market acceptance is not established"
-                                        : v?.outcome === "within_limit"
-                                          ? "Within your active limit; review before publishing"
-                                          : "No change needed"}
+                                        : v?.outcome === "over_limit"
+                                          ? "Active policy caps this increase; market acceptance is not established"
+                                          : v?.outcome === "within_limit"
+                                            ? "Within your active limit; review before publishing"
+                                            : "No change needed"}
                                   </td>
                                 </tr>
                               ))}
@@ -11686,7 +12035,9 @@ export function PrizeSkoutDashboard() {
                       )}
                       {canConnect && !isConnected && (
                         <button
-                          onClick={() => { if (ig.oauthPath) void startOauthConnection(ig.oauthPath); }}
+                          onClick={() => {
+                            if (ig.oauthPath) void startOauthConnection(ig.oauthPath);
+                          }}
                           className="ps-ig-btn"
                           style={{
                             cursor: "pointer",
@@ -11818,7 +12169,9 @@ export function PrizeSkoutDashboard() {
                         ) : o.oauthPath ? (
                           <button
                             type="button"
-                            onClick={() => { if (o.oauthPath) void startOauthConnection(o.oauthPath); }}
+                            onClick={() => {
+                              if (o.oauthPath) void startOauthConnection(o.oauthPath);
+                            }}
                             style={{
                               fontSize: 11,
                               fontWeight: 700,
@@ -13682,66 +14035,63 @@ export function PrizeSkoutDashboard() {
                 ✕
               </button>
             </div>
-            {/* CONTROL PLANE label */}
-            <div
-              style={{
-                fontSize: 12.5,
-                fontWeight: 700,
-                letterSpacing: "1.6px",
-                color: "var(--muted)",
-                marginBottom: 10,
-                paddingInline: 4,
-                fontFamily: MONO,
-              }}
-            >
-              {t.cp}
-            </div>
             {/* Nav items */}
-            <nav style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {navDefs.map((n) => {
-                const on = n.activeTabs?.includes(tab) ?? tab === n.id;
+            <nav
+              aria-label="PrizeSkout workspaces"
+              style={{ display: "flex", flexDirection: "column", gap: 3 }}
+            >
+              {navDefs.map((item) => {
+                const active = sidebarNav === item.id;
+                const Icon = item.icon;
                 return (
-                  <div
-                    key={n.id}
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-current={active ? "page" : undefined}
                     onClick={() => {
-                      setTab(n.id);
+                      openSidebarDestination(item);
                       setSidebarOpen(false);
                     }}
                     style={{
                       cursor: "pointer",
+                      width: "100%",
                       display: "flex",
                       alignItems: "center",
-                      gap: 12,
-                      padding: "14px 14px",
-                      borderRadius: 12,
-                      background: on ? `color-mix(in srgb,${OG} 8%,var(--surface))` : "transparent",
-                      border: `1px solid ${on ? `color-mix(in srgb,${OG} 30%,transparent)` : "transparent"}`,
-                      transition: "background .2s,border-color .2s",
+                      gap: 11,
+                      padding: "10px 11px",
+                      borderRadius: 9,
+                      background: active
+                        ? `color-mix(in srgb,${OG} 9%,var(--surface))`
+                        : "transparent",
+                      border: 0,
+                      color: active ? "var(--text)" : "var(--muted)",
+                      fontFamily: "inherit",
+                      textAlign: "start",
                     }}
                   >
-                    <span
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        flex: "0 0 7px",
-                        background: on ? OG : "color-mix(in srgb,var(--muted) 45%,transparent)",
-                      }}
-                    />
-                    <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
-                        {n.label}
-                      </span>
+                    <Icon size={16} strokeWidth={1.8} color={active ? OG : "currentColor"} />
+                    <span style={{ flex: 1, fontSize: 13.5, fontWeight: active ? 750 : 600 }}>
+                      {item.label}
+                    </span>
+                    {!!item.badge && (
                       <span
                         style={{
-                          fontSize: 13.5,
-                          color: on ? "var(--accent-text)" : "var(--muted)",
+                          minWidth: 20,
+                          height: 20,
+                          paddingInline: 5,
+                          borderRadius: 999,
+                          display: "grid",
+                          placeItems: "center",
+                          background: OG,
+                          color: "#fff",
+                          fontSize: 10.5,
+                          fontWeight: 800,
                         }}
                       >
-                        {n.sub}
+                        {item.badge > 99 ? "99+" : item.badge}
                       </span>
-                    </span>
-                  </div>
+                    )}
+                  </button>
                 );
               })}
             </nav>
@@ -14350,7 +14700,11 @@ export function PrizeSkoutDashboard() {
           <aside
             role="dialog"
             aria-modal="true"
-            aria-label={tr("CFO Copilot and Shop Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
+            aria-label={tr(
+              "CFO Copilot and Shop Manager",
+              "المساعد المالي ومدير المتجر",
+              "Copilote financier et gestionnaire de boutique",
+            )}
             onClick={(event) => event.stopPropagation()}
             style={{
               position: "absolute",
@@ -14379,7 +14733,11 @@ export function PrizeSkoutDashboard() {
             >
               <div>
                 <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>
-                  {tr("CFO Copilot and Shop Manager", "المساعد المالي ومدير المتجر", "Copilote financier et gestionnaire de boutique")}
+                  {tr(
+                    "CFO Copilot and Shop Manager",
+                    "المساعد المالي ومدير المتجر",
+                    "Copilote financier et gestionnaire de boutique",
+                  )}
                 </h2>
                 <p
                   style={{
@@ -14425,7 +14783,11 @@ export function PrizeSkoutDashboard() {
               }}
             >
               <strong style={{ color: "var(--text)" }}>{headerTitle}</strong>{" "}
-              {tr("context · Store changes require your approval", "· تتطلب تغييرات المتجر موافقتك", "· Les modifications de la boutique nécessitent votre validation")}
+              {tr(
+                "context · Store changes require your approval",
+                "· تتطلب تغييرات المتجر موافقتك",
+                "· Les modifications de la boutique nécessitent votre validation",
+              )}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
               {assistantContext[tab].examples.map((example) => (
@@ -14459,7 +14821,11 @@ export function PrizeSkoutDashboard() {
                   submitAssistantDrawer();
                 }
               }}
-              placeholder={tr("What should PrizeSkout handle today?", "ما الذي تريد من PrizeSkout إنجازه اليوم؟", "Que doit prendre en charge PrizeSkout aujourd’hui ?")}
+              placeholder={tr(
+                "What should PrizeSkout handle today?",
+                "ما الذي تريد من PrizeSkout إنجازه اليوم؟",
+                "Que doit prendre en charge PrizeSkout aujourd’hui ?",
+              )}
               rows={4}
               style={{
                 width: "100%",
@@ -14578,11 +14944,26 @@ export function PrizeSkoutDashboard() {
             back: t.tourBackBtn,
             next: lang === "en" ? "Continue" : t.tourNextBtn,
             finish: lang === "en" ? "Finish setup" : t.tourFinishBtn,
-            skip: lang === "en" ? "Pause and exit" : lang === "ar" ? "إيقاف مؤقت وخروج" : "Pause et quitter",
+            skip:
+              lang === "en"
+                ? "Pause and exit"
+                : lang === "ar"
+                  ? "إيقاف مؤقت وخروج"
+                  : "Pause et quitter",
             start: lang === "en" ? "Begin setup" : t.tourStartBtn,
-            setup: lang === "en" ? "FIRST VALUE SETUP" : lang === "ar" ? "إعداد القيمة الأولى" : "PREMIÈRE VALEUR",
+            setup:
+              lang === "en"
+                ? "FIRST VALUE SETUP"
+                : lang === "ar"
+                  ? "إعداد القيمة الأولى"
+                  : "PREMIÈRE VALEUR",
             complete: lang === "en" ? "complete" : lang === "ar" ? "مكتمل" : "terminé",
-            remaining: lang === "en" ? "About {minutes} min left" : lang === "ar" ? "حوالي {minutes} دقيقة متبقية" : "Environ {minutes} min restantes",
+            remaining:
+              lang === "en"
+                ? "About {minutes} min left"
+                : lang === "ar"
+                  ? "حوالي {minutes} دقيقة متبقية"
+                  : "Environ {minutes} min restantes",
           }}
         />
       )}
