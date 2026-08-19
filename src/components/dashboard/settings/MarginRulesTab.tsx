@@ -83,12 +83,12 @@ export function MarginRulesTab() {
                 <strong style={{ display: "block", marginTop: 4 }}>{Number(policy.minimumContributionAmount??0).toFixed(2)} per sale</strong>
               </div>
             </div>
-            {!!policy.overrides?.length&&<div style={{marginTop:16}}><strong style={{fontSize:12}}>Channel overrides</strong><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8,marginTop:8}}>{policy.overrides.map(item=><div key={item.channel} style={{padding:"10px 12px",border:"1px solid var(--border)",borderRadius:9,background:"var(--surface)"}}><strong>{item.channel.toUpperCase()}</strong><div style={{fontSize:11.5,color:"var(--muted)",marginTop:4}}>{Math.round(item.marginFloorPct*100)}% · minimum {Number(item.minimumContributionAmount??0).toFixed(2)} · max increase {Math.round(item.maxPriceIncreasePct*100)}%</div></div>)}</div></div>}
+            <div style={{marginTop:16}}><strong style={{fontSize:12}}>Channel overrides</strong>{policy.overrides?.length?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8,marginTop:8}}>{policy.overrides.map(item=><div key={item.channel} style={{padding:"10px 12px",border:"1px solid var(--border)",borderRadius:9,background:"var(--surface)"}}><strong>{item.channel.toUpperCase()}</strong><div style={{fontSize:11.5,color:"var(--muted)",marginTop:4}}>{Math.round(item.marginFloorPct*100)}% · minimum {Number(item.minimumContributionAmount??0).toFixed(2)} · max increase {Math.round(item.maxPriceIncreasePct*100)}%</div></div>)}</div>:<div style={{fontSize:11.5,color:"var(--muted)",marginTop:7}}>No channel-specific overrides are active yet. Every channel currently inherits the default policy.</div>}</div>
           </>
         ) : null}
       </div>
 
-      <a href="/dashboard/revenue-hub" style={{ marginTop: 16, display: "inline-flex", padding: "11px 16px", borderRadius: 9, background: OG, color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 13 }}>
+      <a href="/dashboard/revenue-hub?workspace=rules#channel-margin-overrides" style={{ marginTop: 16, display: "inline-flex", padding: "11px 16px", borderRadius: 9, background: OG, color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 13 }}>
         Open Margin Policy Engine
       </a>
       <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginTop: 12 }}>

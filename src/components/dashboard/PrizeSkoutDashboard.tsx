@@ -10,9 +10,12 @@ import {
   PlugZap,
   Settings as SettingsIcon,
   ShieldCheck,
+  LogOut,
+  History as HistoryIcon,
   WalletCards,
   type LucideIcon,
 } from "lucide-react";
+import {supabase} from "@/integrations/supabase/client";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
@@ -75,6 +78,7 @@ type SidebarNavId =
   | "manager"
   | "copilot"
   | "integrations"
+  | "evidence"
   | "settings";
 
 const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
@@ -87,6 +91,7 @@ const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
   manager: "manager",
   copilot: "rules",
   integrations: "vault",
+  evidence:"history",
   settings: "settings",
 };
 
@@ -99,6 +104,7 @@ function sidebarNavFromTab(tab: Tab): SidebarNavId {
   if (tab === "rules") return "defend";
   if (tab === "manager") return "manager";
   if (tab === "settings") return "settings";
+  if(tab==="history")return "evidence";
   return "alerts";
 }
 const DASHBOARD_TABS: readonly Tab[] = [
@@ -2163,9 +2169,14 @@ export function PrizeSkoutDashboard() {
     priceActionKeysRef.current.delete(`${purpose}:${eventId}:${targetPrice}`);
   };
   const [tab, setTab] = useState<Tab>(dashboardTabFromUrl);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<"Store Access" | "Channels">("Store Access");
   const [sidebarNav, setSidebarNav] = useState<SidebarNavId>(() =>
     sidebarNavFromTab(dashboardTabFromUrl()),
   );
+  useEffect(()=>{
+    if(tab!=="rules"||window.location.hash!=="#channel-margin-overrides")return;
+    window.requestAnimationFrame(()=>document.getElementById("channel-margin-overrides")?.scrollIntoView({behavior:"smooth",block:"start"}));
+  },[tab]);
   const tabHistoryReadyRef = useRef(false);
   const [theme, setTheme] = useState<Theme>("light");
   const [demoMode, setDemoMode] = useState(false);
@@ -3387,10 +3398,18 @@ export function PrizeSkoutDashboard() {
   };
 
   const openCatalogFilter = (filter: typeof productFilter) => {
+    setTab("catalog");
     setProductSearch("");
     setProductFilter(filter);
     setProductPage(1);
     window.setTimeout(() => document.getElementById("imported-products")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  };
+  const openSettingsChannels = () => {
+    setSettingsInitialTab("Channels");
+    setTab("settings");
+  };
+  const revealTodaySection = (id: string) => {
+    window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   };
 
   // Channel pricing gap — a headline number for what Channel Price
@@ -5355,6 +5374,7 @@ export function PrizeSkoutDashboard() {
     label: string;
     icon: LucideIcon;
     tip: string;
+    targetId?:string;
     badge?: number;
   }> = [
     {
@@ -5370,6 +5390,7 @@ export function PrizeSkoutDashboard() {
       label: "Margin Intelligence",
       icon: ChartNoAxesCombined,
       tip: "Review true profit and margin performance across channels.",
+      targetId:"margin-intelligence-section",
     },
     {
       id: "alerts",
@@ -5385,6 +5406,7 @@ export function PrizeSkoutDashboard() {
       label: "Payout Recovery",
       icon: WalletCards,
       tip: "Check payouts, investigate discrepancies, and manage recovery evidence.",
+      targetId:"ps-payout-assurance-card",
     },
     {
       id: "promotions",
@@ -5417,10 +5439,11 @@ export function PrizeSkoutDashboard() {
     {
       id: "integrations",
       tab: "vault",
-      label: "Integrations",
+      label: "Integration Vault",
       icon: PlugZap,
       tip: "Connect and inspect commerce and delivery channels.",
     },
+    {id:"evidence",tab:"history",label:"Evidence & History",icon:HistoryIcon,tip:"Review payout checks, price actions, investigations, and retained evidence."},
     {
       id: "settings",
       tab: "settings",
@@ -5496,6 +5519,14 @@ export function PrizeSkoutDashboard() {
     setSidebarNav(item.id);
     setTab(item.tab);
     if (item.id === "copilot") openAssistantDrawer();
+    if(item.targetId)window.setTimeout(()=>document.getElementById(item.targetId!)?.scrollIntoView({behavior:"smooth",block:"start"}),50);
+  };
+  const handleSignOut=async()=>{
+    setSidebarOpen(false);
+    await supabase.auth.signOut();
+    localStorage.removeItem("ps_access_code");
+    localStorage.removeItem("ps_merchant_id");
+    window.location.assign("/login");
   };
   const submitAssistantDrawer = () => {
     const prompt = assistantDrawerInput.trim();
@@ -5754,6 +5785,9 @@ export function PrizeSkoutDashboard() {
                 {storeName || t.myAccount}
               </span>
             </div>
+            <button type="button" onClick={()=>void handleSignOut()} style={{border:0,background:"transparent",color:"var(--muted)",borderRadius:9,padding:"9px 10px",display:"flex",alignItems:"center",gap:10,fontFamily:"inherit",fontSize:12.5,fontWeight:650,cursor:"pointer",textAlign:"start"}}>
+              <LogOut size={15} strokeWidth={1.8}/>Log out
+            </button>
           </div>
         </aside>
       )}
@@ -6888,13 +6922,14 @@ export function PrizeSkoutDashboard() {
                 gap: 10,
               }}
             >
-              {[
+              {([
                 [
                   "Connected channels",
                   String(defendHealth?.connected_channels ?? 0),
                   defendHealth?.connected_channels
                     ? "Sharing live store data"
                     : "Connect your first sales channel",
+                  openSettingsChannels,
                 ],
                 [
                   "Tracked products",
@@ -6902,11 +6937,13 @@ export function PrizeSkoutDashboard() {
                     ? "Checking…"
                     : String(heroStats?.tracked_products ?? importedProducts.length),
                   "Products PrizeSkout can review",
+                  () => openCatalogFilter("all"),
                 ],
                 [
                   "Price updates this month",
                   heroStats?.has_activity ? String(heroStats.price_updates_this_month) : "0",
                   "Only confirmed store changes",
+                  () => setTab("history"),
                 ],
                 [
                   "Store status",
@@ -6916,16 +6953,24 @@ export function PrizeSkoutDashboard() {
                       ? "Needs attention"
                       : "Monitoring",
                   defendHealth?.detail ?? "Checking connected sales channels",
+                  () => revealTodaySection("attention-inbox"),
                 ],
-              ].map(([label, value, note]) => (
-                <div
+              ] as Array<[string, string, string, () => void]>).map(([label, value, note, action]) => (
+                <button
+                  type="button"
                   key={label}
+                  onClick={action}
+                  aria-label={`${label}: ${value}. ${note}`}
                   style={{
                     border: "1px solid var(--border)",
                     borderRadius: 12,
                     padding: "14px 15px",
                     background: "var(--surface)",
                     boxShadow: "var(--shadow)",
+                    color: "var(--text)",
+                    fontFamily: "inherit",
+                    textAlign: "start",
+                    cursor: "pointer",
                   }}
                 >
                   <div
@@ -6944,7 +6989,7 @@ export function PrizeSkoutDashboard() {
                   >
                     {note}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -7018,7 +7063,7 @@ export function PrizeSkoutDashboard() {
                 window.setTimeout(() => void runCopilot(prompt), 0);
               }}
             />
-            <ZidProfitBrief connected={channelStatuses.zid === "connected"} />
+            <div id="margin-intelligence-section" style={{scrollMarginTop:24}}><ZidProfitBrief connected={channelStatuses.zid === "connected"} /></div>
 
             {/* First-run welcome: we auto-ran a Talabat payout check the
                 moment Talabat was connected, since this merchant has never
@@ -11309,7 +11354,7 @@ export function PrizeSkoutDashboard() {
                     <span style={{display:"block",fontSize:10.5,fontWeight:500,color:"var(--muted)",marginTop:4}}>Both the cash amount and percentage target must be met.</span>
                   </label>
                 </div>
-                <div style={{marginTop:18,borderTop:"1px solid var(--border)",paddingTop:16}}>
+                <div id="channel-margin-overrides" style={{marginTop:18,borderTop:"1px solid var(--border)",paddingTop:16,scrollMarginTop:24}}>
                   <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
                     <div><strong style={{fontSize:13.5}}>Channel-specific targets</strong><div style={{fontSize:11.5,color:"var(--muted)",marginTop:3}}>Channels without an override inherit the global policy.</div></div>
                     <select aria-label="Add channel policy" defaultValue="" onChange={e=>{const channel=e.target.value;if(!channel)return;setChannelPolicyDrafts(current=>current.some(item=>item.channel===channel)?current:[...current,{channel,servicePath:"default",floor:rules[0].floor,minimumContribution:rules[0].minimumContribution,maxChangePct:rules[0].maxChangePct,approvalMode:rules[0].approvalMode}]);e.target.value="";}}
@@ -13936,7 +13981,7 @@ export function PrizeSkoutDashboard() {
             className="ps-db-section"
             style={{ padding: "28px 30px 48px", animation: "pk-in .3s ease" }}
           >
-            <SettingsTabs />
+            <SettingsTabs initialTab={settingsInitialTab} />
           </section>
         )}
       </main>
@@ -14539,6 +14584,9 @@ export function PrizeSkoutDashboard() {
                 </svg>
                 <span style={{ fontSize: 14.5, fontWeight: 500 }}>{t.backToSite}</span>
               </a>
+              <button type="button" onClick={()=>void handleSignOut()} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 10px",borderRadius:10,border:0,background:"transparent",color:"var(--muted)",fontFamily:"inherit",fontSize:14.5,fontWeight:600,cursor:"pointer",textAlign:"start"}}>
+                <LogOut size={15} strokeWidth={1.8}/>Log out
+              </button>
               <div style={{ height: 1, background: "var(--border)", marginBottom: 8 }} />
               {/* Defend Loop */}
               <div

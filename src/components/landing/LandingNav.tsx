@@ -208,10 +208,10 @@ export function LandingNav() {
   }, [mobileOpen]);
 
   const navItems = [
-    t("landing.infra.nav.infrastructure"),
-    t("landing.infra.nav.loop"),
-    t("landing.infra.nav.latency"),
-    t("landing.infra.nav.docs"),
+    {label:t("landing.infra.nav.infrastructure"),href:"/#infrastructure"},
+    {label:t("landing.infra.nav.loop"),href:"/#loop"},
+    {label:t("landing.infra.nav.latency"),href:"/#latency"},
+    {label:t("landing.infra.nav.docs"),href:"/#docs"},
   ];
 
   return (
@@ -232,7 +232,7 @@ export function LandingNav() {
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <div style={{ display: isMobile ? "none" : "flex", alignItems: "center", gap: 24 }}>
             {navItems.map(item => (
-              <a key={item} href="/" className="lp-nav-link" style={{ fontSize: 13.5, color: "#A8A29E", textDecoration: "none" }}>{item}</a>
+              <a key={item.href} href={item.href} className="lp-nav-link" style={{ fontSize: 13.5, color: "#A8A29E", textDecoration: "none" }}>{item.label}</a>
             ))}
           </div>
           <div style={{ display: isMobile ? "none" : "flex", alignItems: "center", gap: 10 }}>
@@ -241,9 +241,9 @@ export function LandingNav() {
             <ThemeToggle dark={dark} onToggle={() => setDark(v => !v)} />
           </div>
           <a
-            href="/onboarding"
+            href="/login"
             style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "#A8A29E", border: "1px solid #211C1A", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}
-          >Dashboard</a>
+          >Log in</a>
           <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
             onClick={() => setMobileOpen(true)}
@@ -279,12 +279,12 @@ export function LandingNav() {
             {/* Nav items */}
             <div style={{ flex:1 }}>
               {navItems.map(item => (
-                <a key={item} href="/" onClick={() => setMobileOpen(false)}
+                <a key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                   style={{ display:"block", padding:"17px 24px", fontSize:16, color:"#FAFAF9",
                     textDecoration:"none", borderBottom:"1px solid #15110F", transition:"background 0.1s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#15110F"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}
-                >{item}</a>
+                >{item.label}</a>
               ))}
             </div>
             {/* Utils */}
@@ -295,10 +295,10 @@ export function LandingNav() {
             </div>
             {/* CTAs */}
             <div style={{ padding:"16px 24px 32px", display:"flex", flexDirection:"column", gap:10 }}>
-              <a href="/onboarding"
+              <a href="/login"
                 style={{ display:"block", padding:"14px 20px", textAlign:"center", fontFamily:MONO, fontSize:13,
                   color:"#A8A29E", border:"1px solid #211C1A", borderRadius:8, textDecoration:"none" }}>
-                Dashboard
+                Log in
               </a>
               <a href="/onboarding"
                 style={{ display:"block", padding:"14px 20px", textAlign:"center", fontFamily:MONO, fontSize:13,

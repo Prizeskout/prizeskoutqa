@@ -234,10 +234,10 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
   }, [mobileOpen]);
 
   const navItems = [
-    t("landing.infra.nav.infrastructure"),
-    t("landing.infra.nav.loop"),
-    t("landing.infra.nav.latency"),
-    t("landing.infra.nav.docs"),
+    {label:t("landing.infra.nav.infrastructure"),href:"#infrastructure"},
+    {label:t("landing.infra.nav.loop"),href:"#loop"},
+    {label:t("landing.infra.nav.latency"),href:"#latency"},
+    {label:t("landing.infra.nav.docs"),href:"#docs"},
   ];
 
   return (
@@ -248,14 +248,14 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {navItems.map(item => (
-            <span key={item} className="ps-nav-link" style={{ fontSize: 13.5, color: "var(--lp-muted)", cursor: "pointer" }}>{item}</span>
+            <a key={item.href} href={item.href} className="ps-nav-link" style={{ fontSize: 13.5, color: "var(--lp-muted)", cursor: "pointer",textDecoration:"none" }}>{item.label}</a>
           ))}
           <div className="ps-nav-utils">
             <NavMarketSwitcher market={market} onChange={onMarketChange} />
             <NavLangSwitcher />
             <ThemeToggle dark={dark} onToggle={onToggleDark} />
           </div>
-          <a href="/access" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Dashboard</a>
+          <a href="/login" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Log in</a>
           <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
             onClick={() => setMobileOpen(true)}
@@ -289,10 +289,10 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
             </div>
             <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: 4 }}>
               {navItems.map(item => (
-                <button key={item} type="button" onClick={() => setMobileOpen(false)}
+                <a key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                   style={{ display: "flex", alignItems: "center", width: "100%", padding: "14px 0", background: "transparent", border: "none", borderBottom: "1px solid #1A1513", cursor: "pointer", color: "#C4BAB5", fontSize: 14, fontFamily: "inherit", textAlign: "left" }}>
-                  {item}
-                </button>
+                  {item.label}
+                </a>
               ))}
             </div>
             <div style={{ padding: "16px 24px", borderTop: "1px solid #211C1A", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -305,9 +305,9 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
                 style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13, fontWeight: 600, color: "#080505", background: OG, borderRadius: 9, padding: "13px", textDecoration: "none" }}>
                 Connect a Store
               </a>
-              <a href="/access" onClick={() => setMobileOpen(false)}
+              <a href="/login" onClick={() => setMobileOpen(false)}
                 style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13, color: "#A8A29E", border: "1px solid #2A2422", borderRadius: 9, padding: "12px", textDecoration: "none" }}>
-                Dashboard
+                Log in
               </a>
             </div>
           </div>
@@ -1059,13 +1059,13 @@ function LandingPage() {
       <style>{PAGE_CSS}</style>
       <Nav dark={dark} onToggleDark={toggleDark} market={market} onMarketChange={setMarket} />
       <HeroSection dark={dark} />
-      <DemoPlayer currency={market.currency} dark={dark} />
-      <MerchantOperationsPreview />
-      <SurfaceMatrix />
+      <div id="loop" style={{scrollMarginTop:20}}><DemoPlayer currency={market.currency} dark={dark} /></div>
+      <div id="latency" style={{scrollMarginTop:20}}><MerchantOperationsPreview /></div>
+      <div id="infrastructure" style={{scrollMarginTop:20}}><SurfaceMatrix /></div>
       <PricingSection market={market} />
       <FAQSection />
       <CredentialStrip />
-      <DeployCTA dark={dark} />
+      <div id="docs" style={{scrollMarginTop:20}}><DeployCTA dark={dark} /></div>
       <LandingFooter />
     </div>
   );

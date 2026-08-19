@@ -100,7 +100,7 @@ function StoreAccessTab() {
       <BusinessNameCard />
       <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>Store Access Code</h3>
       <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 20px", lineHeight: 1.7 }}>
-        This code identifies your store. Enter it on any device to restore your full dashboard — no account needed.
+        This code identifies your connected store. Keep it private; use the Store Access page when you need to restore that store context.
       </p>
 
       {code ? (
@@ -141,7 +141,7 @@ function StoreAccessTab() {
 
       <p style={{ fontSize: 12, color: "var(--muted)", margin: "16px 0 0", lineHeight: 1.6 }}>
         To restore your dashboard on another device, go to{" "}
-        <a href="/onboarding" style={{ color: OG, textDecoration: "none" }}>prizeskout.qa → Dashboard</a>
+        <a href="/access" style={{ color: OG, textDecoration: "none" }}>prizeskout.qa → Store Access</a>
         {" "}and enter this code.
       </p>
     </div>
@@ -174,14 +174,15 @@ const TAB_TIPS: Record<Tab, string> = {
   "Channels": "Connect delivery apps and POS systems. This is what powers live catalogue sync and automatic price pushes.",
   "Competitor Radar": "Add exact competitor product URLs, map them by channel, and check the latest public price.",
   "Product Images": "Upload, match, approve, verify, and safely undo product image changes.",
-  "Margin Rules": "The minimum margin PrizeSkout defends per category — the floor everything else respects.",
+  "Margin Rules": "Review the global margin floor and channel-specific targets enforced by the Margin Policy Engine.",
   "Locations": "Every outlet you operate — PrizeSkout tracks margin and routes price defenses per location.",
   "Notifications": "Choose which events alert you in-dashboard and via webhook.",
 };
 
-export function SettingsTabs() {
+export function SettingsTabs({ initialTab = "Store Access" }: { initialTab?: Tab }) {
   const { t, i18n } = useTranslation();
-  const [active, setActive] = useState<Tab>("Store Access");
+  const [active, setActive] = useState<Tab>(initialTab);
+  useEffect(() => setActive(initialTab), [initialTab]);
   const activeGroup = (Object.entries(SETTINGS_GROUPS) as [SettingsGroup, readonly Tab[]][]).find(([, tabs]) => tabs.includes(active))?.[0] ?? "Business";
   const groupLabel = (group: SettingsGroup) => {
     const language = i18n.language;

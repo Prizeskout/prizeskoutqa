@@ -104,6 +104,7 @@ export function MerchantOperatingLoop({
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(""),
     [filter, setFilter] = useState("active"),
+    [taskFocus, setTaskFocus] = useState<"all" | "approval">("all"),
     [detail, setDetail] = useState(false),
     [message, setMessage] = useState(""),
     [newTask, setNewTask] = useState("");
@@ -344,10 +345,15 @@ export function MerchantOperatingLoop({
     void call({ action: "track", event_name: "copilot_from_attention" });
     onAskCopilot?.(prompt);
   };
-  const revealAttention = () => {
-    const target = document.getElementById("attention-inbox");
+  const revealSection = (id: string) => {
+    const target = document.getElementById(id);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
     window.setTimeout(() => target?.focus({ preventScroll: true }), 350);
+  };
+  const revealAttention = () => revealSection("attention-inbox");
+  const revealManagement = (focus: "all" | "approval") => {
+    setTaskFocus(focus);
+    window.setTimeout(() => revealSection("management-desk"), 0);
   };
   if (mode === "history")
     return (
@@ -414,10 +420,10 @@ export function MerchantOperatingLoop({
         }}
       >
         {[
-          ["Management tasks", openManagerTasks.length, "Tracked until verified", undefined],
-          ["Waiting approval", approvalTasks.length, "Nothing applied yet", undefined],
-          ["High priority", urgent.length, urgent.length ? `View ${urgent.length} item${urgent.length === 1 ? "" : "s"} ↓` : "Nothing urgent", urgent.length ? revealAttention : undefined],
-          ["Money identified", `${currency} ${moneyAtRisk.toFixed(2)}`, "Not claimed as recovered", undefined],
+          ["Management tasks", openManagerTasks.length, "Open management desk ↓", () => revealManagement("all")],
+          ["Waiting approval", approvalTasks.length, "View approval queue ↓", () => revealManagement("approval")],
+          ["High priority", urgent.length, urgent.length ? `View ${urgent.length} item${urgent.length === 1 ? "" : "s"} ↓` : "View attention inbox ↓", revealAttention],
+          ["Money identified", `${currency} ${moneyAtRisk.toFixed(2)}`, "Review identified value ↓", () => revealSection("money-identified")],
         ].map(([label, value, note, onClick]) => (
           <Metric
             key={String(label)}
@@ -429,7 +435,9 @@ export function MerchantOperatingLoop({
         ))}
       </div>
 
-      <OutcomeProofPanel proof={data?.outcome_proof}/>
+      <div id="money-identified" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
+        <OutcomeProofPanel proof={data?.outcome_proof}/>
+      </div>
 
       <div id="attention-inbox" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
         <div
@@ -477,7 +485,7 @@ export function MerchantOperatingLoop({
         <Items items={visible} busy={busy} onUpdate={update} onAsk={askCopilot} />
       </div>
 
-      <div style={subCard}>
+      <div id="management-desk" tabIndex={-1} style={{ ...subCard, scrollMarginTop: 18, outline: "none" }}>
         <div
           style={{
             display: "flex",
@@ -494,14 +502,21 @@ export function MerchantOperatingLoop({
               changes before they happen.
             </p>
           </div>
-          <Badge
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            {taskFocus === "approval" && (
+              <button type="button" onClick={() => setTaskFocus("all")} style={smallButton}>
+                Show all tasks
+              </button>
+            )}
+            <Badge
             text={
               data?.manager?.available
                 ? (data.manager.profile.operating_mode ?? "supervised").replaceAll("_", " ")
                 : "setup required"
             }
-            color={data?.manager?.available ? OG : "#B45309"}
-          />
+              color={data?.manager?.available ? OG : "#B45309"}
+            />
+          </div>
         </div>
         {data?.manager?.setup_required && (
           <div
@@ -546,7 +561,7 @@ export function MerchantOperatingLoop({
           </button>
         </div>
         <ManagerTasks
-          tasks={openManagerTasks}
+          tasks={taskFocus === "approval" ? approvalTasks : openManagerTasks}
           busy={busy}
           onMove={moveTask}
           onRun={onRunTask}
@@ -621,6 +636,7 @@ export function MerchantOperatingLoop({
                   note={
                     group.category === "identified" ? "Detected, not recovered" : "Evidence ledger"
                   }
+                  onClick={group.category === "identified" ? revealAttention : () => revealSection("attention-inbox")}
                 />
               ))}
             </div>
@@ -1104,20 +1120,7 @@ function Header({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: 
   );
 }
 function Metric({ label, value, note, onClick }: { label: string; value: string; note: string; onClick?: () => void }) {
-  return (
-    <div
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onClick={onClick}
-      onKeyDown={onClick ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick(); } } : undefined}
-      style={{
-        padding: "12px 13px",
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        background: "var(--surface2)",
-        cursor: onClick ? "pointer" : "default",
-      }}
-    >
+  const content = <>
       <div
         style={{
           fontSize: 10.5,
@@ -1130,7 +1133,24 @@ function Metric({ label, value, note, onClick }: { label: string; value: string;
       </div>
       <div style={{ fontSize: 21, fontWeight: 850, marginTop: 4 }}>{value}</div>
       <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{note}</div>
-    </div>
+    </>;
+  const metricStyle: React.CSSProperties = {
+    padding: "12px 13px",
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    background: "var(--surface2)",
+    color: "var(--text)",
+    textAlign: "start",
+    fontFamily: "inherit",
+    width: "100%",
+    cursor: onClick ? "pointer" : "default",
+  };
+  return onClick ? (
+    <button type="button" onClick={onClick} aria-label={`${label}: ${value}. ${note}`} style={metricStyle}>
+      {content}
+    </button>
+  ) : (
+    <div style={metricStyle}>{content}</div>
   );
 }
 function Badge({ text, color }: { text: string; color: string }) {
