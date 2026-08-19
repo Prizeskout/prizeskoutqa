@@ -255,7 +255,7 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
             <NavLangSwitcher />
             <ThemeToggle dark={dark} onToggle={onToggleDark} />
           </div>
-          <a href="/login" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "var(--lp-muted)", border: "1px solid var(--lp-border)", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Log in</a>
+          <a href="/access" aria-label="Returning merchant dashboard access" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, fontWeight: 700, color: "var(--lp-text)", border: "1px solid var(--lp-border)", background: "var(--lp-surface)", borderRadius: 6, padding: "9px 14px", textDecoration: "none", whiteSpace: "nowrap" }}>Merchant login</a>
           <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
             onClick={() => setMobileOpen(true)}
@@ -305,9 +305,9 @@ function Nav({ dark, onToggleDark, market, onMarketChange }: { dark: boolean; on
                 style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13, fontWeight: 600, color: "#080505", background: OG, borderRadius: 9, padding: "13px", textDecoration: "none" }}>
                 Connect a Store
               </a>
-              <a href="/login" onClick={() => setMobileOpen(false)}
+              <a href="/access" onClick={() => setMobileOpen(false)}
                 style={{ display: "block", textAlign: "center", fontFamily: MONO, fontSize: 13, color: "#A8A29E", border: "1px solid #2A2422", borderRadius: 9, padding: "12px", textDecoration: "none" }}>
-                Log in
+                Merchant login
               </a>
             </div>
           </div>

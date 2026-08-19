@@ -15,10 +15,7 @@ import { getPublicOrigin } from "@/server/public-origin";
 import { KEETA_AUTHORIZE_URL } from "@/server/core/keeta-client";
 import { verifyMerchantBootstrap } from "@/server/merchant-bootstrap";
 
-export const Route = createFileRoute("/api/auth/keeta")({
-  server: {
-    handlers: {
-      GET: async ({ request }) => {
+export async function startKeetaOAuth(request: Request, callbackPath = "/api/auth/keeta/callback", cookiePath = "/api/auth/keeta") {
         const appId = process.env.KEETA_APP_ID;
         if (!appId) {
           return new Response(
@@ -42,7 +39,9 @@ export const Route = createFileRoute("/api/auth/keeta")({
         const rawReturn = url.searchParams.get("return_to") ?? "";
         const returnTo  = rawReturn.startsWith("/") && !rawReturn.startsWith("//") ? rawReturn : "";
 
-        const redirectUri = `${getPublicOrigin(request)}/api/auth/keeta/callback`;
+        const publicOrigin = getPublicOrigin(request);
+        const redirectUri = `${publicOrigin}${callbackPath}`;
+        const secureCookie = publicOrigin.startsWith("https://") ? "; Secure" : "";
 
         const nonce = crypto.randomUUID().replace(/-/g, "");
         // Cookie encodes: nonce:merchantId:returnTo (returnTo may be empty)
@@ -60,10 +59,15 @@ export const Route = createFileRoute("/api/auth/keeta")({
           status: 302,
           headers: {
             "Location": `${KEETA_AUTHORIZE_URL}?${params}`,
-            "Set-Cookie": `__ps_keeta_n=${cookieVal}; HttpOnly; SameSite=Lax; Path=/api/auth/keeta; Max-Age=600`,
+            "Set-Cookie": `__ps_keeta_n=${cookieVal}; HttpOnly${secureCookie}; SameSite=Lax; Path=${cookiePath}; Max-Age=600`,
           },
         });
-      },
+}
+
+export const Route = createFileRoute("/api/auth/keeta")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => startKeetaOAuth(request),
     },
   },
 });

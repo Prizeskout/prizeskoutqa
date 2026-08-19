@@ -35,6 +35,8 @@ import { runScrape } from "@/server/scrape-runner";
 import { getValidTalabatAccessToken, updateTalabatOrder } from "@/server/core/talabat-client";
 import type { TalabatOrderUpdateStatus, TalabatTransportType } from "@/server/core/talabat-contract";
 import { toMerchantError } from "@/server/merchant-errors";
+import { startKeetaOAuth } from "@/routes/api/auth/keeta";
+import { handleKeetaCallback } from "@/routes/api/auth/keeta/callback";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -43,6 +45,14 @@ type Body = Record<string, string>;
 export const Route = createFileRoute("/api/channels/connect")({
   server: {
     handlers: {
+      GET: async ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("oauth") === "keeta") {
+          return startKeetaOAuth(request, "/api/channels/connect?oauth_callback=keeta", "/api/channels/connect");
+        }
+        if (url.searchParams.get("oauth_callback") === "keeta") return handleKeetaCallback(request);
+        return resp({ error: "Unsupported connection request." }, 400);
+      },
       POST: async ({ request }) => {
         const json = () => new Response(
           JSON.stringify({ error: "Request body must be valid JSON." }),

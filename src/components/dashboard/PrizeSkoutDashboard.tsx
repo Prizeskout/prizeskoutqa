@@ -338,7 +338,7 @@ const OUTBOUND_INTEGRATIONS = [
     platform: "keeta",
     region: "QA · KSA",
     byok: false,
-    oauthPath: "/api/auth/keeta" as string | null,
+    oauthPath: "/api/channels/connect?oauth=keeta" as string | null,
   },
   {
     name: "Jahez",
@@ -5589,7 +5589,8 @@ export function PrizeSkoutDashboard() {
       });
       const session = (await response.json()) as { token?: string };
       if (!response.ok || !session.token) throw new Error();
-      const destination = `${path}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
+      const separator = path.includes("?") ? "&" : "?";
+      const destination = `${path}${separator}merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
       if (sallaWindow) sallaWindow.location.href = destination;
       else window.location.href = destination;
     } catch {

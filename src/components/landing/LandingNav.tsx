@@ -241,9 +241,10 @@ export function LandingNav() {
             <ThemeToggle dark={dark} onToggle={() => setDark(v => !v)} />
           </div>
           <a
-            href="/login"
-            style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: "#A8A29E", border: "1px solid #211C1A", background: "transparent", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}
-          >Log in</a>
+            href="/access"
+            aria-label="Returning merchant dashboard access"
+            style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, fontWeight: 700, color: "#FAFAF9", border: "1px solid #3A3431", background: "#15110F", borderRadius: 6, padding: "9px 14px", textDecoration: "none", whiteSpace: "nowrap" }}
+          >Merchant login</a>
           <a href="/onboarding" style={{ display: isMobile ? "none" : "inline-block", fontFamily: MONO, fontSize: 12, color: OG, border: "1px solid #3A2418", background: "rgba(239,104,26,0.06)", borderRadius: 6, padding: "7px 13px", textDecoration: "none" }}>Connect a Store</a>
           <button
             onClick={() => setMobileOpen(true)}
@@ -295,10 +296,10 @@ export function LandingNav() {
             </div>
             {/* CTAs */}
             <div style={{ padding:"16px 24px 32px", display:"flex", flexDirection:"column", gap:10 }}>
-              <a href="/login"
+              <a href="/access"
                 style={{ display:"block", padding:"14px 20px", textAlign:"center", fontFamily:MONO, fontSize:13,
                   color:"#A8A29E", border:"1px solid #211C1A", borderRadius:8, textDecoration:"none" }}>
-                Log in
+                Merchant login
               </a>
               <a href="/onboarding"
                 style={{ display:"block", padding:"14px 20px", textAlign:"center", fontFamily:MONO, fontSize:13,

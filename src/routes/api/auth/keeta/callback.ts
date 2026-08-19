@@ -19,6 +19,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { exchangeKeetaCode, registerKeetaWebhook } from "@/server/core/keeta-client";
+import { getPublicOrigin } from "@/server/public-origin";
 
 function escapeHtml(s: string): string {
   return s
@@ -46,10 +47,7 @@ function errorPage(message: string): Response {
   );
 }
 
-export const Route = createFileRoute("/api/auth/keeta/callback")({
-  server: {
-    handlers: {
-      GET: async ({ request }) => {
+export async function handleKeetaCallback(request: Request) {
         const appId     = process.env.KEETA_APP_ID;
         const appSecret = process.env.KEETA_APP_SECRET;
 
@@ -145,7 +143,7 @@ export const Route = createFileRoute("/api/auth/keeta/callback")({
         //    event types have no consumer in the pipeline yet, see
         //    platform-webhooks.ts's handleKeetaWebhook for why).
         try {
-          const webhookUrl = `${url.origin}/api/webhooks/keeta`;
+          const webhookUrl = `${getPublicOrigin(request)}/api/webhooks/keeta`;
           const whResult = await registerKeetaWebhook(1001, webhookUrl);
           if (whResult.ok) {
             await supabaseAdmin
@@ -160,7 +158,12 @@ export const Route = createFileRoute("/api/auth/keeta/callback")({
         const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : "/dashboard/revenue-hub";
         const sep  = dest.includes("?") ? "&" : "?";
         return htmlRedirect(`${dest}${sep}keeta_connected=1`);
-      },
+}
+
+export const Route = createFileRoute("/api/auth/keeta/callback")({
+  server: {
+    handlers: {
+      GET: async ({ request }) => handleKeetaCallback(request),
     },
   },
 });
