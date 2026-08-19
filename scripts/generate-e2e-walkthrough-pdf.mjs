@@ -28,8 +28,18 @@ function clean(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/`(.*?)`/g, "$1")
-    .replace(/â€”/g, "—")
-    .replace(/â†’/g, "→");
+    .replace(/â€”/g, "-")
+    .replace(/â†’/g, " to ")
+    .replace(/[–—]/g, "-")
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/→/g, " to ")
+    .replace(/•/g, "-")
+    .replace(/…/g, "...")
+    .replace(/·/g, "|")
+    .replace(/≥/g, ">=")
+    .replace(/≤/g, "<=")
+    .replace(/×/g, "x");
 }
 
 function footer() {
@@ -131,7 +141,7 @@ for (const rawLine of source.split("\n")) {
   }
   const item = line.match(/^[-*]\s+(.*)$/);
   if (item) {
-    paragraph(item[1], { indent: 5, bullet: "•" });
+    paragraph(item[1], { indent: 5, bullet: "-" });
     continue;
   }
   paragraph(line, { bold: /^(Expected result|Result|Important|Proceed|Only perform)/i.test(line) });

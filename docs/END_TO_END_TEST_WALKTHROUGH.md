@@ -14,6 +14,58 @@ PrizeSkout connects to a merchant's sales channels, reconstructs what the mercha
 4. PrizeSkout never treats an estimate as verified money.
 5. A protected change is prepared, approved, sent, checked, and recorded.
 
+## How to explain any number on screen
+
+Whenever somebody points to a number and asks, “What does that mean?”, answer in this order:
+
+1. Name the number: state exactly what it measures.
+2. Name the scope: state the merchant, channel, branch, currency, and period it covers.
+3. Name the source: state whether it came from the connected platform, an approved contract, a merchant entry, an uploaded statement, or bank evidence.
+4. Name the calculation: explain what was added, removed, divided, or compared.
+5. Name the evidence state: say whether it is verified, estimated, incomplete, or claims-ready.
+6. Name the action: explain what the merchant should do next.
+
+Example: “QAR 679 is potential value identified across the active issues currently in scope. It is based on the evidence available for this merchant and period. It is not cash recovered. We must open the issues, confirm the contract and settlement evidence, submit any valid claim, and then prove the credit or bank receipt before calling it recovered.”
+
+Do not answer a challenge with only “the system calculated it.” PrizeSkout’s defensible answer is always the source, scope, rule, calculation, evidence state, and next action.
+
+## The three different percentages people commonly confuse
+
+### Platform percentage
+
+This is a cost charged by a platform, such as commission or payment processing. It comes from the commercial agreement or, when clearly labelled, an unverified merchant entry. It reduces what the merchant receives. Different platforms can charge different percentages, and the percentage may apply to different bases.
+
+### Margin percentage
+
+This is the percentage of relevant revenue left after product cost and known variable channel costs. It is an output of the economics calculation, not a platform charge and not a setting by itself.
+
+### Margin-policy percentage
+
+This is the merchant’s chosen minimum acceptable contribution margin. It is a control target. PrizeSkout compares the calculated margin with this target to decide whether the item is healthy, below target, or cannot yet be judged.
+
+Defensible example: a platform may charge 25%, while the merchant wants to retain an 18% contribution margin after product cost and all known variable channel charges. The two percentages answer different questions and must never be substituted for one another.
+
+## Where each important input comes from
+
+- Product identity, SKU, selling price, stock, orders, refunds, and platform activity normally come from the connected store or uploaded platform evidence.
+- Product cost may come from an integrated source when available, or from a merchant-entered value with evidence and a timestamp. PrizeSkout must not invent it.
+- Commission, fee bases, settlement timing, funding promises, and dispute deadlines should come from an approved contract version.
+- A manually entered commission is useful for an estimate, but it is not contractual proof until reviewed against the agreement.
+- Platform statement totals come from platform-issued settlement evidence.
+- Actual cash received comes from a bank record or another reliable receipt, not from the platform saying it paid.
+- Margin floors, cash floors, price movement limits, and approval modes come from the merchant’s active policy version.
+- “Recovered” comes only from evidence of a later credit, offset, or bank receipt tied to the case.
+
+## Evidence strength in plain language
+
+- Connected data means PrizeSkout received data through an authorized connection. It does not automatically prove the contract terms or bank receipt.
+- Merchant-entered data means the merchant supplied the value. It can support planning, but must remain labelled until independently supported.
+- Uploaded evidence means a file was supplied and classified. Classification tells us what the file appears to be; it does not guarantee every number is correct.
+- Approved terms mean a named reviewer checked and accepted the contract version for a stated scope and date range.
+- Matched evidence means records were aligned to the same platform, entity, currency, reference, and period.
+- Claims-ready means the difference and contractual basis are sufficiently supported to prepare a claim. It does not mean the platform has accepted it.
+- Recovered means repayment or credit is evidenced. It is the last state, not a synonym for identified.
+
 ## Essential terms
 
 - Product cost: what the merchant pays to make or buy one unit. It is required for profitability and safe pricing, but not normally for the narrow comparison of a platform payout with the platform's order and fee records.
@@ -445,6 +497,65 @@ Eligible sales and adjustments minus agreed commission, fees, tax on fees, refun
 
 A difference alone is not claims-ready.
 
+### Worked payout example you can present
+
+Use this example to explain the calculation. State that the figures are illustrative unless they match the live demo evidence.
+
+1. Eligible order sales for the settlement period are QAR 10,000.
+2. The approved contract commission is 20% of eligible sales. Commission is QAR 2,000.
+3. The approved payment fee is 2% on the same proven base. Payment fee is QAR 200.
+4. VAT on those applicable fees is 5%. If both charges are taxable, VAT on fees is 5% of QAR 2,200, which is QAR 110.
+5. Supported merchant-funded delivery contributions total QAR 150.
+6. Supported refunds and adjustments total QAR 300.
+7. Expected payout is QAR 10,000 minus QAR 2,000 minus QAR 200 minus QAR 110 minus QAR 150 minus QAR 300, which equals QAR 7,240.
+8. The platform statement says QAR 7,140. The statement difference is QAR 100.
+9. The bank shows QAR 7,140 with the matching settlement reference. The statement-to-bank difference is zero.
+
+The defensible conclusion is: “The bank received the amount stated by the platform, but the platform statement is QAR 100 below the contract-based expectation. We investigate that QAR 100 against transaction rows and contract clauses. We do not yet call it recovered, and we call it claims-ready only if the evidence supports the cause and amount.”
+
+### Why product cost is excluded from that payout calculation
+
+Assume the products sold in the example cost the merchant QAR 3,500. That QAR 3,500 matters when calculating the merchant’s profit, but the delivery platform does not normally reimburse or deduct the merchant’s own kitchen or inventory cost in its settlement. Adding product cost to the payout formula would mix two separate questions:
+
+- Settlement question: did the platform pay what the commercial agreement required?
+- Profit question: after the sale, product cost, and channel costs, what did the merchant keep?
+
+For the wider profit view, the illustrative contribution after product cost is QAR 7,240 minus QAR 3,500, or QAR 3,740, before any additional costs outside the calculation. The exact margin denominator must be stated on screen; do not silently divide by a different revenue basis.
+
+### The four comparisons inside reconciliation
+
+1. Activity to contract: recompute what should have happened using eligible orders and approved terms.
+2. Expected payout to platform statement: find whether the platform’s settlement agrees with that recomputation.
+3. Platform statement to bank: find whether the amount the platform says it paid actually arrived.
+4. Exception to recovery: prove whether a challenged amount was later credited, offset, or deposited.
+
+These comparisons locate the problem. If expected payout differs from the statement, the issue may be a platform calculation or unsupported deduction. If the statement agrees with expectation but the bank differs, the issue may be payment timing, reference matching, withholding, bundling, or a missing deposit. If a recovery case exists but no later credit is evidenced, the amount remains open.
+
+### Matching rules you must state before trusting a difference
+
+- Same merchant legal entity: otherwise one company’s sales may be compared with another company’s bank account.
+- Same platform account and branch scope: otherwise orders or fees may be missing or duplicated.
+- Same currency: otherwise a difference may be exchange-rate movement rather than underpayment.
+- Same activity and settlement period: otherwise timing creates a false exception.
+- Same accounting basis: gross sales, eligible sales, and net sales cannot be interchanged.
+- Same settlement reference where available: this is stronger than matching only by amount.
+- No duplicated source files or rows: duplicates inflate expected or stated totals.
+- Approved terms effective during the period: a current rate cannot automatically be applied to an older settlement.
+
+### Reasons a real difference may not be an underpayment
+
+- The payout covers a different cutoff window.
+- Several settlements were combined into one bank deposit.
+- A minimum threshold rolled the balance into the next cycle.
+- A reserve was contractually held and is not yet due.
+- A refund, cancellation, promotion, or advertising charge is valid but missing from the first dataset.
+- The commission base was misunderstood.
+- VAT was applied to fees on a different lawful basis.
+- The deposit is in another currency or includes conversion charges.
+- The platform paid correctly but the bank receipt has not yet been supplied.
+
+Say: “A variance is a lead for investigation. Evidence and contractual basis turn it into a valid exception.”
+
 ---
 
 ## 10. Contract Intelligence Vault
@@ -498,6 +609,36 @@ A difference alone is not claims-ready.
 8. Click Approve terms only when the reviewer agrees.
 
 Say: “AI assists with reading; a named reviewer makes the terms authoritative.”
+
+### How to defend the contract fields when questioned
+
+- Commission rate alone is incomplete. You also need the commission base, effective dates, platform, and covered scope. Twenty percent of gross sales is not the same charge as twenty percent of sales after discounts.
+- Commission base decides which sales amount is multiplied by the rate. If the agreement is unclear, mark the result uncertain instead of choosing the most convenient base.
+- VAT on fees is kept separate because it is generally a tax on applicable platform charges, not another commission rate. The supported contract and jurisdiction determine its treatment.
+- Payment fee is separate from commission so an apparently correct commission cannot hide an excessive processing deduction.
+- Fixed order fee is multiplied by eligible order count. It must not be treated as a percentage.
+- Delivery contribution records the merchant-funded portion. Customer-paid delivery revenue and platform-funded delivery must not automatically be treated as the merchant’s cost.
+- Promotion funding establishes who bears the discount. A promised platform share remains a receivable or expected adjustment until settlement evidence confirms it.
+- Effective dates stop old terms being applied to new activity, or new terms being applied retrospectively.
+- Covered entity, brands, and branches prevent one agreement from being used for stores it does not govern.
+- Settlement frequency says how often a payout cycle occurs. Settlement lag says how long after the relevant cutoff the payout is due. They are separate controls.
+- Cutoff hour and timezone decide which day owns a late transaction. Without them, an order near midnight can create a false period mismatch.
+- Weekend and holiday settings affect business-day calculations. They do not remove transactions; they move the contractual due date.
+- Minimum payout threshold explains why a valid small balance may roll forward rather than arrive immediately.
+- Reserve delay explains when a contractual hold should release. Before the release date it may be expected; after that date it may become overdue.
+- Dispute deadline tells the team how long it has to challenge a settlement. It should create urgency, not prove the claim itself.
+- Advertising commitment and minimum spend may explain deductions, but they require the contract and supporting charge evidence.
+- Currency defines how amounts are interpreted. A conversion should record the original currency, rate source, rate time, and converted currency.
+- Source fingerprint identifies the exact reviewed file. It helps detect replacement or duplication; it does not prove that the agreement is genuine by itself.
+- Reviewer name establishes human accountability. Approval means the reviewer accepted the captured terms for the stated scope, not that every future settlement is correct.
+
+### What Save for review and Approve terms actually do
+
+- Save for review stores a draft contract version. Draft terms may inform a clearly labelled estimate, but should not authorize a definitive claim or live pricing decision.
+- Check source details exposes the extracted source and warnings so the reviewer can compare the screen with the agreement.
+- Approve terms turns the reviewed version into the authoritative commercial input for its covered dates and scope.
+- Replacing terms should create a new version. It should not rewrite the terms attached to old decisions or audits.
+- If two approved versions overlap, stop and resolve the scope conflict rather than allowing whichever record loads first to govern silently.
 
 ---
 
@@ -958,7 +1099,114 @@ Active default policy and channel overrides.
 
 ---
 
-## 24. Full rehearsal checklist
+## 24. Presenter challenge questions and defensible answers
+
+### “Does connected mean all data is complete and live?”
+
+No. Connected means authorization exists. The platform decides which records and actions its interface exposes. Check the last successful sync, capability labels, source coverage, and evidence freshness before describing the data as current or complete.
+
+### “Why can the same product have different margins on different channels?”
+
+The selling price, commission, discounts, payment fee, fixed fee, delivery contribution, tax treatment, and promotion funding can differ by channel. The same product cost can therefore produce a different contribution on Zid, Salla, Talabat, Jahez, or Keeta. Channel-specific policy lets the merchant choose a different acceptable floor for each commercial model.
+
+### “Why not use one universal margin target?”
+
+A universal default is useful as a fallback, but it may not reflect each channel’s economics or strategy. A direct commerce store may tolerate one floor while a delivery aggregator requires another. A channel override takes precedence; a channel with no override inherits the default. This is controlled inheritance, not duplicated settings.
+
+### “Can the merchant simply type any commission?”
+
+The merchant can enter a rate to model an estimate, but PrizeSkout must label its authority. For a defensible audit or claim, the rate, base, dates, scope, and related fees should be supported by an approved agreement. A typed percentage without its base can be materially misleading.
+
+### “What happens when the contract changes mid-month?”
+
+Each transaction should use the contract version effective for its activity date and scope. The period may need to be split between versions. Applying the newest rate to the entire month would rewrite history and could create a false variance.
+
+### “Why do you need product cost?”
+
+We need product cost to calculate contribution profit, margin, promotion affordability, and a safe price. We do not normally need it to check whether a platform paid according to its settlement agreement. That narrower calculation concerns eligible sales and contractual deductions.
+
+### “What if product cost is missing?”
+
+PrizeSkout can still show supported sales and payout facts, but profitability becomes unknown. It should ask for cost evidence and block autonomous margin-based pricing. Missing is not zero.
+
+### “What if the cost changed after the recommendation?”
+
+The decision carries its cost observation time and expiry. If the evidence is stale or changed, regenerate the recommendation. An old approval must not silently authorize a decision based on new economics.
+
+### “Why does VAT basis matter?”
+
+VAT may apply to platform fees rather than the entire customer sale, and treatment can depend on the agreement and jurisdiction. Applying the tax rate to the wrong base changes both the expected payout and margin. PrizeSkout must show the base it used rather than merely showing a VAT percentage.
+
+### “What exactly does expected payout mean?”
+
+It is PrizeSkout’s recomputation of what should be settled for a defined activity period, using supported activity and approved commercial terms. It is not a bank balance, not a platform promise by itself, and not proof of payment.
+
+### “What is the difference between statement amount and actual payout?”
+
+The statement amount is what the platform says it settled. Actual payout is what reliable bank evidence says arrived. They can match while both differ from the contract-based expectation, or the statement can be correct while the bank deposit is missing or bundled.
+
+### “Why can’t every variance become a claim?”
+
+A variance may come from timing, scope, currency, a valid reserve, a valid adjustment, incomplete files, or a mistaken accounting basis. Claims-ready status requires a supported amount, a contractual basis, linked source rows, required evidence, and review.
+
+### “What does confidence mean?”
+
+Confidence describes how strongly the available evidence supports an interpretation or classification. It is not the probability of winning a dispute and does not replace reviewer judgment. A high-confidence document classification can still contain an incorrect platform charge.
+
+### “When is money recovered?”
+
+Only when a repayment, credit, or approved offset is evidenced and tied to the recovery case. Filing a claim, receiving an email acknowledgement, or seeing an identified amount is not recovery.
+
+### “Can PrizeSkout automatically change prices?”
+
+Only where the channel supports a live write, the merchant selected an automatic approval mode, and every active safeguard passes. The exact item, current price, currency, cost evidence, economics version, policy version, movement limit, approval window, and idempotency protection still matter. Other channels remain plan-only.
+
+### “What happens if somebody changed the store price first?”
+
+The expected-current-price check should stop the stale action. PrizeSkout should request a fresh value and regenerate the decision rather than overwrite an unexpected merchant or platform change.
+
+### “Does clicking Approve mean the action succeeded?”
+
+No. Approval authorizes the exact prepared action. Success requires execution and independent verification from the target channel. Approved, executing, verifying, confirmed, failed, and reversed are deliberately separate states.
+
+### “How do retries avoid duplicate changes?”
+
+The action carries an idempotency key. A retry of the same authorized operation should resolve to the same logical action instead of creating a second write. A changed target or expired decision requires a new action.
+
+### “Why keep old policy and contract versions?”
+
+History must explain why a past calculation or action was reasonable at that time. If settings were overwritten in place, a reviewer could not reproduce the old decision. Versioning preserves the actual rules and terms used.
+
+### “What does locked mean?”
+
+Locked means the reviewed report version should no longer be edited through the workflow. It preserves a review point. Do not describe it as a cryptographic signature or external audit certification unless those separate controls exist.
+
+### “Is PrizeSkout the bank, accountant, or platform of record?”
+
+No. PrizeSkout organizes connected data, commercial rules, calculations, evidence, decisions, and follow-up. Platform records and bank evidence remain their respective source records, and professional accounting or legal judgment may still be required.
+
+## 25. What every common button means
+
+- Connect: begins authorization or credential verification. It does not promise a successful sync.
+- Reconnect: renews or repairs authorization. It should not create a second channel identity.
+- Sync now: requests the newest supported source data. It does not change store content unless explicitly described as a write action.
+- Save draft: stores work without authorizing or publishing it.
+- Save for review: creates a reviewable version and keeps it non-authoritative until approval.
+- Approve: records a named decision on the exact version. It is authorization, not execution or verification.
+- Prepare: creates the exact proposed action and safety context. It changes nothing live.
+- Publish/Apply live: attempts the authorized external write. Wait for verification before calling it complete.
+- Verify: reads evidence or the target system to check the expected result.
+- Retry: repeats an eligible failed/incomplete operation under duplicate protection. Investigate the reason first.
+- Undo/Reverse: prepares or performs restoration of a prior supported value and records the outcome.
+- Resolve: closes an issue because the required outcome or conclusion has been recorded.
+- Dismiss: closes an issue as not requiring action; it should capture a reason and must not pretend the issue was fixed.
+- Snooze: defers attention until later; it does not resolve the underlying condition.
+- Export PDF/Word/CSV: creates a portable report or schedule from the current evidence and state. Export does not strengthen weak evidence.
+- Remove staged file: excludes an item before audit. It should not erase the original source outside PrizeSkout.
+- Disconnect: stops future channel access and writes after confirmation. Retained history should remain available.
+- Logout: ends the merchant session on the device. It does not disconnect the merchant’s channel integrations.
+
+## 26. Full rehearsal checklist
 
 Mark PASS, PARTIAL, FAIL, or NOT TESTED.
 

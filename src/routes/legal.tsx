@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MarketingShell } from "@/components/marketing/MarketingShell";
-import { MarketingHero, MarketingBody, MarketingProse } from "@/components/marketing/MarketingPage";
+import { RevenueProtectionPageShell } from "@/components/landing/RevenueProtectionPageShell";
+import { MarketingProse } from "@/components/marketing/MarketingPage";
 
 export const Route = createFileRoute("/legal")({
   head: () => ({
@@ -15,10 +15,15 @@ export const Route = createFileRoute("/legal")({
 
 function LegalPage() {
   return (
-    <MarketingShell>
-      <MarketingHero eyebrow="LEGAL" title="Privacy Policy & Terms" />
-      <MarketingBody>
-        <MarketingProse>
+    <RevenueProtectionPageShell>
+      <section style={{ padding: "72px 28px 54px", textAlign: "center", background: "#F7F9FC", borderTop: "1px solid #EDF0F4", borderBottom: "1px solid #E5E9EF" }}>
+        <p style={{ margin: 0, color: "#F36A21", fontSize: 11, fontWeight: 800, letterSpacing: ".16em" }}>LEGAL</p>
+        <h1 style={{ margin: "14px auto 0", color: "#10182D", fontSize: "clamp(38px, 6vw, 64px)", lineHeight: 1.05, letterSpacing: "-.045em" }}>Privacy Policy &amp; Terms</h1>
+        <p style={{ maxWidth: 680, margin: "18px auto 0", color: "#657086", fontSize: 16, lineHeight: 1.7 }}>How PrizeSkout handles merchant data and the terms governing use of the service.</p>
+      </section>
+      <section style={{ background: "#FFFFFF", padding: "72px 28px" }}>
+        <div style={{ maxWidth: 820, margin: "0 auto" }}>
+          <MarketingProse>
 
           {/* ── PRIVACY POLICY ─────────────────────────────────────────── */}
           <p className="ps-meta">Last updated: June 30th 2026. Version 1.0.</p>
@@ -253,8 +258,9 @@ function LegalPage() {
             PrizeSkout, Office No. 4, situated at Floor 9-902, QFC Tower 1, West Bay, Doha, State of Qatar.
           </p>
 
-        </MarketingProse>
-      </MarketingBody>
-    </MarketingShell>
+          </MarketingProse>
+        </div>
+      </section>
+    </RevenueProtectionPageShell>
   );
 }
