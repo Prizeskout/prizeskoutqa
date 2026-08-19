@@ -302,7 +302,7 @@ const INBOUND_INTEGRATIONS = [
     platform: "salla",
     oauthPath: "/api/auth/salla" as string | null,
   },
-];
+] as const;
 
 const OUTBOUND_INTEGRATIONS = [
   {
@@ -2952,15 +2952,18 @@ export function PrizeSkoutDashboard() {
   }, []);
 
   const SYNC_CAPABLE_PLATFORMS = ["zid", "salla", "foodics"] as const;
+  type SyncCapablePlatform = (typeof SYNC_CAPABLE_PLATFORMS)[number];
   const [syncingCatalog, setSyncingCatalog] = useState(false);
-  const syncAllCatalogs = async () => {
+  const syncCatalogs = async (
+    platforms: readonly SyncCapablePlatform[] = SYNC_CAPABLE_PLATFORMS,
+  ) => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac || syncingCatalog) return;
     setSyncingCatalog(true);
     try {
       const results = await Promise.all(
-        SYNC_CAPABLE_PLATFORMS.map(async (platform) => {
+        platforms.map(async (platform) => {
           try {
             const res = await fetch("/api/channels/connect", {
               method: "POST",
@@ -3014,6 +3017,7 @@ export function PrizeSkoutDashboard() {
       setSyncingCatalog(false);
     }
   };
+  const syncAllCatalogs = () => syncCatalogs();
 
   const showToast = (msg: string) => {
     if (toastT.current) clearTimeout(toastT.current);
@@ -7158,14 +7162,24 @@ export function PrizeSkoutDashboard() {
                       String(storeOpportunity.estimated + storeOpportunity.unknown),
                       "No automatic changes",
                     ],
-                  ].map(([label, value, foot]) => (
-                    <div
+                  ].map(([label, value, foot], index) => (
+                    <button
+                      type="button"
                       key={label}
+                      onClick={() => {
+                        if (index === 0) openCatalogFilter("verified_risk");
+                        else if (index === 1) openCatalogFilter("verified");
+                        else openCatalogFilter("missing_cost");
+                      }}
                       style={{
                         padding: "14px 15px",
                         borderRadius: 11,
                         background: "var(--surface)",
                         border: "1px solid var(--border)",
+                        color: "inherit",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        textAlign: "start",
                       }}
                     >
                       <div
@@ -7186,7 +7200,7 @@ export function PrizeSkoutDashboard() {
                       <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
                         {foot}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
 
@@ -7384,6 +7398,7 @@ export function PrizeSkoutDashboard() {
                     foot: heroStats?.has_activity ? t.profTrackedFoot : "connect a store",
                     footColor: "var(--muted)",
                     tip: "Every product PrizeSkout has pulled in from your connected stores and is actively pricing.",
+                    action: () => openCatalogFilter("all"),
                   },
                   {
                     label: "Price Updates Today",
@@ -7391,6 +7406,7 @@ export function PrizeSkoutDashboard() {
                     foot: "avg latency <2s",
                     footColor: "var(--muted)",
                     tip: "Automatic price changes pushed live today — under 2 seconds from decision to the price actually updating on the channel.",
+                    action: () => setTab("history"),
                   },
                   {
                     label: "Avg. Margin Saved",
@@ -7402,6 +7418,7 @@ export function PrizeSkoutDashboard() {
                       heroStats?.avg_margin_saved_pct != null ? t.profMarginFoot : "no data yet",
                     footColor: "var(--muted)",
                     tip: "Percentage points of margin recovered versus what you'd have made without PrizeSkout's price defenses.",
+                    action: () => setTab("analytics"),
                   },
                   {
                     label: "Active Rules",
@@ -7409,11 +7426,14 @@ export function PrizeSkoutDashboard() {
                     foot: "price guardrails",
                     footColor: "var(--muted)",
                     tip: "Margin policies currently enforced automatically — see Margin Policy Engine for the full rule book.",
+                    action: () => setTab("rules"),
                   },
                 ].map((s) => (
-                  <div
+                  <button
+                    type="button"
                     key={s.label}
                     data-demo-tip={s.tip}
+                    onClick={s.action}
                     style={{
                       background: "var(--surface)",
                       border: "1px solid var(--border)",
@@ -7424,6 +7444,10 @@ export function PrizeSkoutDashboard() {
                       flexDirection: "column",
                       gap: 12,
                       justifyContent: "space-between",
+                      color: "inherit",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      textAlign: "start",
                     }}
                   >
                     <div
@@ -7449,7 +7473,7 @@ export function PrizeSkoutDashboard() {
                       {s.value}
                     </div>
                     <div style={{ fontSize: 14, color: s.footColor }}>{s.foot}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -12156,7 +12180,7 @@ export function PrizeSkoutDashboard() {
                           </div>
                           <button
                             type="button"
-                            onClick={syncAllCatalogs}
+                            onClick={() => void syncCatalogs([ig.platform])}
                             disabled={syncingCatalog}
                             style={{
                               cursor: syncingCatalog ? "wait" : "pointer",
