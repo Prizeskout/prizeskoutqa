@@ -3,7 +3,9 @@ import { AlertTriangle, CheckCircle2, FlaskConical, Save, ShieldCheck } from "lu
 import {
   reconcilePromotionFunding,
   simulatePromotion,
+  validatePromotionInputs,
   type PromotionProduct,
+  type PromotionInputs,
 } from "@/lib/promotion-profitability";
 import type { ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import type { SavedPromotionScenario } from "@/server/core/promotion-scenarios";
@@ -60,6 +62,7 @@ export function PromotionProfitabilityWorkspace({
   const [financeReviewer, setFinanceReviewer] = useState("");
   const [operationsReviewer, setOperationsReviewer] = useState("");
   const [launchReferences, setLaunchReferences] = useState<Record<string, string>>({});
+  const [simulationRequest, setSimulationRequest] = useState<{ inputs: PromotionInputs; selected: string[]; signature: string; calculatedAt: string } | null>(null);
 
   useEffect(() => setSelected(products.map((p) => p.sku)), [products]);
   useEffect(() => {
@@ -96,10 +99,6 @@ export function PromotionProfitabilityWorkspace({
     load();
   }, []);
 
-  const scoped = useMemo(
-    () => products.filter((p) => selected.includes(p.sku)),
-    [products, selected],
-  );
   const inputs = useMemo(
     () => ({
       discount_pct: n(discount),
@@ -128,18 +127,23 @@ export function PromotionProfitabilityWorkspace({
       floor,
     ],
   );
-  const result = useMemo(() => simulatePromotion(scoped, inputs), [scoped, inputs]);
+  const inputSignature = JSON.stringify({ inputs, selected, targetChannels });
+  const validationErrors = useMemo(() => validatePromotionInputs(inputs), [inputs]);
+  const simulationStale = Boolean(simulationRequest && simulationRequest.signature !== inputSignature);
+  const simulatedProducts = useMemo(() => products.filter(product => (simulationRequest?.selected ?? []).includes(product.sku)), [products, simulationRequest]);
+  const simulatedInputs = simulationRequest?.inputs ?? inputs;
+  const result = useMemo(() => simulatePromotion(simulatedProducts, simulatedInputs), [simulatedProducts, simulatedInputs]);
   const sensitivity = useMemo(
     () =>
       [
-        { label: "Downside", lift: Math.min(0, inputs.expected_conversion_lift_pct - 15) },
-        { label: "Base", lift: inputs.expected_conversion_lift_pct },
-        { label: "Upside", lift: inputs.expected_conversion_lift_pct + 15 },
+        { label: "Downside", lift: Math.max(-100, simulatedInputs.expected_conversion_lift_pct - 15) },
+        { label: "Base", lift: simulatedInputs.expected_conversion_lift_pct },
+        { label: "Upside", lift: simulatedInputs.expected_conversion_lift_pct + 15 },
       ].map((item) => ({
         ...item,
-        result: simulatePromotion(scoped, { ...inputs, expected_conversion_lift_pct: item.lift }),
+        result: simulatePromotion(simulatedProducts, { ...simulatedInputs, expected_conversion_lift_pct: item.lift }),
       })),
-    [scoped, inputs],
+    [simulatedProducts, simulatedInputs],
   );
   const waterfall = useMemo(() => {
     const eligible = result.products.filter((product) => product.eligible);
@@ -182,13 +186,17 @@ export function PromotionProfitabilityWorkspace({
     ];
   }, [result.products]);
   const waterfallScale = Math.max(1, ...waterfall.map((item) => Math.abs(item.value)));
-  const commercialInputsReady =
-    commission !== "" && platformFunding !== "" && commissionBase !== "unknown";
-  const contractReady = Boolean(
-    contract && contract.status === "approved" && commercialInputsReady,
-  );
+  const commercialInputsReady = [commission, platformFunding, vatOnFees, paymentFee, fixedOrderFee].every(value => value !== "") && commissionBase !== "unknown" && validationErrors.length === 0;
+  const contractReady = Boolean(contract && contract.status === "approved" && commercialInputsReady
+    && n(commission) === Number(contract.commission_rate_pct)
+    && n(platformFunding) === Number(contract.promotion_funding_platform_pct)
+    && n(vatOnFees) === Number(contract.vat_on_fees_pct)
+    && n(paymentFee) === Number(contract.payment_fee_pct)
+    && n(fixedOrderFee) === Number(contract.fixed_order_fee)
+    && commissionBase === contract.commission_base);
 
   const saveDraft = async () => {
+    if (!simulationRequest || simulationStale || validationErrors.length || !contractReady || !result.approval_ready || !result.meets_margin_floor || !result.beats_baseline) { setError("Run a current simulation backed by an approved contract and verified costs that meets the margin floor and beats the baseline before saving."); return; }
     setBusy(true);
     setError(null);
     try {
@@ -196,7 +204,7 @@ export function PromotionProfitabilityWorkspace({
         action: "create",
         name,
         source_platform: contract?.platform ?? products[0]?.source_platform ?? "unknown",
-        inputs: { ...inputs, target_channels: targetChannels },
+        inputs: { ...simulationRequest.inputs, target_channels: targetChannels, simulation_signature: simulationRequest.signature, simulated_at: new Date().toISOString(), contract_id: contract?.id ?? null, contract_status: contract?.status ?? null },
         results: result,
       });
       await load();
@@ -341,6 +349,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Discount %" help="The percentage customers receive off the normal selling price." source="merchant" consequence="A larger discount can increase orders but reduce what you keep per order.">
             <input
               type="number"
+              min={0} max={100}
               style={input}
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
@@ -349,6 +358,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Platform funding %" help="How much of the customer discount the sales platform pays." source="contract" whereToFind="your campaign agreement">
             <input
               type="number"
+              min={0} max={100}
               style={input}
               value={platformFunding}
               onChange={(e) => setPlatformFunding(e.target.value)}
@@ -358,6 +368,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Commission %" help="The percentage the platform charges on each campaign order." source="contract" whereToFind="your commercial agreement or latest payout statement">
             <input
               type="number"
+              min={0} max={100}
               style={input}
               value={commission}
               onChange={(e) => setCommission(e.target.value)}
@@ -367,6 +378,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="VAT on fees %" help="VAT charged on the platform's commission and fees, not the customer's order total." source="contract">
             <input
               type="number"
+              min={0} max={100}
               style={input}
               value={vatOnFees}
               onChange={(e) => setVatOnFees(e.target.value)}
@@ -376,6 +388,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Payment fee %" help="The percentage deducted for processing the customer's payment." source="contract" whereToFind="your payment or platform agreement">
             <input
               type="number"
+              min={0} max={100}
               style={input}
               value={paymentFee}
               onChange={(e) => setPaymentFee(e.target.value)}
@@ -385,6 +398,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Fixed order fee" help={`Any fixed ${currency} amount charged on every campaign order.`} source="contract">
             <input
               type="number"
+              min={0}
               style={input}
               value={fixedOrderFee}
               onChange={(e) => setFixedOrderFee(e.target.value)}
@@ -406,6 +420,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Expected order lift %" help="Your estimated increase in orders while the promotion is running." source="estimate" consequence="PrizeSkout uses this estimate to project whether extra orders make up for the discount.">
             <input
               type="number"
+              min={-100} max={1000}
               style={input}
               value={lift}
               onChange={(e) => setLift(e.target.value)}
@@ -414,6 +429,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Baseline orders" help="How many orders you would normally expect during the same number of days without this promotion." source="estimate">
             <input
               type="number"
+              min={1}
               style={input}
               value={orders}
               onChange={(e) => setOrders(e.target.value)}
@@ -422,6 +438,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Duration (days)" help="How many calendar days the promotion will run." source="merchant">
             <input
               type="number"
+              min={1} step={1}
               style={input}
               value={days}
               onChange={(e) => setDays(e.target.value)}
@@ -430,6 +447,7 @@ export function PromotionProfitabilityWorkspace({
           <MerchantField label="Minimum margin %" help="The lowest profit margin you are willing to accept after all campaign costs." source="merchant" consequence="PrizeSkout warns you when a campaign would go below this protected margin.">
             <input
               type="number"
+              min={0} max={100}
               style={input}
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
@@ -500,6 +518,16 @@ export function PromotionProfitabilityWorkspace({
             ))}
           </div>
         </div>
+        <div style={{ border: "1px solid var(--border)", borderRadius: 11, padding: 14, background: "var(--surface2)" }}>
+          {!!validationErrors.length && <div style={{ color: "#B42318", fontSize: 12, marginBottom: 10 }}><strong>Fix these inputs before simulating:</strong><ul style={{ margin: "6px 0 0", paddingInlineStart: 20 }}>{validationErrors.map(message => <li key={message}>{message}</li>)}</ul></div>}
+          {simulationStale && <div style={{ color: "#A16207", fontSize: 12, marginBottom: 10 }}><strong>Results out of date.</strong> An assumption, product, or channel changed. Recalculate before saving or approval.</div>}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button type="button" disabled={busy || !selected.length || !commercialInputsReady} onClick={() => { setSimulationRequest({ inputs: { ...inputs }, selected: [...selected], signature: inputSignature, calculatedAt: new Date().toISOString() }); setError(null); }} style={{ border: 0, borderRadius: 8, padding: "10px 14px", background: "#EF681A", color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: !commercialInputsReady || !selected.length ? "not-allowed" : "pointer", opacity: !commercialInputsReady || !selected.length ? .5 : 1 }}><FlaskConical size={14} style={{ verticalAlign: "middle", marginInlineEnd: 6 }} />{simulationRequest ? "Recalculate simulation" : "Run simulation"}</button>
+            <button type="button" onClick={() => { setDiscount("20"); setPlatformFunding(contract?.promotion_funding_platform_pct == null ? "" : String(contract.promotion_funding_platform_pct)); setCommission(contract?.commission_rate_pct == null ? "" : String(contract.commission_rate_pct)); setVatOnFees(contract?.vat_on_fees_pct == null ? "" : String(contract.vat_on_fees_pct)); setPaymentFee(contract?.payment_fee_pct == null ? "" : String(contract.payment_fee_pct)); setFixedOrderFee(contract?.fixed_order_fee == null ? "" : String(contract.fixed_order_fee)); setCommissionBase(contract?.commission_base ?? "unknown"); setLift("25"); setOrders("100"); setDays("7"); setFloor("15"); setSimulationRequest(null); setError(null); }} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "9px 13px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>Reset</button>
+            <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{simulationRequest && !simulationStale ? `Calculated ${new Date(simulationRequest.calculatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "No current result"}</span>
+          </div>
+        </div>
+        {simulationRequest ? <>
         <div
           style={{
             display: "grid",
@@ -621,7 +649,7 @@ export function PromotionProfitabilityWorkspace({
                   </div>
                   <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>
                     {item.result.expected_orders} expected orders ·{" "}
-                    {item.result.profitable ? "profitable" : "below baseline"}
+                    {item.result.beats_baseline ? "beats baseline" : "below baseline"}
                   </div>
                 </div>
               ))}
@@ -668,7 +696,7 @@ export function PromotionProfitabilityWorkspace({
                   marginTop: 4,
                   color:
                     label === "Incremental contribution"
-                      ? result.profitable
+                      ? result.beats_baseline
                         ? "#087F5B"
                         : "#B42318"
                       : "var(--text)",
@@ -762,15 +790,16 @@ export function PromotionProfitabilityWorkspace({
           economics snapshot; inferred values remain clearly labelled. No campaign is launched from
           this workspace.
         </div>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: 11.5 }}><strong style={{ color: result.beats_baseline ? "#087F5B" : "#B42318" }}>{result.beats_baseline ? "Beats baseline" : "Below baseline"}</strong><strong style={{ color: result.meets_margin_floor ? "#087F5B" : "#B42318" }}>{result.meets_margin_floor ? "Every product meets the floor" : "At least one product is below the floor"}</strong><strong style={{ color: result.approval_ready ? "#087F5B" : "#A16207" }}>{result.approval_ready ? "Evidence ready for review" : "Planning estimate only"}</strong></div>
+        </> : <div style={{ border: "1px dashed var(--border)", borderRadius: 11, padding: 24, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Complete the assumptions and click <strong>Run simulation</strong>. PrizeSkout will not present calculated campaign results before validation.</div>}
         <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
           {!commercialInputsReady && (
             <div style={{ fontSize: 11.5, color: "#A16207", alignSelf: "center" }}>
-              Enter the commission, commission basis and funding split before saving. PrizeSkout
-              will not invent missing contract terms.
+              Enter the commission, commission basis, funding split, VAT, payment fee and fixed fee before saving. Enter a reviewed zero when the agreement confirms no charge; PrizeSkout will not treat a blank as zero.
             </div>
           )}
           <button
-            disabled={busy || !name.trim() || !selected.length || !commercialInputsReady}
+            disabled={busy || !name.trim() || !selected.length || !commercialInputsReady || !contractReady || !simulationRequest || simulationStale || !result.approval_ready || !result.meets_margin_floor || !result.beats_baseline}
             onClick={saveDraft}
             style={{
               border: 0,
@@ -783,7 +812,7 @@ export function PromotionProfitabilityWorkspace({
               cursor: "pointer",
               display: "flex",
               gap: 6,
-              opacity: commercialInputsReady ? 1 : 0.5,
+              opacity: commercialInputsReady && contractReady && simulationRequest && !simulationStale && result.approval_ready && result.meets_margin_floor && result.beats_baseline ? 1 : 0.5,
             }}
           >
             <Save size={14} />
@@ -848,6 +877,8 @@ export function PromotionProfitabilityWorkspace({
                       Promised funding
                       <input
                         type="number"
+                        min={0}
+                        step="0.01"
                         style={input}
                         value={draft.promised}
                         onChange={(e) =>
@@ -862,6 +893,8 @@ export function PromotionProfitabilityWorkspace({
                       Actual funding
                       <input
                         type="number"
+                        min={0}
+                        step="0.01"
                         style={input}
                         value={draft.actual}
                         onChange={(e) =>

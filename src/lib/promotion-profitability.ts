@@ -52,6 +52,9 @@ export type PromotionSimulation = {
   baseline_contribution: number;
   campaign_contribution: number;
   incremental_contribution: number;
+  beats_baseline: boolean;
+  meets_margin_floor: boolean;
+  approval_ready: boolean;
   profitable: boolean;
   assumptions: string[];
 };
@@ -59,15 +62,36 @@ export type PromotionSimulation = {
 const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
+export function validatePromotionInputs(inputs: PromotionInputs) {
+  const errors: string[] = [];
+  const percent = (label: string, value: number) => {
+    if (!Number.isFinite(value) || value < 0 || value > 100) errors.push(`${label} must be between 0% and 100%.`);
+  };
+  percent("Discount", inputs.discount_pct);
+  percent("Platform funding", inputs.platform_funding_pct);
+  percent("Commission", inputs.commission_pct);
+  percent("VAT on fees", inputs.vat_on_fees_pct);
+  percent("Payment fee", inputs.payment_fee_pct);
+  percent("Minimum margin", inputs.minimum_margin_pct);
+  if (!Number.isFinite(inputs.fixed_order_fee) || inputs.fixed_order_fee < 0) errors.push("Fixed order fee cannot be negative.");
+  if (!Number.isFinite(inputs.expected_conversion_lift_pct) || inputs.expected_conversion_lift_pct < -100 || inputs.expected_conversion_lift_pct > 1000) errors.push("Expected order lift must be between -100% and 1,000%.");
+  if (!Number.isFinite(inputs.baseline_orders) || inputs.baseline_orders <= 0) errors.push("Baseline orders must be greater than zero.");
+  if (!Number.isFinite(inputs.duration_days) || inputs.duration_days <= 0 || !Number.isInteger(inputs.duration_days)) errors.push("Duration must be a whole number of at least one day.");
+  if (inputs.commission_base === "unknown") errors.push("Select the contractual commission base.");
+  if (inputs.commission_base === "eligible_sales") errors.push("Eligible sales needs an order-level contractual eligibility rule before it can be simulated.");
+  return errors;
+}
+
 function contribution(price: number, cost: number, discountPct: number, inputs: PromotionInputs) {
   const discount = price * clamp(discountPct, 0, 100) / 100;
   const platformFunding = discount * clamp(inputs.platform_funding_pct, 0, 100) / 100;
   const merchantDiscount = discount - platformFunding;
   const campaignPrice = price - discount;
   const feeBase = inputs.commission_base === "gross_before_discount" ? price : campaignPrice;
-  const commission = feeBase * inputs.commission_pct / 100;
-  const vat = commission * inputs.vat_on_fees_pct / 100;
-  const paymentFee = campaignPrice * inputs.payment_fee_pct / 100 + inputs.fixed_order_fee;
+  const commission = feeBase * clamp(inputs.commission_pct, 0, 100) / 100;
+  const percentagePaymentFee = campaignPrice * clamp(inputs.payment_fee_pct, 0, 100) / 100;
+  const paymentFee = percentagePaymentFee + Math.max(0, inputs.fixed_order_fee);
+  const vat = (commission + paymentFee) * clamp(inputs.vat_on_fees_pct, 0, 100) / 100;
   const value = campaignPrice + platformFunding - commission - vat - paymentFee - cost;
   return { value, campaignPrice, platformFunding, merchantDiscount, commission, vat, paymentFee };
 }
@@ -112,24 +136,32 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
     };
   });
   const eligible = results.filter(p => p.eligible);
-  const baselinePerOrder = eligible.reduce((sum, p) => sum + (p.baseline_contribution ?? 0), 0);
-  const campaignPerOrder = eligible.reduce((sum, p) => sum + (p.expected_contribution ?? 0), 0);
+  // Until an explicit product mix is supplied, use an equal-weight product
+  // average. Summing every selected SKU incorrectly assumes each order buys
+  // one unit of every product.
+  const baselinePerOrder = eligible.length ? eligible.reduce((sum, p) => sum + (p.baseline_contribution ?? 0), 0) / eligible.length : 0;
+  const campaignPerOrder = eligible.length ? eligible.reduce((sum, p) => sum + (p.expected_contribution ?? 0), 0) / eligible.length : 0;
   const baselineOrders = Math.max(0, Math.round(inputs.baseline_orders));
   const expectedOrders = Math.max(0, Math.round(baselineOrders * (1 + inputs.expected_conversion_lift_pct / 100)));
   const baselineContribution = baselinePerOrder * baselineOrders;
   const campaignContribution = campaignPerOrder * expectedOrders;
   const breakEvenOrders = campaignPerOrder > 0 ? Math.ceil(baselineContribution / campaignPerOrder) : null;
+  const beatsBaseline = campaignContribution >= baselineContribution;
+  const meetsMarginFloor = eligible.length > 0 && eligible.every(product => (product.expected_margin_pct ?? -Infinity) >= inputs.minimum_margin_pct);
+  const approvalReady = eligible.length > 0 && results.every(product => product.cost_basis === "verified") && inputs.commission_base !== "unknown" && inputs.commission_base !== "eligible_sales";
   return {
     products: results, eligible_products: eligible.length, excluded_products: results.length - eligible.length,
     baseline_orders: baselineOrders, expected_orders: expectedOrders, break_even_orders: breakEvenOrders,
     baseline_contribution: round(baselineContribution), campaign_contribution: round(campaignContribution),
-    incremental_contribution: round(campaignContribution - baselineContribution),
-    profitable: eligible.length > 0 && campaignContribution >= baselineContribution,
+    incremental_contribution: round(campaignContribution - baselineContribution), beats_baseline: beatsBaseline,
+    meets_margin_floor: meetsMarginFloor, approval_ready: approvalReady,
+    profitable: approvalReady && beatsBaseline && meetsMarginFloor,
     assumptions: [
       results.every(product => product.cost_basis === "verified")
         ? "Product cost is verified from the connected catalogue economics snapshot."
         : "Products without verified cost use a clearly labelled inference from current net margin.",
       "Expected conversion lift is merchant-entered and is not presented as a forecast certainty.",
+      "Order economics use an equal product mix until explicit per-SKU order weights are supplied.",
       inputs.commission_base === "unknown"
         ? "Commission base is unknown; net-after-discount is used provisionally."
         : `Commission is calculated on ${inputs.commission_base.replaceAll("_", " ")}.`,
@@ -138,6 +170,9 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
 }
 
 export function reconcilePromotionFunding(promised: number, actual: number) {
+  if (!Number.isFinite(promised) || promised < 0 || !Number.isFinite(actual) || actual < 0) {
+    throw new Error("Promised and actual platform funding must be zero or greater.");
+  }
   const variance = round(actual - promised);
   return {
     promised: round(promised), actual: round(actual), variance,

@@ -22,12 +22,26 @@ export async function listPromotionScenarios(accountId:string):Promise<SavedProm
 }
 
 export async function savePromotionScenario(accountId:string,input:Omit<SavedPromotionScenario,"id"|"account_id"|"created_at"|"updated_at"|"approved_by"|"approved_at"|"finance_approved_by"|"finance_approved_at"|"operations_approved_by"|"operations_approved_at"|"launch_manifest"|"launch_prepared_at">){
+  const numeric=(key:string)=>Number(input.inputs[key]);
+  for(const key of ["discount_pct","platform_funding_pct","commission_pct","vat_on_fees_pct","payment_fee_pct","minimum_margin_pct"]){const value=numeric(key);if(!Number.isFinite(value)||value<0||value>100)throw new Error(`${key.replaceAll("_"," ")} must be between 0 and 100.`);}
+  if(numeric("fixed_order_fee")<0||numeric("baseline_orders")<=0||numeric("duration_days")<=0)throw new Error("Fees cannot be negative, and baseline orders and duration must be positive.");
+  if(!Number.isInteger(numeric("duration_days")))throw new Error("Campaign duration must be a whole number of days.");
+  if(numeric("expected_conversion_lift_pct") < -100 || numeric("expected_conversion_lift_pct") > 1000)throw new Error("Expected order lift must be between -100 and 1,000 percent.");
+  if(!["gross_before_discount","net_after_discount"].includes(String(input.inputs.commission_base)))throw new Error("Choose a currently supported contractual commission base.");
+  if(!input.inputs.simulation_signature||!input.inputs.simulated_at)throw new Error("Run a current simulation before saving.");
+  if(input.results.approval_ready!==true||input.results.meets_margin_floor!==true||input.results.beats_baseline!==true)throw new Error("Only an evidence-ready simulation that meets every product margin floor and beats the baseline can be saved for review.");
+  const contractId=String(input.inputs.contract_id??"");if(!contractId)throw new Error("An approved commercial contract is required.");
+  const contract=await (supabaseAdmin as any).from("ps_marketplace_contract_terms").select("id,status,effective_from,effective_to,commission_rate_pct,vat_on_fees_pct,payment_fee_pct,fixed_order_fee,commission_base,promotion_funding_platform_pct").eq("account_id",accountId).eq("id",contractId).eq("status","approved").maybeSingle();
+  if(contract.error||!contract.data)throw new Error("The selected commercial contract is not approved for this merchant.");
+  const same=(inputValue:unknown,contractValue:unknown)=>Math.abs(Number(inputValue)-Number(contractValue))<0.000001;
+  if(!same(input.inputs.commission_pct,contract.data.commission_rate_pct)||!same(input.inputs.vat_on_fees_pct,contract.data.vat_on_fees_pct)||!same(input.inputs.payment_fee_pct,contract.data.payment_fee_pct)||!same(input.inputs.fixed_order_fee,contract.data.fixed_order_fee)||!same(input.inputs.platform_funding_pct,contract.data.promotion_funding_platform_pct)||input.inputs.commission_base!==contract.data.commission_base)throw new Error("The simulation terms do not match the approved contract. Review or replace the contract before saving.");
   const {data,error}=await table().insert({...input,account_id:accountId}).select("*").single();
   if(error)throw error;
   return data as SavedPromotionScenario;
 }
 
 export async function updatePromotionScenario(accountId:string,id:string,patch:Partial<Pick<SavedPromotionScenario,"status"|"promised_platform_funding"|"actual_platform_funding"|"funding_variance"|"approved_by"|"approved_at"|"finance_approved_by"|"finance_approved_at"|"operations_approved_by"|"operations_approved_at"|"launch_manifest"|"launch_prepared_at">>){
+  for(const key of ["promised_platform_funding","actual_platform_funding"] as const){const value=patch[key];if(value!=null&&(!Number.isFinite(value)||value<0))throw new Error(`${key.replaceAll("_"," ")} must be zero or greater.`);}
   const {data,error}=await table().update({...patch,updated_at:new Date().toISOString()}).eq("account_id",accountId).eq("id",id).select("*").single();
   if(error)throw error;
   return data as SavedPromotionScenario;
@@ -37,6 +51,7 @@ export async function approvePromotionScenario(accountId:string,id:string,role:"
   const {data:current,error}=await table().select("*").eq("account_id",accountId).eq("id",id).single() as {data:SavedPromotionScenario|null;error:{message?:string}|null};
   if(error||!current)throw new Error("Promotion scenario not found.");
   if(!["draft","pending_approval"].includes(current.status))throw new Error("Only a draft scenario can be approved.");
+  if(current.results.approval_ready!==true||current.results.meets_margin_floor!==true||current.results.beats_baseline!==true)throw new Error("This scenario is not approval-ready: it must use supported evidence, meet every product margin floor, and beat the baseline.");
   const other=role==="finance"?current.operations_approved_by:current.finance_approved_by;
   if(other&&other.trim().toLowerCase()===reviewer.trim().toLowerCase())throw new Error("Finance and Operations approvals must come from different people.");
   const now=new Date().toISOString();
