@@ -95,7 +95,20 @@ export async function linkSallaChannelByVerifiedEmail(
     .select("id,licensee_id")
     .eq("id", targetAccountId)
     .maybeSingle();
-  if (!account) return channel;
+
+  // PrizeSkout accounts created before accounts_v2 was introduced use the
+  // merchant UUID directly for both account and licensee. Preserve support
+  // for those merchants instead of refusing an otherwise verified link.
+  let targetLicenseeId = account?.licensee_id ?? "";
+  if (!targetLicenseeId) {
+    const { data: existingChannel } = await supabaseAdmin
+      .from("ps_merchant_channels")
+      .select("licensee_id")
+      .eq("account_id", targetAccountId)
+      .limit(1)
+      .maybeSingle();
+    targetLicenseeId = existingChannel?.licensee_id ?? targetAccountId;
+  }
 
   const { data: occupied } = await supabaseAdmin
     .from("ps_merchant_channels")
@@ -115,8 +128,8 @@ export async function linkSallaChannelByVerifiedEmail(
   const { data: linked, error } = await supabaseAdmin
     .from("ps_merchant_channels")
     .update({
-      account_id: account.id,
-      licensee_id: account.licensee_id,
+      account_id: targetAccountId,
+      licensee_id: targetLicenseeId,
       metadata: linkedMetadata as Json,
       updated_at: linkedAt,
     })
