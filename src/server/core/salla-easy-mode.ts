@@ -3,6 +3,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { backgroundTask } from "@/server/cf-ctx";
 import { syncPlatformCatalog } from "./platform-sync";
 import { registerSallaWebhooks } from "./salla-webhooks";
+import { linkSallaChannelByVerifiedEmail } from "./salla-account-link";
 
 type SallaWebhookPayload = {
   event?: unknown;
@@ -157,7 +158,7 @@ export async function handleSallaAppEvent(payload: SallaWebhookPayload, webhookO
   const merchantId = String(payload.merchant ?? "");
   if (!merchantId) throw new Error("Missing merchant identifier");
 
-  const channel = await provisionSallaTenant(merchantId);
+  let channel = await provisionSallaTenant(merchantId);
   const data = safeObject(payload.data);
   const now = new Date().toISOString();
 
@@ -191,6 +192,14 @@ export async function handleSallaAppEvent(payload: SallaWebhookPayload, webhookO
       })
       .eq("id", channel.id);
     if (error) throw new Error("Unable to save Salla authorization");
+
+    // Easy Mode does not echo PrizeSkout's initiating account. Resolve it
+    // safely through Salla's authenticated store email before syncing data.
+    channel = await linkSallaChannelByVerifiedEmail({
+      ...channel,
+      bearer_token: accessToken,
+      metadata: metadata as Json,
+    });
 
     if (webhookOrigin) {
       backgroundTask((async () => {

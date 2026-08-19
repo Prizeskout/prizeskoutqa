@@ -57,6 +57,7 @@ import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 
 type Tab =
   | "today"
+  | "catalog"
   | "analytics"
   | "manager"
   | "promotions"
@@ -77,7 +78,7 @@ type SidebarNavId =
   | "settings";
 
 const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
-  catalog: "vault",
+  catalog: "catalog",
   margin: "analytics",
   alerts: "today",
   recovery: "analytics",
@@ -90,7 +91,8 @@ const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
 };
 
 function sidebarNavFromTab(tab: Tab): SidebarNavId {
-  if (tab === "vault") return "catalog";
+  if (tab === "catalog") return "catalog";
+  if (tab === "vault") return "integrations";
   if (tab === "analytics") return "margin";
   if (tab === "today") return "alerts";
   if (tab === "promotions") return "promotions";
@@ -101,6 +103,7 @@ function sidebarNavFromTab(tab: Tab): SidebarNavId {
 }
 const DASHBOARD_TABS: readonly Tab[] = [
   "today",
+  "catalog",
   "analytics",
   "manager",
   "promotions",
@@ -2580,7 +2583,7 @@ export function PrizeSkoutDashboard() {
   }, [tab]);
 
   useEffect(() => {
-    if (tab !== "today" && tab !== "analytics" && tab !== "rules") return;
+    if (tab !== "today" && tab !== "catalog" && tab !== "analytics" && tab !== "rules") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) return;
@@ -2610,7 +2613,7 @@ export function PrizeSkoutDashboard() {
   // is ready instead of leaving reviewers on a permanently empty dashboard.
   useEffect(() => {
     if (
-      (tab !== "today" && tab !== "analytics") ||
+      (tab !== "today" && tab !== "catalog" && tab !== "analytics") ||
       channelStatuses.zid !== "connected" ||
       importedProducts.length > 0
     )
@@ -2898,7 +2901,7 @@ export function PrizeSkoutDashboard() {
     // Vault) — the Imported Products empty state needs to know whether a
     // sync-capable store is connected before the merchant has ever visited
     // the Vault tab.
-    if (tab !== "vault" && tab !== "today" && tab !== "analytics") return;
+    if (tab !== "vault" && tab !== "catalog" && tab !== "today" && tab !== "analytics") return;
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     if (!mid) return;
     fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, {
@@ -2925,6 +2928,29 @@ export function PrizeSkoutDashboard() {
   // syncPlatformCatalog actually supports). Used by the direct "Sync
   // Catalogue" button so a merchant never has to go through the Copilot
   // just to pull their products in.
+  // Salla Easy Mode completes in a separate tab. Refresh as soon as the
+  // merchant returns to PrizeSkout, without requiring a manual page reload.
+  useEffect(() => {
+    const refreshConnections = () => {
+      const mid = localStorage.getItem("ps_merchant_id") ?? "";
+      if (!mid) return;
+      fetch(`/api/channels/status?merchant_id=${encodeURIComponent(mid)}`, {
+        headers: { "X-PrizeSkout-Access-Code": localStorage.getItem("ps_access_code") ?? "" },
+      })
+        .then(response => response.ok ? response.json() : null)
+        .then((data: { channels?: { platform: string; status: string; needs_shop_id?: boolean }[] } | null) => {
+          if (!data?.channels) return;
+          const statuses: Record<string, string> = {};
+          for (const channel of data.channels) statuses[channel.platform] = channel.status;
+          setChannelStatuses(statuses);
+          setKeetaNeedsShopId(data.channels.find(channel => channel.platform === "keeta")?.needs_shop_id ?? false);
+        })
+        .catch(() => {});
+    };
+    window.addEventListener("focus", refreshConnections);
+    return () => window.removeEventListener("focus", refreshConnections);
+  }, []);
+
   const SYNC_CAPABLE_PLATFORMS = ["zid", "salla", "foodics"] as const;
   const [syncingCatalog, setSyncingCatalog] = useState(false);
   const syncAllCatalogs = async () => {
@@ -3253,7 +3279,7 @@ export function PrizeSkoutDashboard() {
   const opportunityCurrency = currency;
 
   const reviewVerifiedMarginRisks = () => {
-    setTab("analytics");
+    setTab("catalog");
     setProductSearch("");
     setProductSort("risk");
     setProductFilter("verified_risk");
@@ -3268,7 +3294,7 @@ export function PrizeSkoutDashboard() {
   };
 
   const reviewProductsMissingCosts = () => {
-    setTab("analytics");
+    setTab("catalog");
     setProductSearch("");
     setProductSort("risk");
     const hasMissingCosts = importedProducts.some(
@@ -5228,7 +5254,7 @@ export function PrizeSkoutDashboard() {
   }> = [
     {
       id: "catalog",
-      tab: "vault",
+      tab: "catalog",
       label: "Catalog",
       icon: PackageSearch,
       tip: "Review products, costs, prices, and catalogue evidence.",
@@ -5302,6 +5328,8 @@ export function PrizeSkoutDashboard() {
   const headerSub =
     tab === "today"
       ? ui.todaySub
+      : tab === "catalog"
+        ? "Products, costs, availability, and synchronization from connected stores"
       : tab === "analytics"
         ? t.subA
         : tab === "manager"
@@ -5322,6 +5350,8 @@ export function PrizeSkoutDashboard() {
   const headerTitle =
     tab === "today"
       ? ui.today
+      : tab === "catalog"
+        ? "Catalog"
       : tab === "analytics"
         ? t.navA
         : tab === "manager"
@@ -5352,6 +5382,7 @@ export function PrizeSkoutDashboard() {
       { nudge: values[0], prompt: values[1], examples: values.slice(1) },
     ]),
   ) as Record<Tab, { nudge: string; prompt: string; examples: string[] }>;
+  const activeAssistantContext = assistantContext[tab] ?? assistantContext.analytics;
   const openAssistantDrawer = (prompt = "") => {
     setAssistantDrawerInput(prompt);
     setAssistantDrawerOpen(true);
@@ -5408,6 +5439,12 @@ export function PrizeSkoutDashboard() {
       showToast("Please complete onboarding first.");
       return;
     }
+    const sallaWindow = path === "/api/auth/salla" ? window.open("about:blank", "_blank") : null;
+    if (path === "/api/auth/salla" && !sallaWindow) {
+      showToast("Please allow pop-ups so Salla can open in a separate tab.");
+      return;
+    }
+    if (sallaWindow) sallaWindow.opener = null;
     try {
       const response = await fetch("/api/onboarding/session", {
         method: "POST",
@@ -5416,8 +5453,11 @@ export function PrizeSkoutDashboard() {
       });
       const session = (await response.json()) as { token?: string };
       if (!response.ok || !session.token) throw new Error();
-      window.location.href = `${path}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
+      const destination = `${path}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
+      if (sallaWindow) sallaWindow.location.href = destination;
+      else window.location.href = destination;
     } catch {
+      sallaWindow?.close();
       showToast("PrizeSkout could not verify this connection request.");
     }
   };
@@ -6055,7 +6095,7 @@ export function PrizeSkoutDashboard() {
         </header>
         <StoreManagerCommandBar
           context={headerTitle}
-          examples={assistantContext[tab].examples}
+          examples={activeAssistantContext.examples}
           lang={lang}
           busy={cpPhase === "loading"}
           onSubmit={runPrizeSkoutAssistant}
@@ -6631,6 +6671,95 @@ export function PrizeSkoutDashboard() {
               </div>
             </section>
           </div>
+        )}
+
+        {/* ===== TAB: CATALOG ===== */}
+        {tab === "catalog" && (
+          <section
+            className="ps-db-section"
+            style={{ padding: "28px 30px 48px", display: "flex", flexDirection: "column", gap: 20, animation: "pk-in .3s ease" }}
+          >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+              {[
+                ["Catalog items", importedProducts.length, "Products received"],
+                ["Costs confirmed", storeOpportunity.verified, "Safe for calculation"],
+                ["Costs missing", storeOpportunity.estimated + storeOpportunity.unknown, "Merchant input required"],
+                ["Out of stock", importedProducts.filter(product => product.inventory_status === "out_of_stock").length, "Unavailable products"],
+                ["Connected sources", SYNC_CAPABLE_PLATFORMS.filter(platform => channelStatuses[platform] === "connected").length, "Stores feeding this catalog"],
+              ].map(([label, value, note]) => (
+                <div key={String(label)} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: "16px 18px" }}>
+                  <div style={{ color: "var(--muted)", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</div>
+                  <div style={{ fontFamily: DISPLAY, fontSize: 28, fontWeight: 800, marginTop: 6 }}>{value}</div>
+                  <div style={{ color: "var(--muted)", fontSize: 11.5, marginTop: 2 }}>{note}</div>
+                </div>
+              ))}
+            </div>
+
+            <div id="imported-products" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "var(--shadow)", overflow: "hidden" }}>
+              <div style={{ padding: "20px 22px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap", borderBottom: "1px solid var(--border)" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 20 }}>Product catalog</h2>
+                  <div style={{ marginTop: 4, color: "var(--muted)", fontSize: 13 }}>Products, prices, costs, stock and source channels.</div>
+                </div>
+                <button type="button" onClick={syncAllCatalogs} disabled={syncingCatalog} style={{ border: "none", borderRadius: 9, background: OG, color: "#fff", padding: "10px 15px", fontFamily: "inherit", fontWeight: 800, cursor: syncingCatalog ? "wait" : "pointer", opacity: syncingCatalog ? .7 : 1 }}>
+                  {syncingCatalog ? "Syncing…" : "Sync catalog"}
+                </button>
+              </div>
+
+              <div style={{ padding: "13px 16px", display: "flex", gap: 10, flexWrap: "wrap", background: "var(--surface2)", borderBottom: "1px solid var(--border)" }}>
+                <input value={productSearch} onChange={event => setProductSearch(event.target.value)} placeholder="Search product, SKU, or channel…" aria-label="Search catalog" style={{ flex: "1 1 260px", minWidth: 0, border: "1px solid var(--border)", borderRadius: 9, background: "var(--surface)", color: "var(--text)", padding: "10px 12px", fontFamily: "inherit" }} />
+                <select value={productFilter} onChange={event => setProductFilter(event.target.value as typeof productFilter)} aria-label="Filter catalog" style={{ border: "1px solid var(--border)", borderRadius: 9, background: "var(--surface)", color: "var(--text)", padding: "10px 12px", fontFamily: "inherit" }}>
+                  <option value="all">All products</option>
+                  <option value="missing_cost">Cost missing</option>
+                  <option value="risk">Needs attention</option>
+                  <option value="healthy">Ready</option>
+                  <option value="repriced">Price changed</option>
+                </select>
+                <select value={productSort} onChange={event => setProductSort(event.target.value as typeof productSort)} aria-label="Sort catalog" style={{ border: "1px solid var(--border)", borderRadius: 9, background: "var(--surface)", color: "var(--text)", padding: "10px 12px", fontFamily: "inherit" }}>
+                  <option value="risk">Priority first</option>
+                  <option value="name">Name A–Z</option>
+                  <option value="price">Highest price</option>
+                </select>
+              </div>
+
+              {catalogLoading ? (
+                <div style={{ padding: 28, color: "var(--muted)" }}>Loading catalog…</div>
+              ) : importedProducts.length === 0 ? (
+                <div style={{ padding: 34, textAlign: "center" }}>
+                  <strong>{SYNC_CAPABLE_PLATFORMS.some(platform => channelStatuses[platform] === "connected") ? "Your store is connected, but no products have been loaded yet." : "Connect a store to import its products."}</strong>
+                  <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 7 }}>PrizeSkout will never display invented catalog figures.</div>
+                  <button type="button" onClick={() => SYNC_CAPABLE_PLATFORMS.some(platform => channelStatuses[platform] === "connected") ? void syncAllCatalogs() : setTab("vault")} style={{ marginTop: 16, border: "none", borderRadius: 9, background: OG, color: "#fff", padding: "10px 15px", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>
+                    {SYNC_CAPABLE_PLATFORMS.some(platform => channelStatuses[platform] === "connected") ? "Load products" : "Open integrations"}
+                  </button>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div style={{ padding: 28, color: "var(--muted)" }}>No products match this search or filter.</div>
+              ) : (
+                <>
+                  <div className="table-scroll">
+                    <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
+                      <thead><tr style={{ background: "var(--surface2)", color: "var(--muted)", fontSize: 11, textTransform: "uppercase" }}>
+                        {['Product','Channel','Selling price','Product cost','Availability','Data status'].map(label => <th key={label} style={{ padding: "11px 14px", textAlign: "left" }}>{label}</th>)}
+                      </tr></thead>
+                      <tbody>
+                        {visibleProducts.map(product => (
+                          <tr key={product.ingest_event_id} onClick={() => openProduct(product)} style={{ borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 13 }}>
+                            <td style={{ padding: "13px 14px" }}><strong>{product.name_en || product.name_ar || product.sku}</strong><div style={{ color: "var(--muted)", fontFamily: MONO, fontSize: 11, marginTop: 3 }}>{product.sku}</div></td>
+                            <td style={{ padding: "13px 14px", textTransform: "capitalize" }}>{product.source_platform}</td>
+                            <td style={{ padding: "13px 14px" }}>{product.currency} {fmtMoney(product.current_price, product.currency)}</td>
+                            <td style={{ padding: "13px 14px", color: product.cost_confidence === "verified" ? "var(--text)" : "#B45309" }}>{product.cost_confidence === "verified" && product.base_cost != null ? `${product.currency} ${fmtMoney(product.base_cost, product.currency)}` : "Cost required"}</td>
+                            <td style={{ padding: "13px 14px" }}>{product.inventory_status === "out_of_stock" ? "Out of stock" : product.inventory_quantity != null ? `${product.inventory_quantity} available` : "Available"}</td>
+                            <td style={{ padding: "13px 14px", color: product.cost_confidence === "verified" ? GN : "#B45309" }}>{product.cost_confidence === "verified" ? "Ready" : "Needs cost"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {productPageCount > 1 && <div style={{ padding: "13px 16px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}><span style={{ color: "var(--muted)", fontSize: 12 }}>Page {productPage} of {productPageCount}</span><div style={{ display: "flex", gap: 8 }}><button type="button" disabled={productPage === 1} onClick={() => setProductPage(page => Math.max(1, page - 1))}>Previous</button><button type="button" disabled={productPage === productPageCount} onClick={() => setProductPage(page => Math.min(productPageCount, page + 1))}>Next</button></div></div>}
+                </>
+              )}
+            </div>
+          </section>
         )}
 
         {/* ===== TAB: TODAY ===== */}
@@ -7497,8 +7626,9 @@ export function PrizeSkoutDashboard() {
                 </div>
               )}
 
+            {false && (<>
             <div
-              id="imported-products"
+              id="legacy-imported-products"
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -8007,6 +8137,7 @@ export function PrizeSkoutDashboard() {
                 stacked in front of this (four unrelated workspaces a
                 merchant had to scroll past to reach the thing this page
                 exists for); they now live in their own Policy Center below. */}
+            </>)}
             <div
               id="ps-payout-assurance-card"
               style={{
@@ -14790,7 +14921,7 @@ export function PrizeSkoutDashboard() {
               )}
             </div>
             <div style={{ display: "grid", gap: 8 }}>
-              {assistantContext[tab].examples.map((example) => (
+              {activeAssistantContext.examples.map((example) => (
                 <button
                   key={example}
                   type="button"

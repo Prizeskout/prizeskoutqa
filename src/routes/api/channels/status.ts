@@ -11,6 +11,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { reconcileSallaEasyModeForAccount } from "@/server/core/salla-account-link";
 
 const ALL_PLATFORMS = [
   "salla", "foodics", "zid",
@@ -33,6 +34,11 @@ export const Route = createFileRoute("/api/channels/status")({
         const accessCodeValue = request.headers.get("x-prizeskout-access-code")?.trim().toUpperCase() ?? "";
         const { data: authorizedCode } = await supabaseAdmin.from("ps_access_codes").select("merchant_id").eq("code", accessCodeValue).maybeSingle();
         if (!authorizedCode || authorizedCode.merchant_id !== merchantId) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+
+        // Repairs Easy Mode installations received before account linking was
+        // introduced. It only links after Salla and PrizeSkout independently
+        // confirm the same merchant email.
+        await reconcileSallaEasyModeForAccount(merchantId);
 
         const [{ data, error }, { data: accessCode }] = await Promise.all([
           supabaseAdmin
