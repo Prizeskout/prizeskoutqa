@@ -40,6 +40,8 @@ import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControl
 import { ZidProfitBrief } from "@/components/dashboard/ZidProfitBrief";
 import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
 import { StoreManagerCommandBar } from "@/components/dashboard/StoreManagerCommandBar";
+import { MarginIntelligenceSummary, RecoveryDashboardSummary } from "@/components/dashboard/FocusedIntelligenceSummary";
+import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { EvidenceReviewWorkspace } from "@/components/dashboard/evidence/EvidenceReviewWorkspace";
 import { EvidenceSourceCoverage } from "@/components/dashboard/evidence/EvidenceSourceCoverage";
 import {
@@ -207,8 +209,8 @@ interface ImportedProduct {
 
 const OG = "#EF681A";
 const GN = "#10B981";
-const MONO = "'Chillax',ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
-const DISPLAY = "'Chillax',system-ui,sans-serif";
+const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
+const DISPLAY = "Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif";
 
 const CSS = `
 
@@ -219,7 +221,7 @@ const CSS = `
   @keyframes pk-in{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
   @keyframes pk-toast{from{transform:translateY(14px) scale(.97)}to{transform:none}}
   .ps-db{
-    font-family:'Chillax',system-ui,-apple-system,sans-serif;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
     /* Slate neutrals on a white page, matching the marketing site. The previous
        ramp mixed warm surfaces (#F6F6F4/#FBFBFA) with cool grey text and borders,
        which is what made light mode read muddy. */
@@ -5630,6 +5632,20 @@ export function PrizeSkoutDashboard() {
   const historyConfirmedCount = historyRepricings.filter(
     (row) => row.status === "success" || row.status === "confirmed",
   ).length;
+  const overviewChannels = ["zid", "salla", "talabat", "jahez", "keeta", "snoonu"].map(
+    (platform) => ({
+      name: platform.charAt(0).toUpperCase() + platform.slice(1),
+      connected: channelStatuses[platform] === "connected",
+      termsReady: approvedContracts.some(
+        (term) => term.platform === platform && term.status === "approved",
+      ),
+    }),
+  );
+  const overviewRisks = fixTheseFirst.slice(0, 5).map((product) => ({
+    name: product.name_en || product.name_ar || product.sku,
+    channel: product.source_platform,
+    gap: `${product.currency} ${fmtMoney(Math.max(0, product.recommended_price - product.current_price), product.currency)}`,
+  }));
   const marginPolicyDirty =
     rules[0].floor !== persistedGlobalFloor ||
     rules[0].maxChangePct !== persistedMaxIncrease ||
@@ -6518,7 +6534,7 @@ export function PrizeSkoutDashboard() {
             </button>
           </div>
         </header>
-        <StoreManagerCommandBar
+        {sidebarNav === "manager" && <StoreManagerCommandBar
           context={headerTitle}
           examples={activeAssistantContext.examples}
           lang={lang}
@@ -6534,7 +6550,7 @@ export function PrizeSkoutDashboard() {
               50,
             );
           }}
-        />
+        />}
         {(["manager", "promotions", "rules"] as Tab[]).includes(tab) && (
           <nav
             aria-label="Automation workspaces"
@@ -7339,7 +7355,30 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            <div id="margin-intelligence-section" style={{scrollMarginTop:24}}><ZidProfitBrief connected={channelStatuses.zid === "connected"} /></div>
+            {sidebarNav === "overview" ? (
+              <ExecutiveOverview
+                currency={currency}
+                trackedProducts={importedProducts.length}
+                verifiedCosts={storeOpportunity.verified}
+                missingCosts={storeOpportunity.estimated + storeOpportunity.unknown}
+                atRiskProducts={storeOpportunity.atRisk.length}
+                activeRules={rules.filter((rule) => rule.active).length}
+                attentionCount={historyAttentionCount}
+                confirmedActions={historyConfirmedCount}
+                expectedPayout={payoutData?.expected_payout ?? null}
+                channels={overviewChannels}
+                risks={overviewRisks}
+                onCatalog={() => openCatalogFilter("all")}
+                onMargin={() => { setSidebarNav("margin"); setTab("analytics"); }}
+                onRecovery={() => { setSidebarNav("recovery"); setTab("analytics"); }}
+                onAlerts={() => setTab("today")}
+                onIntegrations={() => setTab("vault")}
+              />
+            ) : (<>
+            {sidebarNav === "margin" && <>
+            <div id="margin-intelligence-section" style={{scrollMarginTop:24}}>
+              <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} channels={overviewChannels} riskRows={overviewRisks} />
+            </div>
 
             {/* First-run welcome: we auto-ran a Talabat payout check the
                 moment Talabat was connected, since this merchant has never
@@ -8586,6 +8625,18 @@ export function PrizeSkoutDashboard() {
                 merchant had to scroll past to reach the thing this page
                 exists for); they now live in their own Policy Center below. */}
             </>)}
+            </>}
+            {sidebarNav === "recovery" && <>
+            <RecoveryDashboardSummary
+              currency={currency}
+              expectedPayout={payoutData?.expected_payout ?? null}
+              checks={historyPayoutChecks.length}
+              investigations={historyPayoutAudits.length}
+              recovered={recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0)}
+              submitted={recoveryCases.filter((item) => Boolean(item.submitted_at)).length}
+              openCases={recoveryCases.filter((item) => !["recovered", "closed", "rejected"].includes(item.status)).length}
+              channels={overviewChannels}
+            />
             <div
               id="ps-payout-assurance-card"
               style={{
@@ -9871,6 +9922,8 @@ export function PrizeSkoutDashboard() {
                 </div>
               </div>
             </div>
+            </>}
+            </>)}
           </section>
         )}
 
@@ -9947,7 +10000,7 @@ export function PrizeSkoutDashboard() {
             }}
           >
             {/* CFO Copilot and Shop Manager */}
-            <div
+            {sidebarNav === "copilot" && <div
               data-demo-tip="CFO Copilot and Shop Manager answer business questions, run safe checks, prepare store work, and ask once before protected changes."
               style={{
                 background: "var(--surface)",
@@ -11565,10 +11618,10 @@ export function PrizeSkoutDashboard() {
                   <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Enter sends. Shift + Enter adds a new line. Attach JPG, PNG or WebP product images up to 10 MB each, and name the exact product or SKU in your message.</div>
                 </div>
               )}
-            </div>
+            </div>}
 
             {/* Margin Policy v1: one understandable, enforceable store policy. */}
-            <div
+            {sidebarNav === "defend" && <div
               data-tour="guardrails"
               style={{ display: "flex", flexDirection: "column", gap: 18 }}
             >
@@ -12019,7 +12072,7 @@ export function PrizeSkoutDashboard() {
                   )}
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Legacy multi-rule concept retained in source for migration reference, never presented as functional. */}
             {false && (

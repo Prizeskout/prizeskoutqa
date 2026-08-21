@@ -31,16 +31,25 @@ try {
     }, { merchantId: access.merchant_id, code: access.code });
     await page.reload({ waitUntil: "networkidle", timeout: 60_000 });
 
-    await page.getByLabel("CFO Copilot and Shop Manager").waitFor({ timeout: 30_000 });
-    await page.getByRole("heading", { name: "Overview", exact: true }).waitFor();
-    assert(await page.getByPlaceholder("What would you like PrizeSkout to handle?").isVisible());
+    await page.getByRole("heading", { name: "Overview", exact: true }).waitFor({ timeout: 30_000 });
+    assert.equal(await page.getByLabel("CFO Copilot and Shop Manager").count(), 0, "Overview must stay focused on financial KPIs");
     await page.screenshot({
       path: resolve(screenshotDir, viewport.width > 600 ? "overview-desktop.png" : "overview-mobile.png"),
       fullPage: true,
     });
 
     if (viewport.width > 600) {
+      await page.getByRole("button", { name: "Margin Intelligence", exact: true }).click();
+      await page.getByRole("heading", { name: "True Margin Intelligence", exact: true }).waitFor();
+      assert.equal(await page.getByRole("heading", { name: "Check Your Platform Payout", exact: true }).count(), 0);
+      await page.screenshot({ path: resolve(screenshotDir, "margin-desktop.png"), fullPage: true });
+
+      await page.getByRole("button", { name: "Payout Recovery", exact: true }).click();
+      await page.getByRole("heading", { name: "Check Your Platform Payout", exact: true }).waitFor();
+      await page.screenshot({ path: resolve(screenshotDir, "recovery-desktop.png"), fullPage: true });
+
       await page.getByRole("button", { name: "AI Store Manager", exact: true }).click();
+      await page.getByLabel("CFO Copilot and Shop Manager").waitFor({ timeout: 20_000 });
       await page.getByText("Your daily store brief", { exact: true }).waitFor({ timeout: 15_000 });
 
       await page.getByRole("button", { name: "Evidence & History", exact: true }).click();
@@ -52,6 +61,7 @@ try {
     } else {
       await page.getByRole("button", { name: "Open navigation" }).click();
       await page.getByRole("button", { name: "AI Store Manager", exact: true }).last().click();
+      await page.getByLabel("CFO Copilot and Shop Manager").waitFor({ timeout: 20_000 });
       await page.getByText("Your daily store brief", { exact: true }).waitFor({ timeout: 15_000 });
     }
 
