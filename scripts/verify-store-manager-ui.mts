@@ -45,8 +45,9 @@ try {
       await page.screenshot({ path: resolve(screenshotDir, "margin-desktop.png"), fullPage: true });
 
       await page.getByRole("button", { name: "Payout Recovery", exact: true }).click();
-      await page.getByRole("heading", { name: "Check Your Platform Payout", exact: true }).waitFor();
       await page.screenshot({ path: resolve(screenshotDir, "recovery-desktop.png"), fullPage: true });
+      await page.getByRole("button", { name: "Open payout check", exact: true }).click();
+      await page.getByRole("heading", { name: "Check Your Platform Payout", exact: true }).waitFor();
 
       await page.getByRole("button", { name: "AI Store Manager", exact: true }).click();
       await page.getByRole("heading", { name: "AI Store Manager", exact: true }).waitFor({ timeout: 20_000 });

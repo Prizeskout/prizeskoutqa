@@ -26,6 +26,9 @@ const money = (n: number, currency: string) =>
 const n = (value: string, fallback = 0) =>
   Number.isFinite(Number(value)) ? Number(value) : fallback;
 
+const promoCss = `
+.ps-promo-workspace{border:0!important;background:transparent!important;overflow:visible!important}.ps-promo-body{padding:0!important;gap:12px!important}.ps-promo-kpis{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}.ps-promo-kpis>div{min-height:104px;box-sizing:border-box;padding:13px 14px!important;border-radius:11px!important}.ps-promo-main{grid-template-columns:300px minmax(0,1fr)!important;gap:10px!important}.ps-promo-builder,.ps-promo-comparison,.ps-promo-impact,.ps-promo-recommendation{border-radius:11px!important;padding:14px!important}.ps-promo-builder{min-width:0}.ps-promo-results{display:grid!important;grid-template-columns:1fr 1fr!important;grid-template-rows:minmax(205px,1fr) auto!important;gap:10px!important}.ps-promo-comparison{grid-column:1/-1;min-height:205px}.ps-promo-impact{min-height:145px}.ps-promo-impact-chart{height:90px;margin-top:12px;border-bottom:1px solid var(--border);background:repeating-linear-gradient(to top,transparent 0,transparent 29px,var(--border) 30px);display:flex;align-items:flex-end;gap:8px;padding:0 8px}.ps-promo-impact-chart i{display:block;flex:1;border-radius:4px 4px 0 0;min-height:4px}.ps-promo-recommendation{min-height:145px;box-sizing:border-box}.ps-promo-workspace details{margin-top:0}@media(max-width:1000px){.ps-promo-main{grid-template-columns:1fr!important}}@media(max-width:700px){.ps-promo-kpis{grid-template-columns:1fr 1fr!important}.ps-promo-results{grid-template-columns:1fr!important}.ps-promo-comparison{grid-column:auto}}`;
+
 export function PromotionProfitabilityWorkspace({
   products,
   contract,
@@ -320,6 +323,7 @@ export function PromotionProfitabilityWorkspace({
 
   return (
     <section
+      className="ps-promo-workspace"
       style={{
         border: "1px solid var(--border)",
         borderRadius: 14,
@@ -327,6 +331,7 @@ export function PromotionProfitabilityWorkspace({
         background: "var(--surface)",
       }}
     >
+      <style>{promoCss}</style>
       <div
         className="ps-promotion-intro"
         style={{
@@ -360,8 +365,8 @@ export function PromotionProfitabilityWorkspace({
           {contractReady ? "Reviewed contract applied" : "Commercial assumptions require review"}
         </span>
       </div>
-      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
+      <div className="ps-promo-body" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
+        <div className="ps-promo-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
           {[
             ["Projected contribution", simulationRequest ? money(result.campaign_contribution, currency) : "Not calculated", "After verified campaign costs"],
             ["Promotion cost", simulationRequest ? money(promotionCost, currency) : "Not calculated", "Merchant-funded discount"],
@@ -369,8 +374,8 @@ export function PromotionProfitabilityWorkspace({
             ["Net profit impact", simulationRequest ? money(result.incremental_contribution, currency) : "Not calculated", simulationRequest ? (result.beats_baseline ? "Above baseline" : "Below baseline") : "Requires current inputs"],
           ].map(([label, value, note]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface)", boxShadow: "0 8px 22px rgba(15,35,70,.04)" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div><div style={{ fontSize: 20, fontWeight: 900, marginTop: 7 }}>{value}</div><div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>{note}</div></div>)}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: 12 }}>
-          <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
+        <div className="ps-promo-main" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: 12 }}>
+          <section className="ps-promo-builder" style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
             <div style={{ fontSize: 14, fontWeight: 900 }}>Scenario builder</div>
             <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 10.5 }}>Configure the commercial outcome you want to test.</div>
             <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
@@ -387,12 +392,13 @@ export function PromotionProfitabilityWorkspace({
               <button type="button" onClick={resetSimulation} style={{ border: 0, background: "transparent", color: "var(--accent-text)", fontFamily: "inherit", fontWeight: 750, fontSize: 11.5, cursor: "pointer" }}>Reset to contract baseline</button>
             </div>
           </section>
-          <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 12, minWidth: 0 }}>
-            <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
+          <div className="ps-promo-results" style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 12, minWidth: 0 }}>
+            <section className="ps-promo-comparison" style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}><div><div style={{ fontSize: 14, fontWeight: 900 }}>Scenario comparison</div><div style={{ marginTop: 3, color: "var(--muted)", fontSize: 10.5 }}>Downside, expected, and upside demand outcomes</div></div>{simulationRequest && <span style={{ color: simulationStale ? "#A16207" : "#087F5B", fontSize: 10.5, fontWeight: 800 }}>{simulationStale ? "Results need recalculation" : "Current simulation"}</span>}</div>
               {simulationRequest ? <div style={{ display: "grid", gap: 14, marginTop: 20 }}>{sensitivity.map((scenario,index) => { const max=Math.max(1,...sensitivity.map(item=>Math.abs(item.result.campaign_contribution))); const width=Math.max(5,Math.abs(scenario.result.campaign_contribution)/max*100); return <div key={scenario.label} style={{ display: "grid", gridTemplateColumns: "70px minmax(0,1fr) 110px", gap: 10, alignItems: "center" }}><strong style={{ fontSize: 11 }}>{scenario.label}</strong><div style={{ height: 22, borderRadius: 6, background: "var(--surface2)", overflow: "hidden" }}><div style={{ width: `${width}%`, height: "100%", background: index===1?"#2563EB":index===2?"#EF681A":"#94A3B8", borderRadius: 6 }} /></div><span style={{ textAlign: "right", fontSize: 11.5, fontWeight: 800 }}>{money(scenario.result.campaign_contribution,currency)}</span></div>})}</div> : <div style={{ minHeight: 150, display: "grid", placeItems: "center", color: "var(--muted)", fontSize: 12 }}>Run the scenario to compare outcomes.</div>}
             </section>
-            <section style={{ border: `1px solid ${simulationRequest ? result.beats_baseline && result.meets_margin_floor ? "#BBF7D0" : "#FED7AA" : "var(--border)"}`, borderRadius: 12, padding: 15, background: simulationRequest ? result.beats_baseline && result.meets_margin_floor ? "#F0FDF4" : "#FFF7ED" : "var(--surface)" }}>
+            <section className="ps-promo-impact" style={{border:"1px solid var(--border)",background:"var(--surface)"}}><div style={{fontSize:12,fontWeight:900}}>Margin Impact Over Time</div><div style={{fontSize:10.5,color:"var(--muted)",marginTop:3}}>Baseline, expected, and upside contribution</div><div className="ps-promo-impact-chart">{sensitivity.map((scenario,index)=>{const maximum=Math.max(1,...sensitivity.map(item=>Math.abs(item.result.incremental_contribution)));const height=simulationRequest?Math.max(5,Math.abs(scenario.result.incremental_contribution)/maximum*100):5;return <i key={scenario.label} title={scenario.label} style={{height:`${height}%`,background:["#94a3b8","#2563eb","#f47320"][index]}}/>})}</div></section>
+            <section className="ps-promo-recommendation" style={{ border: `1px solid ${simulationRequest ? result.beats_baseline && result.meets_margin_floor ? "#BBF7D0" : "#FED7AA" : "var(--border)"}`, borderRadius: 12, padding: 15, background: simulationRequest ? result.beats_baseline && result.meets_margin_floor ? "#F0FDF4" : "#FFF7ED" : "var(--surface)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}><div><div style={{ fontSize: 12, fontWeight: 900 }}>Recommendation summary</div><strong style={{ display: "block", marginTop: 6, fontSize: 15 }}>{!simulationRequest ? "No scenario calculated" : result.beats_baseline && result.meets_margin_floor ? "This scenario is ready for merchant review" : "Revise this scenario before approval"}</strong><span style={{ display: "block", marginTop: 4, color: "var(--muted)", fontSize: 11 }}>{!simulationRequest ? "Complete the builder and run a simulation." : `${result.eligible_products} eligible products · ${result.expected_orders} expected orders · ${resultMargin == null ? "margin unavailable" : `${resultMargin.toFixed(1)}% projected contribution margin`}`}</span></div>{simulationRequest && <span style={{ padding: "5px 8px", borderRadius: 999, background: result.approval_ready ? "#DCFCE7" : "#FFEDD5", color: result.approval_ready ? "#166534" : "#9A3412", fontSize: 10.5, fontWeight: 850 }}>{result.approval_ready ? "Evidence ready" : "Planning estimate"}</span>}</div>
             </section>
           </div>

@@ -105,6 +105,7 @@ export function MerchantOperatingLoop({
     [busy, setBusy] = useState(""),
     [filter, setFilter] = useState("active"),
     [taskFocus, setTaskFocus] = useState<"all" | "approval">("all"),
+    [workspaceExpanded, setWorkspaceExpanded] = useState(false),
     [detail, setDetail] = useState(false),
     [message, setMessage] = useState(""),
     [newTask, setNewTask] = useState("");
@@ -352,9 +353,11 @@ export function MerchantOperatingLoop({
   };
   const revealAttention = () => revealSection("attention-inbox");
   const revealManagement = (focus: "all" | "approval") => {
+    setWorkspaceExpanded(true);
     setTaskFocus(focus);
     window.setTimeout(() => revealSection("management-desk"), 0);
   };
+  const coverage = Math.round(data?.profit_brief?.verified_cost_coverage_pct ?? 0);
   if (mode === "history")
     return (
       <section style={card}>
@@ -367,7 +370,7 @@ export function MerchantOperatingLoop({
       </section>
     );
   return (
-    <section className="ps-manager-workspace" data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
+    <section className={`ps-manager-workspace${workspaceExpanded ? " ps-manager-expanded" : ""}`} data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
       <Header
         eyebrow={tr("AI Store Manager", "مدير المتجر بالذكاء الاصطناعي", "Gestionnaire de boutique IA")}
         title={tr("Automate store operations with oversight", "أتمت عمليات المتجر مع الإشراف", "Automatisez les opérations avec supervision")}
@@ -395,10 +398,10 @@ export function MerchantOperatingLoop({
         }}
       >
         {[
-          ["Management tasks", openManagerTasks.length, "Open management desk ↓", () => revealManagement("all")],
-          ["Waiting approval", approvalTasks.length, "View approval queue ↓", () => revealManagement("approval")],
-          ["High priority", urgent.length, urgent.length ? `View ${urgent.length} item${urgent.length === 1 ? "" : "s"} ↓` : "View attention inbox ↓", revealAttention],
-          ["Money identified", `${currency} ${moneyAtRisk.toFixed(2)}`, "Review identified value ↓", () => revealSection("money-identified")],
+          ["Pending actions", openManagerTasks.length + active.length, "Needs attention", () => revealManagement("all")],
+          ["Catalog sync", `${coverage}%`, "Verified cost coverage", onContinueSetup],
+          ["Tasks completed", data?.recent_resolved ?? 0, "Retained outcomes", () => { setWorkspaceExpanded(true); window.setTimeout(() => revealSection("money-identified"), 0); }],
+          ["Approval queue", approvalTasks.length, "Awaiting merchant approval", () => revealManagement("approval")],
         ].map(([label, value, note, onClick]) => (
           <Metric
             key={String(label)}
@@ -410,14 +413,34 @@ export function MerchantOperatingLoop({
         ))}
       </div>
 
-      <div className="ps-manager-workflow" aria-label="Product update workflow">
-        {[
-          ["1", "AI suggests changes", `${openManagerTasks.length} task${openManagerTasks.length === 1 ? "" : "s"} prepared`],
-          ["2", "Review and approve", `${approvalTasks.length} awaiting approval`],
-          ["3", "Apply updates", "Only within channel permissions"],
-          ["4", "Monitor impact", "Evidence and outcomes retained"],
-        ].map(([step, label, note]) => <div key={step}><i>{step}</i><span><b>{label}</b><small>{note}</small></span></div>)}
+      <div className="ps-manager-main-grid">
+        <section className="ps-manager-panel ps-manager-queue">
+          <div className="ps-manager-panel-heading"><div><h3>Action Queue</h3><p>Prepared work across connected channels</p></div><button type="button" onClick={() => revealManagement("all")}>View all</button></div>
+          <div className="ps-manager-queue-head"><span>Task</span><span>Type</span><span>Priority</span><span>Status</span></div>
+          {openManagerTasks.slice(0, 5).map((task) => <button className="ps-manager-queue-row" type="button" key={task.id} onClick={() => revealManagement(task.status === "waiting_approval" ? "approval" : "all")}><span><b>{task.title}</b><small>{task.detail}</small></span><span>{task.task_type.replaceAll("_", " ")}</span><span className={`ps-manager-priority ps-${task.priority}`}>{task.priority}</span><span>{merchantStatus(task.status)}</span></button>)}
+          {!openManagerTasks.length && urgent.slice(0, 5).map((item) => <button className="ps-manager-queue-row" type="button" key={item.id} onClick={() => { setWorkspaceExpanded(true); window.setTimeout(revealAttention, 0); }}><span><b>{item.title}</b><small>{item.detail}</small></span><span>{item.item_type.replaceAll("_", " ")}</span><span className={`ps-manager-priority ps-${item.priority}`}>{item.priority}</span><span>{merchantStatus(item.status)}</span></button>)}
+          {!openManagerTasks.length && !urgent.length && <div className="ps-manager-empty">No pending actions. PrizeSkout will keep monitoring.</div>}
+        </section>
+        <section className="ps-manager-panel ps-manager-workflow-card">
+          <div className="ps-manager-panel-heading"><div><h3>Product Update Workflow</h3><p>Merchant oversight remains required</p></div></div>
+          <div className="ps-manager-workflow" aria-label="Product update workflow">
+            {[
+              ["1", "AI Suggests Changes", `${openManagerTasks.length} prepared`],
+              ["2", "Review & Approve", `${approvalTasks.length} awaiting approval`],
+              ["3", "Apply Updates", "Within permissions"],
+              ["4", "Monitor Impact", "Outcomes retained"],
+            ].map(([step, label, note]) => <div key={step}><i>{step}</i><span><b>{label}</b><small>{note}</small></span></div>)}
+          </div>
+        </section>
       </div>
+
+      <div className="ps-manager-health-grid">
+        <section className="ps-manager-panel ps-manager-catalog-health"><div className="ps-manager-panel-heading"><div><h3>Catalog Health</h3><p>Verified evidence coverage</p></div></div><div className="ps-manager-health-body"><div className="ps-manager-donut" style={{ "--coverage": `${coverage * 3.6}deg` } as React.CSSProperties}><strong>{coverage}%</strong><small>Healthy</small></div><div><b>{coverage}% verified</b><span>{Math.max(0, 100 - coverage)}% needs evidence</span></div></div></section>
+        <section className="ps-manager-panel ps-manager-sync"><div className="ps-manager-panel-heading"><div><h3>Channel Sync Status</h3><p>Live workflows remain unchanged</p></div></div>{["Zid", "Salla"].map((channel) => <div className="ps-manager-sync-row" key={channel}><b>{channel}</b><span>Connected</span><em>{coverage}%</em></div>)}</section>
+        <section className="ps-manager-panel ps-manager-impact"><div className="ps-manager-panel-heading"><div><h3>Automation Impact</h3><p>Only retained, traceable outcomes</p></div></div><div><span>Tasks completed</span><b>{data?.recent_resolved ?? 0}</b></div><div><span>Manual reviews open</span><b>{active.length}</b></div><div><span>Value identified</span><b>{currency} {moneyAtRisk.toFixed(0)}</b></div></section>
+      </div>
+
+      <button type="button" className="ps-manager-expand" onClick={() => setWorkspaceExpanded((value) => !value)}>{workspaceExpanded ? "Hide detailed operations ↑" : "Open detailed operations →"}</button>
 
       <div className="ps-manager-outcome" id="money-identified" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
         <OutcomeProofPanel proof={data?.outcome_proof}/>
