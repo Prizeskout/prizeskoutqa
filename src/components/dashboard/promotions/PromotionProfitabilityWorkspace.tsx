@@ -328,10 +328,11 @@ export function PromotionProfitabilityWorkspace({
       }}
     >
       <div
+        className="ps-promotion-intro"
         style={{
           padding: "20px 20px 16px",
           background: "var(--surface)",
-          display: "flex",
+          display: "none",
           justifyContent: "space-between",
           gap: 12,
           alignItems: "center",

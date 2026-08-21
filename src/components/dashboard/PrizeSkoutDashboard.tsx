@@ -232,6 +232,7 @@ function DashboardSectionHeader({ eyebrow, title, description, action }: {
 }
 
 const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   @keyframes pk-pulse{0%,100%{opacity:1}50%{opacity:.3}}
   @keyframes pk-ring{0%,100%{opacity:1}50%{opacity:.35}}
@@ -240,20 +241,21 @@ const CSS = `
   @keyframes pk-in{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
   @keyframes pk-toast{from{transform:translateY(14px) scale(.97)}to{transform:none}}
   .ps-db{
-    font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+    font-family:'Plus Jakarta Sans',Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
     /* Slate neutrals on a white page, matching the marketing site. The previous
        ramp mixed warm surfaces (#F6F6F4/#FBFBFA) with cool grey text and borders,
        which is what made light mode read muddy. */
-    --bg:#F8FAFC;--surface:#FFFFFF;--surface2:#F6F8FB;--border:#E2E8F0;
-    --text:#071633;--muted:#526078;--accent:#EF681A;--green:#10B981;--navy:#061B49;
+    --bg:#F1F4FA;--surface:#FFFFFF;--surface2:#F6F8FC;--border:#E7EAF1;
+    --text:#0F1F3D;--muted:#6B7A99;--accent:#F47320;--green:#16A34A;--navy:#0A1734;
     /* Brand orange is only 2.9:1 on light surfaces, so small text uses a darker
        step. Fills and borders keep --accent. */
     --accent-text:#C2410C;
     --term:#0D1117;--term-border:#222B38;--term-text:#C9D1D9;
-    --shadow:0 1px 2px rgba(15,23,42,.04),0 10px 28px -16px rgba(15,23,42,.18);
+    --shadow:0 1px 1px rgba(10,23,52,.04),0 12px 28px -18px rgba(10,23,52,.28);
     --shadow-lg:0 24px 64px rgba(15,23,42,.18);
     --px:30px;
   }
+  .ps-db h1,.ps-db h2,.ps-db h3,.ps-db h4,.ps-db button,.ps-db input,.ps-db select,.ps-db textarea{font-family:inherit}
   .ps-db[data-theme="dark"]{
     --bg:#0B0E13;--surface:#141924;--surface2:#101520;--border:#232B38;
     --text:#F2F4F8;--muted:#8B93A3;--accent-text:#EF681A;
@@ -261,10 +263,11 @@ const CSS = `
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
     --shadow-lg:0 24px 64px rgba(0,0,0,.6);
   }
-  .ps-db-header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(18px)}
-  .ps-db-section{width:100%;max-width:1540px;margin-inline:auto;box-sizing:border-box}
+  .ps-db-header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(18px);padding:18px 22px 14px!important}
+  .ps-db-section{width:100%;max-width:1540px;margin-inline:auto;box-sizing:border-box;padding-inline:22px!important}
   .ps-db section[id],.ps-db [data-workspace-card]{scroll-margin-top:104px}
-  .ps-dashboard-sidebar{background:linear-gradient(180deg,#061B49 0%,#031337 100%)!important;border-inline-end:0!important;color:#fff!important;box-shadow:12px 0 34px rgba(6,27,73,.10)}
+  .ps-dashboard-sidebar{width:246px!important;flex-basis:246px!important;padding:18px 14px 14px!important;background:linear-gradient(185deg,#0C1C3E 0%,#081228 100%)!important;border-inline-end:0!important;color:#fff!important;box-shadow:inset -1px 0 0 rgba(255,255,255,.06),12px 0 32px -24px rgba(8,18,40,.7)}
+  .ps-dashboard-sidebar nav{margin-top:20px!important;gap:2px!important}.ps-dashboard-sidebar nav button{min-height:36px!important;padding:8px 10px!important}
   .ps-dashboard-sidebar nav button{color:rgba(255,255,255,.72)!important}
   .ps-dashboard-sidebar nav button[aria-current="page"]{background:rgba(255,255,255,.12)!important;color:#fff!important;box-shadow:inset 3px 0 0 #EF681A}
   .ps-dashboard-sidebar nav button:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
@@ -272,8 +275,8 @@ const CSS = `
   .ps-db .table-scroll{border-radius:12px}
   .ps-db .table-scroll table thead{position:sticky;top:0;z-index:1}
   .ps-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:2px 2px 4px}
-  .ps-section-heading h1{margin:5px 0 0;font-size:clamp(25px,2.4vw,34px);line-height:1.08;letter-spacing:-.035em;color:var(--text)}
-  .ps-section-heading p{margin:8px 0 0;max-width:760px;color:var(--muted);font-size:14px;line-height:1.55}
+  .ps-section-heading h1{margin:5px 0 0;font-size:clamp(23px,2.1vw,29px);line-height:1.1;letter-spacing:-.035em;color:var(--text)}
+  .ps-section-heading p{margin:7px 0 0;max-width:760px;color:var(--muted);font-size:13px;line-height:1.5}
   .ps-section-eyebrow{color:var(--accent-text);font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
   .ps-section-action{flex:0 0 auto}
   .ps-header-action{border:0;border-radius:10px;background:var(--accent);color:#fff;padding:10px 15px;font:800 13px inherit;cursor:pointer;box-shadow:0 7px 18px rgba(239,104,26,.16)}
@@ -289,6 +292,8 @@ const CSS = `
   .ps-db button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .ps-pill-btn:hover{border-color:var(--accent)!important;color:var(--accent)!important}
   .ps-ig-btn:hover{border-color:var(--accent)!important;color:var(--accent)!important}
+  .ps-db-controls{gap:8px!important}.ps-db-controls>button{height:38px!important}.ps-db-h1{font-size:27px!important;letter-spacing:-.035em!important}.ps-db-header>div:first-child>div+div{font-size:13px!important}
+  .ps-promotion-intro{display:none!important}
   @media(max-width:979px){
     .ps-db{--px:16px}
     .ps-db-header{padding:16px var(--px) 14px!important}
@@ -314,7 +319,7 @@ const CSS = `
     .ps-section-action,.ps-section-action button{width:100%}
     .ps-kpi-strip{grid-template-columns:1fr}
   }
-  .ps-cfo-workspace>.ps-cfo-heading{order:1}.ps-cfo-workspace>.ps-cfo-kpis{order:2}.ps-cfo-workspace>.ps-cfo-command{order:3;background:var(--surface2)!important;border-color:color-mix(in srgb,#2563eb 20%,var(--border))!important}.ps-cfo-workspace>.ps-cfo-suggestions{order:4}.ps-cfo-workspace>.ps-cfo-alerts{order:5}.ps-cfo-workspace>.ps-cfo-modes{order:6;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.ps-cfo-workspace>.ps-cfo-status{order:7}.ps-cfo-workspace>.ps-cfo-kpis>div{min-height:106px}.ps-cfo-heading h2{font-size:26px!important;letter-spacing:-.045em!important}.ps-cfo-workspace>div:not([class]){order:8}.ps-cfo-workspace>.ps-cfo-modes>div{background:var(--surface)!important;min-height:64px}.ps-manager-workspace>.ps-manager-kpis{order:2}.ps-manager-workspace>.ps-manager-workflow{order:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface2)}.ps-manager-workflow>div{display:flex;align-items:flex-start;gap:9px;padding:4px 12px;border-right:1px solid var(--border)}.ps-manager-workflow>div:last-child{border-right:0}.ps-manager-workflow i{font-style:normal;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:white;font-weight:850;font-size:11px;flex:0 0 auto}.ps-manager-workflow span{display:flex;flex-direction:column}.ps-manager-workflow b{font-size:11.5px}.ps-manager-workflow small{font-size:10px;color:var(--muted);margin-top:3px}.ps-manager-workspace>.ps-manager-desk{order:4}.ps-manager-workspace>.ps-manager-attention{order:5}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>*:not(.ps-manager-kpis):not(.ps-manager-workflow):not(.ps-manager-desk):not(.ps-manager-attention):not(.ps-manager-outcome){order:7}.ps-manager-workspace>div:first-of-type{order:1}
+  .ps-cfo-workspace>.ps-cfo-heading{display:none}.ps-cfo-workspace>.ps-cfo-kpis{order:2}.ps-cfo-workspace>.ps-cfo-command{order:3;background:var(--surface2)!important;border-color:color-mix(in srgb,#2563eb 20%,var(--border))!important}.ps-cfo-workspace>.ps-cfo-suggestions{order:4}.ps-cfo-workspace>.ps-cfo-alerts{order:5}.ps-cfo-workspace>.ps-cfo-modes{order:6;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.ps-cfo-workspace>.ps-cfo-status{order:7}.ps-cfo-workspace>.ps-cfo-kpis>div{min-height:106px}.ps-cfo-workspace>div:not([class]){order:8}.ps-cfo-workspace>.ps-cfo-modes>div{background:var(--surface)!important;min-height:64px}.ps-manager-workspace>header{display:none}.ps-manager-workspace>.ps-manager-kpis{order:2}.ps-manager-workspace>.ps-manager-workflow{order:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface2)}.ps-manager-workflow>div{display:flex;align-items:flex-start;gap:9px;padding:4px 12px;border-right:1px solid var(--border)}.ps-manager-workflow>div:last-child{border-right:0}.ps-manager-workflow i{font-style:normal;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:white;font-weight:850;font-size:11px;flex:0 0 auto}.ps-manager-workflow span{display:flex;flex-direction:column}.ps-manager-workflow b{font-size:11.5px}.ps-manager-workflow small{font-size:10px;color:var(--muted);margin-top:3px}.ps-manager-workspace>.ps-manager-desk{order:4}.ps-manager-workspace>.ps-manager-attention{order:5}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>*:not(.ps-manager-kpis):not(.ps-manager-workflow):not(.ps-manager-desk):not(.ps-manager-attention):not(.ps-manager-outcome){order:7}
   @media(max-width:760px){.ps-cfo-workspace>.ps-cfo-modes{grid-template-columns:1fr}.ps-manager-workspace>.ps-manager-workflow{grid-template-columns:1fr 1fr}.ps-manager-workflow>div{border-right:0;border-bottom:1px solid var(--border)}}
   @keyframes pk-drawer-ltr{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
   @keyframes pk-drawer-rtl{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
@@ -10098,7 +10103,7 @@ export function PrizeSkoutDashboard() {
               <div
                 className="ps-cfo-heading"
                 style={{
-                  display: "flex",
+                  display: "none",
                   alignItems: "center",
                   justifyContent: "space-between",
                   gap: 14,

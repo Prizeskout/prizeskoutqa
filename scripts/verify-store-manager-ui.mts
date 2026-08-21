@@ -49,11 +49,11 @@ try {
       await page.screenshot({ path: resolve(screenshotDir, "recovery-desktop.png"), fullPage: true });
 
       await page.getByRole("button", { name: "AI Store Manager", exact: true }).click();
-      await page.getByRole("heading", { name: "Automate store operations with oversight", exact: true }).waitFor({ timeout: 20_000 });
+      await page.getByRole("heading", { name: "AI Store Manager", exact: true }).waitFor({ timeout: 20_000 });
       await page.screenshot({ path: resolve(screenshotDir, "manager-desktop.png"), fullPage: true });
 
       await page.getByRole("button", { name: "Promotion Simulator", exact: true }).click();
-      await page.getByText(/Promotion Profitability Control|Simulate impact before you spend/, { exact: true }).waitFor({ timeout: 15_000 });
+      await page.getByRole("heading", { name: "Promo Simulator", exact: true }).waitFor({ timeout: 15_000 });
       await page.waitForTimeout(500);
       await page.screenshot({ path: resolve(screenshotDir, "promotion-desktop.png"), fullPage: true });
 
@@ -72,7 +72,7 @@ try {
     } else {
       await page.getByRole("button", { name: "Open navigation" }).click();
       await page.getByRole("button", { name: "AI Store Manager", exact: true }).last().click();
-      await page.getByRole("heading", { name: "Automate store operations with oversight", exact: true }).waitFor({ timeout: 20_000 });
+      await page.getByRole("heading", { name: "AI Store Manager", exact: true }).waitFor({ timeout: 20_000 });
     }
 
     await page.screenshot({

@@ -43,14 +43,14 @@ export function ExecutiveOverview(props: Props) {
   return (
     <div className="exec-overview">
       <style>{`
-        .exec-overview{display:grid;gap:16px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+        .exec-overview{display:grid;gap:16px;font-family:inherit}
         .exec-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
         .exec-card,.exec-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
         .exec-metric{padding:16px;text-align:start;color:var(--text);cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
         .exec-metric:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--metric-tone) 40%,var(--border));box-shadow:0 14px 30px -18px rgba(15,23,42,.3)}
-        .exec-heading{display:flex;justify-content:space-between;align-items:end;gap:16px}.exec-heading h2{font-size:27px;letter-spacing:-.04em;margin:0}.exec-heading p{font-size:12px;color:var(--muted);margin:5px 0 0}.exec-grid{display:grid;grid-template-columns:1fr 1.25fr 1fr .9fr;gap:14px;align-items:stretch}.exec-lower{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
+        .exec-heading{display:none}.exec-grid{display:grid;grid-template-columns:1.05fr 1.35fr 1fr .9fr;gap:14px;align-items:stretch}.exec-lower{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
         .exec-panel{padding:18px;min-width:0}
-        .exec-panel h2{font:750 15px/1.25 Inter,ui-sans-serif,system-ui;margin:0;color:var(--text)}
+        .exec-panel h2{font-size:14.5px;font-weight:700;line-height:1.25;margin:0;color:var(--text)}
         .exec-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
         .exec-health{display:flex;align-items:center;gap:18px;margin-top:20px}
         .exec-donut{width:126px;height:126px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:conic-gradient(#10B981 0 calc(var(--health)*1%),#2563EB calc(var(--health)*1%) calc((var(--health) + 7)*1%),#EF681A calc((var(--health) + 7)*1%) 100%)}
@@ -126,7 +126,7 @@ export function ExecutiveOverview(props: Props) {
         <div className="exec-table"><table><thead><tr><th>Product</th><th>Channel</th><th>Issue</th><th>Recommended action</th><th>Status</th></tr></thead><tbody>
           {props.risks.length ? props.risks.map((risk) => <tr key={`${risk.channel}-${risk.name}`}><td><strong>{risk.name}</strong></td><td style={{ textTransform: "capitalize" }}>{risk.channel}</td><td>Below protected margin</td><td>Review price gap {risk.gap}</td><td><span style={{ color: "#C2410C", background: "#FFF7ED", borderRadius: 999, padding: "4px 8px", fontWeight: 750 }}>Review</span></td></tr>) : <tr><td colSpan={5} style={{ color: "var(--muted)", textAlign: "center", padding: 24 }}>No verified products are currently below the active margin floor.</td></tr>}
         </tbody></table></div>
-      </section><section className="exec-panel"><div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"start"}}><div><h2>Integration health</h2><div className="exec-sub">Source access and agreement readiness stay separate</div></div><CheckCircle2 size={17} color="#059669"/></div><div className="exec-integrations" style={{marginTop:13}}>{props.channels.map(channel=><div key={channel.name}><b>{channel.name}</b><span className={channel.connected?"connected":"manual"}>{channel.connected?"Connected":"Manual evidence"}</span><span style={{color:channel.termsReady?"#059669":"#EA580C"}}>{channel.termsReady?"Terms ready":"Terms needed"}</span></div>)}</div><button type="button" onClick={props.onIntegrations} style={linkButton}>View integration health â†’</button></section></div>
+      </section><section className="exec-panel"><div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"start"}}><div><h2>Integration health</h2><div className="exec-sub">Source access and agreement readiness stay separate</div></div><CheckCircle2 size={17} color="#059669"/></div><div className="exec-integrations" style={{marginTop:13}}>{props.channels.map(channel=><div key={channel.name}><b>{channel.name}</b><span className={channel.connected?"connected":"manual"}>{channel.connected?"Connected":"Manual evidence"}</span><span style={{color:channel.termsReady?"#059669":"#EA580C"}}>{channel.termsReady?"Terms ready":"Terms needed"}</span></div>)}</div><button type="button" onClick={props.onIntegrations} style={linkButton}>View integration health {"\u2192"}</button></section></div>
     </div>
   );
 }
