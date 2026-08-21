@@ -41,8 +41,8 @@ function BusinessNameCard() {
 
   return (
     <div style={{
-      background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12,
-      padding: "18px 20px", marginBottom: 24,
+      background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14,
+      padding: "20px", boxShadow: "var(--shadow)", height: "100%", boxSizing: "border-box",
     }}>
       <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>Business name</h3>
       <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px", lineHeight: 1.7 }}>
@@ -96,54 +96,23 @@ function StoreAccessTab() {
   }
 
   return (
-    <div style={{ maxWidth: 540 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: 16 }}>
       <BusinessNameCard />
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>Store Access Code</h3>
-      <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 20px", lineHeight: 1.7 }}>
-        This code identifies your connected store. Keep it private; use the Store Access page when you need to restore that store context.
-      </p>
-
-      {code ? (
-        <div style={{
-          background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12,
-          padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 14, flexWrap: "wrap",
-        }}>
-          <span style={{ fontFamily: MONO, fontSize: 24, fontWeight: 700, letterSpacing: "0.10em", color: OG }}>
-            {code}
-          </span>
-          <button
-            type="button"
-            onClick={copyCode}
-            style={{
-              background: copied ? "color-mix(in srgb, var(--green) 8%, transparent)" : "transparent",
-              color: copied ? "var(--green)" : "var(--muted)",
-              border: `1px solid ${copied ? "color-mix(in srgb, var(--green) 30%, transparent)" : "var(--border)"}`,
-              borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500,
-              cursor: "pointer", fontFamily: "inherit", transition: "all .15s",
-              display: "inline-flex", alignItems: "center", gap: 6,
-            }}
-          >
-            {copied
-              ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>Copied</>
-              : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy</>
-            }
-          </button>
-        </div>
-      ) : (
-        <div style={{
-          background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 12,
-          padding: "18px 20px", color: "var(--muted)", fontSize: 13, fontFamily: MONO,
-        }}>
-          No access code found in this browser. Connect a store to generate one.
-        </div>
-      )}
-
-      <p style={{ fontSize: 12, color: "var(--muted)", margin: "16px 0 0", lineHeight: 1.6 }}>
-        To restore your dashboard on another device, go to{" "}
-        <a href="/access" style={{ color: OG, textDecoration: "none" }}>prizeskout.qa → Store Access</a>
-        {" "}and enter this code.
-      </p>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, boxShadow: "var(--shadow)" }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", margin: "0 0 6px" }}>Store Access Code</h3>
+        <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px", lineHeight: 1.6 }}>
+          This private code restores the same connected store on another device.
+        </p>
+        {code ? (
+          <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 15px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: MONO, fontSize: 20, fontWeight: 750, letterSpacing: ".08em", color: "var(--text)" }}>{code}</span>
+            <button type="button" onClick={copyCode} style={{ background: copied ? "color-mix(in srgb, var(--green) 8%, transparent)" : "var(--surface)", color: copied ? "var(--green)" : "var(--text)", border: `1px solid ${copied ? "color-mix(in srgb, var(--green) 30%, transparent)" : "var(--border)"}`, borderRadius: 8, padding: "8px 13px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{copied ? "Copied" : "Copy code"}</button>
+          </div>
+        ) : (
+          <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 10, padding: 15, color: "var(--muted)", fontSize: 13 }}>No access code found in this browser. Connect a store to generate one.</div>
+        )}
+        <a href="/access" style={{ display: "inline-flex", marginTop: 14, color: "var(--accent-text)", textDecoration: "none", fontSize: 12.5, fontWeight: 750 }}>Open Store Access →</a>
+      </section>
     </div>
   );
 }
@@ -196,8 +165,8 @@ export function SettingsTabs({ initialTab = "Store Access" }: { initialTab?: Tab
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 12, overflowX: "auto", WebkitOverflowScrolling: "touch" as never }}>
+    <div style={{ display: "grid", gap: 18 }}>
+      <div style={{ display: "flex", gap: 4, padding: 5, width: "fit-content", maxWidth: "100%", border: "1px solid var(--border)", borderRadius: 12, background: "var(--surface2)", overflowX: "auto", WebkitOverflowScrolling: "touch" as never }}>
         {(Object.keys(SETTINGS_GROUPS) as SettingsGroup[]).map((group) => {
           const isActive = group === activeGroup;
           return (
@@ -206,10 +175,10 @@ export function SettingsTabs({ initialTab = "Store Access" }: { initialTab?: Tab
               type="button"
               onClick={() => setActive(SETTINGS_GROUPS[group][0])}
               style={{
-                padding: "10px 14px", borderRadius: 999, fontSize: 13, fontWeight: 750,
+                padding: "9px 13px", borderRadius: 8, fontSize: 12.5, fontWeight: 750,
                 color: isActive ? "#fff" : "var(--text)", cursor: "pointer",
-                background: isActive ? "var(--accent)" : "var(--surface)",
-                border: `1px solid ${isActive ? "var(--accent)" : "var(--border)"}`,
+                background: isActive ? "var(--navy)" : "transparent",
+                border: "none",
                 whiteSpace: "nowrap", flexShrink: 0,
               }}
             >
@@ -218,7 +187,7 @@ export function SettingsTabs({ initialTab = "Store Access" }: { initialTab?: Tab
           );
         })}
       </div>
-      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--border)", marginBottom: 24,
+      <div style={{ display: "flex", gap: 18, borderBottom: "1px solid var(--border)",
         overflowX: "auto", WebkitOverflowScrolling: "touch" as never, scrollbarWidth: "none" as never }}>
         {SETTINGS_GROUPS[activeGroup].map((tab) => {
           const isActive = tab === active;
@@ -231,7 +200,7 @@ export function SettingsTabs({ initialTab = "Store Access" }: { initialTab?: Tab
               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "var(--text)"; }}
               onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "var(--muted)"; }}
               style={{
-                padding: "12px 14px", fontSize: 13, fontWeight: 500,
+                padding: "2px 1px 11px", fontSize: 12.5, fontWeight: isActive ? 750 : 550,
                 color: isActive ? "var(--text)" : "var(--muted)",
                 cursor: "pointer", background: "transparent", border: "none",
                 borderBottom: `2px solid ${isActive ? "var(--accent)" : "transparent"}`,
@@ -241,13 +210,15 @@ export function SettingsTabs({ initialTab = "Store Access" }: { initialTab?: Tab
           );
         })}
       </div>
-      {active === "Store Access" && <StoreAccessTab />}
-      {active === "Channels" && <ChannelsTab />}
-      {active === "Competitor Radar" && <CompetitorRadarAccessTab />}
-      {active === "Product Images" && <ProductImageManagerTab />}
-      {active === "Margin Rules" && <MarginRulesTab />}
-      {active === "Locations" && <LocationsTab />}
-      {active === "Notifications" && <NotificationsTab />}
+      <div>
+        {active === "Store Access" && <StoreAccessTab />}
+        {active === "Channels" && <ChannelsTab />}
+        {active === "Competitor Radar" && <CompetitorRadarAccessTab />}
+        {active === "Product Images" && <ProductImageManagerTab />}
+        {active === "Margin Rules" && <MarginRulesTab />}
+        {active === "Locations" && <LocationsTab />}
+        {active === "Notifications" && <NotificationsTab />}
+      </div>
     </div>
   );
 }

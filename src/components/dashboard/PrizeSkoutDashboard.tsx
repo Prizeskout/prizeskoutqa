@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useMemo, useRef } from "react";
+import { Fragment, useState, useEffect, useMemo, useRef, type ReactNode } from "react";
 import {
   BadgePercent,
   Bell,
@@ -213,6 +213,24 @@ const GN = "#10B981";
 const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 const DISPLAY = "Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif";
 
+function DashboardSectionHeader({ eyebrow, title, description, action }: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <header className="ps-section-heading">
+      <div>
+        <div className="ps-section-eyebrow">{eyebrow}</div>
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+      {action ? <div className="ps-section-action">{action}</div> : null}
+    </header>
+  );
+}
+
 const CSS = `
 
   @keyframes pk-pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -253,6 +271,19 @@ const CSS = `
   .ps-dashboard-sidebar-footer{border-top:1px solid rgba(255,255,255,.10);padding-top:14px}
   .ps-db .table-scroll{border-radius:12px}
   .ps-db .table-scroll table thead{position:sticky;top:0;z-index:1}
+  .ps-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:2px 2px 4px}
+  .ps-section-heading h1{margin:5px 0 0;font-size:clamp(25px,2.4vw,34px);line-height:1.08;letter-spacing:-.035em;color:var(--text)}
+  .ps-section-heading p{margin:8px 0 0;max-width:760px;color:var(--muted);font-size:14px;line-height:1.55}
+  .ps-section-eyebrow{color:var(--accent-text);font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+  .ps-section-action{flex:0 0 auto}
+  .ps-header-action{border:0;border-radius:10px;background:var(--accent);color:#fff;padding:10px 15px;font:800 13px inherit;cursor:pointer;box-shadow:0 7px 18px rgba(239,104,26,.16)}
+  .ps-header-action:disabled{opacity:.6;cursor:wait}
+  .ps-header-action-secondary{border:1px solid var(--border);background:var(--surface);color:var(--text);box-shadow:none}
+  .ps-kpi-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .ps-kpi-tile{min-height:112px;padding:16px 17px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .ps-kpi-tile span{font-size:11px;font-weight:800;letter-spacing:.035em;text-transform:uppercase;color:var(--muted)}
+  .ps-kpi-tile strong{margin-top:7px;font-size:25px;line-height:1.1;color:var(--text)}
+  .ps-kpi-tile small{margin-top:auto;padding-top:7px;color:var(--muted);font-size:11.5px;line-height:1.35}
   .ps-evidence-workspace{display:grid;gap:16px;padding:20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
   .ps-db input[type=range]{accent-color:var(--accent);height:28px;cursor:pointer}
   .ps-db button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -267,6 +298,7 @@ const CSS = `
     [data-tour="copilot-command"]{margin:12px var(--px) 0!important;padding:14px!important}
     [data-tour="copilot-command"] input{min-width:0!important}
     .ps-db [role="dialog"]{max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important}
+    .ps-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(max-width:560px){
     .ps-db{--px:12px}
@@ -278,6 +310,9 @@ const CSS = `
     .ps-db input,.ps-db select,.ps-db textarea{font-size:16px!important}
     .ps-db table{font-size:12px}
     .ps-db h1,.ps-db h2,.ps-db h3{overflow-wrap:anywhere}
+    .ps-section-heading{align-items:flex-start;flex-direction:column;gap:12px}
+    .ps-section-action,.ps-section-action button{width:100%}
+    .ps-kpi-strip{grid-template-columns:1fr}
   }
   @keyframes pk-drawer-ltr{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
   @keyframes pk-drawer-rtl{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
@@ -7122,6 +7157,12 @@ export function PrizeSkoutDashboard() {
             className="ps-db-section"
             style={{ padding: "28px 30px 48px", display: "flex", flexDirection: "column", gap: 20, animation: "pk-in .3s ease" }}
           >
+            <DashboardSectionHeader
+              eyebrow="Catalog intelligence"
+              title="Know what is ready to sell"
+              description="Review product coverage, confirmed costs, availability, and source channels in one decision-ready view."
+              action={<button type="button" className="ps-header-action" onClick={syncAllCatalogs} disabled={syncingCatalog}>{syncingCatalog ? "Syncing…" : "Sync catalog"}</button>}
+            />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
               {[
                 { label: "Catalog items", value: importedProducts.length, note: "Products received", action: () => openCatalogFilter("all") },
@@ -7219,6 +7260,12 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
+            <DashboardSectionHeader
+              eyebrow="Alerts & priorities"
+              title="See what needs attention now"
+              description="PrizeSkout ranks live store signals so you can act on the highest-impact issue first."
+              action={<button type="button" className="ps-header-action ps-header-action-secondary" onClick={() => setTab("analytics")}>Open full overview</button>}
+            />
             <div
               style={{
                 display: "grid",
@@ -11645,6 +11692,17 @@ export function PrizeSkoutDashboard() {
               data-tour="guardrails"
               style={{ display: "flex", flexDirection: "column", gap: 18 }}
             >
+              <DashboardSectionHeader
+                eyebrow="Defend Loop"
+                title="Protect margin with merchant-controlled rules"
+                description="Set the floor PrizeSkout must defend, preview the impact, and keep every proposed store change behind your approval controls."
+              />
+              <div className="ps-kpi-strip">
+                <div className="ps-kpi-tile"><span>Protection status</span><strong style={{ color: defendHealth?.state === "active" ? GN : "#B45309" }}>{defendHealth?.state === "active" ? "Active" : "Review"}</strong><small>{defendHealth?.detail ?? "Checking connected channels"}</small></div>
+                <div className="ps-kpi-tile"><span>Margin floor</span><strong>{rules[0]?.floor ?? 18}%</strong><small>Minimum contribution to keep</small></div>
+                <div className="ps-kpi-tile"><span>Policy version</span><strong>{policyVersion}</strong><small>Current auditable rule set</small></div>
+                <div className="ps-kpi-tile"><span>Costs confirmed</span><strong>{storeOpportunity.verified}</strong><small>Products eligible for calculation</small></div>
+              </div>
               <div
                 style={{
                   background: "var(--surface)",
@@ -12662,6 +12720,17 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
+            <DashboardSectionHeader
+              eyebrow="Integration health"
+              title="Keep every evidence source connected"
+              description="Manage read-only commerce connections and see which channels are ready to support catalog, margin, and payout decisions."
+            />
+            <div className="ps-kpi-strip">
+              <div className="ps-kpi-tile"><span>Connected sources</span><strong>{SYNC_CAPABLE_PLATFORMS.filter(platform => channelStatuses[platform] === "connected").length}</strong><small>Actively sharing store data</small></div>
+              <div className="ps-kpi-tile"><span>Available connectors</span><strong>{INBOUND_INTEGRATIONS.length}</strong><small>Read-only inbound sources</small></div>
+              <div className="ps-kpi-tile"><span>Catalog coverage</span><strong>{importedProducts.length}</strong><small>Products received from stores</small></div>
+              <div className="ps-kpi-tile"><span>Connection state</span><strong style={{ color: defendHealth?.state === "active" ? GN : "#B45309" }}>{defendHealth?.state === "active" ? "Healthy" : "Review"}</strong><small>{defendHealth?.detail ?? "Checking sources"}</small></div>
+            </div>
             {/* Inbound */}
             <div data-tour="inbound" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -13009,6 +13078,11 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
+            <DashboardSectionHeader
+              eyebrow="Evidence & history"
+              title="Your permanent evidence record"
+              description="View retained source documents, review extracted facts, and trace every approved decision without changing the original evidence."
+            />
             <MerchantOperatingLoop lang={lang} mode="history" />
 
             <section className="ps-evidence-workspace" aria-labelledby="evidence-inbox-title">
@@ -13023,9 +13097,9 @@ export function PrizeSkoutDashboard() {
                   Compare extracted values with retained source documents before they enter margin, payout, or recovery calculations.
                 </p>
               </div>
-              <EvidenceSourceCoverage />
               <EvidenceLibrary />
               <EvidenceReviewWorkspace />
+              <EvidenceSourceCoverage />
             </section>
 
             <div
