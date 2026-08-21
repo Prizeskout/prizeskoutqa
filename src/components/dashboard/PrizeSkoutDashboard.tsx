@@ -314,6 +314,8 @@ const CSS = `
     .ps-section-action,.ps-section-action button{width:100%}
     .ps-kpi-strip{grid-template-columns:1fr}
   }
+  .ps-cfo-workspace>.ps-cfo-heading{order:1}.ps-cfo-workspace>.ps-cfo-kpis{order:2}.ps-cfo-workspace>.ps-cfo-command{order:3;background:var(--surface2)!important;border-color:color-mix(in srgb,#2563eb 20%,var(--border))!important}.ps-cfo-workspace>.ps-cfo-suggestions{order:4}.ps-cfo-workspace>.ps-cfo-alerts{order:5}.ps-cfo-workspace>.ps-cfo-modes{order:6;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.ps-cfo-workspace>.ps-cfo-status{order:7}.ps-cfo-workspace>.ps-cfo-kpis>div{min-height:106px}.ps-cfo-heading h2{font-size:26px!important;letter-spacing:-.045em!important}.ps-cfo-workspace>div:not([class]){order:8}.ps-cfo-workspace>.ps-cfo-modes>div{background:var(--surface)!important;min-height:64px}.ps-manager-workspace>.ps-manager-kpis{order:2}.ps-manager-workspace>.ps-manager-workflow{order:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface2)}.ps-manager-workflow>div{display:flex;align-items:flex-start;gap:9px;padding:4px 12px;border-right:1px solid var(--border)}.ps-manager-workflow>div:last-child{border-right:0}.ps-manager-workflow i{font-style:normal;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:white;font-weight:850;font-size:11px;flex:0 0 auto}.ps-manager-workflow span{display:flex;flex-direction:column}.ps-manager-workflow b{font-size:11.5px}.ps-manager-workflow small{font-size:10px;color:var(--muted);margin-top:3px}.ps-manager-workspace>.ps-manager-desk{order:4}.ps-manager-workspace>.ps-manager-attention{order:5}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>*:not(.ps-manager-kpis):not(.ps-manager-workflow):not(.ps-manager-desk):not(.ps-manager-attention):not(.ps-manager-outcome){order:7}.ps-manager-workspace>div:first-of-type{order:1}
+  @media(max-width:760px){.ps-cfo-workspace>.ps-cfo-modes{grid-template-columns:1fr}.ps-manager-workspace>.ps-manager-workflow{grid-template-columns:1fr 1fr}.ps-manager-workflow>div{border-right:0;border-bottom:1px solid var(--border)}}
   @keyframes pk-drawer-ltr{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
   @keyframes pk-drawer-rtl{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
 `;
@@ -8696,6 +8698,7 @@ export function PrizeSkoutDashboard() {
               submitted={recoveryCases.filter((item) => Boolean(item.submitted_at)).length}
               openCases={recoveryCases.filter((item) => !["recovered", "closed", "rejected"].includes(item.status)).length}
               channels={overviewChannels}
+              cases={recoveryCases}
             />
             <div
               id="ps-payout-assurance-card"
@@ -10079,6 +10082,7 @@ export function PrizeSkoutDashboard() {
           >
             {/* CFO Copilot and Shop Manager */}
             {sidebarNav === "copilot" && <div
+              className="ps-cfo-workspace"
               data-demo-tip="CFO Copilot and Shop Manager answer business questions, run safe checks, prepare store work, and ask once before protected changes."
               style={{
                 background: "var(--surface)",
@@ -10092,6 +10096,7 @@ export function PrizeSkoutDashboard() {
               }}
             >
               <div
+                className="ps-cfo-heading"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -10101,10 +10106,11 @@ export function PrizeSkoutDashboard() {
                 }}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontSize: 11, fontWeight: 850, letterSpacing: ".1em", color: OG }}>CFO COPILOT</span>
                   <h2
                     style={{ margin: 0, fontSize: 20.5, fontWeight: 800, letterSpacing: "-0.3px" }}
                   >
-                    CFO Copilot
+                    Ask smarter questions. Get financial answers.
                   </h2>
                   <span style={{ fontSize: 15, color: "var(--muted)" }}>
                     Ask smarter questions about profit, payouts, risk, and the next financial decision.
@@ -10129,7 +10135,7 @@ export function PrizeSkoutDashboard() {
                     : "Connect a store to enable live actions"}
                 </span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
+              <div className="ps-cfo-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
                 {[
                   ["Cost evidence", importedProducts.length ? `${Math.round((storeOpportunity.verified / importedProducts.length) * 100)}%` : "No data", `${storeOpportunity.verified} verified products`],
                   ["Margin attention", String(storeOpportunity.atRisk.length), "Verified products below target"],
@@ -10143,7 +10149,7 @@ export function PrizeSkoutDashboard() {
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+              <div className="ps-cfo-modes" style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
                 {[
                   ["Ask about my business", "Profit, margins, orders, payouts and risks"],
                   ["Manage my store", "Create, edit, publish and organise products"],
@@ -10166,6 +10172,7 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
               <div
+                className="ps-cfo-status"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
@@ -10214,7 +10221,7 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
               {copilotAlerts.length > 0 && (
-                <div style={{ display: "grid", gap: 7 }}>
+                <div className="ps-cfo-alerts" style={{ display: "grid", gap: 7 }}>
                   <div
                     style={{
                       fontSize: 10.5,
@@ -10255,6 +10262,7 @@ export function PrizeSkoutDashboard() {
                 </div>
               )}
               <div
+                className="ps-cfo-command"
                 data-tour="copilot"
                 style={{
                   display: "flex",
@@ -10315,7 +10323,7 @@ export function PrizeSkoutDashboard() {
                   product”, “reprice it”, or “push it live”.
                 </div>
               )}
-              <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center" }}>
+              <div className="ps-cfo-suggestions" style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center" }}>
                 <span style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 600 }}>
                   {t.try}
                 </span>

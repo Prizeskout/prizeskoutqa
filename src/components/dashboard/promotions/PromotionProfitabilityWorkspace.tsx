@@ -294,6 +294,30 @@ export function PromotionProfitabilityWorkspace({
     }
   };
 
+  const runSimulation = () => {
+    setSimulationRequest({ inputs: { ...inputs }, selected: [...selected], signature: inputSignature, calculatedAt: new Date().toISOString() });
+    setError(null);
+  };
+
+  const resetSimulation = () => {
+    setDiscount("20");
+    setPlatformFunding(contract?.promotion_funding_platform_pct == null ? "" : String(contract.promotion_funding_platform_pct));
+    setCommission(contract?.commission_rate_pct == null ? "" : String(contract.commission_rate_pct));
+    setVatOnFees(contract?.vat_on_fees_pct == null ? "" : String(contract.vat_on_fees_pct));
+    setPaymentFee(contract?.payment_fee_pct == null ? "" : String(contract.payment_fee_pct));
+    setFixedOrderFee(contract?.fixed_order_fee == null ? "" : String(contract.fixed_order_fee));
+    setCommissionBase(contract?.commission_base ?? "unknown");
+    setLift("25"); setOrders("100"); setDays("7"); setFloor("15");
+    setSimulationRequest(null); setError(null);
+  };
+
+  const promotionCost = simulationRequest
+    ? result.products.reduce((sum, product) => sum + product.merchant_discount, 0) * result.expected_orders
+    : 0;
+  const resultMargin = simulationRequest && result.campaign_contribution > 0
+    ? Math.max(0, (result.campaign_contribution / Math.max(1, result.products.filter(product => product.eligible).reduce((sum, product) => sum + product.campaign_price, 0) * result.expected_orders) * 100))
+    : null;
+
   return (
     <section
       style={{
@@ -305,8 +329,8 @@ export function PromotionProfitabilityWorkspace({
     >
       <div
         style={{
-          padding: "17px 20px",
-          background: "var(--surface2)",
+          padding: "20px 20px 16px",
+          background: "var(--surface)",
           display: "flex",
           justifyContent: "space-between",
           gap: 12,
@@ -315,10 +339,10 @@ export function PromotionProfitabilityWorkspace({
         }}
       >
         <div>
-          <div style={{ fontSize: 18, fontWeight: 900 }}>Promotion Profitability Control</div>
+          <div style={{ color: "#EF681A", fontSize: 10.5, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase" }}>Promotion simulation</div>
+          <div style={{ fontSize: 25, fontWeight: 900, marginTop: 5, letterSpacing: "-.03em" }}>Simulate impact before you spend</div>
           <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 3 }}>
-            Simulate campaign economics before approval, then reconcile promised funding against
-            actual funding.
+            Compare campaign economics, protect contribution margin, and prepare an approval-ready scenario.
           </div>
         </div>
         <span
@@ -338,12 +362,43 @@ export function PromotionProfitabilityWorkspace({
       <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
           {[
-            ["Projected contribution", simulationRequest ? money(result.campaign_contribution, currency) : "Run simulation", "After verified campaign costs"],
-            ["Promotion discount", `${discount}%`, "Current scenario assumption"],
+            ["Projected contribution", simulationRequest ? money(result.campaign_contribution, currency) : "Not calculated", "After verified campaign costs"],
+            ["Promotion cost", simulationRequest ? money(promotionCost, currency) : "Not calculated", "Merchant-funded discount"],
             ["Expected lift", `${n(lift) >= 0 ? "+" : ""}${lift}%`, "Merchant estimate, not a guarantee"],
             ["Net profit impact", simulationRequest ? money(result.incremental_contribution, currency) : "Not calculated", simulationRequest ? (result.beats_baseline ? "Above baseline" : "Below baseline") : "Requires current inputs"],
           ].map(([label, value, note]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface)", boxShadow: "0 8px 22px rgba(15,35,70,.04)" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div><div style={{ fontSize: 20, fontWeight: 900, marginTop: 7 }}>{value}</div><div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>{note}</div></div>)}
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: 12 }}>
+          <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
+            <div style={{ fontSize: 14, fontWeight: 900 }}>Scenario builder</div>
+            <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 10.5 }}>Configure the commercial outcome you want to test.</div>
+            <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+              <label style={{ fontSize: 10.5, fontWeight: 800 }}>Campaign name<input style={{ ...input, marginTop: 4 }} value={name} onChange={event => setName(event.target.value)} /></label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <label style={{ fontSize: 10.5, fontWeight: 800 }}>Discount %<input type="number" min={0} max={100} style={{ ...input, marginTop: 4 }} value={discount} onChange={event => setDiscount(event.target.value)} /></label>
+                <label style={{ fontSize: 10.5, fontWeight: 800 }}>Expected lift %<input type="number" min={-100} max={1000} style={{ ...input, marginTop: 4 }} value={lift} onChange={event => setLift(event.target.value)} /></label>
+                <label style={{ fontSize: 10.5, fontWeight: 800 }}>Baseline orders<input type="number" min={1} style={{ ...input, marginTop: 4 }} value={orders} onChange={event => setOrders(event.target.value)} /></label>
+                <label style={{ fontSize: 10.5, fontWeight: 800 }}>Duration days<input type="number" min={1} style={{ ...input, marginTop: 4 }} value={days} onChange={event => setDays(event.target.value)} /></label>
+              </div>
+              <label style={{ fontSize: 10.5, fontWeight: 800 }}>Protected margin floor %<input type="number" min={0} max={100} style={{ ...input, marginTop: 4 }} value={floor} onChange={event => setFloor(event.target.value)} /></label>
+              <div style={{ padding: "9px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface2)", fontSize: 10.5, color: "var(--muted)" }}><strong style={{ color: "var(--text)" }}>{selected.length} products</strong> · {targetChannels.map(channel => channel.replaceAll("_"," ").toUpperCase()).join(", ") || "No channel selected"}</div>
+              <button type="button" disabled={busy || !selected.length || !commercialInputsReady} onClick={runSimulation} style={{ border: 0, borderRadius: 8, padding: "10px 14px", background: "#061B49", color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: !commercialInputsReady || !selected.length ? "not-allowed" : "pointer", opacity: !commercialInputsReady || !selected.length ? .5 : 1 }}><FlaskConical size={14} style={{ verticalAlign: "middle", marginInlineEnd: 6 }} />{simulationRequest ? "Recalculate simulation" : "Run simulation"}</button>
+              <button type="button" onClick={resetSimulation} style={{ border: 0, background: "transparent", color: "var(--accent-text)", fontFamily: "inherit", fontWeight: 750, fontSize: 11.5, cursor: "pointer" }}>Reset to contract baseline</button>
+            </div>
+          </section>
+          <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 12, minWidth: 0 }}>
+            <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--surface)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}><div><div style={{ fontSize: 14, fontWeight: 900 }}>Scenario comparison</div><div style={{ marginTop: 3, color: "var(--muted)", fontSize: 10.5 }}>Downside, expected, and upside demand outcomes</div></div>{simulationRequest && <span style={{ color: simulationStale ? "#A16207" : "#087F5B", fontSize: 10.5, fontWeight: 800 }}>{simulationStale ? "Results need recalculation" : "Current simulation"}</span>}</div>
+              {simulationRequest ? <div style={{ display: "grid", gap: 14, marginTop: 20 }}>{sensitivity.map((scenario,index) => { const max=Math.max(1,...sensitivity.map(item=>Math.abs(item.result.campaign_contribution))); const width=Math.max(5,Math.abs(scenario.result.campaign_contribution)/max*100); return <div key={scenario.label} style={{ display: "grid", gridTemplateColumns: "70px minmax(0,1fr) 110px", gap: 10, alignItems: "center" }}><strong style={{ fontSize: 11 }}>{scenario.label}</strong><div style={{ height: 22, borderRadius: 6, background: "var(--surface2)", overflow: "hidden" }}><div style={{ width: `${width}%`, height: "100%", background: index===1?"#2563EB":index===2?"#EF681A":"#94A3B8", borderRadius: 6 }} /></div><span style={{ textAlign: "right", fontSize: 11.5, fontWeight: 800 }}>{money(scenario.result.campaign_contribution,currency)}</span></div>})}</div> : <div style={{ minHeight: 150, display: "grid", placeItems: "center", color: "var(--muted)", fontSize: 12 }}>Run the scenario to compare outcomes.</div>}
+            </section>
+            <section style={{ border: `1px solid ${simulationRequest ? result.beats_baseline && result.meets_margin_floor ? "#BBF7D0" : "#FED7AA" : "var(--border)"}`, borderRadius: 12, padding: 15, background: simulationRequest ? result.beats_baseline && result.meets_margin_floor ? "#F0FDF4" : "#FFF7ED" : "var(--surface)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}><div><div style={{ fontSize: 12, fontWeight: 900 }}>Recommendation summary</div><strong style={{ display: "block", marginTop: 6, fontSize: 15 }}>{!simulationRequest ? "No scenario calculated" : result.beats_baseline && result.meets_margin_floor ? "This scenario is ready for merchant review" : "Revise this scenario before approval"}</strong><span style={{ display: "block", marginTop: 4, color: "var(--muted)", fontSize: 11 }}>{!simulationRequest ? "Complete the builder and run a simulation." : `${result.eligible_products} eligible products · ${result.expected_orders} expected orders · ${resultMargin == null ? "margin unavailable" : `${resultMargin.toFixed(1)}% projected contribution margin`}`}</span></div>{simulationRequest && <span style={{ padding: "5px 8px", borderRadius: 999, background: result.approval_ready ? "#DCFCE7" : "#FFEDD5", color: result.approval_ready ? "#166534" : "#9A3412", fontSize: 10.5, fontWeight: 850 }}>{result.approval_ready ? "Evidence ready" : "Planning estimate"}</span>}</div>
+            </section>
+          </div>
+        </div>
+        <details style={{ border: "1px solid var(--border)", borderRadius: 11, background: "var(--surface2)" }}>
+          <summary style={{ padding: "12px 14px", cursor: "pointer", color: "var(--text)", fontSize: 12.5, fontWeight: 850 }}>Products, channels, and contract assumptions</summary>
+          <div style={{ padding: "4px 14px 14px" }}>
         <div
           style={{
             display: "grid",
@@ -530,11 +585,13 @@ export function PromotionProfitabilityWorkspace({
           {!!validationErrors.length && <div style={{ color: "#B42318", fontSize: 12, marginBottom: 10 }}><strong>Fix these inputs before simulating:</strong><ul style={{ margin: "6px 0 0", paddingInlineStart: 20 }}>{validationErrors.map(message => <li key={message}>{message}</li>)}</ul></div>}
           {simulationStale && <div style={{ color: "#A16207", fontSize: 12, marginBottom: 10 }}><strong>Results out of date.</strong> An assumption, product, or channel changed. Recalculate before saving or approval.</div>}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <button type="button" disabled={busy || !selected.length || !commercialInputsReady} onClick={() => { setSimulationRequest({ inputs: { ...inputs }, selected: [...selected], signature: inputSignature, calculatedAt: new Date().toISOString() }); setError(null); }} style={{ border: 0, borderRadius: 8, padding: "10px 14px", background: "#EF681A", color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: !commercialInputsReady || !selected.length ? "not-allowed" : "pointer", opacity: !commercialInputsReady || !selected.length ? .5 : 1 }}><FlaskConical size={14} style={{ verticalAlign: "middle", marginInlineEnd: 6 }} />{simulationRequest ? "Recalculate simulation" : "Run simulation"}</button>
-            <button type="button" onClick={() => { setDiscount("20"); setPlatformFunding(contract?.promotion_funding_platform_pct == null ? "" : String(contract.promotion_funding_platform_pct)); setCommission(contract?.commission_rate_pct == null ? "" : String(contract.commission_rate_pct)); setVatOnFees(contract?.vat_on_fees_pct == null ? "" : String(contract.vat_on_fees_pct)); setPaymentFee(contract?.payment_fee_pct == null ? "" : String(contract.payment_fee_pct)); setFixedOrderFee(contract?.fixed_order_fee == null ? "" : String(contract.fixed_order_fee)); setCommissionBase(contract?.commission_base ?? "unknown"); setLift("25"); setOrders("100"); setDays("7"); setFloor("15"); setSimulationRequest(null); setError(null); }} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "9px 13px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>Reset</button>
+            <button type="button" disabled={busy || !selected.length || !commercialInputsReady} onClick={runSimulation} style={{ border: 0, borderRadius: 8, padding: "10px 14px", background: "#EF681A", color: "#fff", fontFamily: "inherit", fontWeight: 850, cursor: !commercialInputsReady || !selected.length ? "not-allowed" : "pointer", opacity: !commercialInputsReady || !selected.length ? .5 : 1 }}><FlaskConical size={14} style={{ verticalAlign: "middle", marginInlineEnd: 6 }} />{simulationRequest ? "Recalculate simulation" : "Run simulation"}</button>
+            <button type="button" onClick={resetSimulation} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "9px 13px", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>Reset</button>
             <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{simulationRequest && !simulationStale ? `Calculated ${new Date(simulationRequest.calculatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "No current result"}</span>
           </div>
         </div>
+          </div>
+        </details>
         {simulationRequest ? <>
         <div
           style={{

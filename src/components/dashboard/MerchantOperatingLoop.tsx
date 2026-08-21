@@ -367,7 +367,7 @@ export function MerchantOperatingLoop({
       </section>
     );
   return (
-    <section data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
+    <section className="ps-manager-workspace" data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
       <Header
         eyebrow={tr("AI Store Manager", "مدير المتجر بالذكاء الاصطناعي", "Gestionnaire de boutique IA")}
         title={tr("Automate store operations with oversight", "أتمت عمليات المتجر مع الإشراف", "Automatisez les opérations avec supervision")}
@@ -387,6 +387,7 @@ export function MerchantOperatingLoop({
         </button>
       )}
       <div
+        className="ps-manager-kpis"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit,minmax(155px,1fr))",
@@ -409,11 +410,20 @@ export function MerchantOperatingLoop({
         ))}
       </div>
 
-      <div id="money-identified" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
+      <div className="ps-manager-workflow" aria-label="Product update workflow">
+        {[
+          ["1", "AI suggests changes", `${openManagerTasks.length} task${openManagerTasks.length === 1 ? "" : "s"} prepared`],
+          ["2", "Review and approve", `${approvalTasks.length} awaiting approval`],
+          ["3", "Apply updates", "Only within channel permissions"],
+          ["4", "Monitor impact", "Evidence and outcomes retained"],
+        ].map(([step, label, note]) => <div key={step}><i>{step}</i><span><b>{label}</b><small>{note}</small></span></div>)}
+      </div>
+
+      <div className="ps-manager-outcome" id="money-identified" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
         <OutcomeProofPanel proof={data?.outcome_proof}/>
       </div>
 
-      <div id="attention-inbox" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
+      <div className="ps-manager-attention" id="attention-inbox" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
         <div
           style={{
             display: "flex",
@@ -459,7 +469,7 @@ export function MerchantOperatingLoop({
         <Items items={visible} busy={busy} onUpdate={update} onAsk={askCopilot} />
       </div>
 
-      <div id="management-desk" tabIndex={-1} style={{ ...subCard, scrollMarginTop: 18, outline: "none" }}>
+      <div className="ps-manager-desk" id="management-desk" tabIndex={-1} style={{ ...subCard, scrollMarginTop: 18, outline: "none" }}>
         <div
           style={{
             display: "flex",
