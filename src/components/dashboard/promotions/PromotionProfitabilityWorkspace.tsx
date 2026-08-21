@@ -336,6 +336,14 @@ export function PromotionProfitabilityWorkspace({
         </span>
       </div>
       <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
+          {[
+            ["Projected contribution", simulationRequest ? money(result.campaign_contribution, currency) : "Run simulation", "After verified campaign costs"],
+            ["Promotion discount", `${discount}%`, "Current scenario assumption"],
+            ["Expected lift", `${n(lift) >= 0 ? "+" : ""}${lift}%`, "Merchant estimate, not a guarantee"],
+            ["Net profit impact", simulationRequest ? money(result.incremental_contribution, currency) : "Not calculated", simulationRequest ? (result.beats_baseline ? "Above baseline" : "Below baseline") : "Requires current inputs"],
+          ].map(([label, value, note]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface)", boxShadow: "0 8px 22px rgba(15,35,70,.04)" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div><div style={{ fontSize: 20, fontWeight: 900, marginTop: 7 }}>{value}</div><div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>{note}</div></div>)}
+        </div>
         <div
           style={{
             display: "grid",

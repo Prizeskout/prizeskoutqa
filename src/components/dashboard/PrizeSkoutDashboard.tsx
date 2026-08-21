@@ -5758,14 +5758,16 @@ export function PrizeSkoutDashboard() {
             : "Your financial command center for margin, payouts, risk, and next actions."
         : tab === "manager"
           ? lang === "ar"
-            ? "العمل الذي يتولاه PrizeSkout والقرارات التي تحتاج موافقتك"
+            ? "جهّز أعمال الكتالوج والتسعير والمخزون مع موافقة التاجر"
             : lang === "fr"
-              ? "Travail pris en charge par PrizeSkout et décisions à valider"
-              : "Work PrizeSkout is handling and decisions that need your approval"
+              ? "Préparez le catalogue, les prix et le stock avec validation"
+              : "Prepare catalog, pricing, inventory, and content work with merchant approval"
           : tab === "promotions"
             ? ui.promoSub
             : tab === "rules"
-              ? t.subR
+              ? sidebarNav === "copilot"
+                ? "Financial answers, evidence-backed insights, and merchant-controlled actions."
+                : t.subR
               : tab === "settings"
                 ? t.settingsSub
                 : tab === "history"
@@ -5784,10 +5786,10 @@ export function PrizeSkoutDashboard() {
             : "Overview"
         : tab === "manager"
           ? lang === "ar"
-            ? "المهام"
+            ? "مدير المتجر"
             : lang === "fr"
-              ? "Tâches"
-              : "Tasks"
+              ? "Gestionnaire IA"
+              : "AI Store Manager"
           : tab === "promotions"
             ? lang === "ar"
               ? "محاكي العروض"
@@ -5795,7 +5797,7 @@ export function PrizeSkoutDashboard() {
                 ? "Simulateur de promotions"
                 : "Promo Simulator"
             : tab === "rules"
-              ? t.navR
+              ? sidebarNav === "copilot" ? "CFO Copilot" : t.navR
               : tab === "settings"
                 ? t.settingsLabel
                 : tab === "history"
@@ -5818,7 +5820,6 @@ export function PrizeSkoutDashboard() {
   const openSidebarDestination = (item: (typeof navDefs)[number]) => {
     setSidebarNav(item.id);
     setTab(item.tab);
-    if (item.id === "copilot") openAssistantDrawer();
     if(item.targetId)window.setTimeout(()=>document.getElementById(item.targetId!)?.scrollIntoView({behavior:"smooth",block:"start"}),50);
   };
   const handleSignOut=async()=>{
@@ -6534,7 +6535,7 @@ export function PrizeSkoutDashboard() {
             </button>
           </div>
         </header>
-        {sidebarNav === "manager" && <StoreManagerCommandBar
+        {false && sidebarNav === "manager" && <StoreManagerCommandBar
           context={headerTitle}
           examples={activeAssistantContext.examples}
           lang={lang}
@@ -6551,7 +6552,7 @@ export function PrizeSkoutDashboard() {
             );
           }}
         />}
-        {(["manager", "promotions", "rules"] as Tab[]).includes(tab) && (
+        {false && (["manager", "promotions", "rules"] as Tab[]).includes(tab) && (
           <nav
             aria-label="Automation workspaces"
             style={{
@@ -9962,11 +9963,16 @@ export function PrizeSkoutDashboard() {
                   background: "var(--surface)",
                 }}
               >
-                <h3 style={{ margin: 0 }}>Connect or import a catalogue first</h3>
+                <div style={{ fontSize: 11, fontWeight: 900, color: OG, letterSpacing: ".08em" }}>PROMOTION SIMULATOR</div>
+                <h2 style={{ margin: "6px 0 5px", fontSize: 25 }}>Simulate impact before you spend</h2>
                 <p style={{ color: "var(--muted)", lineHeight: 1.6, marginBottom: 14 }}>
                   Promo Simulator needs product prices and margin evidence before it can model a
                   safe campaign.
                 </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10, margin: "18px 0" }}>
+                  {[ ["Projected contribution", "Not calculated"], ["Promotion cost", "Not calculated"], ["Expected lift", "Not calculated"], ["Net profit impact", "Not calculated"] ].map(([label, value]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface2)" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 19, fontWeight: 900, marginTop: 7 }}>{value}</div><div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>Connect verified catalog evidence</div></div>)}
+                </div>
+                <h3 style={{ margin: "20px 0 4px" }}>Connect or import a catalogue first</h3>
                 <button
                   type="button"
                   onClick={() => setTab("vault")}
@@ -10026,11 +10032,10 @@ export function PrizeSkoutDashboard() {
                   <h2
                     style={{ margin: 0, fontSize: 20.5, fontWeight: 800, letterSpacing: "-0.3px" }}
                   >
-                    CFO Copilot and Shop Manager
+                    CFO Copilot
                   </h2>
                   <span style={{ fontSize: 15, color: "var(--muted)" }}>
-                    Ask questions about profit, margins and payouts—or tell PrizeSkout to manage
-                    products, prices, stock, categories and other connected commerce operations.
+                    Ask smarter questions about profit, payouts, risk, and the next financial decision.
                   </span>
                 </div>
                 <span
@@ -10051,6 +10056,20 @@ export function PrizeSkoutDashboard() {
                     ? "Store connected · changes require your approval"
                     : "Connect a store to enable live actions"}
                 </span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
+                {[
+                  ["Cost evidence", importedProducts.length ? `${Math.round((storeOpportunity.verified / importedProducts.length) * 100)}%` : "No data", `${storeOpportunity.verified} verified products`],
+                  ["Margin attention", String(storeOpportunity.atRisk.length), "Verified products below target"],
+                  ["Recovered revenue", `${currency} ${recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, "Recorded recovery outcomes"],
+                  ["Forecast readiness", payoutData ? "Ready" : "Awaiting data", payoutData ? "Latest payout check available" : "Run a payout check first"],
+                ].map(([label, value, note]) => (
+                  <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface)", boxShadow: "0 8px 22px rgba(15,35,70,.04)" }}>
+                    <div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, marginTop: 7 }}>{value}</div>
+                    <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>{note}</div>
+                  </div>
+                ))}
               </div>
               <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
                 {[
@@ -15421,6 +15440,7 @@ export function PrizeSkoutDashboard() {
         <button
           type="button"
           data-tour="support"
+          title={t.supportLabel}
           aria-label={tr("Open support", "افتح الدعم", "Ouvrir l’assistance")}
           onClick={() => setSupportOpen(true)}
           style={{
@@ -15429,22 +15449,24 @@ export function PrizeSkoutDashboard() {
             bottom: toast ? 220 : 88,
             zIndex: 310,
             border: 0,
-            borderRadius: 999,
-            padding: "13px 18px",
+            width: 54,
+            height: 54,
+            borderRadius: "50%",
+            padding: 0,
             background: OG,
             color: "#fff",
-            boxShadow: "0 12px 32px rgba(0,0,0,.2)",
+            boxShadow: "0 12px 30px rgba(239,104,26,.28)",
             fontFamily: "inherit",
             fontSize: 14,
             fontWeight: 800,
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            justifyContent: "center",
             transition: "bottom .2s ease",
           }}
         >
-          <span aria-hidden="true">●</span> {tr("Support", "الدعم", "Assistance")}
+          <MessageSquareText aria-hidden="true" size={22} strokeWidth={2.2} />
         </button>
       )}
       {assistantDrawerOpen && (

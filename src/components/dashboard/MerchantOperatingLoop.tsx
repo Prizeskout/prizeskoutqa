@@ -369,35 +369,9 @@ export function MerchantOperatingLoop({
   return (
     <section data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
       <Header
-        eyebrow={tr("Your daily store brief", "موجز متجرك اليومي", "Votre briefing quotidien")}
-        title={
-          urgent.length
-            ? tr(
-                `${urgent.length} important item${urgent.length === 1 ? " needs" : "s need"} your attention`,
-                `${urgent.length} ${urgent.length === 1 ? "عنصر مهم يحتاج" : "عناصر مهمة تحتاج"} إلى انتباهك`,
-                `${urgent.length} élément${urgent.length === 1 ? " important demande" : "s importants demandent"} votre attention`,
-              )
-            : approvalTasks.length
-              ? tr(
-                  `${approvalTasks.length} management task${approvalTasks.length === 1 ? " is" : "s are"} waiting for you`,
-                  `${approvalTasks.length} ${approvalTasks.length === 1 ? "مهمة إدارية تنتظر" : "مهام إدارية تنتظر"} موافقتك`,
-                  `${approvalTasks.length} tâche${approvalTasks.length === 1 ? " de gestion attend" : "s de gestion attendent"} votre validation`,
-                )
-              : tr("Your store management queue is under control", "قائمة إدارة متجرك تحت السيطرة", "Votre file de gestion est sous contrôle")
-        }
-        sub={
-          data?.profit_brief?.order_count != null
-            ? tr(
-                `PrizeSkout checked ${data.profit_brief.order_count} recent orders and organized the work that needs attention.`,
-                `راجع PrizeSkout عدد ${data.profit_brief.order_count} من الطلبات الحديثة ونظّم الأعمال التي تحتاج إلى انتباهك.`,
-                `PrizeSkout a vérifié ${data.profit_brief.order_count} commandes récentes et organisé les tâches à examiner.`,
-              )
-            : tr(
-                "PrizeSkout is organizing connected products, orders, promotions, inventory and payouts.",
-                "ينظّم PrizeSkout المنتجات والطلبات والعروض والمخزون والمدفوعات المتصلة.",
-                "PrizeSkout organise les produits, commandes, promotions, stocks et versements connectés.",
-              )
-        }
+        eyebrow={tr("AI Store Manager", "مدير المتجر بالذكاء الاصطناعي", "Gestionnaire de boutique IA")}
+        title={tr("Automate store operations with oversight", "أتمت عمليات المتجر مع الإشراف", "Automatisez les opérations avec supervision")}
+        sub={tr("Prepare catalog, pricing, inventory, and content work across connected channels—with merchant approval before protected changes.", "جهّز أعمال الكتالوج والتسعير والمخزون والمحتوى عبر القنوات المتصلة مع موافقة التاجر قبل التغييرات المحمية.", "Préparez le catalogue, les prix, le stock et le contenu avec validation avant toute modification protégée.")}
       />
       {urgent.length > 0 && (
         <button
@@ -1171,11 +1145,11 @@ function Badge({ text, color }: { text: string; color: string }) {
   );
 }
 const card: React.CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 18,
-  boxShadow: "var(--shadow)",
-  padding: "24px 26px",
+  background: "transparent",
+  border: "none",
+  borderRadius: 0,
+  boxShadow: "none",
+  padding: 0,
   display: "flex",
   flexDirection: "column",
 };
