@@ -64,6 +64,7 @@ try {
 
       await page.getByRole("button", { name: "Evidence & History", exact: true }).click();
       await page.getByRole("heading", { name: "Evidence Inbox", exact: true }).waitFor({ timeout: 20_000 });
+      await page.getByRole("heading", { name: "Evidence Library", exact: true }).waitFor({ timeout: 20_000 });
 
       await page.getByRole("button", { name: "Integrations", exact: true }).click();
       await page.getByText("Zid", { exact: true }).first().waitFor();

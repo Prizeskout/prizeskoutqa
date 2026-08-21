@@ -12,10 +12,12 @@ export const Route=createFileRoute("/api/evidence/reviews")({server:{handlers:{
   GET:async({request})=>{try{
     const url=new URL(request.url),merchantId=(request.headers.get("x-merchant-id")??"").trim(),accessCode=request.headers.get("x-access-code")??"";
     if(!await verifyMerchantAccess(merchantId,accessCode))return json({error:"Unauthorized"},403);
-    const db=supabaseAdmin as any,draftId=url.searchParams.get("draft_id");
+    const db=supabaseAdmin as any,draftId=url.searchParams.get("draft_id"),evidenceId=url.searchParams.get("evidence_id");
     const {data:jobs,error:jobsError}=await db.from("ps_evidence_processing_jobs").select("id,evidence_item_id,state,attempts,max_attempts,last_error,created_at,updated_at").eq("account_id",merchantId).eq("merchant_id",merchantId).order("updated_at",{ascending:false}).limit(200);
     if(jobsError)throw new Error(jobsError.message);
     const {data:lastRun}=await db.from("ps_evidence_processor_runs").select("state,started_at,finished_at,error_message").order("started_at",{ascending:false}).limit(1).maybeSingle();
+    const {data:evidenceItems,error:evidenceItemsError}=await db.from("ps_merchant_evidence_items").select("id,source_kind,source_provider,document_kind,observed_at,received_at,media_type,original_filename,storage_reference,content_sha256,source_metadata").eq("account_id",merchantId).eq("merchant_id",merchantId).order("received_at",{ascending:false}).limit(500);
+    if(evidenceItemsError)throw new Error(evidenceItemsError.message);
     let query=db.from("ps_evidence_review_drafts").select("id,evidence_item_id,document_kind,platform,extraction_payload,source_citations,missing_information,warnings,confidence,status,created_at,revision").eq("account_id",merchantId).eq("merchant_id",merchantId).order("created_at",{ascending:false});
     if(draftId)query=query.eq("id",draftId);else query=query.limit(100);
     const {data:drafts,error}=await query;if(error)throw new Error(error.message);
@@ -51,7 +53,11 @@ export const Route=createFileRoute("/api/evidence/reviews")({server:{handlers:{
     const failedItemIds=failed.map((job:any)=>job.evidence_item_id),{data:failedItems}=failedItemIds.length?await db.from("ps_merchant_evidence_items").select("id,original_filename,received_at").eq("account_id",merchantId).in("id",failedItemIds):{data:[]};
     const failedItemMap=new Map((failedItems??[]).map((item:any)=>[item.id,item]));
     const lastHeartbeat=lastRun?.finished_at??lastRun?.started_at??null,stalled=Boolean((queued.length||leased.length)&&(!lastHeartbeat||Date.now()-Date.parse(lastHeartbeat)>15*60_000));
-    return json({ok:true,reviews,processing_status:{queued:queued.length,processing:leased.length,completed:(jobs??[]).filter((job:any)=>job.state==="completed").length,failed:failed.length,stalled,last_heartbeat:lastHeartbeat,last_run_state:lastRun?.state??null,failed_documents:failed.map((job:any)=>({...job,original_filename:(failedItemMap.get(job.evidence_item_id) as any)?.original_filename??null}))}});
+    const jobMap=new Map((jobs??[]).map((job:any)=>[job.evidence_item_id,job]));
+    const latestDraftMap=new Map<string,any>();for(const draft of drafts??[]){if(!latestDraftMap.has(draft.evidence_item_id))latestDraftMap.set(draft.evidence_item_id,draft);}
+    const evidenceLibrary=(evidenceItems??[]).map((item:any)=>{const job=jobMap.get(item.id) as any,draft=latestDraftMap.get(item.id);return{id:item.id,source_kind:item.source_kind,source_provider:item.source_provider,document_kind:item.document_kind,observed_at:item.observed_at,received_at:item.received_at,media_type:item.media_type,original_filename:item.original_filename,content_sha256:item.content_sha256,original_retained:Boolean(storagePath(item.storage_reference)),processing_state:job?.state??(draft?"completed":"registered"),review_state:draft?.status??null};});
+    let evidence_original_url:string|null=null;if(evidenceId){const target=(evidenceItems??[]).find((item:any)=>item.id===evidenceId),path=storagePath(target?.storage_reference??null);if(path){const {data}=await supabaseAdmin.storage.from("merchant-evidence").createSignedUrl(path,300);evidence_original_url=data?.signedUrl??null;}}
+    return json({ok:true,reviews,evidence_library:evidenceLibrary,evidence_original_url,processing_status:{queued:queued.length,processing:leased.length,completed:(jobs??[]).filter((job:any)=>job.state==="completed").length,failed:failed.length,stalled,last_heartbeat:lastHeartbeat,last_run_state:lastRun?.state??null,failed_documents:failed.map((job:any)=>({...job,original_filename:(failedItemMap.get(job.evidence_item_id) as any)?.original_filename??null}))}});
   }catch(error){return json({error:error instanceof Error?error.message:"Reviews could not be loaded."},422);}},
   POST:async({request})=>{try{
     const body=await request.json() as Record<string,unknown>,merchantId=String(body.merchant_id??"").trim(),accessCode=String(body.access_code??"");

@@ -44,6 +44,7 @@ import { MarginIntelligenceSummary, RecoveryDashboardSummary } from "@/component
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { EvidenceReviewWorkspace } from "@/components/dashboard/evidence/EvidenceReviewWorkspace";
 import { EvidenceSourceCoverage } from "@/components/dashboard/evidence/EvidenceSourceCoverage";
+import { EvidenceLibrary } from "@/components/dashboard/evidence/EvidenceLibrary";
 import {
   classifyResult,
   reconcile,
@@ -13023,6 +13024,7 @@ export function PrizeSkoutDashboard() {
                 </p>
               </div>
               <EvidenceSourceCoverage />
+              <EvidenceLibrary />
               <EvidenceReviewWorkspace />
             </section>
 
