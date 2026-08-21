@@ -40,6 +40,8 @@ import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControl
 import { ZidProfitBrief } from "@/components/dashboard/ZidProfitBrief";
 import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
 import { StoreManagerCommandBar } from "@/components/dashboard/StoreManagerCommandBar";
+import { EvidenceReviewWorkspace } from "@/components/dashboard/evidence/EvidenceReviewWorkspace";
+import { EvidenceSourceCoverage } from "@/components/dashboard/evidence/EvidenceSourceCoverage";
 import {
   classifyResult,
   reconcile,
@@ -70,6 +72,7 @@ type Tab =
   | "history"
   | "settings";
 type SidebarNavId =
+  | "overview"
   | "catalog"
   | "margin"
   | "alerts"
@@ -83,6 +86,7 @@ type SidebarNavId =
   | "settings";
 
 const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
+  overview: "analytics",
   catalog: "catalog",
   margin: "analytics",
   alerts: "today",
@@ -99,7 +103,7 @@ const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
 function sidebarNavFromTab(tab: Tab): SidebarNavId {
   if (tab === "catalog") return "catalog";
   if (tab === "vault") return "integrations";
-  if (tab === "analytics") return "margin";
+  if (tab === "analytics") return "overview";
   if (tab === "today") return "alerts";
   if (tab === "promotions") return "promotions";
   if (tab === "rules") return "defend";
@@ -121,9 +125,9 @@ const DASHBOARD_TABS: readonly Tab[] = [
 ];
 
 function dashboardTabFromUrl(): Tab {
-  if (typeof window === "undefined") return "today";
+  if (typeof window === "undefined") return "analytics";
   const workspace = new URLSearchParams(window.location.search).get("workspace");
-  return DASHBOARD_TABS.includes(workspace as Tab) ? (workspace as Tab) : "today";
+  return DASHBOARD_TABS.includes(workspace as Tab) ? (workspace as Tab) : "analytics";
 }
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
@@ -219,13 +223,13 @@ const CSS = `
     /* Slate neutrals on a white page, matching the marketing site. The previous
        ramp mixed warm surfaces (#F6F6F4/#FBFBFA) with cool grey text and borders,
        which is what made light mode read muddy. */
-    --bg:#FFFFFF;--surface:#FFFFFF;--surface2:#F8FAFC;--border:#E2E8F0;
-    --text:#0F172A;--muted:#475569;--accent:#EF681A;--green:#10B981;
+    --bg:#F8FAFC;--surface:#FFFFFF;--surface2:#F6F8FB;--border:#E2E8F0;
+    --text:#071633;--muted:#526078;--accent:#EF681A;--green:#10B981;--navy:#061B49;
     /* Brand orange is only 2.9:1 on light surfaces, so small text uses a darker
        step. Fills and borders keep --accent. */
     --accent-text:#C2410C;
     --term:#0D1117;--term-border:#222B38;--term-text:#C9D1D9;
-    --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px -12px rgba(15,23,42,.10);
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 10px 28px -16px rgba(15,23,42,.18);
     --shadow-lg:0 24px 64px rgba(15,23,42,.18);
     --px:30px;
   }
@@ -236,6 +240,17 @@ const CSS = `
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
     --shadow-lg:0 24px 64px rgba(0,0,0,.6);
   }
+  .ps-db-header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(18px)}
+  .ps-db-section{width:100%;max-width:1540px;margin-inline:auto;box-sizing:border-box}
+  .ps-db section[id],.ps-db [data-workspace-card]{scroll-margin-top:104px}
+  .ps-dashboard-sidebar{background:linear-gradient(180deg,#061B49 0%,#031337 100%)!important;border-inline-end:0!important;color:#fff!important;box-shadow:12px 0 34px rgba(6,27,73,.10)}
+  .ps-dashboard-sidebar nav button{color:rgba(255,255,255,.72)!important}
+  .ps-dashboard-sidebar nav button[aria-current="page"]{background:rgba(255,255,255,.12)!important;color:#fff!important;box-shadow:inset 3px 0 0 #EF681A}
+  .ps-dashboard-sidebar nav button:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
+  .ps-dashboard-sidebar-footer{border-top:1px solid rgba(255,255,255,.10);padding-top:14px}
+  .ps-db .table-scroll{border-radius:12px}
+  .ps-db .table-scroll table thead{position:sticky;top:0;z-index:1}
+  .ps-evidence-workspace{display:grid;gap:16px;padding:20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
   .ps-db input[type=range]{accent-color:var(--accent);height:28px;cursor:pointer}
   .ps-db button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .ps-pill-btn:hover{border-color:var(--accent)!important;color:var(--accent)!important}
@@ -601,11 +616,11 @@ const T = {
       "Connect Talabat, Jahez, or any delivery aggregator and PrizeSkout starts pushing margin-safe prices automatically — no more silent margin leaks.",
     payoutCheckTitle: "Check Your Platform Payout",
     payoutCheckDesc:
-      "Find missing or incorrect platform payments by comparing sales, contracted charges, settlement statements, and bank receipts.",
+      "Find missing or incorrect platform payments by comparing sales, contracted charges, settlement statements, and merchant receipt confirmations.",
     payoutCheckBtn: "Check Expected Payout",
     payoutCheckBtnLoading: "Checking your orders…",
     payoutCheckLiveOnlyNote:
-      "Uses connected Talabat order data. Add a settlement statement or bank receipt to confirm the amount actually received.",
+      "Uses connected Talabat order data. Add a settlement statement and optionally confirm whether the payout arrived.",
     payoutCheckOrders: "Orders Checked",
     payoutCheckSubtotal: "Food Sales (excl. delivery fee)",
     payoutCheckRate: "Your Commission Rate",
@@ -3795,7 +3810,7 @@ export function PrizeSkoutDashboard() {
         if (!response.ok || !result.ok) throw new Error(result.error ?? "The automatic payout check could not run.");
         setPayoutData(result); setPayoutDocuments([]); setAuditResult(null);
         const metrics = { period: `${days} days`, platform: "TALABAT", orders: result.order_count, sales: result.sub_total_sum, expected_payout: result.expected_payout, claims_ready_payout: result.claims_ready_payout ?? null, confidence: result.payout_confidence ?? "estimate" };
-        const reply = `I completed the ${days}-day Talabat payout check. This is the expected payout from connected order evidence; upload the platform statement and bank settlement evidence here for full reconciliation.`;
+        const reply = `I completed the ${days}-day Talabat payout check. This is the expected payout from connected order evidence; add the platform statement here to compare it, and optionally confirm whether the payout arrived.`;
         const operation: Record<string, unknown> = { _type: "operation", operation: "automatic_payout_check", platform: "talabat", summary: reply, requires_confirmation: false, risk_level: "read", metrics };
         setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply);
         appendCpThread("assistant", reply, "evidence", { kind: "payout_check", operation, metrics, result });
@@ -3830,6 +3845,8 @@ export function PrizeSkoutDashboard() {
           body: JSON.stringify({
             prompt,
             requested_role: requestedRole,
+            merchant_id:localStorage.getItem("ps_merchant_id")??undefined,
+            access_code:localStorage.getItem("ps_access_code")??undefined,
             context: {
               previous_operation: previousOperation ?? undefined,
               products: previousProducts.length ? previousProducts : catalogContext,
@@ -5213,13 +5230,16 @@ export function PrizeSkoutDashboard() {
     description: string,
   ): Promise<{ ok: true; result: PayoutCheckData } | { ok: false; error: string }> => {
     try {
+      const original=new FormData();
+      original.set("merchant_id",mid);original.set("access_code",ac);original.set("source_provider",platform);original.set("file",file);
+      const retained=await fetch("/api/evidence/intake",{method:"POST",body:original});
+      const retainedResult=await retained.json() as {ok?:boolean;error?:string};
+      if(!retained.ok||!retainedResult.ok)return {ok:false,error:retainedResult.error??"Could not retain the original evidence file."};
       const lowerName = file.name.toLowerCase();
       const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
       const isXlsx =
         lowerName.endsWith(".xlsx") ||
-        lowerName.endsWith(".xls") ||
-        file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-        file.type === "application/vnd.ms-excel";
+        file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       const body: Record<string, unknown> = {
         merchant_id: mid,
         access_code: ac,
@@ -5316,13 +5336,9 @@ export function PrizeSkoutDashboard() {
     periodEnd: string,
     platform: string,
     evidence: {
-      transactionDate: string;
-      bankReference: string;
       settlementReference:string;
       depositType: string;
       currency: string;
-      fileName?: string;
-      sha256?: string;
     },
   ) => {
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
@@ -5337,10 +5353,6 @@ export function PrizeSkoutDashboard() {
     }
     if (!periodStart || !periodEnd) {
       setPayoutError("Enter a start and end date for the manual entry.");
-      return;
-    }
-    if (!evidence.transactionDate) {
-      setPayoutError("Enter the date the deposit appeared on the bank statement.");
       return;
     }
     setPayoutError(null);
@@ -5371,13 +5383,10 @@ export function PrizeSkoutDashboard() {
           period_start: periodStart,
           period_end: periodEnd,
           upload_platform: platform,
-          bank_transaction_date: evidence.transactionDate,
-          bank_reference: evidence.bankReference,
+          confirmation_date: periodEnd,
           settlement_reference:evidence.settlementReference,
           deposit_type: evidence.depositType,
           currency: evidence.currency,
-          evidence_file_name: evidence.fileName,
-          evidence_sha256: evidence.sha256,
         }),
       });
       const data = (await res.json()) as {
@@ -5388,8 +5397,7 @@ export function PrizeSkoutDashboard() {
         period_end?: string;
         platform?: string | null;
         classification?: PayoutCheckClassification;
-        bank_transaction_date?: string;
-        bank_reference?: string;
+        confirmation_date?: string;
         settlement_reference?:string|null;
         deposit_type?: string;
         currency?: string;
@@ -5425,8 +5433,7 @@ export function PrizeSkoutDashboard() {
                     received_amount: data.received_amount,
                     period_start: data.period_start,
                     period_end: data.period_end,
-                    bank_transaction_date: data.bank_transaction_date,
-                    bank_reference: data.bank_reference,
+                    confirmation_date: data.confirmation_date,
                     settlement_reference:data.settlement_reference,
                     deposit_type: data.deposit_type,
                     currency: data.currency,
@@ -5640,6 +5647,13 @@ export function PrizeSkoutDashboard() {
     badge?: number;
   }> = [
     {
+      id: "overview",
+      tab: "analytics",
+      label: "Overview",
+      icon: ChartNoAxesCombined,
+      tip: "See true profit, payout risk, alerts, and channel performance in one place.",
+    },
+    {
       id: "catalog",
       tab: "catalog",
       label: "Catalog",
@@ -5701,7 +5715,7 @@ export function PrizeSkoutDashboard() {
     {
       id: "integrations",
       tab: "vault",
-      label: "Integration Vault",
+      label: "Integrations",
       icon: PlugZap,
       tip: "Connect and inspect commerce and delivery channels.",
     },
@@ -5721,7 +5735,11 @@ export function PrizeSkoutDashboard() {
       : tab === "catalog"
         ? "Products, costs, availability, and synchronization from connected stores"
       : tab === "analytics"
-        ? t.subA
+        ? sidebarNav === "recovery"
+          ? "Verify expected payouts, investigate discrepancies, and prepare merchant-approved recovery evidence."
+          : sidebarNav === "margin"
+            ? "True profit, fees, costs, and payout performance across every connected channel."
+            : "Your financial command center for margin, payouts, risk, and next actions."
         : tab === "manager"
           ? lang === "ar"
             ? "العمل الذي يتولاه PrizeSkout والقرارات التي تحتاج موافقتك"
@@ -5743,7 +5761,11 @@ export function PrizeSkoutDashboard() {
       : tab === "catalog"
         ? "Catalog"
       : tab === "analytics"
-        ? t.navA
+        ? sidebarNav === "recovery"
+          ? "Payout Recovery"
+          : sidebarNav === "margin"
+            ? "True Margin Intelligence"
+            : "Overview"
         : tab === "manager"
           ? lang === "ar"
             ? "المهام"
@@ -5916,6 +5938,7 @@ export function PrizeSkoutDashboard() {
       {/* SIDEBAR */}
       {isDesktop && (
         <aside
+          className="ps-dashboard-sidebar"
           style={{
             width: 264,
             flex: "0 0 264px",
@@ -5997,7 +6020,7 @@ export function PrizeSkoutDashboard() {
               );
             })}
           </nav>
-          <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+          <div className="ps-dashboard-sidebar-footer" style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
             <button
               type="button"
               onClick={() => setSupportOpen(true)}
@@ -7316,16 +7339,6 @@ export function PrizeSkoutDashboard() {
               animation: "pk-in .3s ease",
             }}
           >
-            <MerchantOperatingLoop
-              lang={lang}
-              onContinueSetup={reviewProductsMissingCosts}
-              onRunTask={runPreparedManagerTask}
-              onAskCopilot={(prompt) => {
-                setTab("rules");
-                setCpInput(prompt);
-                window.setTimeout(() => void runCopilot(prompt), 0);
-              }}
-            />
             <div id="margin-intelligence-section" style={{scrollMarginTop:24}}><ZidProfitBrief connected={channelStatuses.zid === "connected"} /></div>
 
             {/* First-run welcome: we auto-ran a Talabat payout check the
@@ -12924,6 +12937,22 @@ export function PrizeSkoutDashboard() {
             }}
           >
             <MerchantOperatingLoop lang={lang} mode="history" />
+
+            <section className="ps-evidence-workspace" aria-labelledby="evidence-inbox-title">
+              <div>
+                <div style={{ color: OG, fontSize: 11, fontWeight: 850, letterSpacing: ".08em", textTransform: "uppercase" }}>
+                  Merchant-reviewed evidence
+                </div>
+                <h2 id="evidence-inbox-title" style={{ margin: "6px 0 4px", fontSize: 21, color: "var(--text)" }}>
+                  Evidence Inbox
+                </h2>
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: 13, lineHeight: 1.55 }}>
+                  Compare extracted values with retained source documents before they enter margin, payout, or recovery calculations.
+                </p>
+              </div>
+              <EvidenceSourceCoverage />
+              <EvidenceReviewWorkspace />
+            </section>
 
             <div
               style={{

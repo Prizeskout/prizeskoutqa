@@ -143,7 +143,7 @@ export function CommissionAuditPanel({
   const evidenceReceived = [
     receivedLabels.includes("daily_log") && "activity log",
     receivedLabels.includes("statement") && "platform statement",
-    receivedLabels.includes("merchant_received") && "bank settlement record",
+    receivedLabels.includes("merchant_received") && "merchant receipt confirmation",
   ].filter(Boolean).join(", ") || "no structured evidence";
   const missingEvidence = effectiveAssertions.filter(a => a.status === "missing").map(a => a.label).join(", ") || "none identified";
   const requiredActions = effectiveAssertions.filter(a => a.status !== "passed").slice(0, 3).map(a => a.detail);
@@ -182,7 +182,7 @@ export function CommissionAuditPanel({
     { label: "Expected settlement", value: totalExpected, source: "Deterministic ledger", total: true },
     { label: "Platform-reported settlement", value: statementAmount, source: statement?.file_name ?? "No statement supplied" },
     { label: "Bank-supported receipt", value: bankAmount, source: bank?.result.evidence_level === "document_supported" ? "Fingerprint recorded; review pending" : bank ? "Manual assertion" : "No bank evidence" },
-    { label: "Unresolved variance", value: unresolved, source: bankAmount != null ? "Bank receipt less expected settlement" : statementAmount != null ? "Statement less expected settlement" : "Cannot calculate", total: true },
+    { label: "Unresolved variance", value: unresolved, source: bankAmount != null ? "Receipt confirmation less expected settlement" : statementAmount != null ? "Statement less expected settlement" : "Cannot calculate", total: true },
   ];
 
   const coverFields = [

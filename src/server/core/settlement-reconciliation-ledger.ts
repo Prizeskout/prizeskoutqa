@@ -27,7 +27,9 @@ export async function persistSettlementReconciliation(accountId:string,auditId:s
   const inputFingerprint=fingerprint({documents:documents.map(doc=>({id:doc.id,sha:doc.result.evidence_sha256,result:doc.result})),rate});
   const platform=platforms.length===1?platforms[0]:platforms.length?"mixed":"unknown";
   const currency=currencies.length===1?currencies[0]:currencies.length?"MIXED":"UNKNOWN";
-  const status=!orders.length||!settlements.length||!receipts.length?"insufficient_evidence":result.exceptions?"completed_with_exceptions":"completed";
+  // Bank evidence is optional. Order and settlement evidence can complete a
+  // payout check; receipt evidence only confirms that funds actually landed.
+  const status=!orders.length||!settlements.length?"insufficient_evidence":result.exceptions?"completed_with_exceptions":"completed";
   const summary={audit_id:auditId,counts:result.counts,claims_ready_amount:result.claimsReadyAmount,exceptions:result.exceptions,order_count:orders.length,settlement_count:settlements.length,receipt_count:receipts.length,contract_term_id:contract?.id??null,contract_authoritative:contractSupportsTransactions};
   const {data:existing}=await (supabaseAdmin as any).from("ps_settlement_reconciliation_runs").select("id,summary,status").eq("account_id",accountId).eq("platform",platform).eq("currency",currency).eq("input_fingerprint",inputFingerprint).maybeSingle();
   if(existing)return {runId:existing.id,status:existing.status,summary:existing.summary};

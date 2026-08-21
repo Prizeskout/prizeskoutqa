@@ -1,0 +1,4 @@
+export type RecoveryStatus="evidence_required"|"draft"|"ready"|"submitted_manually"|"platform_review"|"accepted"|"rejected"|"recovered"|"closed";
+const transitions:Record<RecoveryStatus,RecoveryStatus[]>={evidence_required:["draft","ready"],draft:["evidence_required","ready"],ready:["draft","evidence_required"],submitted_manually:["platform_review","accepted","rejected"],platform_review:["accepted","rejected"],accepted:["recovered","closed"],rejected:["ready","closed"],recovered:["closed"],closed:[]};
+export function allowedRecoveryTransitions(status:RecoveryStatus){return transitions[status];}
+export function assertRecoveryTransition(from:RecoveryStatus,to:RecoveryStatus){if(from!==to&&!transitions[from].includes(to))throw new Error(`Recovery case cannot move directly from ${from.replaceAll("_"," ")} to ${to.replaceAll("_"," ")}.`);}

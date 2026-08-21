@@ -1,0 +1,9 @@
+import {createFileRoute} from "@tanstack/react-router";
+import {verifyMerchantAccess} from "@/server/core/byok-connect";
+import {listEvidenceSources,registerEvidenceSource,setEvidenceSourceStatus} from "@/server/core/evidence-source-connections";
+import {supabaseAdmin} from "@/integrations/supabase/client.server";
+const json=(value:unknown,status=200)=>Response.json(value,{status});
+export const Route=createFileRoute("/api/evidence/sources")({server:{handlers:{
+  GET:async({request})=>{try{const merchantId=(request.headers.get("x-merchant-id")??"").trim();if(!await verifyMerchantAccess(merchantId,request.headers.get("x-access-code")??""))return json({error:"Unauthorized"},401);return json({ok:true,sources:await listEvidenceSources(merchantId)});}catch(error){return json({error:error instanceof Error?error.message:"Sources could not be loaded."},422);}},
+  POST:async({request})=>{try{const body=await request.json() as Record<string,unknown>,merchantId=String(body.merchant_id??"").trim(),accessCode=String(body.access_code??"");if(!await verifyMerchantAccess(merchantId,accessCode))return json({error:"Unauthorized"},401);if(body.action==="status"){const {data:identity}=await (supabaseAdmin as any).from("ps_access_codes").select("email").eq("merchant_id",merchantId).eq("code",accessCode.trim().toUpperCase()).maybeSingle();return json({ok:true,source:await setEvidenceSourceStatus(merchantId,String(body.id??""),String(body.status??""),String(identity?.email??`access-code:${accessCode.slice(-4)}`))});}return json({ok:true,source:await registerEvidenceSource(merchantId,merchantId,{provider:body.provider,connectionKind:body.connection_kind,permissions:body.permissions,branches:body.branch_references,externalReference:body.external_connection_reference,expectedIntervalMinutes:body.expected_sync_interval_minutes})});}catch(error){return json({error:error instanceof Error?error.message:"Source could not be saved."},422);}}
+}}});

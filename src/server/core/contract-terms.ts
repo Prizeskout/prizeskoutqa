@@ -47,6 +47,8 @@ export type ContractTerm = {
   extraction_model: string | null;
   extraction_confidence: number | null;
   extracted_at: string | null;
+  source_evidence_item_id?: string | null;
+  source_review_decision_id?: string | null;
 };
 
 const table = () => (supabaseAdmin as any).from("ps_marketplace_contract_terms");
@@ -119,7 +121,7 @@ export async function approveContractTerm(accountId: string, id: string, reviewe
       if (!found) continue;
       const now = new Date().toISOString();
       const approved = { ...found, status:"approved" as const, reviewed_by:reviewedBy, approved_at:now };
-      const updated = existing.map(term=>term.id===id?approved:term.platform===found.platform&&term.status==="approved"?{...term,status:"superseded" as const}:term);
+      const updated = existing.map(term=>term.id===id?approved:term.platform===found.platform&&term.effective_from===found.effective_from&&term.status==="approved"?{...term,status:"superseded" as const}:term);
       const { error } = await supabaseAdmin.from("ps_merchant_channels").update({ metadata:{...metadata,contract_terms:updated} as unknown as Json }).eq("id",channel.id);
       if(error)throw new Error(error.message);
       return approved;
@@ -132,6 +134,7 @@ export async function approveContractTerm(accountId: string, id: string, reviewe
     .update({ status: "superseded", updated_at: new Date().toISOString() })
     .eq("account_id", accountId)
     .eq("platform", target.platform)
+    .eq("effective_from", target.effective_from)
     .eq("status", "approved");
 
   const now = new Date().toISOString();
@@ -175,4 +178,11 @@ export async function getApprovedContractTerm(accountId: string, platform: strin
   }
   if (error) throw new Error(error.message);
   return data as ContractTerm | null;
+}
+
+export async function getApprovedContractTermById(accountId:string,id:string):Promise<ContractTerm|null>{
+  const {data,error}=await table().select("*").eq("account_id",accountId).eq("id",id).eq("status","approved").maybeSingle();
+  if(missingTable(error)){const terms=await fallbackTerms(accountId);return terms.find(term=>term.id===id&&term.status==="approved")??null;}
+  if(error)throw new Error(error.message);
+  return data as ContractTerm|null;
 }

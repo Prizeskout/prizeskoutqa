@@ -14,6 +14,7 @@ import {
   Terminal,
   Layers,
   TrendingUp,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -51,6 +52,7 @@ const navGroups: NavGroup[] = [
     tKey: "nav.groups.intelligence",
     items: [
       { to: "/dashboard/revenue-hub", label: "Revenue Protection", tKey: "nav.repricing", icon: TrendingUp },
+      { to: "/dashboard/evidence", label: "Evidence Inbox", tKey: "nav.evidence", icon: Inbox },
     ],
   },
   {

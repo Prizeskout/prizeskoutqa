@@ -54,6 +54,8 @@ export type ExpectedPayoutResult = {
   // the merchant can eyeball the parse against their own PDF rather than
   // trust it blindly.
   brand?: string;
+  branch_external_id?:string|null;
+  legal_entity?:string|null;
   cancelled_gmv?: number;
   cancelled_orders?: number;
   // Real Talabat payout statement path only (see payout-statement-parser.ts)
@@ -86,6 +88,17 @@ export type ExpectedPayoutResult = {
   transaction_rows?: { order_id:string; date:string; gross_sales:number; refund_amount:number; status:string; eligible:boolean; claims_ready?:boolean }[];
   settlement_rows?: { settlement_reference:string; order_id:string|null; amount:number; currency:string }[];
   settlement_reference?: string|null;
+  adjustment_amount?:number|null;
+  adjustment_direction?:"credit"|"debit"|"unknown";
+  adjustment_reason?:string|null;
+  promotion_discount_total?:number|null;
+  platform_funding_amount?:number|null;
+  merchant_funding_amount?:number|null;
+  cancellation_amount?:number|null;
+  received_amount?:number|null;
+  confirmation_reference?:string|null;
+  order_references?:string[];
+  settlement_references?:string[];
   cancelled_orders_total?: number;
   deduction_breakdown?: {
     gross_sales: number;

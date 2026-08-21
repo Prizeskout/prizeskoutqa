@@ -5,6 +5,7 @@
 //           connected Keeta channel — Keeta itself connects via /api/auth/keeta)
 
 import { createFileRoute } from "@tanstack/react-router";
+import {createHash} from "node:crypto";
 import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
 import { activateMerchantMarginPolicy, getMerchantMarginPolicy, listMerchantMarginPolicyVersions, type ApprovalMode } from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout, type ExpectedPayoutResult } from "@/server/core/expected-payout";
@@ -21,8 +22,13 @@ import { approveContractTerm, listContractTerms, saveContractDraft } from "@/ser
 import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
 import {persistSettlementReconciliation} from "@/server/core/settlement-reconciliation-ledger";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
+import {appendEvidenceProcessingAttempt,registerMerchantEvidence,type MerchantDocumentKind} from "@/server/core/merchant-evidence-intake";
+import {persistNormalizedCommerceEvents} from "@/server/core/normalized-commerce-events";
+import {runNormalizedReconciliationShadow} from "@/server/core/normalized-reconciliation-shadow";
 import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
+import {rematchEvidenceAfterContractApproval} from "@/server/core/evidence-agreement-matcher";
+import {approveRecoveryEvidencePack,getRecoveryEvidencePack,prepareRecoveryEvidencePack} from "@/server/core/recovery-evidence-pack";
 import { createRecoveryCase, listRecoveryCases, recordRecoverySubmission, updateRecoveryCase } from "@/server/core/recovery-cases";
 import { approvePromotionScenario, confirmPromotionChannelLaunch, listPromotionScenarios, preparePromotionLaunch, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
@@ -339,7 +345,19 @@ export const Route = createFileRoute("/api/channels/connect")({
               // asks the LLM classifier to interpret it (see upload-
               // classifier.ts). A classification failure never fails the
               // upload itself; it's a soft-fail passenger on the response.
-              const respondWithClassification = async (result: ExpectedPayoutResult) => {
+              const respondWithClassification = async (result: ExpectedPayoutResult,sourceText:string,documentKind:MerchantDocumentKind,mediaType:string) => {
+                // Shadow-only: the existing payout result remains authoritative
+                // for this request. Intake failure is recorded in logs and never
+                // changes the merchant's current upload outcome.
+                try{
+                  const contentSha256=createHash("sha256").update(sourceText).digest("hex");
+                  const intake=await registerMerchantEvidence({accountId:merchant_id,merchantId:merchant_id,sourceKind:"file_upload",sourceProvider:(result.platform||upload_platform||"unknown").toLowerCase(),sourceExternalId:`upload:${contentSha256}`,documentKind,contentSha256,mediaType,sourceMetadata:{shadow_only:true,original_bytes_retained:false,file_kind:file_kind||"csv"}});
+                  try{await appendEvidenceProcessingAttempt({evidenceItemId:intake.evidenceItemId,accountId:merchant_id,processorVersion:"legacy-payout-upload-shadow-v1",attemptNumber:intake.duplicate?2:1,state:result.ok?"accepted":"needs_review",detectedDocumentKind:documentKind,extractionSummary:{parser_ok:result.ok,platform:result.platform??upload_platform??null,period_start:result.period_start??null,period_end:result.period_end??null},limitations:["Compatibility parser retained temporarily while normalized-event parity is verified."]});}catch(error){console.warn("[merchant-evidence-shadow] compatibility attempt was already recorded",error);}
+                  if(result.ok){
+                    await persistNormalizedCommerceEvents({accountId:merchant_id,merchantId:merchant_id,evidenceItemId:intake.evidenceItemId,sourceKind:"file_upload",sourceProvider:(result.platform||upload_platform||"unknown").toLowerCase(),documentKind,result});
+                    await runNormalizedReconciliationShadow({accountId:merchant_id,evidenceItemId:intake.evidenceItemId,compatibilityResult:result});
+                  }
+                }catch(error){console.error("[merchant-evidence-shadow] payout upload intake failed",error);}
                 if (!result.ok) return resp({ ok: false, error: result.error }, 400);
                 await savePayoutCheck(merchant_id, result);
                 const trimmedDescription = (description ?? "").trim().slice(0, 500);
@@ -362,7 +380,7 @@ export const Route = createFileRoute("/api/channels/connect")({
                 if (!pdf_text) {
                   return resp({ error: "pdf_text is required for a PDF upload check." }, 400);
                 }
-                return await respondWithClassification(parseSnoonuBrandReportPdf(pdf_text, rate));
+                return await respondWithClassification(parseSnoonuBrandReportPdf(pdf_text, rate),pdf_text,"order_summary","application/pdf");
               }
 
               const platformName = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(upload_platform ?? "")
@@ -384,7 +402,7 @@ export const Route = createFileRoute("/api/channels/connect")({
               const result = looksLikeStatement
                 ? parseTalabatPayoutStatementCsv(csv_text, rate)
                 : parseAggregatorDailyCsv(csv_text, rate, platformName);
-              return await respondWithClassification(result);
+              return await respondWithClassification(result,csv_text,looksLikeStatement?"settlement_report":"order_export","text/csv");
             }
 
             if (body.action === "manual_entry") {
@@ -403,10 +421,9 @@ export const Route = createFileRoute("/api/channels/connect")({
               if (!period_start || !period_end) {
                 return resp({ error: "period_start and period_end are required for a manual entry." }, 400);
               }
-              if (!body.bank_transaction_date) {
-                return resp({ error: "bank_transaction_date is required for a bank settlement entry." }, 400);
-              }
-              const hasDocumentEvidence = !!body.evidence_file_name && /^[a-f0-9]{64}$/i.test(body.evidence_sha256 ?? "");
+              // A merchant may confirm receipt without exposing private
+              // financial-account or transaction details.
+              const confirmationDate=body.confirmation_date||period_end;
 
               const uploadPlatform = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(body.upload_platform ?? "")
                 ? body.upload_platform
@@ -441,14 +458,11 @@ export const Route = createFileRoute("/api/channels/connect")({
                 period_start,
                 period_end,
                 platform: platformGuess,
-                bank_transaction_date: body.bank_transaction_date,
-                bank_reference: (body.bank_reference ?? "").trim().slice(0, 120),
+                confirmation_date: confirmationDate,
                 settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null,
                 deposit_type: body.deposit_type ?? "regular_payout",
                 currency: body.currency ?? "QAR",
-                evidence_file_name: hasDocumentEvidence ? body.evidence_file_name.slice(0, 200) : undefined,
-                evidence_sha256: hasDocumentEvidence ? body.evidence_sha256 : undefined,
-                evidence_level: hasDocumentEvidence ? "document_supported" : "manual_assertion",
+                evidence_level: "manual_assertion",
                 ...(classification ? { classification } : {}),
               }, 200);
             }
@@ -714,7 +728,8 @@ export const Route = createFileRoute("/api/channels/connect")({
                   })
                   .eq("id", channel.id);
               }
-              return resp({ ok: true, term }, 200);
+              const rematches=await rematchEvidenceAfterContractApproval({accountId:merchant_id,merchantId:merchant_id,platform:term.platform,contractTermId:term.id});
+              return resp({ ok: true, term, rematched_evidence:rematches.length }, 200);
             }
             return resp({ error: "Unsupported contract-terms action." }, 400);
           }
@@ -722,6 +737,18 @@ export const Route = createFileRoute("/api/channels/connect")({
           if(platform==="recovery_cases"){
             if(body.action==="list")return resp({ok:true,cases:await listRecoveryCases(merchant_id)},200);
             const raw=body as unknown as Record<string,unknown>;
+            if(body.action==="prepare_pack"){
+              if(!body.id)return resp({error:"Recovery case id is required."},400);
+              return resp({ok:true,pack:await prepareRecoveryEvidencePack(merchant_id,body.id)},200);
+            }
+            if(body.action==="approve_pack"){
+              if(!body.pack_id||!body.approved_by?.trim())return resp({error:"Evidence pack and approver name are required."},400);
+              return resp({ok:true,approval:await approveRecoveryEvidencePack(merchant_id,body.pack_id,body.approved_by)},200);
+            }
+            if(body.action==="get_pack"){
+              if(!body.pack_id)return resp({error:"Evidence pack id is required."},400);
+              return resp({ok:true,pack:await getRecoveryEvidencePack(merchant_id,body.pack_id)},200);
+            }
             if(body.action==="create"){
               if(!body.exception_key||!body.title||!body.explanation_en||!body.explanation_ar)return resp({error:"Exception identity and bilingual explanations are required."},400);
               const exceptionAmount=raw.exception_amount==null?null:Number(raw.exception_amount);

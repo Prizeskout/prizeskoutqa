@@ -4,6 +4,8 @@ import type { ZidProfitBrief } from "./zid-profit-brief";
 import { getRepricingHistory } from "./dispatch-history";
 import { listRecoveryCases } from "./recovery-cases";
 import { activateMerchantMarginPolicy, getMerchantMarginPolicy, type ApprovalMode } from "./merchant-pricing-config";
+import {syncReconciliationAttention} from "./reconciliation-attention";
+import {syncEvidenceSourceAttention} from "./evidence-source-attention";
 
 async function persistAttention(accountId:string,fingerprint:string,row:Record<string,unknown>){
   const {data:existing}=await supabaseAdmin.from("ps_attention_items").select("id,status").eq("account_id",accountId).eq("fingerprint",fingerprint).maybeSingle();
@@ -34,6 +36,10 @@ export async function syncProfitBriefAttention(accountId:string,brief:ZidProfitB
 
 export async function getMerchantExperience(accountId:string){
   const [dispatches,recoveryCases]=await Promise.all([getRepricingHistory(accountId,30),listRecoveryCases(accountId).catch(()=>[])]);
+  await Promise.all([
+    syncReconciliationAttention(accountId).catch(error=>console.error("[reconciliation-attention] sync failed",error)),
+    syncEvidenceSourceAttention(accountId).catch(error=>console.error("[evidence-source-attention] sync failed",error)),
+  ]);
   for(const dispatch of dispatches.filter(item=>!["success","confirmed","completed"].includes(item.status.toLowerCase()))){
     await persistAttention(accountId,`dispatch:${dispatch.id}`,{item_type:"channel_failure",title:`${dispatch.target_channel??"Channel"} price update needs attention`,detail:dispatch.upstream_message??`The price update for ${dispatch.sku??"a product"} was not confirmed.`,priority:"high",amount:null,currency:dispatch.currency,evidence_strength:"verified",source_route:"history",copilot_prompt:`Explain the failed ${dispatch.target_channel??"channel"} price update for SKU ${dispatch.sku??"unknown"} and show the safest next step.`,context:{dispatch_id:dispatch.id,sku:dispatch.sku} as Json});
   }
