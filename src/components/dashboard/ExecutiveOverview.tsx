@@ -3,134 +3,50 @@ import type { CSSProperties } from "react";
 
 type ChannelRow = { name: string; connected: boolean; termsReady: boolean };
 type RiskRow = { name: string; channel: string; gap: string };
+type Props = { currency:string; trackedProducts:number; verifiedCosts:number; missingCosts:number; atRiskProducts:number; activeRules:number; attentionCount:number; confirmedActions:number; expectedPayout:number|null; channels:ChannelRow[]; risks:RiskRow[]; onCatalog:()=>void; onMargin:()=>void; onRecovery:()=>void; onAlerts:()=>void; onIntegrations:()=>void };
+const money=(amount:number|null,currency:string)=>amount==null?"Not calculated":`${currency} ${amount.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+const channelColors=["#10B981","#4F8DF7","#F47320","#EF4444","#8B5CF6","#14B8A6"];
 
-type Props = {
-  currency: string;
-  trackedProducts: number;
-  verifiedCosts: number;
-  missingCosts: number;
-  atRiskProducts: number;
-  activeRules: number;
-  attentionCount: number;
-  confirmedActions: number;
-  expectedPayout: number | null;
-  channels: ChannelRow[];
-  risks: RiskRow[];
-  onCatalog: () => void;
-  onMargin: () => void;
-  onRecovery: () => void;
-  onAlerts: () => void;
-  onIntegrations: () => void;
-};
-
-const money = (amount: number | null, currency: string) =>
-  amount == null ? "Not calculated" : `${currency} ${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-
-export function ExecutiveOverview(props: Props) {
-  const connected = props.channels.filter((channel) => channel.connected).length;
-  const termsReady = props.channels.filter((channel) => channel.termsReady).length;
-  const evidencePct = props.trackedProducts ? Math.round((props.verifiedCosts / props.trackedProducts) * 100) : 0;
-  const healthPct = props.trackedProducts ? Math.max(0, Math.round(((props.trackedProducts - props.missingCosts) / props.trackedProducts) * 100)) : 0;
-  const metrics = [
-    { label: "Catalog items", value: props.trackedProducts.toLocaleString(), note: `${props.verifiedCosts} costs confirmed`, icon: Boxes, tone: "#2563EB", action: props.onCatalog },
-    { label: "Connected channels", value: String(connected), note: `${props.channels.length} sources available`, icon: PlugZap, tone: "#0EA5E9", action: props.onIntegrations },
-    { label: "Cost evidence", value: `${evidencePct}%`, note: `${props.missingCosts} products need evidence`, icon: CheckCircle2, tone: "#10B981", action: props.onCatalog },
-    { label: "Margin risks", value: String(props.atRiskProducts), note: "Verified products below target", icon: AlertTriangle, tone: "#EF681A", action: props.onMargin },
-    { label: "Expected payout", value: money(props.expectedPayout, props.currency), note: "Latest retained calculation", icon: CircleDollarSign, tone: "#8B5CF6", action: props.onRecovery },
-    { label: "Protected actions", value: String(props.confirmedActions), note: `${props.activeRules} active guardrail${props.activeRules === 1 ? "" : "s"}`, icon: ShieldCheck, tone: "#14B8A6", action: props.onAlerts },
+export function ExecutiveOverview(props:Props){
+  const connected=props.channels.filter(c=>c.connected).length;
+  const termsReady=props.channels.filter(c=>c.termsReady).length;
+  const evidencePct=props.trackedProducts?Math.round(props.verifiedCosts/props.trackedProducts*100):0;
+  const missingPct=props.trackedProducts?Math.round(props.missingCosts/props.trackedProducts*100):0;
+  const metrics=[
+    {label:"Catalog Items Synced",value:props.trackedProducts.toLocaleString(),note:`${props.verifiedCosts} with confirmed costs`,icon:Boxes,tone:"#4F8DF7",action:props.onCatalog},
+    {label:"Channels Monitored",value:String(connected),note:`${props.channels.length} evidence sources`,icon:PlugZap,tone:"#4F8DF7",action:props.onIntegrations},
+    {label:"Cost Evidence",value:`${evidencePct}%`,note:`${props.missingCosts} still need evidence`,icon:CheckCircle2,tone:"#10B981",action:props.onCatalog},
+    {label:"Revenue at Risk",value:String(props.atRiskProducts),note:"Verified products below target",icon:AlertTriangle,tone:"#F47320",action:props.onMargin},
+    {label:"Recoverable Payouts",value:money(props.expectedPayout,props.currency),note:"Latest retained calculation",icon:CircleDollarSign,tone:"#6366F1",action:props.onRecovery},
+    {label:"Protected Pricing Actions",value:String(props.confirmedActions),note:`${props.activeRules} active guardrail${props.activeRules===1?"":"s"}`,icon:ShieldCheck,tone:"#2563EB",action:props.onAlerts},
   ];
-
-  return (
-    <div className="exec-overview">
-      <style>{`
-        .exec-overview{display:grid;gap:16px;font-family:inherit}
-        .exec-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
-        .exec-card,.exec-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
-        .exec-metric{padding:16px;text-align:start;color:var(--text);cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
-        .exec-metric:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--metric-tone) 40%,var(--border));box-shadow:0 14px 30px -18px rgba(15,23,42,.3)}
-        .exec-heading{display:none}.exec-grid{display:grid;grid-template-columns:1.05fr 1.35fr 1fr .9fr;gap:14px;align-items:stretch}.exec-lower{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
-        .exec-panel{padding:18px;min-width:0}
-        .exec-panel h2{font-size:14.5px;font-weight:700;line-height:1.25;margin:0;color:var(--text)}
-        .exec-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
-        .exec-health{display:flex;align-items:center;gap:18px;margin-top:20px}
-        .exec-donut{width:126px;height:126px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:conic-gradient(#10B981 0 calc(var(--health)*1%),#2563EB calc(var(--health)*1%) calc((var(--health) + 7)*1%),#EF681A calc((var(--health) + 7)*1%) 100%)}
-        .exec-donut:after{content:"";width:82px;height:82px;border-radius:50%;background:var(--surface);position:absolute}
-        .exec-donut-value{position:relative;z-index:1;text-align:center;font-size:22px;font-weight:800;color:var(--text)}
-        .exec-donut-value small{display:block;font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase}
-        .exec-channel{display:grid;grid-template-columns:90px 1fr 42px;gap:9px;align-items:center;margin-top:13px;font-size:11.5px}
-        .exec-track{height:8px;border-radius:999px;background:var(--surface2);overflow:hidden}
-        .exec-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#2563EB,#10B981)}
-        .exec-alert{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
-        .exec-alert:last-child{border-bottom:0}
-        .exec-alert-icon{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#FFF7ED;color:#EA580C}
-        .exec-table{overflow:auto}.exec-table table{width:100%;border-collapse:collapse;min-width:680px}.exec-table th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:750;text-align:start;padding:11px 14px;background:var(--surface2)}.exec-table td{font-size:12px;padding:12px 14px;border-top:1px solid var(--border)}
-        .exec-risk-donut{width:116px;height:116px;margin:18px auto 12px;border-radius:50%;display:grid;place-items:center;position:relative}.exec-risk-donut:after{content:"";position:absolute;inset:23px;border-radius:50%;background:var(--surface)}.exec-risk-donut span{position:relative;z-index:1;text-align:center;font-size:18px;font-weight:850}.exec-risk-donut small{display:block;font-size:8.5px;color:var(--muted);text-transform:uppercase}.exec-integrations>div{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:center;border-top:1px solid var(--border);padding:10px 0;font-size:11px}.exec-integrations b{text-transform:capitalize}.exec-integrations .connected{color:#059669}.exec-integrations .manual{color:var(--muted)}
-        @media(max-width:1250px){.exec-metrics{grid-template-columns:repeat(3,1fr)}.exec-grid{grid-template-columns:1fr 1fr}.exec-lower{grid-template-columns:1fr}.exec-grid>.exec-panel:last-child{grid-column:auto}}
-        @media(max-width:700px){.exec-metrics{grid-template-columns:1fr 1fr}.exec-grid{grid-template-columns:1fr}.exec-health{align-items:flex-start;flex-direction:column}.exec-donut{align-self:center}.exec-metric{padding:13px}.exec-metric-value{font-size:20px!important}.exec-heading{align-items:flex-start;flex-direction:column}}
-      `}</style>
-
-      <div className="exec-heading"><div><h2>Business health at a glance</h2><p>Catalog, margin, payout, risk, and protected actions in one operating view.</p></div><strong style={{fontSize:11,color:"#059669"}}>â— LIVE EVIDENCE</strong></div>
-
-      <div className="exec-metrics">
-        {metrics.map(({ label, value, note, icon: Icon, tone, action }) => (
-          <button key={label} type="button" className="exec-card exec-metric" style={{ "--metric-tone": tone } as CSSProperties} onClick={action}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
-              <span style={{ fontSize: 10.5, color: "var(--muted)", fontWeight: 750 }}>{label}</span>
-              <span style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 10, background: `color-mix(in srgb,${tone} 10%,var(--surface))`, color: tone }}><Icon size={15} /></span>
-            </div>
-            <div className="exec-metric-value" style={{ fontSize: value.length > 13 ? 18 : 24, fontWeight: 800, marginTop: 11, letterSpacing: "-.02em" }}>{value}</div>
-            <div style={{ color: "var(--muted)", fontSize: 10.5, marginTop: 5, lineHeight: 1.35 }}>{note}</div>
-          </button>
-        ))}
-      </div>
-
-      <div className="exec-grid">
-        <section className="exec-panel">
-          <h2>Catalog health</h2><div className="exec-sub">Evidence readiness across imported products</div>
-          <div className="exec-health">
-            <div className="exec-donut" style={{ "--health": healthPct, position: "relative", ...(props.trackedProducts === 0 ? { background: "var(--surface2)" } : {}) } as CSSProperties}><div className="exec-donut-value">{healthPct}%<small>ready</small></div></div>
-            <div style={{ flex: 1, display: "grid", gap: 10, fontSize: 11.5 }}>
-              <Legend color="#10B981" label="Confirmed costs" value={props.verifiedCosts} />
-              <Legend color="#EF681A" label="Missing evidence" value={props.missingCosts} />
-              <Legend color="#2563EB" label="Below target" value={props.atRiskProducts} />
-            </div>
-          </div>
-        </section>
-
-        <section className="exec-panel">
-          <h2>Risk breakdown</h2><div className="exec-sub">Current evidence gaps and protected-margin risks</div>
-          <div className="exec-risk-donut" style={{background: props.missingCosts + props.atRiskProducts ? `conic-gradient(#EF681A 0 ${(props.missingCosts / Math.max(1, props.missingCosts + props.atRiskProducts)) * 100}%,#2563EB 0 100%)` : "var(--surface2)"}}><span>{props.missingCosts + props.atRiskProducts}<small>Total signals</small></span></div>
-          <Legend color="#EF681A" label="Missing cost evidence" value={props.missingCosts}/><div style={{height:7}}/><Legend color="#2563EB" label="Below margin target" value={props.atRiskProducts}/>
-        </section>
-
-        <section className="exec-panel">
-          <h2>Channel readiness</h2><div className="exec-sub">Connection and approved commercial-term coverage</div>
-          {props.channels.map((channel) => {
-            const readiness = channel.connected && channel.termsReady ? 100 : channel.connected ? 60 : channel.termsReady ? 35 : 8;
-            return <div className="exec-channel" key={channel.name}><strong>{channel.name}</strong><div className="exec-track"><div className="exec-fill" style={{ width: `${readiness}%` }} /></div><span style={{ color: readiness === 100 ? "#059669" : "var(--muted)", textAlign: "end" }}>{readiness}%</span></div>;
-          })}
-          <button type="button" onClick={props.onIntegrations} style={linkButton}>Review integrations and terms →</button>
-        </section>
-
-        <section className="exec-panel">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><div><h2>Top alerts</h2><div className="exec-sub">Work requiring merchant attention</div></div><strong style={{ color: "#EF681A", fontSize: 12 }}>{props.attentionCount}</strong></div>
-          <Alert label="Cost evidence missing" detail={`${props.missingCosts} products`} />
-          <Alert label="Margin below target" detail={`${props.atRiskProducts} products`} />
-          <Alert label="Commercial terms ready" detail={`${termsReady}/${props.channels.length} channels`} />
-          <button type="button" onClick={props.onAlerts} style={linkButton}>Open attention queue →</button>
-        </section>
-      </div>
-
-      <div className="exec-lower"><section className="exec-panel" style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ padding: "17px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}><div><h2>Priority margin actions</h2><div className="exec-sub">Verified products ranked by the gap to their protected price</div></div><button type="button" onClick={props.onCatalog} style={linkButton}>View catalog →</button></div>
-        <div className="exec-table"><table><thead><tr><th>Product</th><th>Channel</th><th>Issue</th><th>Recommended action</th><th>Status</th></tr></thead><tbody>
-          {props.risks.length ? props.risks.map((risk) => <tr key={`${risk.channel}-${risk.name}`}><td><strong>{risk.name}</strong></td><td style={{ textTransform: "capitalize" }}>{risk.channel}</td><td>Below protected margin</td><td>Review price gap {risk.gap}</td><td><span style={{ color: "#C2410C", background: "#FFF7ED", borderRadius: 999, padding: "4px 8px", fontWeight: 750 }}>Review</span></td></tr>) : <tr><td colSpan={5} style={{ color: "var(--muted)", textAlign: "center", padding: 24 }}>No verified products are currently below the active margin floor.</td></tr>}
-        </tbody></table></div>
-      </section><section className="exec-panel"><div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"start"}}><div><h2>Integration health</h2><div className="exec-sub">Source access and agreement readiness stay separate</div></div><CheckCircle2 size={17} color="#059669"/></div><div className="exec-integrations" style={{marginTop:13}}>{props.channels.map(channel=><div key={channel.name}><b>{channel.name}</b><span className={channel.connected?"connected":"manual"}>{channel.connected?"Connected":"Manual evidence"}</span><span style={{color:channel.termsReady?"#059669":"#EA580C"}}>{channel.termsReady?"Terms ready":"Terms needed"}</span></div>)}</div><button type="button" onClick={props.onIntegrations} style={linkButton}>View integration health {"\u2192"}</button></section></div>
+  return <div className="exec-overview">
+    <style>{`
+      .exec-overview{display:grid;gap:12px;font-family:inherit}.exec-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+      .exec-card,.exec-panel{background:var(--surface);border:1px solid var(--border);border-radius:11px;box-shadow:0 3px 12px rgba(15,31,61,.035)}
+      .exec-metric{min-height:104px;padding:13px 14px;text-align:start;color:var(--text);cursor:pointer;transition:border-color .16s,box-shadow .16s}.exec-metric:hover{border-color:color-mix(in srgb,var(--metric-tone) 38%,var(--border));box-shadow:0 9px 22px -15px rgba(15,31,61,.34)}
+      .exec-metric-top{display:flex;justify-content:space-between;gap:7px;align-items:center}.exec-metric-label{font-size:10px;color:var(--text);font-weight:750;line-height:1.3}.exec-metric-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;flex:0 0 auto}.exec-metric-value{font-size:20px;font-weight:800;margin-top:9px;letter-spacing:-.025em;line-height:1.15}.exec-metric-note{color:var(--muted);font-size:9.5px;margin-top:5px;line-height:1.3}
+      .exec-grid{display:grid;grid-template-columns:1.05fr 1.45fr 1.05fr .9fr;gap:10px;align-items:stretch}.exec-lower{display:grid;grid-template-columns:1.55fr 1fr;gap:10px}.exec-panel{padding:14px;min-width:0;overflow:hidden}.exec-grid>.exec-panel{height:258px;box-sizing:border-box}.exec-panel h2{font-size:12.5px;font-weight:750;line-height:1.25;margin:0;color:var(--text)}.exec-sub{font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.35}.exec-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .exec-health{display:flex;align-items:center;gap:13px;margin-top:17px}.exec-donut{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;position:relative}.exec-donut:after{content:"";width:76px;height:76px;border-radius:50%;background:var(--surface);position:absolute}.exec-donut-value{position:relative;z-index:1;text-align:center;font-size:20px;font-weight:800;color:var(--text)}.exec-donut-value small{display:block;font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px}
+      .exec-legend{display:flex;align-items:center;gap:7px;font-size:9.5px;line-height:1.25}.exec-legend i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.exec-legend span{flex:1;color:var(--muted)}
+      .exec-channel-bars{height:181px;display:flex;align-items:end;gap:9px;padding:17px 4px 0;border-bottom:1px solid var(--border);background:repeating-linear-gradient(to top,transparent 0,transparent 44px,var(--border) 45px)}.exec-channel-column{height:100%;display:flex;flex:1;min-width:0;flex-direction:column;justify-content:end;align-items:center;gap:4px}.exec-channel-column strong{font-size:8.5px}.exec-channel-bar{width:min(34px,72%);min-height:3px;border-radius:5px 5px 0 0}.exec-channel-column span{font-size:8px;text-transform:capitalize;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .exec-leakage{display:flex;align-items:center;gap:12px;margin-top:14px}.exec-leakage .exec-donut{width:108px;height:108px}.exec-leakage .exec-donut:after{width:68px;height:68px}.exec-alert{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}.exec-alert-icon{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#FFF7ED;color:#EA580C}.exec-alert strong{display:block;font-size:9.5px;line-height:1.25}.exec-alert small{color:var(--muted);font-size:8.5px}
+      .exec-table{overflow:auto}.exec-table table{width:100%;border-collapse:collapse;min-width:650px}.exec-table th{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:750;text-align:start;padding:9px 12px;background:var(--surface2)}.exec-table td{font-size:10px;padding:10px 12px;border-top:1px solid var(--border)}.exec-integrations>div{display:grid;grid-template-columns:1fr auto auto;gap:7px;align-items:center;border-top:1px solid var(--border);padding:7px 0;font-size:9.5px}.exec-integrations b{text-transform:capitalize}.exec-integrations .connected{color:#059669}.exec-integrations .manual{color:var(--muted)}.exec-link{border:0;background:transparent;color:#2563EB;font-family:inherit;font-size:9.5px;font-weight:750;padding:9px 0 0;cursor:pointer}
+      @media(max-width:1250px){.exec-metrics{grid-template-columns:repeat(3,1fr)}.exec-grid{grid-template-columns:1fr 1fr}.exec-grid>.exec-panel{height:auto;min-height:250px}.exec-lower{grid-template-columns:1fr}}@media(max-width:700px){.exec-metrics{grid-template-columns:1fr 1fr}.exec-grid{grid-template-columns:1fr}.exec-health{align-items:flex-start;flex-direction:column}.exec-donut{align-self:center}.exec-metric{min-height:96px;padding:12px}}
+    `}</style>
+    <div className="exec-metrics">{metrics.map(({label,value,note,icon:Icon,tone,action})=><button key={label} type="button" className="exec-card exec-metric" style={{"--metric-tone":tone} as CSSProperties} onClick={action}><div className="exec-metric-top"><span className="exec-metric-label">{label}</span><span className="exec-metric-icon" style={{background:`color-mix(in srgb,${tone} 10%,var(--surface))`,color:tone}}><Icon size={14}/></span></div><div className="exec-metric-value" style={{fontSize:value.length>13?15:undefined}}>{value}</div><div className="exec-metric-note">{note}</div></button>)}</div>
+    <div className="exec-grid">
+      <section className="exec-panel"><div className="exec-panel-head"><div><h2>Catalog Health</h2><div className="exec-sub">Cost evidence across imported products</div></div><button className="exec-link" onClick={props.onCatalog}>View details →</button></div><div className="exec-health"><div className="exec-donut" style={{background:props.trackedProducts?`conic-gradient(#10B981 0 ${evidencePct}%,#4F8DF7 ${evidencePct}% ${Math.min(100,evidencePct+Math.max(2,Math.round(props.atRiskProducts/Math.max(1,props.trackedProducts)*100)))}%,#F47320 0 100%)`:"var(--surface2)"}}><div className="exec-donut-value">{props.trackedProducts.toLocaleString()}<small>Total items</small></div></div><div style={{flex:1,display:"grid",gap:9}}><Legend color="#10B981" label="Confirmed costs" value={props.verifiedCosts}/><Legend color="#4F8DF7" label="Below target" value={props.atRiskProducts}/><Legend color="#F47320" label="Missing evidence" value={props.missingCosts}/></div></div></section>
+      <section className="exec-panel"><div className="exec-panel-head"><div><h2>Margin by Channel</h2><div className="exec-sub">Evidence readiness for protected-margin decisions</div></div><button className="exec-link" onClick={props.onMargin}>True margin %</button></div><div className="exec-channel-bars">{props.channels.slice(0,6).map((channel,index)=>{const readiness=channel.connected&&channel.termsReady?100:channel.connected?60:channel.termsReady?35:8;return <div className="exec-channel-column" key={channel.name}><strong>{readiness}%</strong><div className="exec-channel-bar" style={{height:`${Math.max(8,readiness)}%`,background:channelColors[index%channelColors.length]}}/><span>{channel.name}</span></div>})}</div></section>
+      <section className="exec-panel"><div className="exec-panel-head"><div><h2>Leakage Breakdown</h2><div className="exec-sub">Current evidence and margin signals</div></div></div><div className="exec-leakage"><div className="exec-donut" style={{background:props.missingCosts+props.atRiskProducts?`conic-gradient(#3159C9 0 ${100-missingPct}%,#F47320 0 100%)`:"var(--surface2)"}}><div className="exec-donut-value">{props.missingCosts+props.atRiskProducts}<small>Total at risk</small></div></div><div style={{flex:1,display:"grid",gap:9}}><Legend color="#3159C9" label="Cost evidenced" value={props.verifiedCosts}/><Legend color="#F47320" label="Missing evidence" value={props.missingCosts}/><Legend color="#8B5CF6" label="Margin risks" value={props.atRiskProducts}/></div></div></section>
+      <section className="exec-panel"><div className="exec-panel-head"><div><h2>Top Alerts</h2><div className="exec-sub">Merchant attention queue</div></div><button className="exec-link" onClick={props.onAlerts}>View all →</button></div><Alert label="Cost evidence missing" detail={`${props.missingCosts} products`}/><Alert label="Low-margin products" detail={`${props.atRiskProducts} products`}/><Alert label="Commercial terms needed" detail={`${props.channels.length-termsReady} channels`}/></section>
     </div>
-  );
+    <div className="exec-lower">
+      <section className="exec-panel" style={{padding:0,minHeight:210}}><div style={{padding:"13px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><h2>Catalog Action Queue</h2><div className="exec-sub">Verified products ranked by protected-margin gap</div></div><button className="exec-link" onClick={props.onCatalog}>View all →</button></div><div className="exec-table"><table><thead><tr><th>Product</th><th>Channel</th><th>Issue</th><th>Recommendation</th><th>Status</th></tr></thead><tbody>{props.risks.length?props.risks.slice(0,5).map(risk=><tr key={`${risk.channel}-${risk.name}`}><td><strong>{risk.name}</strong></td><td style={{textTransform:"capitalize"}}>{risk.channel}</td><td>Below protected margin</td><td>Review price gap {risk.gap}</td><td><span style={{color:"#C2410C",background:"#FFF7ED",borderRadius:999,padding:"3px 7px",fontWeight:750}}>Review</span></td></tr>):<tr><td colSpan={5} style={{color:"var(--muted)",textAlign:"center",padding:22}}>No verified products are currently below the active margin floor.</td></tr>}</tbody></table></div></section>
+      <section className="exec-panel" style={{minHeight:210}}><div className="exec-panel-head"><div><h2>Integrations Status</h2><div className="exec-sub">Source access and agreement readiness</div></div><CheckCircle2 size={15} color="#059669"/></div><div className="exec-integrations" style={{marginTop:10}}>{props.channels.slice(0,6).map(channel=><div key={channel.name}><b>{channel.name}</b><span className={channel.connected?"connected":"manual"}>{channel.connected?"Connected":"Manual evidence"}</span><span style={{color:channel.termsReady?"#059669":"#EA580C"}}>{channel.termsReady?"Terms ready":"Terms needed"}</span></div>)}</div><button type="button" onClick={props.onIntegrations} className="exec-link">View integration health →</button></section>
+    </div>
+  </div>;
 }
 
-function Legend({ color, label, value }: { color: string; label: string; value: number }) { return <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ width: 8, height: 8, borderRadius: 99, background: color }} /><span style={{ flex: 1, color: "var(--muted)" }}>{label}</span><strong>{value}</strong></div>; }
-function Alert({ label, detail }: { label: string; detail: string }) { return <div className="exec-alert"><span className="exec-alert-icon"><AlertTriangle size={15} /></span><div><strong style={{ display: "block", fontSize: 11.5 }}>{label}</strong><span style={{ color: "var(--muted)", fontSize: 10.5 }}>{detail}</span></div><span style={{ color: "var(--muted)" }}>›</span></div>; }
-const linkButton: CSSProperties = { border: 0, background: "transparent", color: "#C2410C", fontFamily: "inherit", fontSize: 11.5, fontWeight: 750, padding: "12px 0 0", cursor: "pointer" };
+function Legend({color,label,value}:{color:string;label:string;value:number}){return <div className="exec-legend"><i style={{background:color}}/><span>{label}</span><strong>{value}</strong></div>}
+function Alert({label,detail}:{label:string;detail:string}){return <div className="exec-alert"><span className="exec-alert-icon"><AlertTriangle size={13}/></span><div><strong>{label}</strong><small>{detail}</small></div><span style={{color:"var(--muted)"}}>›</span></div>}

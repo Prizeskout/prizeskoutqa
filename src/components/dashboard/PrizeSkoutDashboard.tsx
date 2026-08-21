@@ -272,6 +272,13 @@ const CSS = `
   .ps-dashboard-sidebar nav button[aria-current="page"]{background:rgba(255,255,255,.12)!important;color:#fff!important;box-shadow:inset 3px 0 0 #EF681A}
   .ps-dashboard-sidebar nav button:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
   .ps-dashboard-sidebar-footer{border-top:1px solid rgba(255,255,255,.10);padding-top:14px}
+  .ps-dashboard-sidebar.ps-overview-sidebar{background:#FFFFFF!important;color:var(--text)!important;border-inline-end:1px solid var(--border)!important;box-shadow:4px 0 18px -16px rgba(10,23,52,.22)}
+  .ps-dashboard-sidebar.ps-overview-sidebar nav button{color:var(--muted)!important}
+  .ps-dashboard-sidebar.ps-overview-sidebar nav button[aria-current="page"]{background:#0F2B62!important;color:#FFFFFF!important;box-shadow:none}
+  .ps-dashboard-sidebar.ps-overview-sidebar nav button[aria-current="page"] svg{color:#FFFFFF!important}
+  .ps-dashboard-sidebar.ps-overview-sidebar nav button:hover{background:var(--surface2)!important;color:var(--text)!important}
+  .ps-dashboard-sidebar.ps-overview-sidebar nav button[aria-current="page"]:hover{background:#0F2B62!important;color:#FFFFFF!important}
+  .ps-dashboard-sidebar.ps-overview-sidebar .ps-dashboard-sidebar-footer{border-top-color:var(--border)}
   .ps-db .table-scroll{border-radius:12px}
   .ps-db .table-scroll table thead{position:sticky;top:0;z-index:1}
   .ps-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:2px 2px 4px}
@@ -6009,7 +6016,7 @@ export function PrizeSkoutDashboard() {
       {/* SIDEBAR */}
       {isDesktop && (
         <aside
-          className="ps-dashboard-sidebar"
+          className={`ps-dashboard-sidebar ${tab === "analytics" && sidebarNav === "overview" ? "ps-overview-sidebar" : ""}`}
           style={{
             width: 264,
             flex: "0 0 264px",
