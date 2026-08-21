@@ -30,6 +30,8 @@ export type StagedItem = {
   error?: string;
   classifiedDoc?: ClassifiedDocument;
   classification?: PayoutCheckClassification;
+  evidenceItemId?: string;
+  originalRetained?: boolean;
 };
 
 const DOCUMENT_TYPE_LABEL: Record<DocumentType, string> = {
@@ -109,7 +111,7 @@ export function PayoutUploadStaging({
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", background: "var(--surface2)", border: "1px solid var(--border)",
         borderRadius: 10, padding: 3, gap: 2, alignSelf: "flex-start" }}>
-        {([["file", "Merchant files"], ["manual", "Receipt confirmation"]] as [StagedKind, string][]).map(([id, label]) => (
+        {([["file", "Statement file"], ["manual", "Receipt confirmation"]] as [StagedKind, string][]).map(([id, label]) => (
           <button key={id} type="button" onClick={() => setMode(id)}
             style={{ cursor: "pointer", border: "none", borderRadius: 8, padding: "9px 15px",
               fontSize: 13, fontWeight: 700, fontFamily: "inherit",
@@ -197,6 +199,16 @@ export function PayoutUploadStaging({
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{it.label}</span>
                   {it.status === "uploading" && <span style={{ fontSize: 12, color: "var(--muted)" }}>Uploading…</span>}
+                  {it.status === "done" && it.originalRetained && (
+                    <span title={it.evidenceItemId} style={{ fontSize: 10.5, fontWeight: 750, color: "#166534", background: "#ECFDF3", border: "1px solid #BBF7D0", borderRadius: 999, padding: "3px 8px" }}>
+                      Original retained · review required
+                    </span>
+                  )}
+                  {it.status === "done" && it.kind === "manual" && it.evidenceItemId && (
+                    <span title={it.evidenceItemId} style={{ fontSize: 10.5, fontWeight: 750, color: "#9A3412", background: "#FFF7ED", border: "1px solid #FED7AA", borderRadius: 999, padding: "3px 8px" }}>
+                      Merchant assertion recorded
+                    </span>
+                  )}
                   {it.status === "done" && structuralType && it.kind === "file" && (
                     <select value={structuralType} onChange={e => onCorrectType(it.id, e.target.value as DocumentType)}
                       style={{ height: 26, fontSize: 11.5, fontWeight: 700, color: "var(--text)",
@@ -288,8 +300,9 @@ export function PayoutUploadStaging({
             color: "#fff", background: doneCount === 0 ? "#9A9A9A" : GN,
             border: "none", borderRadius: 10, padding: "11px 20px", fontFamily: "inherit",
             opacity: doneCount === 0 ? 0.7 : 1 }}>
-          Review Files and Run Check{doneCount > 0 ? ` (${doneCount})` : ""}
+          Preview Extracted Values{doneCount > 0 ? ` (${doneCount})` : ""}
         </button>
+        {doneCount > 0 && <div style={{ marginTop: 7, maxWidth: 720, color: "var(--muted)", fontSize: 11.5, lineHeight: 1.5 }}>This preview helps you spot obvious file or period problems. It does not become approved financial evidence until you verify the extraction in Evidence &amp; History.</div>}
       </div>
     </div>
   );

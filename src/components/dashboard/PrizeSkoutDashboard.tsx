@@ -5266,13 +5266,14 @@ export function PrizeSkoutDashboard() {
     rate: number,
     platform: string,
     description: string,
-  ): Promise<{ ok: true; result: PayoutCheckData } | { ok: false; error: string }> => {
+  ): Promise<{ ok: true; result: PayoutCheckData; evidenceItemId: string; duplicate: boolean } | { ok: false; error: string }> => {
     try {
       const original=new FormData();
       original.set("merchant_id",mid);original.set("access_code",ac);original.set("source_provider",platform);original.set("file",file);
       const retained=await fetch("/api/evidence/intake",{method:"POST",body:original});
-      const retainedResult=await retained.json() as {ok?:boolean;error?:string};
+      const retainedResult=await retained.json() as {ok?:boolean;error?:string;evidence_item_id?:string;duplicate?:boolean};
       if(!retained.ok||!retainedResult.ok)return {ok:false,error:retainedResult.error??"Could not retain the original evidence file."};
+      if(!retainedResult.evidence_item_id)return {ok:false,error:"The original file was stored but its evidence record could not be confirmed."};
       const lowerName = file.name.toLowerCase();
       const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
       const isXlsx =
@@ -5306,7 +5307,7 @@ export function PrizeSkoutDashboard() {
       if (!res.ok || !data.ok) {
         return { ok: false, error: data.error ?? "Could not read that file." };
       }
-      return { ok: true, result: data };
+      return { ok: true, result: data, evidenceItemId: retainedResult.evidence_item_id, duplicate: Boolean(retainedResult.duplicate) };
     } catch {
       return { ok: false, error: "Could not read that file." };
     }
@@ -5347,9 +5348,12 @@ export function PrizeSkoutDashboard() {
           return {
             ...it,
             status: "done",
+            evidenceItemId: outcome.evidenceItemId,
+            originalRetained: true,
             classification: outcome.result.classification,
             classifiedDoc: {
               id,
+              evidence_item_id: outcome.evidenceItemId,
               file_name: file.name,
               document_type: documentType,
               result: outcome.result,
@@ -5442,6 +5446,7 @@ export function PrizeSkoutDashboard() {
         evidence_file_name?: string;
         evidence_sha256?: string;
         evidence_level?: "manual_assertion" | "document_supported";
+        evidence_item_id?: string;
       };
       if (!res.ok || !data.ok) {
         setStagedItems((prev) =>
@@ -5460,6 +5465,7 @@ export function PrizeSkoutDashboard() {
             : {
                 ...it,
                 status: "done",
+                evidenceItemId: data.evidence_item_id,
                 classification: data.classification,
                 classifiedDoc: {
                   id,
@@ -5561,6 +5567,11 @@ export function PrizeSkoutDashboard() {
 
   const handleSaveAudit = async () => {
     if (!auditResult || savingAudit || auditSaved) return;
+    if (payoutDocuments.some((document) => Boolean(document.evidence_item_id))) {
+      showToast("Review the retained extraction in Evidence & History before it becomes financial evidence.");
+      setTab("history");
+      return;
+    }
     const mid = localStorage.getItem("ps_merchant_id") ?? "";
     const ac = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac) return;
@@ -8768,6 +8779,14 @@ export function PrizeSkoutDashboard() {
                 {t.payoutCheckDesc}
               </div>
 
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: 8 }}>
+                {[
+                  ["1", "Choose evidence", "Connected orders, a statement, or receipt confirmation"],
+                  ["2", "Preview extraction", "Check the platform, period, amounts, and document type"],
+                  ["3", "Review & approve", "Only verified evidence enters reconciliation and recovery"],
+                ].map(([number,label,note]) => <div key={number} style={{ display: "flex", gap: 10, padding: "11px 12px", border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface2)" }}><span style={{ flex: "0 0 auto", width: 24, height: 24, display: "grid", placeItems: "center", borderRadius: "50%", background: number === "1" ? OG : "var(--surface)", color: number === "1" ? "#fff" : "var(--muted)", border: number === "1" ? 0 : "1px solid var(--border)", fontSize: 11, fontWeight: 850 }}>{number}</span><span><strong style={{ display: "block", color: "var(--text)", fontSize: 12 }}>{label}</strong><small style={{ display: "block", marginTop: 2, color: "var(--muted)", fontSize: 10.5, lineHeight: 1.35 }}>{note}</small></span></div>)}
+              </div>
+
               {/* Tabs */}
               <div
                 style={{
@@ -8782,8 +8801,8 @@ export function PrizeSkoutDashboard() {
               >
                 {(
                   [
-                    ["live", t.payoutCheckLiveTab],
-                    ["upload", t.payoutCheckUploadTab],
+                    ["live", lang === "en" ? "Connected orders" : t.payoutCheckLiveTab],
+                    ["upload", lang === "en" ? "Upload evidence" : t.payoutCheckUploadTab],
                   ] as [typeof payoutTab, string][]
                 ).map(([id, label]) => (
                   <button
@@ -8966,7 +8985,12 @@ export function PrizeSkoutDashboard() {
                       documents={payoutDocuments}
                       approvedContract={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform) ?? null}
                     />
-                    <div>
+                    {payoutDocuments.some((document) => Boolean(document.evidence_item_id)) ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", padding: "14px 16px", border: "1px solid #FED7AA", borderRadius: 11, background: "#FFF7ED" }}>
+                        <div><strong style={{ display: "block", color: "#9A3412", fontSize: 13 }}>Preliminary extraction — not an approved audit</strong><span style={{ display: "block", marginTop: 4, color: "#9A3412", fontSize: 12, lineHeight: 1.45 }}>The original is safely retained. Verify its extracted values before PrizeSkout uses them for reconciliation or recovery.</span></div>
+                        <button type="button" onClick={() => setTab("history")} style={{ border: 0, borderRadius: 9, padding: "9px 13px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>Review retained evidence →</button>
+                      </div>
+                    ) : <div>
                       <button
                         type="button"
                         onClick={handleSaveAudit}
@@ -8993,7 +9017,7 @@ export function PrizeSkoutDashboard() {
                       {auditSaved&&settlementRun&&<div style={{marginTop:9,padding:"9px 12px",border:"1px solid var(--border)",borderRadius:9,fontSize:12,color:"var(--muted)",background:"var(--surface2)"}}>
                         Settlement ledger: <strong style={{color:"var(--text)"}}>{settlementRun.status.replaceAll("_"," ")}</strong> · {settlementRun.summary.exceptions??0} exception(s) · claim-ready {currency} {(settlementRun.summary.claims_ready_amount??0).toFixed(2)}. Aggregate or unreferenced evidence remains quarantined.
                       </div>}
-                    </div>
+                    </div>}
                   </>
                 )}
             </div>

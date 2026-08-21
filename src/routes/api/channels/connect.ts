@@ -353,13 +353,14 @@ export const Route = createFileRoute("/api/channels/connect")({
                   const contentSha256=createHash("sha256").update(sourceText).digest("hex");
                   const intake=await registerMerchantEvidence({accountId:merchant_id,merchantId:merchant_id,sourceKind:"file_upload",sourceProvider:(result.platform||upload_platform||"unknown").toLowerCase(),sourceExternalId:`upload:${contentSha256}`,documentKind,contentSha256,mediaType,sourceMetadata:{shadow_only:true,original_bytes_retained:false,file_kind:file_kind||"csv"}});
                   try{await appendEvidenceProcessingAttempt({evidenceItemId:intake.evidenceItemId,accountId:merchant_id,processorVersion:"legacy-payout-upload-shadow-v1",attemptNumber:intake.duplicate?2:1,state:result.ok?"accepted":"needs_review",detectedDocumentKind:documentKind,extractionSummary:{parser_ok:result.ok,platform:result.platform??upload_platform??null,period_start:result.period_start??null,period_end:result.period_end??null},limitations:["Compatibility parser retained temporarily while normalized-event parity is verified."]});}catch(error){console.warn("[merchant-evidence-shadow] compatibility attempt was already recorded",error);}
-                  if(result.ok){
-                    await persistNormalizedCommerceEvents({accountId:merchant_id,merchantId:merchant_id,evidenceItemId:intake.evidenceItemId,sourceKind:"file_upload",sourceProvider:(result.platform||upload_platform||"unknown").toLowerCase(),documentKind,result});
-                    await runNormalizedReconciliationShadow({accountId:merchant_id,evidenceItemId:intake.evidenceItemId,compatibilityResult:result});
-                  }
+                  // The compatibility parser may preview the file, but it must
+                  // not create normalized financial events. The durable
+                  // evidence processor does that only after merchant review.
                 }catch(error){console.error("[merchant-evidence-shadow] payout upload intake failed",error);}
                 if (!result.ok) return resp({ ok: false, error: result.error }, 400);
-                await savePayoutCheck(merchant_id, result);
+                // Uploaded files are previews until the merchant approves the
+                // retained extraction in Evidence & History. Do not place an
+                // unreviewed parser result in payout-check history.
                 const trimmedDescription = (description ?? "").trim().slice(0, 500);
                 if (!trimmedDescription) return resp({ ...result, ok: true }, 200);
                 const classification = await classifyUpload({
@@ -450,8 +451,19 @@ export const Route = createFileRoute("/api/channels/connect")({
                 }
               }
 
+              const confirmationEvidence=JSON.stringify({
+                merchant_id,platform:platformGuess,amount:Math.round(amount*100)/100,
+                period_start,period_end,confirmation_date:confirmationDate,
+                settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null,
+                deposit_type:body.deposit_type??"regular_payout",currency:body.currency??"QAR",
+              });
+              const confirmationHash=createHash("sha256").update(confirmationEvidence).digest("hex");
+              const confirmationIntake=await registerMerchantEvidence({accountId:merchant_id,merchantId:merchant_id,sourceKind:"file_upload",sourceProvider:(platformGuess??"merchant").toLowerCase(),sourceExternalId:`confirmation:${confirmationHash}`,documentKind:"merchant_confirmation",contentSha256:confirmationHash,mediaType:"application/json",sourceMetadata:{original_bytes_retained:false,manual_assertion:true,period_start,period_end,confirmation_date:confirmationDate}});
+              if(!confirmationIntake.duplicate)await appendEvidenceProcessingAttempt({evidenceItemId:confirmationIntake.evidenceItemId,accountId:merchant_id,processorVersion:"merchant-receipt-confirmation-v1",attemptNumber:1,state:"accepted",detectedDocumentKind:"merchant_confirmation",extractionSummary:{received_amount:Math.round(amount*100)/100,currency:body.currency??"QAR",period_start,period_end,settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null},limitations:["Merchant assertion only; no bank transaction was requested or verified."]});
+
               return resp({
                 ok: true,
+                evidence_item_id:confirmationIntake.evidenceItemId,
                 source: "manual",
                 role: "merchant_received",
                 received_amount: Math.round(amount * 100) / 100,

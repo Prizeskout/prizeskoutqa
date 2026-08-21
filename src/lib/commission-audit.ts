@@ -94,6 +94,9 @@ export type LedgerRow = {
 
 export type ClassifiedDocument = {
   id: string;
+  /** Immutable retained source record. Documents with this ID require the
+   * Evidence Inbox approval path before they support a final audit. */
+  evidence_item_id?: string;
   file_name: string;
   document_type: DocumentType;
   result: PayoutResultLike;
