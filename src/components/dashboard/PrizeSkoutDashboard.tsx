@@ -333,6 +333,9 @@ const CSS = `
   @media(max-width:1100px){.ps-cfo-workspace>.ps-cfo-compact{grid-template-columns:1fr 1fr}.ps-cfo-chat-panel{grid-column:1/-1}}
   @media(max-width:900px){.ps-cfo-workspace>.ps-cfo-compact,.ps-manager-workspace>.ps-manager-main-grid,.ps-manager-workspace>.ps-manager-health-grid{grid-template-columns:1fr}.ps-cfo-chat-panel{grid-column:auto}.ps-manager-workflow-card .ps-manager-workflow{grid-template-columns:repeat(2,1fr);gap:18px}.ps-manager-workflow-card .ps-manager-workflow>div:after{display:none}}
   @media(max-width:760px){.ps-cfo-workspace>.ps-cfo-modes{grid-template-columns:1fr}.ps-manager-workflow-card .ps-manager-workflow{grid-template-columns:1fr 1fr}.ps-manager-queue-head{display:none}.ps-manager-queue-row{grid-template-columns:1fr auto}.ps-manager-queue-row>span:nth-child(2),.ps-manager-queue-row>span:nth-child(3){display:none}}
+  .ps-catalog-page,.ps-defend-page{background:var(--surface2)}.ps-catalog-kpis>button,.ps-defend-kpis>.ps-kpi-tile{min-height:112px;box-shadow:0 8px 24px rgba(15,35,70,.045)!important}.ps-catalog-insights{display:grid;grid-template-columns:.9fr 1.1fr .8fr;gap:14px}.ps-catalog-insight-card,.ps-defend-snapshot>section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:17px;min-width:0}.ps-catalog-insight-card>div:first-child h3,.ps-defend-snapshot h3{font-size:14px;margin:0}.ps-catalog-insight-card>div:first-child p,.ps-defend-snapshot section>div:first-child p{font-size:10.5px;color:var(--muted);margin:3px 0 12px}.ps-catalog-health-ring,.ps-defend-ring{width:122px;height:122px;border-radius:50%;margin:2px auto 14px;background:conic-gradient(#10b981 var(--catalog-ready,var(--defend-ready)),#f97316 0);display:grid;place-content:center;text-align:center;position:relative}.ps-catalog-health-ring:before,.ps-defend-ring:before{content:"";position:absolute;inset:19px;border-radius:50%;background:var(--surface)}.ps-catalog-health-ring strong,.ps-catalog-health-ring small,.ps-defend-ring strong,.ps-defend-ring small{position:relative;z-index:1}.ps-catalog-health-ring strong,.ps-defend-ring strong{font-size:21px}.ps-catalog-health-ring small,.ps-defend-ring small{font-size:8px;color:var(--muted)}.ps-catalog-insight-card ul{list-style:none;padding:0;margin:0;display:grid;gap:7px}.ps-catalog-insight-card li,.ps-defend-legend span{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--muted)}.ps-catalog-insight-card li b,.ps-defend-legend b{margin-left:auto;color:var(--text)}.ps-dot-green,.ps-dot-orange,.ps-dot-blue{width:7px;height:7px;border-radius:50%;display:inline-block;background:#10b981}.ps-dot-orange{background:#f97316}.ps-dot-blue{background:#2563eb}.ps-catalog-channel-list>div,.ps-defend-channel>div{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:10px;text-transform:capitalize}.ps-catalog-channel-list span,.ps-defend-channel span{color:var(--muted)}.ps-catalog-channel-list span.is-connected,.ps-defend-channel span.is-connected{color:#059669}.ps-catalog-channel-list em,.ps-defend-channel em{font-style:normal;color:var(--muted)}.ps-catalog-insight-card>button,.ps-defend-snapshot section>button{margin-top:14px;border:0;background:transparent;color:#2563eb;font:750 10px inherit;cursor:pointer;padding:0}.ps-catalog-priority{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}.ps-catalog-priority strong{font-size:22px;color:#f97316}.ps-catalog-priority span{font-size:10px;color:var(--muted)}.ps-catalog-table-card{box-shadow:0 12px 32px rgba(15,35,70,.055)!important}.ps-catalog-table-card tbody tr{transition:background .15s ease}.ps-catalog-table-card tbody tr:hover{background:color-mix(in srgb,#2563eb 3%,var(--surface))}.ps-defend-page{display:flex;flex-direction:column;gap:18px}.ps-defend-snapshot{display:grid;grid-template-columns:.85fr 1.2fr 1fr;gap:14px}.ps-defend-legend{display:grid;gap:7px}.ps-defend-snapshot ol{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.ps-defend-snapshot li{position:relative;text-align:center}.ps-defend-snapshot li:not(:last-child):after{content:"";position:absolute;top:13px;left:60%;right:-40%;height:1px;background:var(--border)}.ps-defend-snapshot li>i{position:relative;z-index:1;margin:auto;width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--border);font-style:normal;font-size:9px;font-weight:850}.ps-defend-snapshot li.is-active>i{background:#2563eb;color:#fff;border-color:#2563eb}.ps-defend-snapshot li span,.ps-defend-snapshot li b,.ps-defend-snapshot li small{display:block}.ps-defend-snapshot li b{font-size:8.5px;margin-top:7px}.ps-defend-snapshot li small{font-size:7.5px;color:var(--muted);margin-top:2px}.ps-defend-editor{box-shadow:0 12px 32px rgba(15,35,70,.055)}
+  @media(max-width:1050px){.ps-catalog-insights,.ps-defend-snapshot{grid-template-columns:1fr 1fr}.ps-catalog-insight-card:first-child,.ps-defend-snapshot>section:first-child{grid-row:span 2}}
+  @media(max-width:760px){.ps-catalog-insights,.ps-defend-snapshot{grid-template-columns:1fr}.ps-catalog-insight-card:first-child,.ps-defend-snapshot>section:first-child{grid-row:auto}.ps-defend-snapshot ol{grid-template-columns:1fr 1fr;gap:14px}.ps-defend-snapshot li:after{display:none}}
   @keyframes pk-drawer-ltr{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
   @keyframes pk-drawer-rtl{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
 `;
@@ -7185,7 +7188,7 @@ export function PrizeSkoutDashboard() {
         {/* ===== TAB: CATALOG ===== */}
         {tab === "catalog" && (
           <section
-            className="ps-db-section"
+            className="ps-db-section ps-catalog-page"
             style={{ padding: "28px 30px 48px", display: "flex", flexDirection: "column", gap: 20, animation: "pk-in .3s ease" }}
           >
             <DashboardSectionHeader
@@ -7194,7 +7197,7 @@ export function PrizeSkoutDashboard() {
               description="Review product coverage, confirmed costs, availability, and source channels in one decision-ready view."
               action={<button type="button" className="ps-header-action" onClick={syncAllCatalogs} disabled={syncingCatalog}>{syncingCatalog ? "Syncing…" : "Sync catalog"}</button>}
             />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+            <div className="ps-catalog-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
               {[
                 { label: "Catalog items", value: importedProducts.length, note: "Products received", action: () => openCatalogFilter("all") },
                 { label: "Costs confirmed", value: storeOpportunity.verified, note: "Safe for calculation", action: () => openCatalogFilter("verified") },
@@ -7210,7 +7213,13 @@ export function PrizeSkoutDashboard() {
               ))}
             </div>
 
-            <div id="imported-products" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "var(--shadow)", overflow: "hidden" }}>
+            <div className="ps-catalog-insights">
+              <section className="ps-catalog-insight-card"><div><h3>Catalog health</h3><p>Products with verified cost evidence</p></div><div className="ps-catalog-health-ring" style={{ "--catalog-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Ready</small></div><ul><li><i className="ps-dot-green"/>Confirmed costs <b>{storeOpportunity.verified}</b></li><li><i className="ps-dot-orange"/>Missing evidence <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></li><li><i className="ps-dot-blue"/>Out of stock <b>{importedProducts.filter(product => product.inventory_status === "out_of_stock").length}</b></li></ul></section>
+              <section className="ps-catalog-insight-card"><div><h3>Channel coverage</h3><p>Connected sources feeding the live catalog</p></div><div className="ps-catalog-channel-list">{(["zid", "salla"] as const).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform] === "connected" ? "is-connected" : ""}>{channelStatuses[platform] === "connected" ? "Connected" : "Not connected"}</span><em>{importedProducts.filter(product => product.source_platform === platform).length} items</em></div>)}</div><button type="button" onClick={() => setTab("vault")}>View integration health →</button></section>
+              <section className="ps-catalog-insight-card"><div><h3>Priority review</h3><p>Evidence gaps and availability issues</p></div><div className="ps-catalog-priority"><strong>{storeOpportunity.estimated + storeOpportunity.unknown}</strong><span>products need cost evidence</span></div><div className="ps-catalog-priority"><strong>{storeOpportunity.atRisk.length}</strong><span>verified products need margin review</span></div><button type="button" onClick={() => openCatalogFilter("missing_cost")}>Open attention queue →</button></section>
+            </div>
+
+            <div id="imported-products" className="ps-catalog-table-card" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "var(--shadow)", overflow: "hidden" }}>
               <div style={{ padding: "20px 22px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap", borderBottom: "1px solid var(--border)" }}>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 20 }}>Product catalog</h2>
@@ -11755,6 +11764,7 @@ export function PrizeSkoutDashboard() {
 
             {/* Margin Policy v1: one understandable, enforceable store policy. */}
             {sidebarNav === "defend" && <div
+              className="ps-defend-page"
               data-tour="guardrails"
               style={{ display: "flex", flexDirection: "column", gap: 18 }}
             >
@@ -11763,13 +11773,19 @@ export function PrizeSkoutDashboard() {
                 title="Protect margin with merchant-controlled rules"
                 description="Set the floor PrizeSkout must defend, preview the impact, and keep every proposed store change behind your approval controls."
               />
-              <div className="ps-kpi-strip">
+              <div className="ps-kpi-strip ps-defend-kpis">
                 <div className="ps-kpi-tile"><span>Protection status</span><strong style={{ color: defendHealth?.state === "active" ? GN : "#B45309" }}>{defendHealth?.state === "active" ? "Active" : "Review"}</strong><small>{defendHealth?.detail ?? "Checking connected channels"}</small></div>
                 <div className="ps-kpi-tile"><span>Margin floor</span><strong>{rules[0]?.floor ?? 18}%</strong><small>Minimum contribution to keep</small></div>
                 <div className="ps-kpi-tile"><span>Policy version</span><strong>{policyVersion}</strong><small>Current auditable rule set</small></div>
                 <div className="ps-kpi-tile"><span>Costs confirmed</span><strong>{storeOpportunity.verified}</strong><small>Products eligible for calculation</small></div>
               </div>
+              <div className="ps-defend-snapshot">
+                <section><div><h3>Protection coverage</h3><p>How much of the catalog can safely use this policy</p></div><div className="ps-defend-ring" style={{ "--defend-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Covered</small></div><div className="ps-defend-legend"><span><i className="ps-dot-green"/>Eligible <b>{storeOpportunity.verified}</b></span><span><i className="ps-dot-orange"/>Evidence needed <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></span></div></section>
+                <section><div><h3>Policy workflow</h3><p>Every protected change follows merchant controls</p></div><ol><li className="is-active"><i>1</i><span><b>Set protection floor</b><small>{rules[0]?.floor ?? 18}% minimum contribution</small></span></li><li><i>2</i><span><b>Preview affected products</b><small>No store changes yet</small></span></li><li><i>3</i><span><b>Review and activate</b><small>Approval mode remains enforced</small></span></li><li><i>4</i><span><b>Monitor outcomes</b><small>Audit evidence retained</small></span></li></ol></section>
+                <section><div><h3>Channel protection</h3><p>Connection and rule readiness stay separate</p></div><div className="ps-defend-channel">{(["zid", "salla"] as const).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform] === "connected" ? "is-connected" : ""}>{channelStatuses[platform] === "connected" ? "Connected" : "Not connected"}</span><em>{channelPolicyDrafts.some(item => item.channel === platform) ? "Override ready" : "Global policy"}</em></div>)}</div><button type="button" onClick={() => document.getElementById("channel-margin-overrides")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Review channel targets →</button></section>
+              </div>
               <div
+                className="ps-defend-editor"
                 style={{
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
