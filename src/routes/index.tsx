@@ -8,7 +8,7 @@ import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
 import qstpLogoColored from "@/assets/qstp-logo-colored.png";
 import { DemoPlayer } from "@/components/landing/DemoPlayer";
-import { RevenueProtectionLanding } from "@/components/landing/RevenueProtectionLanding";
+import { ImmersiveEconomicTwinLanding } from "@/components/landing/ImmersiveEconomicTwinLanding";
 import {
   PLAN_PRICES_QAR_ANNUAL_MONTHLY,
   PLAN_PRICES_QAR_MONTHLY,
@@ -19,17 +19,17 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PrizeSkout | Margin Intelligence" },
+      { title: "PrizeSkout | The Economic Twin for Commerce" },
       {
         name: "description",
         content:
-          "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.",
+          "Reconstruct the real unit economics of every order, predict the profit impact of commercial actions, and defend your margin automatically.",
       },
-      { property: "og:title", content: "PrizeSkout | Margin Intelligence" },
+      { property: "og:title", content: "PrizeSkout | The Economic Twin for Commerce" },
       {
         property: "og:description",
         content:
-          "Understand true profit, protect margins, monitor competitors, manage prices and promotions, check payouts, and run daily store operations with AI.",
+          "Reported profit is a story. True profit is a system.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://prizeskout.qa/" },
@@ -1030,7 +1030,7 @@ function FAQSection() {
 
 // ── Page root ─────────────────────────────────────────────────────────────────
 function LandingPage() {
-  return <RevenueProtectionLanding />;
+  return <ImmersiveEconomicTwinLanding />;
   /* Legacy landing retained temporarily for safe rollback while the new
      revenue-protection direction is validated. */
   // Light is the default for every visit; only an explicit toggle opts into dark.
