@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { hydrateLocaleFromServer } from "@/lib/locale-sync";
 
 type AuthState = {
   user: User | null;
@@ -56,12 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setLoading(false);
+      // Adopt the account's saved language once we know who is signed in.
+      if (newSession?.user) void hydrateLocaleFromServer();
     });
 
     supabase.auth.getSession().then(({ data: { session: existing } }) => {
       setSession(existing);
       setUser(existing?.user ?? null);
       setLoading(false);
+      if (existing?.user) void hydrateLocaleFromServer();
     });
 
     return () => subscription.unsubscribe();

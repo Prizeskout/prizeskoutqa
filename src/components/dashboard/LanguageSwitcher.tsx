@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown } from "lucide-react";
-import { LOCALES, LOCALE_NAMES, applyLocale, type Locale } from "@/lib/i18n";
+import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n";
+import { setLocale } from "@/lib/locale-sync";
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
@@ -21,8 +22,8 @@ export function LanguageSwitcher() {
   }, [open]);
 
   const handleChange = (lng: Locale) => {
-    i18n.changeLanguage(lng);
-    applyLocale(lng);
+    // Applies the locale everywhere and persists it to the account (if signed in).
+    void setLocale(lng);
     setOpen(false);
   };
 

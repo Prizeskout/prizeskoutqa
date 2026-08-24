@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendAlertEmail } from "@/server/email";
 
 export type NotificationCategory =
   | "webhook_failure"
@@ -95,6 +96,29 @@ export async function createNotification(input: CreateNotificationInput): Promis
       metadata: metadata as never,
     });
     if (error) console.error("createNotification failed", error);
+
+    // Piggyback a localized alert email for high-severity events.
+    // Best-effort — swallowed entirely so a Resend failure never
+    // breaks the originating flow. Only fires for error/warning
+    // severity (not info/success) to avoid email noise.
+    const severity = input.severity ?? "info";
+    if (!error && (severity === "error" || severity === "warning")) {
+      try {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(input.userId);
+        const to = authUser?.user?.email;
+        if (to) {
+          await sendAlertEmail({
+            to,
+            userId: input.userId,
+            title: input.title,
+            body: input.body,
+            linkTo: input.linkTo,
+          });
+        }
+      } catch {
+        // Email alert is best-effort; never surface.
+      }
+    }
   } catch (err) {
     console.error("createNotification threw", err);
   }

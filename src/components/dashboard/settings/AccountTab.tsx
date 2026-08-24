@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { getCompany, setCompany } from "@/lib/companyStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n";
+import { setLocale } from "@/lib/locale-sync";
 import {
   PLAN_LIMITS,
   PLAN_ACCENTS,
@@ -49,7 +51,7 @@ const COUNTRIES = [
 const CURRENCIES = ["QAR", "USD", "AED", "SAR", "KWD", "BHD"] as const;
 
 export function AccountTab() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [companyName, setCompanyName] = useState(() => getCompany().name);
   const [industry, setIndustry] = useState<string>("E-commerce / Quick commerce");
   const [country, setCountry] = useState<string>("Qatar");
@@ -205,6 +207,26 @@ export function AccountTab() {
               </span>
             )}
           </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{t("settings.languageEmail", "Language & email")}</CardTitle>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+          <Field label={t("settings.language", "Language")}>
+            <SelectField
+              value={(i18n.language?.slice(0, 2) as Locale) ?? "en"}
+              onChange={(v) => void setLocale(v as Locale)}
+              options={LOCALES}
+              labels={LOCALE_NAMES}
+            />
+          </Field>
+          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "#9A9A9A" }}>
+            {t(
+              "settings.languageEmailHint",
+              "Sets your dashboard language and the language of the emails we send you \u2014 welcome, weekly summaries, alerts and sign-in links.",
+            )}
+          </p>
         </div>
       </Card>
 

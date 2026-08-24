@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "skipLibCheck": true },
+  "include": [
+    "src/server/email/locale.ts",
+    "src/server/email/strings.ts",
+    "src/server/email/render.ts",
+    "src/server/email/templates.ts",
+    "src/server/email/send.ts",
+    "src/server/email/index.ts",
+    "src/server/rate-limit.ts",
+    "src/routes/api/settings/locale.ts",
+    "src/routes/api/public/hooks/auth-email.ts",
+    "src/routes/api/register-code.ts",
+    "src/routes/api/public/hooks/weekly-margin-digest.ts",
+    "src/lib/locale-sync.ts",
+    "src/lib/auth-context.tsx",
+    "src/components/dashboard/LanguageSwitcher.tsx",
+    "src/components/dashboard/settings/AccountTab.tsx",
+    "src/routeTree.gen.ts"
+  ]
+}

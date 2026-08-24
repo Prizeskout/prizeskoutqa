@@ -1,6 +1,7 @@
-﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import logoLight from "@/assets/logo-light.svg";
+import { i18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -807,7 +808,7 @@ function OnboardingPage() {
       const registration=await fetchWithTimeout("/api/register-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ merchant_id: mid, onboarding_token: token, region_code: REGION_CODE[region] ?? "QA", email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined }),
+      body: JSON.stringify({ merchant_id: mid, onboarding_token: token, region_code: REGION_CODE[region] ?? "QA", email: email.trim().toLowerCase() || undefined, store_name: storeName.trim() || undefined, locale: i18n.language?.slice(0, 2) ?? "en" }),
       });
       if(!registration.ok)throw new Error("PrizeSkout could not secure your onboarding session. Please try again.");
       const registrationData = await registration.json() as { code?: string };

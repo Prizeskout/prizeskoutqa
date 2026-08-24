@@ -9,6 +9,7 @@ import {
   LegalFooter,
 } from "@/components/auth/AuthShared";
 import { supabase } from "@/integrations/supabase/client";
+import { i18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/access")({
   head: () => ({
@@ -78,7 +79,11 @@ function AccessPage() {
       // access on its own.
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: trimmed,
-        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback` },
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: { locale: i18n.language?.slice(0, 2) ?? "en" },
+        },
       });
       if (otpError) {
         setError("Could not send sign-in link. Please try again.");

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createNotification } from "@/server/notifications";
+import { sendWeeklyDigestEmail } from "@/server/email";
 
 function weekKey(date = new Date()) {
   const monday = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -46,6 +47,24 @@ export const Route = createFileRoute("/api/public/hooks/weekly-margin-digest")({
             dedupeWindowMinutes: 8 * 24 * 60,
             metadata: { checked: checked ?? 0, breaches: breaches ?? 0, repriced: repriced ?? 0, week: weekKey() },
           });
+
+          // Deliver the same summary by email, in the user's saved language.
+          // The helper resolves locale + honors the email opt-out; here we just
+          // supply the address and the numbers.
+          try {
+            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(subscriber.user_id);
+            const to = authUser?.user?.email;
+            if (to) {
+              await sendWeeklyDigestEmail({
+                to,
+                userId: subscriber.user_id,
+                checked: checked ?? 0,
+                breaches: breaches ?? 0,
+                repriced: repriced ?? 0,
+              });
+            }
+          } catch { /* email is best-effort; never fail the digest run */ }
+
           sent++;
         }
         return Response.json({ success: true, subscribers: subscribers?.length ?? 0, sent, week: weekKey() });
