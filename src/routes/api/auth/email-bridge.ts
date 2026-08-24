@@ -12,11 +12,18 @@
 // back in this response.
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, tooManyRequests } from "@/server/rate-limit";
 
 export const Route = createFileRoute("/api/auth/email-bridge")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Unauthenticated endpoint: anyone can POST any email here, so cap
+        // per-IP volume to blunt email-enumeration scans (login intent) and
+        // automated account creation (signup intent).
+        const rate = checkRateLimit(request, { name: "email-bridge", max: 15, windowMs: 15 * 60_000 });
+        if (rate.limited) return tooManyRequests(rate.retryAfterSeconds);
+
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         const supabaseUrl = process.env.SUPABASE_URL;
 

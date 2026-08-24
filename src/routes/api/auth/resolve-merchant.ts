@@ -6,11 +6,15 @@
 // trusting whatever merchant_id happened to already be in localStorage.
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { checkRateLimit, tooManyRequests } from "@/server/rate-limit";
 
 export const Route = createFileRoute("/api/auth/resolve-merchant")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const rate = checkRateLimit(request, { name: "resolve-merchant", max: 30, windowMs: 15 * 60_000 });
+        if (rate.limited) return tooManyRequests(rate.retryAfterSeconds);
+
         const auth = request.headers.get("authorization") ?? "";
         const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
         if (!token) {
