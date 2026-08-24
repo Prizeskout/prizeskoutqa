@@ -34,6 +34,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://prizeskout.qa/" },
       { property: "og:site_name", content: "PrizeSkout" },
+      { name: "prizeskout-release", content: "economic-twin-2026-08-24-2" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "PrizeSkout | Margin Intelligence" },
       {
