@@ -71,7 +71,7 @@ export function RevenueProtectionLanding(){
         </div>
         <div className="rpl-language rpl-picker"><button aria-haspopup="listbox" aria-expanded={menu} onClick={()=>{setMenu(v=>!v);setCountryMenu(false)}}>{lang==="ar"?"العربية":"English"} <span>⌄</span></button>{menu&&<div role="listbox" aria-label={tr("Select language","اختر اللغة")}><button role="option" aria-selected={lang==="en"} onClick={()=>change("en")}>English</button><button role="option" aria-selected={lang==="ar"} onClick={()=>change("ar")}>العربية</button></div>}</div>
         <a className="rpl-demo" href="/contact">{tr("Book a demo","احجز عرضاً توضيحياً")}</a>
-        <a className="rpl-login" href="/access">{tr("Merchant login","دخول التاجر")}</a>
+        <a className="rpl-login" href="/access">{tr("Login","تسجيل الدخول")}</a>
       </div>
     </nav>
 
@@ -119,7 +119,7 @@ export function RevenueProtectionLanding(){
 
     <section className="rpl-final"><img src={logo} alt="PrizeSkout"/><h2>{tr("Your margins should not depend on someone else’s dashboard.","يجب ألا تعتمد هوامشك على لوحة تحكم جهة أخرى.")}</h2><p>{tr("Connect your commerce stack and put every order under active revenue protection.","اربط منظومة تجارتك وضع كل طلب تحت حماية نشطة للإيرادات.")}</p><div className="rpl-ctas"><a href="/contact">{tr("Book a demo","احجز عرضاً توضيحياً")}</a><a href="/onboarding">{tr("Connect your store","اربط متجرك")}</a></div></section>
     </>}
-    <footer className="rpl-footer"><img src={logo} alt="PrizeSkout"/><div><a href="#product">Product</a><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#integrations">Integrations</a><a href="/access">Merchant login</a><a href="/legal">Privacy &amp; Terms</a></div><span>© 2026 PrizeSkout</span></footer>
+    <footer className="rpl-footer"><img src={logo} alt="PrizeSkout"/><div><a href="#product">Product</a><a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#integrations">Integrations</a><a href="/access">Login</a><a href="/legal">Privacy &amp; Terms</a></div><span>© 2026 PrizeSkout</span></footer>
   </main>
 }
 

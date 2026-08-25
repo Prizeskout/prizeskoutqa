@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { KeyRound, LockKeyhole, Mail } from "lucide-react";
+import { Eye, EyeOff, KeyRound, LockKeyhole, Mail } from "lucide-react";
 import {
   AuthShell,
   FormLabel,
@@ -26,6 +26,7 @@ function AccessPage() {
   const [mode, setMode] = useState<"password" | "code">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -155,7 +156,25 @@ function AccessPage() {
               value={password}
               onChange={setPassword}
               placeholder="Your password"
-              type="password"
+              type={showPassword ? "text" : "password"}
+              hasRightIcon
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{
+                    display: "flex",
+                    padding: 0,
+                    border: 0,
+                    background: "transparent",
+                    color: "#7C8492",
+                    cursor: "pointer",
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
             />
           </div>
           {error && <ErrorBox message={error} />}
@@ -190,9 +209,9 @@ function AccessPage() {
         </form>
       )}
       <p style={{ margin: "24px 0 0", color: "#6B7280", fontSize: 11, textAlign: "center" }}>
-        New to PrizeSkout?{" "}
+        Don&apos;t have an account?{" "}
         <a href="/signup" style={{ color: "#E7E8EA", fontWeight: 600 }}>
-          Create an account
+          Create one
         </a>
       </p>
       <LegalFooter />

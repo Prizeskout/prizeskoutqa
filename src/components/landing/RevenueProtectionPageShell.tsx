@@ -21,7 +21,7 @@ export function RevenueProtectionPageShell({ children }: { children: ReactNode }
           <a className="rps-market" href="/" aria-label="Return home to change country">🇶🇦 <span>Qatar</span></a>
           <a className="rps-language" href="/" aria-label="Return home to change language">English</a>
           <a className="rps-demo" href="/contact">Book a demo</a>
-          <a className="rps-login" href="/access">Merchant login</a>
+          <a className="rps-login" href="/access">Login</a>
         </div>
       </nav>
       {children}
@@ -32,7 +32,7 @@ export function RevenueProtectionPageShell({ children }: { children: ReactNode }
           <a href="/#platform">Platform</a>
           <a href="/#pricing">Pricing</a>
           <a href="/#integrations">Integrations</a>
-          <a href="/access">Merchant login</a>
+          <a href="/access">Login</a>
           <a aria-current="page" href="/legal">Privacy &amp; Terms</a>
         </div>
         <span>© 2026 PrizeSkout</span>
