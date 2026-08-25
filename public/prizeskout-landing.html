@@ -2827,4 +2827,20 @@ html{scroll-behavior:smooth} [data-reveal]{opacity:1!important;transform:none!im
     setInterval(()=>{if(flowPaused||!sceneVisible('product')||stage>=5)return;stage++;renderFlow()},140);
     setInterval(()=>{if(flowPaused||!sceneVisible('product'))return;flow=(flow+1)%flows.length;stage=0;renderFlow()},3200);
     renderEvidence(); renderLoop(); renderFlow();
-  })();</script></body></html>
+  })();</script><style id="prizeskout-final-footer-layout">
+@media (min-width: 901px) {
+  .et-live-product .et-footer { grid-template-columns: 1.25fr repeat(3, 1fr) !important; gap: clamp(70px, 9vw, 180px) !important; padding-top: 92px !important; }
+}
+</style><script id="prizeskout-final-footer-content">
+document.addEventListener('DOMContentLoaded',()=>{
+  const footer=document.querySelector('.et-footer');
+  if(!footer)return;
+  footer.querySelectorAll(':scope>div').forEach(column=>{
+    const heading=column.querySelector(':scope>b')?.textContent.trim();
+    if(heading==='COMPANY')column.remove();
+  });
+  footer.querySelectorAll(':scope>div a').forEach(link=>{
+    if(link.textContent.trim()==='Economic Twin')link.remove();
+  });
+});
+</script></body></html>
