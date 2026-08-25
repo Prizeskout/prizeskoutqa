@@ -46,8 +46,8 @@ function ForgotPasswordPage() {
         }}
       >
         <div style={{ marginBottom: 20 }}>
-          <Link
-            to="/"
+          <a
+            href="/"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -62,7 +62,7 @@ function ForgotPasswordPage() {
           >
             <ArrowLeft size={14} aria-hidden="true" />
             Back to home
-          </Link>
+          </a>
         </div>
         <BrandLogoLight />
 

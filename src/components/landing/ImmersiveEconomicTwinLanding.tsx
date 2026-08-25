@@ -181,7 +181,7 @@ export function ImmersiveEconomicTwinLanding() {
           <a href="#pricing">Pricing</a>
           <button onClick={() => go("integrations")}>Integrations</button>
           <a className="et-mobile-nav-action et-mobile-demo" href="mailto:hello@prizeskout.com?subject=Book a demo">Book a demo</a>
-          <a className="et-mobile-nav-action" href="/access">Merchant login</a>
+          <a className="et-mobile-nav-action" href="/access">Login</a>
         </div>
         <div className="et-actions">
           <button className="et-nav-utility" type="button">Qatar · QAR</button>
@@ -189,7 +189,7 @@ export function ImmersiveEconomicTwinLanding() {
           <a className="et-btn hot" href="mailto:hello@prizeskout.com?subject=Book a demo">
             Book a demo
           </a>
-          <a className="et-merchant-login" href="/access">Merchant login</a>
+          <a className="et-merchant-login" href="/access">Login</a>
         </div>
         <button className="et-menu" onClick={() => setMenu(!menu)}>
           {menu ? <X /> : <Menu />}

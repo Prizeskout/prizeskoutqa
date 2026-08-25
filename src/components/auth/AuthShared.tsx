@@ -1,5 +1,4 @@
 ﻿import { useState, type CSSProperties, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
@@ -8,8 +7,8 @@ export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) 
   const color = tone === "light" ? "#6B6B6B" : "#8A8A8A";
   const hoverColor = tone === "light" ? "#1A1A18" : "#FAFAF9";
   return (
-    <Link
-      to="/"
+    <a
+      href="/"
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -25,7 +24,7 @@ export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) 
     >
       <ArrowLeft size={14} aria-hidden="true" />
       Back to home
-    </Link>
+    </a>
   );
 }
 
