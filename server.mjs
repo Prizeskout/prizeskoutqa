@@ -45,6 +45,30 @@ function mime(filepath) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
 
+  // The finalized landing-page artifact is intentionally served verbatim at
+  // the public root. Application routes continue through the SSR handler.
+  if (
+    (req.method === "GET" || req.method === "HEAD") &&
+    (url.pathname === "/" || url.pathname === "/index.html")
+  ) {
+    const landingPath = join(STATIC_DIR, "prizeskout-landing.html");
+    try {
+      const stat = statSync(landingPath);
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Content-Length", stat.size);
+      res.setHeader("Cache-Control", "no-cache, must-revalidate");
+      res.setHeader("X-PrizeSkout-Landing", "finalized-preview-20260825");
+      if (req.method === "HEAD") {
+        res.end();
+      } else {
+        createReadStream(landingPath).pipe(res);
+      }
+      return;
+    } catch {
+      // Fall through to SSR if the artifact is missing from the build.
+    }
+  }
+
   // --- Static file serving ---
   const staticPath = join(STATIC_DIR, url.pathname);
   try {
