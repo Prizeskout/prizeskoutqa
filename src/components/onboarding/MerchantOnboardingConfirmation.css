@@ -1,0 +1,124 @@
+.mo-confirmation-note {
+  max-width: 520px;
+  margin: -12px auto 24px;
+  padding: 12px 14px;
+  border: 1px solid #f1c6ad;
+  border-radius: 10px;
+  background: #fff8f3;
+  color: #80513a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.mo-nav-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mo-nav-actions a,
+.mo-language {
+  border: 0;
+  background: transparent;
+  color: #10182d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mo-language {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #d7dcd9;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.mo-password-guide {
+  margin-top: -8px;
+  padding: 14px 16px;
+  border: 1px solid #e2e5e2;
+  border-radius: 10px;
+  background: #fafbf9;
+}
+
+.mo-password-guide p {
+  margin: 0 0 9px;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.mo-password-guide ul {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 16px;
+  list-style: none;
+}
+
+.mo-password-guide li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8a929d;
+  font-size: 10px;
+}
+
+.mo-password-guide li > span {
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9ddda;
+  border-radius: 50%;
+}
+
+.mo-password-guide li.valid {
+  color: #187452;
+}
+
+.mo-password-guide li.valid > span {
+  border-color: #25835f;
+  background: #eaf7f1;
+  color: #25835f;
+}
+
+.mo-shell[dir="rtl"] .mo-password > button {
+  right: auto;
+  left: 9px;
+}
+
+.mo-shell[dir="rtl"] .mo-password .mo-input {
+  padding-right: 13px;
+  padding-left: 42px;
+}
+
+.mo-shell[dir="rtl"] .mo-select-wrap > svg:first-child {
+  left: auto;
+  right: 12px;
+}
+
+.mo-shell[dir="rtl"] .mo-select-wrap > svg:last-child {
+  right: auto;
+  left: 12px;
+}
+
+.mo-shell[dir="rtl"] .mo-select {
+  padding-left: 37px;
+  padding-right: 37px;
+}
+
+@media (max-width: 560px) {
+  .mo-password-guide ul {
+    grid-template-columns: 1fr;
+  }
+
+  .mo-nav-actions {
+    gap: 8px;
+  }
+}

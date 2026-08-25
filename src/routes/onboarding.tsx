@@ -1,6 +1,7 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import logoLight from "@/assets/logo-light.svg";
+import { MerchantOnboarding } from "@/components/onboarding/MerchantOnboarding";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/onboarding")({
       { name: "description", content: "Set up your pricing defense in minutes." },
     ],
   }),
-  component: OnboardingPage,
+  component: MerchantOnboarding,
 });
 
 const OG = "#EF681A";

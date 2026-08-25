@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { humanizeAuthError } from "@/lib/api-error";
@@ -24,9 +24,9 @@ import {
   AuthCheckbox,
   PrimaryAuthButton,
 } from "@/components/auth/AuthShared";
+import { MerchantOnboarding } from "@/components/onboarding/MerchantOnboarding";
 
 export const Route = createFileRoute("/signup")({
-  beforeLoad: () => { throw redirect({ to: "/onboarding" }); },
   head: () => ({
     meta: [
       { title: "Create your account | PrizeSkout" },
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/signup")({
       },
     ],
   }),
-  component: SignupPage,
+  component: MerchantOnboarding,
 });
 
 const businessTypes = [

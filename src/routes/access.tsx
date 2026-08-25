@@ -1,248 +1,200 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Mail, KeyRound, MailCheck } from "lucide-react";
+import { KeyRound, LockKeyhole, Mail } from "lucide-react";
 import {
   AuthShell,
-  IconInput,
   FormLabel,
-  PrimaryAuthButton,
+  IconInput,
   LegalFooter,
+  PrimaryAuthButton,
 } from "@/components/auth/AuthShared";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/access")({
   head: () => ({
     meta: [
-      { title: "Access your dashboard | PrizeSkout" },
-      {
-        name: "description",
-        content: "Enter your store email or access code to reach your PrizeSkout dashboard.",
-      },
+      { title: "Login | PrizeSkout" },
+      { name: "description", content: "Login to your PrizeSkout workspace." },
     ],
   }),
   component: AccessPage,
 });
 
-const OG = "#EF681A";
+const ORANGE = "#EF681A";
 
 function AccessPage() {
-  const [mode, setMode] = useState<"email" | "code">("email");
-
-  // email mode
+  const [mode, setMode] = useState<"password" | "code">("password");
   const [email, setEmail] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
-
-  // code mode
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
-
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  function switchMode(m: "email" | "code") {
-    setMode(m);
-    setError(null);
-    setEmailSent(false);
+  function switchMode(next: "password" | "code") {
+    setMode(next);
+    setError("");
   }
 
-  const handleEmailSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed) {
-      setError("Enter your email address.");
+  async function login(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    if (!email.trim() || !password) {
+      setError("Enter your email address and password.");
       return;
     }
     setSubmitting(true);
-
     try {
-      // Confirm this email actually belongs to an onboarded merchant before
-      // asking Supabase to email anything — this endpoint never creates an
-      // account or hands back anything usable on its own.
-      const res = await fetch("/api/auth/email-bridge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed, intent: "login" }),
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
       });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        setError(json.error ?? "Could not verify access. Please try again.");
-        setSubmitting(false);
-        return;
-      }
-
-      // Real magic link, sent by Supabase to the merchant's actual inbox —
-      // shouldCreateUser:false is a second guarantee (on top of the check
-      // above) that this can never provision a new account. The merchant
-      // has to open the email and click the link; nothing here grants
-      // access on its own.
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: trimmed,
-        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (otpError) {
-        setError("Could not send sign-in link. Please try again.");
-        setSubmitting(false);
-        return;
-      }
-
-      setEmailSent(true);
-      setSubmitting(false);
+      if (signInError) throw signInError;
+      navigate({ to: "/dashboard" });
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Email or password is incorrect. Check your details and try again.");
+    } finally {
       setSubmitting(false);
     }
-  };
+  }
 
-  const handleCodeSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const trimmedCode = code.trim().toUpperCase();
-    if (!trimmedCode) {
+  async function restore(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    const normalized = code.trim().toUpperCase();
+    if (!normalized) {
       setError("Enter your access code.");
       return;
     }
     setSubmitting(true);
     try {
-      // If this device already has the matching code in localStorage, restore
-      // directly — avoids a round-trip and handles codes generated before the
-      // DB registration fix was deployed.
       const storedCode = localStorage.getItem("ps_access_code");
-      const storedMid  = localStorage.getItem("ps_merchant_id");
-      if (storedCode === trimmedCode && storedMid) {
+      const storedMerchant = localStorage.getItem("ps_merchant_id");
+      if (storedCode === normalized && storedMerchant) {
         localStorage.setItem("ps_connected", "true");
         navigate({ to: "/dashboard" });
         return;
       }
-
-      const res = await fetch("/api/restore", {
+      const response = await fetch("/api/restore", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: trimmedCode }),
+        body: JSON.stringify({ code: normalized }),
       });
-      if (!res.ok) {
-        setError("Code not found. Double-check and try again.");
-        setSubmitting(false);
-        return;
-      }
-      const data = await res.json() as { merchant_id: string };
+      if (!response.ok) throw new Error("Code not found");
+      const data = (await response.json()) as { merchant_id: string };
       localStorage.setItem("ps_merchant_id", data.merchant_id);
-      localStorage.setItem("ps_access_code", trimmedCode);
+      localStorage.setItem("ps_access_code", normalized);
       localStorage.setItem("ps_connected", "true");
       navigate({ to: "/dashboard" });
     } catch {
-      setError("Connection error. Please try again.");
+      setError("Code not found. Double-check it and try again.");
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   return (
     <AuthShell>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: "#ffffff", margin: 0 }}>
-        Access your dashboard
-      </h1>
-      <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6, margin: "6px 0 0 0" }}>
-        {mode === "email"
-          ? emailSent
-            ? "Check your inbox for a sign-in link."
-            : "Enter your store email — we'll send you a sign-in link. No password needed."
-          : "Enter the access code you received when you first connected."}
+      <h1 style={{ margin: 0, color: "#fff", fontSize: 24, fontWeight: 650 }}>Login</h1>
+      <p style={{ margin: "7px 0 0", color: "#9CA3AF", fontSize: 13, lineHeight: 1.6 }}>
+        {mode === "password"
+          ? "Use the details you created during signup."
+          : "Use your secure store access code."}
       </p>
-
-      {/* Mode toggle */}
       <div
         style={{
           display: "flex",
           marginTop: 24,
-          background: "rgba(255,255,255,0.05)",
-          borderRadius: 10,
           padding: 3,
           gap: 2,
+          borderRadius: 10,
+          background: "rgba(255,255,255,.05)",
         }}
       >
-        {(["email", "code"] as const).map((m) => (
+        {(["password", "code"] as const).map((item) => (
           <button
-            key={m}
+            key={item}
             type="button"
-            onClick={() => switchMode(m)}
+            onClick={() => switchMode(item)}
             style={{
               flex: 1,
-              padding: "8px 0",
-              fontSize: 13,
-              fontWeight: 600,
-              border: "none",
+              padding: "9px 6px",
+              border: 0,
               borderRadius: 8,
+              background: mode === item ? ORANGE : "transparent",
+              color: mode === item ? "#fff" : "#7C8492",
+              font: "inherit",
+              fontSize: 12,
+              fontWeight: 600,
               cursor: "pointer",
-              transition: "all 0.15s",
-              background: mode === m ? OG : "transparent",
-              color: mode === m ? "#fff" : "#6B7280",
-              fontFamily: "inherit",
             }}
           >
-            {m === "email" ? "Email" : "Access Code"}
+            {item === "password" ? "Email & password" : "Access code"}
           </button>
         ))}
       </div>
-
-      {mode === "email" ? (
-        emailSent ? (
-          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(239,104,26,0.12)",
-              display: "grid", placeItems: "center" }}>
-              <MailCheck size={20} color={OG} />
-            </div>
-            <p style={{ fontSize: 13, color: "#9CA3AF", lineHeight: 1.6, margin: 0 }}>
-              Sent to <strong style={{ color: "#E7E8EA" }}>{email.trim()}</strong>. Click the link there to sign in — this page can be closed.
-            </p>
-            <button
-              type="button"
-              onClick={() => setEmailSent(false)}
-              style={{ background: "transparent", border: "none", color: "#6B7280", fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", padding: "8px 0" }}
-            >
-              Use a different email
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleEmailSubmit} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <FormLabel>Email address</FormLabel>
-              <IconInput
-                leftIcon={<Mail size={16} />}
-                value={email}
-                onChange={setEmail}
-                placeholder="you@company.com"
-                type="email"
-              />
-            </div>
-            {error && <ErrorBox message={error} />}
-            <div style={{ marginTop: 4 }}>
-              <PrimaryAuthButton type="submit" disabled={submitting}>
-                {submitting ? "Sending…" : "Send sign-in link"}
-              </PrimaryAuthButton>
-            </div>
-          </form>
-        )
-      ) : (
-        <form onSubmit={handleCodeSubmit} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+      {mode === "password" ? (
+        <form
+          onSubmit={login}
+          style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 16 }}
+        >
           <div>
-            <FormLabel>Access Code</FormLabel>
+            <FormLabel>Email address</FormLabel>
+            <IconInput
+              leftIcon={<Mail size={16} />}
+              value={email}
+              onChange={setEmail}
+              placeholder="name@business.com"
+              type="email"
+            />
+          </div>
+          <div>
+            <FormLabel>Password</FormLabel>
+            <IconInput
+              leftIcon={<LockKeyhole size={16} />}
+              value={password}
+              onChange={setPassword}
+              placeholder="Your password"
+              type="password"
+            />
+          </div>
+          {error && <ErrorBox message={error} />}
+          <PrimaryAuthButton type="submit" disabled={submitting}>
+            {submitting ? "Signing in…" : "Login"}
+          </PrimaryAuthButton>
+          <a
+            href="/forgot-password"
+            style={{ color: "#7C8492", fontSize: 11, textAlign: "center", textDecoration: "none" }}
+          >
+            Forgot your password?
+          </a>
+        </form>
+      ) : (
+        <form
+          onSubmit={restore}
+          style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 16 }}
+        >
+          <div>
+            <FormLabel>Access code</FormLabel>
             <IconInput
               leftIcon={<KeyRound size={16} />}
               value={code}
-              onChange={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
+              onChange={(value) => setCode(value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
               placeholder="PSK-QA-SECURE-CODE"
             />
           </div>
           {error && <ErrorBox message={error} />}
-          <div style={{ marginTop: 4 }}>
-            <PrimaryAuthButton type="submit" disabled={submitting}>
-              {submitting ? "Restoring…" : "Restore access"}
-            </PrimaryAuthButton>
-          </div>
+          <PrimaryAuthButton type="submit" disabled={submitting}>
+            {submitting ? "Restoring…" : "Restore access"}
+          </PrimaryAuthButton>
         </form>
       )}
-
+      <p style={{ margin: "24px 0 0", color: "#6B7280", fontSize: 11, textAlign: "center" }}>
+        New to PrizeSkout?{" "}
+        <a href="/signup" style={{ color: "#E7E8EA", fontWeight: 600 }}>
+          Create an account
+        </a>
+      </p>
       <LegalFooter />
     </AuthShell>
   );
@@ -253,12 +205,12 @@ function ErrorBox({ message }: { message: string }) {
     <div
       role="alert"
       style={{
-        fontSize: 12,
-        color: "#DC2626",
-        backgroundColor: "rgba(239,68,68,0.08)",
-        padding: "8px 12px",
+        padding: "9px 11px",
+        border: "1px solid rgba(239,68,68,.22)",
         borderRadius: 8,
-        border: "1px solid rgba(239,68,68,0.2)",
+        background: "rgba(239,68,68,.08)",
+        color: "#F87171",
+        fontSize: 11,
       }}
     >
       {message}
