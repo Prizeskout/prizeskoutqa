@@ -95,9 +95,26 @@ function AccessPage() {
   }
 
   return (
-    <AuthShell>
-      <h1 style={{ margin: 0, color: "#fff", fontSize: 24, fontWeight: 650 }}>Login</h1>
-      <p style={{ margin: "7px 0 0", color: "#9CA3AF", fontSize: 13, lineHeight: 1.6 }}>
+    <AuthShell tone="light">
+      <style>{`
+        .ps-auth-shell-light input {
+          background: #fff !important;
+          border-color: #d9dad7 !important;
+          color: #10182d !important;
+          border-radius: 5px !important;
+        }
+        .ps-auth-shell-light input:focus {
+          border-color: #ef681a !important;
+          box-shadow: 0 0 0 2px rgba(239,104,26,.1) !important;
+        }
+        .ps-auth-shell-light label { color: #414957 !important; }
+        .ps-auth-shell-light input::placeholder { color: #9da3ad; }
+        .ps-auth-shell-light [role="alert"] { color: #9f3122 !important; }
+        .ps-auth-shell-light .access-legal,
+        .ps-auth-shell-light .access-legal span { color: #777e89 !important; }
+      `}</style>
+      <h1 style={{ margin: 0, color: "#10182D", fontSize: 24, fontWeight: 650 }}>Login</h1>
+      <p style={{ margin: "7px 0 0", color: "#69717E", fontSize: 13, lineHeight: 1.6 }}>
         {mode === "password"
           ? "Use the details you created during signup."
           : "Use your secure store access code."}
@@ -109,7 +126,7 @@ function AccessPage() {
           padding: 3,
           gap: 2,
           borderRadius: 10,
-          background: "rgba(255,255,255,.05)",
+          background: "#eeece7",
         }}
       >
         {(["password", "code"] as const).map((item) => (
@@ -123,7 +140,7 @@ function AccessPage() {
               border: 0,
               borderRadius: 8,
               background: mode === item ? ORANGE : "transparent",
-              color: mode === item ? "#fff" : "#7C8492",
+              color: mode === item ? "#fff" : "#667085",
               font: "inherit",
               fontSize: 12,
               fontWeight: 600,
@@ -183,7 +200,7 @@ function AccessPage() {
           </PrimaryAuthButton>
           <a
             href="/forgot-password"
-            style={{ color: "#7C8492", fontSize: 11, textAlign: "center", textDecoration: "none" }}
+            style={{ color: "#667085", fontSize: 11, textAlign: "center", textDecoration: "none" }}
           >
             Forgot your password?
           </a>
@@ -210,11 +227,11 @@ function AccessPage() {
       )}
       <p style={{ margin: "24px 0 0", color: "#6B7280", fontSize: 11, textAlign: "center" }}>
         Don&apos;t have an account?{" "}
-        <a href="/signup" style={{ color: "#E7E8EA", fontWeight: 600 }}>
+        <a href="/signup" style={{ color: "#10182D", fontWeight: 650 }}>
           Create one
         </a>
       </p>
-      <LegalFooter />
+      <div className="access-legal"><LegalFooter /></div>
     </AuthShell>
   );
 }
