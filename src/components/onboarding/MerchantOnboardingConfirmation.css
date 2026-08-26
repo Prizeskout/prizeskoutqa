@@ -122,3 +122,30 @@
     gap: 8px;
   }
 }
+
+.mo-password-guide {
+  margin-top: -4px;
+  padding: 15px 0;
+  border-width: 1px 0;
+  border-radius: 0;
+  border-color: #e5e3df;
+  background: transparent;
+}
+
+.mo-password-guide p {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.mo-password-guide li > span {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.mo-password-guide li.valid > span {
+  border: 0;
+  background: transparent;
+}

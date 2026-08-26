@@ -420,7 +420,7 @@ function AccountStep({
   return (
     <form onSubmit={submit} className="mo-form">
       <header className="mo-step-header">
-        <p>{tr("ACCOUNT DETAILS")}</p>
+        <p>{lang === "ar" ? tr("ACCOUNT DETAILS") : "Account details"}</p>
         <h1>{tr("Create your PrizeSkout account")}</h1>
         <span>{tr("Tell us who will manage the account and where your business operates.")}</span>
       </header>
