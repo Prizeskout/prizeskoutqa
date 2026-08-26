@@ -172,7 +172,7 @@ export function AuthShell({
         <div className="ps-auth-back" style={{ position: "absolute", top: 24, left: 24 }}>
           <BackToHomeLink tone={light ? "light" : "dark"} />
         </div>
-        <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>
+        <div className="ps-auth-content" style={{ maxWidth: 380, width: "100%" }}>{children}</div>
       </main>
     </div>
   );

@@ -624,6 +624,7 @@
 /* Restrained account-opening layout */
 .mo-shell {
   background: #faf9f6;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .mo-nav {
@@ -636,13 +637,13 @@
 .mo-nav > span {
   padding-left: 20px;
   color: #7a7f89;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .mo-layout {
-  width: min(1120px, calc(100% - 56px));
-  margin: 54px auto 80px;
-  grid-template-columns: 210px minmax(0, 780px);
+  width: min(1180px, calc(100% - 56px));
+  margin: 44px auto 80px;
+  grid-template-columns: 230px minmax(0, 860px);
   justify-content: space-between;
   gap: 72px;
 }
@@ -666,7 +667,7 @@
 
 .mo-layout > aside p {
   margin: 28px 0 10px;
-  font-size: 21px;
+  font-size: 24px;
   line-height: 1.25;
   letter-spacing: -0.02em;
   font-weight: 600;
@@ -674,7 +675,7 @@
 
 .mo-layout > aside > span {
   color: #69717e;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.65;
 }
 
@@ -683,11 +684,11 @@
 }
 
 .mo-card {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  padding: 36px 40px 40px;
+  border: 1px solid #dedbd4;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(16, 24, 45, 0.06);
 }
 
 .mo-progress {
@@ -704,8 +705,8 @@
   padding: 0 0 8px;
   border-bottom: 1px solid transparent;
   color: #969ca6;
-  font-size: 10px;
-  font-weight: 550;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .mo-progress li:not(:last-child)::after {
@@ -720,7 +721,7 @@
   background: transparent;
   color: #969ca6;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .mo-progress li.active {
@@ -748,24 +749,24 @@
 .mo-complete > p {
   margin-bottom: 12px;
   color: #ef681a;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: capitalize;
 }
 
 .mo-step-header h1,
 .mo-complete h1 {
-  font-size: clamp(28px, 3vw, 36px);
-  letter-spacing: -0.035em;
-  font-weight: 600;
+  font-size: clamp(32px, 3vw, 38px);
+  letter-spacing: -0.025em;
+  font-weight: 700;
 }
 
 .mo-step-header > span,
 .mo-complete > span {
   max-width: 540px;
   color: #747b87;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .mo-form {
@@ -775,23 +776,35 @@
 .mo-label {
   margin-bottom: 8px;
   color: #303746;
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
 }
 
 .mo-input {
-  height: 48px;
-  padding-inline: 14px;
-  border-color: #d9dad7;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.72);
-  font-size: 12.5px;
+  height: 52px;
+  padding-inline: 15px;
+  border-color: #cfd2d8;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 16px;
 }
 
 .mo-input:focus {
-  border-color: #10182d;
-  box-shadow: 0 0 0 1px #10182d;
+  border-color: #ef681a;
+  box-shadow: 0 0 0 3px rgba(239, 104, 26, 0.1);
 }
+
+.mo-input:-webkit-autofill {
+  -webkit-text-fill-color: #10182d;
+  box-shadow: 0 0 0 1000px #fff inset;
+}
+
+.mo-terms,
+.mo-actions > span { font-size: 14px; }
+
+.mo-primary,
+.mo-secondary,
+.mo-back { font-size: 14px; }
 
 .mo-actions {
   margin-top: 10px;
@@ -806,7 +819,7 @@
 }
 
 .mo-primary {
-  min-height: 46px;
+  min-height: 50px;
   padding-inline: 22px;
   background: #ef681a;
 }
@@ -832,7 +845,7 @@
   }
 
   .mo-card {
-    padding: 0;
+    padding: 32px;
   }
 }
 
@@ -847,8 +860,8 @@
   }
 
   .mo-card {
-    padding: 0;
-    border-radius: 0;
+    padding: 26px 20px;
+    border-radius: 10px;
   }
 
   .mo-progress {

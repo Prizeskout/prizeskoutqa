@@ -23,7 +23,7 @@
   background: transparent;
   color: #10182d;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -133,8 +133,12 @@
 }
 
 .mo-password-guide p {
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.mo-password-guide li {
+  font-size: 12px;
 }
 
 .mo-password-guide li > span {

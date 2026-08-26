@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, KeyRound, LockKeyhole, Mail } from "lucide-react";
 import {
   AuthShell,
+  BrandLogoLight,
   FormLabel,
   IconInput,
   LegalFooter,
@@ -97,32 +98,66 @@ function AccessPage() {
   return (
     <AuthShell tone="light">
       <style>{`
+        .ps-auth-shell-light {
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif !important;
+        }
+        .ps-auth-shell-light .ps-auth-main {
+          background: #f5f3ee !important;
+          padding: 72px 28px 40px !important;
+        }
+        .ps-auth-shell-light .ps-auth-content { max-width: 460px !important; }
+        .access-panel {
+          background: #fff;
+          border: 1px solid #dedbd4;
+          border-radius: 12px;
+          padding: 40px;
+          box-shadow: 0 12px 32px rgba(16,24,45,.06);
+        }
+        .access-logo { display: block; width: 142px; margin-bottom: 34px; }
         .ps-auth-shell-light input {
           background: #fff !important;
-          border-color: #d9dad7 !important;
+          border-color: #cfd2d8 !important;
           color: #10182d !important;
-          border-radius: 5px !important;
+          border-radius: 7px !important;
+          min-height: 52px;
+          font-size: 16px !important;
+        }
+        .ps-auth-shell-light input:-webkit-autofill {
+          -webkit-text-fill-color: #10182d !important;
+          box-shadow: 0 0 0 1000px #fff inset !important;
         }
         .ps-auth-shell-light input:focus {
           border-color: #ef681a !important;
           box-shadow: 0 0 0 2px rgba(239,104,26,.1) !important;
         }
-        .ps-auth-shell-light label { color: #414957 !important; }
+        .ps-auth-shell-light label { color: #303846 !important; font-size: 14px !important; font-weight: 600 !important; margin-bottom: 7px !important; }
         .ps-auth-shell-light input::placeholder { color: #9da3ad; }
         .ps-auth-shell-light [role="alert"] { color: #9f3122 !important; }
+        .access-tabs button { font-size: 14px !important; }
+        .access-panel form > button { min-height: 50px; font-size: 16px !important; }
+        .access-secondary { font-size: 14px !important; }
         .ps-auth-shell-light .access-legal,
-        .ps-auth-shell-light .access-legal span { color: #777e89 !important; }
+        .ps-auth-shell-light .access-legal span { color: #626a76 !important; }
+        .ps-auth-shell-light .access-legal > div { font-size: 12px !important; }
+        @media (max-width: 560px) {
+          .ps-auth-shell-light .ps-auth-main { padding: 72px 16px 24px !important; align-items: flex-start !important; }
+          .access-panel { padding: 28px 22px; }
+          .access-logo { margin-bottom: 28px; }
+        }
       `}</style>
-      <h1 style={{ margin: 0, color: "#10182D", fontSize: 24, fontWeight: 650 }}>Login</h1>
-      <p style={{ margin: "7px 0 0", color: "#69717E", fontSize: 13, lineHeight: 1.6 }}>
+      <div className="access-panel">
+      <div className="access-logo"><BrandLogoLight /></div>
+      <h1 style={{ margin: 0, color: "#10182D", fontSize: 32, lineHeight: 1.15, letterSpacing: "-.02em", fontWeight: 700 }}>Welcome back</h1>
+      <p style={{ margin: "10px 0 0", color: "#626A76", fontSize: 15, lineHeight: 1.6 }}>
         {mode === "password"
           ? "Use the details you created during signup."
           : "Use your secure store access code."}
       </p>
       <div
+        className="access-tabs"
         style={{
           display: "flex",
-          marginTop: 24,
+          marginTop: 28,
           padding: 3,
           gap: 2,
           borderRadius: 10,
@@ -136,13 +171,13 @@ function AccessPage() {
             onClick={() => switchMode(item)}
             style={{
               flex: 1,
-              padding: "9px 6px",
+              padding: "11px 8px",
               border: 0,
               borderRadius: 8,
               background: mode === item ? ORANGE : "transparent",
               color: mode === item ? "#fff" : "#667085",
               font: "inherit",
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",
             }}
@@ -199,6 +234,7 @@ function AccessPage() {
             {submitting ? "Signing in…" : "Login"}
           </PrimaryAuthButton>
           <a
+            className="access-secondary"
             href="/forgot-password"
             style={{ color: "#667085", fontSize: 11, textAlign: "center", textDecoration: "none" }}
           >
@@ -225,13 +261,14 @@ function AccessPage() {
           </PrimaryAuthButton>
         </form>
       )}
-      <p style={{ margin: "24px 0 0", color: "#6B7280", fontSize: 11, textAlign: "center" }}>
+      <p className="access-secondary" style={{ margin: "28px 0 0", color: "#626A76", fontSize: 14, textAlign: "center" }}>
         Don&apos;t have an account?{" "}
         <a href="/signup" style={{ color: "#10182D", fontWeight: 650 }}>
           Create one
         </a>
       </p>
       <div className="access-legal"><LegalFooter /></div>
+      </div>
     </AuthShell>
   );
 }
