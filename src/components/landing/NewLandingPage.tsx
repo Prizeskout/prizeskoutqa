@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { ArrowRight, Check, CircleCheck, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Check, Menu, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
 import dashboardDesktop from "@/assets/landing/dashboard-overview.png";
 import dashboardMobile from "@/assets/landing/dashboard-mobile.png";
 import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
+import defendLoopDesktop from "@/assets/landing/defend-loop.png";
+import evidenceHistoryDesktop from "@/assets/landing/evidence-history.png";
+import storeManagerDesktop from "@/assets/landing/ai-store-manager.png";
 import "./NewLandingPage.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
@@ -167,11 +170,6 @@ export function NewLandingPage() {
             className="nlp-hero-media"
             aria-label="PrizeSkout dashboard shown on desktop and mobile"
           >
-            <div className="nlp-hero-card nlp-hero-card-back" aria-hidden="true">
-              <span>True Margin Intelligence</span>
-              <b>18.7%</b>
-              <small>True margin</small>
-            </div>
             <figure className="nlp-screen nlp-screen-desktop">
               <figcaption>
                 <span>
@@ -233,45 +231,17 @@ export function NewLandingPage() {
             text="Watch PrizeSkout build one trusted order from six live sources."
           />
 
-          <div className="nlp-proof-grid">
-            <article className="nlp-proof-copy">
-              <span>Order 8745123 · Talabat</span>
-              <div className="nlp-proof-value">
-                <small>True profit per order</small>
-                <b>QAR 4.18</b>
-              </div>
-              <ul>
-                {[
-                  "Commission agreement §4.2",
-                  "Payment settlement",
-                  "Delivery invoice",
-                  "Campaign PROMO-218",
-                  "Payout statement #815",
-                  "Catalog cost record",
-                ].map((item) => (
-                  <li key={item}>
-                    <Check aria-hidden="true" /> {item}
-                  </li>
-                ))}
-              </ul>
-              <p>
-                <ShieldCheck aria-hidden="true" /> Six source records retain their original
-                evidence.
-              </p>
-            </article>
-
-            <figure className="nlp-product-window nlp-product-window-wide">
-              <figcaption>
-                <span>PrizeSkout dashboard</span>
-                <b>Merchant overview</b>
-              </figcaption>
-              <img
-                src={dashboardDesktop}
-                alt="PrizeSkout merchant overview with pricing, market, and channel navigation"
-                loading="lazy"
-              />
-            </figure>
-          </div>
+          <figure className="nlp-product-window nlp-product-window-featured">
+            <figcaption>
+              <span>Current product · Evidence &amp; History</span>
+              <b>Permanent evidence record</b>
+            </figcaption>
+            <img
+              src={evidenceHistoryDesktop}
+              alt="Current PrizeSkout Evidence and History workspace"
+              loading="lazy"
+            />
+          </figure>
         </section>
 
         <section className="nlp-section nlp-defend" aria-labelledby="defend-loop-title">
@@ -283,44 +253,17 @@ export function NewLandingPage() {
             text="PrizeSkout detects risk, predicts the result, checks your rules, requests approval, and records proof."
           />
 
-          <div className="nlp-decision-layout">
-            <div className="nlp-decision-track" aria-label="Defend Loop decision path">
-              {[
-                ["14:32:08", "Risk detected", "Talabat promotion signal"],
-                ["14:32:08", "Impact calculated", "Projected margin 12.6%"],
-                ["14:32:09", "Rule matched", "PS-MARGIN-018"],
-                ["14:32:11", "Approval received", "Fahad · 15% cap"],
-                ["14:32:12", "Proof recorded", "Decision D-8745123"],
-              ].map(([time, title, detail], index) => (
-                <article key={title}>
-                  <time>{time}</time>
-                  <i>{String(index + 1).padStart(2, "0")}</i>
-                  <div>
-                    <b>{title}</b>
-                    <span>{detail}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <article className="nlp-decision-output">
-              <span>Active decision · Talabat</span>
-              <h3>Weekend promotion exceeds the 18% margin floor.</h3>
-              <p>QAR 21,900 in margin protection was recorded.</p>
-              <dl>
-                <div>
-                  <dt>Approved cap</dt>
-                  <dd>15%</dd>
-                </div>
-                <div>
-                  <dt>Evidence record</dt>
-                  <dd>D-8745123</dd>
-                </div>
-              </dl>
-              <footer>
-                <CircleCheck aria-hidden="true" /> Outcome recorded
-              </footer>
-            </article>
-          </div>
+          <figure className="nlp-product-window nlp-product-window-featured">
+            <figcaption>
+              <span>Current product · Defend Loop</span>
+              <b>Margin Policy Engine</b>
+            </figcaption>
+            <img
+              src={defendLoopDesktop}
+              alt="Current PrizeSkout Defend Loop and Margin Policy Engine workspace"
+              loading="lazy"
+            />
+          </figure>
         </section>
 
         <section className="nlp-section nlp-product" id="product" aria-labelledby="product-title">
@@ -335,44 +278,42 @@ export function NewLandingPage() {
           <div className="nlp-product-gallery">
             <figure className="nlp-product-window nlp-gallery-primary">
               <figcaption>
-                <span>01 · Desktop</span>
-                <b>PrizeSkout merchant dashboard</b>
+                <span>01 · AI Store Manager</span>
+                <b>Merchant-controlled operations</b>
                 <a href="/access">
                   Open dashboard <ArrowRight aria-hidden="true" />
                 </a>
               </figcaption>
               <img
-                src={dashboardDesktop}
-                alt="Actual PrizeSkout desktop dashboard overview"
+                src={storeManagerDesktop}
+                alt="Current PrizeSkout AI Store Manager workspace"
                 loading="lazy"
               />
             </figure>
 
-            <figure className="nlp-product-window nlp-gallery-mobile">
+            <figure className="nlp-product-window nlp-gallery-workflow">
               <figcaption>
-                <span>02 · Mobile</span>
-                <b>The same operator view on mobile</b>
+                <span>02 · Defend Loop</span>
+                <b>Merchant-controlled margin policy</b>
               </figcaption>
-              <div>
-                <img
-                  src={dashboardMobile}
-                  alt="Actual PrizeSkout mobile dashboard overview"
-                  loading="lazy"
-                />
-              </div>
+              <img
+                src={defendLoopDesktop}
+                alt="Current PrizeSkout Defend Loop workspace"
+                loading="lazy"
+              />
             </figure>
 
-            <figure className="nlp-product-window nlp-gallery-onboarding">
+            <figure className="nlp-product-window nlp-gallery-workflow">
               <figcaption>
-                <span>03 · Merchant setup</span>
-                <b>Connect the business and channels</b>
-                <a href="/onboarding">
-                  Start setup <ArrowRight aria-hidden="true" />
+                <span>03 · Evidence &amp; History</span>
+                <b>Permanent evidence record</b>
+                <a href="/access">
+                  Open dashboard <ArrowRight aria-hidden="true" />
                 </a>
               </figcaption>
               <img
-                src={onboardingDesktop}
-                alt="Actual PrizeSkout merchant account setup page"
+                src={evidenceHistoryDesktop}
+                alt="Current PrizeSkout Evidence and History workspace"
                 loading="lazy"
               />
             </figure>
