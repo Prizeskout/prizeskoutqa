@@ -1860,3 +1860,24 @@ declare module '@tanstack/react-start' {
     router: Awaited<ReturnType<typeof getRouter>>
   }
 }
+import { Route as NewLandingPageRouteImport } from './routes/new-landing-page'
+const NewLandingPageRoute = NewLandingPageRouteImport.update({
+  id: '/new-landing-page',
+  path: '/new-landing-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+  '/new-landing-page': typeof NewLandingPageRoute
+  '/new-landing-page': typeof NewLandingPageRoute
+  '/new-landing-page': typeof NewLandingPageRoute
+    | '/new-landing-page'
+    | '/new-landing-page'
+    | '/new-landing-page'
+  NewLandingPageRoute: typeof NewLandingPageRoute
+    '/new-landing-page': {
+      id: '/new-landing-page'
+      path: '/new-landing-page'
+      fullPath: '/new-landing-page'
+      preLoaderRoute: typeof NewLandingPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  NewLandingPageRoute: NewLandingPageRoute,
