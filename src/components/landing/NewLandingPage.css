@@ -1343,3 +1343,567 @@
     border: 1px solid ButtonText;
   }
 }
+
+/* Scalora-composed dark direction */
+.nlp {
+  --ink: #f7f4ef;
+  --copy: #aaa7a3;
+  --muted: #77746f;
+  --line: #343230;
+  --soft: #292725;
+  --paper: #161616;
+  --warm: #191817;
+  --cool: #181818;
+  --window-shadow: 0 34px 90px rgb(0 0 0 / 0.46);
+  background: #161616;
+  color: #f7f4ef;
+  margin-top: -16px;
+  padding-top: 16px;
+}
+
+.nlp-nav-shell {
+  position: absolute;
+  inset: 0 0 auto;
+  padding: 16px clamp(18px, 3vw, 44px) 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.nlp-nav-shell.is-scrolled {
+  position: fixed;
+  padding-block: 8px;
+  border: 0;
+  background: rgb(22 22 22 / 0.88);
+  backdrop-filter: blur(18px);
+}
+
+.nlp-nav {
+  min-height: 64px;
+  border-color: #302e2c;
+  border-radius: 22px 22px 0 0;
+  background: #111110;
+  box-shadow: none;
+}
+
+.nlp-nav::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 clamp(30%, 33vw, 37%) -15px;
+  background: #161616;
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+
+.nlp-logo img,
+.nlp-footer-brand img {
+  filter: brightness(0) invert(1);
+}
+
+.nlp-nav-links button,
+.nlp-login {
+  color: #dedbd7;
+}
+
+.nlp-nav-actions > span {
+  color: #77746f;
+}
+
+.nlp .nlp-button-primary {
+  border-color: #6d3a23;
+  background: var(--orange);
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 0.68),
+    0 0 24px rgb(247 93 22 / 0.38);
+}
+
+.nlp .nlp-button-primary:hover {
+  background: #ff7130;
+}
+
+.nlp-button-quiet {
+  border-color: #3a3836;
+  background: #171716;
+  color: #f7f4ef;
+}
+
+.nlp-button-quiet:hover {
+  border-color: #5a5652;
+  background: #22201e;
+}
+
+.nlp-hero {
+  width: min(1440px, calc(100% - 32px));
+  min-height: 1040px;
+  margin-top: 16px;
+  padding: 154px clamp(24px, 6vw, 90px) 42px;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(480px, 1fr) auto;
+  justify-items: center;
+  gap: 60px;
+  border-color: #302e2c;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 78%, rgb(247 93 22 / 0.46), transparent 42%),
+    radial-gradient(circle, rgb(255 255 255 / 0.055) 1px, transparent 1.2px), #151210;
+  background-size:
+    auto,
+    6px 6px,
+    auto;
+}
+
+.nlp-hero-copy {
+  max-width: 800px;
+  text-align: center;
+}
+
+.nlp-hero .nlp-eyebrow {
+  margin-bottom: 22px;
+  padding: 7px 14px;
+  border: 1px solid #6d3a23;
+  border-radius: 7px;
+  background: rgb(247 93 22 / 0.08);
+  color: #f5eee9;
+}
+
+.nlp-hero h1 {
+  max-width: 820px;
+  font-size: clamp(62px, 6.2vw, 92px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+
+.nlp-hero h1 br {
+  display: none;
+}
+
+.nlp-hero h1 em {
+  color: #fff;
+  font-family: "NLP Instrument Serif", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.nlp-hero h1 em::after {
+  display: none;
+}
+
+.nlp-hero-copy > p {
+  max-width: 660px;
+  margin-inline: auto;
+  color: #c5c1bc;
+  font-size: 17px;
+}
+
+.nlp-hero-actions {
+  justify-content: center;
+}
+
+.nlp-hero-media {
+  width: min(960px, 92%);
+  align-self: end;
+}
+
+.nlp-screen {
+  border-color: #6d3a23;
+  box-shadow:
+    0 28px 70px rgb(0 0 0 / 0.5),
+    0 0 0 1px rgb(247 93 22 / 0.24);
+}
+
+.nlp-screen-desktop {
+  transform: perspective(1400px) rotateX(2deg);
+}
+
+.nlp-screen-mobile {
+  width: 150px;
+  height: 320px;
+  border-color: #111;
+}
+
+.nlp-source-line {
+  width: 100%;
+  color: #aaa7a3;
+  border-color: #4a352c;
+}
+
+.nlp-source-line b,
+.nlp-source-line > span {
+  color: #c4bcb5;
+}
+
+.nlp-credentials {
+  min-height: 136px;
+  margin-top: 0;
+  border-width: 0 1px 1px;
+  border-color: #302e2c;
+  border-radius: 0;
+  background: #161616;
+}
+
+.nlp-credentials span,
+.nlp-credentials b {
+  color: #817e79;
+}
+
+.nlp-credentials img {
+  filter: grayscale(1) brightness(2.2);
+  opacity: 0.74;
+}
+
+.nlp-credentials > i {
+  background: #343230;
+}
+
+.nlp-section {
+  position: relative;
+  width: min(1360px, calc(100% - 48px));
+  padding-block: clamp(150px, 17vw, 260px);
+  border-inline: 1px solid #2f2d2b;
+  background: #161616;
+}
+
+.nlp-section::before,
+.nlp-section::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 1px;
+  background: #57534e;
+}
+
+.nlp-section::before {
+  inset: -4px auto auto -5px;
+}
+
+.nlp-section::after {
+  inset: -4px -5px auto auto;
+}
+
+.nlp-section-index i {
+  background: #4b4844;
+}
+
+.nlp-section-heading > p,
+.nlp-pricing-heading > p {
+  color: #aaa7a3;
+}
+
+.nlp-platform {
+  grid-template-columns: minmax(260px, 0.58fr) minmax(620px, 1.42fr);
+  gap: 0;
+  padding-inline: clamp(32px, 5vw, 72px);
+}
+
+.nlp-platform .nlp-section-heading {
+  padding-right: clamp(36px, 5vw, 72px);
+}
+
+.nlp-platform .nlp-product-window {
+  padding: clamp(40px, 6vw, 76px);
+  border-color: #4b3329;
+  border-radius: 0;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.045) 1px, transparent 1.2px), #2a1d18;
+  background-size: 6px 6px;
+}
+
+.nlp-platform .nlp-product-window figcaption,
+.nlp-platform .nlp-product-window img {
+  border-inline: 1px solid #6d3a23;
+}
+
+.nlp-defend {
+  width: min(1360px, calc(100% - 48px));
+  padding-inline: clamp(32px, 5vw, 72px);
+  background: #131313;
+}
+
+.nlp-defend-flow {
+  border-color: #383532;
+  border-radius: 0;
+  background: #181716;
+}
+
+.nlp-defend-flow li {
+  border-color: #383532;
+}
+
+.nlp-defend .nlp-product-window {
+  padding: clamp(30px, 4vw, 54px);
+  border-color: #4b3329;
+  border-radius: 0;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.045) 1px, transparent 1.2px), #2a1d18;
+  background-size: 6px 6px;
+}
+
+.nlp-product {
+  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0;
+  padding-inline: clamp(32px, 5vw, 72px);
+}
+
+.nlp-product .nlp-section-heading {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  margin-bottom: 74px;
+  text-align: center;
+  justify-self: center;
+}
+
+.nlp-workflow-tabs {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  border: 1px solid #35322f;
+  border-right: 0;
+}
+
+.nlp-workflow-tabs button {
+  min-height: 132px;
+  padding: 26px 30px;
+  justify-content: center;
+  border: 0;
+  border-bottom: 1px solid #35322f;
+  color: #aaa7a3;
+}
+
+.nlp-workflow-tabs button:last-child {
+  border-bottom: 0;
+}
+
+.nlp-workflow-tabs button[aria-selected="true"] {
+  border: 0;
+  background: #242220;
+  color: #fff;
+}
+
+.nlp-workflow-tabs span {
+  color: #d36a3b;
+}
+
+.nlp-workflow-tabs b {
+  font-size: 20px;
+}
+
+.nlp-product-gallery {
+  grid-column: 2;
+  grid-row: 2;
+  padding: clamp(42px, 6vw, 76px);
+  border: 1px solid #4b3329;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.045) 1px, transparent 1.2px), #2a1d18;
+  background-size: 6px 6px;
+}
+
+.nlp-product-gallery .nlp-product-window {
+  border-color: #6d3a23;
+}
+
+.nlp-first-hours {
+  grid-template-columns: 1fr;
+}
+
+.nlp-onboarding-layout {
+  grid-template-columns: minmax(620px, 1.3fr) minmax(280px, 0.7fr);
+  padding: clamp(34px, 5vw, 64px);
+  border: 1px solid #35322f;
+}
+
+.nlp-onboarding-steps article {
+  border-color: #35322f;
+}
+
+.nlp-pricing {
+  position: relative;
+  width: min(1360px, calc(100% - 48px));
+  margin-inline: auto;
+  padding-block: clamp(150px, 17vw, 250px);
+  border-inline: 1px solid #2f2d2b;
+  background: #161616;
+  color: #f7f4ef;
+}
+
+.nlp-billing {
+  border-color: #383532;
+  background: #1b1a19;
+}
+
+.nlp-billing button {
+  color: #aaa7a3;
+}
+
+.nlp-plan-grid {
+  gap: 0;
+  border: 1px solid #35322f;
+}
+
+.nlp-plan-grid > article {
+  min-height: 560px;
+  border: 0;
+  border-right: 1px solid #35322f;
+  border-radius: 0;
+  background: #181716;
+}
+
+.nlp-plan-grid > article:last-child {
+  border-right: 0;
+}
+
+.nlp-plan-grid > article.is-popular {
+  border-color: #6d3a23;
+  background: #241b17;
+  box-shadow: none;
+}
+
+.nlp-plan-best span,
+.nlp-plan-grid article > span,
+.nlp-plan-grid article > small,
+.nlp-plan-grid li {
+  color: #aaa7a3;
+}
+
+.nlp-plan-grid li {
+  border-color: #35322f;
+}
+
+.nlp-plan-grid article > a {
+  border-color: #6d3a23;
+}
+
+.nlp-final-cta {
+  width: min(1408px, calc(100% - 32px));
+  margin-inline: auto;
+  padding-block: clamp(160px, 20vw, 290px);
+  border: 1px solid #302e2c;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 100%, rgb(247 93 22 / 0.44), transparent 42%),
+    radial-gradient(circle, rgb(255 255 255 / 0.05) 1px, transparent 1.2px), #151210;
+  background-size:
+    auto,
+    6px 6px,
+    auto;
+  text-align: center;
+}
+
+.nlp-final-cta h2,
+.nlp-final-cta p {
+  margin-inline: auto;
+}
+
+.nlp-final-cta > div {
+  justify-content: center;
+}
+
+.nlp-footer {
+  width: min(1360px, calc(100% - 48px));
+  margin-inline: auto;
+  border: 1px solid #2f2d2b;
+  border-top: 0;
+  background: #161616;
+}
+
+.nlp-footer-column a,
+.nlp-footer-brand p {
+  color: #96928d;
+}
+
+@media (max-width: 1100px) {
+  .nlp-hero {
+    grid-template-columns: 1fr;
+  }
+  .nlp-platform,
+  .nlp-product,
+  .nlp-onboarding-layout {
+    grid-template-columns: 1fr;
+  }
+  .nlp-platform .nlp-section-heading {
+    padding-right: 0;
+    margin-bottom: 56px;
+  }
+  .nlp-product .nlp-section-heading,
+  .nlp-workflow-tabs,
+  .nlp-product-gallery {
+    grid-column: 1;
+  }
+  .nlp-workflow-tabs {
+    grid-row: auto;
+    flex-direction: row;
+    border-right: 1px solid #35322f;
+  }
+  .nlp-workflow-tabs button {
+    flex: 1;
+    min-height: 100px;
+    border-right: 1px solid #35322f;
+    border-bottom: 0;
+  }
+  .nlp-product-gallery {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .nlp-nav-shell {
+    position: absolute;
+  }
+  .nlp-nav-shell.is-scrolled {
+    position: fixed;
+  }
+  .nlp-nav {
+    border-radius: 16px 16px 0 0;
+    background: #111110;
+  }
+  .nlp-nav::after {
+    display: none;
+  }
+  .nlp-nav-links {
+    background: #181716;
+    border-color: #3a3836;
+  }
+  .nlp-hero {
+    min-height: 980px;
+    padding-top: 124px;
+    grid-template-rows: auto auto auto;
+  }
+  .nlp-hero h1 {
+    font-size: clamp(47px, 13vw, 62px);
+  }
+  .nlp-hero-media {
+    width: 100%;
+  }
+  .nlp-section,
+  .nlp-defend,
+  .nlp-pricing,
+  .nlp-footer {
+    width: calc(100% - 24px);
+  }
+  .nlp-platform .nlp-product-window,
+  .nlp-defend .nlp-product-window,
+  .nlp-product-gallery {
+    padding: 14px;
+  }
+  .nlp-workflow-tabs {
+    flex-direction: column;
+  }
+  .nlp-workflow-tabs button {
+    min-height: 84px;
+    border-right: 0;
+    border-bottom: 1px solid #35322f;
+  }
+  .nlp-onboarding-layout {
+    padding: 18px;
+  }
+  .nlp-plan-grid > article {
+    border-right: 0;
+    border-bottom: 1px solid #35322f;
+  }
+  .nlp-plan-grid > article:last-child {
+    border-bottom: 0;
+  }
+  .nlp-final-cta {
+    width: calc(100% - 20px);
+  }
+}
