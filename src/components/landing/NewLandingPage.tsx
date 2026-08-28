@@ -3,14 +3,9 @@ import { ArrowRight, Check, Menu, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
 import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
-import defendLoopDesktop from "@/assets/landing/defend-loop.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
 import { HeroCardSystem } from "./HeroCardSystem";
-import marginDesktop from "../../../output/dashboard-review/margin-desktop.png";
-import recoveryDesktop from "../../../output/dashboard-review/recovery-desktop.png";
-import promotionDesktop from "../../../output/dashboard-review/promotion-desktop.png";
-import managerDesktop from "../../../output/dashboard-review/manager-desktop.png";
-import copilotDesktop from "../../../output/dashboard-review/copilot-desktop.png";
+import { LiveDashboardDemo } from "./LiveDashboardDemo";
 import "./NewLandingPage.css";
 import "./LandingSpacing.css";
 import "./LandingMotion.css";
@@ -36,38 +31,26 @@ const workflows = [
   {
     name: "True Margin Intelligence",
     detail: "Order economics",
-    image: marginDesktop,
-    alt: "PrizeSkout True Margin Intelligence dashboard",
   },
   {
     name: "Payout Recovery",
     detail: "Recovery workspace",
-    image: recoveryDesktop,
-    alt: "PrizeSkout Payout Recovery dashboard",
   },
   {
     name: "Promotion Simulator",
     detail: "Scenario builder",
-    image: promotionDesktop,
-    alt: "PrizeSkout Promotion Simulator dashboard",
   },
   {
     name: "Defend Loop",
     detail: "Margin Policy Engine",
-    image: defendLoopDesktop,
-    alt: "PrizeSkout Defend Loop dashboard",
   },
   {
     name: "AI Store Manager",
     detail: "Merchant-controlled operations",
-    image: managerDesktop,
-    alt: "PrizeSkout AI Store Manager dashboard",
   },
   {
     name: "CFO Copilot",
     detail: "Financial investigation",
-    image: copilotDesktop,
-    alt: "PrizeSkout CFO Copilot dashboard",
   },
 ] as const;
 
@@ -190,7 +173,7 @@ export function NewLandingPage() {
     if (!productInView || productPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setTimeout(
       () => setActiveWorkflow((current) => (current + 1) % workflows.length),
-      5200,
+      8200,
     );
     return () => window.clearTimeout(timer);
   }, [activeWorkflow, productInView, productPaused]);
@@ -418,22 +401,7 @@ export function NewLandingPage() {
             aria-labelledby={`workflow-tab-${activeWorkflow}`}
             data-reveal
           >
-            <figure
-              className="nlp-product-window nlp-gallery-primary"
-              key={workflows[activeWorkflow].name}
-              data-workflow={activeWorkflow}
-            >
-              <figcaption>
-                <span>{workflows[activeWorkflow].name}</span>
-                <b>{workflows[activeWorkflow].detail}</b>
-              </figcaption>
-              <img
-                src={workflows[activeWorkflow].image}
-                alt={workflows[activeWorkflow].alt}
-                loading="lazy"
-              />
-              <i className="nlp-screen-pointer" aria-hidden="true"><span /></i>
-            </figure>
+            <LiveDashboardDemo workflow={activeWorkflow} />
           </div>
         </section>
 
@@ -456,7 +424,6 @@ export function NewLandingPage() {
                 alt="PrizeSkout merchant onboarding account details page"
                 loading="lazy"
               />
-              <i className="nlp-onboarding-pointer" aria-hidden="true"><span /></i>
             </figure>
             <div className="nlp-onboarding-steps">
               {[

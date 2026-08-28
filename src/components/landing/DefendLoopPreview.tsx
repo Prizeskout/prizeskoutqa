@@ -55,7 +55,6 @@ export function DefendLoopPreview() {
             <article className={stage === 2 ? "focus" : ""}><span>Channel protection</span><p><b>Zid</b><em>{stage >= 2 ? "Protected" : "Review required"}</em></p><p><b>Salla</b><em>{stage >= 2 ? "Protected" : "Review required"}</em></p><button type="button">{stage >= 2 ? "Policy active" : "Review channel targets"}</button></article>
           </div>
           <div className={`dlp-outcome ${stage === 3 ? "show" : ""}`}><Check aria-hidden="true" /><div><b>Margin policy active</b><span>Every proposed change remains behind merchant approval.</span></div></div>
-          <i className="dlp-guide-pointer" aria-hidden="true"><span /></i>
         </main>
       </div>
     </div>
