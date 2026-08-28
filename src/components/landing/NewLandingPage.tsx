@@ -201,10 +201,10 @@ export function NewLandingPage() {
         <section className="nlp-hero" aria-labelledby="nlp-hero-title">
           <div className="nlp-hero-copy">
             <span className="nlp-eyebrow">
-              <i /> Economic Twin is live
+              <i /> Deep-tech commerce infrastructure
             </span>
             <h1 id="nlp-hero-title">
-              Reported profit is a story.
+              Reported profit is the starting point.
               <br />
               <em>True profit</em> is a system.
             </h1>
@@ -225,7 +225,7 @@ export function NewLandingPage() {
                 type="button"
                 onClick={() => go("platform")}
               >
-                Watch your order reconcile <ArrowRight aria-hidden="true" />
+                Get Started <ArrowRight aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -260,7 +260,7 @@ export function NewLandingPage() {
           </div>
 
           <div className="nlp-source-line" id="integrations">
-            <span>Live sources</span>
+            <span>Connect your stack. Bring your POS and marketplace data together.</span>
             <div>
               {channels.map((channel) => (
                 <b key={channel}>{channel}</b>
