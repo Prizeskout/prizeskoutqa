@@ -44,6 +44,20 @@ export function HeroCardSystem() {
     rootRef.current?.style.setProperty("--hero-y", "0px");
   };
 
+  const bounceCard = (event: React.PointerEvent<HTMLElement>) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const card = event.currentTarget;
+    card.classList.remove("is-bouncing");
+    void card.offsetWidth;
+    card.classList.add("is-bouncing");
+    const finishBounce = (animationEvent: AnimationEvent) => {
+      if (!animationEvent.animationName.startsWith("nlp-card-bounce")) return;
+      card.classList.remove("is-bouncing");
+      card.removeEventListener("animationend", finishBounce);
+    };
+    card.addEventListener("animationend", finishBounce);
+  };
+
   return (
     <div
       ref={rootRef}
@@ -62,6 +76,7 @@ export function HeroCardSystem() {
             className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}${index < active ? " is-complete" : ""}`}
             key={title}
             style={{ "--story-index": index } as React.CSSProperties}
+            onPointerDown={bounceCard}
           >
             <span>{eyebrow}</span>
             <strong>{title}</strong>

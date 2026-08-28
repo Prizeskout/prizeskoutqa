@@ -1,0 +1,33 @@
+/* A consistent editorial cadence between the landing-page story beats. */
+.nlp {
+  --nlp-section-space: clamp(96px, 9vw, 144px);
+  --nlp-closing-space: clamp(120px, 12vw, 192px);
+}
+
+.nlp .nlp-section,
+.nlp .nlp-pricing {
+  padding-block: var(--nlp-section-space);
+}
+
+.nlp .nlp-product .nlp-section-heading {
+  margin-bottom: clamp(48px, 4.5vw, 64px);
+}
+
+.nlp .nlp-final-cta {
+  padding-block: var(--nlp-closing-space);
+}
+
+@media (max-width: 560px) {
+  .nlp {
+    --nlp-section-space: 88px;
+    --nlp-closing-space: 112px;
+  }
+
+  .nlp .nlp-section-heading {
+    margin-bottom: 44px;
+  }
+
+  .nlp .nlp-product .nlp-section-heading {
+    margin-bottom: 48px;
+  }
+}

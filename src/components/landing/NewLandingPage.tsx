@@ -9,6 +9,7 @@ import storeManagerDesktop from "@/assets/landing/ai-store-manager.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
 import { HeroCardSystem } from "./HeroCardSystem";
 import "./NewLandingPage.css";
+import "./LandingSpacing.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
 
