@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { ArrowRight, Check, FileCheck2, Menu, ShieldCheck, Store, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, FileCheck2, Menu, ShieldCheck, Store, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { applyLocale, getStoredLocale, type Locale } from "@/lib/i18n";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
@@ -11,6 +13,15 @@ import "./LandingSpacing.css";
 import "./LandingMotion.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
+const landingMarkets = [
+  { code: "qa", country: "Qatar", currency: "QAR" },
+  { code: "sa", country: "Saudi Arabia", currency: "SAR" },
+  { code: "ae", country: "United Arab Emirates", currency: "AED" },
+  { code: "kw", country: "Kuwait", currency: "KWD" },
+  { code: "bh", country: "Bahrain", currency: "BHD" },
+  { code: "om", country: "Oman", currency: "OMR" },
+] as const;
+type LandingMarketCode = (typeof landingMarkets)[number]["code"];
 
 const channels = [
   { name: "Deliveroo", logo: "/channel-logos/deliveroo.png" },
@@ -150,9 +161,12 @@ function OnboardingMedia({ step, onSelect }: { step: number; onSelect: (step: nu
 }
 
 export function NewLandingPage() {
+  const { i18n } = useTranslation();
   const pageRef = useRef<HTMLElement>(null);
   const productRef = useRef<HTMLElement>(null);
   const onboardingRef = useRef<HTMLDivElement>(null);
+  const navMenusRef = useRef<HTMLDivElement>(null);
+  const navActionsRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [annualBilling, setAnnualBilling] = useState(false);
   const [activeWorkflow, setActiveWorkflow] = useState(0);
@@ -162,6 +176,41 @@ export function NewLandingPage() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingInView, setOnboardingInView] = useState(false);
   const [onboardingPaused, setOnboardingPaused] = useState(false);
+  const [navMenu, setNavMenu] = useState<"product" | "platform" | null>(null);
+  const [marketOpen, setMarketOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [market, setMarket] = useState<LandingMarketCode>("qa");
+  const [language, setLanguage] = useState<"en" | "ar">("en");
+
+  useEffect(() => {
+    const storedMarket = window.localStorage.getItem("prizeskout-country");
+    if (landingMarkets.some((item) => item.code === storedMarket)) setMarket(storedMarket as LandingMarketCode);
+    setLanguage(getStoredLocale() === "ar" ? "ar" : "en");
+  }, []);
+
+  useEffect(() => {
+    if (!marketOpen && !languageOpen && !navMenu) return;
+    const close = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!navActionsRef.current?.contains(target)) {
+        setMarketOpen(false);
+        setLanguageOpen(false);
+      }
+      if (!navMenusRef.current?.contains(target)) setNavMenu(null);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMarketOpen(false);
+      setLanguageOpen(false);
+      setNavMenu(null);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [languageOpen, marketOpen, navMenu]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setPageReady(true));
@@ -243,6 +292,18 @@ export function NewLandingPage() {
     scrollToSection(id);
     setMenuOpen(false);
   };
+  const selectedMarket = landingMarkets.find((item) => item.code === market) ?? landingMarkets[0];
+  const chooseMarket = (code: LandingMarketCode) => {
+    setMarket(code);
+    window.localStorage.setItem("prizeskout-country", code);
+    setMarketOpen(false);
+  };
+  const chooseLanguage = (next: "en" | "ar") => {
+    setLanguage(next);
+    applyLocale(next as Locale);
+    void i18n.changeLanguage(next);
+    setLanguageOpen(false);
+  };
 
   return (
     <main ref={pageRef} className={`nlp ${pageReady ? "is-ready" : ""}`} id="top">
@@ -256,13 +317,15 @@ export function NewLandingPage() {
             <img src={logo} alt="PrizeSkout" />
           </button>
 
-          <div className={`nlp-nav-links ${menuOpen ? "is-open" : ""}`}>
-            <button type="button" onClick={() => go("product")}>
-              Product
-            </button>
-            <button type="button" onClick={() => go("platform")}>
-              Platform
-            </button>
+          <div className={`nlp-nav-links ${menuOpen ? "is-open" : ""}`} ref={navMenusRef}>
+            <div className="nlp-nav-dropdown">
+              <button type="button" aria-haspopup="menu" aria-expanded={navMenu === "product"} onClick={() => setNavMenu(navMenu === "product" ? null : "product")}>Product <ChevronDown /></button>
+              {navMenu === "product" && <div className="nlp-nav-mega nlp-product-menu" role="menu"><header><small>PRODUCT</small><strong>Explore every capability</strong></header><div>{workflows.map((item, index) => <button role="menuitem" type="button" key={item.name} onClick={() => { setNavMenu(null); setActiveWorkflow(index); go("product"); }}><small>{String(index + 1).padStart(2, "0")}</small><span><b>{item.name}</b><em>{item.detail}</em></span></button>)}</div></div>}
+            </div>
+            <div className="nlp-nav-dropdown">
+              <button type="button" aria-haspopup="menu" aria-expanded={navMenu === "platform"} onClick={() => setNavMenu(navMenu === "platform" ? null : "platform")}>Platform <ChevronDown /></button>
+              {navMenu === "platform" && <div className="nlp-nav-mega nlp-platform-menu" role="menu"><header><small>CONNECTED CHANNELS</small><strong>Connect your commerce stack</strong></header><button role="menuitem" type="button" className="nlp-channel-live" onClick={() => go("integrations")}><img src="/channel-logos/zid.png" alt="" /><span><b>Zid</b><em>Available now</em></span><small>Connect</small></button><div>{["Salla", "Foodics", "Talabat", "Jahez", "Careem", "noon food"].map((item) => <span key={item}><b>{item}</b><small>Coming soon</small></span>)}</div></div>}
+            </div>
             <button type="button" onClick={() => go("pricing")}>
               Pricing
             </button>
@@ -280,9 +343,12 @@ export function NewLandingPage() {
             </a>
           </div>
 
-          <div className="nlp-nav-actions">
-            <button className="nlp-nav-utility" type="button">Qatar · QAR</button>
-            <button className="nlp-nav-utility" type="button">English</button>
+          <div className="nlp-nav-actions" ref={navActionsRef}>
+            <div className="nlp-market-picker">
+              <button className="nlp-market-trigger" type="button" aria-haspopup="dialog" aria-expanded={marketOpen} onClick={() => { setMarketOpen((open) => !open); setLanguageOpen(false); }}><img src={`https://flagcdn.com/${selectedMarket.code}.svg`} alt="" /><span>{selectedMarket.country}</span><small>{selectedMarket.currency}</small><ChevronDown /></button>
+              {marketOpen && <div className="nlp-market-panel" role="dialog" aria-label="Choose country"><header><div><small>Your market</small><strong>{selectedMarket.country}</strong></div><button type="button" aria-label="Close country picker" onClick={() => setMarketOpen(false)}><X /></button></header><p>Prices and examples will use your local currency.</p><div role="listbox" aria-label="Countries">{landingMarkets.map((item) => <button type="button" role="option" aria-selected={item.code === market} className={item.code === market ? "is-selected" : ""} key={item.code} onClick={() => chooseMarket(item.code)}><img src={`https://flagcdn.com/${item.code}.svg`} alt="" /><span><b>{item.country}</b><small>{item.currency}</small></span>{item.code === market && <Check />}</button>)}</div></div>}
+            </div>
+            <div className="nlp-language-picker"><button type="button" aria-haspopup="listbox" aria-expanded={languageOpen} onClick={() => { setLanguageOpen((open) => !open); setMarketOpen(false); }}>{language === "ar" ? "العربية" : "English"}<ChevronDown /></button>{languageOpen && <div role="listbox" aria-label="Select language"><button type="button" role="option" aria-selected={language === "en"} onClick={() => chooseLanguage("en")}>English</button><button type="button" role="option" aria-selected={language === "ar"} onClick={() => chooseLanguage("ar")}>العربية</button></div>}</div>
             <a
               className="nlp-header-demo"
               href="mailto:hello@prizeskout.com?subject=Book a demo"
