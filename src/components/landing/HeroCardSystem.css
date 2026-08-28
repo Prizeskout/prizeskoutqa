@@ -178,12 +178,20 @@
 }
 @media (max-width: 760px) {
   .nlp-card-story .nlp-system-track {
+    position: absolute;
+    top: 0;
+    left: 50%;
     transform: translateX(-50%) translate3d(var(--hero-x), var(--hero-y), 0) scale(0.67);
   }
 }
 @media (max-width: 420px) {
   .nlp-card-story .nlp-system-track {
-    transform: translateX(-50%) translate3d(var(--hero-x), var(--hero-y), 0) scale(0.55);
+    transform: translateX(-50%) translate3d(var(--hero-x), var(--hero-y), 0) scale(0.5);
+  }
+}
+@media (max-width: 360px) {
+  .nlp-card-story .nlp-system-track {
+    transform: translateX(-50%) translate3d(var(--hero-x), var(--hero-y), 0) scale(0.44);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -207,6 +215,11 @@
 }
 @media (max-width: 420px) and (prefers-reduced-motion: reduce) {
   .nlp-card-story .nlp-system-track {
-    transform: translateX(-50%) scale(0.55) !important;
+    transform: translateX(-50%) scale(0.5) !important;
+  }
+}
+@media (max-width: 360px) and (prefers-reduced-motion: reduce) {
+  .nlp-card-story .nlp-system-track {
+    transform: translateX(-50%) scale(0.44) !important;
   }
 }

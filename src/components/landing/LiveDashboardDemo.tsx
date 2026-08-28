@@ -13,20 +13,23 @@ const scenes = [
 
 const navItems = ["Overview", "Catalog", "Margin Intelligence", "Payout Recovery", "Promotion Simulator", "Defend Loop", "AI Store Manager", "CFO Copilot", "Evidence & History"];
 
-export function LiveDashboardDemo({ workflow }: { workflow: number }) {
+export function LiveDashboardDemo({ workflow, playing = true }: { workflow: number; playing?: boolean }) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     setStep(0);
+  }, [workflow]);
+
+  useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setStep(4);
       return;
     }
-    const timers = [520, 1380, 2480, 3880].map((delay, index) =>
-      window.setTimeout(() => setStep(index + 1), delay),
-    );
-    return () => timers.forEach(window.clearTimeout);
-  }, [workflow]);
+    if (!playing || step >= 4) return;
+    const delays = [520, 860, 1100, 1400];
+    const timer = window.setTimeout(() => setStep((current) => Math.min(current + 1, 4)), delays[step]);
+    return () => window.clearTimeout(timer);
+  }, [playing, step, workflow]);
 
   const scene = scenes[workflow];
   return (

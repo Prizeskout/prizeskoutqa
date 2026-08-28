@@ -121,7 +121,6 @@ function OnboardingMedia({ step, onSelect }: { step: number; onSelect: (step: nu
     <figure className="nlp-setup-demo" data-onboarding-step={step} aria-label={`${setupScreens[step]} setup screen`}>
       <header className="nlp-setup-bar">
         <strong>Prize<span>skout</span></strong>
-        <small>Merchant setup</small>
         <em>Bayt Burger · Qatar</em>
       </header>
       <div className="nlp-setup-shell">
@@ -257,7 +256,7 @@ export function NewLandingPage() {
     const product = productRef.current;
     if (!product) return;
     const observer = new IntersectionObserver(([entry]) => setProductInView(entry.isIntersecting), {
-      threshold: 0.42,
+      threshold: 0.12,
     });
     observer.observe(product);
     return () => observer.disconnect();
@@ -276,7 +275,7 @@ export function NewLandingPage() {
     const onboarding = onboardingRef.current;
     if (!onboarding) return;
     const observer = new IntersectionObserver(([entry]) => setOnboardingInView(entry.isIntersecting), {
-      threshold: 0.38,
+      threshold: 0.12,
     });
     observer.observe(onboarding);
     return () => observer.disconnect();
@@ -291,6 +290,14 @@ export function NewLandingPage() {
   const go = (id: string) => {
     scrollToSection(id);
     setMenuOpen(false);
+  };
+  const openNavDestination = (menu: "product" | "platform") => {
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      setNavMenu(null);
+      go(menu);
+      return;
+    }
+    setNavMenu((current) => current === menu ? null : menu);
   };
   const selectedMarket = landingMarkets.find((item) => item.code === market) ?? landingMarkets[0];
   const chooseMarket = (code: LandingMarketCode) => {
@@ -318,12 +325,12 @@ export function NewLandingPage() {
           </button>
 
           <div className={`nlp-nav-links ${menuOpen ? "is-open" : ""}`} ref={navMenusRef}>
-            <div className="nlp-nav-dropdown">
-              <button type="button" aria-haspopup="menu" aria-expanded={navMenu === "product"} onClick={() => setNavMenu(navMenu === "product" ? null : "product")}>Product <ChevronDown /></button>
+            <div className="nlp-nav-dropdown" onMouseEnter={() => setNavMenu("product")} onMouseLeave={() => setNavMenu(null)}>
+              <button type="button" aria-haspopup="menu" aria-expanded={navMenu === "product"} onClick={() => openNavDestination("product")}>Product <ChevronDown /></button>
               {navMenu === "product" && <div className="nlp-nav-mega nlp-product-menu" role="menu"><header><small>PRODUCT</small><strong>Explore every capability</strong></header><div>{workflows.map((item, index) => <button role="menuitem" type="button" key={item.name} onClick={() => { setNavMenu(null); setActiveWorkflow(index); go("product"); }}><small>{String(index + 1).padStart(2, "0")}</small><span><b>{item.name}</b><em>{item.detail}</em></span></button>)}</div></div>}
             </div>
-            <div className="nlp-nav-dropdown">
-              <button type="button" aria-haspopup="menu" aria-expanded={navMenu === "platform"} onClick={() => setNavMenu(navMenu === "platform" ? null : "platform")}>Platform <ChevronDown /></button>
+            <div className="nlp-nav-dropdown" onMouseEnter={() => setNavMenu("platform")} onMouseLeave={() => setNavMenu(null)}>
+              <button type="button" aria-haspopup="menu" aria-expanded={navMenu === "platform"} onClick={() => openNavDestination("platform")}>Platform <ChevronDown /></button>
               {navMenu === "platform" && <div className="nlp-nav-mega nlp-platform-menu" role="menu"><header><small>CONNECTED CHANNELS</small><strong>Connect your commerce stack</strong></header><button role="menuitem" type="button" className="nlp-channel-live" onClick={() => go("integrations")}><img src="/channel-logos/zid.png" alt="" /><span><b>Zid</b><em>Available now</em></span><small>Connect</small></button><div>{["Salla", "Foodics", "Talabat", "Jahez", "Careem", "noon food"].map((item) => <span key={item}><b>{item}</b><small>Coming soon</small></span>)}</div></div>}
             </div>
             <button type="button" onClick={() => go("pricing")}>
@@ -392,13 +399,12 @@ export function NewLandingPage() {
               >
                 Book a demo <ArrowRight aria-hidden="true" />
               </a>
-              <button
+              <a
                 className="nlp-button nlp-button-quiet"
-                type="button"
-                onClick={() => go("platform")}
+                href="/onboarding"
               >
-                See how it works <ArrowRight aria-hidden="true" />
-              </button>
+                Get Started <ArrowRight aria-hidden="true" />
+              </a>
             </div>
           </div>
 
@@ -428,15 +434,21 @@ export function NewLandingPage() {
         </section>
 
         <aside className="nlp-credentials" aria-label="PrizeSkout credentials" data-reveal>
-          <div>
+          <div className="nlp-qstp-credential">
             <span>Backed by</span>
             <img src={qstpLogo} alt="Qatar Science and Technology Park" />
           </div>
           <i aria-hidden="true" />
-          <div>
+          <div className="nlp-qfc-credential">
             <span>Licensed by</span>
             <img src={QFC_LOGO} alt="Qatar Financial Centre" />
             <b>04412</b>
+          </div>
+          <i aria-hidden="true" />
+          <div className="nlp-zid-credential">
+            <span>Partnered by</span>
+            <img src="/channel-logos/zid.png" alt="" />
+            <b>Zid</b>
           </div>
         </aside>
 
@@ -514,7 +526,7 @@ export function NewLandingPage() {
             aria-labelledby={`workflow-tab-${activeWorkflow}`}
             data-reveal
           >
-            <LiveDashboardDemo workflow={activeWorkflow} />
+            <LiveDashboardDemo workflow={activeWorkflow} playing={productInView} />
           </div>
         </section>
 

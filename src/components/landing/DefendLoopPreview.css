@@ -3,3 +3,20 @@
 @media(prefers-reduced-motion:reduce){.dlp *{animation:none!important;transition:none!important}.dlp .focus{transform:none}}
 
 .dlp[data-stage="0"] .dlp-metrics article:nth-child(2),.dlp[data-stage="1"] .dlp-panels article:first-child,.dlp[data-stage="2"] .dlp-panels article:last-child{animation:dlp-decision-focus 900ms cubic-bezier(.16,1,.3,1) both}.dlp-policy i.done b{animation:dlp-node-confirm 520ms cubic-bezier(.34,1.56,.64,1) both}@keyframes dlp-decision-focus{0%{box-shadow:0 0 0 0 rgb(242 103 34/0);transform:none}45%{box-shadow:0 0 0 4px rgb(242 103 34/.13);transform:translateY(-3px)}100%{box-shadow:0 0 0 3px rgb(242 103 34/.1);transform:translateY(-2px)}}@keyframes dlp-node-confirm{0%{transform:scale(.72)}70%{transform:scale(1.12)}100%{transform:none}}
+
+/* Internal camera choreography: enlarge the event, never the dashboard shell. */
+.dlp{--dlp-camera-scale:1.09;--dlp-context-opacity:.8}
+.dlp-metrics article,.dlp-panels article,.dlp-outcome{position:relative;transition:opacity 260ms ease,border-color 240ms ease,box-shadow 320ms ease,transform 520ms cubic-bezier(.16,1,.3,1)}
+.dlp[data-stage] .dlp-metrics article,.dlp[data-stage] .dlp-panels article{opacity:var(--dlp-context-opacity)}
+.dlp[data-stage="0"] .dlp-metrics article:nth-child(2),.dlp[data-stage="1"] .dlp-panels article:first-child,.dlp[data-stage="2"] .dlp-panels article:last-child{z-index:5;opacity:1;animation:none;box-shadow:0 18px 34px rgb(8 29 67/.16),0 0 0 3px rgb(242 103 34/.12);transform:translate3d(4px,-4px,0) scale(var(--dlp-camera-scale))}
+.dlp[data-stage="0"] .dlp-metrics article:nth-child(2){transform-origin:top center}
+.dlp[data-stage="1"] .dlp-panels article:first-child{transform-origin:center left}
+.dlp[data-stage="2"] .dlp-panels article:last-child{transform-origin:center right}
+.dlp[data-stage="1"] .dlp-policy,.dlp[data-stage="2"] .dlp-policy{opacity:.94;transform:scale(1.025)}
+.dlp[data-stage="3"] .dlp-metrics article,.dlp[data-stage="3"] .dlp-panels article{opacity:.76}
+.dlp[data-stage="3"] .dlp-outcome{z-index:7;opacity:1;transform-origin:bottom center;transform:translate3d(0,-6px,0) scale(1.075);box-shadow:0 18px 38px rgb(8 29 67/.18)}
+@media(max-width:760px){.dlp{--dlp-camera-scale:1.05;--dlp-context-opacity:.87}.dlp[data-stage="1"] .dlp-panels article:first-child{display:none}.dlp[data-stage="1"] .dlp-policy{z-index:5;opacity:1;transform-origin:top center;transform:translate3d(0,-3px,0) scale(var(--dlp-camera-scale));box-shadow:0 14px 30px rgb(8 29 67/.14)}.dlp[data-stage="3"] .dlp-outcome{transform:translate3d(0,-4px,0) scale(1.04)}}
+@media(max-width:360px){.dlp{--dlp-camera-scale:1.025}.dlp[data-stage="3"] .dlp-outcome{transform:translate3d(0,-3px,0) scale(1.025)}}
+@media(prefers-reduced-motion:reduce){.dlp-metrics article,.dlp-panels article,.dlp-outcome{opacity:1!important;transform:none!important;box-shadow:none!important}}
+
+@media(max-width:760px){.dlp-panels button{min-height:44px}}
