@@ -10,7 +10,16 @@ import "./NewLandingPage.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
 
-const channels = ["Zid", "Salla", "Foodics", "Talabat", "Snoonu", "Jahez"];
+const channels = [
+  { name: "Zid", logo: "/channel-logos/zid.png" },
+  { name: "Salla", logo: "/channel-logos/salla.png" },
+  { name: "Foodics", logo: "/channel-logos/foodics.png" },
+  { name: "Talabat", logo: "/channel-logos/talabat.png" },
+  { name: "Snoonu", logo: "/channel-logos/snoonu.png" },
+  { name: "Jahez", logo: "/channel-logos/jahez.svg" },
+  { name: "Keeta", logo: "/channel-logos/keeta.svg" },
+  { name: "Deliveroo", logo: "/channel-logos/deliveroo.png" },
+] as const;
 
 const workflows = [
   {
@@ -199,7 +208,7 @@ export function NewLandingPage() {
         <section className="nlp-hero" aria-labelledby="nlp-hero-title">
           <div className="nlp-hero-copy">
             <span className="nlp-eyebrow">
-              <i /> Revenue assurance for GCC commerce
+              <i /> Deep-tech commerce infrastructure
             </span>
             <h1 id="nlp-hero-title">
               Know what every order <em>should earn.</em>
@@ -230,54 +239,67 @@ export function NewLandingPage() {
             aria-label="How PrizeSkout protects the margin on every order"
           >
             <p className="nlp-visually-hidden">
-              A Talabat order is checked against the merchant agreement. PrizeSkout finds an
-              18.40 QAR payout gap and prepares an evidence-backed recovery case for review.
+              PrizeSkout brings together commerce data, reconstructs what each order should earn,
+              finds missing margin, lets the merchant decide what happens next, and keeps the proof.
             </p>
-            <div className="nlp-live-window" aria-hidden="true">
-              <div className="nlp-live-topbar">
-                <span><i /> Live order assurance</span>
-                <b>PrizeSkout Economic Twin</b>
-              </div>
-              <div className="nlp-live-body">
-                <div className="nlp-order-heading">
-                  <div><small>Talabat · Order</small><strong>#TB-804291</strong></div>
-                  <span>Checking</span>
-                </div>
-                <div className="nlp-order-flow">
-                  <article style={{ "--step": 0 } as React.CSSProperties}>
-                    <span>01</span><div><small>Order received</small><b>QAR 186.00</b></div><i>Live</i>
-                  </article>
-                  <article style={{ "--step": 1 } as React.CSSProperties}>
-                    <span>02</span><div><small>Expected payout</small><b>QAR 142.60</b></div><i>Rebuilt</i>
-                  </article>
-                  <article className="is-alert" style={{ "--step": 2 } as React.CSSProperties}>
-                    <span>03</span><div><small>Actual payout</small><b>QAR 124.20</b></div><i>−18.40</i>
-                  </article>
-                  <article className="is-proof" style={{ "--step": 3 } as React.CSSProperties}>
-                    <span>04</span><div><small>Recovery case</small><b>Evidence ready</b></div><i>Review</i>
-                  </article>
-                </div>
-                <div className="nlp-live-result">
-                  <div><span>Margin leak identified</span><strong>QAR 18.40</strong></div>
-                  <button type="button" tabIndex={-1}>Review evidence <ArrowRight /></button>
-                </div>
-              </div>
+            <div className="nlp-system-track" aria-hidden="true">
+              <article className="nlp-system-card nlp-system-input">
+                <span>Your commerce data</span>
+                <strong>See the whole order</strong>
+                <small>Orders, fees and payouts together</small>
+              </article>
+
+              <article className="nlp-system-card nlp-system-twin">
+                <span>What should have happened</span>
+                <strong>Know what you should earn</strong>
+                <small>Every cost rebuilt order by order</small>
+              </article>
+
+              <article className="nlp-system-card nlp-system-policy">
+                <span>What actually happened</span>
+                <strong>Catch what is missing</strong>
+                <small>Fees, discounts and payout gaps explained</small>
+              </article>
+
+              <article className="nlp-system-card nlp-system-action">
+                <span>You stay in control</span>
+                <strong>Choose what happens next</strong>
+                <small>Review first. Approve every action.</small>
+              </article>
+
+              <article className="nlp-system-card nlp-system-evidence">
+                <span>Nothing gets lost</span>
+                <strong>Keep the proof</strong>
+                <small>A clear record for every decision</small>
+              </article>
             </div>
             <div className="nlp-system-caption" aria-hidden="true">
-              <span>01 · Observe</span>
+              <span>See the full picture</span>
               <i />
-              <span>02 · Decide</span>
+              <span>Find the difference</span>
               <i />
-              <span>03 · Defend</span>
+              <span>Decide with proof</span>
             </div>
           </div>
 
           <div className="nlp-source-line" id="integrations">
-            <span>Connect your stack. Bring your POS and marketplace data together.</span>
-            <div>
-              {channels.map((channel) => (
-                <b key={channel}>{channel}</b>
-              ))}
+            <div className="nlp-source-intro">
+              <span>Built around your stack</span>
+              <p>Storefronts, POS and delivery platforms—read together.</p>
+            </div>
+            <div className="nlp-source-receipt" aria-label="Supported commerce platforms">
+              <div className="nlp-source-receipt-head" aria-hidden="true">
+                <span>Commerce sources</span>
+                <span>PrizeSkout / 08</span>
+              </div>
+              <ul>
+                {channels.map((channel, index) => (
+                  <li key={channel.name} style={{ "--channel-index": index } as React.CSSProperties}>
+                    <img src={channel.logo} alt="" />
+                    <span>{channel.name}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
