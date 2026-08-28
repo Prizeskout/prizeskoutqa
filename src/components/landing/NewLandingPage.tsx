@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Menu, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
@@ -13,6 +13,30 @@ import "./NewLandingPage.css";
 const QFC_LOGO = "/qfc-logo.svg";
 
 const channels = ["Zid", "Salla", "Foodics", "Talabat", "Snoonu", "Jahez"];
+
+const workflows = [
+  {
+    label: "01 · AI Store Manager",
+    title: "Merchant-controlled operations",
+    image: storeManagerDesktop,
+    alt: "Current PrizeSkout AI Store Manager workspace",
+    link: true,
+  },
+  {
+    label: "02 · Defend Loop",
+    title: "Merchant-controlled margin policy",
+    image: defendLoopDesktop,
+    alt: "Current PrizeSkout Defend Loop workspace",
+    link: false,
+  },
+  {
+    label: "03 · Evidence & History",
+    title: "Permanent evidence record",
+    image: evidenceHistoryDesktop,
+    alt: "Current PrizeSkout Evidence and History workspace",
+    link: true,
+  },
+] as const;
 
 const plans = [
   {
@@ -64,8 +88,48 @@ function scrollToSection(id: string) {
 }
 
 export function NewLandingPage() {
+  const pageRef = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [annualBilling, setAnnualBilling] = useState(false);
+  const [activeWorkflow, setActiveWorkflow] = useState(0);
+  const [pageReady, setPageReady] = useState(false);
+  const [navScrolled, setNavScrolled] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setPageReady(true));
+    const root = pageRef.current;
+    if (!root) return () => window.cancelAnimationFrame(frame);
+
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }),
+      { rootMargin: "0px 0px -10%", threshold: 0.12 },
+    );
+    root
+      .querySelectorAll<HTMLElement>("[data-reveal]")
+      .forEach((element) => observer.observe(element));
+
+    let scrollFrame = 0;
+    const handleScroll = () => {
+      if (scrollFrame) return;
+      scrollFrame = window.requestAnimationFrame(() => {
+        setNavScrolled(window.scrollY > 24);
+        scrollFrame = 0;
+      });
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.cancelAnimationFrame(scrollFrame);
+      observer.disconnect();
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const go = (id: string) => {
     scrollToSection(id);
@@ -73,12 +137,12 @@ export function NewLandingPage() {
   };
 
   return (
-    <main className="nlp" id="top">
+    <main ref={pageRef} className={`nlp ${pageReady ? "is-ready" : ""}`} id="top">
       <a className="nlp-skip" href="#main-content">
         Skip to main content
       </a>
 
-      <header className="nlp-nav-shell">
+      <header className={`nlp-nav-shell ${navScrolled ? "is-scrolled" : ""}`}>
         <nav className="nlp-nav" aria-label="Main navigation">
           <button className="nlp-logo" type="button" onClick={() => go("top")}>
             <img src={logo} alt="PrizeSkout" />
@@ -205,7 +269,7 @@ export function NewLandingPage() {
           </div>
         </section>
 
-        <aside className="nlp-credentials" aria-label="PrizeSkout credentials">
+        <aside className="nlp-credentials" aria-label="PrizeSkout credentials" data-reveal>
           <div>
             <span>Backed by</span>
             <img src={qstpLogo} alt="Qatar Science and Technology Park" />
@@ -231,7 +295,7 @@ export function NewLandingPage() {
             text="Watch PrizeSkout build one trusted order from six live sources."
           />
 
-          <figure className="nlp-product-window nlp-product-window-featured">
+          <figure className="nlp-product-window nlp-product-window-featured" data-reveal>
             <figcaption>
               <span>Current product · Evidence &amp; History</span>
               <b>Permanent evidence record</b>
@@ -253,7 +317,25 @@ export function NewLandingPage() {
             text="PrizeSkout detects risk, predicts the result, checks your rules, requests approval, and records proof."
           />
 
-          <figure className="nlp-product-window nlp-product-window-featured">
+          <ol className="nlp-defend-flow" aria-label="Defend Loop decision sequence" data-reveal>
+            {[
+              "Detects risk",
+              "Predicts the result",
+              "Checks your rules",
+              "Requests approval",
+              "Records proof",
+            ].map((step, index) => (
+              <li key={step} style={{ "--flow-index": index } as React.CSSProperties}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <b>{step}</b>
+              </li>
+            ))}
+          </ol>
+
+          <figure
+            className="nlp-product-window nlp-product-window-featured nlp-defend-window"
+            data-reveal
+          >
             <figcaption>
               <span>Current product · Defend Loop</span>
               <b>Margin Policy Engine</b>
@@ -275,8 +357,45 @@ export function NewLandingPage() {
             text="Choose a workflow and watch the same experience that merchants use inside the dashboard."
           />
 
-          <div className="nlp-product-gallery">
-            <figure className="nlp-product-window nlp-gallery-primary">
+          <div
+            className="nlp-workflow-tabs"
+            role="tablist"
+            aria-label="Product workflows"
+            data-reveal
+          >
+            {workflows.map((workflow, index) => (
+              <button
+                key={workflow.label}
+                id={`workflow-tab-${index}`}
+                type="button"
+                role="tab"
+                aria-selected={activeWorkflow === index}
+                aria-controls={`workflow-panel-${index}`}
+                tabIndex={activeWorkflow === index ? 0 : -1}
+                onClick={() => setActiveWorkflow(index)}
+                onKeyDown={(event) => {
+                  if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                  event.preventDefault();
+                  const direction = event.key === "ArrowRight" ? 1 : -1;
+                  const next = (activeWorkflow + direction + workflows.length) % workflows.length;
+                  setActiveWorkflow(next);
+                  document.getElementById(`workflow-tab-${next}`)?.focus();
+                }}
+              >
+                <span>{workflow.label}</span>
+                <b>{workflow.title}</b>
+              </button>
+            ))}
+          </div>
+
+          <div className="nlp-product-gallery" data-reveal>
+            <figure
+              id="workflow-panel-0"
+              role="tabpanel"
+              aria-labelledby="workflow-tab-0"
+              hidden={activeWorkflow !== 0}
+              className="nlp-product-window nlp-gallery-primary"
+            >
               <figcaption>
                 <span>01 · AI Store Manager</span>
                 <b>Merchant-controlled operations</b>
@@ -291,7 +410,13 @@ export function NewLandingPage() {
               />
             </figure>
 
-            <figure className="nlp-product-window nlp-gallery-workflow">
+            <figure
+              id="workflow-panel-1"
+              role="tabpanel"
+              aria-labelledby="workflow-tab-1"
+              hidden={activeWorkflow !== 1}
+              className="nlp-product-window nlp-gallery-primary"
+            >
               <figcaption>
                 <span>02 · Defend Loop</span>
                 <b>Merchant-controlled margin policy</b>
@@ -303,7 +428,13 @@ export function NewLandingPage() {
               />
             </figure>
 
-            <figure className="nlp-product-window nlp-gallery-workflow">
+            <figure
+              id="workflow-panel-2"
+              role="tabpanel"
+              aria-labelledby="workflow-tab-2"
+              hidden={activeWorkflow !== 2}
+              className="nlp-product-window nlp-gallery-primary"
+            >
               <figcaption>
                 <span>03 · Evidence &amp; History</span>
                 <b>Permanent evidence record</b>
@@ -329,7 +460,7 @@ export function NewLandingPage() {
             text="The product stays in view while your own catalog, orders, agreements, and payouts replace the demonstration data."
           />
 
-          <div className="nlp-onboarding-layout">
+          <div className="nlp-onboarding-layout" data-reveal>
             <figure className="nlp-product-window">
               <figcaption>
                 <span>Actual product page</span>
@@ -395,7 +526,7 @@ export function NewLandingPage() {
             </button>
           </div>
 
-          <div className="nlp-plan-grid">
+          <div className="nlp-plan-grid" data-reveal>
             {plans.map((plan) => (
               <article className={plan.popular ? "is-popular" : ""} key={plan.name}>
                 {plan.popular ? <em>Most popular</em> : null}
@@ -488,7 +619,7 @@ function SectionHeading({
   text: string;
 }) {
   return (
-    <header className="nlp-section-heading">
+    <header className="nlp-section-heading" data-reveal>
       <div className="nlp-section-index">
         <span>{number}</span>
         <i />
