@@ -11,14 +11,18 @@ import "./NewLandingPage.css";
 const QFC_LOGO = "/qfc-logo.svg";
 
 const channels = [
+  { name: "Deliveroo", logo: "/channel-logos/deliveroo.png" },
+  { name: "Careem", logo: "/channel-logos/careem.png" },
+  { name: "Mrsool", logo: "/channel-logos/mrsool.png" },
   { name: "Zid", logo: "/channel-logos/zid.png" },
   { name: "Salla", logo: "/channel-logos/salla.png" },
   { name: "Foodics", logo: "/channel-logos/foodics.png" },
   { name: "Talabat", logo: "/channel-logos/talabat.png" },
   { name: "Snoonu", logo: "/channel-logos/snoonu.png" },
   { name: "Jahez", logo: "/channel-logos/jahez.svg" },
+  { name: "Rafeeq", logo: "/channel-logos/rafeeq.png" },
   { name: "Keeta", logo: "/channel-logos/keeta.svg" },
-  { name: "Deliveroo", logo: "/channel-logos/deliveroo.png" },
+  { name: "HungerStation", logo: "/channel-logos/hungerstation.png" },
 ] as const;
 
 const workflows = [
@@ -283,23 +287,23 @@ export function NewLandingPage() {
           </div>
 
           <div className="nlp-source-line" id="integrations">
-            <div className="nlp-source-intro">
-              <span>Built around your stack</span>
-              <p>Storefronts, POS and delivery platforms—read together.</p>
-            </div>
-            <div className="nlp-source-receipt" aria-label="Supported commerce platforms">
-              <div className="nlp-source-receipt-head" aria-hidden="true">
-                <span>Commerce sources</span>
-                <span>PrizeSkout / 08</span>
-              </div>
-              <ul>
-                {channels.map((channel, index) => (
-                  <li key={channel.name} style={{ "--channel-index": index } as React.CSSProperties}>
-                    <img src={channel.logo} alt="" />
-                    <span>{channel.name}</span>
-                  </li>
-                ))}
-              </ul>
+            <p className="nlp-source-heading">
+              Connect your stack. Bring your POS and marketplace data together.
+            </p>
+            <div className="nlp-source-brands" aria-label="Supported commerce platforms">
+              {[channels.slice(0, 6), channels.slice(6)].map((row, rowIndex) => (
+                <ul className="nlp-source-row" key={rowIndex}>
+                  {row.map((channel, channelIndex) => (
+                    <li
+                      key={channel.name}
+                      style={{ "--channel-index": rowIndex * 6 + channelIndex } as React.CSSProperties}
+                    >
+                      <img src={channel.logo} alt="" />
+                      <span>{channel.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              ))}
             </div>
           </div>
         </section>
