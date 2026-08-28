@@ -415,10 +415,6 @@ export function NewLandingPage() {
 
           <div ref={onboardingRef} className="nlp-onboarding-layout" data-reveal>
             <figure className="nlp-product-window" data-onboarding-step={onboardingStep}>
-              <figcaption>
-                <span>Actual product page</span>
-                <b>Merchant setup</b>
-              </figcaption>
               <img
                 src={onboardingDesktop}
                 alt="PrizeSkout merchant onboarding account details page"

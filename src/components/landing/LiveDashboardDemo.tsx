@@ -33,8 +33,7 @@ export function LiveDashboardDemo({ workflow }: { workflow: number }) {
     <div className="ldd" data-scene={workflow} data-step={step}>
       <header className="ldd-topbar">
         <strong>Prize<span>skout</span></strong>
-        <div><b>{scene.title}</b><i>LIVE</i></div>
-        <small>{step < 4 ? "Working with live data" : "Up to date"}</small>
+        <div><b>{scene.title}</b></div>
       </header>
       <div className="ldd-app">
         <aside aria-hidden="true">
