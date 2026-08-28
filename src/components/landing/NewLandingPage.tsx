@@ -3,11 +3,9 @@ import { ArrowRight, Check, Menu, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
 import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
-import defendLoopDesktop from "@/assets/landing/defend-loop.png";
-import evidenceHistoryDesktop from "@/assets/landing/evidence-history.png";
-import storeManagerDesktop from "@/assets/landing/ai-store-manager.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
 import { HeroCardSystem } from "./HeroCardSystem";
+import { ProductFlowDemo, productFlows } from "./ImmersiveEconomicTwinLanding";
 import "./NewLandingPage.css";
 import "./LandingSpacing.css";
 
@@ -26,30 +24,6 @@ const channels = [
   { name: "Rafeeq", logo: "/channel-logos/rafeeq.png" },
   { name: "Keeta", logo: "/channel-logos/keeta.svg" },
   { name: "HungerStation", logo: "/channel-logos/hungerstation.png" },
-] as const;
-
-const workflows = [
-  {
-    label: "AI Store Manager",
-    title: "Merchant-controlled operations",
-    image: storeManagerDesktop,
-    alt: "Current PrizeSkout AI Store Manager workspace",
-    link: true,
-  },
-  {
-    label: "Defend Loop",
-    title: "Merchant-controlled margin policy",
-    image: defendLoopDesktop,
-    alt: "Current PrizeSkout Defend Loop workspace",
-    link: false,
-  },
-  {
-    label: "Evidence & History",
-    title: "Permanent evidence record",
-    image: evidenceHistoryDesktop,
-    alt: "Current PrizeSkout Evidence and History workspace",
-    link: true,
-  },
 ] as const;
 
 const plans = [
@@ -106,6 +80,7 @@ export function NewLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [annualBilling, setAnnualBilling] = useState(false);
   const [activeWorkflow, setActiveWorkflow] = useState(0);
+  const [capabilityStep, setCapabilityStep] = useState(0);
   const [pageReady, setPageReady] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
 
@@ -144,6 +119,15 @@ export function NewLandingPage() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  useEffect(() => {
+    setCapabilityStep(0);
+    const timer = window.setInterval(
+      () => setCapabilityStep((step) => (step >= 5 ? 0 : step + 1)),
+      720,
+    );
+    return () => window.clearInterval(timer);
+  }, [activeWorkflow]);
 
   const go = (id: string) => {
     scrollToSection(id);
@@ -307,91 +291,44 @@ export function NewLandingPage() {
             aria-label="Product workflows"
             data-reveal
           >
-            {workflows.map((workflow, index) => (
+            {productFlows.map((workflow, index) => (
               <button
-                key={workflow.label}
+                key={workflow.name}
                 id={`workflow-tab-${index}`}
                 type="button"
                 role="tab"
                 aria-selected={activeWorkflow === index}
-                aria-controls={`workflow-panel-${index}`}
+                aria-controls="workflow-panel"
                 tabIndex={activeWorkflow === index ? 0 : -1}
                 onClick={() => setActiveWorkflow(index)}
                 onKeyDown={(event) => {
                   if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
                   event.preventDefault();
                   const direction = event.key === "ArrowRight" ? 1 : -1;
-                  const next = (activeWorkflow + direction + workflows.length) % workflows.length;
+                  const next =
+                    (activeWorkflow + direction + productFlows.length) % productFlows.length;
                   setActiveWorkflow(next);
                   document.getElementById(`workflow-tab-${next}`)?.focus();
                 }}
               >
-                <span>{workflow.label}</span>
-                <b>{workflow.title}</b>
+                <span>{workflow.name}</span>
+                <b>{workflow.action}</b>
               </button>
             ))}
           </div>
 
-          <div className="nlp-product-gallery" data-reveal>
-            <figure
-              id="workflow-panel-0"
-              role="tabpanel"
-              aria-labelledby="workflow-tab-0"
-              hidden={activeWorkflow !== 0}
-              className="nlp-product-window nlp-gallery-primary"
-            >
-              <figcaption>
-                <span>AI Store Manager</span>
-                <b>Merchant-controlled operations</b>
-                <a href="/access">
-                  Open dashboard <ArrowRight aria-hidden="true" />
-                </a>
-              </figcaption>
-              <img
-                src={storeManagerDesktop}
-                alt="Current PrizeSkout AI Store Manager workspace"
-                loading="lazy"
-              />
-            </figure>
-
-            <figure
-              id="workflow-panel-1"
-              role="tabpanel"
-              aria-labelledby="workflow-tab-1"
-              hidden={activeWorkflow !== 1}
-              className="nlp-product-window nlp-gallery-primary"
-            >
-              <figcaption>
-                <span>Defend Loop</span>
-                <b>Merchant-controlled margin policy</b>
-              </figcaption>
-              <img
-                src={defendLoopDesktop}
-                alt="Current PrizeSkout Defend Loop workspace"
-                loading="lazy"
-              />
-            </figure>
-
-            <figure
-              id="workflow-panel-2"
-              role="tabpanel"
-              aria-labelledby="workflow-tab-2"
-              hidden={activeWorkflow !== 2}
-              className="nlp-product-window nlp-gallery-primary"
-            >
-              <figcaption>
-                <span>Evidence &amp; History</span>
-                <b>Permanent evidence record</b>
-                <a href="/access">
-                  Open dashboard <ArrowRight aria-hidden="true" />
-                </a>
-              </figcaption>
-              <img
-                src={evidenceHistoryDesktop}
-                alt="Current PrizeSkout Evidence and History workspace"
-                loading="lazy"
-              />
-            </figure>
+          <div
+            className="nlp-capability-stage et"
+            id="workflow-panel"
+            role="tabpanel"
+            aria-labelledby={`workflow-tab-${activeWorkflow}`}
+            data-reveal
+          >
+            <ProductFlowDemo
+              flow={activeWorkflow}
+              step={capabilityStep}
+              item={productFlows[activeWorkflow]}
+            />
           </div>
         </section>
 

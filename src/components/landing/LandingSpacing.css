@@ -22,6 +22,72 @@
   padding-block: var(--nlp-closing-space);
 }
 
+/* Product screens sit inside the section rather than becoming the section. */
+.nlp .nlp-defend .dlp {
+  width: min(1040px, 86%);
+  margin-inline: auto;
+}
+
+.nlp .nlp-product {
+  grid-template-columns: 280px minmax(0, 820px);
+  justify-content: center;
+}
+
+.nlp .nlp-workflow-tabs button {
+  min-height: 82px;
+  padding: 16px 22px;
+}
+
+.nlp .nlp-workflow-tabs b {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.nlp-capability-stage {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  padding: clamp(24px, 3vw, 42px);
+  border: 1px solid #4b3329;
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.045) 1px, transparent 1.2px),
+    #2a1d18;
+  background-size: 6px 6px;
+}
+
+.nlp-capability-stage.et {
+  color: #071127;
+  font-family: "NLP Inter Display", Inter, system-ui, sans-serif;
+}
+
+.nlp-capability-stage .et-dashboard-window {
+  width: 100%;
+  min-height: 480px;
+}
+
+.nlp .nlp-onboarding-layout {
+  width: min(1080px, 92%);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+}
+
+@media (max-width: 1100px) {
+  .nlp .nlp-defend .dlp,
+  .nlp .nlp-onboarding-layout {
+    width: 100%;
+  }
+
+  .nlp .nlp-product,
+  .nlp .nlp-onboarding-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .nlp-capability-stage {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 @media (max-width: 560px) {
   .nlp {
     --nlp-section-space: 88px;
@@ -35,5 +101,9 @@
 
   .nlp .nlp-product .nlp-section-heading {
     margin-bottom: 48px;
+  }
+
+  .nlp-capability-stage {
+    padding: 12px;
   }
 }
