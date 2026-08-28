@@ -7,6 +7,7 @@ import defendLoopDesktop from "@/assets/landing/defend-loop.png";
 import evidenceHistoryDesktop from "@/assets/landing/evidence-history.png";
 import storeManagerDesktop from "@/assets/landing/ai-store-manager.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
+import { HeroCardSystem } from "./HeroCardSystem";
 import "./NewLandingPage.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
@@ -239,53 +240,7 @@ export function NewLandingPage() {
             </div>
           </div>
 
-          <div
-            className="nlp-hero-system"
-            aria-label="How PrizeSkout protects the margin on every order"
-          >
-            <p className="nlp-visually-hidden">
-              PrizeSkout brings together commerce data, reconstructs what each order should earn,
-              finds missing margin, lets the merchant decide what happens next, and keeps the proof.
-            </p>
-            <div className="nlp-system-track" aria-hidden="true">
-              <article className="nlp-system-card nlp-system-input">
-                <span>Your commerce data</span>
-                <strong>See the whole order</strong>
-                <small>Orders, fees and payouts together</small>
-              </article>
-
-              <article className="nlp-system-card nlp-system-twin">
-                <span>What should have happened</span>
-                <strong>Know what you should earn</strong>
-                <small>Every cost rebuilt order by order</small>
-              </article>
-
-              <article className="nlp-system-card nlp-system-policy">
-                <span>What actually happened</span>
-                <strong>Catch what is missing</strong>
-                <small>Fees, discounts and payout gaps explained</small>
-              </article>
-
-              <article className="nlp-system-card nlp-system-action">
-                <span>You stay in control</span>
-                <strong>Choose what happens next</strong>
-                <small>Review first. Approve every action.</small>
-              </article>
-
-              <article className="nlp-system-card nlp-system-evidence">
-                <span>Nothing gets lost</span>
-                <strong>Keep the proof</strong>
-                <small>A clear record for every decision</small>
-              </article>
-            </div>
-            <div className="nlp-system-caption" aria-hidden="true">
-              <span>See the full picture</span>
-              <i />
-              <span>Find the difference</span>
-              <i />
-              <span>Decide with proof</span>
-            </div>
-          </div>
+          <HeroCardSystem />
 
           <div className="nlp-source-line" id="integrations">
             <p className="nlp-source-heading">

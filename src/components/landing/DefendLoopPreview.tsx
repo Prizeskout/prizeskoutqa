@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Pause, Play, ShieldCheck } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import "./DefendLoopPreview.css";
 
 const steps = ["Set protection floor", "Preview affected products", "Review and activate", "Monitor outcomes"];
@@ -7,14 +7,16 @@ const steps = ["Set protection floor", "Preview affected products", "Review and 
 export function DefendLoopPreview() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState(0);
-  const [playing, setPlaying] = useState(true);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+        if (!entry.isIntersecting) setStage(0);
+      },
       { threshold: 0.35 },
     );
     observer.observe(preview);
@@ -23,20 +25,16 @@ export function DefendLoopPreview() {
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (media.matches) { setPlaying(false); setStage(3); return; }
-    if (!playing || !inView) return;
-    const timer = window.setTimeout(() => setStage((value) => (value + 1) % steps.length), 2200);
+    if (media.matches) { setStage(3); return; }
+    if (!inView || stage === steps.length - 1) return;
+    const timer = window.setTimeout(() => setStage((value) => value + 1), 2200);
     return () => window.clearTimeout(timer);
-  }, [inView, playing, stage]);
+  }, [inView, stage]);
 
   return (
     <div ref={previewRef} className="dlp" data-stage={stage} data-reveal>
       <header className="dlp-bar">
         <div><span>PrizeSkout</span><b>Margin Policy Engine</b></div>
-        <button type="button" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pause product preview" : "Play product preview"}>
-          {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-          {playing ? "Pause" : "Play"}
-        </button>
       </header>
       <div className="dlp-app">
         <aside className="dlp-nav" aria-hidden="true">
