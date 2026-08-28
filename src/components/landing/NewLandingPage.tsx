@@ -6,6 +6,7 @@ import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
 import defendLoopDesktop from "@/assets/landing/defend-loop.png";
 import evidenceHistoryDesktop from "@/assets/landing/evidence-history.png";
 import storeManagerDesktop from "@/assets/landing/ai-store-manager.png";
+import { DefendLoopPreview } from "./DefendLoopPreview";
 import "./NewLandingPage.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
@@ -27,21 +28,21 @@ const channels = [
 
 const workflows = [
   {
-    label: "01 · AI Store Manager",
+    label: "AI Store Manager",
     title: "Merchant-controlled operations",
     image: storeManagerDesktop,
     alt: "Current PrizeSkout AI Store Manager workspace",
     link: true,
   },
   {
-    label: "02 · Defend Loop",
+    label: "Defend Loop",
     title: "Merchant-controlled margin policy",
     image: defendLoopDesktop,
     alt: "Current PrizeSkout Defend Loop workspace",
     link: false,
   },
   {
-    label: "03 · Evidence & History",
+    label: "Evidence & History",
     title: "Permanent evidence record",
     image: evidenceHistoryDesktop,
     alt: "Current PrizeSkout Evidence and History workspace",
@@ -322,74 +323,22 @@ export function NewLandingPage() {
         </aside>
 
         <section
-          className="nlp-section nlp-platform"
+          className="nlp-section nlp-defend"
           id="platform"
-          aria-labelledby="economic-twin-title"
+          aria-labelledby="defend-loop-title"
         >
           <SectionHeading
-            number="01"
-            eyebrow="The Economic Twin"
-            id="economic-twin-title"
-            title="Every number arrives with its evidence."
-            text="Watch PrizeSkout build one trusted order from six live sources."
-          />
-
-          <figure className="nlp-product-window nlp-product-window-featured" data-reveal>
-            <figcaption>
-              <span>Current product · Evidence &amp; History</span>
-              <b>Permanent evidence record</b>
-            </figcaption>
-            <img
-              src={evidenceHistoryDesktop}
-              alt="Current PrizeSkout Evidence and History workspace"
-              loading="lazy"
-            />
-          </figure>
-        </section>
-
-        <section className="nlp-section nlp-defend" aria-labelledby="defend-loop-title">
-          <SectionHeading
-            number="02"
             eyebrow="The Defend Loop"
             id="defend-loop-title"
             title="A decision completes in seconds."
             text="PrizeSkout detects risk, predicts the result, checks your rules, requests approval, and records proof."
           />
 
-          <ol className="nlp-defend-flow" aria-label="Defend Loop decision sequence" data-reveal>
-            {[
-              "Detects risk",
-              "Predicts the result",
-              "Checks your rules",
-              "Requests approval",
-              "Records proof",
-            ].map((step, index) => (
-              <li key={step} style={{ "--flow-index": index } as React.CSSProperties}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <b>{step}</b>
-              </li>
-            ))}
-          </ol>
-
-          <figure
-            className="nlp-product-window nlp-product-window-featured nlp-defend-window"
-            data-reveal
-          >
-            <figcaption>
-              <span>Current product · Defend Loop</span>
-              <b>Margin Policy Engine</b>
-            </figcaption>
-            <img
-              src={defendLoopDesktop}
-              alt="Current PrizeSkout Defend Loop and Margin Policy Engine workspace"
-              loading="lazy"
-            />
-          </figure>
+          <DefendLoopPreview />
         </section>
 
         <section className="nlp-section nlp-product" id="product" aria-labelledby="product-title">
           <SectionHeading
-            number="03"
             eyebrow="The product"
             id="product-title"
             title="Use PrizeSkout before you book a demo."
@@ -436,7 +385,7 @@ export function NewLandingPage() {
               className="nlp-product-window nlp-gallery-primary"
             >
               <figcaption>
-                <span>01 · AI Store Manager</span>
+                <span>AI Store Manager</span>
                 <b>Merchant-controlled operations</b>
                 <a href="/access">
                   Open dashboard <ArrowRight aria-hidden="true" />
@@ -457,7 +406,7 @@ export function NewLandingPage() {
               className="nlp-product-window nlp-gallery-primary"
             >
               <figcaption>
-                <span>02 · Defend Loop</span>
+                <span>Defend Loop</span>
                 <b>Merchant-controlled margin policy</b>
               </figcaption>
               <img
@@ -475,7 +424,7 @@ export function NewLandingPage() {
               className="nlp-product-window nlp-gallery-primary"
             >
               <figcaption>
-                <span>03 · Evidence &amp; History</span>
+                <span>Evidence &amp; History</span>
                 <b>Permanent evidence record</b>
                 <a href="/access">
                   Open dashboard <ArrowRight aria-hidden="true" />
@@ -492,7 +441,6 @@ export function NewLandingPage() {
 
         <section className="nlp-section nlp-first-hours" aria-labelledby="first-hours-title">
           <SectionHeading
-            number="04"
             eyebrow="Your first 48 hours"
             id="first-hours-title"
             title="Connect the stack. See the truth. Choose what happens next."
@@ -513,12 +461,11 @@ export function NewLandingPage() {
             </figure>
             <div className="nlp-onboarding-steps">
               {[
-                ["01", "Connect catalog", "Zid and Salla use their existing workflows."],
-                ["02", "Add evidence", "Upload agreements, statements, and receipts."],
-                ["03", "Approve protection", "You control every protected action."],
-              ].map(([number, title, detail]) => (
-                <article key={number}>
-                  <span>{number}</span>
+                ["Connect catalog", "Zid and Salla use their existing workflows."],
+                ["Add evidence", "Upload agreements, statements, and receipts."],
+                ["Approve protection", "You control every protected action."],
+              ].map(([title, detail]) => (
+                <article key={title}>
                   <div>
                     <b>{title}</b>
                     <p>{detail}</p>
@@ -645,13 +592,11 @@ export function NewLandingPage() {
 }
 
 function SectionHeading({
-  number,
   eyebrow,
   id,
   title,
   text,
 }: {
-  number: string;
   eyebrow: string;
   id: string;
   title: string;
@@ -659,10 +604,6 @@ function SectionHeading({
 }) {
   return (
     <header className="nlp-section-heading" data-reveal>
-      <div className="nlp-section-index">
-        <span>{number}</span>
-        <i />
-      </div>
       <span className="nlp-eyebrow">{eyebrow}</span>
       <h2 id={id}>{title}</h2>
       <p>{text}</p>
