@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, BrainCircuit, Check, FileCheck2, Menu, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Check, Menu, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
 import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
@@ -199,17 +199,14 @@ export function NewLandingPage() {
         <section className="nlp-hero" aria-labelledby="nlp-hero-title">
           <div className="nlp-hero-copy">
             <span className="nlp-eyebrow">
-              <i /> Deep-tech commerce infrastructure
+              <i /> Revenue assurance for GCC commerce
             </span>
             <h1 id="nlp-hero-title">
-              Reported profit is the starting point.
-              <br />
-              <em>True profit</em> is a system.
+              Know what every order <em>should earn.</em>
             </h1>
             <p>
-              PrizeSkout reconstructs the real unit economics of every order across every channel.
-              It predicts the profit impact of every commercial action and protects your margin
-              while you sleep.
+              PrizeSkout compares orders, fees, agreements and payouts to find margin leaks,
+              explain the cause, and prepare the evidence to recover what you are owed.
             </p>
             <div className="nlp-hero-actions">
               <a
@@ -223,7 +220,7 @@ export function NewLandingPage() {
                 type="button"
                 onClick={() => go("platform")}
               >
-                Get Started <ArrowRight aria-hidden="true" />
+                See how it works <ArrowRight aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -233,71 +230,38 @@ export function NewLandingPage() {
             aria-label="How PrizeSkout protects the margin on every order"
           >
             <p className="nlp-visually-hidden">
-              Commerce inputs enter the Economic Twin, pass through margin policy, become a
-              protected action, and finish as a permanent evidence record.
+              A Talabat order is checked against the merchant agreement. PrizeSkout finds an
+              18.40 QAR payout gap and prepares an evidence-backed recovery case for review.
             </p>
-            <div className="nlp-system-track" aria-hidden="true">
-              <article className="nlp-system-card nlp-system-input">
-                <span>Live inputs</span>
-                <strong>
-                  Commerce
-                  <br />
-                  stack
-                </strong>
-                <small>Orders + payouts</small>
-              </article>
-
-              <article className="nlp-system-card nlp-system-twin">
-                <span>PrizeSkout</span>
-                <strong>
-                  Economic
-                  <br />
-                  Twin
-                </strong>
-                <small>Reconstruct</small>
-              </article>
-
-              <article className="nlp-system-card nlp-system-policy">
-                <BrainCircuit />
-                <span>Margin intelligence</span>
-                <strong>
-                  Margin
-                  <br />
-                  policy
-                </strong>
-                <small>Predict + check</small>
-              </article>
-
-              <div className="nlp-system-decision">
-                <article className="nlp-system-card nlp-system-approval">
-                  <ShieldCheck />
-                  <span>Merchant control</span>
-                  <strong>
-                    Protected
-                    <br />
-                    action
-                  </strong>
-                </article>
-                <article className="nlp-system-card nlp-system-defend">
-                  <ArrowRight />
-                  <span>Defend Loop</span>
-                  <strong>
-                    Act +<br />
-                    protect
-                  </strong>
-                </article>
+            <div className="nlp-live-window" aria-hidden="true">
+              <div className="nlp-live-topbar">
+                <span><i /> Live order assurance</span>
+                <b>PrizeSkout Economic Twin</b>
               </div>
-
-              <article className="nlp-system-card nlp-system-evidence">
-                <FileCheck2 />
-                <span>Evidence &amp; History</span>
-                <strong>
-                  Permanent
-                  <br />
-                  record
-                </strong>
-                <small>Proof retained</small>
-              </article>
+              <div className="nlp-live-body">
+                <div className="nlp-order-heading">
+                  <div><small>Talabat · Order</small><strong>#TB-804291</strong></div>
+                  <span>Checking</span>
+                </div>
+                <div className="nlp-order-flow">
+                  <article style={{ "--step": 0 } as React.CSSProperties}>
+                    <span>01</span><div><small>Order received</small><b>QAR 186.00</b></div><i>Live</i>
+                  </article>
+                  <article style={{ "--step": 1 } as React.CSSProperties}>
+                    <span>02</span><div><small>Expected payout</small><b>QAR 142.60</b></div><i>Rebuilt</i>
+                  </article>
+                  <article className="is-alert" style={{ "--step": 2 } as React.CSSProperties}>
+                    <span>03</span><div><small>Actual payout</small><b>QAR 124.20</b></div><i>−18.40</i>
+                  </article>
+                  <article className="is-proof" style={{ "--step": 3 } as React.CSSProperties}>
+                    <span>04</span><div><small>Recovery case</small><b>Evidence ready</b></div><i>Review</i>
+                  </article>
+                </div>
+                <div className="nlp-live-result">
+                  <div><span>Margin leak identified</span><strong>QAR 18.40</strong></div>
+                  <button type="button" tabIndex={-1}>Review evidence <ArrowRight /></button>
+                </div>
+              </div>
             </div>
             <div className="nlp-system-caption" aria-hidden="true">
               <span>01 · Observe</span>
