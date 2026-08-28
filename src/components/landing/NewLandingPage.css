@@ -938,7 +938,7 @@
   width: 100%;
   padding: 72px max(28px, calc((100vw - 1264px) / 2)) 34px;
   display: grid;
-  grid-template-columns: 1.5fr repeat(4, 1fr);
+  grid-template-columns: 1.5fr repeat(3, 1fr);
   gap: 36px;
   border-top: 1px solid var(--soft);
   background: #fbfbfc;

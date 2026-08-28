@@ -654,7 +654,6 @@ export function NewLandingPage() {
         {[
           ["Platform", "Economic Twin", "Margin Intelligence", "Payout Recovery", "Defend Loop"],
           ["Solutions", "Marketplaces", "Restaurant groups", "Retail and grocery", "Enterprise"],
-          ["Company", "About", "Careers", "Security", "Press"],
           ["Resources", "Docs", "API reference", "Margin playbook", "Status"],
         ].map((column) => (
           <div className="nlp-footer-column" key={column[0]}>
