@@ -16,6 +16,13 @@
   font-weight: 600;
   font-display: swap;
 }
+@font-face {
+  font-family: "NLP Instrument Serif";
+  src: url("../../assets/landing/instrument-serif-italic.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
 
 .nlp {
   --navy: #071a3d;
@@ -63,6 +70,11 @@
 .nlp figure,
 .nlp dl {
   margin: 0;
+}
+.nlp h1,
+.nlp h2,
+.nlp h3 {
+  font-family: "NLP Inter Display", Inter, Arial, sans-serif;
 }
 .nlp a {
   color: inherit;
@@ -505,9 +517,9 @@
 .nlp-pricing-heading h2,
 .nlp-final-cta h2 {
   font-size: clamp(44px, 5.1vw, 70px);
-  font-weight: 600;
-  letter-spacing: -0.05em;
-  line-height: 0.98;
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.16;
   text-wrap: balance;
 }
 .nlp-section-heading > p,
@@ -1763,9 +1775,9 @@
 .nlp-hero h1 {
   max-width: 820px;
   font-size: clamp(62px, 6.2vw, 92px);
-  font-weight: 400;
-  line-height: 1.02;
-  letter-spacing: -0.05em;
+  font-weight: 500;
+  line-height: 1.11;
+  letter-spacing: normal;
 }
 
 .nlp-hero h1 br {
