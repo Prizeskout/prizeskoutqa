@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Check } from "lucide-react";
 import "./HeroCardSystem.css";
 
 const cards = [
@@ -27,9 +28,9 @@ export function HeroCardSystem() {
 
   useEffect(() => {
     if (!inView || hovered !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => setActive((value) => (value + 1) % cards.length), 1850);
-    return () => window.clearInterval(timer);
-  }, [hovered, inView]);
+    const timer = window.setTimeout(() => setActive((value) => (value + 1) % cards.length), 2350);
+    return () => window.clearTimeout(timer);
+  }, [active, hovered, inView]);
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch") return;
@@ -50,20 +51,6 @@ export function HeroCardSystem() {
     setHovered(null);
   };
 
-  const bounceCard = (event: React.PointerEvent<HTMLElement>) => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const card = event.currentTarget;
-    card.classList.remove("is-bouncing");
-    void card.offsetWidth;
-    card.classList.add("is-bouncing");
-    const finishBounce = (animationEvent: AnimationEvent) => {
-      if (!animationEvent.animationName.startsWith("nlp-card-bounce")) return;
-      card.classList.remove("is-bouncing");
-      card.removeEventListener("animationend", finishBounce);
-    };
-    card.addEventListener("animationend", finishBounce);
-  };
-
   return (
     <div
       ref={rootRef}
@@ -72,27 +59,42 @@ export function HeroCardSystem() {
       aria-label="How PrizeSkout protects the margin on every order"
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
+      data-active={active}
     >
       <p className="nlp-visually-hidden">
         PrizeSkout brings together commerce data, reconstructs what each order should earn,
         finds missing margin, lets the merchant decide what happens next, and keeps the proof.
       </p>
-      <div className="nlp-system-track" aria-hidden="true">
+      <div className="nlp-system-track">
         {cards.map(([eyebrow, title, detail, name], index) => (
-          <article
-            className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}`}
+          <button
+            type="button"
+            aria-pressed={active === index}
+            aria-label={`${title}. ${detail}`}
+            className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}${index < active ? " is-complete" : ""}${active < cards.length - 1 && index === active + 1 ? " is-next" : ""}`}
             key={title}
             style={{ "--story-index": index } as React.CSSProperties}
             onPointerEnter={() => {
               setHovered(index);
               setActive(index);
             }}
-            onPointerDown={bounceCard}
+            onFocus={() => {
+              setHovered(index);
+              setActive(index);
+            }}
+            onBlur={(event) => {
+              if (!rootRef.current?.contains(event.relatedTarget as Node | null)) setHovered(null);
+            }}
+            onClick={() => {
+              setHovered(index);
+              setActive(index);
+            }}
           >
+            <i className="nlp-story-state" aria-hidden="true">{index < active ? <Check /> : String(index + 1).padStart(2, "0")}</i>
             <span>{eyebrow}</span>
             <strong>{title}</strong>
             <small>{detail}</small>
-          </article>
+          </button>
         ))}
       </div>
       <div className="nlp-system-caption" aria-hidden="true">
