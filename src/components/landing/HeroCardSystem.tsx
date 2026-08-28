@@ -12,6 +12,7 @@ const cards = [
 export function HeroCardSystem() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const [hovered, setHovered] = useState<number | null>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
@@ -25,23 +26,28 @@ export function HeroCardSystem() {
   }, []);
 
   useEffect(() => {
-    if (!inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!inView || hovered !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => setActive((value) => (value + 1) % cards.length), 1850);
     return () => window.clearInterval(timer);
-  }, [inView]);
+  }, [hovered, inView]);
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch") return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width - 0.5;
     const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-    event.currentTarget.style.setProperty("--hero-x", `${x * 10}px`);
-    event.currentTarget.style.setProperty("--hero-y", `${y * 7}px`);
+    event.currentTarget.style.setProperty("--hero-x", `${x * 12}px`);
+    event.currentTarget.style.setProperty("--hero-y", `${y * 8}px`);
+    event.currentTarget.style.setProperty("--hero-rx", `${y * -1.4}deg`);
+    event.currentTarget.style.setProperty("--hero-ry", `${x * 1.8}deg`);
   };
 
   const resetPointer = () => {
     rootRef.current?.style.setProperty("--hero-x", "0px");
     rootRef.current?.style.setProperty("--hero-y", "0px");
+    rootRef.current?.style.setProperty("--hero-rx", "0deg");
+    rootRef.current?.style.setProperty("--hero-ry", "0deg");
+    setHovered(null);
   };
 
   const bounceCard = (event: React.PointerEvent<HTMLElement>) => {
@@ -62,6 +68,7 @@ export function HeroCardSystem() {
     <div
       ref={rootRef}
       className="nlp-hero-system nlp-card-story"
+      data-hovered={hovered ?? ""}
       aria-label="How PrizeSkout protects the margin on every order"
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
@@ -76,6 +83,10 @@ export function HeroCardSystem() {
             className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}${index < active ? " is-complete" : ""}`}
             key={title}
             style={{ "--story-index": index } as React.CSSProperties}
+            onPointerEnter={() => {
+              setHovered(index);
+              setActive(index);
+            }}
             onPointerDown={bounceCard}
           >
             <span>{eyebrow}</span>

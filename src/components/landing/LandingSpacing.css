@@ -7,11 +7,22 @@
 
 .nlp .nlp-section,
 .nlp .nlp-pricing {
+  --section-progress: 0;
+  --section-shift: 22px;
   margin-block-start: var(--nlp-section-gutter);
   margin-inline: auto;
   padding-block: var(--nlp-section-space);
   border: 1px solid #302e2c;
   border-radius: 14px;
+}
+
+/* One restrained scroll language: headings settle before their product surface. */
+@supports (transform: translate3d(0, 0, 0)) {
+  .nlp .nlp-section > .nlp-section-heading,
+  .nlp .nlp-pricing > .nlp-pricing-heading {
+    transform: translate3d(0, var(--section-shift), 0);
+    will-change: transform;
+  }
 }
 
 .nlp .nlp-product .nlp-section-heading {
@@ -55,20 +66,105 @@
   background-size: 6px 6px;
 }
 
-.nlp-capability-stage.et {
-  color: #071127;
-  font-family: "NLP Inter Display", Inter, system-ui, sans-serif;
+.nlp-capability-stage .nlp-product-window {
+  width: 100%;
+  border-color: #6d3a23;
 }
 
-.nlp-capability-stage .et-dashboard-window {
+.nlp-capability-stage .nlp-product-window img {
   width: 100%;
-  min-height: 480px;
+  height: auto;
+  object-fit: contain;
+  object-position: top center;
+}
+
+/* Actual dashboard imagery, choreographed as a guided camera rather than a fake UI. */
+.nlp-capability-stage {
+  overflow: hidden;
+}
+
+.nlp-capability-stage .nlp-gallery-primary {
+  position: relative;
+  overflow: hidden;
+  animation: nlp-workflow-frame-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.nlp-capability-stage .nlp-gallery-primary img {
+  transform-origin: var(--focus-x, 54%) var(--focus-y, 34%);
+  animation: nlp-workflow-camera 5.2s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+.nlp-capability-stage .nlp-gallery-primary[data-workflow="1"] { --focus-x: 64%; --focus-y: 44%; }
+.nlp-capability-stage .nlp-gallery-primary[data-workflow="2"] { --focus-x: 57%; --focus-y: 55%; }
+.nlp-capability-stage .nlp-gallery-primary[data-workflow="3"] { --focus-x: 49%; --focus-y: 58%; }
+.nlp-capability-stage .nlp-gallery-primary[data-workflow="4"] { --focus-x: 70%; --focus-y: 47%; }
+.nlp-capability-stage .nlp-gallery-primary[data-workflow="5"] { --focus-x: 61%; --focus-y: 38%; }
+
+.nlp .nlp-workflow-tabs button {
+  position: relative;
+  overflow: hidden;
+}
+
+.nlp .nlp-workflow-tabs button::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: #f26722;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.nlp .nlp-workflow-tabs button[aria-selected="true"]::after {
+  animation: nlp-workflow-progress 5.2s linear both;
+}
+
+@keyframes nlp-workflow-frame-in {
+  from { opacity: 0; transform: translate3d(20px, 0, 0) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nlp-workflow-camera {
+  0%, 14% { transform: scale(1); }
+  58%, 82% { transform: scale(1.045); }
+  100% { transform: scale(1.015); }
+}
+
+@keyframes nlp-workflow-progress {
+  to { transform: scaleX(1); }
 }
 
 .nlp .nlp-onboarding-layout {
   width: min(1080px, 92%);
   margin-inline: auto;
   grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+}
+
+.nlp-onboarding-layout .nlp-product-window {
+  overflow: hidden;
+}
+
+.nlp-onboarding-layout .nlp-product-window img {
+  transform-origin: 48% 34%;
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1), filter 350ms ease;
+}
+
+.nlp-onboarding-layout .nlp-product-window[data-onboarding-step="1"] img {
+  transform: scale(1.035) translate3d(-0.8%, -0.6%, 0);
+}
+
+.nlp-onboarding-layout .nlp-product-window[data-onboarding-step="2"] img {
+  transform: scale(1.055) translate3d(-1.4%, -1.1%, 0);
+}
+
+.nlp .nlp-onboarding-steps article {
+  transition: border-color 220ms ease, background-color 220ms ease, transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nlp .nlp-onboarding-steps article.is-active {
+  border-color: #74402a;
+  background: #1d1a18;
+  transform: translate3d(8px, 0, 0);
 }
 
 @media (max-width: 1100px) {
@@ -106,4 +202,19 @@
   .nlp-capability-stage {
     padding: 12px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nlp .nlp-section > .nlp-section-heading,
+  .nlp .nlp-pricing > .nlp-pricing-heading,
+  .nlp-capability-stage .nlp-gallery-primary,
+  .nlp-capability-stage .nlp-gallery-primary img {
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .nlp-onboarding-layout .nlp-product-window img,
+  .nlp .nlp-onboarding-steps article { transform: none !important; transition: none !important; }
+
+  .nlp .nlp-workflow-tabs button::after { display: none; }
 }

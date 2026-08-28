@@ -1,11 +1,21 @@
 .nlp-card-story {
   --hero-x: 0px;
   --hero-y: 0px;
+  --hero-rx: 0deg;
+  --hero-ry: 0deg;
 }
 .nlp-card-story .nlp-system-track {
-  transform: translate3d(var(--hero-x), var(--hero-y), 0);
-  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate3d(var(--hero-x), var(--hero-y), 0) rotateX(var(--hero-rx)) rotateY(var(--hero-ry));
+  transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+.nlp-card-story[data-hovered="0"] .nlp-system-card:nth-child(n + 2) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(11px, 1px, -10px); }
+.nlp-card-story[data-hovered="1"] .nlp-system-card:nth-child(1) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(-10px, 1px, -8px); }
+.nlp-card-story[data-hovered="1"] .nlp-system-card:nth-child(n + 3) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(10px, 1px, -8px); }
+.nlp-card-story[data-hovered="2"] .nlp-system-card:nth-child(-n + 2) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(-9px, 2px, -12px); }
+.nlp-card-story[data-hovered="2"] .nlp-system-card:nth-child(n + 4) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(9px, 2px, -12px); }
+.nlp-card-story[data-hovered="3"] .nlp-system-card:nth-child(-n + 3) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(-10px, 1px, -8px); }
+.nlp-card-story[data-hovered="3"] .nlp-system-card:nth-child(5) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(10px, 1px, -8px); }
+.nlp-card-story[data-hovered="4"] .nlp-system-card:nth-child(-n + 4) { transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) translate3d(-11px, 1px, -10px); }
 .nlp-card-story .nlp-system-card {
   transition:
     transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -153,6 +163,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .nlp-card-story .nlp-system-track { transform: none !important; }
   .nlp-card-story .nlp-system-card {
     filter: none !important;
   }

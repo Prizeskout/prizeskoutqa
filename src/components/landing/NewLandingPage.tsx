@@ -3,9 +3,14 @@ import { ArrowRight, Check, Menu, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
 import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
+import defendLoopDesktop from "@/assets/landing/defend-loop.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
 import { HeroCardSystem } from "./HeroCardSystem";
-import { ProductFlowDemo, productFlows } from "./ImmersiveEconomicTwinLanding";
+import marginDesktop from "../../../output/dashboard-review/margin-desktop.png";
+import recoveryDesktop from "../../../output/dashboard-review/recovery-desktop.png";
+import promotionDesktop from "../../../output/dashboard-review/promotion-desktop.png";
+import managerDesktop from "../../../output/dashboard-review/manager-desktop.png";
+import copilotDesktop from "../../../output/dashboard-review/copilot-desktop.png";
 import "./NewLandingPage.css";
 import "./LandingSpacing.css";
 
@@ -24,6 +29,45 @@ const channels = [
   { name: "Rafeeq", logo: "/channel-logos/rafeeq.png" },
   { name: "Keeta", logo: "/channel-logos/keeta.svg" },
   { name: "HungerStation", logo: "/channel-logos/hungerstation.png" },
+] as const;
+
+const workflows = [
+  {
+    name: "True Margin Intelligence",
+    detail: "Order economics",
+    image: marginDesktop,
+    alt: "PrizeSkout True Margin Intelligence dashboard",
+  },
+  {
+    name: "Payout Recovery",
+    detail: "Recovery workspace",
+    image: recoveryDesktop,
+    alt: "PrizeSkout Payout Recovery dashboard",
+  },
+  {
+    name: "Promotion Simulator",
+    detail: "Scenario builder",
+    image: promotionDesktop,
+    alt: "PrizeSkout Promotion Simulator dashboard",
+  },
+  {
+    name: "Defend Loop",
+    detail: "Margin Policy Engine",
+    image: defendLoopDesktop,
+    alt: "PrizeSkout Defend Loop dashboard",
+  },
+  {
+    name: "AI Store Manager",
+    detail: "Merchant-controlled operations",
+    image: managerDesktop,
+    alt: "PrizeSkout AI Store Manager dashboard",
+  },
+  {
+    name: "CFO Copilot",
+    detail: "Financial investigation",
+    image: copilotDesktop,
+    alt: "PrizeSkout CFO Copilot dashboard",
+  },
 ] as const;
 
 const plans = [
@@ -77,12 +121,17 @@ function scrollToSection(id: string) {
 
 export function NewLandingPage() {
   const pageRef = useRef<HTMLElement>(null);
+  const productRef = useRef<HTMLElement>(null);
+  const onboardingRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [annualBilling, setAnnualBilling] = useState(false);
   const [activeWorkflow, setActiveWorkflow] = useState(0);
-  const [capabilityStep, setCapabilityStep] = useState(0);
   const [pageReady, setPageReady] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
+  const [productInView, setProductInView] = useState(false);
+  const [productPaused, setProductPaused] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingInView, setOnboardingInView] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setPageReady(true));
@@ -107,6 +156,12 @@ export function NewLandingPage() {
       if (scrollFrame) return;
       scrollFrame = window.requestAnimationFrame(() => {
         setNavScrolled(window.scrollY > 24);
+        root.querySelectorAll<HTMLElement>(".nlp-section, .nlp-pricing, .nlp-final-cta").forEach((section) => {
+          const bounds = section.getBoundingClientRect();
+          const progress = Math.max(0, Math.min(1, (window.innerHeight - bounds.top) / (window.innerHeight + bounds.height * 0.45)));
+          section.style.setProperty("--section-progress", progress.toFixed(3));
+          section.style.setProperty("--section-shift", `${((1 - progress) * 22).toFixed(2)}px`);
+        });
         scrollFrame = 0;
       });
     };
@@ -121,13 +176,39 @@ export function NewLandingPage() {
   }, []);
 
   useEffect(() => {
-    setCapabilityStep(0);
-    const timer = window.setInterval(
-      () => setCapabilityStep((step) => (step >= 5 ? 0 : step + 1)),
-      720,
+    const product = productRef.current;
+    if (!product) return;
+    const observer = new IntersectionObserver(([entry]) => setProductInView(entry.isIntersecting), {
+      threshold: 0.42,
+    });
+    observer.observe(product);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!productInView || productPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setTimeout(
+      () => setActiveWorkflow((current) => (current + 1) % workflows.length),
+      5200,
     );
-    return () => window.clearInterval(timer);
-  }, [activeWorkflow]);
+    return () => window.clearTimeout(timer);
+  }, [activeWorkflow, productInView, productPaused]);
+
+  useEffect(() => {
+    const onboarding = onboardingRef.current;
+    if (!onboarding) return;
+    const observer = new IntersectionObserver(([entry]) => setOnboardingInView(entry.isIntersecting), {
+      threshold: 0.38,
+    });
+    observer.observe(onboarding);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!onboardingInView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setTimeout(() => setOnboardingStep((current) => (current + 1) % 3), 2600);
+    return () => window.clearTimeout(timer);
+  }, [onboardingInView, onboardingStep]);
 
   const go = (id: string) => {
     scrollToSection(id);
@@ -277,7 +358,16 @@ export function NewLandingPage() {
           <DefendLoopPreview />
         </section>
 
-        <section className="nlp-section nlp-product" id="product" aria-labelledby="product-title">
+        <section
+          ref={productRef}
+          className="nlp-section nlp-product"
+          id="product"
+          aria-labelledby="product-title"
+          onFocusCapture={() => setProductPaused(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setProductPaused(false);
+          }}
+        >
           <SectionHeading
             eyebrow="The product"
             id="product-title"
@@ -291,7 +381,7 @@ export function NewLandingPage() {
             aria-label="Product workflows"
             data-reveal
           >
-            {productFlows.map((workflow, index) => (
+            {workflows.map((workflow, index) => (
               <button
                 key={workflow.name}
                 id={`workflow-tab-${index}`}
@@ -306,29 +396,39 @@ export function NewLandingPage() {
                   event.preventDefault();
                   const direction = event.key === "ArrowRight" ? 1 : -1;
                   const next =
-                    (activeWorkflow + direction + productFlows.length) % productFlows.length;
+                    (activeWorkflow + direction + workflows.length) % workflows.length;
                   setActiveWorkflow(next);
                   document.getElementById(`workflow-tab-${next}`)?.focus();
                 }}
               >
                 <span>{workflow.name}</span>
-                <b>{workflow.action}</b>
+                <b>{workflow.detail}</b>
               </button>
             ))}
           </div>
 
           <div
-            className="nlp-capability-stage et"
+            className="nlp-capability-stage"
             id="workflow-panel"
             role="tabpanel"
             aria-labelledby={`workflow-tab-${activeWorkflow}`}
             data-reveal
           >
-            <ProductFlowDemo
-              flow={activeWorkflow}
-              step={capabilityStep}
-              item={productFlows[activeWorkflow]}
-            />
+            <figure
+              className="nlp-product-window nlp-gallery-primary"
+              key={workflows[activeWorkflow].name}
+              data-workflow={activeWorkflow}
+            >
+              <figcaption>
+                <span>{workflows[activeWorkflow].name}</span>
+                <b>{workflows[activeWorkflow].detail}</b>
+              </figcaption>
+              <img
+                src={workflows[activeWorkflow].image}
+                alt={workflows[activeWorkflow].alt}
+                loading="lazy"
+              />
+            </figure>
           </div>
         </section>
 
@@ -340,8 +440,8 @@ export function NewLandingPage() {
             text="The product stays in view while your own catalog, orders, agreements, and payouts replace the demonstration data."
           />
 
-          <div className="nlp-onboarding-layout" data-reveal>
-            <figure className="nlp-product-window">
+          <div ref={onboardingRef} className="nlp-onboarding-layout" data-reveal>
+            <figure className="nlp-product-window" data-onboarding-step={onboardingStep}>
               <figcaption>
                 <span>Actual product page</span>
                 <b>Merchant setup</b>
@@ -357,8 +457,8 @@ export function NewLandingPage() {
                 ["Connect catalog", "Zid and Salla use their existing workflows."],
                 ["Add evidence", "Upload agreements, statements, and receipts."],
                 ["Approve protection", "You control every protected action."],
-              ].map(([title, detail]) => (
-                <article key={title}>
+              ].map(([title, detail], index) => (
+                <article className={onboardingStep === index ? "is-active" : ""} key={title}>
                   <div>
                     <b>{title}</b>
                     <p>{detail}</p>

@@ -19,7 +19,7 @@ const reconcileOrders = [
   { channel: "Jahez", id: "8745189", city: "Jeddah", time: "14:34", revenue: 31.8, reported: 38.1, deductions: [5.72, 0.83, 3.15, 2.1, 0.46, 8.24] },
   { channel: "Snoonu", id: "8745261", city: "Doha", time: "14:36", revenue: 27.4, reported: 34.6, deductions: [4.66, 0.74, 2.82, 1.35, 0.58, 7.86] },
 ] as const;
-export const productFlows = [
+const productFlows = [
   {
     name: "True Margin Intelligence",
     prompt: "Show my true profit for Talabat orders today.",
@@ -495,7 +495,7 @@ function Head({ eyebrow, title, text }: { eyebrow: string; title: string; text: 
   );
 }
 
-export function ProductFlowDemo({
+function ProductFlowDemo({
   flow,
   step,
   item,
