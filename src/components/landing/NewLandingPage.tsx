@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Menu, X } from "lucide-react";
+import { ArrowRight, BrainCircuit, Check, FileCheck2, Menu, ShieldCheck, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
-import dashboardDesktop from "@/assets/landing/dashboard-overview.png";
-import dashboardMobile from "@/assets/landing/dashboard-mobile.png";
 import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
 import defendLoopDesktop from "@/assets/landing/defend-loop.png";
 import evidenceHistoryDesktop from "@/assets/landing/evidence-history.png";
@@ -231,32 +229,83 @@ export function NewLandingPage() {
           </div>
 
           <div
-            className="nlp-hero-media"
-            aria-label="PrizeSkout dashboard shown on desktop and mobile"
+            className="nlp-hero-system"
+            aria-label="How PrizeSkout protects the margin on every order"
           >
-            <figure className="nlp-screen nlp-screen-desktop">
-              <figcaption>
-                <span>
-                  <i /> Live product
-                </span>
-                <b>Merchant dashboard · Overview</b>
-              </figcaption>
-              <div className="nlp-screen-image">
-                <img
-                  src={dashboardDesktop}
-                  alt="The current PrizeSkout merchant dashboard overview"
-                />
+            <p className="nlp-visually-hidden">
+              Commerce inputs enter the Economic Twin, pass through margin policy, become a
+              protected action, and finish as a permanent evidence record.
+            </p>
+            <div className="nlp-system-track" aria-hidden="true">
+              <article className="nlp-system-card nlp-system-input">
+                <span>Live inputs</span>
+                <strong>
+                  Commerce
+                  <br />
+                  stack
+                </strong>
+                <small>Orders + payouts</small>
+              </article>
+
+              <article className="nlp-system-card nlp-system-twin">
+                <span>PrizeSkout</span>
+                <strong>
+                  Economic
+                  <br />
+                  Twin
+                </strong>
+                <small>Reconstruct</small>
+              </article>
+
+              <article className="nlp-system-card nlp-system-policy">
+                <BrainCircuit />
+                <span>Margin intelligence</span>
+                <strong>
+                  Margin
+                  <br />
+                  policy
+                </strong>
+                <small>Predict + check</small>
+              </article>
+
+              <div className="nlp-system-decision">
+                <article className="nlp-system-card nlp-system-approval">
+                  <ShieldCheck />
+                  <span>Merchant control</span>
+                  <strong>
+                    Protected
+                    <br />
+                    action
+                  </strong>
+                </article>
+                <article className="nlp-system-card nlp-system-defend">
+                  <ArrowRight />
+                  <span>Defend Loop</span>
+                  <strong>
+                    Act +<br />
+                    protect
+                  </strong>
+                </article>
               </div>
-            </figure>
-            <figure className="nlp-screen nlp-screen-mobile">
-              <figcaption>
-                <span>Mobile</span>
-              </figcaption>
-              <img
-                src={dashboardMobile}
-                alt="The current PrizeSkout merchant dashboard on mobile"
-              />
-            </figure>
+
+              <article className="nlp-system-card nlp-system-evidence">
+                <FileCheck2 />
+                <span>Evidence &amp; History</span>
+                <strong>
+                  Permanent
+                  <br />
+                  record
+                </strong>
+                <small>Proof retained</small>
+              </article>
+            </div>
+            <div className="nlp-system-caption" aria-hidden="true">
+              <span>01 · Observe</span>
+              <i />
+              <span>02 · Decide</span>
+              <i />
+              <span>03 · Defend</span>
+            </div>
           </div>
 
           <div className="nlp-source-line" id="integrations">
