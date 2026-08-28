@@ -1708,6 +1708,10 @@
   .nlp-system-caption { margin-top: -74px; }
 }
 
+/* Final cascade: mirror the production landing header exactly on this route. */
+.nlp .nlp-nav-shell{position:fixed;z-index:50;inset:14px 0 auto;padding:0;background:transparent;backdrop-filter:none}.nlp .nlp-nav-shell.is-scrolled{position:fixed;padding:0;border:0;background:transparent;backdrop-filter:none}.nlp .nlp-nav{position:relative;width:min(1180px,calc(100% - 32px));min-height:62px;height:62px;padding:0 12px 0 20px;grid-template-columns:138px 1fr auto;gap:26px;border:1px solid rgb(23 33 73/.09);border-radius:18px;background:rgb(255 255 255/.94);box-shadow:0 12px 40px rgb(36 50 106/.07);backdrop-filter:blur(18px)}.nlp .nlp-nav::after{display:none}.nlp .nlp-logo{width:138px;padding:0}.nlp .nlp-logo img{width:138px;filter:none}.nlp .nlp-nav-links{gap:24px}.nlp .nlp-nav-links button{min-height:42px;color:#33405d;font-size:13px;font-weight:700}.nlp .nlp-nav-links button:hover,.nlp .nlp-login:hover,.nlp .nlp-nav-utility:hover{color:#745cff}.nlp .nlp-nav-actions{gap:10px}.nlp .nlp-nav-utility{padding:8px 10px;border:0;background:transparent;color:#526078;font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer}.nlp .nlp-header-demo{padding:14px 22px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #0c1230;border-radius:14px;background:#0c1230;color:#fff!important;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background-color 150ms ease,border-color 150ms ease}.nlp .nlp-header-demo:hover{border-color:#745cff;background:#745cff}.nlp .nlp-login{min-height:auto;padding:10px 4px;color:#33405d;font-size:12px;font-weight:500}.nlp .nlp-menu-button{color:#33405d}
+@media(max-width:900px){.nlp .nlp-nav-shell{inset-block-start:14px}.nlp .nlp-nav{width:calc(100% - 28px);grid-template-columns:1fr auto;padding-inline:20px}.nlp .nlp-nav-actions{display:none}.nlp .nlp-menu-button{display:flex}.nlp .nlp-nav-links{display:none;position:absolute;inset:70px 0 auto;padding:18px;flex-direction:column;align-items:stretch;gap:0;border:1px solid #2a3952;border-radius:16px;background:#0b1729}.nlp .nlp-nav-links.is-open{display:flex}.nlp .nlp-nav-links button{width:100%;padding:13px 14px;color:#fff;text-align:left}.nlp .nlp-nav-mobile-action,.nlp .nlp-nav-mobile-login{display:block;margin-top:8px;padding:12px 14px;border-radius:10px;color:#fff;text-align:center;text-decoration:none}.nlp .nlp-nav-mobile-action{background:#0c1230}.nlp .nlp-nav-mobile-login{border:1px solid #2a3952}.nlp .nlp-logo img{filter:none}}
+
 /* Preserve official credential colors on a controlled light field. */
 .nlp-credentials {
   padding: 22px clamp(20px, 4vw, 48px);
@@ -2498,8 +2502,8 @@
 }
 
 .nlp-credentials img {
-  filter: grayscale(1) brightness(2.2);
-  opacity: 0.74;
+  filter: none;
+  opacity: 1;
 }
 
 .nlp-credentials > i {

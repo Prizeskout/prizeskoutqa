@@ -100,7 +100,7 @@ const plans = [
 ] as const;
 
 function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView();
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
 const setupScreens = ["Account", "Channels", "Ready"] as const;
@@ -157,7 +157,6 @@ export function NewLandingPage() {
   const [annualBilling, setAnnualBilling] = useState(false);
   const [activeWorkflow, setActiveWorkflow] = useState(0);
   const [pageReady, setPageReady] = useState(false);
-  const [navScrolled, setNavScrolled] = useState(false);
   const [productInView, setProductInView] = useState(false);
   const [productPaused, setProductPaused] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -186,7 +185,6 @@ export function NewLandingPage() {
     const handleScroll = () => {
       if (scrollFrame) return;
       scrollFrame = window.requestAnimationFrame(() => {
-        setNavScrolled(window.scrollY > 24);
         root.querySelectorAll<HTMLElement>(".nlp-section, .nlp-pricing, .nlp-final-cta").forEach((section) => {
           const bounds = section.getBoundingClientRect();
           const progress = Math.max(0, Math.min(1, (window.innerHeight - bounds.top) / (window.innerHeight + bounds.height * 0.45)));
@@ -252,7 +250,7 @@ export function NewLandingPage() {
         Skip to main content
       </a>
 
-      <header className={`nlp-nav-shell ${navScrolled ? "is-scrolled" : ""}`}>
+      <header className="nlp-nav-shell">
         <nav className="nlp-nav" aria-label="Main navigation">
           <button className="nlp-logo" type="button" onClick={() => go("top")}>
             <img src={logo} alt="PrizeSkout" />
@@ -275,7 +273,7 @@ export function NewLandingPage() {
               className="nlp-nav-mobile-action"
               href="mailto:hello@prizeskout.com?subject=Book a demo"
             >
-              Book a demo <ArrowRight aria-hidden="true" />
+              Book a demo
             </a>
             <a className="nlp-nav-mobile-login" href="/access">
               Login
@@ -283,12 +281,13 @@ export function NewLandingPage() {
           </div>
 
           <div className="nlp-nav-actions">
-            <span>Qatar · QAR</span>
+            <button className="nlp-nav-utility" type="button">Qatar · QAR</button>
+            <button className="nlp-nav-utility" type="button">English</button>
             <a
-              className="nlp-button nlp-button-primary nlp-button-small"
+              className="nlp-header-demo"
               href="mailto:hello@prizeskout.com?subject=Book a demo"
             >
-              Book a demo <ArrowRight aria-hidden="true" />
+              Book a demo
             </a>
             <a className="nlp-login" href="/access">
               Login
