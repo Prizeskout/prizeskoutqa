@@ -13,16 +13,17 @@ import managerDesktop from "../../../output/dashboard-review/manager-desktop.png
 import copilotDesktop from "../../../output/dashboard-review/copilot-desktop.png";
 import "./NewLandingPage.css";
 import "./LandingSpacing.css";
+import "./LandingMotion.css";
 
 const QFC_LOGO = "/qfc-logo.svg";
 
 const channels = [
   { name: "Deliveroo", logo: "/channel-logos/deliveroo.png" },
-  { name: "Careem", logo: "/channel-logos/careem.png" },
+  { name: "Careem", logo: "/channel-logos/careem.webp" },
   { name: "Mrsool", logo: "/channel-logos/mrsool.png" },
   { name: "Zid", logo: "/channel-logos/zid.png" },
   { name: "Salla", logo: "/channel-logos/salla.png" },
-  { name: "Foodics", logo: "/channel-logos/foodics.png" },
+  { name: "Foodics", logo: "/channel-logos/foodics.webp" },
   { name: "Talabat", logo: "/channel-logos/talabat.png" },
   { name: "Snoonu", logo: "/channel-logos/snoonu.png" },
   { name: "Jahez", logo: "/channel-logos/jahez.svg" },
@@ -277,7 +278,7 @@ export function NewLandingPage() {
       </header>
 
       <div id="main-content">
-        <section className="nlp-hero" aria-labelledby="nlp-hero-title">
+        <section className="nlp-hero" data-motion-scene="hero" aria-labelledby="nlp-hero-title">
           <div className="nlp-hero-copy">
             <span className="nlp-eyebrow">
               <i /> Deep-tech commerce infrastructure
@@ -318,6 +319,7 @@ export function NewLandingPage() {
                   {row.map((channel, channelIndex) => (
                     <li
                       key={channel.name}
+                      className={channel.name === "Careem" ? "nlp-source-light-logo" : undefined}
                       style={{ "--channel-index": rowIndex * 6 + channelIndex } as React.CSSProperties}
                     >
                       <img src={channel.logo} alt="" />
@@ -345,6 +347,7 @@ export function NewLandingPage() {
 
         <section
           className="nlp-section nlp-defend"
+          data-motion-scene="decision"
           id="platform"
           aria-labelledby="defend-loop-title"
         >
@@ -361,6 +364,7 @@ export function NewLandingPage() {
         <section
           ref={productRef}
           className="nlp-section nlp-product"
+          data-motion-scene="product"
           id="product"
           aria-labelledby="product-title"
           onFocusCapture={() => setProductPaused(true)}
@@ -428,11 +432,12 @@ export function NewLandingPage() {
                 alt={workflows[activeWorkflow].alt}
                 loading="lazy"
               />
+              <i className="nlp-screen-pointer" aria-hidden="true"><span /></i>
             </figure>
           </div>
         </section>
 
-        <section className="nlp-section nlp-first-hours" aria-labelledby="first-hours-title">
+        <section className="nlp-section nlp-first-hours" data-motion-scene="onboarding" aria-labelledby="first-hours-title">
           <SectionHeading
             eyebrow="Your first 48 hours"
             id="first-hours-title"
@@ -451,6 +456,7 @@ export function NewLandingPage() {
                 alt="PrizeSkout merchant onboarding account details page"
                 loading="lazy"
               />
+              <i className="nlp-onboarding-pointer" aria-hidden="true"><span /></i>
             </figure>
             <div className="nlp-onboarding-steps">
               {[
@@ -472,7 +478,7 @@ export function NewLandingPage() {
           </div>
         </section>
 
-        <section className="nlp-pricing" id="pricing" aria-labelledby="pricing-title">
+        <section className="nlp-pricing" data-motion-scene="pricing" id="pricing" aria-labelledby="pricing-title">
           <div className="nlp-pricing-heading">
             <span>Simple pricing</span>
             <h2 id="pricing-title">Start with visibility. Scale into protection.</h2>
@@ -506,8 +512,12 @@ export function NewLandingPage() {
           </div>
 
           <div className="nlp-plan-grid" data-reveal>
-            {plans.map((plan) => (
-              <article className={plan.popular ? "is-popular" : ""} key={plan.name}>
+            {plans.map((plan, index) => (
+              <article
+                className={plan.popular ? "is-popular" : ""}
+                key={plan.name}
+                style={{ "--plan-index": index } as React.CSSProperties}
+              >
                 {plan.popular ? <em>Most popular</em> : null}
                 <div className="nlp-plan-best">
                   <b>Best for</b>
@@ -534,7 +544,7 @@ export function NewLandingPage() {
           </div>
         </section>
 
-        <section className="nlp-final-cta" aria-labelledby="final-cta-title">
+        <section className="nlp-final-cta" data-motion-scene="closing" aria-labelledby="final-cta-title">
           <span>Put the system to work</span>
           <h2 id="final-cta-title">Your margins should not depend on someone else’s dashboard.</h2>
           <p>Connect your commerce stack and put every order under active revenue protection.</p>

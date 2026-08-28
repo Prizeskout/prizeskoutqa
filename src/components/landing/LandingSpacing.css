@@ -105,20 +105,6 @@
   overflow: hidden;
 }
 
-.nlp .nlp-workflow-tabs button::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: #f26722;
-  transform: scaleX(0);
-  transform-origin: left;
-}
-
-.nlp .nlp-workflow-tabs button[aria-selected="true"]::after {
-  animation: nlp-workflow-progress 5.2s linear both;
-}
-
 @keyframes nlp-workflow-frame-in {
   from { opacity: 0; transform: translate3d(20px, 0, 0) scale(0.985); }
   to { opacity: 1; transform: none; }
@@ -128,10 +114,6 @@
   0%, 14% { transform: scale(1); }
   58%, 82% { transform: scale(1.045); }
   100% { transform: scale(1.015); }
-}
-
-@keyframes nlp-workflow-progress {
-  to { transform: scaleX(1); }
 }
 
 .nlp .nlp-onboarding-layout {
@@ -216,5 +198,4 @@
   .nlp-onboarding-layout .nlp-product-window img,
   .nlp .nlp-onboarding-steps article { transform: none !important; transition: none !important; }
 
-  .nlp .nlp-workflow-tabs button::after { display: none; }
 }

@@ -80,7 +80,7 @@ export function HeroCardSystem() {
       <div className="nlp-system-track" aria-hidden="true">
         {cards.map(([eyebrow, title, detail, name], index) => (
           <article
-            className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}${index < active ? " is-complete" : ""}`}
+            className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}`}
             key={title}
             style={{ "--story-index": index } as React.CSSProperties}
             onPointerEnter={() => {
@@ -92,15 +92,14 @@ export function HeroCardSystem() {
             <span>{eyebrow}</span>
             <strong>{title}</strong>
             <small>{detail}</small>
-            <i className="nlp-card-progress" />
           </article>
         ))}
       </div>
       <div className="nlp-system-caption" aria-hidden="true">
         <span className={active < 2 ? "is-active" : ""}>See the full picture</span>
-        <i className={active >= 1 ? "is-complete" : ""} />
+        <i />
         <span className={active >= 2 && active < 4 ? "is-active" : ""}>Find the difference</span>
-        <i className={active >= 3 ? "is-complete" : ""} />
+        <i />
         <span className={active === 4 ? "is-active" : ""}>Decide with proof</span>
       </div>
     </div>

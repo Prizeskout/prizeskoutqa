@@ -1,0 +1,174 @@
+/* PrizeSkout motion direction: evidence in motion.
+   Direct input is quick; guided product behavior is deliberate; decoration stays quiet. */
+
+.nlp {
+  --motion-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-settle: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Section choreography: surfaces arrive after their explanation, not at the same time. */
+.nlp .nlp-section .nlp-section-heading,
+.nlp .nlp-pricing .nlp-pricing-heading {
+  transition: transform 90ms linear;
+}
+
+.nlp .nlp-defend .dlp,
+.nlp .nlp-product .nlp-workflow-tabs,
+.nlp .nlp-product .nlp-capability-stage,
+.nlp .nlp-first-hours .nlp-onboarding-layout {
+  clip-path: inset(0 0 10% 0 round 2px);
+  transform: translate3d(0, 34px, 0) scale(0.985);
+  transform-origin: 50% 0;
+  opacity: 0;
+  transition:
+    clip-path 900ms var(--motion-enter),
+    transform 900ms var(--motion-enter),
+    opacity 420ms ease;
+}
+
+.nlp .nlp-defend .dlp.is-visible,
+.nlp .nlp-product .nlp-workflow-tabs.is-visible,
+.nlp .nlp-product .nlp-capability-stage.is-visible,
+.nlp .nlp-first-hours .nlp-onboarding-layout.is-visible {
+  clip-path: inset(0 round 2px);
+  transform: none;
+  opacity: 1;
+}
+
+.nlp .nlp-product .nlp-capability-stage { transition-delay: 90ms; }
+
+/* Real dashboard tours: a quiet pointer creates causality without fabricating UI. */
+.nlp-screen-pointer,
+.nlp-onboarding-pointer,
+.dlp-guide-pointer {
+  position: absolute;
+  z-index: 30;
+  width: 18px;
+  height: 24px;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 8px rgb(8 20 44 / 0.24));
+  transition:
+    left 850ms var(--motion-settle),
+    top 850ms var(--motion-settle),
+    opacity 220ms ease;
+}
+
+.nlp-screen-pointer::before,
+.nlp-onboarding-pointer::before,
+.dlp-guide-pointer::before {
+  content: "";
+  position: absolute;
+  width: 13px;
+  height: 18px;
+  background: #f26722;
+  clip-path: polygon(0 0, 100% 72%, 58% 76%, 43% 100%);
+  border-radius: 1px;
+  filter: drop-shadow(0 0 1px #fff);
+}
+
+.nlp-screen-pointer span,
+.nlp-onboarding-pointer span,
+.dlp-guide-pointer span {
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgb(242 103 34 / 0.72);
+  border-radius: 50%;
+  opacity: 0;
+  animation: nlp-pointer-contact 2.6s 900ms ease-out infinite;
+}
+
+.nlp-gallery-primary .nlp-screen-pointer { left: 74%; top: 38%; }
+.nlp-gallery-primary[data-workflow="1"] .nlp-screen-pointer { left: 68%; top: 58%; }
+.nlp-gallery-primary[data-workflow="2"] .nlp-screen-pointer { left: 56%; top: 48%; }
+.nlp-gallery-primary[data-workflow="3"] .nlp-screen-pointer { left: 71%; top: 67%; }
+.nlp-gallery-primary[data-workflow="4"] .nlp-screen-pointer { left: 80%; top: 42%; }
+.nlp-gallery-primary[data-workflow="5"] .nlp-screen-pointer { left: 61%; top: 31%; }
+
+.nlp-gallery-primary .nlp-screen-pointer {
+  animation: nlp-product-pointer-in 620ms 480ms var(--motion-enter) both;
+}
+
+.nlp-onboarding-pointer { left: 39%; top: 42%; }
+.nlp-product-window[data-onboarding-step="1"] .nlp-onboarding-pointer { left: 55%; top: 24%; }
+.nlp-product-window[data-onboarding-step="2"] .nlp-onboarding-pointer { left: 77%; top: 24%; }
+
+/* Pricing responds as a composed set; the recommended plan remains the anchor. */
+.nlp-plan-grid.is-visible > article {
+  animation: nlp-plan-settle 720ms calc(var(--plan-index) * 90ms) var(--motion-enter) both;
+}
+
+.nlp-plan-grid > article {
+  transition:
+    transform 480ms var(--motion-settle),
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 480ms var(--motion-settle);
+}
+
+.nlp-plan-grid > article:hover {
+  z-index: 2;
+  transform: translate3d(0, -8px, 0);
+  border-color: #6c4634;
+  box-shadow: 0 28px 70px rgb(0 0 0 / 0.25);
+}
+
+.nlp-plan-grid > article:hover + article { transform: translate3d(4px, 0, 0); }
+.nlp-plan-grid > article:has(+ article:hover) { transform: translate3d(-4px, 0, 0); }
+
+/* Buttons carry momentum through their icon, rather than moving the whole layout. */
+.nlp-button svg,
+.nlp-plan-grid article > a svg {
+  transition: transform 420ms var(--motion-settle);
+}
+
+.nlp-button:hover svg,
+.nlp-plan-grid article > a:hover svg { transform: translate3d(5px, 0, 0); }
+
+.nlp-button:active { transform: translateY(1px) scale(0.985); }
+
+@keyframes nlp-pointer-contact {
+  0%, 48% { opacity: 0; transform: scale(0.45); }
+  52% { opacity: 0.85; }
+  78%, 100% { opacity: 0; transform: scale(1.65); }
+}
+
+@keyframes nlp-product-pointer-in {
+  from { opacity: 0; transform: translate3d(30px, 28px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nlp-plan-settle {
+  from { opacity: 0; transform: translate3d(0, 28px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 760px) {
+  .nlp-screen-pointer,
+  .nlp-onboarding-pointer,
+  .dlp-guide-pointer { transform: scale(0.8); transform-origin: top left; }
+
+  .nlp-plan-grid > article:hover,
+  .nlp-plan-grid > article:hover + article,
+  .nlp-plan-grid > article:has(+ article:hover) { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nlp .nlp-defend .dlp,
+  .nlp .nlp-product .nlp-workflow-tabs,
+  .nlp .nlp-product .nlp-capability-stage,
+  .nlp .nlp-first-hours .nlp-onboarding-layout,
+  .nlp-plan-grid > article {
+    clip-path: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
+  .nlp-screen-pointer,
+  .nlp-onboarding-pointer,
+  .dlp-guide-pointer { display: none; }
+}
