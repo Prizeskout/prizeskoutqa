@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Menu, X } from "lucide-react";
+import type { CSSProperties } from "react";
+import { ArrowRight, Check, FileCheck2, Menu, ShieldCheck, Store, X } from "lucide-react";
 import logo from "@/assets/logo-light.svg";
 import qstpLogo from "@/assets/qstp-logo-colored.png";
-import onboardingDesktop from "@/assets/landing/merchant-onboarding.png";
 import { DefendLoopPreview } from "./DefendLoopPreview";
 import { HeroCardSystem } from "./HeroCardSystem";
 import { LiveDashboardDemo } from "./LiveDashboardDemo";
@@ -103,6 +103,52 @@ function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView();
 }
 
+const setupScreens = ["Account", "Channels", "Ready"] as const;
+
+function OnboardingMedia({ step, onSelect }: { step: number; onSelect: (step: number) => void }) {
+  return (
+    <figure className="nlp-setup-demo" data-onboarding-step={step} aria-label={`${setupScreens[step]} setup screen`}>
+      <header className="nlp-setup-bar">
+        <strong>Prize<span>skout</span></strong>
+        <small>Merchant setup</small>
+        <em>Bayt Burger · Qatar</em>
+      </header>
+      <div className="nlp-setup-shell">
+        <aside aria-hidden="true"><Store /><b>{setupScreens[step]} setup</b><p>{step === 0 ? "Tell us who operates the store." : step === 1 ? "Bring your commerce data together." : "Review what PrizeSkout will protect."}</p></aside>
+        <main>
+          <nav aria-label="Merchant setup progress">
+            {setupScreens.map((label, index) => <button type="button" className={index === step ? "is-active" : index < step ? "is-done" : ""} aria-current={index === step ? "step" : undefined} onClick={() => onSelect(index)} key={label}><i>{index < step ? <Check /> : index + 1}</i>{label}</button>)}
+          </nav>
+          {step === 0 && <section className="nlp-setup-screen nlp-account-screen" key="account">
+            <div className="nlp-setup-heading"><span>Account details</span><h3>Create your PrizeSkout account</h3><p>Tell us who will manage the account and where your business operates.</p></div>
+            <div className="nlp-setup-fields">
+              <label>Account manager<b className="fill-1">Mariam Al-Kuwari</b></label><label>Business name<b className="fill-1">Bayt Burger W.L.L.</b></label>
+              <label>Primary location<b className="fill-2">Doha, Qatar</b></label><label>Number of branches<b className="fill-2">4 branches</b></label>
+              <label className="wide">Work email<b className="fill-3">mariam@baytburger.qa</b></label>
+            </div>
+            <div className="nlp-setup-confirm"><Check /> Account details saved</div>
+          </section>}
+          {step === 1 && <section className="nlp-setup-screen nlp-channel-screen" key="channels">
+            <div className="nlp-setup-heading"><span>Connected channels</span><h3>Connect your commerce stack</h3><p>PrizeSkout starts organizing products, orders, fees, and payouts.</p></div>
+            <div className="nlp-channel-grid">
+              {[{name:"Zid",logo:"/channel-logos/zid.png",count:"1,432 products"},{name:"Salla",logo:"/channel-logos/salla.png",count:"2,840 orders"},{name:"Talabat",logo:"/channel-logos/talabat.png",count:"14 payouts"}].map((channel, index) => <article style={{ "--channel-index": index } as CSSProperties} key={channel.name}><img src={channel.logo} alt="" /><div><b>{channel.name}</b><small>{channel.count}</small></div><span><Check /> Connected</span></article>)}
+            </div>
+            <div className="nlp-sync-result"><i /><div><b>Records are flowing into one trusted model</b><small>4,286 records synced · fees and payouts matched</small></div><strong>100%</strong></div>
+          </section>}
+          {step === 2 && <section className="nlp-setup-screen nlp-ready-screen" key="ready">
+            <div className="nlp-setup-heading"><span>Protection review</span><h3>Your store is ready for protection</h3><p>Evidence is retained and every protected action still requires your approval.</p></div>
+            <div className="nlp-ready-grid">
+              <div className="nlp-evidence-stack"><article><FileCheck2 /><div><b>Talabat agreement v3</b><small>Commission terms verified</small></div><Check /></article><article><FileCheck2 /><div><b>August settlement</b><small>238 orders reconciled</small></div><Check /></article></div>
+              <article className="nlp-protection-card"><ShieldCheck /><small>Margin policy</small><b>18% protected floor</b><span><Check /> Merchant approval required</span></article>
+            </div>
+            <div className="nlp-ready-result"><Check /><div><b>Bayt Burger is ready</b><small>Monitoring begins with a permanent evidence trail.</small></div><span>Protection active</span></div>
+          </section>}
+        </main>
+      </div>
+    </figure>
+  );
+}
+
 export function NewLandingPage() {
   const pageRef = useRef<HTMLElement>(null);
   const productRef = useRef<HTMLElement>(null);
@@ -116,6 +162,7 @@ export function NewLandingPage() {
   const [productPaused, setProductPaused] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingInView, setOnboardingInView] = useState(false);
+  const [onboardingPaused, setOnboardingPaused] = useState(false);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setPageReady(true));
@@ -173,7 +220,7 @@ export function NewLandingPage() {
     if (!productInView || productPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setTimeout(
       () => setActiveWorkflow((current) => (current + 1) % workflows.length),
-      8200,
+      6000,
     );
     return () => window.clearTimeout(timer);
   }, [activeWorkflow, productInView, productPaused]);
@@ -189,10 +236,10 @@ export function NewLandingPage() {
   }, []);
 
   useEffect(() => {
-    if (!onboardingInView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!onboardingInView || onboardingPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setTimeout(() => setOnboardingStep((current) => (current + 1) % 3), 2600);
     return () => window.clearTimeout(timer);
-  }, [onboardingInView, onboardingStep]);
+  }, [onboardingInView, onboardingPaused, onboardingStep]);
 
   const go = (id: string) => {
     scrollToSection(id);
@@ -350,6 +397,7 @@ export function NewLandingPage() {
           data-motion-scene="product"
           id="product"
           aria-labelledby="product-title"
+          onPointerDownCapture={() => setProductPaused(true)}
           onFocusCapture={() => setProductPaused(true)}
           onBlurCapture={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setProductPaused(false);
@@ -413,14 +461,8 @@ export function NewLandingPage() {
             text="The product stays in view while your own catalog, orders, agreements, and payouts replace the demonstration data."
           />
 
-          <div ref={onboardingRef} className="nlp-onboarding-layout" data-reveal>
-            <figure className="nlp-product-window" data-onboarding-step={onboardingStep}>
-              <img
-                src={onboardingDesktop}
-                alt="PrizeSkout merchant onboarding account details page"
-                loading="lazy"
-              />
-            </figure>
+          <div ref={onboardingRef} className="nlp-onboarding-layout" data-reveal onPointerDownCapture={() => setOnboardingPaused(true)} onFocusCapture={() => setOnboardingPaused(true)}>
+            <OnboardingMedia step={onboardingStep} onSelect={(step) => { setOnboardingStep(step); setOnboardingPaused(true); }} />
             <div className="nlp-onboarding-steps">
               {[
                 ["Connect catalog", "Zid and Salla use their existing workflows."],
@@ -428,10 +470,12 @@ export function NewLandingPage() {
                 ["Approve protection", "You control every protected action."],
               ].map(([title, detail], index) => (
                 <article className={onboardingStep === index ? "is-active" : ""} key={title}>
+                  <button type="button" aria-pressed={onboardingStep === index} onClick={() => { setOnboardingStep(index); setOnboardingPaused(true); }}>
                   <div>
                     <b>{title}</b>
                     <p>{detail}</p>
                   </div>
+                  </button>
                 </article>
               ))}
               <a className="nlp-button nlp-button-primary" href="/onboarding">

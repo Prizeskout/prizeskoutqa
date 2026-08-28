@@ -22,7 +22,7 @@ export function LiveDashboardDemo({ workflow }: { workflow: number }) {
       setStep(4);
       return;
     }
-    const timers = [900, 2200, 3700, 5300].map((delay, index) =>
+    const timers = [520, 1380, 2480, 3880].map((delay, index) =>
       window.setTimeout(() => setStep(index + 1), delay),
     );
     return () => timers.forEach(window.clearTimeout);
@@ -30,7 +30,7 @@ export function LiveDashboardDemo({ workflow }: { workflow: number }) {
 
   const scene = scenes[workflow];
   return (
-    <div className="ldd" data-scene={workflow} data-step={step}>
+    <div className="ldd" data-scene={workflow} data-step={step} data-focus={`scene-${workflow}-step-${step}`}>
       <header className="ldd-topbar">
         <strong>Prize<span>skout</span></strong>
         <div><b>{scene.title}</b></div>
@@ -57,7 +57,7 @@ function SceneHead({ eyebrow, title, status }: { eyebrow: string; title: string;
 }
 
 function Metric({ label, value, note, changed }: { label: string; value: string; note: string; changed?: boolean }) {
-  return <article className={`ldd-metric${changed ? " changed" : ""}`}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>;
+  return <article className={`ldd-metric${changed ? " changed" : ""}`}><span>{label}</span><strong><span className="ldd-value" key={value}>{value}</span></strong><small>{note}</small></article>;
 }
 
 function MarginScene({ step }: { step: number }) {
@@ -69,15 +69,15 @@ function MarginScene({ step }: { step: number }) {
   ];
   return <>
     <SceneHead eyebrow="True margin intelligence" title="Today’s order economics" status={step < 4 ? "Calculating" : "3 orders need attention"} />
-    <div className="ldd-metrics">
+    <div className="ldd-metrics ldd-focus-region" data-region="metrics">
       <Metric label="Orders received" value={step < 1 ? "0" : step < 2 ? "18" : "238"} note="Across connected channels" changed={step === 1} />
       <Metric label="Revenue reconstructed" value={step < 2 ? "QAR 0" : "QAR 18,420"} note="Order by order" changed={step === 2} />
       <Metric label="True margin" value={step < 3 ? "—" : "21.4%"} note="After every known cost" changed={step === 3} />
       <Metric label="Margin at risk" value={step < 4 ? "—" : "QAR 1,284"} note="Evidence ready" changed={step === 4} />
     </div>
-    <section className="ldd-table"><header><span>Order</span><span>Channel</span><span>Collected</span><span>True earnings</span></header>{orders.map((row, index)=><button type="button" onClick={() => setSelectedOrder(index)} className={`${step >= index + 1 ? "show" : ""}${selectedOrder === index ? " selected" : ""}`} key={row[0]}>{row.map((cell, cellIndex)=><span className={cellIndex === 3 && index === 2 ? "risk" : ""} key={cell}>{cell}</span>)}</button>)}</section>
+    <section className="ldd-table ldd-focus-region" data-region="table"><header><span>Order</span><span>Channel</span><span>Collected</span><span>True earnings</span></header>{orders.map((row, index)=><button type="button" onClick={() => setSelectedOrder(index)} className={`${step >= index + 1 ? "show" : ""}${selectedOrder === index ? " selected" : ""}`} key={row[0]}>{row.map((cell, cellIndex)=><span className={cellIndex === 3 && index === 2 ? "risk" : ""} key={cell}>{cell}</span>)}</button>)}</section>
     <div className={`ldd-order-detail ${selectedOrder !== null ? "show" : ""}`}><div><small>{selectedOrder === null ? "Order detail" : orders[selectedOrder][0]}</small><b>{selectedOrder === 2 ? "Commission above contracted rate" : "Order economics verified"}</b></div><span>Food cost <b>{selectedOrder === 2 ? "QAR 47.20" : "QAR 28.40"}</b></span><span>Channel fees <b>{selectedOrder === 2 ? "QAR 18.44" : "QAR 12.60"}</b></span><button type="button" onClick={() => setSelectedOrder(null)}>Close</button></div>
-    <div className={`ldd-notice ${step === 4 ? "show" : ""}`}><ShieldCheck /><div><b>Margin leak isolated</b><span>Commission exceeded the contracted rate on 3 orders.</span></div></div>
+    <div className={`ldd-notice ldd-focus-region ${step === 4 ? "show" : ""}`} data-region="result"><ShieldCheck /><div><b>Margin leak isolated</b><span>Commission exceeded the contracted rate on 3 orders.</span></div></div>
   </>;
 }
 
@@ -86,14 +86,14 @@ function RecoveryScene({ step }: { step: number }) {
   const complete = step >= 4 || manualRun;
   return <>
     <SceneHead eyebrow="Payout recovery" title="Settlement reconciliation" status={!complete ? "Reviewing statement" : "Recovery case ready"} />
-    <div className="ldd-upload"><FileCheck2 /><div><b>talabat-settlement-aug-24.csv</b><span>{step < 1 ? "Statement received" : step < 2 ? "Matching 238 orders" : "238 orders matched"}</span></div><em className={step >= 2 ? "done" : ""}>{step >= 2 ? <Check /> : "···"}</em></div>
-    <div className="ldd-reconcile">
+    <div className="ldd-upload ldd-focus-region" data-region="input"><FileCheck2 /><div><b>talabat-settlement-aug-24.csv</b><span>{step < 1 ? "Statement received" : step < 2 ? "Matching 238 orders" : "238 orders matched"}</span></div><em className={step >= 2 ? "done" : ""}>{step >= 2 ? <Check /> : "···"}</em></div>
+    <div className="ldd-reconcile ldd-focus-region" data-region="calculation">
       <article><span>Expected payout</span><b>{step < 2 ? "—" : "QAR 15,908.40"}</b></article>
       <i className={step >= 3 ? "resolved" : ""} />
       <article><span>Reported payout</span><b>{step < 2 ? "—" : "QAR 15,641.20"}</b></article>
       <article className={step >= 3 ? "difference" : ""}><span>Difference</span><b>{step < 3 ? "—" : "QAR 267.20"}</b></article>
     </div>
-    <section className={`ldd-evidence ${step >= 3 || manualRun ? "show" : ""}`}><div><small>Recovery evidence</small><b>{complete ? "6 affected orders · 4 retained records" : "Ready to compare expected and reported payouts"}</b></div><button type="button" onClick={() => setManualRun(true)}>{complete ? "Reconciliation complete" : "Run reconciliation"}</button></section>
+    <section className={`ldd-evidence ldd-focus-region ${step >= 3 || manualRun ? "show" : ""}`} data-region="result"><div><small>Recovery evidence</small><b>{complete ? "6 affected orders · 4 retained records" : "Ready to compare expected and reported payouts"}</b></div><button type="button" onClick={() => setManualRun(true)}>{complete ? "Reconciliation complete" : "Run reconciliation"}</button></section>
   </>;
 }
 
@@ -104,9 +104,9 @@ function PromotionScene({ step }: { step: number }) {
   const safe = margin >= 18;
   return <>
     <SceneHead eyebrow="Promotion simulator" title="Compare the economics before publishing" status={step < 4 ? "Scenario running" : "Recommendation ready"} />
-    <div className="ldd-fields"><label>Campaign type<b>{step < 1 ? "Select" : "Percentage discount"}</b></label><label className="ldd-range">Discount<b>{discount}%</b><input aria-label="Promotion discount" type="range" min="5" max="25" step="1" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} /></label><label>Duration<b>{step < 2 ? "—" : "14 days"}</b></label><label>Protected margin floor<b>{step < 2 ? "—" : "18%"}</b></label></div>
-    <div className="ldd-scenarios"><article><span>Baseline</span><strong>QAR 42,600</strong><small>Projected revenue</small><b>24.1% margin</b></article><article className={step >= 3 ? safe ? "safe" : "unsafe" : ""}><span>Requested · {discount}%</span><strong>{step < 3 ? "Calculating" : `QAR ${revenue.toLocaleString()}`}</strong><small>Projected revenue</small><b>{step < 3 ? "—" : `${margin.toFixed(1)}% margin`}</b></article><article className={step >= 4 ? "safe" : ""}><span>Protected plan · 15%</span><strong>{step < 4 ? "Waiting" : "QAR 47,180"}</strong><small>Projected revenue</small><b>{step < 4 ? "—" : "18.7% margin"}</b></article></div>
-    <div className={`ldd-notice ${step >= 3 ? "show" : ""}`}><Sparkles /><div><b>{safe ? "This scenario protects the margin floor" : "Use the 15% scenario"}</b><span>{safe ? "The requested discount remains within the merchant’s policy." : "It protects the merchant’s margin floor while preserving projected growth."}</span></div></div>
+    <div className="ldd-fields ldd-focus-region" data-region="input"><label>Campaign type<b>{step < 1 ? "Select" : "Percentage discount"}</b></label><label className="ldd-range">Discount<b><span className="ldd-value" key={discount}>{discount}%</span></b><input aria-label="Promotion discount" type="range" min="5" max="25" step="1" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} /></label><label>Duration<b>{step < 2 ? "—" : "14 days"}</b></label><label>Protected margin floor<b>{step < 2 ? "—" : "18%"}</b></label></div>
+    <div className="ldd-scenarios ldd-focus-region" data-region="calculation"><article><span>Baseline</span><strong>QAR 42,600</strong><small>Projected revenue</small><b>24.1% margin</b></article><article className={step >= 3 ? safe ? "safe" : "unsafe" : ""}><span>Requested · {discount}%</span><strong><span className="ldd-value" key={revenue}>{step < 3 ? "Calculating" : `QAR ${revenue.toLocaleString()}`}</span></strong><small>Projected revenue</small><b><span className="ldd-value" key={margin}>{step < 3 ? "—" : `${margin.toFixed(1)}% margin`}</span></b></article><article className={step >= 4 ? "safe" : ""}><span>Protected plan · 15%</span><strong>{step < 4 ? "Waiting" : "QAR 47,180"}</strong><small>Projected revenue</small><b>{step < 4 ? "—" : "18.7% margin"}</b></article></div>
+    <div className={`ldd-notice ldd-focus-region ${step >= 3 ? "show" : ""}`} data-region="result"><Sparkles /><div><b>{safe ? "This scenario protects the margin floor" : "Use the 15% scenario"}</b><span>{safe ? "The requested discount remains within the merchant’s policy." : "It protects the merchant’s margin floor while preserving projected growth."}</span></div></div>
   </>;
 }
 
@@ -116,9 +116,9 @@ function DefendScene({ step }: { step: number }) {
   const finished = step >= 4 || approved;
   return <>
     <SceneHead eyebrow="Defend loop" title="Protect margin with merchant-controlled rules" status={!finished ? "Draft policy" : "Policy active"} />
-    <div className="ldd-fields"><label className="ldd-range">Margin floor<b>{floor}%</b><input aria-label="Protected margin floor" type="range" min="12" max="28" value={floor} onChange={(event) => { setFloor(Number(event.target.value)); setApproved(false); }} /></label><label>Channels<b>{step < 2 ? "—" : "Zid · Salla · Talabat"}</b></label><label>Affected products<b>{step < 2 ? "—" : String(12 + floor - 6)}</b></label></div>
-    <div className="ldd-policy-flow">{["Set protection floor","Preview affected products","Review and activate","Monitor outcomes"].map((label,index)=><div className={step > index ? "done" : step === index ? "active" : ""} key={label}><i>{step > index ? <Check /> : index + 1}</i><span>{label}</span></div>)}</div>
-    <section className={`ldd-approval ${step >= 3 ? "show" : ""}`}><div><small>Merchant approval</small><b>{!finished ? `${12 + floor - 6} products are ready for protection` : "Approved by account owner"}</b></div><button onClick={() => setApproved(true)} className={finished ? "approved" : ""} type="button">{finished ? "Policy active" : "Approve policy"}</button></section>
+    <div className="ldd-fields ldd-focus-region" data-region="input"><label className="ldd-range">Margin floor<b><span className="ldd-value" key={floor}>{floor}%</span></b><input aria-label="Protected margin floor" type="range" min="12" max="28" value={floor} onChange={(event) => { setFloor(Number(event.target.value)); setApproved(false); }} /></label><label>Channels<b>{step < 2 ? "—" : "Zid · Salla · Talabat"}</b></label><label>Affected products<b><span className="ldd-value" key={floor}>{step < 2 ? "—" : String(12 + floor - 6)}</span></b></label></div>
+    <div className="ldd-policy-flow ldd-focus-region" data-region="calculation">{["Set protection floor","Preview affected products","Review and activate","Monitor outcomes"].map((label,index)=><div className={step > index ? "done" : step === index ? "active" : ""} key={label}><i>{step > index ? <Check /> : index + 1}</i><span>{label}</span></div>)}</div>
+    <section className={`ldd-approval ldd-focus-region ${step >= 3 ? "show" : ""}`} data-region="result"><div><small>Merchant approval</small><b>{!finished ? `${12 + floor - 6} products are ready for protection` : "Approved by account owner · Evidence retained"}</b></div><button onClick={() => setApproved(true)} className={finished ? "approved" : ""} type="button">{finished ? "Policy active" : "Approve policy"}</button></section>
   </>;
 }
 
@@ -128,8 +128,8 @@ function ManagerScene({ step }: { step: number }) {
   const tasks = [["Review payout discrepancy","QAR 267.20 at risk"],["Approve margin policy","24 products affected"],["Update catalog costs","6 products need evidence"]];
   return <>
     <SceneHead eyebrow="AI Store Manager" title="Merchant-controlled operations" status={!complete ? "Preparing work" : "Action completed"} />
-    <div className="ldd-manager"><section><span>Attention queue</span>{tasks.map((task,index)=><article className={step >= index ? "show" : ""} key={task[0]}><i>{index+1}</i><div><b>{task[0]}</b><small>{task[1]}</small></div><em>{step > index ? "Ready" : "Review"}</em></article>)}</section><section className={`ldd-action-card ${step >= 2 ? "show" : ""}`}><small>Proposed action</small><h4>Prepare payout recovery case</h4><p>Compile the affected orders, agreement terms, and settlement evidence.</p><div><button type="button" onClick={() => setApproved(false)}>Keep for review</button><button onClick={() => setApproved(true)} className={complete ? "approved" : ""} type="button">{complete ? "Approved" : "Approve"}</button></div></section></div>
-    <div className={`ldd-notice ${complete ? "show" : ""}`}><Check /><div><b>Recovery case prepared</b><span>The action and approval are retained in Evidence & History.</span></div></div>
+    <div className="ldd-manager"><section className="ldd-focus-region" data-region="input"><span>Attention queue</span>{tasks.map((task,index)=><article className={step >= index ? "show" : ""} key={task[0]}><i>{index+1}</i><div><b>{task[0]}</b><small>{task[1]}</small></div><em>{step > index ? "Ready" : "Review"}</em></article>)}</section><section className={`ldd-action-card ldd-focus-region ${step >= 2 ? "show" : ""}`} data-region="calculation"><small>Proposed action</small><h4>Prepare payout recovery case</h4><p>Compile the affected orders, agreement terms, and settlement evidence.</p><div><button type="button" onClick={() => setApproved(false)}>Keep for review</button><button onClick={() => setApproved(true)} className={complete ? "approved" : ""} type="button">{complete ? "Approved" : "Approve"}</button></div></section></div>
+    <div className={`ldd-notice ldd-focus-region ${complete ? "show" : ""}`} data-region="result"><Check /><div><b>Recovery case prepared</b><span>The action and approval are retained in Evidence & History.</span></div></div>
   </>;
 }
 
@@ -147,9 +147,9 @@ function CopilotScene({ step }: { step: number }) {
   const complete = step >= 4 || (manualQuestion && answerReady);
   return <>
     <SceneHead eyebrow="CFO Copilot" title="Investigate the numbers with retained evidence" status={!complete ? "Investigating" : "Answer ready"} />
-    <div className="ldd-question"><span>{step < 1 && !answerReady ? "" : question}</span><i className={!complete ? "typing" : ""} /></div>
+    <div className="ldd-question ldd-focus-region" data-region="input"><span>{step < 1 && !answerReady ? "" : question}</span><i className={!complete ? "typing" : ""} /></div>
     <div className="ldd-question-options">{questions.map((item) => <button type="button" className={item === question ? "active" : ""} onClick={() => { setManualQuestion(true); setQuestion(item); }} key={item}>{item}</button>)}</div>
-    <div className={`ldd-thinking ${step >= 2 && !complete ? "show" : ""}`}><i /><span>{step === 2 ? "Reading 238 orders and 3 agreements" : "Checking fees against retained terms"}</span></div>
-    <section className={`ldd-answer ${complete ? "show" : ""}`}><small>Finding</small><h4>{question.includes("payouts") ? "Six payout discrepancies are ready for recovery review." : question.includes("promotion") ? "A 20% promotion would breach the protected margin floor." : "Margin fell 3.8 points after excess commission on 18 orders."}</h4><p>{question.includes("promotion") ? "A 15% discount preserves an 18.7% projected margin and keeps the campaign within policy." : "Talabat reported QAR 421.60 more in commission than the retained agreement permits. Six orders are ready for recovery review."}</p><div><span><FileCheck2 /> Agreement v3</span><span><FileCheck2 /> 18 order records</span><span><FileCheck2 /> Settlement statement</span></div></section>
+    <div className={`ldd-thinking ldd-focus-region ${step >= 2 && !complete ? "show" : ""}`} data-region="calculation"><i /><span>{step === 2 ? "Reading 238 orders and 3 agreements" : "Checking fees against retained terms"}</span></div>
+    <section className={`ldd-answer ldd-focus-region ${complete ? "show" : ""}`} data-region="result"><small>Finding</small><h4>{question.includes("payouts") ? "Six payout discrepancies are ready for recovery review." : question.includes("promotion") ? "A 20% promotion would breach the protected margin floor." : "Margin fell 3.8 points after excess commission on 18 orders."}</h4><p>{question.includes("promotion") ? "A 15% discount preserves an 18.7% projected margin and keeps the campaign within policy." : "Talabat reported QAR 421.60 more in commission than the retained agreement permits. Six orders are ready for recovery review."}</p><div><span><FileCheck2 /> Agreement v3</span><span><FileCheck2 /> 18 order records</span><span><FileCheck2 /> Settlement statement</span></div></section>
   </>;
 }
