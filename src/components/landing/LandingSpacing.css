@@ -2,11 +2,16 @@
 .nlp {
   --nlp-section-space: clamp(96px, 9vw, 144px);
   --nlp-closing-space: clamp(120px, 12vw, 192px);
+  --nlp-section-gutter: 28px;
 }
 
 .nlp .nlp-section,
 .nlp .nlp-pricing {
+  margin-block-start: var(--nlp-section-gutter);
+  margin-inline: auto;
   padding-block: var(--nlp-section-space);
+  border: 1px solid #302e2c;
+  border-radius: 14px;
 }
 
 .nlp .nlp-product .nlp-section-heading {
@@ -21,6 +26,7 @@
   .nlp {
     --nlp-section-space: 88px;
     --nlp-closing-space: 112px;
+    --nlp-section-gutter: 16px;
   }
 
   .nlp .nlp-section-heading {
