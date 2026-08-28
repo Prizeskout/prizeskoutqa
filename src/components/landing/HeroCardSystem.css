@@ -27,6 +27,79 @@
     border-color 320ms ease;
   animation-delay: calc(180ms + var(--story-index) * 105ms) !important;
 }
+.nlp-card-story .nlp-card-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nlp-card-story .nlp-system-card.is-flipped .nlp-card-flip {
+  transform: rotateY(180deg);
+}
+.nlp-card-story .nlp-card-face {
+  position: absolute;
+  inset: 0;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.nlp-card-story .nlp-card-back {
+  justify-content: flex-start;
+  padding: 28px 22px 25px 40px;
+  transform: rotateY(180deg);
+  background: linear-gradient(155deg, rgb(35 24 20 / .94), rgb(68 39 29 / .96));
+}
+.nlp-card-story .nlp-card-back > span {
+  padding-right: 36px;
+}
+.nlp-card-story .nlp-card-back > strong {
+  margin-top: auto;
+  font-size: clamp(18px, 1.5vw, 22px);
+  line-height: 1.04;
+}
+.nlp-card-story .nlp-card-result {
+  display: grid;
+  gap: 8px;
+}
+.nlp-card-story .nlp-card-result > div {
+  padding: 8px 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid rgb(255 244 237 / .16);
+}
+.nlp-card-story .nlp-card-result small {
+  color: rgb(255 244 237 / .62);
+  font-size: 8px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.nlp-card-story .nlp-card-result b {
+  color: #fff8f3;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nlp-card-story .nlp-card-back > em {
+  margin-top: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #c8f4e2;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 750;
+}
+.nlp-card-story .nlp-card-back > em svg {
+  position: static;
+  width: 13px;
+  height: 13px;
+}
 .nlp-card-story .nlp-story-state {
   position: absolute;
   top: 20px;
@@ -55,6 +128,9 @@
   filter: saturate(1.12) brightness(1.1);
   border-color: rgb(255 232 220 / 0.82);
   transform: perspective(1000px) rotateY(-8deg) skewY(-2.5deg) translate3d(12px, -22px, 76px);
+}
+.nlp-card-story .nlp-system-card.is-active.is-flipped {
+  transform: perspective(1000px) rotateY(0deg) skewY(0deg) translate3d(52px, -25px, 120px);
 }
 .nlp-card-story .nlp-system-card.is-active .nlp-story-state {
   color: #432115;
@@ -122,6 +198,7 @@
     transform: perspective(1000px) rotateY(-18deg) skewY(-7deg) !important;
   }
   .nlp-card-story .nlp-story-state { transform: none !important; }
+  .nlp-card-story .nlp-card-flip { transition: none !important; }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
   .nlp-card-story .nlp-system-track {

@@ -3,17 +3,18 @@ import { Check } from "lucide-react";
 import "./HeroCardSystem.css";
 
 const cards = [
-  ["Your commerce data", "See the whole order", "Orders, fees and payouts together", "input"],
-  ["What should have happened", "Know what you should earn", "Every cost rebuilt order by order", "twin"],
-  ["What actually happened", "Catch what is missing", "Fees, discounts and payout gaps explained", "policy"],
-  ["You stay in control", "Choose what happens next", "Review first. Approve every action.", "action"],
-  ["Nothing gets lost", "Keep the proof", "A clear record for every decision", "evidence"],
+  ["Your commerce data", "See the whole order", "Orders, fees and payouts together", "input", "Order #PS-84217", [["Order value", "QAR 186.00"], ["Channel fees", "QAR 42.18"], ["Payout", "QAR 143.82"]]],
+  ["What should have happened", "Know what you should earn", "Every cost rebuilt order by order", "twin", "Expected economics", [["Expected net", "QAR 38.64"], ["Margin", "20.8%"], ["Costs rebuilt", "6 of 6"]]],
+  ["What actually happened", "Catch what is missing", "Fees, discounts and payout gaps explained", "policy", "Discrepancy found", [["Margin gap", "QAR 6.24"], ["Charged", "22.4%"], ["Contract rate", "19.0%"]]],
+  ["You stay in control", "Choose what happens next", "Review first. Approve every action.", "action", "Policy ready", [["Margin floor", "18.0%"], ["Affected SKUs", "12"], ["Status", "Awaiting approval"]]],
+  ["Nothing gets lost", "Keep the proof", "A clear record for every decision", "evidence", "Evidence retained", [["Evidence ID", "EV-84217"], ["Sources matched", "5"], ["Decision", "Recorded"]]],
 ] as const;
 
 export function HeroCardSystem() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [flipped, setFlipped] = useState<number | null>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
@@ -27,10 +28,10 @@ export function HeroCardSystem() {
   }, []);
 
   useEffect(() => {
-    if (!inView || hovered !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!inView || hovered !== null || flipped !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setTimeout(() => setActive((value) => (value + 1) % cards.length), 2350);
     return () => window.clearTimeout(timer);
-  }, [active, hovered, inView]);
+  }, [active, flipped, hovered, inView]);
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch") return;
@@ -66,12 +67,13 @@ export function HeroCardSystem() {
         finds missing margin, lets the merchant decide what happens next, and keeps the proof.
       </p>
       <div className="nlp-system-track">
-        {cards.map(([eyebrow, title, detail, name], index) => (
+        {cards.map(([eyebrow, title, detail, name, resultTitle, resultRows], index) => (
           <button
             type="button"
             aria-pressed={active === index}
-            aria-label={`${title}. ${detail}`}
-            className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}${index < active ? " is-complete" : ""}${active < cards.length - 1 && index === active + 1 ? " is-next" : ""}`}
+            aria-expanded={flipped === index}
+            aria-label={`${title}. ${detail}. ${flipped === index ? "Hide" : "Show"} operational detail.`}
+            className={`nlp-system-card nlp-system-${name}${active === index ? " is-active" : ""}${index < active ? " is-complete" : ""}${active < cards.length - 1 && index === active + 1 ? " is-next" : ""}${flipped === index ? " is-flipped" : ""}`}
             key={title}
             style={{ "--story-index": index } as React.CSSProperties}
             onPointerEnter={() => {
@@ -88,12 +90,25 @@ export function HeroCardSystem() {
             onClick={() => {
               setHovered(index);
               setActive(index);
+              setFlipped((current) => current === index ? null : index);
             }}
           >
             <i className="nlp-story-state" aria-hidden="true">{index < active ? <Check /> : String(index + 1).padStart(2, "0")}</i>
-            <span>{eyebrow}</span>
-            <strong>{title}</strong>
-            <small>{detail}</small>
+            <div className="nlp-card-flip">
+              <div className="nlp-card-face nlp-card-front">
+                <span>{eyebrow}</span>
+                <strong>{title}</strong>
+                <small>{detail}</small>
+              </div>
+              <div className="nlp-card-face nlp-card-back" aria-hidden={flipped !== index}>
+                <span>{String(index + 1).padStart(2, "0")} · PrizeSkout</span>
+                <strong>{resultTitle}</strong>
+                <div className="nlp-card-result">
+                  {resultRows.map(([label, value]) => <div key={label}><small>{label}</small><b>{value}</b></div>)}
+                </div>
+                <em><Check /> Verified</em>
+              </div>
+            </div>
           </button>
         ))}
       </div>
