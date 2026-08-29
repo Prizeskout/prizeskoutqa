@@ -251,6 +251,7 @@ h1 {
 .stack-kicker { font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; color: #98a2b3; letter-spacing: .12em; margin-bottom: 4px; }
 .source-chip {
   border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px 13px; min-height: 60px;
+  transition: border-color .28s ease, background-color .28s ease, box-shadow .28s ease;
 }
 .source-chip span { display: block; color: #98a2b3; font-size: 8px; letter-spacing: .11em; font-weight: 800; margin-bottom: 5px; }
 .source-chip b { font-size: 12px; font-weight: 700; }
@@ -259,9 +260,17 @@ h1 {
 .flow-lines { position: relative; min-width: 55px; }
 .flow-lines i { position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, #d7dae0, var(--orange)); }
 .flow-lines i::after { content: ""; position: absolute; right: -1px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px rgba(244,115,32,.08); }
+.flow-lines i::before { content: ""; position: absolute; z-index: 1; left: 0; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); opacity: 0; transform: translateX(0); }
+.flow-lines i.is-signal::before { animation: signal-in .62s cubic-bezier(.4,0,.2,1) both; }
 .flow-lines i:nth-child(1){ top: 28%; } .flow-lines i:nth-child(2){ top: 42%; } .flow-lines i:nth-child(3){ top: 57%; } .flow-lines i:nth-child(4){ top: 72%; }
 .flow-lines.outbound i { background: linear-gradient(90deg, var(--orange), #d7dae0); }
 .flow-lines.outbound i::after { left: -1px; right: auto; }
+.flow-lines.outbound i.is-signal::before { animation-name: signal-out; }
+@keyframes signal-in { 0% { opacity: 0; transform: translateX(0); } 12%,88% { opacity: 1; } 100% { opacity: 0; transform: translateX(calc(100% - 7px)); } }
+@keyframes signal-out { 0% { opacity: 0; transform: translateX(0); } 12%,88% { opacity: 1; } 100% { opacity: 0; transform: translateX(calc(100% - 7px)); } }
+.stack-map.is-paused .flow-lines i::before { animation-play-state: paused; }
+.source-chip.is-active,
+.source-chip.is-complete { border-color: rgba(244,115,32,.48); background: #fffaf7; box-shadow: inset 0 0 0 1px rgba(244,115,32,.06); }
 .engine {
   background: var(--navy); color: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 24px 60px rgba(7,21,47,.2); align-self: center;
 }
@@ -270,6 +279,9 @@ h1 {
 .engine-mark { width: 38px; height: 38px; background: var(--orange); border-radius: 10px; display: grid; place-items: center; font-weight: 900; }
 .engine-pipeline { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
 .engine-pipeline div { min-height: 116px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); border-radius: 12px; padding: 14px; }
+.engine-pipeline div { transition: border-color .28s ease, background-color .28s ease; }
+.engine-pipeline div.is-active,
+.engine-pipeline div.is-complete { border-color: rgba(244,115,32,.68); background: rgba(244,115,32,.1); }
 .engine-pipeline span { display: block; color: var(--orange); font-family: "SFMono-Regular", Consolas, monospace; font-size: 9px; margin-bottom: 18px; }
 .engine-pipeline b { display: block; font-size: 13px; margin-bottom: 6px; }
 .engine-pipeline small { color: #8fa0bf; font-size: 10px; }
@@ -534,6 +546,9 @@ footer { background: var(--navy); color: #fff; padding: 56px 0 30px; }
   *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; transition-delay: 0ms !important; }
   .reveal { opacity: 1; transform: none; }
   .economic-line { opacity: 1; transform: none; }
+  .stack-map .source-chip { border-color: rgba(244,115,32,.48); background: #fffaf7; box-shadow: inset 0 0 0 1px rgba(244,115,32,.06); }
+  .stack-map .engine-pipeline div { border-color: rgba(244,115,32,.68); background: rgba(244,115,32,.1); }
+  .stack-map .flow-lines i::before { display: none; }
 }
 
 </style>
@@ -643,13 +658,13 @@ footer { background: var(--navy); color: #fff; padding: 56px 0 30px; }
           </div>
         </div>
 
-        <div class="stack-map reveal">
+        <div class="stack-map reveal" data-profit-flow>
           <div class="stack-column sources">
             <div class="stack-kicker">INPUTS</div>
-            <div class="source-chip"><span>POS</span><b>Sales + COGS</b></div>
-            <div class="source-chip"><span>ERP</span><b>Finance + inventory</b></div>
-            <div class="source-chip"><span>DELIVERY</span><b>Orders + promos</b></div>
-            <div class="source-chip"><span>PAYOUTS</span><b>Fees + settlements</b></div>
+            <div class="source-chip" data-flow-source><span>POS</span><b>Sales + COGS</b></div>
+            <div class="source-chip" data-flow-source><span>ERP</span><b>Finance + inventory</b></div>
+            <div class="source-chip" data-flow-source><span>DELIVERY</span><b>Orders + promos</b></div>
+            <div class="source-chip" data-flow-source><span>PAYOUTS</span><b>Fees + settlements</b></div>
           </div>
 
           <div class="flow-lines" aria-hidden="true">
@@ -662,10 +677,10 @@ footer { background: var(--navy); color: #fff; padding: 56px 0 30px; }
               <div><span class="mono-label light">PRIZESKOUT</span><strong>Profit Intelligence Engine</strong></div>
             </div>
             <div class="engine-pipeline">
-              <div><span>01</span><b>Normalize</b><small>One commerce model</small></div>
-              <div><span>02</span><b>Reconcile</b><small>Expected vs actual</small></div>
-              <div><span>03</span><b>Model</b><small>True contribution</small></div>
-              <div><span>04</span><b>Decide</b><small>Recommended action</small></div>
+              <div data-flow-engine><span>01</span><b>Normalize</b><small>One commerce model</small></div>
+              <div data-flow-engine><span>02</span><b>Reconcile</b><small>Expected vs actual</small></div>
+              <div data-flow-engine><span>03</span><b>Model</b><small>True contribution</small></div>
+              <div data-flow-engine><span>04</span><b>Decide</b><small>Recommended action</small></div>
             </div>
           </div>
 
@@ -675,10 +690,10 @@ footer { background: var(--navy); color: #fff; padding: 56px 0 30px; }
 
           <div class="stack-column outcomes">
             <div class="stack-kicker">OUTPUTS</div>
-            <div class="source-chip outcome"><span>PROFIT</span><b>True contribution</b></div>
-            <div class="source-chip outcome"><span>LEAKAGE</span><b>Margin at risk</b></div>
-            <div class="source-chip outcome"><span>PAYOUT</span><b>Variance detected</b></div>
-            <div class="source-chip outcome"><span>ACTION</span><b>What to do next</b></div>
+            <div class="source-chip outcome" data-flow-outcome><span>PROFIT</span><b>True contribution</b></div>
+            <div class="source-chip outcome" data-flow-outcome><span>LEAKAGE</span><b>Margin at risk</b></div>
+            <div class="source-chip outcome" data-flow-outcome><span>PAYOUT</span><b>Variance detected</b></div>
+            <div class="source-chip outcome" data-flow-outcome><span>ACTION</span><b>What to do next</b></div>
           </div>
         </div>
       </div>
@@ -1007,6 +1022,102 @@ const observer = new IntersectionObserver(entries => {
   });
 }, { threshold: .13 });
 qsa('.reveal').forEach(el => observer.observe(el));
+
+const profitFlow = qs('[data-profit-flow]');
+if (profitFlow) {
+  const sources = qsa('[data-flow-source]', profitFlow);
+  const engines = qsa('[data-flow-engine]', profitFlow);
+  const outcomes = qsa('[data-flow-outcome]', profitFlow);
+  const inbound = qsa('.flow-lines:not(.outbound) i', profitFlow);
+  const outbound = qsa('.flow-lines.outbound i', profitFlow);
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const loopDuration = 9200;
+  let elapsed = 0;
+  let lastTime = 0;
+  let frame = 0;
+  let visible = false;
+  let pausedByUser = false;
+  let lastState = '';
+
+  function setCompleteState() {
+    [...sources, ...engines, ...outcomes].forEach(item => {
+      item.classList.remove('is-active');
+      item.classList.add('is-complete');
+    });
+    [...inbound, ...outbound].forEach(line => line.classList.remove('is-signal'));
+  }
+
+  function paintProfitFlow(time) {
+    const sourceStarts = [0, 1300, 2100, 2900];
+    const engineStarts = [650, 3700, 4700, 5700];
+    const outcomeStarts = [6700, 7150, 7600, 8050];
+    const activeSource = sourceStarts.findIndex(start => time >= start && time < start + 650);
+    const activeEngine = engineStarts.findIndex((start, index) => time >= start && time < (engineStarts[index + 1] ?? 6700));
+    const activeOutcome = outcomeStarts.findIndex(start => time >= start && time < start + 450);
+    const state = `${activeSource}:${activeEngine}:${activeOutcome}:${sourceStarts.filter(start => time >= start + 650).length}:${engineStarts.filter((start, index) => time >= (engineStarts[index + 1] ?? 6700)).length}:${outcomeStarts.filter(start => time >= start + 450).length}`;
+    if (state === lastState) return;
+    lastState = state;
+
+    sources.forEach((item, index) => {
+      item.classList.toggle('is-active', index === activeSource);
+      item.classList.toggle('is-complete', time >= sourceStarts[index] + 650);
+      inbound[index]?.classList.toggle('is-signal', index === activeSource);
+    });
+    engines.forEach((item, index) => {
+      item.classList.toggle('is-active', index === activeEngine);
+      item.classList.toggle('is-complete', time >= (engineStarts[index + 1] ?? 6700));
+    });
+    outcomes.forEach((item, index) => {
+      item.classList.toggle('is-active', index === activeOutcome);
+      item.classList.toggle('is-complete', time >= outcomeStarts[index] + 450);
+      outbound[index]?.classList.toggle('is-signal', index === activeOutcome);
+    });
+  }
+
+  function canRun() {
+    return visible && !pausedByUser && !reduceMotion.matches;
+  }
+
+  function tick(time) {
+    if (!canRun()) { frame = 0; lastTime = 0; return; }
+    if (lastTime) elapsed = (elapsed + time - lastTime) % loopDuration;
+    lastTime = time;
+    paintProfitFlow(elapsed);
+    frame = requestAnimationFrame(tick);
+  }
+
+  function syncProfitFlow() {
+    const running = canRun();
+    profitFlow.classList.toggle('is-paused', !running);
+    if (reduceMotion.matches) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      lastTime = 0;
+      lastState = '';
+      setCompleteState();
+    } else if (running && !frame) {
+      frame = requestAnimationFrame(tick);
+    }
+  }
+
+  profitFlow.addEventListener('pointerenter', () => { pausedByUser = true; syncProfitFlow(); });
+  profitFlow.addEventListener('pointerleave', () => { pausedByUser = false; syncProfitFlow(); });
+  profitFlow.addEventListener('focusin', () => { pausedByUser = true; syncProfitFlow(); });
+  profitFlow.addEventListener('focusout', event => {
+    if (!profitFlow.contains(event.relatedTarget)) { pausedByUser = false; syncProfitFlow(); }
+  });
+  reduceMotion.addEventListener('change', syncProfitFlow);
+  const flowObserver = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting && entry.intersectionRatio >= .35;
+    syncProfitFlow();
+  }, { threshold: [.35] });
+  flowObserver.observe(profitFlow);
+  addEventListener('pagehide', () => {
+    cancelAnimationFrame(frame);
+    flowObserver.disconnect();
+  }, { once: true });
+  paintProfitFlow(0);
+}
 
 const heroSystem = qs('#hero-card-system');
 if (heroSystem) {
