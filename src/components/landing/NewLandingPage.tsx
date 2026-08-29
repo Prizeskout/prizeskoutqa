@@ -629,9 +629,9 @@ export function NewLandingPage() {
         </section>
 
         <section className="nlp-final-cta" data-motion-scene="closing" aria-labelledby="final-cta-title">
-          <span>Put the system to work</span>
-          <h2 id="final-cta-title">Your margins should not depend on someone else’s dashboard.</h2>
-          <p>Connect your commerce stack and put every order under active revenue protection.</p>
+          <span>Evidence-backed margin control</span>
+          <h2 id="final-cta-title">Reconstruct every order. Investigate every difference. Keep the evidence.</h2>
+          <p>Connect orders, fees, agreements, and payouts in one verifiable operating view.</p>
           <div>
             <a className="nlp-button nlp-button-primary" href="/onboarding">
               Connect your store <ArrowRight aria-hidden="true" />

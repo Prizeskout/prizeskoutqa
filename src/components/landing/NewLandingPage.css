@@ -2808,7 +2808,7 @@
   position: relative;
   width: min(1360px, calc(100% - 48px));
   margin-inline: auto;
-  padding-block: clamp(150px, 17vw, 250px);
+  padding-block: clamp(120px, 13vw, 190px);
   border-inline: 1px solid #2f2d2b;
   background: #161616;
   color: #f7f4ef;
@@ -2864,11 +2864,11 @@
 .nlp-final-cta {
   width: min(1408px, calc(100% - 32px));
   margin-inline: auto;
-  padding-block: clamp(160px, 20vw, 290px);
+  padding-block: clamp(120px, 14vw, 210px);
   border: 1px solid #302e2c;
   border-radius: 22px;
   background:
-    radial-gradient(circle at 50% 100%, rgb(247 93 22 / 0.44), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgb(247 93 22 / 0.22), transparent 38%),
     radial-gradient(circle, rgb(255 255 255 / 0.05) 1px, transparent 1.2px), #151210;
   background-size:
     auto,
@@ -2880,6 +2880,12 @@
 .nlp-final-cta h2,
 .nlp-final-cta p {
   margin-inline: auto;
+}
+
+.nlp-final-cta h2 {
+  max-width: 1040px;
+  font-size: clamp(42px, 4.4vw, 62px);
+  line-height: 1.12;
 }
 
 .nlp-final-cta > div {
