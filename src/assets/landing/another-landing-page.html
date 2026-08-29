@@ -194,6 +194,28 @@ h1 {
 .leak-alert div span { font-size: 10px; color: #7a5b46; }
 .inline-action { background: #fff; border: 1px solid #ffd1b4; border-radius: 8px; padding: 7px 9px; color: #c9560d; font-size: 10px; font-weight: 750; cursor: pointer; }
 
+/* Interactive 3D economic-story system, shared in spirit with /new-landing-page. */
+.hero-card-stage { min-width: 0; padding: 26px 0; border-radius: 24px; background: #161311; overflow: hidden; perspective: 1200px; }
+.hero-card-stage::before { inset: 0; z-index: 0; background: radial-gradient(circle at 50% 80%, rgba(244,90,24,.25), transparent 58%), radial-gradient(rgba(255,255,255,.08) .7px, transparent .7px); background-size: auto, 8px 8px; }
+.hero-card-system { --hx:0px; --hy:0px; --hrx:0deg; --hry:0deg; position: relative; z-index: 1; min-height: 430px; display:grid; place-items:center; color:#fff; }
+.hero-system-track { position:relative; width:700px; height:360px; transform-style:preserve-3d; transform:translate3d(var(--hx),var(--hy),0) rotateX(var(--hrx)) rotateY(var(--hry)) scale(.72); transition:transform .35s ease; }
+.hero-system-card { position:absolute; appearance:none; text-align:left; font:inherit; padding:0; border:1px solid rgba(255,255,255,.22); border-radius:16px; color:#fff; overflow:visible; cursor:pointer; background:none; transform:perspective(1000px) rotateY(-18deg) skewY(-7deg); transform-style:preserve-3d; transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .4s,opacity .4s; }
+.hero-system-card:nth-child(1){z-index:1;top:90px;left:0;width:23%;height:236px}.hero-system-card:nth-child(2){z-index:2;top:51px;left:18%;width:27%;height:282px}.hero-system-card:nth-child(3){z-index:3;top:25px;left:39%;width:28%;height:320px}.hero-system-card:nth-child(4){z-index:4;top:56px;left:62%;width:24%;height:274px}.hero-system-card:nth-child(5){z-index:5;top:76px;right:0;width:21%;height:245px}
+.hero-card-flip { position:absolute; inset:0; transform-style:preserve-3d; transition:transform .72s cubic-bezier(.2,.8,.2,1); }
+.hero-system-card.is-flipped .hero-card-flip { transform:rotateY(180deg); }
+.hero-card-face { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; gap:8px; padding:22px 17px; border-radius:15px; overflow:hidden; backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+.hero-system-card:nth-child(1) .hero-card-face{background:linear-gradient(145deg,#ad3d1d,#7f2d18)}.hero-system-card:nth-child(2) .hero-card-face{background:linear-gradient(145deg,#f16840,#aa3d22)}.hero-system-card:nth-child(3) .hero-card-face{background:linear-gradient(145deg,#62483c,#30241f)}.hero-system-card:nth-child(4) .hero-card-face{background:linear-gradient(145deg,#ef6942,#bd4425)}.hero-system-card:nth-child(5) .hero-card-face{background:linear-gradient(145deg,#ff8965,#c94e2e)}
+.hero-card-face small{font-size:11px;line-height:1.3;color:rgba(255,255,255,.65)}.hero-card-face strong{font-size:clamp(21px,2.2vw,30px);line-height:1.02;letter-spacing:-.05em}.hero-card-face>span{font-size:12px;line-height:1.4;color:rgba(255,255,255,.7)}
+.hero-card-back { justify-content:flex-start; transform:rotateY(180deg); background:#f7f3ee!important; color:#172033; }
+.hero-card-back small{color:#ec5a20;text-transform:uppercase;letter-spacing:.08em}.hero-card-back strong{font-size:18px}.hero-card-result{margin-top:8px;display:grid;gap:8px}.hero-card-result div{padding-top:8px;border-top:1px solid #ddd4ca;display:grid;gap:2px}.hero-card-result small{font-size:8px;color:#7b7168}.hero-card-result b{font-size:12px;color:#172033}.hero-card-back em{margin-top:auto;font-size:9px;color:#71675f;font-style:normal}
+.hero-story-state{position:absolute;top:14px;right:14px;z-index:2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(27,16,12,.2);font-size:10px;font-weight:800;transition:.3s}.hero-system-card.is-active{filter:brightness(1.08);transform:perspective(1000px) rotateY(-12deg) skewY(-4deg) translate3d(0,-17px,45px)}.hero-system-card.is-active .hero-story-state,.hero-system-card.is-complete .hero-story-state{background:#dff7ef;color:#08785b}.hero-system-card.is-complete:not(.is-active){filter:saturate(.8) brightness(.88)}.hero-system-card.is-next:not(.is-active){filter:brightness(1.04)}
+.hero-system-card:hover,.hero-system-card:focus-visible{transform:perspective(1000px) rotateY(-10deg) skewY(-3deg) translate3d(0,-20px,55px);outline:none}.hero-system-card:focus-visible{box-shadow:0 0 0 3px #fff,0 0 0 6px #ff5a1f}.hero-system-card.is-flipped{z-index:10}
+.hero-system-caption{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:90%;display:flex;justify-content:space-between;color:#8f8883;font-size:11px}.hero-system-caption span{transition:.3s}.hero-system-caption .is-active{color:#fff}
+@media(max-width:1040px){.hero-card-stage{max-width:760px;width:100%;margin-inline:auto}.hero-system-track{transform:translate3d(var(--hx),var(--hy),0) rotateX(var(--hrx)) rotateY(var(--hry)) scale(.88)}}
+@media(max-width:620px){.hero-card-stage{margin-inline:-10px;width:calc(100% + 20px);padding:8px 0}.hero-card-system{min-height:340px}.hero-system-track{transform:scale(.54);transform-origin:center}.hero-system-caption{font-size:10px;bottom:0}}
+@media(max-width:380px){.hero-system-track{transform:scale(.44)}}
+@media(prefers-reduced-motion:reduce){.hero-system-track,.hero-system-card,.hero-card-flip,.hero-story-state{transition:none!important}.hero-system-card{filter:none!important}}
+
 .proof-sentence {
   display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 66px;
   border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
@@ -568,62 +590,15 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
           </div>
         </div>
 
-        <div class="hero-visual reveal delay-1" aria-label="Illustrative true-profit calculation">
-          <div class="signal-card">
-            <div class="signal-head">
-              <div>
-                <div class="mono-label">ORDER ECONOMIC TWIN</div>
-                <div class="signal-title">Order #8745123</div>
-              </div>
-              <div class="status-pill"><span class="status-dot"></span> Reconciled</div>
-            </div>
-
-            <div class="order-total">
-              <span>Customer paid</span>
-              <strong>QAR 72.00</strong>
-            </div>
-
-            <div class="economic-lines" id="economic-lines">
-              <div class="economic-line">
-                <div><span class="line-icon">↳</span> Platform commission</div>
-                <strong>− QAR 15.84</strong>
-              </div>
-              <div class="economic-line">
-                <div><span class="line-icon">↳</span> Promotion share</div>
-                <strong>− QAR 5.40</strong>
-              </div>
-              <div class="economic-line">
-                <div><span class="line-icon">↳</span> Payment fees</div>
-                <strong>− QAR 1.82</strong>
-              </div>
-              <div class="economic-line">
-                <div><span class="line-icon">↳</span> Food + packaging</div>
-                <strong>− QAR 22.60</strong>
-              </div>
-              <div class="economic-line warning-line">
-                <div><span class="line-icon">!</span> Payout variance</div>
-                <strong>− QAR 2.10</strong>
-              </div>
-            </div>
-
-            <div class="true-profit">
-              <div>
-                <span class="mono-label">TRUE CONTRIBUTION</span>
-                <strong>QAR 24.24</strong>
-              </div>
-              <div class="margin-meter">
-                <span>33.7%</span>
-                <div class="meter"><i></i></div>
-              </div>
-            </div>
-
-            <div class="leak-alert">
-              <span class="alert-icon">!</span>
-              <div>
-                <strong>QAR 2.10 margin leakage detected</strong>
-                <span>Settlement is below the expected economic model.</span>
-              </div>
-              <button class="inline-action" type="button" data-toast="Evidence pack prepared">Review</button>
+        <div class="hero-visual hero-card-stage reveal delay-1">
+          <div class="hero-card-system" id="hero-card-system" data-active="0" aria-label="Interactive PrizeSkout economic workflow">
+            <div class="hero-system-track">
+              <button class="hero-system-card is-active" type="button" aria-pressed="false" aria-expanded="false" aria-label="See the whole order. Activate to reveal order details."><span class="hero-story-state">01</span><span class="hero-card-flip"><span class="hero-card-face"><small>Your commerce data</small><strong>See the whole order</strong><span>Orders, fees and payouts together</span></span><span class="hero-card-face hero-card-back"><small>Order result</small><strong>Order #PS-84217</strong><span class="hero-card-result"><div><small>Order value</small><b>QAR 186.00</b></div><div><small>Channel fees</small><b>QAR 42.18</b></div><div><small>Payout</small><b>QAR 143.82</b></div></span><em>Activate again to return</em></span></span></button>
+              <button class="hero-system-card is-next" type="button" aria-pressed="false" aria-expanded="false" aria-label="Know what you should earn. Activate to reveal expected economics."><span class="hero-story-state">02</span><span class="hero-card-flip"><span class="hero-card-face"><small>What should have happened</small><strong>Know what you should earn</strong><span>Every cost rebuilt order by order</span></span><span class="hero-card-face hero-card-back"><small>Calculation result</small><strong>Expected economics</strong><span class="hero-card-result"><div><small>Expected net</small><b>QAR 38.64</b></div><div><small>Margin</small><b>20.8%</b></div><div><small>Costs rebuilt</small><b>6 of 6</b></div></span><em>Activate again to return</em></span></span></button>
+              <button class="hero-system-card" type="button" aria-pressed="false" aria-expanded="false" aria-label="Catch what is missing. Activate to reveal discrepancy details."><span class="hero-story-state">03</span><span class="hero-card-flip"><span class="hero-card-face"><small>What actually happened</small><strong>Catch what is missing</strong><span>Fees, discounts and payout gaps explained</span></span><span class="hero-card-face hero-card-back"><small>Review result</small><strong>Discrepancy found</strong><span class="hero-card-result"><div><small>Margin gap</small><b>QAR 6.24</b></div><div><small>Charged</small><b>22.4%</b></div><div><small>Contract rate</small><b>19.0%</b></div></span><em>Activate again to return</em></span></span></button>
+              <button class="hero-system-card" type="button" aria-pressed="false" aria-expanded="false" aria-label="Choose what happens next. Activate to reveal policy status."><span class="hero-story-state">04</span><span class="hero-card-flip"><span class="hero-card-face"><small>You stay in control</small><strong>Choose what happens next</strong><span>Review first. Approve every action.</span></span><span class="hero-card-face hero-card-back"><small>Approval result</small><strong>Policy ready</strong><span class="hero-card-result"><div><small>Margin floor</small><b>18.0%</b></div><div><small>Affected SKUs</small><b>12</b></div><div><small>Status</small><b>Awaiting approval</b></div></span><em>Activate again to return</em></span></span></button>
+              <button class="hero-system-card" type="button" aria-pressed="false" aria-expanded="false" aria-label="Keep the proof. Activate to reveal retained evidence."><span class="hero-story-state">05</span><span class="hero-card-flip"><span class="hero-card-face"><small>Nothing gets lost</small><strong>Keep the proof</strong><span>A clear record for every decision</span></span><span class="hero-card-face hero-card-back"><small>Evidence result</small><strong>Evidence retained</strong><span class="hero-card-result"><div><small>Evidence ID</small><b>EV-84217</b></div><div><small>Sources matched</small><b>5</b></div><div><small>Decision</small><b>Recorded</b></div></span><em>Activate again to return</em></span></span></button>
+              <div class="hero-system-caption" aria-hidden="true"><span class="is-active">Know every order</span><span>Protect every margin</span><span>Keep every decision</span></div>
             </div>
           </div>
         </div>
@@ -1022,8 +997,61 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: .13 });
 qsa('.reveal').forEach(el => observer.observe(el));
 
-const economicLines = qsa('.economic-line');
-economicLines.forEach((el, i) => setTimeout(() => el.classList.add('visible'), 520 + i * 170));
+const heroSystem = qs('#hero-card-system');
+if (heroSystem) {
+  const cards = qsa('.hero-system-card', heroSystem);
+  const captions = qsa('.hero-system-caption span', heroSystem);
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let activeCard = 0;
+  let hoveredCard = null;
+  let flippedCard = null;
+  let heroVisible = true;
+
+  function paintHeroCards() {
+    heroSystem.dataset.active = String(activeCard);
+    cards.forEach((card, index) => {
+      card.classList.toggle('is-active', index === activeCard);
+      card.classList.toggle('is-complete', index < activeCard);
+      card.classList.toggle('is-next', index === activeCard + 1);
+      card.classList.toggle('is-flipped', index === flippedCard);
+      card.setAttribute('aria-pressed', String(index === flippedCard));
+      card.setAttribute('aria-expanded', String(index === flippedCard));
+      card.querySelector('.hero-story-state').textContent = index < activeCard ? '✓' : String(index + 1).padStart(2, '0');
+    });
+    const captionIndex = activeCard < 2 ? 0 : activeCard < 4 ? 1 : 2;
+    captions.forEach((caption, index) => caption.classList.toggle('is-active', index === captionIndex));
+  }
+
+  cards.forEach((card, index) => {
+    card.addEventListener('pointerenter', () => { hoveredCard = index; activeCard = index; paintHeroCards(); });
+    card.addEventListener('pointerleave', () => { hoveredCard = null; });
+    card.addEventListener('focus', () => { hoveredCard = index; activeCard = index; paintHeroCards(); });
+    card.addEventListener('blur', () => { hoveredCard = null; });
+    card.addEventListener('click', () => { activeCard = index; flippedCard = flippedCard === index ? null : index; paintHeroCards(); });
+  });
+
+  heroSystem.addEventListener('pointermove', event => {
+    if (reduceMotion.matches || innerWidth < 700) return;
+    const box = heroSystem.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - .5;
+    const y = (event.clientY - box.top) / box.height - .5;
+    heroSystem.style.setProperty('--hx', `${x * 12}px`);
+    heroSystem.style.setProperty('--hy', `${y * 8}px`);
+    heroSystem.style.setProperty('--hrx', `${y * -1.4}deg`);
+    heroSystem.style.setProperty('--hry', `${x * 1.8}deg`);
+  });
+  heroSystem.addEventListener('pointerleave', () => {
+    ['--hx','--hy','--hrx','--hry'].forEach(name => heroSystem.style.removeProperty(name));
+  });
+  new IntersectionObserver(([entry]) => { heroVisible = entry.isIntersecting; }, { threshold: .35 }).observe(heroSystem);
+  setInterval(() => {
+    if (heroVisible && hoveredCard === null && flippedCard === null && !reduceMotion.matches) {
+      activeCard = (activeCard + 1) % cards.length;
+      paintHeroCards();
+    }
+  }, 2350);
+  paintHeroCards();
+}
 
 const toast = qs('.toast');
 let toastTimer;
