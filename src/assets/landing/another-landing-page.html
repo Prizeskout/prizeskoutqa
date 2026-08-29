@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PrizeSkout | Profit Intelligence Infrastructure</title>
-  <meta name="description" content="Connect your POS, ERP, delivery channels and payouts to calculate true contribution profit, reconcile settlements and detect margin leakage—order by order." />
+  <meta name="description" content="Connect your POS, ERP, delivery channels and payouts to calculate true contribution profit, reconcile settlements and detect margin leakage order by order." />
   <meta name="theme-color" content="#ffffff" />
   <meta property="og:title" content="PrizeSkout | Profit Intelligence Infrastructure" />
   <meta property="og:description" content="Know what every order actually earns." />
@@ -195,10 +195,10 @@ h1 {
 .inline-action { background: #fff; border: 1px solid #ffd1b4; border-radius: 8px; padding: 7px 9px; color: #c9560d; font-size: 10px; font-weight: 750; cursor: pointer; }
 
 /* Interactive 3D economic-story system, shared in spirit with /new-landing-page. */
-.hero-card-stage { min-width: 0; padding: 26px 0; border-radius: 24px; background: #161311; overflow: hidden; perspective: 1200px; }
-.hero-card-stage::before { inset: 0; z-index: 0; background: radial-gradient(circle at 50% 80%, rgba(244,90,24,.25), transparent 58%), radial-gradient(rgba(255,255,255,.08) .7px, transparent .7px); background-size: auto, 8px 8px; }
+.hero-card-stage { min-width: 0; padding: 26px 0; perspective: 1200px; }
+.hero-card-stage::before { content: none; }
 .hero-card-system { --hx:0px; --hy:0px; --hrx:0deg; --hry:0deg; position: relative; z-index: 1; min-height: 430px; display:grid; place-items:center; color:#fff; }
-.hero-system-track { position:relative; width:700px; height:360px; transform-style:preserve-3d; transform:translate3d(var(--hx),var(--hy),0) rotateX(var(--hrx)) rotateY(var(--hry)) scale(.72); transition:transform .35s ease; }
+.hero-system-track { position:relative; width:700px; height:360px; transform-style:preserve-3d; transform:translate3d(var(--hx),var(--hy),0) rotateX(var(--hrx)) rotateY(var(--hry)) scale(.84); transition:transform .35s ease; }
 .hero-system-card { position:absolute; appearance:none; text-align:left; font:inherit; padding:0; border:1px solid rgba(255,255,255,.22); border-radius:16px; color:#fff; overflow:visible; cursor:pointer; background:none; transform:perspective(1000px) rotateY(-18deg) skewY(-7deg); transform-style:preserve-3d; transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .4s,opacity .4s; }
 .hero-system-card:nth-child(1){z-index:1;top:90px;left:0;width:23%;height:236px}.hero-system-card:nth-child(2){z-index:2;top:51px;left:18%;width:27%;height:282px}.hero-system-card:nth-child(3){z-index:3;top:25px;left:39%;width:28%;height:320px}.hero-system-card:nth-child(4){z-index:4;top:56px;left:62%;width:24%;height:274px}.hero-system-card:nth-child(5){z-index:5;top:76px;right:0;width:21%;height:245px}
 .hero-card-flip { position:absolute; inset:0; transform-style:preserve-3d; transition:transform .72s cubic-bezier(.2,.8,.2,1); }
@@ -210,7 +210,7 @@ h1 {
 .hero-card-back small{color:#ec5a20;text-transform:uppercase;letter-spacing:.08em}.hero-card-back strong{font-size:18px}.hero-card-result{margin-top:8px;display:grid;gap:8px}.hero-card-result div{padding-top:8px;border-top:1px solid #ddd4ca;display:grid;gap:2px}.hero-card-result small{font-size:8px;color:#7b7168}.hero-card-result b{font-size:12px;color:#172033}.hero-card-back em{margin-top:auto;font-size:9px;color:#71675f;font-style:normal}
 .hero-story-state{position:absolute;top:14px;right:14px;z-index:2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(27,16,12,.2);font-size:10px;font-weight:800;transition:.3s}.hero-system-card.is-active{filter:brightness(1.08);transform:perspective(1000px) rotateY(-12deg) skewY(-4deg) translate3d(0,-17px,45px)}.hero-system-card.is-active .hero-story-state,.hero-system-card.is-complete .hero-story-state{background:#dff7ef;color:#08785b}.hero-system-card.is-complete:not(.is-active){filter:saturate(.8) brightness(.88)}.hero-system-card.is-next:not(.is-active){filter:brightness(1.04)}
 .hero-system-card:hover,.hero-system-card:focus-visible{transform:perspective(1000px) rotateY(-10deg) skewY(-3deg) translate3d(0,-20px,55px);outline:none}.hero-system-card:focus-visible{box-shadow:0 0 0 3px #fff,0 0 0 6px #ff5a1f}.hero-system-card.is-flipped{z-index:10}
-.hero-system-caption{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:90%;display:flex;justify-content:space-between;color:#8f8883;font-size:11px}.hero-system-caption span{transition:.3s}.hero-system-caption .is-active{color:#fff}
+.hero-system-caption{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:90%;display:flex;justify-content:space-between;color:#8f8883;font-size:11px}.hero-system-caption span{transition:.3s}.hero-system-caption .is-active{color:#c94e2e;font-weight:700}
 @media(max-width:1040px){.hero-card-stage{max-width:760px;width:100%;margin-inline:auto}.hero-system-track{transform:translate3d(var(--hx),var(--hy),0) rotateX(var(--hrx)) rotateY(var(--hry)) scale(.88)}}
 @media(max-width:620px){.hero-card-stage{margin-inline:-10px;width:calc(100% + 20px);padding:8px 0}.hero-card-system{min-height:340px}.hero-system-track{transform:scale(.54);transform-origin:center}.hero-system-caption{font-size:10px;bottom:0}}
 @media(max-width:380px){.hero-system-track{transform:scale(.44)}}
@@ -283,6 +283,10 @@ h1 {
 .dark-card { background: var(--navy); color: #fff; border-color: var(--navy); }
 .light-accent { background: #fffaf7; border-color: #ffddc7; }
 .card-index { font-family: "SFMono-Regular", Consolas, monospace; color: var(--orange); font-size: 11px; margin-bottom: 44px; }
+.card-index,
+.hero-story-state,
+.engine-pipeline > div > span,
+.defense-step > span { display: none !important; }
 .card-label { font-size: 10px; letter-spacing: .1em; font-weight: 800; color: #98a2b3; margin-bottom: 11px; }
 .dark-card .card-label { color: #8494b1; }
 .bento-card h3 { font-size: 31px; letter-spacing: -.04em; margin-bottom: 12px; line-height: 1.06; }
@@ -577,16 +581,16 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
           <h1>Know what every order <span class="accent">actually earns.</span></h1>
           <p class="hero-sub">
             PrizeSkout connects your POS, ERP, delivery channels and payouts to calculate
-            <strong>true contribution profit</strong>, reconcile settlements and detect margin leakage—order by order.
+            <strong>true contribution profit</strong>, reconcile settlements and detect margin leakage order by order.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#audit">Book a Profit Audit <span aria-hidden="true">→</span></a>
             <a class="button button-ghost" href="#api">Explore the API</a>
           </div>
           <div class="micro-trust" aria-label="Key product attributes">
-            <span><i class="check">✓</i> No rip-and-replace</span>
-            <span><i class="check">✓</i> API-first</span>
-            <span><i class="check">✓</i> Merchant-controlled</span>
+            <span><i class="check">✓</i> No replacement required</span>
+            <span><i class="check">✓</i> API first</span>
+            <span><i class="check">✓</i> Merchant controlled</span>
           </div>
         </div>
 
@@ -614,10 +618,10 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
 
     <section class="credibility">
       <div class="shell credibility-grid">
-        <div><span class="cred-icon">◎</span><strong>QFC-LICENSED</strong><small>Doha, Qatar</small></div>
-        <div><span class="cred-icon">↔</span><strong>API-FIRST</strong><small>Built around your stack</small></div>
+        <div><span class="cred-icon">◎</span><strong>QFC LICENSED</strong><small>Doha, Qatar</small></div>
+        <div><span class="cred-icon">↔</span><strong>API FIRST</strong><small>Built around your stack</small></div>
         <div><span class="cred-icon">⌁</span><strong>ZID PARTNER</strong><small>Merchant onboarding underway</small></div>
-        <div><span class="cred-icon">✓</span><strong>MERCHANT-CONTROLLED</strong><small>Actions stay inside your rules</small></div>
+        <div><span class="cred-icon">✓</span><strong>MERCHANT CONTROLLED</strong><small>Actions stay inside your rules</small></div>
       </div>
     </section>
 
@@ -628,7 +632,6 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
             <div class="eyebrow"><span class="eyebrow-dot"></span> ONE ECONOMIC TRUTH</div>
             <h2>Your systems see transactions.<br><span class="accent">PrizeSkout sees the economics.</span></h2>
           </div>
-          <p>Keep the systems you already use. PrizeSkout normalizes fragmented commerce data into one trusted profit layer.</p>
         </div>
 
         <div class="stack-map reveal">
@@ -677,7 +680,7 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
         <div class="section-heading center-heading reveal">
           <div class="eyebrow center"><span class="eyebrow-dot"></span> FOUR COMMERCIAL OUTCOMES</div>
           <h2>Less dashboard. <span class="accent">More decision.</span></h2>
-          <p>Every signal should answer a financial question—and make the next action obvious.</p>
+          <p>Every signal should answer a financial question and make the next action obvious.</p>
         </div>
 
         <div class="bento">
@@ -725,8 +728,8 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
             <div class="card-index">04</div>
             <div>
               <div class="card-label">AI PROFIT COPILOT</div>
-              <h3>Ask the business. Get an evidence-backed answer.</h3>
-              <p>Turn connected order, payout and cost data into finance-ready explanations—not generic AI output.</p>
+              <h3>Ask the business. Get an answer supported by evidence.</h3>
+              <p>Turn connected order, payout and cost data into clear financial explanations instead of generic AI output.</p>
             </div>
             <div class="copilot">
               <div class="chat user-chat">Why did Talabat margin fall last week?</div>
@@ -749,11 +752,11 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
         <div class="api-copy reveal">
           <div class="eyebrow light"><span class="eyebrow-dot"></span> BUILT AS INFRASTRUCTURE</div>
           <h2>Use the intelligence <span class="accent">anywhere.</span></h2>
-          <p>PrizeSkout is API-first. Consume profit, settlement and margin signals inside your ERP, BI, finance workflow—or use the PrizeSkout Control Room.</p>
+          <p>PrizeSkout is API first. Consume profit, settlement and margin signals inside your ERP, BI or finance workflow, or use the PrizeSkout Control Room.</p>
           <div class="api-benefits">
             <span>One canonical commerce model</span>
             <span>Embedded intelligence</span>
-            <span>Enterprise-ready webhooks</span>
+            <span>Enterprise ready webhooks</span>
           </div>
           <a href="#audit" class="button button-white">Talk to us about the API <span aria-hidden="true">→</span></a>
         </div>
@@ -791,7 +794,6 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
             <div class="eyebrow"><span class="eyebrow-dot"></span> MARGIN DEFENCE</div>
             <h2>Don't just find the problem.<br><span class="accent">Know what to do next.</span></h2>
           </div>
-          <p>PrizeSkout detects risk, models impact and prepares the next best action. Your team decides what gets approved.</p>
         </div>
 
         <div class="defense-track reveal">
@@ -840,7 +842,7 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
     <section id="solutions" class="section-pad solutions-section">
       <div class="shell">
         <div class="section-heading center-heading reveal">
-          <div class="eyebrow center"><span class="eyebrow-dot"></span> PURPOSE-BUILT FOR PLATFORM COMMERCE</div>
+          <div class="eyebrow center"><span class="eyebrow-dot"></span> PURPOSE BUILT FOR PLATFORM COMMERCE</div>
           <h2>One engine. <span class="accent">Different economic questions.</span></h2>
         </div>
 
@@ -855,7 +857,7 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
           <div>
             <span class="mono-label" id="solution-kicker">RESTAURANT GROUPS</span>
             <h3 id="solution-title">See profit across every brand, branch and delivery channel.</h3>
-            <p id="solution-copy">Model item-level contribution after commission, promotions, COGS, refunds and settlements—without replacing your POS or ERP.</p>
+            <p id="solution-copy">Model contribution for every item after commission, promotions, COGS, refunds and settlements without replacing your POS or ERP.</p>
             <ul id="solution-list">
               <li>Branch × platform profitability</li>
               <li>Settlement and commission audit</li>
@@ -908,12 +910,12 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
       <div class="shell faq-grid">
         <div class="reveal">
           <div class="eyebrow"><span class="eyebrow-dot"></span> QUICK ANSWERS</div>
-          <h2>Built to fit your stack—not replace it.</h2>
+          <h2>Built to fit your stack without replacing it.</h2>
         </div>
         <div class="faq-list reveal delay-1">
           <details open>
             <summary>Is PrizeSkout another restaurant dashboard?</summary>
-            <p>No. The dashboard is the control surface. The core product is a profit-intelligence layer that reconciles commerce data and exposes it through APIs, embedded workflows and the PrizeSkout Control Room.</p>
+            <p>No. The dashboard is the control surface. The core product is a profit intelligence layer that reconciles commerce data and exposes it through APIs, embedded workflows and the PrizeSkout Control Room.</p>
           </details>
           <details>
             <summary>Do we need an API integration to start?</summary>
@@ -925,7 +927,7 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
           </details>
           <details>
             <summary>Does PrizeSkout change prices automatically?</summary>
-            <p>Not unless your team enables that behavior. Recommendations can remain approval-only and every action stays within merchant-defined floors, permissions and thresholds.</p>
+            <p>Not unless your team enables that behavior. Recommendations can always require approval, and every action stays within floors, permissions and thresholds defined by the merchant.</p>
           </details>
           <details>
             <summary>What can we measure?</summary>
@@ -965,7 +967,7 @@ footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
     </div>
     <div class="shell footer-bottom">
       <span>© 2026 PrizeSkout · Doha, Qatar</span>
-      <span>Merchant-controlled · API-first</span>
+      <span>Merchant controlled · API first</span>
     </div>
   </footer>
 
@@ -1123,7 +1125,7 @@ const solutions = {
   restaurant: {
     kicker: 'RESTAURANT GROUPS',
     title: 'See profit across every brand, branch and delivery channel.',
-    copy: 'Model item-level contribution after commission, promotions, COGS, refunds and settlements—without replacing your POS or ERP.',
+    copy: 'Model contribution for every item after commission, promotions, COGS, refunds and settlements without replacing your POS or ERP.',
     items: ['Branch × platform profitability','Settlement and commission audit','Menu and promotion economics'],
     label: 'BRANCH PROFITABILITY',
     rows: [['Branch 01','18.7%',86],['Branch 02','14.2%',68],['Branch 03','6.9%',34],['Branch 04','16.4%',77]],
@@ -1131,7 +1133,7 @@ const solutions = {
   },
   kitchen: {
     kicker: 'CLOUD KITCHENS',
-    title: 'Know which virtual brands create profit—not just orders.',
+    title: 'Know which virtual brands create profit, not just orders.',
     copy: 'Compare brand, kitchen and aggregator economics in one model so you can scale winners, reprice weak concepts and stop subsidising unprofitable growth.',
     items: ['Virtual brand contribution','Kitchen × channel performance','Scale / reprice / pause decisions'],
     label: 'VIRTUAL BRAND PROFITABILITY',
