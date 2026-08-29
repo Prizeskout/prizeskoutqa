@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrizeSkout | Profit Intelligence Infrastructure</title>
+  <meta name="description" content="Connect your POS, ERP, delivery channels and payouts to calculate true contribution profit, reconcile settlements and detect margin leakage—order by order." />
+  <meta name="theme-color" content="#ffffff" />
+  <meta property="og:title" content="PrizeSkout | Profit Intelligence Infrastructure" />
+  <meta property="og:description" content="Know what every order actually earns." />
+  <style>
+:root {
+  --orange: #f47320;
+  --orange-2: #ff8a43;
+  --orange-soft: #fff3eb;
+  --ink: #0d1424;
+  --navy: #07152f;
+  --navy-2: #0d2148;
+  --text: #1d2939;
+  --muted: #667085;
+  --line: #e6e8ec;
+  --soft: #f7f8fa;
+  --white: #fff;
+  --success: #12b76a;
+  --danger: #d92d20;
+  --shadow: 0 24px 80px rgba(7, 21, 47, .10);
+  --radius: 18px;
+  --shell: 1180px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: #fff;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; }
+button { color: inherit; }
+img { max-width: 100%; display: block; }
+.shell { width: min(calc(100% - 48px), var(--shell)); margin: 0 auto; }
+.section-pad { padding: 108px 0; }
+.skip-link {
+  position: fixed; left: 16px; top: -60px; z-index: 9999;
+  background: #fff; border: 1px solid var(--line); padding: 10px 14px; border-radius: 8px;
+}
+.skip-link:focus { top: 16px; }
+.accent { color: var(--orange); }
+.orange { color: var(--orange)!important; }
+
+.announcement {
+  background: var(--navy);
+  color: #fff;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  letter-spacing: .02em;
+}
+.announcement-inner { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.announcement-badge {
+  font-size: 10px;
+  letter-spacing: .12em;
+  font-weight: 800;
+  background: rgba(244,115,32,.18);
+  color: #ffb17f;
+  border: 1px solid rgba(244,115,32,.3);
+  padding: 5px 8px;
+  border-radius: 99px;
+}
+.announcement a { color: #ffb17f; font-weight: 700; }
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255,255,255,.9);
+  border-bottom: 1px solid rgba(230,232,236,.75);
+  backdrop-filter: blur(18px);
+}
+.nav-wrap { height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { display: inline-flex; align-items: center; height: 32px; min-width: 144px; }
+.brand-prize { font-size: 24px; font-weight: 800; letter-spacing: -.045em; line-height: 1; }
+.brand-skout { height: 27px; width: auto; object-fit: contain; margin-left: 1px; }
+.desktop-nav { display: flex; gap: 28px; font-size: 13px; color: #344054; font-weight: 600; }
+.desktop-nav a, .text-link { transition: color .2s ease; }
+.desktop-nav a:hover, .text-link:hover { color: var(--orange); }
+.nav-actions { display: flex; align-items: center; gap: 18px; font-size: 13px; }
+.menu-button { display: none; width: 42px; height: 42px; padding: 0; border: 1px solid var(--line); background: #fff; border-radius: 10px; }
+.menu-button span { width: 18px; height: 1.5px; display: block; background: var(--ink); margin: 5px auto; }
+.mobile-menu { display: none; padding-bottom: 20px; }
+.mobile-menu.open { display: grid; }
+.mobile-menu a { padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+
+.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px;
+  border-radius: 10px; border: 1px solid transparent;
+  font-size: 14px; font-weight: 750;
+  cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+}
+.button:hover { transform: translateY(-1px); }
+.button:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid rgba(244,115,32,.25); outline-offset: 3px; }
+.button-sm { min-height: 40px; padding: 0 15px; font-size: 12px; }
+.button-primary { background: var(--orange); color: #fff; box-shadow: 0 8px 26px rgba(244,115,32,.22); }
+.button-primary:hover { background: #e96513; box-shadow: 0 12px 30px rgba(244,115,32,.28); }
+.button-dark { background: var(--navy); color: #fff; }
+.button-dark:hover { background: #10264e; }
+.button-ghost { border-color: var(--line); background: #fff; color: var(--ink); }
+.button-ghost:hover { border-color: #c9ced7; box-shadow: 0 8px 24px rgba(15,23,42,.06); }
+.button-white { background: #fff; color: var(--navy); }
+.button-outline-light { color: #fff; border-color: rgba(255,255,255,.24); background: transparent; }
+
+.hero { padding-top: 92px; padding-bottom: 44px; overflow: clip; }
+.hero-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 76px; align-items: center; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: #344054; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.eyebrow.center { justify-content: center; }
+.eyebrow.light { color: #aab6cc; }
+.eyebrow-dot { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; box-shadow: 0 0 0 4px rgba(244,115,32,.12); }
+h1, h2, h3, p { margin-top: 0; }
+h1 {
+  margin-bottom: 24px;
+  font-size: clamp(54px, 5.8vw, 84px);
+  line-height: .98;
+  letter-spacing: -.06em;
+  max-width: 760px;
+}
+.hero-sub {
+  font-size: 19px;
+  line-height: 1.62;
+  color: #475467;
+  max-width: 650px;
+  margin-bottom: 30px;
+}
+.hero-sub strong { color: var(--ink); font-weight: 700; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.micro-trust { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 16px 22px; font-size: 12px; color: #667085; }
+.check { width: 18px; height: 18px; border-radius: 50%; background: #ecfdf3; color: #079455; font-style: normal; display: inline-grid; place-items: center; font-size: 11px; margin-right: 4px; }
+
+.hero-visual { position: relative; }
+.hero-visual::before {
+  content: ""; position: absolute; inset: -100px -120px -100px -40px;
+  background: radial-gradient(circle at 50% 50%, rgba(244,115,32,.08), transparent 58%);
+  z-index: -1; pointer-events: none;
+}
+.signal-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 22px;
+  box-shadow: var(--shadow);
+}
+.signal-head, .order-total, .true-profit, .result-head { display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+.signal-head { padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.mono-label {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #98a2b3; text-transform: uppercase;
+}
+.mono-label.light { color: #7f91b3; }
+.signal-title { margin-top: 5px; font-weight: 750; font-size: 16px; letter-spacing: -.02em; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  background: #f2f4f7; color: #475467; border: 1px solid #eaecf0; padding: 7px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
+}
+.status-dot { width: 7px; height: 7px; background: var(--success); border-radius: 50%; box-shadow: 0 0 0 3px rgba(18,183,106,.12); }
+.order-total { padding: 22px 2px 15px; font-size: 13px; color: var(--muted); }
+.order-total strong { color: var(--ink); font-size: 28px; letter-spacing: -.04em; }
+.economic-lines { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.economic-line {
+  min-height: 47px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px;
+  border-bottom: 1px solid var(--line); font-size: 12px; color: #475467;
+  opacity: 0; transform: translateY(5px); transition: opacity .45s ease, transform .45s ease;
+}
+.economic-line:last-child { border-bottom: 0; }
+.economic-line.visible { opacity: 1; transform: translateY(0); }
+.economic-line strong { color: #344054; }
+.line-icon { width: 18px; display: inline-grid; place-items: center; color: #98a2b3; }
+.warning-line { background: #fffaf6; }
+.warning-line .line-icon, .warning-line strong { color: var(--orange); }
+.true-profit { padding: 21px 2px 3px; }
+.true-profit strong { display: block; font-size: 34px; line-height: 1; margin-top: 6px; letter-spacing: -.05em; }
+.margin-meter { min-width: 145px; text-align: right; font-size: 12px; color: #475467; font-weight: 700; }
+.meter { height: 5px; margin-top: 8px; background: #eef0f3; border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 72%; background: var(--orange); border-radius: inherit; transform-origin: left; animation: meterIn 1.4s .8s cubic-bezier(.2,.9,.2,1) both; }
+@keyframes meterIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.leak-alert { margin-top: 19px; background: var(--orange-soft); border: 1px solid #ffd9c2; border-radius: 12px; padding: 12px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+.alert-icon { width: 26px; height: 26px; border-radius: 50%; background: var(--orange); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+.leak-alert strong { display: block; font-size: 11px; }
+.leak-alert div span { font-size: 10px; color: #7a5b46; }
+.inline-action { background: #fff; border: 1px solid #ffd1b4; border-radius: 8px; padding: 7px 9px; color: #c9560d; font-size: 10px; font-weight: 750; cursor: pointer; }
+
+.proof-sentence {
+  display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 66px;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.proof-sentence span, .proof-sentence strong {
+  padding: 22px 18px; font-size: 11px; text-align: center; border-right: 1px solid var(--line); color: #667085; font-weight: 600;
+}
+.proof-sentence > *:last-child { border-right: 0; }
+.proof-sentence strong { color: var(--orange); background: #fffaf7; }
+
+.credibility { background: var(--soft); border-bottom: 1px solid var(--line); }
+.credibility-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+.credibility-grid > div { min-height: 94px; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-content: center; border-right: 1px solid var(--line); padding: 20px 28px; }
+.credibility-grid > div:last-child { border-right: 0; }
+.cred-icon { grid-row: 1 / 3; width: 32px; height: 32px; border: 1px solid #d7dae0; border-radius: 9px; display: grid; place-items: center; color: var(--orange); background: #fff; }
+.credibility strong { font-size: 10px; letter-spacing: .08em; }
+.credibility small { color: #7c8799; font-size: 10px; margin-top: 3px; }
+
+.section-heading { margin-bottom: 52px; }
+.section-heading h2 { margin: 0; font-size: clamp(42px, 4vw, 62px); line-height: 1.04; letter-spacing: -.05em; }
+.split-heading { display: grid; grid-template-columns: 1.35fr .65fr; gap: 80px; align-items: end; }
+.split-heading p { color: #667085; line-height: 1.65; font-size: 15px; margin: 0 0 6px; }
+.center-heading { text-align: center; max-width: 820px; margin-left: auto; margin-right: auto; }
+.center-heading p { max-width: 610px; margin: 18px auto 0; color: #667085; line-height: 1.6; }
+
+.platform-section { background: #fff; }
+.stack-map {
+  display: grid; grid-template-columns: 210px 1fr minmax(400px, 470px) 1fr 210px; gap: 0; align-items: stretch;
+  min-height: 410px;
+}
+.stack-column { display: grid; gap: 9px; align-content: center; }
+.stack-kicker { font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; color: #98a2b3; letter-spacing: .12em; margin-bottom: 4px; }
+.source-chip {
+  border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px 13px; min-height: 60px;
+}
+.source-chip span { display: block; color: #98a2b3; font-size: 8px; letter-spacing: .11em; font-weight: 800; margin-bottom: 5px; }
+.source-chip b { font-size: 12px; font-weight: 700; }
+.source-chip.outcome { background: #fffaf7; border-color: #ffe0cd; }
+.source-chip.outcome span { color: var(--orange); }
+.flow-lines { position: relative; min-width: 55px; }
+.flow-lines i { position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, #d7dae0, var(--orange)); }
+.flow-lines i::after { content: ""; position: absolute; right: -1px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px rgba(244,115,32,.08); }
+.flow-lines i:nth-child(1){ top: 28%; } .flow-lines i:nth-child(2){ top: 42%; } .flow-lines i:nth-child(3){ top: 57%; } .flow-lines i:nth-child(4){ top: 72%; }
+.flow-lines.outbound i { background: linear-gradient(90deg, var(--orange), #d7dae0); }
+.flow-lines.outbound i::after { left: -1px; right: auto; }
+.engine {
+  background: var(--navy); color: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 24px 60px rgba(7,21,47,.2); align-self: center;
+}
+.engine-top { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.11); }
+.engine-top strong { display: block; margin-top: 4px; font-size: 16px; letter-spacing: -.02em; }
+.engine-mark { width: 38px; height: 38px; background: var(--orange); border-radius: 10px; display: grid; place-items: center; font-weight: 900; }
+.engine-pipeline { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+.engine-pipeline div { min-height: 116px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); border-radius: 12px; padding: 14px; }
+.engine-pipeline span { display: block; color: var(--orange); font-family: "SFMono-Regular", Consolas, monospace; font-size: 9px; margin-bottom: 18px; }
+.engine-pipeline b { display: block; font-size: 13px; margin-bottom: 6px; }
+.engine-pipeline small { color: #8fa0bf; font-size: 10px; }
+
+.intelligence-section { background: var(--soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.bento { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.bento-card {
+  position: relative; border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 26px;
+  min-height: 360px; overflow: hidden;
+}
+.bento-card.large-card { min-height: 430px; }
+.dark-card { background: var(--navy); color: #fff; border-color: var(--navy); }
+.light-accent { background: #fffaf7; border-color: #ffddc7; }
+.card-index { font-family: "SFMono-Regular", Consolas, monospace; color: var(--orange); font-size: 11px; margin-bottom: 44px; }
+.card-label { font-size: 10px; letter-spacing: .1em; font-weight: 800; color: #98a2b3; margin-bottom: 11px; }
+.dark-card .card-label { color: #8494b1; }
+.bento-card h3 { font-size: 31px; letter-spacing: -.04em; margin-bottom: 12px; line-height: 1.06; }
+.bento-card p { color: #667085; font-size: 14px; line-height: 1.6; max-width: 520px; }
+.dark-card p { color: #9fb0cd; }
+.profit-mini { margin-top: 34px; border: 1px solid rgba(255,255,255,.11); border-radius: 12px; overflow: hidden; }
+.profit-row { min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 11px; color: #91a3c2; }
+.profit-row b { color: #fff; font-size: 12px; }
+.profit-row.total { border-bottom: 0; background: rgba(244,115,32,.1); color: #ffc29c; }
+.profit-row.total b { color: #ff9a5b; font-size: 16px; }
+.variance-card { margin-top: 28px; display: grid; gap: 9px; }
+.variance-card > div { display: flex; align-items: center; justify-content: space-between; padding: 13px; border-radius: 10px; background: #f8f9fb; font-size: 11px; }
+.variance-card b { font-size: 13px; }
+.variance-card .variance-result { background: var(--orange-soft); color: #a9470a; }
+.promo-compare { margin-top: 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.promo-compare > div { min-height: 100px; border: 1px solid var(--line); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+.promo-compare small { color: #98a2b3; font-size: 9px; letter-spacing: .1em; }
+.promo-compare strong { font-size: 30px; letter-spacing: -.05em; }
+.promo-compare .bad strong { color: var(--danger); }
+.recommend-pill { grid-column: 1 / 3; padding: 11px 12px; background: var(--navy); color: #fff; border-radius: 10px; font-size: 11px; font-weight: 700; }
+.copilot { margin-top: 30px; max-width: 560px; }
+.chat { border-radius: 12px; padding: 13px 14px; font-size: 12px; line-height: 1.55; }
+.user-chat { margin-left: 80px; background: #fff; border: 1px solid #fed7bf; }
+.ai-chat { display: grid; grid-template-columns: auto 1fr; gap: 10px; background: var(--navy); color: #fff; margin-top: 10px; }
+.ai-dot { width: 27px; height: 27px; border-radius: 8px; background: var(--orange); display: grid; place-items: center; font-weight: 900; }
+.ai-chat p { color: #aebad0; font-size: 11px; margin: 4px 0 10px; }
+.ai-chat button { padding: 0; border: 0; background: transparent; color: #ffad79; font-size: 10px; font-weight: 700; cursor: pointer; }
+
+.api-section { background: var(--navy); color: #fff; overflow: hidden; }
+.api-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 70px; align-items: center; }
+.api-copy h2 { font-size: clamp(46px, 4.7vw, 70px); line-height: 1.03; letter-spacing: -.055em; margin-bottom: 22px; }
+.api-copy p { color: #9eacc4; font-size: 16px; line-height: 1.65; max-width: 520px; }
+.api-benefits { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 28px; }
+.api-benefits span { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: #b8c4d8; padding: 9px 11px; border-radius: 8px; font-size: 10px; }
+.code-window { background: #091a39; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; overflow: hidden; box-shadow: 0 28px 80px rgba(0,0,0,.25); }
+.code-top { min-height: 54px; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+.code-dots { display: flex; gap: 6px; }
+.code-dots i { width: 7px; height: 7px; background: #324667; border-radius: 50%; }
+.api-tabs { display: flex; gap: 3px; }
+.api-tab { border: 0; background: transparent; color: #8192af; padding: 7px 10px; font-size: 10px; border-radius: 7px; cursor: pointer; }
+.api-tab.active { color: #fff; background: #13284f; }
+.code-window pre { margin: 0; padding: 30px; min-height: 310px; color: #cad3e1; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; }
+.code-key { color: #8dc1ff; } .code-string { color: #f4a261; } .code-num { color: #8ed1b2; }
+.endpoint-bar { border-top: 1px solid rgba(255,255,255,.08); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 14px 16px; font-size: 10px; }
+.endpoint-bar > span { background: rgba(18,183,106,.14); color: #62d69d; border: 1px solid rgba(18,183,106,.22); padding: 5px 7px; border-radius: 6px; font-weight: 800; }
+.endpoint-bar code { color: #a6b3c9; }
+.endpoint-bar button { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); color: #fff; padding: 7px 9px; border-radius: 7px; cursor: pointer; font-size: 9px; }
+
+.margin-defense { background: #fff; }
+.defense-track { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; }
+.defense-track > i { color: #cbd1da; font-style: normal; }
+.defense-step { border-top: 2px solid #e7e9ee; padding-top: 15px; min-height: 85px; transition: border .3s ease; }
+.defense-step.active { border-top-color: var(--orange); }
+.defense-step span { display: block; font-size: 9px; color: var(--orange); font-family: "SFMono-Regular", Consolas, monospace; margin-bottom: 8px; }
+.defense-step strong { display: block; font-size: 13px; }
+.defense-step small { color: #98a2b3; font-size: 10px; margin-top: 4px; display: block; }
+.decision-panel { margin-top: 34px; border: 1px solid var(--line); border-radius: 16px; padding: 24px; display: grid; grid-template-columns: 1.15fr .9fr auto; align-items: center; gap: 32px; box-shadow: 0 16px 50px rgba(15,23,42,.05); }
+.decision-signal { display: flex; align-items: center; gap: 13px; }
+.risk-symbol { width: 42px; height: 42px; border-radius: 12px; background: var(--orange-soft); color: var(--orange); display: grid; place-items: center; font-weight: 900; }
+.decision-signal h3 { font-size: 16px; line-height: 1.35; margin: 5px 0 0; max-width: 430px; }
+.decision-metrics { display: grid; grid-template-columns: 1fr 1fr 1.2fr; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.decision-metrics div { min-height: 70px; padding: 12px; border-right: 1px solid var(--line); }
+.decision-metrics div:last-child { border-right: 0; }
+.decision-metrics span { display: block; color: #98a2b3; font-size: 8px; margin-bottom: 8px; }
+.decision-metrics b { font-size: 11px; }
+.danger { color: var(--danger); }
+.decision-actions { display: flex; gap: 8px; flex-direction: column; }
+.decision-actions .button { min-height: 40px; white-space: nowrap; font-size: 11px; }
+
+.solutions-section { background: var(--soft); border-top: 1px solid var(--line); }
+.solution-tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid #d9dde4; margin-bottom: 26px; }
+.solution-tab { background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 15px 10px; color: #667085; font-weight: 700; font-size: 12px; cursor: pointer; }
+.solution-tab.active { color: var(--ink); border-bottom-color: var(--orange); }
+.solution-content { display: grid; grid-template-columns: .8fr 1.2fr; gap: 60px; align-items: center; min-height: 420px; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 42px; }
+.solution-content h3 { font-size: 36px; letter-spacing: -.045em; line-height: 1.1; margin: 13px 0 14px; }
+.solution-content p { color: #667085; line-height: 1.65; font-size: 14px; }
+.solution-content ul { margin: 24px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.solution-content li { position: relative; padding-left: 22px; font-size: 12px; color: #344054; font-weight: 650; }
+.solution-content li::before { content: "✓"; position: absolute; left: 0; top: -1px; color: var(--orange); }
+.solution-visual { background: var(--navy); border-radius: 14px; padding: 22px; color: #fff; min-height: 300px; }
+.heat-head { display: flex; justify-content: space-between; color: #91a2bf; font-family: "SFMono-Regular", Consolas, monospace; font-size: 9px; letter-spacing: .06em; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.heat-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 11px; }
+.heat-row i { grid-column: 1 / 3; height: 3px; border-radius: 99px; background: linear-gradient(90deg, var(--orange) var(--w), #1c3158 var(--w)); }
+.heat-row.flagged b { color: #ff9f61; }
+.heat-note { margin-top: 16px; background: rgba(244,115,32,.12); color: #ffc19b; border: 1px solid rgba(244,115,32,.25); padding: 11px; border-radius: 9px; font-size: 10px; }
+.heat-note span { display: inline-grid; place-items: center; width: 18px; height: 18px; background: var(--orange); color: #fff; border-radius: 50%; margin-right: 7px; }
+
+.audit-section { background: #fff; }
+.audit-wrap { background: #fbfbfc; border: 1px solid var(--line); border-radius: 18px; padding: 56px; display: grid; grid-template-columns: 1fr .85fr; gap: 70px; align-items: center; }
+.audit-copy h2 { font-size: clamp(42px, 4.5vw, 64px); letter-spacing: -.055em; line-height: 1.02; margin-bottom: 18px; }
+.audit-copy p { color: #667085; max-width: 500px; line-height: 1.6; }
+.audit-inputs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+.audit-inputs span { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px 10px; font-size: 10px; font-weight: 650; }
+.audit-result { background: #fff; border: 1px solid var(--line); border-radius: 15px; padding: 20px; box-shadow: 0 20px 60px rgba(15,23,42,.08); }
+.result-head { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.result-head strong { display: block; margin-top: 4px; font-size: 12px; }
+.audit-metrics { display: grid; gap: 0; margin-top: 8px; }
+.audit-metrics > div { display: flex; justify-content: space-between; align-items: center; padding: 14px 2px; border-bottom: 1px solid var(--line); font-size: 11px; color: #667085; }
+.audit-metrics strong { color: var(--ink); }
+.audit-metrics .result-main { margin: 8px 0 14px; padding: 18px 14px; border: 1px solid #ffd7bd; background: var(--orange-soft); border-radius: 10px; }
+.audit-metrics .result-main strong { color: var(--orange); font-size: 22px; letter-spacing: -.04em; }
+.full-button { width: 100%; }
+.audit-foot { text-align: center; color: #98a2b3; font-size: 9px; margin: 11px 0 0; }
+
+.faq-section { background: var(--soft); border-top: 1px solid var(--line); }
+.faq-grid { display: grid; grid-template-columns: .65fr 1.35fr; gap: 80px; }
+.faq-grid h2 { font-size: 46px; line-height: 1.04; letter-spacing: -.05em; }
+.faq-list details { border-top: 1px solid #dce0e6; }
+.faq-list details:last-child { border-bottom: 1px solid #dce0e6; }
+.faq-list summary { list-style: none; cursor: pointer; padding: 21px 36px 21px 0; position: relative; font-size: 14px; font-weight: 700; }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after { content: "+"; position: absolute; right: 0; top: 19px; width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid #d1d6df; border-radius: 50%; color: #667085; }
+.faq-list details[open] summary::after { content: "−"; }
+.faq-list details p { color: #667085; font-size: 13px; line-height: 1.7; max-width: 760px; padding: 0 42px 22px 0; margin: 0; }
+
+.final-cta { padding: 36px 0 0; background: var(--soft); }
+.final-card { background: var(--navy); color: #fff; border-radius: 22px 22px 0 0; padding: 78px 74px; position: relative; overflow: hidden; }
+.final-card::after { content: ""; position: absolute; width: 420px; height: 420px; border-radius: 50%; right: -120px; bottom: -220px; border: 1px solid rgba(244,115,32,.18); box-shadow: 0 0 0 80px rgba(244,115,32,.04), 0 0 0 160px rgba(244,115,32,.025); }
+.final-card h2 { font-size: clamp(44px, 5vw, 72px); letter-spacing: -.055em; line-height: 1.02; margin-bottom: 18px; max-width: 940px; position: relative; z-index: 1; }
+.final-card h2 span { color: #ff9251; }
+.final-card p { color: #9eacc4; max-width: 640px; font-size: 15px; line-height: 1.65; position: relative; z-index: 1; }
+.final-card .hero-actions { position: relative; z-index: 2; margin-top: 30px; }
+
+footer { background: var(--navy); color: #fff; padding: 64px 0 30px; }
+.footer-top { display: grid; grid-template-columns: 1fr 1.4fr; gap: 80px; padding-bottom: 50px; }
+.brand-footer .brand-prize { color: #fff; }
+.footer-brand p { color: #8fa0bd; font-size: 12px; margin-top: 18px; max-width: 300px; line-height: 1.6; }
+.footer-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.footer-links div { display: grid; align-content: start; gap: 11px; }
+.footer-links strong { font-size: 11px; color: #fff; margin-bottom: 4px; }
+.footer-links a { color: #8797b4; font-size: 10px; }
+.footer-links a:hover { color: #ff9b5c; }
+.footer-bottom { display: flex; justify-content: space-between; gap: 30px; border-top: 1px solid rgba(255,255,255,.09); padding-top: 22px; color: #6f819e; font-size: 9px; }
+
+.toast {
+  position: fixed; z-index: 3000; right: 24px; bottom: 24px; transform: translateY(18px);
+  opacity: 0; pointer-events: none; background: var(--navy); color: #fff; border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 18px 50px rgba(0,0,0,.2); border-radius: 10px; padding: 11px 14px; font-size: 11px;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .72s ease, transform .72s cubic-bezier(.2,.8,.2,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.delay-1 { transition-delay: .08s; }
+.delay-2 { transition-delay: .14s; }
+
+@media (max-width: 1040px) {
+  .desktop-nav { display: none; }
+  .menu-button { display: block; }
+  .hero-grid, .api-grid { grid-template-columns: 1fr; gap: 52px; }
+  .hero-copy { max-width: 800px; }
+  .hero-visual { max-width: 720px; }
+  .proof-sentence { grid-template-columns: 1fr 1fr; }
+  .proof-sentence > *:nth-child(2) { border-right: 0; }
+  .proof-sentence > *:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .credibility-grid { grid-template-columns: 1fr 1fr; }
+  .credibility-grid > div:nth-child(2) { border-right: 0; }
+  .credibility-grid > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .stack-map { grid-template-columns: 180px 45px 1fr 45px 180px; }
+  .decision-panel { grid-template-columns: 1fr; }
+  .decision-actions { flex-direction: row; }
+  .audit-wrap { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 820px) {
+  .section-pad { padding: 82px 0; }
+  .shell { width: min(calc(100% - 32px), var(--shell)); }
+  .hide-mobile { display: none; }
+  .announcement-inner { justify-content: flex-start; overflow-x: auto; white-space: nowrap; }
+  .hero { padding-top: 70px; }
+  h1 { font-size: clamp(48px, 13vw, 70px); }
+  .hero-sub { font-size: 17px; }
+  .split-heading { grid-template-columns: 1fr; gap: 24px; }
+  .credibility-grid { grid-template-columns: 1fr; }
+  .credibility-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .credibility-grid > div:last-child { border-bottom: 0; }
+  .stack-map { display: grid; grid-template-columns: 1fr; gap: 16px; min-height: 0; }
+  .flow-lines { display: none; }
+  .stack-column { grid-template-columns: 1fr 1fr; }
+  .stack-kicker { grid-column: 1 / 3; }
+  .bento { grid-template-columns: 1fr; }
+  .defense-track { overflow-x: auto; grid-template-columns: repeat(9, min-content); padding-bottom: 10px; }
+  .defense-step { width: 150px; }
+  .solution-tabs { grid-template-columns: 1fr 1fr; }
+  .solution-content { grid-template-columns: 1fr; gap: 32px; padding: 28px; }
+  .faq-grid { grid-template-columns: 1fr; gap: 32px; }
+  .final-card { padding: 58px 34px; }
+  .footer-top { grid-template-columns: 1fr; gap: 40px; }
+}
+
+@media (max-width: 560px) {
+  .nav-wrap { height: 68px; }
+  .brand { min-width: 128px; }
+  .brand-prize { font-size: 21px; }
+  .brand-skout { height: 24px; }
+  .button-sm { padding: 0 12px; }
+  .hero-actions .button { width: 100%; }
+  .micro-trust { display: grid; }
+  .proof-sentence { grid-template-columns: 1fr; }
+  .proof-sentence > * { border-right: 0!important; border-bottom: 1px solid var(--line); }
+  .proof-sentence > *:last-child { border-bottom: 0; }
+  .signal-card { padding: 16px; }
+  .signal-head { align-items: flex-start; }
+  .status-pill { font-size: 8px; }
+  .order-total strong { font-size: 24px; }
+  .true-profit { align-items: flex-end; }
+  .true-profit strong { font-size: 29px; }
+  .margin-meter { min-width: 100px; }
+  .leak-alert { grid-template-columns: auto 1fr; }
+  .leak-alert .inline-action { grid-column: 1 / 3; }
+  .stack-column { grid-template-columns: 1fr; }
+  .stack-kicker { grid-column: 1; }
+  .engine-pipeline { grid-template-columns: 1fr; }
+  .bento-card, .bento-card.large-card { min-height: 0; }
+  .promo-compare { grid-template-columns: 1fr; }
+  .recommend-pill { grid-column: 1; }
+  .user-chat { margin-left: 30px; }
+  .code-window pre { font-size: 10px; padding: 20px; min-height: 270px; }
+  .endpoint-bar { grid-template-columns: auto 1fr; }
+  .endpoint-bar button { grid-column: 1 / 3; }
+  .decision-metrics { grid-template-columns: 1fr; }
+  .decision-metrics div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .decision-metrics div:last-child { border-bottom: 0; }
+  .decision-actions { flex-direction: column; }
+  .solution-tabs { grid-template-columns: 1fr; }
+  .solution-content { padding: 20px; }
+  .audit-wrap { padding: 28px 20px; }
+  .audit-metrics .result-main { display: grid; gap: 8px; }
+  .footer-links { grid-template-columns: 1fr 1fr; }
+  .footer-bottom { flex-direction: column; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; transition-delay: 0ms !important; }
+  .reveal { opacity: 1; transform: none; }
+  .economic-line { opacity: 1; transform: none; }
+}
+
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="announcement">
+    <div class="shell announcement-inner">
+      <span class="announcement-badge">PRIZESKOUT × ZID</span>
+      <span>Merchant onboarding underway.</span>
+      <a href="#audit">Join early access <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+
+  <header class="site-header" id="top">
+    <div class="shell nav-wrap">
+      <a class="brand" href="#top" aria-label="PrizeSkout home">
+        <span class="brand-prize">Prize</span>
+        <img src="data:image/png;base64,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" alt="skout" class="brand-skout" />
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#platform">Platform</a>
+        <a href="#intelligence">Intelligence</a>
+        <a href="#api">API</a>
+        <a href="#solutions">Solutions</a>
+        <a href="#audit">Profit Audit</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="text-link hide-mobile" href="/auth" aria-label="PrizeSkout sign in">Sign in</a>
+        <a class="button button-dark button-sm" href="#audit">Book a Profit Audit</a>
+        <button class="menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav id="mobile-menu" class="mobile-menu shell" aria-label="Mobile navigation">
+      <a href="#platform">Platform</a>
+      <a href="#intelligence">Intelligence</a>
+      <a href="#api">API</a>
+      <a href="#solutions">Solutions</a>
+      <a href="#audit">Profit Audit</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero section-pad">
+      <div class="shell hero-grid">
+        <div class="hero-copy reveal">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> PROFIT INTELLIGENCE INFRASTRUCTURE</div>
+          <h1>Know what every order <span class="accent">actually earns.</span></h1>
+          <p class="hero-sub">
+            PrizeSkout connects your POS, ERP, delivery channels and payouts to calculate
+            <strong>true contribution profit</strong>, reconcile settlements and detect margin leakage—order by order.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#audit">Book a Profit Audit <span aria-hidden="true">→</span></a>
+            <a class="button button-ghost" href="#api">Explore the API</a>
+          </div>
+          <div class="micro-trust" aria-label="Key product attributes">
+            <span><i class="check">✓</i> No rip-and-replace</span>
+            <span><i class="check">✓</i> API-first</span>
+            <span><i class="check">✓</i> Merchant-controlled</span>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal delay-1" aria-label="Illustrative true-profit calculation">
+          <div class="signal-card">
+            <div class="signal-head">
+              <div>
+                <div class="mono-label">ORDER ECONOMIC TWIN</div>
+                <div class="signal-title">Order #8745123</div>
+              </div>
+              <div class="status-pill"><span class="status-dot"></span> Reconciled</div>
+            </div>
+
+            <div class="order-total">
+              <span>Customer paid</span>
+              <strong>QAR 72.00</strong>
+            </div>
+
+            <div class="economic-lines" id="economic-lines">
+              <div class="economic-line">
+                <div><span class="line-icon">↳</span> Platform commission</div>
+                <strong>− QAR 15.84</strong>
+              </div>
+              <div class="economic-line">
+                <div><span class="line-icon">↳</span> Promotion share</div>
+                <strong>− QAR 5.40</strong>
+              </div>
+              <div class="economic-line">
+                <div><span class="line-icon">↳</span> Payment fees</div>
+                <strong>− QAR 1.82</strong>
+              </div>
+              <div class="economic-line">
+                <div><span class="line-icon">↳</span> Food + packaging</div>
+                <strong>− QAR 22.60</strong>
+              </div>
+              <div class="economic-line warning-line">
+                <div><span class="line-icon">!</span> Payout variance</div>
+                <strong>− QAR 2.10</strong>
+              </div>
+            </div>
+
+            <div class="true-profit">
+              <div>
+                <span class="mono-label">TRUE CONTRIBUTION</span>
+                <strong>QAR 24.24</strong>
+              </div>
+              <div class="margin-meter">
+                <span>33.7%</span>
+                <div class="meter"><i></i></div>
+              </div>
+            </div>
+
+            <div class="leak-alert">
+              <span class="alert-icon">!</span>
+              <div>
+                <strong>QAR 2.10 margin leakage detected</strong>
+                <span>Settlement is below the expected economic model.</span>
+              </div>
+              <button class="inline-action" type="button" data-toast="Evidence pack prepared">Review</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shell proof-sentence reveal delay-2">
+        <span>Your POS knows the sale.</span>
+        <span>Your platform knows the order.</span>
+        <span>Your ERP knows the accounting.</span>
+        <strong>PrizeSkout knows the profit.</strong>
+      </div>
+    </section>
+
+    <section class="credibility">
+      <div class="shell credibility-grid">
+        <div><span class="cred-icon">◎</span><strong>QFC-LICENSED</strong><small>Doha, Qatar</small></div>
+        <div><span class="cred-icon">↔</span><strong>API-FIRST</strong><small>Built around your stack</small></div>
+        <div><span class="cred-icon">⌁</span><strong>ZID PARTNER</strong><small>Merchant onboarding underway</small></div>
+        <div><span class="cred-icon">✓</span><strong>MERCHANT-CONTROLLED</strong><small>Actions stay inside your rules</small></div>
+      </div>
+    </section>
+
+    <section id="platform" class="section-pad platform-section">
+      <div class="shell">
+        <div class="section-heading split-heading reveal">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> ONE ECONOMIC TRUTH</div>
+            <h2>Your systems see transactions.<br><span class="accent">PrizeSkout sees the economics.</span></h2>
+          </div>
+          <p>Keep the systems you already use. PrizeSkout normalizes fragmented commerce data into one trusted profit layer.</p>
+        </div>
+
+        <div class="stack-map reveal">
+          <div class="stack-column sources">
+            <div class="stack-kicker">INPUTS</div>
+            <div class="source-chip"><span>POS</span><b>Sales + COGS</b></div>
+            <div class="source-chip"><span>ERP</span><b>Finance + inventory</b></div>
+            <div class="source-chip"><span>DELIVERY</span><b>Orders + promos</b></div>
+            <div class="source-chip"><span>PAYOUTS</span><b>Fees + settlements</b></div>
+          </div>
+
+          <div class="flow-lines" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </div>
+
+          <div class="engine">
+            <div class="engine-top">
+              <div class="engine-mark">P</div>
+              <div><span class="mono-label light">PRIZESKOUT</span><strong>Profit Intelligence Engine</strong></div>
+            </div>
+            <div class="engine-pipeline">
+              <div><span>01</span><b>Normalize</b><small>One commerce model</small></div>
+              <div><span>02</span><b>Reconcile</b><small>Expected vs actual</small></div>
+              <div><span>03</span><b>Model</b><small>True contribution</small></div>
+              <div><span>04</span><b>Decide</b><small>Recommended action</small></div>
+            </div>
+          </div>
+
+          <div class="flow-lines outbound" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </div>
+
+          <div class="stack-column outcomes">
+            <div class="stack-kicker">OUTPUTS</div>
+            <div class="source-chip outcome"><span>PROFIT</span><b>True contribution</b></div>
+            <div class="source-chip outcome"><span>LEAKAGE</span><b>Margin at risk</b></div>
+            <div class="source-chip outcome"><span>PAYOUT</span><b>Variance detected</b></div>
+            <div class="source-chip outcome"><span>ACTION</span><b>What to do next</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="intelligence" class="section-pad intelligence-section">
+      <div class="shell">
+        <div class="section-heading center-heading reveal">
+          <div class="eyebrow center"><span class="eyebrow-dot"></span> FOUR COMMERCIAL OUTCOMES</div>
+          <h2>Less dashboard. <span class="accent">More decision.</span></h2>
+          <p>Every signal should answer a financial question—and make the next action obvious.</p>
+        </div>
+
+        <div class="bento">
+          <article class="bento-card large-card dark-card reveal">
+            <div class="card-index">01</div>
+            <div>
+              <div class="card-label">TRUE PROFIT INTELLIGENCE</div>
+              <h3>Know the real margin.</h3>
+              <p>See what every order, SKU, branch, brand and channel earns after fees, discounts, COGS and adjustments.</p>
+            </div>
+            <div class="profit-mini">
+              <div class="profit-row"><span>GMV</span><b>QAR 1.84M</b></div>
+              <div class="profit-row"><span>Platform costs</span><b>− QAR 402K</b></div>
+              <div class="profit-row"><span>Promotions</span><b>− QAR 126K</b></div>
+              <div class="profit-row"><span>COGS</span><b>− QAR 517K</b></div>
+              <div class="profit-row total"><span>True contribution</span><b>QAR 795K</b></div>
+            </div>
+          </article>
+
+          <article class="bento-card reveal delay-1">
+            <div class="card-index">02</div>
+            <div class="card-label">SETTLEMENT INTELLIGENCE</div>
+            <h3>Find money that went missing.</h3>
+            <p>Match expected payouts to actual settlements and surface unexplained deductions automatically.</p>
+            <div class="variance-card">
+              <div><span>Expected</span><b>QAR 84,920</b></div>
+              <div><span>Received</span><b>QAR 82,410</b></div>
+              <div class="variance-result"><span>Requires review</span><b>QAR 2,510</b></div>
+            </div>
+          </article>
+
+          <article class="bento-card reveal">
+            <div class="card-index">03</div>
+            <div class="card-label">PROMOTION INTELLIGENCE</div>
+            <h3>Know before you discount.</h3>
+            <p>Simulate a campaign before order growth turns into margin dilution.</p>
+            <div class="promo-compare">
+              <div><small>ORDERS</small><strong>+24%</strong></div>
+              <div class="bad"><small>PROFIT</small><strong>−7%</strong></div>
+              <span class="recommend-pill">Recommendation · Reprice</span>
+            </div>
+          </article>
+
+          <article class="bento-card large-card light-accent reveal delay-1">
+            <div class="card-index">04</div>
+            <div>
+              <div class="card-label">AI PROFIT COPILOT</div>
+              <h3>Ask the business. Get an evidence-backed answer.</h3>
+              <p>Turn connected order, payout and cost data into finance-ready explanations—not generic AI output.</p>
+            </div>
+            <div class="copilot">
+              <div class="chat user-chat">Why did Talabat margin fall last week?</div>
+              <div class="chat ai-chat">
+                <span class="ai-dot">P</span>
+                <div>
+                  <strong>3 drivers found.</strong>
+                  <p>Promotion spend caused 61% of the decline. Two branches also show abnormal payout adjustments.</p>
+                  <button type="button" data-toast="Evidence view opened">View evidence →</button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="api" class="section-pad api-section">
+      <div class="shell api-grid">
+        <div class="api-copy reveal">
+          <div class="eyebrow light"><span class="eyebrow-dot"></span> BUILT AS INFRASTRUCTURE</div>
+          <h2>Use the intelligence <span class="accent">anywhere.</span></h2>
+          <p>PrizeSkout is API-first. Consume profit, settlement and margin signals inside your ERP, BI, finance workflow—or use the PrizeSkout Control Room.</p>
+          <div class="api-benefits">
+            <span>One canonical commerce model</span>
+            <span>Embedded intelligence</span>
+            <span>Enterprise-ready webhooks</span>
+          </div>
+          <a href="#audit" class="button button-white">Talk to us about the API <span aria-hidden="true">→</span></a>
+        </div>
+
+        <div class="code-window reveal delay-1">
+          <div class="code-top">
+            <div class="code-dots"><i></i><i></i><i></i></div>
+            <div class="api-tabs" role="tablist" aria-label="API response examples">
+              <button class="api-tab active" role="tab" aria-selected="true" data-api="profit">profit</button>
+              <button class="api-tab" role="tab" aria-selected="false" data-api="settlement">settlement</button>
+              <button class="api-tab" role="tab" aria-selected="false" data-api="recommendation">action</button>
+            </div>
+          </div>
+          <pre id="api-code" aria-live="polite"><code>{
+  <span class="code-key">"order_id"</span>: <span class="code-string">"8745123"</span>,
+  <span class="code-key">"channel"</span>: <span class="code-string">"talabat"</span>,
+  <span class="code-key">"gross_value"</span>: <span class="code-num">72.00</span>,
+  <span class="code-key">"true_contribution"</span>: <span class="code-num">24.24</span>,
+  <span class="code-key">"margin_pct"</span>: <span class="code-num">33.7</span>,
+  <span class="code-key">"confidence"</span>: <span class="code-num">0.98</span>
+}</code></pre>
+          <div class="endpoint-bar">
+            <span>GET</span>
+            <code>/v1/profit/orders/8745123</code>
+            <button type="button" data-copy="/v1/profit/orders/8745123">Copy</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-pad margin-defense">
+      <div class="shell">
+        <div class="section-heading split-heading reveal">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-dot"></span> MARGIN DEFENCE</div>
+            <h2>Don't just find the problem.<br><span class="accent">Know what to do next.</span></h2>
+          </div>
+          <p>PrizeSkout detects risk, models impact and prepares the next best action. Your team decides what gets approved.</p>
+        </div>
+
+        <div class="defense-track reveal">
+          <div class="defense-step active">
+            <span>01</span><strong>Detect</strong><small>Margin at risk</small>
+          </div>
+          <i>→</i>
+          <div class="defense-step">
+            <span>02</span><strong>Predict</strong><small>Impact calculated</small>
+          </div>
+          <i>→</i>
+          <div class="defense-step">
+            <span>03</span><strong>Recommend</strong><small>Best action found</small>
+          </div>
+          <i>→</i>
+          <div class="defense-step">
+            <span>04</span><strong>Approve</strong><small>You stay in control</small>
+          </div>
+          <i>→</i>
+          <div class="defense-step">
+            <span>05</span><strong>Verify</strong><small>Outcome recorded</small>
+          </div>
+        </div>
+
+        <div class="decision-panel reveal">
+          <div class="decision-signal">
+            <div class="risk-symbol">!</div>
+            <div>
+              <span class="mono-label">ACTIVE DECISION</span>
+              <h3>Weekend promotion drops Branch 03 below the 18% margin floor.</h3>
+            </div>
+          </div>
+          <div class="decision-metrics">
+            <div><span>Projected orders</span><b>+19.4%</b></div>
+            <div><span>Contribution margin</span><b class="danger">−6.1%</b></div>
+            <div><span>Recommended action</span><b>Reduce merchant share</b></div>
+          </div>
+          <div class="decision-actions">
+            <button type="button" class="button button-ghost" data-toast="Scenario opened">Review scenario</button>
+            <button type="button" class="button button-primary" data-toast="Recommendation approved">Approve recommendation</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="solutions" class="section-pad solutions-section">
+      <div class="shell">
+        <div class="section-heading center-heading reveal">
+          <div class="eyebrow center"><span class="eyebrow-dot"></span> PURPOSE-BUILT FOR PLATFORM COMMERCE</div>
+          <h2>One engine. <span class="accent">Different economic questions.</span></h2>
+        </div>
+
+        <div class="solution-tabs reveal" role="tablist" aria-label="PrizeSkout solutions">
+          <button class="solution-tab active" data-solution="restaurant" role="tab" aria-selected="true">Restaurant groups</button>
+          <button class="solution-tab" data-solution="kitchen" role="tab" aria-selected="false">Cloud kitchens</button>
+          <button class="solution-tab" data-solution="merchant" role="tab" aria-selected="false">Commerce merchants</button>
+          <button class="solution-tab" data-solution="platform" role="tab" aria-selected="false">Platforms & ERP</button>
+        </div>
+
+        <div class="solution-content reveal">
+          <div>
+            <span class="mono-label" id="solution-kicker">RESTAURANT GROUPS</span>
+            <h3 id="solution-title">See profit across every brand, branch and delivery channel.</h3>
+            <p id="solution-copy">Model item-level contribution after commission, promotions, COGS, refunds and settlements—without replacing your POS or ERP.</p>
+            <ul id="solution-list">
+              <li>Branch × platform profitability</li>
+              <li>Settlement and commission audit</li>
+              <li>Menu and promotion economics</li>
+            </ul>
+          </div>
+          <div class="solution-visual" id="solution-visual">
+            <div class="heat-head">
+              <span>BRANCH PROFITABILITY</span><strong>LAST 30 DAYS</strong>
+            </div>
+            <div class="heat-row"><span>Branch 01</span><b>18.7%</b><i style="--w:86%"></i></div>
+            <div class="heat-row"><span>Branch 02</span><b>14.2%</b><i style="--w:68%"></i></div>
+            <div class="heat-row flagged"><span>Branch 03</span><b>6.9%</b><i style="--w:34%"></i></div>
+            <div class="heat-row"><span>Branch 04</span><b>16.4%</b><i style="--w:77%"></i></div>
+            <div class="heat-note"><span>!</span> Branch 03 requires review · Promo intensity +6.3%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="audit" class="section-pad audit-section">
+      <div class="shell audit-wrap reveal">
+        <div class="audit-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> START WITH YOUR OWN DATA</div>
+          <h2>Give us 30 days.<br><span class="accent">We'll show you where the margin went.</span></h2>
+          <p>Start with one brand, one branch and one delivery channel. No system replacement required.</p>
+          <div class="audit-inputs">
+            <span>Orders</span><span>Payouts</span><span>Fees</span><span>Promotions</span><span>COGS</span>
+          </div>
+        </div>
+
+        <div class="audit-result">
+          <div class="result-head">
+            <div><span class="mono-label">DELIVERY PROFIT AUDIT</span><strong>Illustrative output</strong></div>
+            <span class="status-pill"><span class="status-dot"></span> 30 days</span>
+          </div>
+          <div class="audit-metrics">
+            <div><span>Delivery sales</span><strong>QAR 418,500</strong></div>
+            <div><span>Platform + promo costs</span><strong>QAR 104,010</strong></div>
+            <div><span>Settlement variance</span><strong class="orange">QAR 3,900</strong></div>
+            <div class="result-main"><span>Recoverable / protectable margin</span><strong>QAR 17,840</strong></div>
+          </div>
+          <a class="button button-primary full-button" href="mailto:Adekunle@prizeskout.com?subject=PrizeSkout%2030-Day%20Profit%20Audit">Run my Profit Audit <span aria-hidden="true">→</span></a>
+          <p class="audit-foot">One branch. 30 days of data. Clear actions.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-pad faq-section">
+      <div class="shell faq-grid">
+        <div class="reveal">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> QUICK ANSWERS</div>
+          <h2>Built to fit your stack—not replace it.</h2>
+        </div>
+        <div class="faq-list reveal delay-1">
+          <details open>
+            <summary>Is PrizeSkout another restaurant dashboard?</summary>
+            <p>No. The dashboard is the control surface. The core product is a profit-intelligence layer that reconciles commerce data and exposes it through APIs, embedded workflows and the PrizeSkout Control Room.</p>
+          </details>
+          <details>
+            <summary>Do we need an API integration to start?</summary>
+            <p>No. A pilot can begin with CSV or exported order, payout and cost data. Once value is proven, the workflow can be automated through supported APIs and connectors.</p>
+          </details>
+          <details>
+            <summary>Will PrizeSkout replace our POS or ERP?</summary>
+            <p>No. PrizeSkout is designed to sit between systems such as POS, ERP, delivery platforms and payout records so finance and operations can see one economic truth.</p>
+          </details>
+          <details>
+            <summary>Does PrizeSkout change prices automatically?</summary>
+            <p>Not unless your team enables that behavior. Recommendations can remain approval-only and every action stays within merchant-defined floors, permissions and thresholds.</p>
+          </details>
+          <details>
+            <summary>What can we measure?</summary>
+            <p>True contribution profit, effective commission, promotion cost, settlement variance, margin leakage, channel economics and recommended corrective actions.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <div class="shell final-card reveal">
+        <div class="eyebrow light"><span class="eyebrow-dot"></span> PROFIT IS THE SIGNAL</div>
+        <h2>Revenue tells you what you sold.<br><span>PrizeSkout tells you what you kept.</span></h2>
+        <p>Connect your commerce stack and turn fragmented transaction data into one trusted profit layer.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#audit">Book a Profit Audit <span aria-hidden="true">→</span></a>
+          <a class="button button-outline-light" href="#api">Explore the API</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-top">
+      <div class="footer-brand">
+        <a class="brand brand-footer" href="#top">
+          <span class="brand-prize">Prize</span>
+          <img src="data:image/png;base64,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" alt="skout" class="brand-skout" />
+        </a>
+        <p>Profit Intelligence Infrastructure for Digital Commerce.</p>
+      </div>
+      <div class="footer-links">
+        <div><strong>Platform</strong><a href="#intelligence">True Profit</a><a href="#intelligence">Settlement Intelligence</a><a href="#api">API</a></div>
+        <div><strong>Solutions</strong><a href="#solutions">Restaurant Groups</a><a href="#solutions">Cloud Kitchens</a><a href="#solutions">Commerce Merchants</a></div>
+        <div><strong>Company</strong><a href="/">About</a><a href="mailto:Adekunle@prizeskout.com">Contact</a><a href="#audit">Profit Audit</a></div>
+      </div>
+    </div>
+    <div class="shell footer-bottom">
+      <span>© 2026 PrizeSkout · Doha, Qatar</span>
+      <span>Merchant-controlled · API-first</span>
+    </div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <script>
+const qs = (s, el = document) => el.querySelector(s);
+const qsa = (s, el = document) => [...el.querySelectorAll(s)];
+
+const menuBtn = qs('.menu-button');
+const mobileMenu = qs('#mobile-menu');
+if (menuBtn) {
+  menuBtn.addEventListener('click', () => {
+    const open = mobileMenu.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', String(open));
+  });
+}
+qsa('#mobile-menu a').forEach(a => a.addEventListener('click', () => {
+  mobileMenu.classList.remove('open');
+  menuBtn?.setAttribute('aria-expanded', 'false');
+}));
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: .13 });
+qsa('.reveal').forEach(el => observer.observe(el));
+
+const economicLines = qsa('.economic-line');
+economicLines.forEach((el, i) => setTimeout(() => el.classList.add('visible'), 520 + i * 170));
+
+const toast = qs('.toast');
+let toastTimer;
+function showToast(message) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add('show');
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+qsa('[data-toast]').forEach(btn => btn.addEventListener('click', () => showToast(btn.dataset.toast)));
+
+qsa('[data-copy]').forEach(btn => btn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(btn.dataset.copy);
+    showToast('Endpoint copied');
+  } catch {
+    showToast(btn.dataset.copy);
+  }
+}));
+
+const apiExamples = {
+  profit: {
+    endpoint: '/v1/profit/orders/8745123',
+    html: `{
+  <span class="code-key">"order_id"</span>: <span class="code-string">"8745123"</span>,
+  <span class="code-key">"channel"</span>: <span class="code-string">"talabat"</span>,
+  <span class="code-key">"gross_value"</span>: <span class="code-num">72.00</span>,
+  <span class="code-key">"true_contribution"</span>: <span class="code-num">24.24</span>,
+  <span class="code-key">"margin_pct"</span>: <span class="code-num">33.7</span>,
+  <span class="code-key">"confidence"</span>: <span class="code-num">0.98</span>
+}`
+  },
+  settlement: {
+    endpoint: '/v1/settlements/variance?status=open',
+    html: `{
+  <span class="code-key">"settlement_id"</span>: <span class="code-string">"STL-22081"</span>,
+  <span class="code-key">"expected"</span>: <span class="code-num">84920.00</span>,
+  <span class="code-key">"received"</span>: <span class="code-num">82410.00</span>,
+  <span class="code-key">"variance"</span>: <span class="code-num">2510.00</span>,
+  <span class="code-key">"status"</span>: <span class="code-string">"requires_review"</span>,
+  <span class="code-key">"evidence_ready"</span>: <span class="code-string">true</span>
+}`
+  },
+  recommendation: {
+    endpoint: '/v1/recommendations?priority=high',
+    html: `{
+  <span class="code-key">"signal"</span>: <span class="code-string">"promo_margin_risk"</span>,
+  <span class="code-key">"branch"</span>: <span class="code-string">"BR-03"</span>,
+  <span class="code-key">"current_margin"</span>: <span class="code-num">11.9</span>,
+  <span class="code-key">"target_margin"</span>: <span class="code-num">18.0</span>,
+  <span class="code-key">"action"</span>: <span class="code-string">"reduce_merchant_share"</span>,
+  <span class="code-key">"approval_required"</span>: <span class="code-string">true</span>
+}`
+  }
+};
+
+qsa('.api-tab').forEach(tab => tab.addEventListener('click', () => {
+  qsa('.api-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+  tab.classList.add('active'); tab.setAttribute('aria-selected', 'true');
+  const current = apiExamples[tab.dataset.api];
+  qs('#api-code code').innerHTML = current.html;
+  const barCode = qs('.endpoint-bar code');
+  const copy = qs('.endpoint-bar button');
+  barCode.textContent = current.endpoint;
+  copy.dataset.copy = current.endpoint;
+}));
+
+const solutions = {
+  restaurant: {
+    kicker: 'RESTAURANT GROUPS',
+    title: 'See profit across every brand, branch and delivery channel.',
+    copy: 'Model item-level contribution after commission, promotions, COGS, refunds and settlements—without replacing your POS or ERP.',
+    items: ['Branch × platform profitability','Settlement and commission audit','Menu and promotion economics'],
+    label: 'BRANCH PROFITABILITY',
+    rows: [['Branch 01','18.7%',86],['Branch 02','14.2%',68],['Branch 03','6.9%',34],['Branch 04','16.4%',77]],
+    note: 'Branch 03 requires review · Promo intensity +6.3%'
+  },
+  kitchen: {
+    kicker: 'CLOUD KITCHENS',
+    title: 'Know which virtual brands create profit—not just orders.',
+    copy: 'Compare brand, kitchen and aggregator economics in one model so you can scale winners, reprice weak concepts and stop subsidising unprofitable growth.',
+    items: ['Virtual brand contribution','Kitchen × channel performance','Scale / reprice / pause decisions'],
+    label: 'VIRTUAL BRAND PROFITABILITY',
+    rows: [['Brand Alpha','21.4%',86],['Brand Beta','9.8%',42],['Brand Gamma','24.7%',94],['Brand Delta','14.3%',63]],
+    note: 'Brand Beta requires review · Promo spend +8.1%'
+  },
+  merchant: {
+    kicker: 'COMMERCE MERCHANTS',
+    title: 'Know the profit behind every cart.',
+    copy: 'Connect product cost, pricing, promotions, orders and payouts. See which SKUs create contribution and which discounts or fees quietly dilute it.',
+    items: ['SKU × channel true profit','Promotion and coupon economics','Payout and fee verification'],
+    label: 'SKU CONTRIBUTION',
+    rows: [['SKU-0148','22.1%',90],['SKU-2281','16.2%',72],['SKU-3099','7.4%',36],['SKU-4180','19.3%',81]],
+    note: 'SKU-3099 below target · Shipping subsidy +4.2%'
+  },
+  platform: {
+    kicker: 'PLATFORMS & ERP',
+    title: 'Embed profit intelligence into the systems merchants already use.',
+    copy: 'Use PrizeSkout APIs to expose normalized order economics, settlement variance and recommended actions inside your own product experience.',
+    items: ['Canonical commerce model','Profit and settlement APIs','Embedded signals + webhooks'],
+    label: 'API SIGNAL COVERAGE',
+    rows: [['Profit API','99.8%',96],['Settlement API','98.7%',91],['Action API','96.4%',87],['Webhook delivery','99.9%',98]],
+    note: 'Illustrative API health view'
+  }
+};
+
+function renderSolution(key) {
+  const s = solutions[key];
+  qs('#solution-kicker').textContent = s.kicker;
+  qs('#solution-title').textContent = s.title;
+  qs('#solution-copy').textContent = s.copy;
+  qs('#solution-list').innerHTML = s.items.map(x => `<li>${x}</li>`).join('');
+  qs('#solution-visual').innerHTML = `
+    <div class="heat-head"><span>${s.label}</span><strong>LAST 30 DAYS</strong></div>
+    ${s.rows.map((r,i) => `<div class="heat-row ${i===2?'flagged':''}"><span>${r[0]}</span><b>${r[1]}</b><i style="--w:${r[2]}%"></i></div>`).join('')}
+    <div class="heat-note"><span>!</span> ${s.note}</div>`;
+}
+qsa('.solution-tab').forEach(tab => tab.addEventListener('click', () => {
+  qsa('.solution-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+  renderSolution(tab.dataset.solution);
+}));
+
+const defenseSteps = qsa('.defense-step');
+let defenseIndex = 0;
+setInterval(() => {
+  defenseSteps.forEach(s => s.classList.remove('active'));
+  defenseIndex = (defenseIndex + 1) % defenseSteps.length;
+  defenseSteps[defenseIndex]?.classList.add('active');
+}, 1900);
+
+</script>
+</body>
+</html>
