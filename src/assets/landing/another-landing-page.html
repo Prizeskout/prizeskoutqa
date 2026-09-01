@@ -102,6 +102,7 @@ img { max-width: 100%; display: block; }
 }
 .nav-utility-trigger:hover,.nav-utility-trigger[aria-expanded="true"] { border-color:#c9ced7; background:#fafafa; }
 .nav-utility-trigger svg { width:13px; height:13px; color:var(--orange); flex:none; }
+.nav-market-flag { width:20px; height:14px; flex:0 0 20px; object-fit:cover; border:1px solid #e1e4e9; border-radius:3px; }
 .nav-utility-trigger .utility-chevron { width:10px; color:#7c8799; transition:transform .18s ease; }
 .nav-utility-trigger[aria-expanded="true"] .utility-chevron { transform:rotate(180deg); }
 .nav-utility-menu {
@@ -118,6 +119,7 @@ img { max-width: 100%; display: block; }
 }
 .nav-utility-option:hover,.nav-utility-option:focus-visible { background:#f7f8fa; }
 .nav-utility-option[aria-selected="true"] { color:var(--ink); font-weight:700; background:#fff5ef; }
+.nav-utility-option .market-option-flag { width:28px; height:20px; flex:0 0 28px; object-fit:cover; border:1px solid #e1e4e9; border-radius:4px; }
 .utility-code { min-width:34px; color:var(--orange); font-size:10px; font-weight:800; letter-spacing:.04em; }
 .utility-check { margin-left:auto; color:var(--orange); opacity:0; }
 .nav-utility-option[aria-selected="true"] .utility-check { opacity:1; }
@@ -2814,18 +2816,18 @@ section[id],.margin-defense,.faq-section { scroll-margin-top:96px; }
         <div class="nav-utilities" aria-label="Region and language preferences">
           <div class="nav-utility" data-market-picker>
             <button class="nav-utility-trigger" type="button" aria-expanded="false" aria-haspopup="listbox" aria-label="Select country and currency">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              <img class="nav-market-flag" data-market-flag src="/country-flags/qa.svg" alt="" aria-hidden="true">
               <span data-market-label>QA</span>
               <svg class="utility-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
             </button>
             <div class="nav-utility-menu" role="listbox" aria-label="Country and currency">
               <span class="utility-menu-label">MARKET / CURRENCY</span>
-              <button class="nav-utility-option" type="button" role="option" data-market="QA" aria-selected="true"><span class="utility-code">QAR</span>Qatar<span class="utility-check">✓</span></button>
-              <button class="nav-utility-option" type="button" role="option" data-market="SA" aria-selected="false"><span class="utility-code">SAR</span>Saudi Arabia<span class="utility-check">✓</span></button>
-              <button class="nav-utility-option" type="button" role="option" data-market="AE" aria-selected="false"><span class="utility-code">AED</span>United Arab Emirates<span class="utility-check">✓</span></button>
-              <button class="nav-utility-option" type="button" role="option" data-market="OM" aria-selected="false"><span class="utility-code">OMR</span>Oman<span class="utility-check">✓</span></button>
-              <button class="nav-utility-option" type="button" role="option" data-market="KW" aria-selected="false"><span class="utility-code">KWD</span>Kuwait<span class="utility-check">✓</span></button>
-              <button class="nav-utility-option" type="button" role="option" data-market="BH" aria-selected="false"><span class="utility-code">BHD</span>Bahrain<span class="utility-check">✓</span></button>
+              <button class="nav-utility-option" type="button" role="option" data-market="QA" aria-selected="true"><img class="market-option-flag" src="/country-flags/qa.svg" alt="" aria-hidden="true"><span class="utility-code">QAR</span>Qatar<span class="utility-check">✓</span></button>
+              <button class="nav-utility-option" type="button" role="option" data-market="SA" aria-selected="false"><img class="market-option-flag" src="/country-flags/sa.svg" alt="" aria-hidden="true"><span class="utility-code">SAR</span>Saudi Arabia<span class="utility-check">✓</span></button>
+              <button class="nav-utility-option" type="button" role="option" data-market="AE" aria-selected="false"><img class="market-option-flag" src="/country-flags/ae.svg" alt="" aria-hidden="true"><span class="utility-code">AED</span>United Arab Emirates<span class="utility-check">✓</span></button>
+              <button class="nav-utility-option" type="button" role="option" data-market="OM" aria-selected="false"><img class="market-option-flag" src="/country-flags/om.svg" alt="" aria-hidden="true"><span class="utility-code">OMR</span>Oman<span class="utility-check">✓</span></button>
+              <button class="nav-utility-option" type="button" role="option" data-market="KW" aria-selected="false"><img class="market-option-flag" src="/country-flags/kw.svg" alt="" aria-hidden="true"><span class="utility-code">KWD</span>Kuwait<span class="utility-check">✓</span></button>
+              <button class="nav-utility-option" type="button" role="option" data-market="BH" aria-selected="false"><img class="market-option-flag" src="/country-flags/bh.svg" alt="" aria-hidden="true"><span class="utility-code">BHD</span>Bahrain<span class="utility-check">✓</span></button>
             </div>
           </div>
           <div class="nav-utility" data-language-picker>
@@ -3309,6 +3311,7 @@ function applyMarket(code, persist=true) {
     node.nodeValue = original.replace(/QAR\s*([0-9][0-9,.]*)([KM])?/g,(_,raw,suffix='') => `${market.currency} ${formatMarketValue(raw,suffix,market)}`);
   });
   qsa('[data-market-label]').forEach(label => { label.textContent = market.code; });
+  qsa('[data-market-flag]').forEach(flag => { flag.src = `/country-flags/${market.code.toLowerCase()}.svg`; });
   qsa('[data-market]').forEach(option => option.setAttribute('aria-selected',String(option.dataset.market === market.code)));
   if (persist) localStorage.setItem('ps-market',market.code);
 }
