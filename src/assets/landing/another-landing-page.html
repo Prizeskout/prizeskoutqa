@@ -1641,7 +1641,10 @@ footer {
 .audit-wrap { max-width: 1080px; }
 
 .faq-section { min-height: 680px; display: flex; align-items: center; }
-.faq-grid { width: 100%; }
+.faq-grid {
+  width: min(calc(100% - 48px), var(--shell));
+  margin-inline: auto;
+}
 
 @media (max-width: 1040px) {
   .intelligence-section .bento { grid-template-columns: 1fr 1fr; }
@@ -1655,6 +1658,7 @@ footer {
 }
 
 @media (max-width: 820px) {
+  .faq-grid { width: min(calc(100% - 32px), var(--shell)); }
   .intelligence-section .bento { grid-template-columns: 1fr; }
   .intelligence-section .bento-card:nth-child(4) { grid-column: 1; grid-template-columns: 1fr; gap: 34px; }
   .solution-content { grid-template-columns: 1fr; }
