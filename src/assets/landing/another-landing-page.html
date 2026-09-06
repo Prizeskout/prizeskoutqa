@@ -2784,6 +2784,16 @@ section[id],.margin-defense,.faq-section { scroll-margin-top:96px; }
     overflow-wrap:anywhere;
   }
 }
+/* Profit-audit conversion dialog */
+.audit-dialog{width:min(760px,calc(100% - 32px));max-height:min(880px,calc(100dvh - 32px));padding:0;border:0;border-radius:24px;background:#fff;color:#11182c;box-shadow:0 32px 100px rgba(9,17,40,.3);overflow:auto}
+.audit-dialog::backdrop{background:rgba(8,14,31,.68);backdrop-filter:blur(8px)}
+.audit-dialog-shell{position:relative;padding:38px}.audit-dialog-close{position:absolute;inset-block-start:20px;inset-inline-end:20px;width:44px;height:44px;display:grid;place-items:center;border:1px solid #dfe4ec;border-radius:50%;background:#fff;color:#28344f;font-size:25px;line-height:1;cursor:pointer}.audit-dialog-close:hover{background:#f5f7fb}.audit-dialog-close:focus-visible,.audit-form :focus-visible{outline:3px solid rgba(116,92,255,.34);outline-offset:2px}
+.audit-dialog-header{max-width:620px;padding-inline-end:44px}.audit-dialog-header .eyebrow{margin-bottom:13px}.audit-dialog-header h2{margin:0;font-size:clamp(30px,5vw,48px);line-height:1.02;letter-spacing:-.045em}.audit-dialog-header p{margin:14px 0 0;color:#5f6b82;font-size:15px;line-height:1.65}
+.audit-form{margin-top:28px}.audit-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.audit-field{display:grid;gap:7px}.audit-field-wide{grid-column:1/-1}.audit-field label{color:#26324c;font-size:13px;font-weight:750}.audit-field label>span{color:#745cff}.audit-field input,.audit-field select,.audit-field textarea{width:100%;min-height:48px;padding:12px 14px;border:1px solid #cfd6e2;border-radius:11px;background:#fff;color:#10182d;font:inherit;font-size:16px;box-sizing:border-box}.audit-field textarea{min-height:104px;resize:vertical;line-height:1.5}.audit-field input::placeholder,.audit-field textarea::placeholder{color:#8a95a8}.audit-field small{color:#6d788d;font-size:11px;line-height:1.45}.audit-field-error{min-height:16px;color:#b42318!important;font-weight:650}.audit-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+.audit-consent{display:flex;align-items:flex-start;gap:10px;margin:20px 0;color:#606b80;font-size:12px;line-height:1.5}.audit-consent input{width:18px;height:18px;flex:0 0 auto;margin-top:1px;accent-color:#745cff}.audit-consent a{color:#4f3bd7}.audit-submit{width:100%;min-height:52px}.audit-submit[disabled]{opacity:.58;cursor:wait}.audit-form-status{margin:13px 0 0;min-height:20px;color:#b42318;font-size:13px;font-weight:650;text-align:center}
+.audit-success{display:none;min-height:460px;padding:40px 10px;place-items:center;text-align:center}.audit-success.is-visible{display:grid}.audit-success-mark{width:72px;height:72px;display:grid;place-items:center;margin:0 auto 24px;border-radius:50%;background:#eaf8f2;color:#148a59;font-size:34px;font-weight:800}.audit-success h2{margin:0;font-size:clamp(31px,5vw,48px);letter-spacing:-.04em}.audit-success p{max-width:520px;margin:14px auto;color:#5f6b82;line-height:1.65}.audit-success-next{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0}.audit-success-next span{padding:14px;border:1px solid #e2e6ed;border-radius:12px;color:#37435d;font-size:12px;font-weight:700}.audit-success button{min-height:46px;border:0;background:transparent;color:#4f3bd7;font:inherit;font-weight:750;cursor:pointer}html[dir=rtl] .audit-dialog{text-align:right}html[dir=rtl] .audit-dialog-header{padding-inline:44px 0}
+@media(max-width:640px){.audit-dialog{width:100%;max-height:calc(100dvh - 12px);margin-block-end:0;border-radius:22px 22px 0 0}.audit-dialog-shell{padding:28px 20px}.audit-dialog-header{padding-inline-end:48px}.audit-form-grid{grid-template-columns:1fr;gap:14px}.audit-field-wide{grid-column:auto}.audit-success{min-height:520px}.audit-success-next{grid-template-columns:1fr}.audit-dialog-close{inset-block-start:14px;inset-inline-end:14px}}
+@media(prefers-reduced-motion:no-preference){.audit-dialog[open]{animation:audit-enter .22s cubic-bezier(.2,.8,.2,1)}.audit-dialog[open]::backdrop{animation:audit-fade .18s ease-out}@keyframes audit-enter{from{opacity:0;transform:translateY(12px) scale(.985)}}@keyframes audit-fade{from{opacity:0}}}
 </style>
 </head>
 <body>
@@ -3199,7 +3209,7 @@ section[id],.margin-defense,.faq-section { scroll-margin-top:96px; }
             <div class="audit-card audit-card-three"><span>Settlement variance</span><strong class="orange">QAR 3,900</strong></div>
             <div class="audit-card audit-card-four result-main"><span>Recoverable / protectable margin</span><strong>QAR 17,840</strong></div>
           </div>
-          <a class="button button-primary full-button" href="mailto:Adekunle@prizeskout.com?subject=PrizeSkout%2030-Day%20Profit%20Audit">Run my Profit Audit <span aria-hidden="true">→</span></a>
+          <a class="button button-primary full-button" href="#profit-audit-form" data-open-audit>Run my Profit Audit <span aria-hidden="true">→</span></a>
           <p class="audit-foot">One branch. 30 days of data. Clear actions.</p>
         </div>
       </div>
@@ -3269,6 +3279,39 @@ section[id],.margin-defense,.faq-section { scroll-margin-top:96px; }
     </div>
   </footer>
 
+  <dialog class="audit-dialog" id="profit-audit-form" aria-labelledby="audit-dialog-title">
+    <div class="audit-dialog-shell">
+      <button class="audit-dialog-close" type="button" data-close-audit aria-label="Close profit audit form">&times;</button>
+      <div class="audit-form-view">
+        <header class="audit-dialog-header">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> <span data-copy="auditEyebrow">30-DAY PROFIT AUDIT</span></div>
+          <h2 id="audit-dialog-title" data-copy="auditTitle">Let’s find what your orders should be earning.</h2>
+          <p data-copy="auditIntro">Tell us about your operation. We’ll review your stack and contact you to shape a focused audit around one branch and 30 days of data.</p>
+        </header>
+        <form class="audit-form" novalidate>
+          <input type="hidden" name="form_started_at">
+          <div class="audit-honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+          <div class="audit-form-grid">
+            <div class="audit-field"><label for="audit-company"><span aria-hidden="true">*</span> <b data-copy="companyLabel">Company name</b></label><input id="audit-company" name="company" autocomplete="organization" maxlength="200" required><small class="audit-field-error" data-error-for="company"></small></div>
+            <div class="audit-field"><label for="audit-name"><span aria-hidden="true">*</span> <b data-copy="nameLabel">Your name</b></label><input id="audit-name" name="name" autocomplete="name" maxlength="200" required><small class="audit-field-error" data-error-for="name"></small></div>
+            <div class="audit-field"><label for="audit-role"><span aria-hidden="true">*</span> <b data-copy="roleLabel">Your role</b></label><input id="audit-role" name="job_title" autocomplete="organization-title" maxlength="160" placeholder="e.g. CFO, Finance Manager, COO" data-placeholder="rolePlaceholder" required><small class="audit-field-error" data-error-for="job_title"></small></div>
+            <div class="audit-field"><label for="audit-email"><span aria-hidden="true">*</span> <b data-copy="emailLabel">Work email</b></label><input id="audit-email" name="email" type="email" inputmode="email" autocomplete="email" maxlength="320" required><small class="audit-field-error" data-error-for="email"></small></div>
+            <div class="audit-field"><label for="audit-phone"><b data-copy="phoneLabel">Phone number</b> <small data-copy="optionalLabel">Optional</small></label><input id="audit-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="60"></div>
+            <div class="audit-field"><label for="audit-size"><span aria-hidden="true">*</span> <b data-copy="sizeLabel">Number of branches</b></label><select id="audit-size" name="company_size" required><option value="" data-copy="selectOption">Select one</option><option value="1">1</option><option value="2-5">2–5</option><option value="6-20">6–20</option><option value="21-50">21–50</option><option value="51+">51+</option></select><small class="audit-field-error" data-error-for="company_size"></small></div>
+            <div class="audit-field audit-field-wide"><label for="audit-stack"><b data-copy="stackLabel">What systems do you use?</b> <small data-copy="optionalLabel">Optional</small></label><input id="audit-stack" name="commerce_stack" maxlength="1000" placeholder="POS, ERP, Talabat, Snoonu, Foodics, Odoo…" data-placeholder="stackPlaceholder"><small data-copy="stackHelp">A short list helps us prepare the right integration path.</small></div>
+            <div class="audit-field audit-field-wide"><label for="audit-challenge"><span aria-hidden="true">*</span> <b data-copy="challengeLabel">What would you most like the audit to uncover?</b></label><textarea id="audit-challenge" name="challenge" maxlength="3000" placeholder="For example: unexplained payout deductions, branch-level profitability, or delivery-channel margin…" data-placeholder="challengePlaceholder" required></textarea><small class="audit-field-error" data-error-for="challenge"></small></div>
+          </div>
+          <label class="audit-consent"><input type="checkbox" name="consent" required><span data-copy="consentText">I agree that PrizeSkout may contact me about this audit request. My information will be handled according to the Privacy Policy.</span></label>
+          <button class="button button-primary audit-submit" type="submit"><span data-copy="submitLabel">Request my Profit Audit</span> <span aria-hidden="true">→</span></button>
+          <p class="audit-form-status" role="alert" aria-live="assertive"></p>
+        </form>
+      </div>
+      <div class="audit-success" aria-live="polite" tabindex="-1">
+        <div><div class="audit-success-mark" aria-hidden="true">✓</div><h2 data-copy="successTitle">Your audit request is in.</h2><p data-copy="successBody">Thank you. A member of the PrizeSkout team will review your operation and contact you within one business day to agree on the audit scope.</p><div class="audit-success-next"><span data-copy="successStep1">1. We review your stack</span><span data-copy="successStep2">2. We agree one pilot branch</span><span data-copy="successStep3">3. We map the required data</span></div><button type="button" data-success-close data-copy="successClose">Return to the website</button></div>
+      </div>
+    </div>
+  </dialog>
+
   <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   <script>
 const qs = (s, el = document) => el.querySelector(s);
@@ -3283,10 +3326,44 @@ const marketDefinitions = {
   BH:{code:'BH',currency:'BHD',rate:.104,digits:3}
 };
 const languageDefinitions = {en:'EN',ar:'AR'};
+const auditCopy = {
+  en:{auditEyebrow:'30-DAY PROFIT AUDIT',auditTitle:'Let’s find what your orders should be earning.',auditIntro:'Tell us about your operation. We’ll review your stack and contact you to shape a focused audit around one branch and 30 days of data.',companyLabel:'Company name',nameLabel:'Your name',roleLabel:'Your role',rolePlaceholder:'e.g. CFO, Finance Manager, COO',emailLabel:'Work email',phoneLabel:'Phone number',optionalLabel:'Optional',sizeLabel:'Number of branches',selectOption:'Select one',stackLabel:'What systems do you use?',stackPlaceholder:'POS, ERP, Talabat, Snoonu, Foodics, Odoo…',stackHelp:'A short list helps us prepare the right integration path.',challengeLabel:'What would you most like the audit to uncover?',challengePlaceholder:'For example: unexplained payout deductions, branch-level profitability, or delivery-channel margin…',consentText:'I agree that PrizeSkout may contact me about this audit request. My information will be handled according to the Privacy Policy.',submitLabel:'Request my Profit Audit',submitting:'Submitting…',successTitle:'Your audit request is in.',successBody:'Thank you. A member of the PrizeSkout team will review your operation and contact you within one business day to agree on the audit scope.',successStep1:'1. We review your stack',successStep2:'2. We agree one pilot branch',successStep3:'3. We map the required data',successClose:'Return to the website',required:'This field is required.',emailError:'Enter a valid work email.',challengeError:'Tell us a little more so we can prepare.',consentError:'Please confirm that we may contact you.',networkError:'We could not submit your request. Please try again or email hello@prizeskout.qa.'},
+  ar:{auditEyebrow:'تدقيق الربح لمدة 30 يوماً',auditTitle:'لنكتشف ما الذي ينبغي أن تحققه طلباتك من أرباح.',auditIntro:'أخبرنا عن عملياتك. سنراجع أنظمتك ونتواصل معك لتحديد تدقيق مركز لفرع واحد وبيانات 30 يوماً.',companyLabel:'اسم الشركة',nameLabel:'اسمك',roleLabel:'منصبك',rolePlaceholder:'مثلاً: المدير المالي، مدير العمليات',emailLabel:'البريد الإلكتروني للعمل',phoneLabel:'رقم الهاتف',optionalLabel:'اختياري',sizeLabel:'عدد الفروع',selectOption:'اختر',stackLabel:'ما الأنظمة التي تستخدمونها؟',stackPlaceholder:'نقاط البيع، ERP، طلبات، سنونو، Foodics، Odoo…',stackHelp:'قائمة مختصرة تساعدنا على إعداد مسار التكامل المناسب.',challengeLabel:'ما أهم شيء تريد أن يكشفه التدقيق؟',challengePlaceholder:'مثلاً: خصومات غير مبررة، ربحية الفروع، أو هامش قنوات التوصيل…',consentText:'أوافق على أن تتواصل معي PrizeSkout بشأن طلب التدقيق هذا، وأن تتم معالجة معلوماتي وفق سياسة الخصوصية.',submitLabel:'اطلب تدقيق الربح',submitting:'جارٍ الإرسال…',successTitle:'تم استلام طلب التدقيق.',successBody:'شكراً لك. سيراجع أحد أعضاء فريق PrizeSkout عملياتك ويتواصل معك خلال يوم عمل واحد للاتفاق على نطاق التدقيق.',successStep1:'١. نراجع أنظمتك',successStep2:'٢. نتفق على فرع تجريبي',successStep3:'٣. نحدد البيانات المطلوبة',successClose:'العودة إلى الموقع',required:'هذا الحقل مطلوب.',emailError:'أدخل بريداً إلكترونياً صحيحاً للعمل.',challengeError:'أضف بعض التفاصيل حتى نتمكن من الاستعداد.',consentError:'يرجى تأكيد موافقتك على التواصل معك.',networkError:'تعذر إرسال طلبك. حاول مرة أخرى أو راسل hello@prizeskout.qa.'}
+};
+const arabicPageCopy = new Map(Object.entries({
+  'Skip to content':'تخطَّ إلى المحتوى','Merchant onboarding underway.':'بدأ انضمام التجار.','Join early access':'انضم إلى الوصول المبكر','Platform':'المنصة','Intelligence':'الذكاء','Solutions':'الحلول','Profit Audit':'تدقيق الربح','Sign in':'تسجيل الدخول','Book a Profit Audit':'احجز تدقيق الربح','Know what every order':'اعرف ما يحققه كل طلب','actually earns.':'فعلياً.','Book a Profit Audit →':'احجز تدقيق الربح ←','Explore the API':'استكشف واجهة API','No replacement required':'لا حاجة لاستبدال أنظمتك','API first':'واجهة API أولاً','Merchant controlled':'بإدارة التاجر','Your POS knows the sale.':'نظام نقاط البيع يعرف عملية البيع.','Your platform knows the order.':'منصة التوصيل تعرف الطلب.','Your ERP knows the accounting.':'نظام ERP يعرف المحاسبة.','PrizeSkout knows the profit.':'PrizeSkout يعرف الربح.','API FIRST':'واجهة API أولاً','Built around your stack':'مصمم حول أنظمتك','MERCHANT CONTROLLED':'بإدارة التاجر','Actions stay inside your rules':'الإجراءات تبقى ضمن قواعدك','ONE ECONOMIC TRUTH':'حقيقة اقتصادية واحدة','Your systems see transactions.':'أنظمتك ترى المعاملات.','PrizeSkout sees the economics.':'PrizeSkout يرى اقتصادياتها.','INPUTS':'المدخلات','Sales + COGS':'المبيعات + تكلفة البضاعة','Finance + inventory':'المالية + المخزون','Orders + promos':'الطلبات + العروض','Fees + settlements':'الرسوم + التسويات','OUTPUTS':'المخرجات','True profit':'الربح الحقيقي','Settlement variance':'فروقات التسوية','Margin leakage':'تسرب الهامش','Recommended action':'الإجراء المقترح','30-DAY PROFIT AUDIT':'تدقيق الربح لمدة 30 يوماً','Run my Profit Audit →':'ابدأ تدقيق الربح ←','One branch. 30 days of data. Clear actions.':'فرع واحد. بيانات 30 يوماً. إجراءات واضحة.','QUICK ANSWERS':'إجابات سريعة','Built to fit your stack without replacing it.':'مصمم ليتوافق مع أنظمتك دون استبدالها.','Is PrizeSkout another restaurant dashboard?':'هل PrizeSkout مجرد لوحة تحكم أخرى للمطاعم؟','Do we need an API integration to start?':'هل نحتاج إلى تكامل API للبدء؟','Will PrizeSkout replace our POS or ERP?':'هل سيستبدل PrizeSkout نظام نقاط البيع أو ERP؟','Does PrizeSkout change prices automatically?':'هل يغيّر PrizeSkout الأسعار تلقائياً؟','What can we measure?':'ما الذي يمكننا قياسه؟','PROFIT IS THE SIGNAL':'الربح هو الإشارة','Revenue tells you what you sold.':'الإيرادات تخبرك بما بعته.','PrizeSkout tells you what you kept.':'PrizeSkout يخبرك بما احتفظت به.','Merchant controlled · API first':'بإدارة التاجر · واجهة API أولاً','Profit Intelligence Infrastructure for Digital Commerce.':'بنية ذكاء الربح للتجارة الرقمية.'
+}));
+Object.entries({
+  'PROFIT INTELLIGENCE INFRASTRUCTURE':'بنية ذكاء الربح','PrizeSkout connects your POS, ERP, delivery channels and payouts to calculate':'يربط PrizeSkout نقاط البيع وERP وقنوات التوصيل والمدفوعات لحساب','true contribution profit':'ربح المساهمة الحقيقي',', reconcile settlements and detect margin leakage order by order.':'، ومطابقة التسويات واكتشاف تسرب الهامش لكل طلب.','Your commerce data':'بيانات تجارتك','See the whole order':'شاهد الطلب كاملاً','Orders, fees and payouts together':'الطلبات والرسوم والمدفوعات معاً','Order result':'نتيجة الطلب','Order value':'قيمة الطلب','Channel fees':'رسوم القناة','Payout':'الدفعة','Activate again to return':'اضغط مرة أخرى للعودة','What should have happened':'ما كان ينبغي أن يحدث','Know what you should earn':'اعرف ما ينبغي أن تربحه','Every cost rebuilt order by order':'إعادة بناء كل تكلفة لكل طلب','Calculation result':'نتيجة الحساب','Expected economics':'الاقتصاديات المتوقعة','Expected net':'الصافي المتوقع','Margin':'الهامش','Costs rebuilt':'التكاليف المعاد بناؤها','What actually happened':'ما حدث فعلياً','Catch what is missing':'اكتشف المبالغ المفقودة','Fees, discounts and payout gaps explained':'تفسير الرسوم والخصومات وفروقات المدفوعات','Review result':'نتيجة المراجعة','Discrepancy found':'تم العثور على فرق','Margin gap':'فجوة الهامش','Charged':'المحتسب','Contract rate':'نسبة العقد','You stay in control':'تبقى أنت المتحكم','Choose what happens next':'اختر ما يحدث تالياً','Review first. Approve every action.':'راجع أولاً ووافق على كل إجراء.','Approval result':'نتيجة الموافقة','Policy ready':'السياسة جاهزة','Margin floor':'الحد الأدنى للهامش','Affected SKUs':'المنتجات المتأثرة','Status':'الحالة','Awaiting approval':'بانتظار الموافقة','Nothing gets lost':'لا يضيع شيء','Keep the proof':'احتفظ بالإثبات','A clear record for every decision':'سجل واضح لكل قرار','Evidence result':'نتيجة الأدلة','Evidence retained':'تم حفظ الأدلة','Evidence ID':'معرّف الدليل','Sources matched':'المصادر المتطابقة','Decision':'القرار','Recorded':'مسجل','Know every order':'اعرف كل طلب','Protect every margin':'احمِ كل هامش','Keep every decision':'احتفظ بكل قرار','Profit Intelligence Engine':'محرك ذكاء الربح','Normalize':'توحيد البيانات','One commerce model':'نموذج تجارة واحد','Reconcile':'المطابقة','Expected vs actual':'المتوقع مقابل الفعلي','Model':'النمذجة','True contribution':'المساهمة الحقيقية','Decide':'اتخاذ القرار','PROFIT':'الربح','LEAKAGE':'التسرب','Margin at risk':'الهامش المعرض للخطر','PAYOUT':'المدفوعات','Variance detected':'تم اكتشاف فرق','ACTION':'الإجراء','What to do next':'ما ينبغي فعله تالياً','FOUR COMMERCIAL OUTCOMES':'أربع نتائج تجارية','Less dashboard.':'لوحات أقل.','More decision.':'قرارات أكثر.','Every signal should answer a financial question and make the next action obvious.':'يجب أن تجيب كل إشارة عن سؤال مالي وأن توضح الإجراء التالي.','TRUE PROFIT INTELLIGENCE':'ذكاء الربح الحقيقي','Know the real margin.':'اعرف الهامش الحقيقي.','See what every order, SKU, branch, brand and channel earns after fees, discounts, COGS and adjustments.':'اعرف ما يحققه كل طلب ومنتج وفرع وعلامة وقناة بعد الرسوم والخصومات والتكاليف والتعديلات.','Platform costs':'تكاليف المنصات','Promotions':'العروض','SETTLEMENT INTELLIGENCE':'ذكاء التسويات','Find money that went missing.':'اكتشف الأموال المفقودة.','Match expected payouts to actual settlements and surface unexplained deductions automatically.':'طابق المدفوعات المتوقعة بالتسويات الفعلية واكشف الخصومات غير المبررة تلقائياً.','Expected':'المتوقع','Received':'المستلم','Requires review':'يتطلب المراجعة','PROMOTION INTELLIGENCE':'ذكاء العروض','Know before you discount.':'اعرف قبل أن تقدم الخصم.','Simulate a campaign before order growth turns into margin dilution.':'حاكِ الحملة قبل أن تتحول زيادة الطلبات إلى تآكل في الهامش.','Recommendation · Reprice':'التوصية · إعادة التسعير','AI PROFIT COPILOT':'مساعد الربح بالذكاء الاصطناعي','Ask the business. Get an answer supported by evidence.':'اسأل عن أعمالك واحصل على إجابة مدعومة بالأدلة.','Turn connected order, payout and cost data into clear financial explanations instead of generic AI output.':'حوّل بيانات الطلبات والمدفوعات والتكاليف إلى تفسيرات مالية واضحة بدلاً من إجابات عامة.','Why did Talabat margin fall last week?':'لماذا انخفض هامش طلبات الأسبوع الماضي؟','3 drivers found.':'تم العثور على 3 أسباب.','Promotion spend caused 61% of the decline. Two branches also show abnormal payout adjustments.':'تسبب الإنفاق على العروض في 61% من الانخفاض، كما يظهر فرعان تعديلات غير طبيعية في المدفوعات.','View evidence →':'عرض الأدلة ←','BUILT AS INFRASTRUCTURE':'مصمم كبنية تحتية','Use the intelligence':'استخدم الذكاء','anywhere.':'في أي مكان.','PrizeSkout is API first. Consume profit, settlement and margin signals inside your ERP, BI or finance workflow, or use the PrizeSkout Control Room.':'PrizeSkout مبني على API أولاً. استخدم إشارات الربح والتسوية والهامش داخل ERP أو ذكاء الأعمال أو سير العمل المالي، أو استخدم غرفة تحكم PrizeSkout.','One canonical commerce model':'نموذج تجارة موحد','Embedded intelligence':'ذكاء مضمّن','Enterprise ready webhooks':'Webhooks جاهزة للمؤسسات','Talk to us about the API':'تحدث معنا عن API','Copy':'نسخ','MARGIN DEFENCE':'حماية الهامش',"Don't just find the problem.":'لا تكتفِ باكتشاف المشكلة.','Know what to do next.':'اعرف ما يجب فعله تالياً.','Detect':'اكتشف','Predict':'تنبأ','Impact calculated':'تم حساب التأثير','Recommend':'أوصِ','Best action found':'تم العثور على أفضل إجراء','Approve':'وافق','Verify':'تحقق','Outcome recorded':'تم تسجيل النتيجة','ACTIVE DECISION':'قرار نشط','Weekend promotion drops Branch 03 below the 18% margin floor.':'عرض نهاية الأسبوع يخفض الفرع 03 دون حد الهامش البالغ 18%.','Projected orders':'الطلبات المتوقعة','Contribution margin':'هامش المساهمة','Reduce merchant share':'تقليل حصة التاجر','Review scenario':'مراجعة السيناريو','Approve recommendation':'الموافقة على التوصية','PURPOSE BUILT FOR PLATFORM COMMERCE':'مصمم خصيصاً لتجارة المنصات','One engine.':'محرك واحد.','Different economic questions.':'أسئلة اقتصادية مختلفة.','Restaurant groups':'مجموعات المطاعم','Cloud kitchens':'المطابخ السحابية','Commerce merchants':'تجار التجارة الرقمية','Platforms & ERP':'المنصات وERP','RESTAURANT GROUPS':'مجموعات المطاعم','See profit across every brand, branch and delivery channel.':'شاهد الربح عبر كل علامة وفرع وقناة توصيل.','Model contribution for every item after commission, promotions, COGS, refunds and settlements without replacing your POS or ERP.':'احسب مساهمة كل منتج بعد العمولة والعروض والتكاليف والاستردادات والتسويات دون استبدال نقاط البيع أو ERP.','Branch × platform profitability':'ربحية الفرع × المنصة','Settlement and commission audit':'تدقيق التسويات والعمولات','Menu and promotion economics':'اقتصاديات القائمة والعروض','Branch 03 requires review · Promo intensity +6.3%':'الفرع 03 يتطلب المراجعة · كثافة العروض +6.3%','START WITH YOUR OWN DATA':'ابدأ ببياناتك','Give us 30 days.':'امنحنا 30 يوماً.',"We'll show you where the margin went.":'سنوضح لك أين ذهب الهامش.','Start with one brand, one branch and one delivery channel. No system replacement required.':'ابدأ بعلامة واحدة وفرع واحد وقناة توصيل واحدة، دون الحاجة لاستبدال أي نظام.','Orders':'الطلبات','Payouts':'المدفوعات','Fees':'الرسوم','DELIVERY PROFIT AUDIT':'تدقيق ربح التوصيل','Illustrative output':'نتيجة توضيحية','30 days':'30 يوماً','Delivery sales':'مبيعات التوصيل','Platform + promo costs':'تكاليف المنصة + العروض','Recoverable / protectable margin':'هامش قابل للاسترداد أو الحماية','Connect your commerce stack and turn fragmented transaction data into one trusted profit layer.':'اربط أنظمتك التجارية وحوّل بيانات المعاملات المتفرقة إلى طبقة ربح موثوقة واحدة.','True Profit':'الربح الحقيقي','Settlement Intelligence':'ذكاء التسويات','Restaurant Groups':'مجموعات المطاعم','Cloud Kitchens':'المطابخ السحابية','Commerce Merchants':'تجار التجارة الرقمية','© 2026 PrizeSkout · Doha, Qatar':'© 2026 PrizeSkout · الدوحة، قطر'
+}).forEach(([english,arabic])=>arabicPageCopy.set(english,arabic));
+Object.entries({
+  'No. The dashboard is the control surface. The core product is a profit intelligence layer that reconciles commerce data and exposes it through APIs, embedded workflows and the PrizeSkout Control Room.':'لا. لوحة التحكم هي واجهة التشغيل، أما المنتج الأساسي فهو طبقة ذكاء للربح تطابق بيانات التجارة وتوفرها عبر واجهات API وسير العمل المضمّن وغرفة تحكم PrizeSkout.','No. A pilot can begin with CSV or exported order, payout and cost data. Once value is proven, the workflow can be automated through supported APIs and connectors.':'لا. يمكن أن يبدأ المشروع التجريبي بملفات CSV أو بيانات الطلبات والمدفوعات والتكاليف المصدّرة. وبعد إثبات القيمة يمكن أتمتة سير العمل عبر واجهات API والموصلات المدعومة.','No. PrizeSkout is designed to sit between systems such as POS, ERP, delivery platforms and payout records so finance and operations can see one economic truth.':'لا. صُمم PrizeSkout ليربط بين نقاط البيع وERP ومنصات التوصيل وسجلات المدفوعات، كي ترى فرق المالية والعمليات حقيقة اقتصادية واحدة.','Not unless your team enables that behavior. Recommendations can always require approval, and every action stays within floors, permissions and thresholds defined by the merchant.':'ليس ما لم يفعّل فريقك ذلك. يمكن أن تتطلب التوصيات الموافقة دائماً، وتبقى كل الإجراءات ضمن الحدود والصلاحيات التي يحددها التاجر.','True contribution profit, effective commission, promotion cost, settlement variance, margin leakage, channel economics and recommended corrective actions.':'ربح المساهمة الحقيقي، والعمولة الفعلية، وتكلفة العروض، وفروقات التسوية، وتسرب الهامش، واقتصاديات القنوات، والإجراءات التصحيحية المقترحة.'
+}).forEach(([english,arabic])=>arabicPageCopy.set(english,arabic));
+Object.entries({
+  'PrizeSkout | Profit Intelligence Infrastructure':'PrizeSkout | بنية ذكاء الربح','PRIZESKOUT × ZID':'PRIZESKOUT × ZID','MARKET / CURRENCY':'السوق / العملة','Qatar':'قطر','Saudi Arabia':'المملكة العربية السعودية','United Arab Emirates':'الإمارات العربية المتحدة','Oman':'عُمان','Kuwait':'الكويت','Bahrain':'البحرين','LANGUAGE':'اللغة','English':'الإنجليزية','Arabic':'العربية','QFC LICENSED':'مرخص من مركز قطر للمال','Doha, Qatar':'الدوحة، قطر','ZID PARTNER':'شريك زد','BACKED BY QSTP':'مدعوم من واحة قطر للعلوم والتكنولوجيا','Qatar Science & Technology Park':'واحة قطر للعلوم والتكنولوجيا','DELIVERY':'التوصيل','PAYOUTS':'المدفوعات','PRIZESKOUT':'PRIZESKOUT','GMV':'إجمالي قيمة المبيعات','COGS':'تكلفة البضاعة المباعة','ORDERS':'الطلبات','profit':'الربح','settlement':'التسوية','action':'الإجراء','Run my Profit Audit':'ابدأ تدقيق الربح','Branch 01':'الفرع 01','Branch 02':'الفرع 02','Branch 03':'الفرع 03','Branch 04':'الفرع 04','Website':'الموقع الإلكتروني','Platform + promo costs':'تكاليف المنصة والعروض','Settlement variance':'فروقات التسوية','Orders':'الطلبات','Payouts':'المدفوعات','Fees':'الرسوم','Promotions':'العروض'
+}).forEach(([english,arabic])=>arabicPageCopy.set(english,arabic));
+const arabicAttributeCopy=new Map(Object.entries({
+  'Primary navigation':'التنقل الرئيسي','Mobile navigation':'تنقل الهاتف','Region and language preferences':'تفضيلات المنطقة واللغة','Select country and currency':'اختر البلد والعملة','Country and currency':'البلد والعملة','Select language':'اختر اللغة','Language':'اللغة','PrizeSkout sign in':'تسجيل الدخول إلى PrizeSkout','Open menu':'فتح القائمة','Close menu':'إغلاق القائمة','Key product attributes':'خصائص المنتج الرئيسية','Interactive PrizeSkout economic workflow':'سير عمل اقتصادي تفاعلي من PrizeSkout','See the whole order. Activate to reveal order details.':'شاهد الطلب كاملاً. اضغط لعرض تفاصيل الطلب.','Know what you should earn. Activate to reveal expected economics.':'اعرف ما ينبغي أن تربحه. اضغط لعرض الاقتصاديات المتوقعة.','Catch what is missing. Activate to reveal discrepancy details.':'اكتشف المبالغ المفقودة. اضغط لعرض تفاصيل الفرق.','Choose what happens next. Activate to reveal policy status.':'اختر ما يحدث تالياً. اضغط لعرض حالة السياسة.','Keep the proof. Activate to reveal retained evidence.':'احتفظ بالإثبات. اضغط لعرض الأدلة المحفوظة.','Close profit audit form':'إغلاق نموذج تدقيق الربح'
+}));
 const desktopMarketPicker = qs('.nav-actions [data-market-picker]');
 const desktopLanguagePicker = qs('.nav-actions [data-language-picker]');
 qsa('.mobile-utilities [data-market-picker]').forEach(picker => { picker.innerHTML = desktopMarketPicker?.innerHTML || ''; });
 qsa('.mobile-utilities [data-language-picker]').forEach(picker => { picker.innerHTML = desktopLanguagePicker?.innerHTML || ''; });
+
+const languageTextNodes=[];
+const languageWalker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+while(languageWalker.nextNode()){
+  const node=languageWalker.currentNode,parent=node.parentElement;
+  if(!parent||parent.closest('script,style,[data-language-picker],[data-copy]')||!node.nodeValue?.trim())continue;
+  languageTextNodes.push({node,original:node.nodeValue});
+}
+const languageAttributes=[];
+qsa('[aria-label],[title]').forEach(element=>{
+  for(const attribute of ['aria-label','title']){
+    const original=element.getAttribute(attribute);
+    if(original)languageAttributes.push({element,attribute,original});
+  }
+});
 
 const currencyTextNodes = [];
 const currencyWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -3320,6 +3397,23 @@ function applyLanguagePreference(language, persist=true) {
   const selected = languageDefinitions[language] ? language : 'en';
   qsa('[data-language-label]').forEach(label => { label.textContent = languageDefinitions[selected]; });
   qsa('[data-language]').forEach(option => option.setAttribute('aria-selected',String(option.dataset.language === selected)));
+  const copy=auditCopy[selected];
+  qsa('[data-copy]').forEach(element=>{const value=copy[element.dataset.copy];if(value)element.textContent=value;});
+  qsa('[data-placeholder]').forEach(element=>{const value=copy[element.dataset.placeholder];if(value)element.setAttribute('placeholder',value);});
+  languageTextNodes.forEach(({node,original})=>{
+    const trimmed=original.trim(),translated=selected==='ar'?arabicPageCopy.get(trimmed):null;
+    node.nodeValue=translated?original.replace(trimmed,translated):original;
+  });
+  languageAttributes.forEach(({element,attribute,original})=>element.setAttribute(attribute,selected==='ar'?(arabicAttributeCopy.get(original)||original):original));
+  qsa('[data-language]').forEach(option=>{
+    [...option.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE&&node.nodeValue?.trim()).forEach(node=>{
+      const code=option.dataset.language;
+      node.nodeValue=selected==='ar'?(code==='ar'?'العربية':'الإنجليزية'):(code==='ar'?'Arabic':'English');
+    });
+  });
+  document.title=selected==='ar'?'PrizeSkout | بنية ذكاء الربح':'PrizeSkout | Profit Intelligence Infrastructure';
+  document.documentElement.lang=selected;
+  document.documentElement.dir=selected==='ar'?'rtl':'ltr';
   document.documentElement.dataset.preferredLanguage = selected;
   if (persist) localStorage.setItem('ps-locale',selected);
 }
@@ -3359,6 +3453,69 @@ document.addEventListener('keydown',event => {
 });
 applyMarket(localStorage.getItem('ps-market') || 'QA',false);
 applyLanguagePreference(localStorage.getItem('ps-locale') || 'en',false);
+
+const auditDialog=qs('#profit-audit-form');
+const auditForm=qs('.audit-form',auditDialog);
+let auditTrigger=null;
+function openAuditDialog(trigger){
+  if(!auditDialog)return;
+  auditTrigger=trigger;
+  const started=qs('[name="form_started_at"]',auditForm);
+  if(started)started.value=String(Date.now());
+  if(typeof auditDialog.showModal==='function')auditDialog.showModal();
+  else auditDialog.setAttribute('open','');
+  requestAnimationFrame(()=>qs('[name="company"]',auditForm)?.focus());
+}
+function closeAuditDialog(){
+  if(!auditDialog)return;
+  if(typeof auditDialog.close==='function')auditDialog.close();
+  else auditDialog.removeAttribute('open');
+  auditTrigger?.focus();
+}
+qsa('a.button[href="#audit"],a[data-open-audit]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();openAuditDialog(link);}));
+qs('[data-close-audit]',auditDialog)?.addEventListener('click',closeAuditDialog);
+qs('[data-success-close]',auditDialog)?.addEventListener('click',closeAuditDialog);
+auditDialog?.addEventListener('click',event=>{if(event.target===auditDialog)closeAuditDialog();});
+
+function auditError(name,message){
+  const field=qs(`[name="${name}"]`,auditForm),output=qs(`[data-error-for="${name}"]`,auditForm);
+  field?.setAttribute('aria-invalid',message?'true':'false');
+  if(output)output.textContent=message;
+  return field;
+}
+auditForm?.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const language=document.documentElement.lang==='ar'?'ar':'en',copy=auditCopy[language];
+  const data=new FormData(auditForm),values=Object.fromEntries(data.entries());
+  qsa('.audit-field-error',auditForm).forEach(error=>{error.textContent='';});
+  qsa('[aria-invalid]',auditForm).forEach(field=>field.setAttribute('aria-invalid','false'));
+  let firstInvalid=null;
+  for(const name of ['company','name','job_title','email','company_size','challenge']){
+    const value=String(values[name]||'').trim();
+    let message=!value?copy.required:'';
+    if(name==='email'&&value&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))message=copy.emailError;
+    if(name==='challenge'&&value.length>0&&value.length<10)message=copy.challengeError;
+    const field=auditError(name,message);if(message&&!firstInvalid)firstInvalid=field;
+  }
+  if(!data.get('consent')){
+    const consent=qs('[name="consent"]',auditForm);consent?.setAttribute('aria-invalid','true');
+    if(!firstInvalid)firstInvalid=consent;
+    qs('.audit-form-status',auditForm).textContent=copy.consentError;
+  } else qs('.audit-form-status',auditForm).textContent='';
+  if(firstInvalid){firstInvalid.focus();return;}
+  const button=qs('.audit-submit',auditForm),label=qs('[data-copy="submitLabel"]',button);
+  button.disabled=true;if(label)label.textContent=copy.submitting;
+  try{
+    const response=await fetch('/api/profit-audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:String(values.company).trim(),name:String(values.name).trim(),job_title:String(values.job_title).trim(),email:String(values.email).trim(),phone:String(values.phone||'').trim(),company_size:String(values.company_size),commerce_stack:String(values.commerce_stack||'').trim(),challenge:String(values.challenge).trim(),website:String(values.website||''),form_started_at:Number(values.form_started_at),market:localStorage.getItem('ps-market')||'QA',language})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result.error||copy.networkError);
+    qs('.audit-form-view',auditDialog).hidden=true;
+    qs('.audit-success',auditDialog).classList.add('is-visible');
+    qs('.audit-success',auditDialog).focus();
+    auditForm.reset();
+  }catch(error){qs('.audit-form-status',auditForm).textContent=error instanceof Error?error.message:copy.networkError;}
+  finally{button.disabled=false;if(label)label.textContent=copy.submitLabel;}
+});
 
 const menuBtn = qs('.menu-button');
 const mobileMenu = qs('#mobile-menu');
