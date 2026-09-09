@@ -91,6 +91,7 @@ import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/
 import { Route as ApiPublicHooksEvidenceSourceSyncRouteImport } from './routes/api/public/hooks/evidence-source-sync'
 import { Route as ApiPublicHooksEvidenceSourcePullRouteImport } from './routes/api/public/hooks/evidence-source-pull'
 import { Route as ApiPublicHooksEvidenceProcessRouteImport } from './routes/api/public/hooks/evidence-process'
+import { Route as ApiPublicHooksEngineRouteImport } from './routes/api/public/hooks/engine'
 import { Route as ApiPublicHooksEconomicEvidenceRouteImport } from './routes/api/public/hooks/economic-evidence'
 import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/public/hooks/dispatch-queue'
 import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
@@ -526,6 +527,11 @@ const ApiPublicHooksEvidenceProcessRoute =
     path: '/api/public/hooks/evidence-process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEngineRoute = ApiPublicHooksEngineRouteImport.update({
+  id: '/api/public/hooks/engine',
+  path: '/api/public/hooks/engine',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksEconomicEvidenceRoute =
   ApiPublicHooksEconomicEvidenceRouteImport.update({
     id: '/api/public/hooks/economic-evidence',
@@ -672,6 +678,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
+  '/api/public/hooks/engine': typeof ApiPublicHooksEngineRoute
   '/api/public/hooks/evidence-process': typeof ApiPublicHooksEvidenceProcessRoute
   '/api/public/hooks/evidence-source-pull': typeof ApiPublicHooksEvidenceSourcePullRoute
   '/api/public/hooks/evidence-source-sync': typeof ApiPublicHooksEvidenceSourceSyncRoute
@@ -765,6 +772,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
+  '/api/public/hooks/engine': typeof ApiPublicHooksEngineRoute
   '/api/public/hooks/evidence-process': typeof ApiPublicHooksEvidenceProcessRoute
   '/api/public/hooks/evidence-source-pull': typeof ApiPublicHooksEvidenceSourcePullRoute
   '/api/public/hooks/evidence-source-sync': typeof ApiPublicHooksEvidenceSourceSyncRoute
@@ -862,6 +870,7 @@ export interface FileRoutesById {
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
+  '/api/public/hooks/engine': typeof ApiPublicHooksEngineRoute
   '/api/public/hooks/evidence-process': typeof ApiPublicHooksEvidenceProcessRoute
   '/api/public/hooks/evidence-source-pull': typeof ApiPublicHooksEvidenceSourcePullRoute
   '/api/public/hooks/evidence-source-sync': typeof ApiPublicHooksEvidenceSourceSyncRoute
@@ -960,6 +969,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/economic-evidence'
+    | '/api/public/hooks/engine'
     | '/api/public/hooks/evidence-process'
     | '/api/public/hooks/evidence-source-pull'
     | '/api/public/hooks/evidence-source-sync'
@@ -1053,6 +1063,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/economic-evidence'
+    | '/api/public/hooks/engine'
     | '/api/public/hooks/evidence-process'
     | '/api/public/hooks/evidence-source-pull'
     | '/api/public/hooks/evidence-source-sync'
@@ -1149,6 +1160,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/economic-evidence'
+    | '/api/public/hooks/engine'
     | '/api/public/hooks/evidence-process'
     | '/api/public/hooks/evidence-source-pull'
     | '/api/public/hooks/evidence-source-sync'
@@ -1226,6 +1238,7 @@ export interface RootRouteChildren {
   ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
   ApiPublicHooksDispatchQueueRoute: typeof ApiPublicHooksDispatchQueueRoute
   ApiPublicHooksEconomicEvidenceRoute: typeof ApiPublicHooksEconomicEvidenceRoute
+  ApiPublicHooksEngineRoute: typeof ApiPublicHooksEngineRoute
   ApiPublicHooksEvidenceProcessRoute: typeof ApiPublicHooksEvidenceProcessRoute
   ApiPublicHooksEvidenceSourcePullRoute: typeof ApiPublicHooksEvidenceSourcePullRoute
   ApiPublicHooksEvidenceSourceSyncRoute: typeof ApiPublicHooksEvidenceSourceSyncRoute
@@ -1825,6 +1838,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksEvidenceProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/engine': {
+      id: '/api/public/hooks/engine'
+      path: '/api/public/hooks/engine'
+      fullPath: '/api/public/hooks/engine'
+      preLoaderRoute: typeof ApiPublicHooksEngineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/economic-evidence': {
       id: '/api/public/hooks/economic-evidence'
       path: '/api/public/hooks/economic-evidence'
@@ -2065,6 +2085,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksDispatchConfirmationRoute,
   ApiPublicHooksDispatchQueueRoute: ApiPublicHooksDispatchQueueRoute,
   ApiPublicHooksEconomicEvidenceRoute: ApiPublicHooksEconomicEvidenceRoute,
+  ApiPublicHooksEngineRoute: ApiPublicHooksEngineRoute,
   ApiPublicHooksEvidenceProcessRoute: ApiPublicHooksEvidenceProcessRoute,
   ApiPublicHooksEvidenceSourcePullRoute: ApiPublicHooksEvidenceSourcePullRoute,
   ApiPublicHooksEvidenceSourceSyncRoute: ApiPublicHooksEvidenceSourceSyncRoute,

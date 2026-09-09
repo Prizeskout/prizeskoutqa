@@ -11,6 +11,9 @@ import {
 } from "@/server/core/normalized-commerce-events";
 import { runNormalizedReconciliationShadow } from "@/server/core/normalized-reconciliation-shadow";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
+import { acceptEngineEvent } from "@/server/core/engine-orchestrator";
+import { processEngineQueue } from "@/server/core/engine-orchestrator";
+import { backgroundTask } from "@/server/cf-ctx";
 
 type JsonObject = Record<string, unknown>;
 type SettlementRecord = {
@@ -236,7 +239,11 @@ export async function handleRestaurantSettlementBatch(
       data_minimized: true,
     },
   });
-  if (intake.duplicate)
+  if (intake.duplicate) {
+    const {data:priorEvents,error:priorEventsError}=await db.from("ps_normalized_commerce_events").select("id").eq("account_id",ctx.accountId).eq("evidence_item_id",intake.evidenceItemId);
+    if(priorEventsError)throw new Error(priorEventsError.message);
+    await acceptEngineEvent({accountId:ctx.accountId,merchantId:ctx.accountId,eventType:"commerce.settlement_batch.accepted",source:batch.source_provider,sourceEventId:`settlements:${batch.batch_id}`,schemaVersion:batch.schema_version,payload:{evidence_item_id:intake.evidenceItemId,normalized_event_ids:(priorEvents??[]).map((row:any)=>row.id),delivery_complete:batch.delivery_complete},workKind:"reconcile_settlement_evidence",priority:35});
+    backgroundTask(processEngineQueue(`settlement-replay:${crypto.randomUUID()}`,5));
     return {
       status: 200,
       body: {
@@ -248,6 +255,7 @@ export async function handleRestaurantSettlementBatch(
         },
       },
     };
+  }
   const eventBase = {
     account_id: ctx.accountId,
     merchant_id: ctx.accountId,
@@ -341,6 +349,14 @@ export async function handleRestaurantSettlementBatch(
     },
     limitations: batch.delivery_complete ? [] : ["The source did not declare the batch complete."],
   });
+  await acceptEngineEvent({
+    accountId: ctx.accountId, merchantId: ctx.accountId,
+    eventType: "commerce.settlement_batch.accepted", source: batch.source_provider,
+    sourceEventId: `settlements:${batch.batch_id}`, schemaVersion: batch.schema_version,
+    payload: { evidence_item_id: intake.evidenceItemId, normalized_event_ids: (data ?? []).map((row:any) => row.id), delivery_complete: batch.delivery_complete },
+    workKind: "reconcile_settlement_evidence", priority: 35,
+  });
+  backgroundTask(processEngineQueue(`settlement:${crypto.randomUUID()}`,5));
   return {
     status: 202,
     body: {

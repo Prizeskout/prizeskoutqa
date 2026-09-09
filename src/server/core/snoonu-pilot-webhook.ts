@@ -1,6 +1,9 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { isFreshSnoonuTimestamp, normalizeSnoonuPilotEvent, parseSnoonuPilotEnvelope, verifySnoonuPilotSignature } from "./snoonu-pilot-contract";
+import { acceptEngineEvent } from "./engine-orchestrator";
+import { processEngineQueue } from "./engine-orchestrator";
+import { backgroundTask } from "@/server/cf-ctx";
 
 const json = (body: unknown, status: number) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json", "X-PrizeSkout-Contract": "snoonu-pilot-2026-09-09" },
@@ -39,8 +42,22 @@ export async function handleSnoonuPilotWebhook(request: Request): Promise<Respon
     occurred_at: envelope.occurred_at, payload: envelope as unknown as Json,
     normalized_payload: normalized as unknown as Json, status: "accepted",
   }).select("id").maybeSingle();
-  if (insertError?.code === "23505") return json({ accepted: true, replay: true, event_id: envelope.event_id }, 200);
+  if (insertError?.code === "23505") {
+    const {data:prior}=await db.from("ps_snoonu_webhook_events").select("id").eq("account_id",channel.account_id).eq("event_id",envelope.event_id).maybeSingle();
+    if(!prior)return json({error:"The duplicate receipt could not be recovered."},503);
+    try{await acceptEngineEvent({accountId:String(channel.account_id),merchantId:String(channel.merchant_id),eventType:`commerce.${envelope.event_type}`,source:"snoonu_webhook",sourceEventId:envelope.event_id,schemaVersion:envelope.schema_version,payload:{receipt_id:prior.id,external_merchant_id:envelope.merchant.id,external_branch_id:envelope.branch.id},workKind:"normalize_partner_event",occurredAt:envelope.occurred_at,priority:20});backgroundTask(processEngineQueue(`snoonu-replay:${crypto.randomUUID()}`,5));}
+    catch(error){console.error("[snoonu-webhook] duplicate engine reconciliation failed",error);return json({error:"The receipt exists but engine recovery failed. Retry this event."},503);}
+    return json({ accepted: true, replay: true, event_id: envelope.event_id }, 200);
+  }
   if (insertError || !receipt) return json({ error: "Could not persist webhook receipt." }, 503);
+
+  try {
+    await acceptEngineEvent({accountId:String(channel.account_id),merchantId:String(channel.merchant_id),eventType:`commerce.${envelope.event_type}`,source:"snoonu_webhook",sourceEventId:envelope.event_id,schemaVersion:envelope.schema_version,payload:{receipt_id:receipt.id,external_merchant_id:envelope.merchant.id,external_branch_id:envelope.branch.id},workKind:"normalize_partner_event",occurredAt:envelope.occurred_at,priority:20});
+    backgroundTask(processEngineQueue(`snoonu:${crypto.randomUUID()}`,5));
+  } catch (error) {
+    console.error("[snoonu-webhook] engine acceptance failed", error);
+    return json({ error: "Receipt was stored but the engine did not accept it. Retry with the same event ID." }, 503);
+  }
 
   return json({ accepted: true, replay: false, receipt_id: receipt.id, event_id: envelope.event_id }, 202);
 }

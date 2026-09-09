@@ -10,6 +10,9 @@ import {
   type NormalizedCommerceEvent,
 } from "@/server/core/normalized-commerce-events";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
+import { acceptEngineEvent } from "@/server/core/engine-orchestrator";
+import { processEngineQueue } from "@/server/core/engine-orchestrator";
+import { backgroundTask } from "@/server/cf-ctx";
 
 type JsonObject = Record<string, unknown>;
 
@@ -280,7 +283,11 @@ export async function handleRestaurantOrderBatch(
       data_minimized: true,
     },
   });
-  if (intake.duplicate)
+  if (intake.duplicate) {
+    const {data:priorEvents,error:priorEventsError}=await (supabaseAdmin as any).from("ps_normalized_commerce_events").select("id").eq("account_id",ctx.accountId).eq("evidence_item_id",intake.evidenceItemId);
+    if(priorEventsError)throw new Error(priorEventsError.message);
+    await acceptEngineEvent({accountId:ctx.accountId,merchantId:ctx.accountId,eventType:"commerce.order_batch.accepted",source:batch.source_provider,sourceEventId:`orders:${batch.batch_id}`,schemaVersion:batch.schema_version,payload:{evidence_item_id:intake.evidenceItemId,normalized_event_ids:(priorEvents??[]).map((row:any)=>row.id),delivery_complete:batch.delivery_complete},workKind:"assess_order_economics",priority:30});
+    backgroundTask(processEngineQueue(`commerce-replay:${crypto.randomUUID()}`,5));
     return {
       status: 200,
       body: {
@@ -292,6 +299,7 @@ export async function handleRestaurantOrderBatch(
         },
       },
     };
+  }
   const events: NormalizedCommerceEvent[] = batch.orders.flatMap((order) => {
     const limitations = [
       ...(!order.final ? ["The source order is not final."] : []),
@@ -355,6 +363,14 @@ export async function handleRestaurantOrderBatch(
     },
     limitations: batch.delivery_complete ? [] : ["The source did not declare the batch complete."],
   });
+  await acceptEngineEvent({
+    accountId: ctx.accountId, merchantId: ctx.accountId,
+    eventType: "commerce.order_batch.accepted", source: batch.source_provider,
+    sourceEventId: `orders:${batch.batch_id}`, schemaVersion: batch.schema_version,
+    payload: { evidence_item_id: intake.evidenceItemId, normalized_event_ids: (data ?? []).map((row:any) => row.id), delivery_complete: batch.delivery_complete },
+    workKind: "assess_order_economics", priority: 30,
+  });
+  backgroundTask(processEngineQueue(`commerce:${crypto.randomUUID()}`,5));
   return {
     status: 202,
     body: {

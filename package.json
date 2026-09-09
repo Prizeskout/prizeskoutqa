@@ -23,6 +23,7 @@
     "verify-restaurant-commerce-contract": "tsx scripts/verify-restaurant-commerce-contract.mts",
     "verify-restaurant-cost-contract": "tsx scripts/verify-restaurant-cost-contract.mts",
     "verify-restaurant-settlement-contract": "tsx scripts/verify-restaurant-settlement-contract.mts",
+    "verify-engine-state-machine": "tsx scripts/verify-engine-state-machine.mts",
     "verify-keeta-contract": "tsx scripts/verify-keeta-contract.mts",
     "verify-shadow-intelligence": "tsx scripts/verify-shadow-intelligence.mts",
     "verify-economic-evidence": "tsx scripts/verify-economic-evidence.mts",

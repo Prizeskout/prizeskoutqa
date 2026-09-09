@@ -129,6 +129,7 @@ import {
   handleRestaurantReconciliationRun,
   handleRestaurantSettlementBatch,
 } from "@/server/restaurant-settlement-handlers";
+import { handleEngineHealth,handleListEngineWork,handleReplayEngineWork } from "@/server/engine-control-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -977,6 +978,9 @@ function compileRoute(
 }
 
 const V1_ROUTES: V1Route[] = [
+  compileRoute("GET /v1/engine/health",(req,ctx)=>handleEngineHealth(req,ctx)),
+  compileRoute("GET /v1/engine/work-items",(req,ctx)=>handleListEngineWork(req,ctx)),
+  compileRoute("POST /v1/engine/work-items/{id}/replay",(req,ctx,p)=>handleReplayEngineWork(req,ctx,p.id)),
   // Canonical restaurant-commerce intake for enterprise POS/ERP adapters.
   compileRoute("POST /v1/commerce/order-batches", (req, ctx) =>
     handleRestaurantOrderBatch(req, ctx),
