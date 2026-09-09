@@ -69,6 +69,8 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
 }
 
 export async function processEngineQueue(owner=crypto.randomUUID(),limit=20){
+  const {error:recoveryError}=await db.rpc("ps_engine_recover_stalled",{p_actor:`worker:${owner}`,p_limit:Math.min(Math.max(limit*2,10),100)});
+  if(recoveryError) throw new Error(`Engine recovery sweep failed: ${recoveryError.message}`);
   const {data,error}=await db.rpc("ps_engine_lease_work",{p_owner:owner,p_limit:Math.min(Math.max(limit,1),50)});
   if(error) throw new Error(error.message); const results:Json[]=[];
   for(const work of (data??[]) as Work[]){

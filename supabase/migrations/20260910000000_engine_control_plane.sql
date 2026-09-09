@@ -75,7 +75,8 @@ begin
   end if;
   insert into ps_engine_work_items(account_id,event_id,work_kind,priority,available_at)
   values(p_account_id,v_event,p_work_kind,p_priority,now())
-  on conflict(event_id,work_kind) do update set event_id=excluded.event_id returning id into v_work;
+  on conflict on constraint ps_engine_work_items_event_id_work_kind_key
+  do update set event_id=excluded.event_id returning id into v_work;
   if v_inserted then insert into ps_engine_transitions(account_id,work_item_id,from_state,to_state,actor,reason) values(p_account_id,v_work,null,'queued','engine','event_accepted'); end if;
   return query select v_event,v_work,not v_inserted;
 end $$;
@@ -130,7 +131,7 @@ begin
     when 'leased' then new.state in ('processing','retry_scheduled','dead_letter','cancelled')
     when 'processing' then new.state in ('waiting_evidence','waiting_approval','verifying','completed','retry_scheduled','dead_letter','cancelled')
     when 'waiting_evidence' then new.state in ('queued','cancelled')
-    when 'waiting_approval' then new.state in ('queued','cancelled')
+    when 'waiting_approval' then new.state in ('queued','dead_letter','cancelled')
     when 'verifying' then new.state in ('completed','retry_scheduled','dead_letter')
     when 'retry_scheduled' then new.state in ('leased','cancelled')
     when 'dead_letter' then new.state in ('queued','cancelled')

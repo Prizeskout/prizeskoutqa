@@ -10,7 +10,7 @@ const ALLOWED: Record<EngineWorkState, readonly EngineWorkState[]> = {
   leased: ["processing", "retry_scheduled", "dead_letter", "cancelled"],
   processing: ["waiting_evidence", "waiting_approval", "verifying", "completed", "retry_scheduled", "dead_letter", "cancelled"],
   waiting_evidence: ["queued", "cancelled"],
-  waiting_approval: ["queued", "cancelled"],
+  waiting_approval: ["queued", "dead_letter", "cancelled"],
   verifying: ["completed", "retry_scheduled", "dead_letter"],
   retry_scheduled: ["leased", "cancelled"],
   completed: [],

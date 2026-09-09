@@ -2,7 +2,13 @@ import { timingSafeEqual } from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
 import { processEngineQueue } from "@/server/core/engine-orchestrator";
 
-const authorized=(request:Request)=>{const expected=Buffer.from(process.env.CRON_SECRET??""),actual=Buffer.from(request.headers.get("authorization")?.replace(/^Bearer\s+/i,"")??"");return expected.length>0&&expected.length===actual.length&&timingSafeEqual(expected,actual);};
+const authorized=(request:Request)=>{
+  const actual=Buffer.from(request.headers.get("authorization")?.replace(/^Bearer\s+/i,"")??"");
+  return [process.env.CRON_SECRET,process.env.EVIDENCE_PROCESSOR_SECRET].some(value=>{
+    const expected=Buffer.from(value??"");
+    return expected.length>0&&expected.length===actual.length&&timingSafeEqual(expected,actual);
+  });
+};
 export const Route=createFileRoute("/api/public/hooks/engine")({server:{handlers:{POST:async({request})=>{
   if(!authorized(request))return Response.json({error:"Unauthorized"},{status:401});
   const body=await request.json().catch(()=>({})) as {limit?:number};
