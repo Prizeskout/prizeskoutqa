@@ -31,7 +31,7 @@ import { getMerchantMarginFloor } from "./merchant-pricing-config";
 import { resolveAuthoritativeEconomics } from "./economics-resolver";
 import { handleSallaAppEvent, isSallaAppEvent } from "./salla-easy-mode";
 import { isSallaOperationalEvent, processSallaOperationalEvent } from "./salla-store-events";
-import { constantTimeTokenMatch, parseTalabatCallback, talabatStaticToken } from "./talabat-contract";
+import { constantTimeTokenMatch, parseTalabatCallback, talabatStaticToken, verifyTalabatMiddlewareJwt, sha256Hex } from "./talabat-contract";
 import { reconcileTalabatConfirmationByJobId } from "./dispatch-queue";
 
 // ---------------------------------------------------------------------------
@@ -849,6 +849,162 @@ export async function handleTalabatWebhook(request: Request): Promise<Response> 
   }
 
   return ok({ received: true, processed: true, callback_kind: kind, event_key: eventKey, order_id: orderId || null, job_id: jobId || null });
+}
+
+// Official Delivery Hero Plugin API order-dispatch endpoint. `remoteId` is
+// PrizeSkout's POS vendor ID configured during Talabat integration activation.
+// Middleware signs every request with an HS512 JWT whose service claim must be
+// `middleware`; the shared secret differs between staging and production.
+async function authenticateTalabatPluginChannel(request: Request, remoteId: string) {
+  const db = supabaseAdmin;
+  const { data: candidates } = await db.from("ps_merchant_channels")
+    .select("id,account_id,licensee_id,merchant_id,webhook_secret,metadata")
+    .eq("platform", "talabat").eq("status", "connected")
+    .contains("metadata", { pos_vendor_id: remoteId });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let channel: any = null;
+  for (const candidate of candidates ?? []) {
+    const verification = await verifyTalabatMiddlewareJwt(request.headers.get("authorization"), candidate.webhook_secret ?? "");
+    if (verification.valid) { channel = candidate; break; }
+  }
+  return channel;
+}
+
+export async function handleTalabatPluginOrder(request: Request, remoteId: string): Promise<Response> {
+  const db = supabaseAdmin;
+  const channel = await authenticateTalabatPluginChannel(request, remoteId);
+  if (!channel) return err("Invalid Talabat middleware JWT", 401);
+
+  const rawBody = await request.text();
+  let payload: Record<string, unknown>;
+  try { payload = JSON.parse(rawBody) as Record<string, unknown>; }
+  catch { return err("Invalid JSON", 400); }
+  const orderToken = String(payload.token ?? "").trim();
+  if (!orderToken) return err("Order token is required", 400);
+  const createdAt = String(payload.createdAt ?? new Date().toISOString());
+  const eventKey = `${orderToken}:RECEIVED:${createdAt}`;
+  const payloadHash = await sha256Hex(rawBody);
+  const price = payload.price && typeof payload.price === "object" ? payload.price as Record<string, unknown> : {};
+  const localInfo = payload.localInfo && typeof payload.localInfo === "object" ? payload.localInfo as Record<string, unknown> : {};
+  const payment = payload.payment && typeof payload.payment === "object" ? payload.payment as Record<string, unknown> : {};
+  const products = Array.isArray(payload.products) ? payload.products : [];
+  const numberOrNull = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : null;
+
+  const { data: inserted, error: eventError } = await db.from("ps_talabat_webhook_events").insert({
+    channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id, callback_kind: "order", event_name: "order.received",
+    event_key: eventKey, external_order_id: orderToken, occurred_at: createdAt,
+    payload_hash: payloadHash, environment: (channel.metadata as Record<string, unknown> | null)?.environment === "production" ? "production" : "sandbox",
+    payload: payload as Json, status: "processed", processed_at: new Date().toISOString(),
+  }).select("id").maybeSingle();
+  if (eventError?.code === "23505") return ok({ remoteResponse: { remoteOrderId: orderToken } });
+  if (eventError) return err("Failed to persist order", 500);
+
+  const { error: orderError } = await db.from("ps_talabat_orders").upsert({
+    channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id, external_order_id: orderToken,
+    order_code: String(payload.code ?? payload.shortCode ?? "") || null, vendor_id: remoteId,
+    chain_id: String((channel.metadata as Record<string, unknown> | null)?.chain_code ?? "") || null,
+    country_code: String(localInfo.countryCode ?? "") || null, status: "RECEIVED",
+    currency: String(localInfo.currencySymbol ?? "QAR"), subtotal: numberOrNull(price.totalNet),
+    total: numberOrNull(price.grandTotal), order_type: String(payload.expeditionType ?? "") || null,
+    transport_type: String(payload.expeditionType ?? "") || null, payment_type: String(payment.type ?? payment.status ?? "") || null,
+    delivery_fee: Array.isArray(price.deliveryFees)
+      ? price.deliveryFees.reduce((sum: number, fee: unknown) => sum + (numberOrNull((fee as Record<string, unknown>)?.value) ?? 0), 0)
+      : null,
+    discount_total: Array.isArray(payload.discounts)
+      ? payload.discounts.reduce((sum: number, discount: unknown) => sum + (numberOrNull((discount as Record<string, unknown>)?.amount) ?? 0), 0)
+      : null,
+    items: products as Json, raw_order: payload as Json, last_event_id: inserted?.id ?? null,
+    occurred_at: createdAt, sys_updated_at: createdAt, updated_at: new Date().toISOString(),
+  }, { onConflict: "channel_id,external_order_id" });
+  if (orderError) return err("Failed to persist order", 500);
+  return ok({ remoteResponse: { remoteOrderId: orderToken } });
+}
+
+export async function handleTalabatPluginOrderStatus(
+  request: Request,
+  remoteId: string,
+  remoteOrderId: string,
+): Promise<Response> {
+  const db = supabaseAdmin;
+  const channel = await authenticateTalabatPluginChannel(request, remoteId);
+  if (!channel) return err("Invalid Talabat middleware JWT", 401);
+  const rawBody = await request.text();
+  let payload: Record<string, unknown>;
+  try { payload = JSON.parse(rawBody) as Record<string, unknown>; }
+  catch { return err("Invalid JSON", 400); }
+  const status = String(payload.status ?? "").trim();
+  if (!status) return err("Order status is required", 400);
+  const occurredAt = String(payload.occurredAt ?? new Date().toISOString());
+  const payloadHash = await sha256Hex(rawBody);
+  const eventKey = `${remoteOrderId}:${status}:${occurredAt}`;
+  const environment = (channel.metadata as Record<string, unknown> | null)?.environment === "production" ? "production" : "sandbox";
+  const { error: eventError } = await db.from("ps_talabat_webhook_events").insert({
+    channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id, callback_kind: "order", event_name: `order.${status.toLowerCase()}`,
+    event_key: eventKey, external_order_id: remoteOrderId, occurred_at: occurredAt,
+    payload_hash: payloadHash, environment, payload: payload as Json,
+    status: "processed", processed_at: new Date().toISOString(),
+  });
+  if (eventError && eventError.code !== "23505") return err("Failed to persist order status", 500);
+  if (eventError?.code !== "23505") {
+    const { error: updateError } = await db.from("ps_talabat_orders").update({
+      status, cancellation: status === "ORDER_CANCELLED" ? payload as Json : undefined,
+      occurred_at: occurredAt, updated_at: new Date().toISOString(),
+    }).eq("channel_id", channel.id).eq("external_order_id", remoteOrderId);
+    if (updateError) return err("Failed to update order status", 500);
+  }
+  return ok({ received: true });
+}
+
+export async function handleTalabatPluginAvailability(request: Request, remoteId: string): Promise<Response> {
+  // Untyped until generated Supabase definitions include the callback migration.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabaseAdmin as any;
+  const channel = await authenticateTalabatPluginChannel(request, remoteId);
+  if (!channel) return err("Invalid Talabat middleware JWT", 401);
+  let payload: Record<string, unknown>;
+  try { payload = await request.json() as Record<string, unknown>; }
+  catch { return err("Invalid JSON", 400); }
+  const timestamp = String(payload.timestamp ?? "");
+  if (!timestamp || !Number.isFinite(Date.parse(timestamp))) return err("A valid availability timestamp is required", 400);
+  const closures = Array.isArray(payload.closures) ? payload.closures : [];
+  const { data: current } = await db.from("ps_talabat_vendor_availability")
+    .select("occurred_at").eq("channel_id", channel.id).maybeSingle();
+  if (!current?.occurred_at || Date.parse(timestamp) > Date.parse(current.occurred_at)) {
+    const { error: availabilityError } = await db.from("ps_talabat_vendor_availability").upsert({
+      channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
+      merchant_id: channel.merchant_id, pos_vendor_id: remoteId,
+      is_available: closures.length === 0, closures: closures as Json,
+      occurred_at: timestamp, updated_at: new Date().toISOString(),
+    }, { onConflict: "channel_id" });
+    if (availabilityError) return err("Failed to persist vendor availability", 500);
+  }
+  return ok({ received: true });
+}
+
+export async function handleTalabatCatalogStatus(request: Request, remoteId: string): Promise<Response> {
+  const db = supabaseAdmin;
+  const channel = await authenticateTalabatPluginChannel(request, remoteId);
+  if (!channel) return err("Invalid Talabat middleware JWT", 401);
+  let payload: Record<string, unknown>;
+  try { payload = await request.json() as Record<string, unknown>; }
+  catch { return err("Invalid JSON", 400); }
+  const catalogImportId = String(payload.catalogImportId ?? "").trim();
+  const status = String(payload.status ?? "").trim();
+  if (!catalogImportId || !["in_progress", "done", "done_with_errors", "failed"].includes(status))
+    return err("A valid catalogImportId and status are required", 400);
+  const environment = (channel.metadata as Record<string, unknown> | null)?.environment === "production" ? "production" : "sandbox";
+  const { error: catalogError } = await db.from("ps_talabat_catalog_jobs").upsert({
+    channel_id: channel.id, account_id: channel.account_id, licensee_id: channel.licensee_id,
+    merchant_id: channel.merchant_id, environment, job_id: catalogImportId,
+    operation: "full_catalog_import", status, callback_payload: payload as Json,
+    completed_at: ["done", "done_with_errors", "failed"].includes(status) ? new Date().toISOString() : null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "channel_id,job_id" });
+  if (catalogError) return err("Failed to persist catalog status", 500);
+  return ok({ received: true });
 }
 
 // ---------------------------------------------------------------------------

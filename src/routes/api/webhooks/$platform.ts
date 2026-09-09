@@ -16,8 +16,9 @@ import {
   handleKeetaWebhook,
   handleTalabatWebhook,
 } from "@/server/core/platform-webhooks";
+import { handleSnoonuPilotWebhook } from "@/server/core/snoonu-pilot-webhook";
 
-const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta", "talabat"]);
+const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta", "talabat", "snoonu"]);
 
 function notFound(platform: string): Response {
   return new Response(
@@ -41,6 +42,7 @@ async function handle(request: Request, platform: string): Promise<Response> {
   if (platform === "zid")     return handleZidWebhook(request);
   if (platform === "keeta")   return handleKeetaWebhook(request);
   if (platform === "talabat") return handleTalabatWebhook(request);
+  if (platform === "snoonu") return handleSnoonuPilotWebhook(request);
 
   return notFound(platform);
 }

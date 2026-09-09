@@ -1,0 +1,81 @@
+openapi: 3.1.0
+info:
+  title: PrizeSkout Snoonu Partner Pilot Ingestion API
+  version: 2026-09-09
+  description: Proposed pilot contract for discussion with Snoonu; not Snoonu-issued API documentation.
+paths:
+  /api/webhooks/snoonu:
+    post:
+      summary: Accept a signed Snoonu pilot event
+      parameters:
+        - name: X-Snoonu-Timestamp
+          in: header
+          required: true
+          schema: { type: string }
+          description: Unix seconds or ISO-8601; accepted within five minutes.
+        - name: X-Snoonu-Signature
+          in: header
+          required: true
+          schema: { type: string, pattern: "^(sha256=)?[a-f0-9]{64}$" }
+          description: HMAC-SHA-256 of timestamp + '.' + exact raw request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Event" }
+      responses:
+        "202": { description: New event durably accepted }
+        "200": { description: Idempotent replay already accepted }
+        "401": { description: Missing, stale, or invalid signature }
+        "404": { description: Merchant or branch is not pilot-allowlisted }
+        "422": { description: Invalid event contract }
+        "503": { description: Temporary persistence failure; retry with the same event ID }
+components:
+  schemas:
+    Event:
+      type: object
+      additionalProperties: false
+      required: [schema_version, event_id, event_type, occurred_at, merchant, branch, data]
+      properties:
+        schema_version: { type: string, example: "2026-09-09" }
+        event_id: { type: string, example: evt_sn_001 }
+        event_type:
+          type: string
+          enum: [order.created, order.updated, order.cancelled, order.refunded, settlement.created, settlement.updated]
+        occurred_at: { type: string, format: date-time }
+        merchant: { $ref: "#/components/schemas/ExternalIdentity" }
+        branch: { $ref: "#/components/schemas/ExternalIdentity" }
+        data:
+          oneOf:
+            - $ref: "#/components/schemas/OrderData"
+            - $ref: "#/components/schemas/SettlementData"
+    ExternalIdentity:
+      type: object
+      required: [id]
+      properties: { id: { type: string } }
+    OrderData:
+      type: object
+      required: [order_id, currency, status]
+      properties:
+        order_id: { type: string }
+        currency: { type: string, example: QAR }
+        status: { type: string }
+        gross_amount: { type: number }
+        commission_amount: { type: number }
+        discount_amount: { type: number }
+        refund_amount: { type: number }
+        net_amount: { type: number }
+        line_items: { type: array, items: { type: object } }
+    SettlementData:
+      type: object
+      required: [settlement_id, currency, status]
+      properties:
+        settlement_id: { type: string }
+        currency: { type: string, example: QAR }
+        status: { type: string }
+        gross_amount: { type: number }
+        commission_amount: { type: number }
+        discount_amount: { type: number }
+        refund_amount: { type: number }
+        net_amount: { type: number }
+        line_items: { type: array, items: { type: object } }

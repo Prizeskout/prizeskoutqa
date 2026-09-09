@@ -34,10 +34,11 @@ type ByokField = { key: string; labelKey: string; hintKey?: string };
 const BYOK_PLATFORMS: Record<string, { fields: ByokField[]; portalHintKey?: string }> = {
   talabat: {
     fields: [
-      { key: "client_id",     labelKey: "settingsTabs.channels.byok.talabat.clientId.label",     hintKey: "settingsTabs.channels.byok.talabat.clientId.hint" },
-      { key: "client_secret", labelKey: "settingsTabs.channels.byok.talabat.clientSecret.label" },
-      { key: "vendor_id",     labelKey: "settingsTabs.channels.byok.talabat.vendorId.label",      hintKey: "settingsTabs.channels.byok.talabat.vendorId.hint" },
-      { key: "chain_id",      labelKey: "settingsTabs.channels.byok.talabat.chainId.label" },
+      { key: "username",      labelKey: "settingsTabs.channels.byok.talabat.clientId.label",     hintKey: "settingsTabs.channels.byok.talabat.clientId.hint" },
+      { key: "password",      labelKey: "settingsTabs.channels.byok.talabat.clientSecret.label" },
+      { key: "middleware_jwt_secret", labelKey: "settingsTabs.channels.byok.talabat.middlewareSecret.label" },
+      { key: "pos_vendor_id", labelKey: "settingsTabs.channels.byok.talabat.vendorId.label",      hintKey: "settingsTabs.channels.byok.talabat.vendorId.hint" },
+      { key: "chain_code",    labelKey: "settingsTabs.channels.byok.talabat.chainId.label" },
     ],
     portalHintKey: "settingsTabs.channels.byok.talabat.portalHint",
   },

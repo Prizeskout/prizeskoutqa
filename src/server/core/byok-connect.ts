@@ -12,7 +12,7 @@
 //          only holds setKeetaShopId(), the post-connect shop-ID capture step.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { exchangeTalabatToken, verifyTalabatVendorAccess, type TalabatEnvironment } from "./talabat-client";
+import { exchangeTalabatToken, type TalabatEnvironment } from "./talabat-client";
 
 export const JAHEZ_BASE   = "https://integration-api.jahez.net";
 
@@ -32,10 +32,11 @@ export async function verifyMerchantAccess(merchantId: string, accessCode: strin
 
 export async function connectTalabat(params: {
   merchantId: string;
-  clientId: string;
-  clientSecret: string;
-  vendorId: string;
-  chainId: string;
+  username: string;
+  password: string;
+  middlewareJwtSecret: string;
+  posVendorId: string;
+  chainCode: string;
   commissionRatePct: string;
   vatOnFeesPct?: string;
   paymentFeePct?: string;
@@ -43,8 +44,8 @@ export async function connectTalabat(params: {
   deliveryContribution?: string;
   environment?: TalabatEnvironment;
   contractCurrency?: string;
-}): Promise<{ ok: boolean; message?: string; webhookToken?: string }> {
-  const { merchantId, clientId, clientSecret, vendorId, chainId, commissionRatePct } = params;
+}): Promise<{ ok: boolean; message?: string }> {
+  const { merchantId, username, password, middlewareJwtSecret, posVendorId, chainCode, commissionRatePct } = params;
   const now = new Date().toISOString();
 
   // Powers the expected-payout check (merchant-facing "here's what you
@@ -80,21 +81,18 @@ export async function connectTalabat(params: {
   // merchant's Chain ID field is a plain text input with no format
   // enforcement, so a copy-paste mistake here would otherwise "connect"
   // successfully and only ever fail, silently, on the first real dispatch.
-  const UUID_RE = /^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/;
-  if (!UUID_RE.test(chainId)) {
-    return {
-      ok: false,
-      message: "Chain ID must be a UUID (e.g. 12345678-1234-1234-1234-123456789012) — check partner.talabat.com for the exact value.",
-    };
-  }
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{1,99}$/.test(chainCode.trim()))
+    return { ok: false, message: "Enter the Chain Code supplied by your Talabat integration contact." };
+  if (!posVendorId.trim()) return { ok: false, message: "Enter the POS Vendor ID configured for PrizeSkout." };
+  if (!middlewareJwtSecret.trim()) return { ok: false, message: "Enter the middleware JWT secret supplied with the Talabat credentials." };
 
   // Verify live against Talabat's real OAuth token endpoint before ever
   // reporting "connected" — a wrong client_id/client_secret fails here with
   // a clear message instead of silently sitting in the DB until the first
   // real dispatch attempt fails.
-  const environment = params.environment === "sandbox" ? "sandbox" : "production";
+  const environment = params.environment === "production" ? "production" : "sandbox";
   const contractCurrency = /^[A-Z]{3}$/.test(params.contractCurrency ?? "") ? params.contractCurrency : "QAR";
-  const tokenResult = await exchangeTalabatToken(clientId, clientSecret, environment);
+  const tokenResult = await exchangeTalabatToken(username, password, environment);
   if (!tokenResult.ok || !tokenResult.data?.access_token) {
     // Confirmed live against Talabat's real token endpoint: invalid
     // credentials come back as 400 invalid_request/invalid_client, not
@@ -106,30 +104,12 @@ export async function connectTalabat(params: {
     return {
       ok: false,
       message: isBadCredentials
-        ? "Talabat rejected these credentials. Double-check your Client ID and Client Secret from partner.talabat.com."
+        ? "Talabat rejected the plugin username or password. Recheck the decrypted credential message."
         : `Could not reach Talabat to verify credentials: ${tokenResult.message ?? "unknown error"}. Please try again.`,
     };
   }
 
-  const vendorProbe = await verifyTalabatVendorAccess({
-    chainId,
-    vendorId,
-    accessToken: tokenResult.data.access_token,
-    environment,
-  });
-  if (!vendorProbe.ok) {
-    const invalidVendor = [400,403,404].includes(vendorProbe.httpStatus);
-    return {
-      ok: false,
-      message: invalidVendor
-        ? "Talabat authenticated the credentials, but the Chain ID or Vendor ID is not accessible. Use the sandbox vendor identifiers downloaded from Partner Portal."
-        : `Talabat authentication succeeded, but vendor verification failed: ${vendorProbe.message ?? "unknown error"}.`,
-    };
-  }
-
-  const { data: existingChannel } = await db().select("webhook_secret")
-    .eq("account_id", merchantId).eq("merchant_id", merchantId).eq("platform", "talabat").maybeSingle();
-  const webhookToken = existingChannel?.webhook_secret || Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
+  const webhookToken = middlewareJwtSecret.trim();
   const { error } = await db()
     .upsert(
       {
@@ -137,9 +117,9 @@ export async function connectTalabat(params: {
         licensee_id:      merchantId,
         merchant_id:      merchantId,
         platform:         "talabat",
-        bearer_token:     clientSecret,
-        manager_token:    clientId,
-        scopes:           ["catalog:read", "catalog:write", "orders:read"],
+        bearer_token:     password,
+        manager_token:    username,
+        scopes:           ["catalog:write", "orders:read", "orders:status", "vendor:availability"],
         status:           "connected",
         error_message:    null,
         connected_at:     now,
@@ -147,8 +127,12 @@ export async function connectTalabat(params: {
         updated_at:       now,
         webhook_secret:   webhookToken,
         metadata: {
-          vendor_id: vendorId,
-          chain_id: chainId,
+          pos_vendor_id: posVendorId.trim(),
+          chain_code: chainCode.trim(),
+          // Compatibility aliases for existing payout/dispatch readers. These
+          // now contain POS Middleware identifiers, not Partner API UUIDs.
+          vendor_id: posVendorId.trim(),
+          chain_id: chainCode.trim(),
           access_token: tokenResult.data.access_token,
           token_expires_at: new Date(Date.now() + tokenResult.data.expires_in * 1000).toISOString(),
           commission_rate_pct: commissionRate,
@@ -166,7 +150,7 @@ export async function connectTalabat(params: {
     );
 
   if (error) return { ok: false, message: "Failed to save credentials. Please try again." };
-  return { ok: true, webhookToken };
+  return { ok: true };
 }
 
 export async function connectJahez(params: {

@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoiCalculatorRouteImport } from './routes/roi-calculator'
+import { Route as PreviousLandingPageRouteImport } from './routes/previous-landing-page'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NewLandingPageRouteImport } from './routes/new-landing-page'
 import { Route as MarginDashboardRouteImport } from './routes/margin-dashboard'
 import { Route as MarginRouteImport } from './routes/margin'
 import { Route as LoginRouteImport } from './routes/login'
@@ -19,6 +21,7 @@ import { Route as LegalRouteImport } from './routes/legal'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AnotherLandingPageRouteImport } from './routes/another-landing-page'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +47,7 @@ import { Route as DashboardEvidenceRouteImport } from './routes/dashboard.eviden
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
+import { Route as ApiProfitAuditRouteImport } from './routes/api/profit-audit'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSignInRouteImport } from './routes/admin.sign-in'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
@@ -76,6 +80,8 @@ import { Route as ApiPublicV1SplatRouteImport } from './routes/api/public/v1/$'
 import { Route as ApiPublicHooksWeeklyMarginDigestRouteImport } from './routes/api/public/hooks/weekly-margin-digest'
 import { Route as ApiPublicHooksWebhookRetryRouteImport } from './routes/api/public/hooks/webhook-retry'
 import { Route as ApiPublicHooksWebhookIntelligenceRetryRouteImport } from './routes/api/public/hooks/webhook-intelligence-retry'
+import { Route as ApiPublicHooksTalabatOrderSyncRouteImport } from './routes/api/public/hooks/talabat-order-sync'
+import { Route as ApiPublicHooksTalabatOrderActionsRouteImport } from './routes/api/public/hooks/talabat-order-actions'
 import { Route as ApiPublicHooksShadowIntelligenceRouteImport } from './routes/api/public/hooks/shadow-intelligence'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
 import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/public/hooks/map-monitor'
@@ -83,6 +89,7 @@ import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/public/hooks/flash-start'
 import { Route as ApiPublicHooksFlashEndRouteImport } from './routes/api/public/hooks/flash-end'
 import { Route as ApiPublicHooksEvidenceSourceSyncRouteImport } from './routes/api/public/hooks/evidence-source-sync'
+import { Route as ApiPublicHooksEvidenceSourcePullRouteImport } from './routes/api/public/hooks/evidence-source-pull'
 import { Route as ApiPublicHooksEvidenceProcessRouteImport } from './routes/api/public/hooks/evidence-process'
 import { Route as ApiPublicHooksEconomicEvidenceRouteImport } from './routes/api/public/hooks/economic-evidence'
 import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/public/hooks/dispatch-queue'
@@ -91,7 +98,11 @@ import { Route as ApiPublicHooksCopilotSchedulesRouteImport } from './routes/api
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
+import { Route as ApiTalabatPluginOrderRemoteIdRouteImport } from './routes/api/talabat/plugin/order.$remoteId'
+import { Route as ApiTalabatPluginCatalogStatusRemoteIdRouteImport } from './routes/api/talabat/plugin/catalog-status.$remoteId'
 import { Route as ApiPublicV1WebhooksTestSignatureRouteImport } from './routes/api/public/v1/webhooks.test-signature'
+import { Route as ApiTalabatPluginRemoteIdRemoteIdAvailabilityRouteImport } from './routes/api/talabat/plugin/remoteId.$remoteId.availability'
+import { Route as ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRouteImport } from './routes/api/talabat/plugin/remoteId.$remoteId.remoteOrder.$remoteOrderId.posOrderStatus'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -103,9 +114,19 @@ const RoiCalculatorRoute = RoiCalculatorRouteImport.update({
   path: '/roi-calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviousLandingPageRoute = PreviousLandingPageRouteImport.update({
+  id: '/previous-landing-page',
+  path: '/previous-landing-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewLandingPageRoute = NewLandingPageRouteImport.update({
+  id: '/new-landing-page',
+  path: '/new-landing-page',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarginDashboardRoute = MarginDashboardRouteImport.update({
@@ -141,6 +162,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnotherLandingPageRoute = AnotherLandingPageRouteImport.update({
+  id: '/another-landing-page',
+  path: '/another-landing-page',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -266,6 +292,11 @@ const ApiRestoreRoute = ApiRestoreRouteImport.update({
 const ApiRegisterCodeRoute = ApiRegisterCodeRouteImport.update({
   id: '/api/register-code',
   path: '/api/register-code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProfitAuditRoute = ApiProfitAuditRouteImport.update({
+  id: '/api/profit-audit',
+  path: '/api/profit-audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
@@ -431,6 +462,18 @@ const ApiPublicHooksWebhookIntelligenceRetryRoute =
     path: '/api/public/hooks/webhook-intelligence-retry',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksTalabatOrderSyncRoute =
+  ApiPublicHooksTalabatOrderSyncRouteImport.update({
+    id: '/api/public/hooks/talabat-order-sync',
+    path: '/api/public/hooks/talabat-order-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksTalabatOrderActionsRoute =
+  ApiPublicHooksTalabatOrderActionsRouteImport.update({
+    id: '/api/public/hooks/talabat-order-actions',
+    path: '/api/public/hooks/talabat-order-actions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksShadowIntelligenceRoute =
   ApiPublicHooksShadowIntelligenceRouteImport.update({
     id: '/api/public/hooks/shadow-intelligence',
@@ -469,6 +512,12 @@ const ApiPublicHooksEvidenceSourceSyncRoute =
   ApiPublicHooksEvidenceSourceSyncRouteImport.update({
     id: '/api/public/hooks/evidence-source-sync',
     path: '/api/public/hooks/evidence-source-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksEvidenceSourcePullRoute =
+  ApiPublicHooksEvidenceSourcePullRouteImport.update({
+    id: '/api/public/hooks/evidence-source-pull',
+    path: '/api/public/hooks/evidence-source-pull',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksEvidenceProcessRoute =
@@ -516,17 +565,44 @@ const ApiAuthKeetaCallbackRoute = ApiAuthKeetaCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => ApiAuthKeetaRoute,
 } as any)
+const ApiTalabatPluginOrderRemoteIdRoute =
+  ApiTalabatPluginOrderRemoteIdRouteImport.update({
+    id: '/api/talabat/plugin/order/$remoteId',
+    path: '/api/talabat/plugin/order/$remoteId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTalabatPluginCatalogStatusRemoteIdRoute =
+  ApiTalabatPluginCatalogStatusRemoteIdRouteImport.update({
+    id: '/api/talabat/plugin/catalog-status/$remoteId',
+    path: '/api/talabat/plugin/catalog-status/$remoteId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1WebhooksTestSignatureRoute =
   ApiPublicV1WebhooksTestSignatureRouteImport.update({
     id: '/api/public/v1/webhooks/test-signature',
     path: '/api/public/v1/webhooks/test-signature',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute =
+  ApiTalabatPluginRemoteIdRemoteIdAvailabilityRouteImport.update({
+    id: '/api/talabat/plugin/remoteId/$remoteId/availability',
+    path: '/api/talabat/plugin/remoteId/$remoteId/availability',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute =
+  ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRouteImport.update(
+    {
+      id: '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus',
+      path: '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus',
+      getParentRoute: () => rootRouteImport,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/admin': typeof AdminRouteWithChildren
+  '/another-landing-page': typeof AnotherLandingPageRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -534,7 +610,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/margin-dashboard': typeof MarginDashboardRouteWithChildren
+  '/new-landing-page': typeof NewLandingPageRoute
   '/onboarding': typeof OnboardingRoute
+  '/previous-landing-page': typeof PreviousLandingPageRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/admin/callback': typeof AdminCallbackRoute
@@ -542,6 +620,7 @@ export interface FileRoutesByFullPath {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/sign-in': typeof AdminSignInRoute
   '/admin/support': typeof AdminSupportRoute
+  '/api/profit-audit': typeof ApiProfitAuditRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -594,6 +673,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
   '/api/public/hooks/evidence-process': typeof ApiPublicHooksEvidenceProcessRoute
+  '/api/public/hooks/evidence-source-pull': typeof ApiPublicHooksEvidenceSourcePullRoute
   '/api/public/hooks/evidence-source-sync': typeof ApiPublicHooksEvidenceSourceSyncRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
@@ -601,22 +681,31 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
+  '/api/public/hooks/talabat-order-actions': typeof ApiPublicHooksTalabatOrderActionsRoute
+  '/api/public/hooks/talabat-order-sync': typeof ApiPublicHooksTalabatOrderSyncRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
+  '/api/talabat/plugin/catalog-status/$remoteId': typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
+  '/api/talabat/plugin/order/$remoteId': typeof ApiTalabatPluginOrderRemoteIdRoute
+  '/api/talabat/plugin/remoteId/$remoteId/availability': typeof ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute
+  '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus': typeof ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
+  '/another-landing-page': typeof AnotherLandingPageRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
+  '/new-landing-page': typeof NewLandingPageRoute
   '/onboarding': typeof OnboardingRoute
+  '/previous-landing-page': typeof PreviousLandingPageRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/admin/callback': typeof AdminCallbackRoute
@@ -624,6 +713,7 @@ export interface FileRoutesByTo {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/sign-in': typeof AdminSignInRoute
   '/admin/support': typeof AdminSupportRoute
+  '/api/profit-audit': typeof ApiProfitAuditRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -676,6 +766,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
   '/api/public/hooks/evidence-process': typeof ApiPublicHooksEvidenceProcessRoute
+  '/api/public/hooks/evidence-source-pull': typeof ApiPublicHooksEvidenceSourcePullRoute
   '/api/public/hooks/evidence-source-sync': typeof ApiPublicHooksEvidenceSourceSyncRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
@@ -683,18 +774,25 @@ export interface FileRoutesByTo {
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
+  '/api/public/hooks/talabat-order-actions': typeof ApiPublicHooksTalabatOrderActionsRoute
+  '/api/public/hooks/talabat-order-sync': typeof ApiPublicHooksTalabatOrderSyncRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
+  '/api/talabat/plugin/catalog-status/$remoteId': typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
+  '/api/talabat/plugin/order/$remoteId': typeof ApiTalabatPluginOrderRemoteIdRoute
+  '/api/talabat/plugin/remoteId/$remoteId/availability': typeof ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute
+  '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus': typeof ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/admin': typeof AdminRouteWithChildren
+  '/another-landing-page': typeof AnotherLandingPageRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
@@ -702,7 +800,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/margin': typeof MarginRoute
   '/margin-dashboard': typeof MarginDashboardRouteWithChildren
+  '/new-landing-page': typeof NewLandingPageRoute
   '/onboarding': typeof OnboardingRoute
+  '/previous-landing-page': typeof PreviousLandingPageRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
   '/admin/callback': typeof AdminCallbackRoute
@@ -710,6 +810,7 @@ export interface FileRoutesById {
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/sign-in': typeof AdminSignInRoute
   '/admin/support': typeof AdminSupportRoute
+  '/api/profit-audit': typeof ApiProfitAuditRoute
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -762,6 +863,7 @@ export interface FileRoutesById {
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
   '/api/public/hooks/economic-evidence': typeof ApiPublicHooksEconomicEvidenceRoute
   '/api/public/hooks/evidence-process': typeof ApiPublicHooksEvidenceProcessRoute
+  '/api/public/hooks/evidence-source-pull': typeof ApiPublicHooksEvidenceSourcePullRoute
   '/api/public/hooks/evidence-source-sync': typeof ApiPublicHooksEvidenceSourceSyncRoute
   '/api/public/hooks/flash-end': typeof ApiPublicHooksFlashEndRoute
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
@@ -769,12 +871,18 @@ export interface FileRoutesById {
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
+  '/api/public/hooks/talabat-order-actions': typeof ApiPublicHooksTalabatOrderActionsRoute
+  '/api/public/hooks/talabat-order-sync': typeof ApiPublicHooksTalabatOrderSyncRoute
   '/api/public/hooks/webhook-intelligence-retry': typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   '/api/public/hooks/webhook-retry': typeof ApiPublicHooksWebhookRetryRoute
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
+  '/api/talabat/plugin/catalog-status/$remoteId': typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
+  '/api/talabat/plugin/order/$remoteId': typeof ApiTalabatPluginOrderRemoteIdRoute
+  '/api/talabat/plugin/remoteId/$remoteId/availability': typeof ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute
+  '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus': typeof ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -782,6 +890,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/admin'
+    | '/another-landing-page'
     | '/contact'
     | '/dashboard'
     | '/forgot-password'
@@ -789,7 +898,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/margin'
     | '/margin-dashboard'
+    | '/new-landing-page'
     | '/onboarding'
+    | '/previous-landing-page'
     | '/roi-calculator'
     | '/signup'
     | '/admin/callback'
@@ -797,6 +908,7 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/sign-in'
     | '/admin/support'
+    | '/api/profit-audit'
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
@@ -849,6 +961,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/economic-evidence'
     | '/api/public/hooks/evidence-process'
+    | '/api/public/hooks/evidence-source-pull'
     | '/api/public/hooks/evidence-source-sync'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
@@ -856,22 +969,31 @@ export interface FileRouteTypes {
     | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/shadow-intelligence'
+    | '/api/public/hooks/talabat-order-actions'
+    | '/api/public/hooks/talabat-order-sync'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
+    | '/api/talabat/plugin/catalog-status/$remoteId'
+    | '/api/talabat/plugin/order/$remoteId'
+    | '/api/talabat/plugin/remoteId/$remoteId/availability'
+    | '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/access'
+    | '/another-landing-page'
     | '/contact'
     | '/forgot-password'
     | '/legal'
     | '/login'
     | '/margin'
+    | '/new-landing-page'
     | '/onboarding'
+    | '/previous-landing-page'
     | '/roi-calculator'
     | '/signup'
     | '/admin/callback'
@@ -879,6 +1001,7 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/sign-in'
     | '/admin/support'
+    | '/api/profit-audit'
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
@@ -931,6 +1054,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/economic-evidence'
     | '/api/public/hooks/evidence-process'
+    | '/api/public/hooks/evidence-source-pull'
     | '/api/public/hooks/evidence-source-sync'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
@@ -938,17 +1062,24 @@ export interface FileRouteTypes {
     | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/shadow-intelligence'
+    | '/api/public/hooks/talabat-order-actions'
+    | '/api/public/hooks/talabat-order-sync'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
+    | '/api/talabat/plugin/catalog-status/$remoteId'
+    | '/api/talabat/plugin/order/$remoteId'
+    | '/api/talabat/plugin/remoteId/$remoteId/availability'
+    | '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus'
   id:
     | '__root__'
     | '/'
     | '/access'
     | '/admin'
+    | '/another-landing-page'
     | '/contact'
     | '/dashboard'
     | '/forgot-password'
@@ -956,7 +1087,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/margin'
     | '/margin-dashboard'
+    | '/new-landing-page'
     | '/onboarding'
+    | '/previous-landing-page'
     | '/roi-calculator'
     | '/signup'
     | '/admin/callback'
@@ -964,6 +1097,7 @@ export interface FileRouteTypes {
     | '/admin/operations'
     | '/admin/sign-in'
     | '/admin/support'
+    | '/api/profit-audit'
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
@@ -1016,6 +1150,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/dispatch-queue'
     | '/api/public/hooks/economic-evidence'
     | '/api/public/hooks/evidence-process'
+    | '/api/public/hooks/evidence-source-pull'
     | '/api/public/hooks/evidence-source-sync'
     | '/api/public/hooks/flash-end'
     | '/api/public/hooks/flash-start'
@@ -1023,18 +1158,25 @@ export interface FileRouteTypes {
     | '/api/public/hooks/map-monitor'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/shadow-intelligence'
+    | '/api/public/hooks/talabat-order-actions'
+    | '/api/public/hooks/talabat-order-sync'
     | '/api/public/hooks/webhook-intelligence-retry'
     | '/api/public/hooks/webhook-retry'
     | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
     | '/api/public/v1/webhooks/test-signature'
+    | '/api/talabat/plugin/catalog-status/$remoteId'
+    | '/api/talabat/plugin/order/$remoteId'
+    | '/api/talabat/plugin/remoteId/$remoteId/availability'
+    | '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessRoute: typeof AccessRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AnotherLandingPageRoute: typeof AnotherLandingPageRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -1042,9 +1184,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MarginRoute: typeof MarginRoute
   MarginDashboardRoute: typeof MarginDashboardRouteWithChildren
+  NewLandingPageRoute: typeof NewLandingPageRoute
   OnboardingRoute: typeof OnboardingRoute
+  PreviousLandingPageRoute: typeof PreviousLandingPageRoute
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
+  ApiProfitAuditRoute: typeof ApiProfitAuditRoute
   ApiRegisterCodeRoute: typeof ApiRegisterCodeRoute
   ApiRestoreRoute: typeof ApiRestoreRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -1082,6 +1227,7 @@ export interface RootRouteChildren {
   ApiPublicHooksDispatchQueueRoute: typeof ApiPublicHooksDispatchQueueRoute
   ApiPublicHooksEconomicEvidenceRoute: typeof ApiPublicHooksEconomicEvidenceRoute
   ApiPublicHooksEvidenceProcessRoute: typeof ApiPublicHooksEvidenceProcessRoute
+  ApiPublicHooksEvidenceSourcePullRoute: typeof ApiPublicHooksEvidenceSourcePullRoute
   ApiPublicHooksEvidenceSourceSyncRoute: typeof ApiPublicHooksEvidenceSourceSyncRoute
   ApiPublicHooksFlashEndRoute: typeof ApiPublicHooksFlashEndRoute
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
@@ -1089,12 +1235,18 @@ export interface RootRouteChildren {
   ApiPublicHooksMapMonitorRoute: typeof ApiPublicHooksMapMonitorRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
   ApiPublicHooksShadowIntelligenceRoute: typeof ApiPublicHooksShadowIntelligenceRoute
+  ApiPublicHooksTalabatOrderActionsRoute: typeof ApiPublicHooksTalabatOrderActionsRoute
+  ApiPublicHooksTalabatOrderSyncRoute: typeof ApiPublicHooksTalabatOrderSyncRoute
   ApiPublicHooksWebhookIntelligenceRetryRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRoute
   ApiPublicHooksWebhookRetryRoute: typeof ApiPublicHooksWebhookRetryRoute
   ApiPublicHooksWeeklyMarginDigestRoute: typeof ApiPublicHooksWeeklyMarginDigestRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
   ApiWebhooksZidAppMarketRoute: typeof ApiWebhooksZidAppMarketRoute
   ApiPublicV1WebhooksTestSignatureRoute: typeof ApiPublicV1WebhooksTestSignatureRoute
+  ApiTalabatPluginCatalogStatusRemoteIdRoute: typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
+  ApiTalabatPluginOrderRemoteIdRoute: typeof ApiTalabatPluginOrderRemoteIdRoute
+  ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute: typeof ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute
+  ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute: typeof ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1113,11 +1265,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoiCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/previous-landing-page': {
+      id: '/previous-landing-page'
+      path: '/previous-landing-page'
+      fullPath: '/previous-landing-page'
+      preLoaderRoute: typeof PreviousLandingPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/new-landing-page': {
+      id: '/new-landing-page'
+      path: '/new-landing-page'
+      fullPath: '/new-landing-page'
+      preLoaderRoute: typeof NewLandingPageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/margin-dashboard': {
@@ -1167,6 +1333,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/another-landing-page': {
+      id: '/another-landing-page'
+      path: '/another-landing-page'
+      fullPath: '/another-landing-page'
+      preLoaderRoute: typeof AnotherLandingPageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -1342,6 +1515,13 @@ declare module '@tanstack/react-router' {
       path: '/api/register-code'
       fullPath: '/api/register-code'
       preLoaderRoute: typeof ApiRegisterCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/profit-audit': {
+      id: '/api/profit-audit'
+      path: '/api/profit-audit'
+      fullPath: '/api/profit-audit'
+      preLoaderRoute: typeof ApiProfitAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/support': {
@@ -1568,6 +1748,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksWebhookIntelligenceRetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/talabat-order-sync': {
+      id: '/api/public/hooks/talabat-order-sync'
+      path: '/api/public/hooks/talabat-order-sync'
+      fullPath: '/api/public/hooks/talabat-order-sync'
+      preLoaderRoute: typeof ApiPublicHooksTalabatOrderSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/talabat-order-actions': {
+      id: '/api/public/hooks/talabat-order-actions'
+      path: '/api/public/hooks/talabat-order-actions'
+      fullPath: '/api/public/hooks/talabat-order-actions'
+      preLoaderRoute: typeof ApiPublicHooksTalabatOrderActionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/shadow-intelligence': {
       id: '/api/public/hooks/shadow-intelligence'
       path: '/api/public/hooks/shadow-intelligence'
@@ -1615,6 +1809,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/evidence-source-sync'
       fullPath: '/api/public/hooks/evidence-source-sync'
       preLoaderRoute: typeof ApiPublicHooksEvidenceSourceSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/evidence-source-pull': {
+      id: '/api/public/hooks/evidence-source-pull'
+      path: '/api/public/hooks/evidence-source-pull'
+      fullPath: '/api/public/hooks/evidence-source-pull'
+      preLoaderRoute: typeof ApiPublicHooksEvidenceSourcePullRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/evidence-process': {
@@ -1673,11 +1874,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthKeetaCallbackRouteImport
       parentRoute: typeof ApiAuthKeetaRoute
     }
+    '/api/talabat/plugin/order/$remoteId': {
+      id: '/api/talabat/plugin/order/$remoteId'
+      path: '/api/talabat/plugin/order/$remoteId'
+      fullPath: '/api/talabat/plugin/order/$remoteId'
+      preLoaderRoute: typeof ApiTalabatPluginOrderRemoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talabat/plugin/catalog-status/$remoteId': {
+      id: '/api/talabat/plugin/catalog-status/$remoteId'
+      path: '/api/talabat/plugin/catalog-status/$remoteId'
+      fullPath: '/api/talabat/plugin/catalog-status/$remoteId'
+      preLoaderRoute: typeof ApiTalabatPluginCatalogStatusRemoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/webhooks/test-signature': {
       id: '/api/public/v1/webhooks/test-signature'
       path: '/api/public/v1/webhooks/test-signature'
       fullPath: '/api/public/v1/webhooks/test-signature'
       preLoaderRoute: typeof ApiPublicV1WebhooksTestSignatureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talabat/plugin/remoteId/$remoteId/availability': {
+      id: '/api/talabat/plugin/remoteId/$remoteId/availability'
+      path: '/api/talabat/plugin/remoteId/$remoteId/availability'
+      fullPath: '/api/talabat/plugin/remoteId/$remoteId/availability'
+      preLoaderRoute: typeof ApiTalabatPluginRemoteIdRemoteIdAvailabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus': {
+      id: '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus'
+      path: '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus'
+      fullPath: '/api/talabat/plugin/remoteId/$remoteId/remoteOrder/$remoteOrderId/posOrderStatus'
+      preLoaderRoute: typeof ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1785,6 +2014,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessRoute: AccessRoute,
   AdminRoute: AdminRouteWithChildren,
+  AnotherLandingPageRoute: AnotherLandingPageRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
@@ -1792,9 +2022,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MarginRoute: MarginRoute,
   MarginDashboardRoute: MarginDashboardRouteWithChildren,
+  NewLandingPageRoute: NewLandingPageRoute,
   OnboardingRoute: OnboardingRoute,
+  PreviousLandingPageRoute: PreviousLandingPageRoute,
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,
+  ApiProfitAuditRoute: ApiProfitAuditRoute,
   ApiRegisterCodeRoute: ApiRegisterCodeRoute,
   ApiRestoreRoute: ApiRestoreRoute,
   AuthCallbackRoute: AuthCallbackRoute,
@@ -1833,6 +2066,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksDispatchQueueRoute: ApiPublicHooksDispatchQueueRoute,
   ApiPublicHooksEconomicEvidenceRoute: ApiPublicHooksEconomicEvidenceRoute,
   ApiPublicHooksEvidenceProcessRoute: ApiPublicHooksEvidenceProcessRoute,
+  ApiPublicHooksEvidenceSourcePullRoute: ApiPublicHooksEvidenceSourcePullRoute,
   ApiPublicHooksEvidenceSourceSyncRoute: ApiPublicHooksEvidenceSourceSyncRoute,
   ApiPublicHooksFlashEndRoute: ApiPublicHooksFlashEndRoute,
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
@@ -1840,6 +2074,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksMapMonitorRoute: ApiPublicHooksMapMonitorRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
   ApiPublicHooksShadowIntelligenceRoute: ApiPublicHooksShadowIntelligenceRoute,
+  ApiPublicHooksTalabatOrderActionsRoute:
+    ApiPublicHooksTalabatOrderActionsRoute,
+  ApiPublicHooksTalabatOrderSyncRoute: ApiPublicHooksTalabatOrderSyncRoute,
   ApiPublicHooksWebhookIntelligenceRetryRoute:
     ApiPublicHooksWebhookIntelligenceRetryRoute,
   ApiPublicHooksWebhookRetryRoute: ApiPublicHooksWebhookRetryRoute,
@@ -1847,6 +2084,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
   ApiWebhooksZidAppMarketRoute: ApiWebhooksZidAppMarketRoute,
   ApiPublicV1WebhooksTestSignatureRoute: ApiPublicV1WebhooksTestSignatureRoute,
+  ApiTalabatPluginCatalogStatusRemoteIdRoute:
+    ApiTalabatPluginCatalogStatusRemoteIdRoute,
+  ApiTalabatPluginOrderRemoteIdRoute: ApiTalabatPluginOrderRemoteIdRoute,
+  ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute:
+    ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute,
+  ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute:
+    ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
@@ -1860,24 +2104,3 @@ declare module '@tanstack/react-start' {
     router: Awaited<ReturnType<typeof getRouter>>
   }
 }
-import { Route as NewLandingPageRouteImport } from './routes/new-landing-page'
-const NewLandingPageRoute = NewLandingPageRouteImport.update({
-  id: '/new-landing-page',
-  path: '/new-landing-page',
-  getParentRoute: () => rootRouteImport,
-} as any)
-  '/new-landing-page': typeof NewLandingPageRoute
-  '/new-landing-page': typeof NewLandingPageRoute
-  '/new-landing-page': typeof NewLandingPageRoute
-    | '/new-landing-page'
-    | '/new-landing-page'
-    | '/new-landing-page'
-  NewLandingPageRoute: typeof NewLandingPageRoute
-    '/new-landing-page': {
-      id: '/new-landing-page'
-      path: '/new-landing-page'
-      fullPath: '/new-landing-page'
-      preLoaderRoute: typeof NewLandingPageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-  NewLandingPageRoute: NewLandingPageRoute,
