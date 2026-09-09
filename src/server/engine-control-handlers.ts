@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
+import { processEngineQueue } from "@/server/core/engine-orchestrator";
+import { backgroundTask } from "@/server/cf-ctx";
 
 const db=supabaseAdmin as any;
 const forbidden=():V1Result=>({status:403,body:{error:{code:"forbidden",message:"This operation requires the admin scope."}}});
@@ -47,5 +49,6 @@ export async function handleDecideEngineApproval(request:Request,ctx:V1Context,i
   const context=body.context&&typeof body.context==="object"&&!Array.isArray(body.context)?body.context:{};
   const {data,error}=await db.rpc("ps_engine_decide_approval",{p_request_id:id,p_account_id:ctx.accountId,p_decision:decision,p_decided_by:`api_key:${ctx.apiKeyId}`,p_reason:reason,p_context:context});
   if(error){const message=String(error.message);return {status:/expired|already decided|not waiting/.test(message)?409:404,body:{error:{code:"approval_failed",message}}};}
+  if(decision==="approved")backgroundTask(processEngineQueue(`approval:${crypto.randomUUID()}`,5));
   return {status:200,body:{data:{request_id:id,decision,work_item_id:data?.id,state:data?.state}}};
 }

@@ -5,7 +5,7 @@ type Json = Record<string, unknown>;
 export type EngineEventInput = { accountId:string; merchantId?:string|null; eventType:string; source:string; sourceEventId:string; schemaVersion:string; payload:Json; workKind:string; occurredAt?:string|null; priority?:number };
 type Work = { id:string; account_id:string; event_id:string; work_kind:string; state:EngineWorkState; attempt:number; max_attempts:number };
 type Event = { id:string; account_id:string; merchant_id:string|null; event_type:string; source:string; payload:Json };
-type Outcome = { state:"completed"|"waiting_evidence"|"waiting_approval"|"verifying"|"dead_letter"; reason:string; detail?:Json };
+type Outcome = { state:"completed"|"waiting_evidence"|"waiting_approval"|"verifying"|"dead_letter"; reason:string; detail?:Json; approval?:{scope:string;expiresAt:string} };
 
 const db = supabaseAdmin as any;
 
@@ -65,6 +65,15 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
     if(data.state==="dead_letter")return {state:"dead_letter",reason:"dispatch_requires_recovery",detail:{dispatch_id:data.id,channel:data.channel,sku:data.sku,error:data.last_error}};
     throw new Error(`Dispatch ${dispatchId} is still ${data.state}`);
   }
+  if(work.work_kind==="authorize_store_manager_task"){
+    const taskId=String(event.payload.task_id??"");
+    if(!taskId)return {state:"waiting_evidence",reason:"store_manager_task_required"};
+    const {data,error}=await db.from("ps_store_manager_tasks").select("id,status,risk_level,task_type,title,approved_by,approved_at").eq("id",taskId).eq("account_id",event.account_id).maybeSingle();
+    if(error)throw new Error(error.message);if(!data)return {state:"waiting_evidence",reason:"store_manager_task_not_visible"};
+    if(data.status==="waiting_approval")return {state:"waiting_approval",reason:"merchant_approval_required",detail:{task_id:data.id,task_type:data.task_type,risk_level:data.risk_level,title:data.title},approval:{scope:`store_manager:${data.task_type}`,expiresAt:new Date(Date.now()+24*60*60_000).toISOString()}};
+    if(data.status==="cancelled")return {state:"dead_letter",reason:"store_manager_task_cancelled",detail:{task_id:data.id}};
+    return {state:"completed",reason:"store_manager_task_authorized",detail:{task_id:data.id,status:data.status,approved_by:data.approved_by,approved_at:data.approved_at}};
+  }
   return {state:"dead_letter",reason:"unknown_work_kind"};
 }
 
@@ -79,7 +88,10 @@ export async function processEngineQueue(owner=crypto.randomUUID(),limit=20){
       const {data:event,error:eventError}=await db.from("ps_engine_events").select("*").eq("id",work.event_id).single();
       if(eventError||!event) throw new Error(eventError?.message??"Engine event missing");
       const outcome=await execute(event as Event,work);
-      await transition(work,owner,outcome.state,outcome.reason,outcome.detail??{});
+      if(outcome.state==="waiting_approval"&&outcome.approval){
+        const {error:approvalError}=await db.rpc("ps_engine_request_approval",{p_work_item_id:work.id,p_owner:owner,p_scope:outcome.approval.scope,p_requested_by:`worker:${owner}`,p_context:outcome.detail??{},p_expires_at:outcome.approval.expiresAt});
+        if(approvalError)throw new Error(approvalError.message);
+      }else await transition(work,owner,outcome.state,outcome.reason,outcome.detail??{});
       results.push({work_item_id:work.id,state:outcome.state});
     }catch(error){
       const message=error instanceof Error?error.message:String(error),state=nextFailureState(work.attempt,work.max_attempts);
