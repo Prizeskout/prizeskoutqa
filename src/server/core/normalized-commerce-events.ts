@@ -9,6 +9,8 @@ import {
   appendEvidenceProcessingAttempt,
   type MerchantDocumentKind,
 } from "./merchant-evidence-intake";
+import { acceptEngineEvent,processEngineQueue } from "./engine-orchestrator";
+import { backgroundTask } from "@/server/cf-ctx";
 
 export const NORMALIZED_COMMERCE_VERSION = "commerce-normalizer-v2";
 
@@ -385,12 +387,15 @@ export function buildNormalizedCommerceEvents(input: BuildInput) {
 export async function persistNormalizedCommerceEvents(input: BuildInput) {
   const built = buildNormalizedCommerceEvents(input);
   const db = supabaseAdmin as any;
+  let normalizedEventIds:string[]=[];
   if (built.events.length) {
-    const { error } = await db.from("ps_normalized_commerce_events").upsert(built.events, {
+    const { data,error } = await db.from("ps_normalized_commerce_events").upsert(built.events, {
       onConflict: "account_id,source_provider,event_kind,external_event_id,event_fingerprint",
       ignoreDuplicates: true,
-    });
+    }).select("id");
     if (error) throw new Error(error.message ?? "Normalized commerce events could not be stored.");
+    normalizedEventIds=(data??[]).map((row:any)=>String(row.id));
+    if(!normalizedEventIds.length){const {data:existing,error:existingError}=await db.from("ps_normalized_commerce_events").select("id").eq("account_id",input.accountId).eq("evidence_item_id",input.evidenceItemId);if(existingError)throw new Error(existingError.message);normalizedEventIds=(existing??[]).map((row:any)=>String(row.id));}
   }
   const { data: prior, error: priorError } = await db
     .from("ps_evidence_processing_attempts")
@@ -415,5 +420,7 @@ export async function persistNormalizedCommerceEvents(input: BuildInput) {
     },
     limitations: built.limitations,
   });
+  await acceptEngineEvent({accountId:input.accountId,merchantId:input.merchantId,eventType:"commerce.document.normalized",source:input.sourceProvider,sourceEventId:`evidence:${input.evidenceItemId}`,schemaVersion:NORMALIZED_COMMERCE_VERSION,payload:{evidence_item_id:input.evidenceItemId,normalized_event_ids:normalizedEventIds,document_kind:input.documentKind,limitations:built.limitations},workKind:"assess_order_economics",priority:40});
+  backgroundTask(processEngineQueue(`document:${crypto.randomUUID()}`,5));
   return { eventCount: built.events.length, limitations: built.limitations };
 }

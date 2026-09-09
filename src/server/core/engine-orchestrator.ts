@@ -39,6 +39,32 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
   if(work.work_kind==="reconcile_settlement_evidence"){
     return event.payload.contract_term_id?{state:"completed",reason:"settlement_ready_for_explicit_reconciliation",detail:{contract_term_id:event.payload.contract_term_id}}:{state:"waiting_evidence",reason:"contract_terms_required"};
   }
+  if(work.work_kind==="audit_reconciliation_outcome"){
+    const runId=String(event.payload.reconciliation_run_id??"");
+    if(!runId)return {state:"waiting_evidence",reason:"reconciliation_run_required"};
+    const [{data:run,error:runError},{data:findings,error:findingsError}]=await Promise.all([
+      db.from("ps_settlement_reconciliation_runs").select("id,status,summary").eq("id",runId).eq("account_id",event.account_id).maybeSingle(),
+      db.from("ps_reconciliation_findings").select("id,conclusion,recoverability").eq("run_id",runId).eq("account_id",event.account_id),
+    ]);
+    if(runError||findingsError)throw new Error(runError?.message??findingsError?.message);
+    if(!run)return {state:"waiting_evidence",reason:"reconciliation_run_not_visible"};
+    return {state:"completed",reason:"reconciliation_outcome_verified",detail:{reconciliation_run_id:run.id,status:run.status,finding_count:(findings??[]).length,recoverable_findings:(findings??[]).filter((row:any)=>row.recoverability==="recoverable").length}};
+  }
+  if(work.work_kind==="audit_price_action_outcome"){
+    const actionId=String(event.payload.action_id??"");
+    const {data,error}=await db.from("ps_price_actions").select("id,state,platform,item_id,target_price,live_price_after,failure_reason").eq("id",actionId).eq("account_id",event.account_id).maybeSingle();
+    if(error)throw new Error(error.message);if(!data)return {state:"waiting_evidence",reason:"price_action_not_visible"};
+    const failed=["platform_failed","confirmation_failed","rollback_failed"].includes(String(data.state));
+    return {state:failed?"dead_letter":"completed",reason:failed?"price_action_requires_recovery":"price_action_outcome_verified",detail:{action_id:data.id,state:data.state,platform:data.platform,item_id:data.item_id,target_price:data.target_price,live_price_after:data.live_price_after,failure_reason:data.failure_reason}};
+  }
+  if(work.work_kind==="supervise_dispatch"){
+    const dispatchId=String(event.payload.dispatch_id??"");
+    const {data,error}=await db.from("ps_dispatch_queue").select("id,state,channel,sku,target_price,confirmed_at,last_error").eq("id",dispatchId).eq("account_id",event.account_id).maybeSingle();
+    if(error)throw new Error(error.message);if(!data)return {state:"waiting_evidence",reason:"dispatch_not_visible"};
+    if(data.state==="confirmed")return {state:"completed",reason:"live_dispatch_verified",detail:{dispatch_id:data.id,channel:data.channel,sku:data.sku,target_price:data.target_price,confirmed_at:data.confirmed_at}};
+    if(data.state==="dead_letter")return {state:"dead_letter",reason:"dispatch_requires_recovery",detail:{dispatch_id:data.id,channel:data.channel,sku:data.sku,error:data.last_error}};
+    throw new Error(`Dispatch ${dispatchId} is still ${data.state}`);
+  }
   return {state:"dead_letter",reason:"unknown_work_kind"};
 }
 
