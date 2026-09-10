@@ -92,13 +92,27 @@ export async function transitionStoreManagerTask(accountId:string,input:{id:stri
   if(!STATUSES.includes(input.toStatus))throw new Error("Choose a valid task status.");
   const {data:current,error:readError}=await supabaseAdmin.from("ps_store_manager_tasks" as never).select("*").eq("account_id",accountId).eq("id",input.id).maybeSingle();if(readError||!current)throw new Error("Task not found.");
   const from=String((current as any).status);
+  const actor=(input.actor??"Merchant").slice(0,120),note=(input.note??"").trim().slice(0,500);
+  if(from==="waiting_approval"&&Boolean((current as any).approval_required)&&String((current as any).risk_level)!=="read_only"&&["approved","cancelled"].includes(input.toStatus)){
+    const {data:event,error:eventError}=await (supabaseAdmin as any).from("ps_engine_events").select("id").eq("account_id",accountId).eq("source","store_manager_task").eq("source_event_id",`${input.id}:waiting_approval`).maybeSingle();
+    if(eventError||!event)throw new Error("The durable approval request is still being prepared. Try again shortly.");
+    const {data:work,error:workError}=await (supabaseAdmin as any).from("ps_engine_work_items").select("id").eq("event_id",event.id).eq("account_id",accountId).eq("state","waiting_approval").maybeSingle();
+    if(workError||!work)throw new Error("This task is not currently waiting in the approval engine.");
+    const {data:request,error:requestError}=await (supabaseAdmin as any).from("ps_engine_approval_requests").select("id").eq("work_item_id",work.id).eq("account_id",accountId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+    if(requestError||!request)throw new Error("The durable approval request is still being prepared. Try again shortly.");
+    const reason=note||`${input.toStatus==="approved"?"Approved":"Rejected"} by the merchant from Store Manager.`;
+    const {error:decisionError}=await (supabaseAdmin as any).rpc("ps_engine_decide_approval",{p_request_id:request.id,p_account_id:accountId,p_decision:input.toStatus==="approved"?"approved":"rejected",p_decided_by:actor,p_reason:reason,p_context:{source:"store_manager_dashboard"}});
+    if(decisionError)throw new Error(decisionError.message);
+    const {data:updated,error:updateReadError}=await supabaseAdmin.from("ps_store_manager_tasks" as never).select("*").eq("account_id",accountId).eq("id",input.id).single();
+    if(updateReadError)throw updateReadError; if(input.toStatus==="approved")backgroundTask(processEngineQueue(`store-manager-approved:${crypto.randomUUID()}`,5)); return updated;
+  }
   const readOnlyReview=input.toStatus==="investigating"&&from==="waiting_approval"&&String((current as any).risk_level)==="read_only";
   const readOnlyCompletion=input.toStatus==="completed"&&["investigating","prepared","waiting_approval"].includes(from)&&String((current as any).risk_level)==="read_only";
   if(!(TRANSITIONS[from]??[]).includes(input.toStatus)&&!readOnlyReview&&!readOnlyCompletion)throw new Error(`A task cannot move from ${from.replaceAll("_"," ")} to ${input.toStatus.replaceAll("_"," ")}.`);
   const patch:Record<string,unknown>={status:input.toStatus};
-  if(input.toStatus==="approved")Object.assign(patch,{approved_by:(input.actor??"Merchant").slice(0,120),approved_at:new Date().toISOString()});
+  if(input.toStatus==="approved")Object.assign(patch,{approved_by:actor,approved_at:new Date().toISOString()});
   if(input.toStatus==="completed")patch.completed_at=new Date().toISOString();
   const {data,error}=await supabaseAdmin.from("ps_store_manager_tasks" as never).update(patch as never).eq("account_id",accountId).eq("id",input.id).select("*").single();if(error)throw error;
-  await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:input.id,from_status:from,to_status:input.toStatus,actor:(input.actor??"Merchant").slice(0,120),note:(input.note??"").slice(0,500)} as never);
+  await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:input.id,from_status:from,to_status:input.toStatus,actor,note} as never);
   return data;
 }
