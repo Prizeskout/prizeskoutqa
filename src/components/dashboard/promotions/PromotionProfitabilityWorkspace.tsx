@@ -10,6 +10,7 @@ import {
 import type { ContractTerm } from "@/components/dashboard/payout/ContractIntelligenceVault";
 import type { SavedPromotionScenario } from "@/server/core/promotion-scenarios";
 import { MerchantField } from "@/components/ui/MerchantField";
+type PromotionAction={id:string;scenario_id:string;platform:string;action_type:"stop"|"reduce_discount"|"remove_item"|"adjust_discount";target_reference:string;requested_payload:Record<string,unknown>;status:string;requested_by:string;approved_by:string|null;delivery_mode:string|null;partner_reference:string|null};
 
 const input = {
   width: "100%",
@@ -54,6 +55,7 @@ export function PromotionProfitabilityWorkspace({
   const [floor, setFloor] = useState("15");
   const [selected, setSelected] = useState<string[]>([]);
   const [saved, setSaved] = useState<SavedPromotionScenario[]>([]);
+  const [actions,setActions]=useState<PromotionAction[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fundingDrafts, setFundingDrafts] = useState<
@@ -94,13 +96,20 @@ export function PromotionProfitabilityWorkspace({
     if (!response.ok || !data.ok) throw new Error(data.error ?? "Promotion request failed.");
     return data;
   };
+  const actionCall=async(payload:Record<string,unknown>)=>{const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"promotion_actions",...payload})}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error??"Promotion action request failed.");return data};
+  const loadActions=()=>actionCall({action:"list"}).then(data=>setActions(data.actions??[]));
   const load = () =>
     call({ action: "list" })
       .then((data) => setSaved(data.scenarios ?? []))
       .catch((err) => setError(err instanceof Error ? err.message : "Could not load campaigns."));
   useEffect(() => {
-    load();
+    void Promise.all([load(),loadActions()]);
   }, []);
+
+  const proposeAction=async(item:SavedPromotionScenario)=>{const actionType=window.prompt("Action: stop, reduce_discount, remove_item, or adjust_discount","stop") as PromotionAction["action_type"]|null;if(!actionType||!["stop","reduce_discount","remove_item","adjust_discount"].includes(actionType)){if(actionType)setError("Choose stop, reduce_discount, remove_item, or adjust_discount.");return}const target=window.prompt("Exact partner campaign ID or item reference",item.launch_manifest?.find(entry=>entry.partner_campaign_id)?.partner_campaign_id??"")??"",requester=window.prompt("Requester name or email",operationsReviewer)??"";if(!target.trim()||!requester.trim())return;const value=["reduce_discount","adjust_discount"].includes(actionType)?Number(window.prompt("New discount percentage","10")):null;if(value!==null&&(!Number.isFinite(value)||value<0||value>100)){setError("Discount must be between 0 and 100%.");return}setBusy(true);try{await actionCall({action:"create",scenario_id:item.id,target_platform:item.platform,action_type:actionType,target_reference:target,requested_by:requester,requested_payload:value===null?{}:{discount_pct:value}});await loadActions()}catch(error){setError(error instanceof Error?error.message:"Promotion action could not be proposed.")}finally{setBusy(false)}};
+  const decideAction=async(item:PromotionAction,decision:"approved"|"rejected")=>{const reviewer=window.prompt(`${decision==="approved"?"Approver":"Reviewer"} name or email`,financeReviewer)??"";if(!reviewer.trim())return;setBusy(true);try{await actionCall({action:"decide",id:item.id,decision,reviewer});await loadActions()}catch(error){setError(error instanceof Error?error.message:"Promotion action decision failed.")}finally{setBusy(false)}};
+  const executeAction=async(item:PromotionAction)=>{setBusy(true);try{await actionCall({action:"execute",id:item.id});await loadActions()}catch(error){setError(error instanceof Error?error.message:"Promotion action could not be released.")}finally{setBusy(false)}};
+  const confirmAction=async(item:PromotionAction)=>{const reference=window.prompt("Partner confirmation reference","")??"";if(!reference.trim())return;setBusy(true);try{await actionCall({action:"confirm",id:item.id,partner_reference:reference});await loadActions()}catch(error){setError(error instanceof Error?error.message:"Promotion action could not be confirmed.")}finally{setBusy(false)}};
 
   const inputs = useMemo(
     () => ({
@@ -1135,12 +1144,18 @@ export function PromotionProfitabilityWorkspace({
                         })}
                       </div>
                     )}
+                    {["approved","ready_to_launch","running"].includes(item.status) && (
+                      <button type="button" disabled={busy} onClick={()=>void proposeAction(item)} style={{border:"1px solid #B42318",borderRadius:7,padding:"8px",background:"transparent",color:"#B42318",fontFamily:"inherit",fontWeight:800,cursor:"pointer"}}>
+                        Propose stop or adjustment
+                      </button>
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
         )}
+        {!!actions.length && <div style={{border:"1px solid var(--border)",borderRadius:12,padding:14,background:"var(--surface)"}}><h3 style={{margin:"0 0 4px",fontSize:13}}>Approved promotion action queue</h3><p style={{margin:"0 0 10px",fontSize:10.5,color:"var(--muted)"}}>No change is released until a different reviewer explicitly approves it. Connected partners can pull approved actions through the PrizeSkout API.</p><div style={{display:"grid",gap:7}}>{actions.map(item=><div key={item.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:9,border:"1px solid var(--border)",borderRadius:8,fontSize:11,flexWrap:"wrap"}}><span><strong>{item.action_type.replaceAll("_"," ").toUpperCase()}</strong> · {item.platform.toUpperCase()} · {item.target_reference}<span style={{display:"block",marginTop:3,color:"var(--muted)"}}>Requested by {item.requested_by} · {item.status.replaceAll("_"," ")}{item.delivery_mode?` · ${item.delivery_mode.replaceAll("_"," ")}`:""}</span></span><div style={{display:"flex",gap:6}}>{item.status==="pending_approval"&&<><button disabled={busy} onClick={()=>void decideAction(item,"approved")} style={{...input,width:"auto",padding:"6px 8px",color:"#087F5B"}}>Approve</button><button disabled={busy} onClick={()=>void decideAction(item,"rejected")} style={{...input,width:"auto",padding:"6px 8px",color:"#B42318"}}>Reject</button></>}{item.status==="approved"&&<button disabled={busy} onClick={()=>void executeAction(item)} style={{...input,width:"auto",padding:"6px 8px",color:"#087F5B"}}>Release approved action</button>}{item.status==="awaiting_partner"&&item.delivery_mode==="manual"&&<button disabled={busy} onClick={()=>void confirmAction(item)} style={{...input,width:"auto",padding:"6px 8px"}}>Record confirmation</button>}{item.status==="confirmed"&&<span style={{color:"#087F5B",fontWeight:800}}>Confirmed · {item.partner_reference}</span>}</div></div>)}</div></div>}
         {error && <div style={{ fontSize: 12, color: "#B42318" }}>{error}</div>}
         <div
           style={{

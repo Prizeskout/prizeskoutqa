@@ -15,7 +15,7 @@ import { reconcileSallaEasyModeForAccount } from "@/server/core/salla-account-li
 
 const ALL_PLATFORMS = [
   "salla", "foodics", "zid",
-  "talabat", "jahez", "snoonu", "deliveroo", "keeta",
+  "talabat", "jahez", "snoonu", "deliveroo", "keeta", "noon", "careem", "rafeeq",
 ] as const;
 
 export const Route = createFileRoute("/api/channels/status")({

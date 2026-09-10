@@ -31,6 +31,7 @@ import {rematchEvidenceAfterContractApproval} from "@/server/core/evidence-agree
 import {approveRecoveryEvidencePack,getRecoveryEvidencePack,prepareRecoveryEvidencePack} from "@/server/core/recovery-evidence-pack";
 import { createRecoveryCase, listRecoveryCases, recordRecoverySubmission, updateRecoveryCase } from "@/server/core/recovery-cases";
 import { approvePromotionScenario, confirmPromotionChannelLaunch, listPromotionScenarios, preparePromotionLaunch, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
+import {approvePromotionAction,confirmPromotionAction,createPromotionAction,listPromotionActions,queuePromotionAction,type PromotionActionType} from "@/server/core/promotion-actions";
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
 import { activateGroupPolicy, approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
 import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
@@ -271,31 +272,74 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ error: "Unsupported Zid–Jahez bridge action." }, 400);
           }
 
+          if (platform === "restaurant_workspace") {
+            if(body.action === "get"){
+              const {data,error}=await (supabaseAdmin as any).from("ps_restaurant_workspaces").select("account_id,name,country_code,currency,industry,timezone,active,metadata").eq("account_id",merchant_id).maybeSingle();
+              if(error)throw error;
+              return resp({ok:true,workspace:data??null},200);
+            }
+            if(body.action === "save"){
+              const countries:Record<string,{code:string;timezone:string}>={"Qatar":{code:"QA",timezone:"Asia/Qatar"},"Saudi Arabia":{code:"SA",timezone:"Asia/Riyadh"},"UAE":{code:"AE",timezone:"Asia/Dubai"},"Kuwait":{code:"KW",timezone:"Asia/Kuwait"},"Bahrain":{code:"BH",timezone:"Asia/Bahrain"},"Oman":{code:"OM",timezone:"Asia/Muscat"},"Egypt":{code:"EG",timezone:"Africa/Cairo"},"Jordan":{code:"JO",timezone:"Asia/Amman"}};
+              const name=(body.name??"").trim().slice(0,160),country=countries[body.country??""],currency=(body.currency??"").trim().toUpperCase();
+              if(!name||!country||!/^[A-Z]{3}$/.test(currency))return resp({error:"Restaurant name, supported country, and ISO currency are required."},400);
+              const metadata={contact_email:(body.contact_email??"").trim()||null,contact_phone:(body.contact_phone??"").trim()||null,description:(body.description??"").trim()||null};
+              const {data,error}=await (supabaseAdmin as any).from("ps_restaurant_workspaces").upsert({account_id:merchant_id,name,country_code:country.code,currency,industry:"restaurant",timezone:country.timezone,metadata,updated_at:new Date().toISOString()},{onConflict:"account_id"}).select("account_id,name,country_code,currency,industry,timezone,active,metadata").single();
+              if(error)throw error;
+              return resp({ok:true,workspace:data},200);
+            }
+            return resp({error:"Unsupported restaurant workspace action."},400);
+          }
+
           if (platform === "locations") {
             if (body.action === "list") {
-              const { data, error } = await supabaseAdmin.from("ps_merchant_locations").select("id,name,city,region,active").eq("account_id", merchant_id).order("created_at");
+              const { data, error } = await (supabaseAdmin as any).from("ps_enterprise_entities").select("id,name,external_id,country_code,currency,active,metadata").eq("account_id", merchant_id).eq("entity_type", "branch").order("created_at");
               if (error) throw error;
-              return resp({ ok:true, locations:data ?? [] }, 200);
+              return resp({ ok:true, locations:(data ?? []).map((row:any)=>({id:row.id,name:row.name,external_id:row.external_id,city:String(row.metadata?.city??""),region:String(row.metadata?.region??""),country_code:row.country_code,currency:row.currency,active:row.active})) }, 200);
             }
             if (body.action === "create") {
-              const name=(body.name ?? "").trim().slice(0,160),city=(body.city ?? "").trim().slice(0,120),region=(body.region ?? "").trim();
+              const name=(body.name ?? "").trim().slice(0,160),city=(body.city ?? "").trim().slice(0,120),region=(body.region ?? "").trim(),externalId=(body.external_id??body.pos_external_id??crypto.randomUUID()).trim().slice(0,160);
               if (!name || !city || !["Qatar","Saudi Arabia","UAE","Kuwait","Bahrain","Oman"].includes(region)) return resp({error:"Name, city, and a supported region are required."},400);
-              const {data,error}=await supabaseAdmin.from("ps_merchant_locations").insert({account_id:merchant_id,name,city,region,active:true}).select("id,name,city,region,active").single();
+              const locale:Record<string,{country:string;currency:string;timezone:string}>={"Qatar":{country:"QA",currency:"QAR",timezone:"Asia/Qatar"},"Saudi Arabia":{country:"SA",currency:"SAR",timezone:"Asia/Riyadh"},"UAE":{country:"AE",currency:"AED",timezone:"Asia/Dubai"},"Kuwait":{country:"KW",currency:"KWD",timezone:"Asia/Kuwait"},"Bahrain":{country:"BH",currency:"BHD",timezone:"Asia/Bahrain"},"Oman":{country:"OM",currency:"OMR",timezone:"Asia/Muscat"}};
+              const details=locale[region];
+              const {data,error}=await (supabaseAdmin as any).from("ps_enterprise_entities").insert({account_id:merchant_id,entity_type:"branch",external_id:externalId,name,country_code:details.country,currency:details.currency,timezone:details.timezone,active:true,metadata:{city,region,pos_external_id:body.pos_external_id||null}}).select("id,name,external_id,country_code,currency,active,metadata").single();
               if(error)throw error;
-              return resp({ok:true,location:data},200);
+              return resp({ok:true,location:{id:data.id,name:data.name,external_id:data.external_id,city:data.metadata?.city??city,region:data.metadata?.region??region,country_code:data.country_code,currency:data.currency,active:data.active}},200);
             }
             if (body.action === "toggle") {
-              const {data,error}=await supabaseAdmin.from("ps_merchant_locations").update({active:body.active==="true"}).eq("account_id",merchant_id).eq("id",body.id).select("id,name,city,region,active").maybeSingle();
+              const {data,error}=await (supabaseAdmin as any).from("ps_enterprise_entities").update({active:body.active==="true",updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("entity_type","branch").eq("id",body.id).select("id,name,external_id,country_code,currency,active,metadata").maybeSingle();
               if(error)throw error;
               if(!data)return resp({error:"Location not found."},404);
-              return resp({ok:true,location:data},200);
+              return resp({ok:true,location:{id:data.id,name:data.name,external_id:data.external_id,city:data.metadata?.city??"",region:data.metadata?.region??"",country_code:data.country_code,currency:data.currency,active:data.active}},200);
             }
             if (body.action === "delete") {
-              const {error}=await supabaseAdmin.from("ps_merchant_locations").delete().eq("account_id",merchant_id).eq("id",body.id);
+              // Branch identities are historical dimensions. Deactivation is
+              // the only safe delete semantics once financial evidence exists.
+              const {error}=await (supabaseAdmin as any).from("ps_enterprise_entities").update({active:false,updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("entity_type","branch").eq("id",body.id);
               if(error)throw error;
               return resp({ok:true},200);
             }
             return resp({error:"Unsupported location action."},400);
+          }
+
+          if (platform === "branch_assignments") {
+            if (body.action === "list") {
+              const {data,error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").select("id,branch_id,platform,external_branch_id,pos_external_id,active,created_at").eq("account_id",merchant_id).order("created_at");
+              if(error)throw error;
+              return resp({ok:true,assignments:data??[]},200);
+            }
+            if(body.action === "save"){
+              const branchId=(body.branch_id??"").trim(),channel=(body.channel??"").trim().toLowerCase(),externalBranchId=(body.external_branch_id??"").trim(),posExternalId=(body.pos_external_id??"").trim()||null;
+              if(!branchId||!channel||!externalBranchId)return resp({error:"Branch, channel and external branch ID are required."},400);
+              const {data:branch,error:branchError}=await (supabaseAdmin as any).from("ps_enterprise_entities").select("id").eq("account_id",merchant_id).eq("entity_type","branch").eq("id",branchId).maybeSingle();
+              if(branchError)throw branchError;if(!branch)return resp({error:"Branch not found in this restaurant workspace."},404);
+              const {data,error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").upsert({account_id:merchant_id,branch_id:branchId,platform:channel,external_branch_id:externalBranchId,pos_external_id:posExternalId,active:true,updated_at:new Date().toISOString()},{onConflict:"account_id,branch_id,platform"}).select("id,branch_id,platform,external_branch_id,pos_external_id,active,created_at").single();
+              if(error)throw error;return resp({ok:true,assignment:data},200);
+            }
+            if(body.action === "delete"){
+              const {error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").update({active:false,updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("id",body.id);
+              if(error)throw error;return resp({ok:true},200);
+            }
+            return resp({error:"Unsupported branch assignment action."},400);
           }
 
           if (platform === "notification_preferences") {
@@ -314,6 +358,24 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ ok:true, preference:data }, 200);
             }
             return resp({ error:"Unsupported notification preference action." }, 400);
+          }
+
+          if(platform === "alert_rules"){
+            if(body.action==="list"){
+              const {data,error}=await (supabaseAdmin as any).from("ps_alert_rules").select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").eq("account_id",merchant_id).order("created_at");
+              if(error)throw error;return resp({ok:true,rules:data??[]},200);
+            }
+            if(body.action==="save"){
+              const metric=body.metric??"",operator=body.operator??"",severity=body.severity??"",threshold=Number(body.threshold),name=(body.name??"").trim().slice(0,160);
+              if(!name||!["gross_sales","contribution","payout_variance","margin","recoverable_amount"].includes(metric)||!["gt","gte","lt","lte"].includes(operator)||!["info","warning","critical"].includes(severity)||!Number.isFinite(threshold))return resp({error:"Name, metric, comparison, threshold, and severity are required."},400);
+              const row={account_id:merchant_id,name,metric,operator,threshold,severity,platform:(body.scope_platform??"").trim()||null,branch_external_id:(body.branch_external_id??"").trim()||null,enabled:body.enabled!=="false",updated_at:new Date().toISOString()};
+              const query=body.id?(supabaseAdmin as any).from("ps_alert_rules").update(row).eq("account_id",merchant_id).eq("id",body.id):(supabaseAdmin as any).from("ps_alert_rules").insert(row);
+              const {data,error}=await query.select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").single();if(error)throw error;return resp({ok:true,rule:data},200);
+            }
+            if(body.action==="delete"){
+              const {error}=await (supabaseAdmin as any).from("ps_alert_rules").delete().eq("account_id",merchant_id).eq("id",body.id);if(error)throw error;return resp({ok:true},200);
+            }
+            return resp({error:"Unsupported alert rule action."},400);
           }
 
           if(platform==="merchant_experience"){
@@ -898,6 +960,27 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ok:true,scenario:item},200);
             }
             return resp({error:"Unsupported promotion-scenario action."},400);
+          }
+
+          if(platform==="promotion_actions"){
+            if(body.action==="list")return resp({ok:true,actions:await listPromotionActions(merchant_id)},200);
+            if(body.action==="create"){
+              const actionType=body.action_type as PromotionActionType,allowed=["stop","reduce_discount","remove_item","adjust_discount"];
+              if(!body.scenario_id||!body.target_platform||!body.target_reference||!allowed.includes(actionType)||!body.requested_by?.trim())return resp({error:"Scenario, platform, action, target reference, and requester are required."},400);
+              const raw=body as unknown as Record<string,unknown>,payload=raw.requested_payload&&typeof raw.requested_payload==="object"&&!Array.isArray(raw.requested_payload)?raw.requested_payload as Record<string,unknown>:{};
+              return resp({ok:true,promotion_action:await createPromotionAction({accountId:merchant_id,scenarioId:body.scenario_id,platform:body.target_platform.trim().toLowerCase(),actionType,targetReference:body.target_reference.trim().slice(0,200),payload,requestedBy:body.requested_by.trim().slice(0,160)})},200);
+            }
+            if(body.action==="decide"){
+              if(!body.id||!["approved","rejected"].includes(body.decision)||!body.reviewer?.trim())return resp({error:"Action, decision, and reviewer are required."},400);
+              return resp({ok:true,promotion_action:await approvePromotionAction(merchant_id,body.id,body.reviewer.trim().slice(0,160),body.decision as "approved"|"rejected")},200);
+            }
+            if(body.action==="execute"){
+              if(!body.id)return resp({error:"Action id is required."},400);return resp({ok:true,promotion_action:await queuePromotionAction(merchant_id,body.id)},200);
+            }
+            if(body.action==="confirm"){
+              if(!body.id||!body.partner_reference?.trim())return resp({error:"Action id and partner reference are required."},400);return resp({ok:true,promotion_action:await confirmPromotionAction(merchant_id,body.id,body.partner_reference.trim().slice(0,200),{})},200);
+            }
+            return resp({error:"Unsupported promotion action."},400);
           }
 
           if(platform==="channel_price_plans"){

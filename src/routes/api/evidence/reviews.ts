@@ -39,10 +39,10 @@ export const Route=createFileRoute("/api/evidence/reviews")({server:{handlers:{
     const runMap=new Map((reconciliationRuns??[]).map((run:any)=>[run.id,run]));
     const {data:findings,error:findingError}=runIds.length?await db.from("ps_reconciliation_findings").select("id,evidence_item_id,run_id,conclusion,recoverability,order_external_id,settlement_reference,currency,expected_amount,reported_amount,variance,evidence_strength,explanation,blockers,created_at").eq("account_id",merchantId).in("run_id",runIds).order("created_at",{ascending:false}):evidenceIds.length?await db.from("ps_reconciliation_findings").select("id,evidence_item_id,run_id,conclusion,recoverability,order_external_id,settlement_reference,currency,expected_amount,reported_amount,variance,evidence_strength,explanation,blockers,created_at").eq("account_id",merchantId).in("evidence_item_id",evidenceIds).order("created_at",{ascending:false}):{data:[],error:null};
     if(findingError)throw new Error(findingError.message);
-    const findingIds=(findings??[]).map((finding:any)=>finding.id),{data:recoveryCases}=findingIds.length?await db.from("ps_recovery_cases").select("id,reconciliation_finding_id,status").eq("account_id",merchantId).in("reconciliation_finding_id",findingIds):{data:[]};
-    const recoveryMap=new Map((recoveryCases??[]).map((item:any)=>[item.reconciliation_finding_id,item]));
+    const findingIds=(findings??[]).map((finding:any)=>finding.id),[{data:recoveryCases},{data:matchDecisions}]=findingIds.length?await Promise.all([db.from("ps_recovery_cases").select("id,reconciliation_finding_id,status").eq("account_id",merchantId).in("reconciliation_finding_id",findingIds),db.from("ps_order_match_decisions").select("id,reconciliation_finding_id,resolution,aggregator_order_reference,pos_order_reference,notes,decided_by,created_at").eq("account_id",merchantId).in("reconciliation_finding_id",findingIds).order("created_at",{ascending:false})]):[{data:[]},{data:[]}];
+    const recoveryMap=new Map((recoveryCases??[]).map((item:any)=>[item.reconciliation_finding_id,item])),decisionMapByFinding=new Map<string,any>();for(const decision of matchDecisions??[]){if(!decisionMapByFinding.has(decision.reconciliation_finding_id))decisionMapByFinding.set(decision.reconciliation_finding_id,decision);}
     const evidenceByRun=new Map<string,string[]>();for(const row of runEvidence??[]){const list=evidenceByRun.get(row.run_id)??[];list.push(row.evidence_item_id);evidenceByRun.set(row.run_id,list);}
-    const findingMap=new Map<string,any[]>();for(const finding of findings??[]){for(const evidenceId of evidenceByRun.get(finding.run_id)??[finding.evidence_item_id]){const list=findingMap.get(evidenceId)??[];list.push({...finding,recovery_case:recoveryMap.get(finding.id)??null});findingMap.set(evidenceId,list);}}
+    const findingMap=new Map<string,any[]>();for(const finding of findings??[]){for(const evidenceId of evidenceByRun.get(finding.run_id)??[finding.evidence_item_id]){const list=findingMap.get(evidenceId)??[];list.push({...finding,recovery_case:recoveryMap.get(finding.id)??null,match_decision:decisionMapByFinding.get(finding.id)??null});findingMap.set(evidenceId,list);}}
     const reviews=await Promise.all((drafts??[]).map(async(draft:any)=>{
       const item=itemMap.get(draft.evidence_item_id) as any,path=storagePath(item?.storage_reference??null);let original_url:string|null=null;
       if(draftId&&path){const {data}=await supabaseAdmin.storage.from("merchant-evidence").createSignedUrl(path,300);original_url=data?.signedUrl??null;}
@@ -75,6 +75,15 @@ export const Route=createFileRoute("/api/evidence/reviews")({server:{handlers:{
     if(body.action==="prepare_recovery"){
       const recoveryCase=await createRecoveryCaseFromFinding(merchantId,String(body.finding_id??""));
       return json({ok:true,recovery_case_id:recoveryCase.id,status:recoveryCase.status});
+    }
+    if(body.action==="decide_order_match"){
+      const findingId=String(body.finding_id??""),resolution=String(body.resolution??""),posReference=String(body.pos_order_reference??"").trim(),notes=String(body.notes??"").trim();
+      if(!["exact","probable","unmatched","duplicate"].includes(resolution))return json({error:"Choose Exact, Probable, Unmatched, or Duplicate."},400);
+      if(["exact","probable"].includes(resolution)&&!posReference)return json({error:"A POS order reference is required for an Exact or Probable match."},400);
+      const {data:finding}=await (supabaseAdmin as any).from("ps_reconciliation_findings").select("id,order_external_id").eq("account_id",merchantId).eq("id",findingId).maybeSingle();if(!finding)return json({error:"Reconciliation finding was not found."},404);
+      const {data:prior}=await (supabaseAdmin as any).from("ps_order_match_decisions").select("id").eq("account_id",merchantId).eq("reconciliation_finding_id",findingId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+      const {data:accessIdentity}=await (supabaseAdmin as any).from("ps_access_codes").select("email").eq("merchant_id",merchantId).eq("code",accessCode.trim().toUpperCase()).maybeSingle();
+      const {data,error}=await (supabaseAdmin as any).from("ps_order_match_decisions").insert({account_id:merchantId,reconciliation_finding_id:findingId,resolution,aggregator_order_reference:finding.order_external_id,pos_order_reference:posReference||null,notes:notes||null,decided_by:String(accessIdentity?.email??`access-code:${accessCode.trim().toUpperCase().slice(-4)}`),supersedes_id:prior?.id??null}).select("*").single();if(error)throw error;return json({ok:true,decision:data});
     }
     const decision=body.decision==="approved"?"approved":body.decision==="rejected"?"rejected":null;
     if(!decision)return json({error:"Choose approve or reject."},400);

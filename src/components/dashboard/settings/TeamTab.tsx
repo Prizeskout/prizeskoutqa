@@ -21,11 +21,13 @@ import { useAuth } from "@/lib/auth-context";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type LicenseeRole = "owner" | "admin" | "developer" | "viewer";
+type FunctionalRole = "finance" | "operations" | "management" | "accounting";
 
 type Member = {
   id: string;
   userId: string;
   role: LicenseeRole;
+  functionalRole: FunctionalRole;
   displayName: string;
   email: string | null;
   invitedAt: string | null;
@@ -92,6 +94,13 @@ function timeAgo(iso: string, t: TFunction): string {
 // ── Invite modal ───────────────────────────────────────────────────────────────
 
 const INVITE_ROLES = ["admin", "developer", "viewer"] as const;
+const FUNCTIONAL_ROLES = ["finance", "operations", "management", "accounting"] as const;
+const FUNCTIONAL_ROLE_LABELS: Record<FunctionalRole, string> = {
+  finance: "Finance",
+  operations: "Operations",
+  management: "Management",
+  accounting: "Accounting",
+};
 
 function InviteModal({
   licenseeId,
@@ -107,6 +116,7 @@ function InviteModal({
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<string>("developer");
+  const [functionalRole, setFunctionalRole] = useState<FunctionalRole>("operations");
   const [saving, setSaving] = useState(false);
 
   const canSave = email.trim().includes("@");
@@ -130,10 +140,11 @@ function InviteModal({
         toast.error(t("settingsTabs.team.toasts.noAccount"));
         return;
       }
-      const { error: insertErr } = await supabase.from("licensee_members").insert({
+      const { error: insertErr } = await (supabase.from("licensee_members") as any).insert({
         licensee_id: licenseeId,
         user_id: foundUserId as string,
         role: role as LicenseeRole,
+        functional_role: functionalRole,
         invited_by: currentUserId,
         invited_at: new Date().toISOString(),
       });
@@ -215,6 +226,11 @@ function InviteModal({
             </Field>
           </FieldRow>
           <FieldRow>
+            <Field label="Restaurant responsibility">
+              <SelectField value={functionalRole} onChange={(value) => setFunctionalRole(value as FunctionalRole)} options={FUNCTIONAL_ROLES} labels={FUNCTIONAL_ROLE_LABELS} />
+            </Field>
+          </FieldRow>
+          <FieldRow>
             <Field label={t("settingsTabs.team.inviteModal.role")}>
               <SelectField
                 value={role}
@@ -275,6 +291,7 @@ function EditRoleModal({
 }) {
   const { t } = useTranslation();
   const [role, setRole] = useState<LicenseeRole>(member.role);
+  const [functionalRole, setFunctionalRole] = useState<FunctionalRole>(member.functionalRole);
   const [saving, setSaving] = useState(false);
 
   const editableRoleLabels: Record<string, string> = {
@@ -284,19 +301,18 @@ function EditRoleModal({
   };
 
   const handleSave = async () => {
-    if (role === member.role) { onClose(); return; }
+    if (role === member.role && functionalRole === member.functionalRole) { onClose(); return; }
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("licensee_members")
-        .update({ role })
+      const { error } = await (supabase.from("licensee_members") as any)
+        .update({ role, functional_role: functionalRole })
         .eq("id", member.id);
       if (error) throw error;
       toast.success(t("settingsTabs.team.toasts.roleUpdated", {
         name: member.displayName,
         role: roleLabel(t, role as LicenseeRole),
       }));
-      onSaved({ ...member, role: role as LicenseeRole });
+      onSaved({ ...member, role: role as LicenseeRole, functionalRole });
       onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("settingsTabs.team.toasts.roleUpdateFailed"));
@@ -368,6 +384,11 @@ function EditRoleModal({
               />
             </Field>
           </FieldRow>
+          <FieldRow>
+            <Field label="Restaurant responsibility">
+              <SelectField value={functionalRole} onChange={(value) => setFunctionalRole(value as FunctionalRole)} options={FUNCTIONAL_ROLES} labels={FUNCTIONAL_ROLE_LABELS} />
+            </Field>
+          </FieldRow>
           <div style={{ fontSize: 11, color: "#9A9A9A", lineHeight: 1.5 }}>
             <Trans i18nKey="settingsTabs.team.roleHelp.developer" components={{ b: <strong /> }} />
             {"  "}
@@ -435,9 +456,9 @@ export function TeamTab() {
       setLicenseeId(lid);
 
       // Load all members for this licensee
-      const { data: memberRows } = await supabase
+      const { data: memberRows } = await (supabase
         .from("licensee_members")
-        .select("id, user_id, role, invited_at, accepted_at")
+        .select("id, user_id, role, functional_role, invited_at, accepted_at") as any)
         .eq("licensee_id", lid);
 
       if (!memberRows || memberRows.length === 0) {
@@ -446,7 +467,8 @@ export function TeamTab() {
         return;
       }
 
-      const userIds = memberRows.map((m) => m.user_id);
+      const typedMemberRows = memberRows as Array<{id:string;user_id:string;role:string;functional_role:string|null;invited_at:string|null;accepted_at:string|null}>;
+      const userIds = typedMemberRows.map((m) => m.user_id);
 
       // Load profiles for display names
       const { data: profiles } = await supabase
@@ -459,10 +481,11 @@ export function TeamTab() {
       );
 
       setMembers(
-        memberRows.map((m) => ({
+        typedMemberRows.map((m) => ({
           id: m.id,
           userId: m.user_id,
           role: m.role as LicenseeRole,
+          functionalRole: (m.functional_role ?? "operations") as FunctionalRole,
           displayName: profileMap.get(m.user_id) || m.user_id.slice(0, 8),
           email: null,
           invitedAt: m.invited_at,
@@ -585,6 +608,7 @@ export function TeamTab() {
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
                   <RoleBadge role={m.role} />
+                  <span style={{ fontSize: 11, color: "#6B6B6B", minWidth: 72 }}>{FUNCTIONAL_ROLE_LABELS[m.functionalRole]}</span>
                   <div style={{ fontSize: 11, color: "#9A9A9A", minWidth: 70, textAlign: "right" }}>
                     {lastSeen}
                   </div>

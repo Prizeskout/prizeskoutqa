@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/margin-dashboard")({
@@ -8,6 +8,10 @@ export const Route = createFileRoute("/margin-dashboard")({
     if (!session) {
       throw redirect({ to: "/login", search: { redirect: location.href } });
     }
+    // The former Margin mini-product read from margin_orders, a second and
+    // incompatible financial ledger. All financial views now live in the main
+    // dashboard and are backed by the normalized Economic Twin.
+    throw redirect({ to: "/dashboard" });
   },
-  component: () => <Outlet />,
+  component: () => null,
 });

@@ -13,18 +13,29 @@ interface Channel {
   type:     "pos" | "aggregator";
   logo:     string;
   note?:    string;
+  readiness: "production" | "sandbox" | "file_only" | "unavailable";
 }
 
 const CHANNELS: Channel[] = [
-  { name: "Talabat",   platform: "talabat",  type: "aggregator", logo: "🟠" },
-  { name: "Snoonu",    platform: "snoonu",   type: "aggregator", logo: "🟣" },
-  { name: "Jahez",     platform: "jahez",    type: "aggregator", logo: "🟡" },
-  { name: "Noon Food", platform: "noon",     type: "aggregator", logo: "🟡" },
-  { name: "Careem",    platform: "careem",   type: "aggregator", logo: "⚫" },
-  { name: "Foodics",   platform: "foodics",  type: "pos",        logo: "🔵" },
-  { name: "Salla",     platform: "salla",    type: "pos",        logo: "🟢" },
-  { name: "Zid",       platform: "zid",      type: "pos",        logo: "🟤" },
+  { name: "Talabat", platform: "talabat", type: "aggregator", logo: "🟠", readiness: "sandbox" },
+  { name: "Snoonu", platform: "snoonu", type: "aggregator", logo: "🟣", readiness: "sandbox", note: "Inbound partner pilot; outbound API access requires Snoonu approval." },
+  { name: "Keeta", platform: "keeta", type: "aggregator", logo: "🟢", readiness: "sandbox" },
+  { name: "Jahez", platform: "jahez", type: "aggregator", logo: "🟡", readiness: "unavailable", note: "File import remains available while partner API access is verified." },
+  { name: "Deliveroo", platform: "deliveroo", type: "aggregator", logo: "🔵", readiness: "unavailable", note: "Partner credentials and certification required." },
+  { name: "Noon Food", platform: "noon", type: "aggregator", logo: "🟡", readiness: "file_only" },
+  { name: "Careem", platform: "careem", type: "aggregator", logo: "⚫", readiness: "file_only" },
+  { name: "Rafeeq", platform: "rafeeq", type: "aggregator", logo: "🟣", readiness: "unavailable" },
+  { name: "Foodics", platform: "foodics", type: "pos", logo: "🔵", readiness: "production" },
+  { name: "Salla", platform: "salla", type: "pos", logo: "🟢", readiness: "production" },
+  { name: "Zid", platform: "zid", type: "pos", logo: "🟤", readiness: "production" },
 ];
+
+const READINESS = {
+  production: { label: "Production", color: "#087F5B", bg: "rgba(8,127,91,.09)" },
+  sandbox: { label: "Sandbox", color: "#A16207", bg: "rgba(161,98,7,.09)" },
+  file_only: { label: "File only", color: "#2563EB", bg: "rgba(37,99,235,.09)" },
+  unavailable: { label: "Unavailable", color: "#6B7280", bg: "rgba(107,114,128,.09)" },
+} as const;
 
 // Platforms that support OAuth connect from the dashboard
 const OAUTH_PLATFORMS = new Set(["salla", "zid"]);
@@ -244,12 +255,15 @@ export function ChannelsTab() {
                   <span style={{ fontSize: 22 }}>{ch.logo}</span>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{ch.name}</div>
+                    <span style={{ display: "inline-block", marginTop: 4, padding: "2px 7px", borderRadius: 999, fontSize: 10, fontWeight: 800, color: READINESS[ch.readiness].color, background: READINESS[ch.readiness].bg }}>
+                      {READINESS[ch.readiness].label}
+                    </span>
                     {ch.note && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{ch.note}</div>}
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <StatusBadge status={loading ? "not_connected" : status} t={t} />
-                  {!loading && status === "not_connected" && OAUTH_PLATFORMS.has(ch.platform) && (
+                  {!loading && status === "not_connected" && ch.readiness !== "file_only" && ch.readiness !== "unavailable" && OAUTH_PLATFORMS.has(ch.platform) && (
                     <ConnectButton platform={ch.platform} onConnect={handleConnect} t={t} />
                   )}
                   {!loading && status === "connected" && OAUTH_PLATFORMS.has(ch.platform) && (
@@ -285,10 +299,10 @@ export function ChannelsTab() {
                       >{t("settingsTabs.channels.actions.reconnect")}</button>
                     </>
                   )}
-                  {!loading && status === "not_connected" && !OAUTH_PLATFORMS.has(ch.platform) && ch.platform in BYOK_PLATFORMS && (
+                  {!loading && status === "not_connected" && ch.readiness !== "file_only" && ch.readiness !== "unavailable" && !OAUTH_PLATFORMS.has(ch.platform) && ch.platform in BYOK_PLATFORMS && (
                     <ConnectButton platform={ch.platform} onConnect={handleConnect} t={t} />
                   )}
-                  {!loading && status === "not_connected" && !OAUTH_PLATFORMS.has(ch.platform) && !(ch.platform in BYOK_PLATFORMS) && (
+                  {!loading && status === "not_connected" && (ch.readiness === "file_only" || ch.readiness === "unavailable" || (!OAUTH_PLATFORMS.has(ch.platform) && !(ch.platform in BYOK_PLATFORMS))) && (
                     <button
                       type="button"
                       disabled
@@ -297,7 +311,7 @@ export function ChannelsTab() {
                         border: "1px solid var(--border)", borderRadius: 7, padding: "10px 16px",
                         cursor: "default", fontFamily: "inherit", minHeight: 44,
                       }}
-                    >{t("settingsTabs.channels.actions.comingSoon")}</button>
+                    >{ch.readiness === "file_only" ? "Use file import" : t("settingsTabs.channels.actions.comingSoon")}</button>
                   )}
                 </div>
               </div>

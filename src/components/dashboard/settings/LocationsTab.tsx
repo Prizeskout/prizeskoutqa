@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 const OG = "#EF681A";
 interface Outlet {
   id: string;
+  external_id?: string;
   name: string;
   city: string;
   region: string;
   active: boolean;
 }
+interface BranchAssignment { id:string;branch_id:string;platform:string;external_branch_id:string;pos_external_id:string|null;active:boolean }
 const REGIONS = ["Qatar", "Saudi Arabia", "UAE", "Kuwait", "Bahrain", "Oman"];
 const CITIES: Record<string, string[]> = {
   Qatar: ["Doha", "Al Wakrah", "Al Khor", "Lusail"],
@@ -18,7 +20,7 @@ const CITIES: Record<string, string[]> = {
   Bahrain: ["Manama", "Muharraq", "Riffa"],
   Oman: ["Muscat", "Salalah", "Sohar"],
 };
-const BLANK = { name: "", city: "", region: "Qatar" };
+const BLANK = { name: "", external_id: "", city: "", region: "Qatar" };
 
 export function LocationsTab() {
   const { t } = useTranslation();
@@ -28,6 +30,8 @@ export function LocationsTab() {
   const [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [assignments,setAssignments]=useState<BranchAssignment[]>([]);
+  const [assignmentDraft,setAssignmentDraft]=useState({branch_id:"",channel:"snoonu",external_branch_id:""});
   const call = async (body: Record<string, string>) => {
     const response = await fetch("/api/channels/connect", {
       method: "POST",
@@ -48,11 +52,16 @@ export function LocationsTab() {
     if (!response.ok || !data.ok) throw new Error(data.error ?? "Location request failed.");
     return data;
   };
+  const assignmentCall=async(body:Record<string,string>)=>{
+    const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"branch_assignments",...body})});
+    const data=await response.json() as {ok?:boolean;assignments?:BranchAssignment[];assignment?:BranchAssignment;error?:string};
+    if(!response.ok||!data.ok)throw new Error(data.error??"Branch mapping request failed.");return data;
+  };
   useEffect(() => {
     let cancelled = false;
     void call({ action: "list" })
       .then((data) => {
-        if (!cancelled) setOutlets(data.locations ?? []);
+        if (!cancelled) { const rows=data.locations??[];setOutlets(rows);setAssignmentDraft(current=>({...current,branch_id:current.branch_id||rows[0]?.id||""}));void assignmentCall({action:"list"}).then(result=>{if(!cancelled)setAssignments(result.assignments??[]);}); }
       })
       .catch((reason) => {
         if (!cancelled)
@@ -73,6 +82,8 @@ export function LocationsTab() {
       const data = await call({
         action: "create",
         name: draft.name.trim(),
+        external_id: draft.external_id.trim(),
+        pos_external_id: draft.external_id.trim(),
         city: draft.city,
         region: draft.region,
       });
@@ -90,7 +101,7 @@ export function LocationsTab() {
     setError("");
     try {
       await call({ action: "delete", id });
-      setOutlets((current) => current.filter((outlet) => outlet.id !== id));
+      setOutlets((current) => current.map((outlet) => outlet.id === id ? {...outlet,active:false} : outlet));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Location could not be removed.");
     } finally {
@@ -112,6 +123,8 @@ export function LocationsTab() {
       setBusy(false);
     }
   };
+  const saveAssignment=async()=>{if(!assignmentDraft.branch_id||!assignmentDraft.channel.trim()||!assignmentDraft.external_branch_id.trim())return;setBusy(true);setError("");try{const data=await assignmentCall({action:"save",...assignmentDraft});if(data.assignment)setAssignments(current=>[...current.filter(row=>!(row.branch_id===data.assignment!.branch_id&&row.platform===data.assignment!.platform)),data.assignment!]);setAssignmentDraft(current=>({...current,external_branch_id:""}));}catch(reason){setError(reason instanceof Error?reason.message:"Branch mapping could not be saved.");}finally{setBusy(false);}};
+  const removeAssignment=async(id:string)=>{setBusy(true);try{await assignmentCall({action:"delete",id});setAssignments(current=>current.map(row=>row.id===id?{...row,active:false}:row));}catch(reason){setError(reason instanceof Error?reason.message:"Branch mapping could not be removed.");}finally{setBusy(false);}};
   const input = {
     background: "var(--surface)",
     border: "1px solid var(--border)",
@@ -224,6 +237,13 @@ export function LocationsTab() {
             onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
             style={input}
           />
+          <input
+            aria-label="POS branch identifier"
+            placeholder="POS branch ID (for example DOHA-01)"
+            value={draft.external_id}
+            onChange={(event) => setDraft((current) => ({ ...current, external_id: event.target.value }))}
+            style={input}
+          />
           <div style={{ display: "flex", gap: 10 }}>
             <select
               aria-label="Region"
@@ -313,6 +333,7 @@ export function LocationsTab() {
           {t("settingsTabs.locations.addOutlet")}
         </button>
       )}
+      {!!outlets.length&&<div style={{marginTop:24,borderTop:"1px solid var(--border)",paddingTop:20}}><h3 style={{fontSize:14,margin:"0 0 5px"}}>Branch channel identities</h3><p style={{fontSize:12,color:"var(--muted)",lineHeight:1.55,margin:"0 0 12px"}}>Link each internal branch to the ID used by a delivery platform. This keeps orders, payouts and profitability on one branch identity.</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1.2fr auto",gap:8}}><select aria-label="Restaurant branch" style={input} value={assignmentDraft.branch_id} onChange={event=>setAssignmentDraft(current=>({...current,branch_id:event.target.value}))}>{outlets.filter(row=>row.active).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select><select aria-label="Delivery platform" style={input} value={assignmentDraft.channel} onChange={event=>setAssignmentDraft(current=>({...current,channel:event.target.value}))}>{["snoonu","talabat","deliveroo","keeta","rafeeq","jahez","hungerstation"].map(row=><option key={row} value={row}>{row[0].toUpperCase()+row.slice(1)}</option>)}</select><input aria-label="Platform branch ID" style={input} placeholder="Platform branch ID" value={assignmentDraft.external_branch_id} onChange={event=>setAssignmentDraft(current=>({...current,external_branch_id:event.target.value}))}/><button type="button" disabled={busy||!assignmentDraft.external_branch_id.trim()} onClick={()=>void saveAssignment()} style={{border:0,borderRadius:8,padding:"0 13px",background:OG,color:"#fff",fontWeight:700}}>Link</button></div><div style={{display:"grid",gap:7,marginTop:12}}>{assignments.filter(row=>row.active).map(row=><div key={row.id} style={{display:"flex",justifyContent:"space-between",gap:12,padding:"9px 11px",background:"var(--surface2)",borderRadius:8,fontSize:12}}><span><b>{outlets.find(outlet=>outlet.id===row.branch_id)?.name??"Branch"}</b> · {row.platform} · <code>{row.external_branch_id}</code></span><button type="button" disabled={busy} onClick={()=>void removeAssignment(row.id)} style={{border:0,background:"transparent",color:"#B42318",cursor:"pointer"}}>Deactivate</button></div>)}</div></div>}
     </div>
   );
 }

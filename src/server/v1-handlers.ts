@@ -130,6 +130,7 @@ import {
   handleRestaurantSettlementBatch,
 } from "@/server/restaurant-settlement-handlers";
 import { handleDecideEngineApproval,handleEngineHealth,handleGetEngineWork,handleListEngineApprovals,handleListEngineWork,handleReplayEngineWork,handleResumeEngineWork } from "@/server/engine-control-handlers";
+import {confirmPromotionAction,listPendingPartnerPromotionActions} from "@/server/core/promotion-actions";
 
 export type V1Context = {
   apiKeyId: string;
@@ -147,6 +148,9 @@ export type V1Result = {
   body: unknown;
   headers?: Record<string, string>;
 };
+
+async function handlePendingPromotionActions(request:Request,ctx:V1Context):Promise<V1Result>{if(!ctx.scopes.some(scope=>["read","admin","promotions:read"].includes(scope)))return{status:403,body:{error:{code:"forbidden",message:"This API key requires promotion read access."}}};const platform=(new URL(request.url).searchParams.get("platform")??"").trim().toLowerCase();if(!platform)return{status:422,body:{error:{code:"validation_failed",message:"platform is required."}}};return{status:200,body:{data:await listPendingPartnerPromotionActions(ctx.accountId,platform)}}}
+async function handleConfirmPromotionAction(request:Request,ctx:V1Context,id:string):Promise<V1Result>{if(!ctx.scopes.some(scope=>["write","admin","promotions:write"].includes(scope)))return{status:403,body:{error:{code:"forbidden",message:"This API key requires promotion write access."}}};const body=await request.json().catch(()=>null) as Record<string,unknown>|null,reference=String(body?.partner_reference??"").trim();if(!reference)return{status:422,body:{error:{code:"validation_failed",message:"partner_reference is required."}}};const result=body?.result&&typeof body.result==="object"&&!Array.isArray(body.result)?body.result as Record<string,unknown>:{};return{status:200,body:{data:await confirmPromotionAction(ctx.accountId,decodeURIComponent(id),reference,result)}}}
 
 // ----------------------------------------------------------------------------
 // Helpers
@@ -996,6 +1000,10 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("POST /v1/profit/reconciliation-runs", (req, ctx) =>
     handleRestaurantReconciliationRun(req, ctx),
   ),
+  // Independent partner-pull path: a delivery platform can fetch only
+  // explicitly approved promotion actions and confirm the exact result.
+  compileRoute("GET /v1/promotions/actions",(req,ctx)=>handlePendingPromotionActions(req,ctx)),
+  compileRoute("POST /v1/promotions/actions/{id}/confirm",(req,ctx,p)=>handleConfirmPromotionAction(req,ctx,p.id)),
   compileRoute("GET /v1/profit/orders/{external_order_id}", (req, ctx, params) =>
     handleGetRestaurantOrderEconomics(req, ctx, params.external_order_id),
   ),

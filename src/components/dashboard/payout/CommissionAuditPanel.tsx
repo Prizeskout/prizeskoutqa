@@ -148,7 +148,7 @@ export function CommissionAuditPanel({
   const missingEvidence = effectiveAssertions.filter(a => a.status === "missing").map(a => a.label).join(", ") || "none identified";
   const requiredActions = effectiveAssertions.filter(a => a.status !== "passed").slice(0, 3).map(a => a.detail);
 
-  const handleDownload = async (format:"pdf"|"word"="pdf") => {
+  const handleDownload = async (format:"pdf"|"excel"|"word"="pdf") => {
     if (downloading) return;
     setDownloading(true);
     try {
@@ -156,7 +156,8 @@ export function CommissionAuditPanel({
         documents, approvedContract: contractCoversAudit ? approvedContract : null,
         preparedBy, reviewStatus: locked ? "Locked final" : reviewedBy ? "Review in progress" : "Unreviewed draft",
       };
-      if(format==="word"){const {exportCommissionAuditWord}=await import("./exportReportsWord");await exportCommissionAuditWord(result,currency,documentCount,options);}
+      if(format==="excel"){const {exportCommissionAuditExcel}=await import("./exportAuditReportExcel");await exportCommissionAuditExcel(result,currency,documentCount,options);}
+      else if(format==="word"){const {exportCommissionAuditWord}=await import("./exportReportsWord");await exportCommissionAuditWord(result,currency,documentCount,options);}
       else{const { exportCommissionAuditPdf } = await import("./exportAuditReportPdf");await exportCommissionAuditPdf(result, currency, documentCount, options);}
     } finally { setDownloading(false); }
   };
@@ -202,7 +203,7 @@ export function CommissionAuditPanel({
   return <div style={{ ...panel, overflow: "hidden", color: "var(--text)" }}>
     <div style={{ padding: "18px 22px", background: NAVY, color: "#fff", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
       <div><div style={{ fontSize: 10.5, opacity: .7, fontWeight: 800, letterSpacing: ".08em" }}>CONFIDENTIAL · PAYOUT CHECK</div><div style={{ fontSize: 21, fontWeight: 900, marginTop: 4 }}>Your payout check</div><div style={{ fontSize: 11.5, opacity: .75, marginTop: 3 }}>{engagementId} · Draft created {new Date().toLocaleDateString("en-GB")}</div></div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Badge color={locked ? GREEN : AMBER}>{locked ? "LOCKED FINAL" : "UNREVIEWED DRAFT"}</Badge><button onClick={()=>handleDownload("pdf")} style={{ border: "1px solid #ffffff55", color: "#fff", background: "transparent", borderRadius: 7, padding: "7px 10px", cursor: "pointer", fontWeight: 700 }}>{downloading ? "Preparing…" : "PDF"}</button><button onClick={()=>handleDownload("word")} style={{ border: "1px solid #ffffff55", color: "#fff", background: "transparent", borderRadius: 7, padding: "7px 10px", cursor: "pointer", fontWeight: 700 }}>Word</button></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Badge color={locked ? GREEN : AMBER}>{locked ? "LOCKED FINAL" : "UNREVIEWED DRAFT"}</Badge><button onClick={()=>handleDownload("pdf")} style={{ border: "1px solid #ffffff55", color: "#fff", background: "transparent", borderRadius: 7, padding: "7px 10px", cursor: "pointer", fontWeight: 700 }}>{downloading ? "Preparing…" : "PDF"}</button><button onClick={()=>handleDownload("excel")} style={{ border: "1px solid #ffffff55", color: "#fff", background: "transparent", borderRadius: 7, padding: "7px 10px", cursor: "pointer", fontWeight: 700 }}>Excel</button><button onClick={()=>handleDownload("word")} style={{ border: "1px solid #ffffff55", color: "#fff", background: "transparent", borderRadius: 7, padding: "7px 10px", cursor: "pointer", fontWeight: 700 }}>Word</button></div>
     </div>
 
     <div className="table-scroll" style={{ borderBottom: "1px solid var(--border)", background: "var(--surface2)" }}>
