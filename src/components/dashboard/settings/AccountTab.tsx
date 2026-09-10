@@ -27,7 +27,27 @@ import {
 
 const INDUSTRIES = [
   "Restaurant",
+  "Grocery",
+  "Retail",
+  "Café",
+  "Cloud Kitchen",
+  "Catering",
+  "Other",
 ] as const;
+
+const INDUSTRY_DB_MAP: Record<string, string> = {
+  Restaurant: "restaurant",
+  Grocery: "grocery",
+  Retail: "retail",
+  "Café": "cafe",
+  "Cloud Kitchen": "cloud_kitchen",
+  Catering: "catering",
+  Other: "other",
+};
+
+const INDUSTRY_DISPLAY_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(INDUSTRY_DB_MAP).map(([display, db]) => [db, display]),
+);
 
 const COUNTRIES = [
   "Qatar",
@@ -92,7 +112,7 @@ export function AccountTab() {
       if (!active) return;
       if (data) {
         if (data.company_name) setCompanyName(data.company_name);
-        if (data.industry) setIndustry(data.industry);
+        if (data.industry) setIndustry(INDUSTRY_DISPLAY_MAP[data.industry] ?? data.industry);
         if (data.country) setCountry(data.country);
         if (data.currency) setCurrency(data.currency);
         if (data.contact_email) setEmail(data.contact_email);
@@ -103,7 +123,7 @@ export function AccountTab() {
       if(merchantId&&accessCode){
         const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,platform:"restaurant_workspace",action:"get"})});
         const result=await response.json() as {workspace?:{name?:string;country_code?:string;currency?:string;metadata?:Record<string,unknown>}};
-        if(response.ok&&result.workspace){const countryByCode:Record<string,string>={QA:"Qatar",AE:"UAE",SA:"Saudi Arabia",KW:"Kuwait",BH:"Bahrain",OM:"Oman",EG:"Egypt",JO:"Jordan"};setCompanyName(result.workspace.name??companyName);setIndustry("Restaurant");setCountry(countryByCode[result.workspace.country_code??""]??country);setCurrency(result.workspace.currency??currency);setEmail(String(result.workspace.metadata?.contact_email??""));setPhone(String(result.workspace.metadata?.contact_phone??""));setDescription(String(result.workspace.metadata?.description??""));}
+        if(response.ok&&result.workspace){const countryByCode:Record<string,string>={QA:"Qatar",AE:"UAE",SA:"Saudi Arabia",KW:"Kuwait",BH:"Bahrain",OM:"Oman",EG:"Egypt",JO:"Jordan"};setCompanyName(result.workspace.name??companyName);const wsIndustry=String(result.workspace.metadata?.industry??"restaurant");setIndustry(INDUSTRY_DISPLAY_MAP[wsIndustry]??"Restaurant");setCountry(countryByCode[result.workspace.country_code??""]??country);setCurrency(result.workspace.currency??currency);setEmail(String(result.workspace.metadata?.contact_email??""));setPhone(String(result.workspace.metadata?.contact_phone??""));setDescription(String(result.workspace.metadata?.description??""));}
       }
       setLoading(false);
     })();
@@ -130,7 +150,7 @@ export function AccountTab() {
           {
             user_id: user.id,
             company_name: trimmedCompany,
-            industry,
+            industry: INDUSTRY_DB_MAP[industry] ?? "restaurant",
             country,
             currency,
             contact_email: email.trim() || null,
@@ -141,7 +161,7 @@ export function AccountTab() {
         );
       if (error) throw error;
       const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
-      if(merchantId&&accessCode){const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,platform:"restaurant_workspace",action:"save",name:trimmedCompany,country,currency,contact_email:email,contact_phone:phone,description})});if(!response.ok){const result=await response.json() as {error?:string};throw new Error(result.error??"Restaurant workspace could not be saved.");}}
+      if(merchantId&&accessCode){const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,platform:"restaurant_workspace",action:"save",name:trimmedCompany,country,currency,industry:INDUSTRY_DB_MAP[industry]??"restaurant",contact_email:email,contact_phone:phone,description})});if(!response.ok){const result=await response.json() as {error?:string};throw new Error(result.error??"Restaurant workspace could not be saved.");}}
       setCompany({ name: trimmedCompany });
       setSavedAt(Date.now());
       window.setTimeout(() => setSavedAt(null), 1800);

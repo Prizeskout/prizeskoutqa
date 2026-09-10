@@ -55,6 +55,7 @@ import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
 import { Route as AdminCallbackRouteImport } from './routes/admin.callback'
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
+import { Route as ApiSettingsLocaleRouteImport } from './routes/api/settings/locale'
 import { Route as ApiRepricingCatalogRouteImport } from './routes/api/repricing/catalog'
 import { Route as ApiRepricingApplyRouteImport } from './routes/api/repricing/apply'
 import { Route as ApiOnboardingSessionRouteImport } from './routes/api/onboarding/session'
@@ -96,6 +97,7 @@ import { Route as ApiPublicHooksEconomicEvidenceRouteImport } from './routes/api
 import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/public/hooks/dispatch-queue'
 import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
 import { Route as ApiPublicHooksCopilotSchedulesRouteImport } from './routes/api/public/hooks/copilot-schedules'
+import { Route as ApiPublicHooksAuthEmailRouteImport } from './routes/api/public/hooks/auth-email'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
@@ -335,6 +337,11 @@ const ApiWebhooksPlatformRoute = ApiWebhooksPlatformRouteImport.update({
   path: '/api/webhooks/$platform',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSettingsLocaleRoute = ApiSettingsLocaleRouteImport.update({
+  id: '/api/settings/locale',
+  path: '/api/settings/locale',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRepricingCatalogRoute = ApiRepricingCatalogRouteImport.update({
   id: '/api/repricing/catalog',
   path: '/api/repricing/catalog',
@@ -556,6 +563,11 @@ const ApiPublicHooksCopilotSchedulesRoute =
     path: '/api/public/hooks/copilot-schedules',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAuthEmailRoute = ApiPublicHooksAuthEmailRouteImport.update({
+  id: '/api/public/hooks/auth-email',
+  path: '/api/public/hooks/auth-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -669,11 +681,13 @@ export interface FileRoutesByFullPath {
   '/api/onboarding/session': typeof ApiOnboardingSessionRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
+  '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
@@ -763,11 +777,13 @@ export interface FileRoutesByTo {
   '/api/onboarding/session': typeof ApiOnboardingSessionRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
+  '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
@@ -861,11 +877,13 @@ export interface FileRoutesById {
   '/api/onboarding/session': typeof ApiOnboardingSessionRoute
   '/api/repricing/apply': typeof ApiRepricingApplyRoute
   '/api/repricing/catalog': typeof ApiRepricingCatalogRoute
+  '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
   '/api/public/hooks/dispatch-queue': typeof ApiPublicHooksDispatchQueueRoute
@@ -960,11 +978,13 @@ export interface FileRouteTypes {
     | '/api/onboarding/session'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
+    | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
@@ -1054,11 +1074,13 @@ export interface FileRouteTypes {
     | '/api/onboarding/session'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
+    | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
@@ -1151,11 +1173,13 @@ export interface FileRouteTypes {
     | '/api/onboarding/session'
     | '/api/repricing/apply'
     | '/api/repricing/catalog'
+    | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
     | '/api/public/hooks/dispatch-queue'
@@ -1233,7 +1257,9 @@ export interface RootRouteChildren {
   ApiOnboardingSessionRoute: typeof ApiOnboardingSessionRoute
   ApiRepricingApplyRoute: typeof ApiRepricingApplyRoute
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
+  ApiSettingsLocaleRoute: typeof ApiSettingsLocaleRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
+  ApiPublicHooksAuthEmailRoute: typeof ApiPublicHooksAuthEmailRoute
   ApiPublicHooksCopilotSchedulesRoute: typeof ApiPublicHooksCopilotSchedulesRoute
   ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
   ApiPublicHooksDispatchQueueRoute: typeof ApiPublicHooksDispatchQueueRoute
@@ -1586,6 +1612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWebhooksPlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/settings/locale': {
+      id: '/api/settings/locale'
+      path: '/api/settings/locale'
+      fullPath: '/api/settings/locale'
+      preLoaderRoute: typeof ApiSettingsLocaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/repricing/catalog': {
       id: '/api/repricing/catalog'
       path: '/api/repricing/catalog'
@@ -1873,6 +1906,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCopilotSchedulesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/auth-email': {
+      id: '/api/public/hooks/auth-email'
+      path: '/api/public/hooks/auth-email'
+      fullPath: '/api/public/hooks/auth-email'
+      preLoaderRoute: typeof ApiPublicHooksAuthEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid/callback': {
       id: '/api/auth/zid/callback'
       path: '/callback'
@@ -2079,7 +2119,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOnboardingSessionRoute: ApiOnboardingSessionRoute,
   ApiRepricingApplyRoute: ApiRepricingApplyRoute,
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
+  ApiSettingsLocaleRoute: ApiSettingsLocaleRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
+  ApiPublicHooksAuthEmailRoute: ApiPublicHooksAuthEmailRoute,
   ApiPublicHooksCopilotSchedulesRoute: ApiPublicHooksCopilotSchedulesRoute,
   ApiPublicHooksDispatchConfirmationRoute:
     ApiPublicHooksDispatchConfirmationRoute,

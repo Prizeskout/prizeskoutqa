@@ -17,6 +17,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 
 type LicenseeRole = "owner" | "admin" | "developer" | "viewer";
+type FunctionalRole = "finance" | "operations" | "management" | "accounting";
 
 const ROLE_RANK: Record<LicenseeRole, number> = {
   viewer: 0,
@@ -28,23 +29,35 @@ const ROLE_RANK: Record<LicenseeRole, number> = {
 async function getCallerLicensee(
   supabase: any,
   userId: string,
-): Promise<{ licenseeId: string; role: LicenseeRole }> {
+): Promise<{ licenseeId: string; role: LicenseeRole; functionalRole: FunctionalRole }> {
   const { data, error } = await supabase
     .from("licensee_members")
-    .select("licensee_id, role")
+    .select("licensee_id, role, functional_role")
     .eq("user_id", userId)
-    .order("role", { ascending: false }) // owner > admin > developer > viewer (alphabetical isn't helpful but RLS narrows already)
+    .order("role", { ascending: false })
     .limit(1);
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0];
   if (!row) throw new Error("No licensee found for this user.");
-  return { licenseeId: row.licensee_id, role: row.role as LicenseeRole };
+  return {
+    licenseeId: row.licensee_id,
+    role: row.role as LicenseeRole,
+    functionalRole: (row.functional_role ?? "operations") as FunctionalRole,
+  };
 }
 
 function requireRole(actual: LicenseeRole, min: LicenseeRole) {
   if (ROLE_RANK[actual] < ROLE_RANK[min]) {
     throw new Error(
       `Insufficient permissions. ${min} role required, you have ${actual}.`,
+    );
+  }
+}
+
+function requireFunctionalRole(actual: FunctionalRole, allowed: FunctionalRole[]) {
+  if (!allowed.includes(actual)) {
+    throw new Error(
+      `This action requires one of [${allowed.join(", ")}] responsibility. Your role is ${actual}.`,
     );
   }
 }
@@ -136,8 +149,9 @@ export const createAccount = createServerFn({ method: "POST" })
   .inputValidator((input: AccountInput) => validateAccountInput(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { licenseeId, role } = await getCallerLicensee(supabase, userId);
+    const { licenseeId, role, functionalRole } = await getCallerLicensee(supabase, userId);
     requireRole(role, "admin");
+    requireFunctionalRole(functionalRole, ["finance", "management"]);
 
     if (data.isDefault) {
       // Clear any existing default first.
@@ -179,8 +193,9 @@ export const updateAccount = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { licenseeId, role } = await getCallerLicensee(supabase, userId);
+    const { licenseeId, role, functionalRole } = await getCallerLicensee(supabase, userId);
     requireRole(role, "admin");
+    requireFunctionalRole(functionalRole, ["finance", "management"]);
 
     if (data.isDefault) {
       const { error: clearErr } = await supabase
@@ -215,8 +230,9 @@ export const deleteAccount = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { licenseeId, role } = await getCallerLicensee(supabase, userId);
+    const { licenseeId, role, functionalRole } = await getCallerLicensee(supabase, userId);
     requireRole(role, "admin");
+    requireFunctionalRole(functionalRole, ["finance", "management"]);
 
     // Refuse to delete the default account if it's the only one.
     const { data: accounts, error: listErr } = await supabase

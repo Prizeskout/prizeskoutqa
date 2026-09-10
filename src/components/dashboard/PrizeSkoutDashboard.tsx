@@ -5297,11 +5297,21 @@ export function PrizeSkoutDashboard() {
     rate: number,
     platform: string,
     description: string,
-    retry?:{evidenceItemId:string;csvText:string},
-  ): Promise<{ ok: true; result: PayoutCheckData; evidenceItemId: string; duplicate: boolean } | { ok: false; error: string;evidenceItemId?:string;csvText?:string;headers?:string[] }> => {
+    retry?: { evidenceItemId: string; csvText: string },
+  ): Promise<{ ok: true; result: PayoutCheckData; evidenceItemId: string; duplicate: boolean } | { ok: false; error: string; evidenceItemId?: string; csvText?: string; headers?: string[] }> => {
     try {
-      let evidenceItemId=retry?.evidenceItemId,duplicate=false;
-      if(!evidenceItemId){const original=new FormData();original.set("merchant_id",mid);original.set("access_code",ac);original.set("source_provider",platform);original.set("file",file);const retained=await fetch("/api/evidence/intake",{method:"POST",body:original});const retainedResult=await retained.json() as {ok?:boolean;error?:string;evidence_item_id?:string;duplicate?:boolean};if(!retained.ok||!retainedResult.ok)return {ok:false,error:retainedResult.error??"Could not retain the original evidence file."};if(!retainedResult.evidence_item_id)return {ok:false,error:"The original file was stored but its evidence record could not be confirmed."};evidenceItemId=retainedResult.evidence_item_id;duplicate=Boolean(retainedResult.duplicate)}
+      let evidenceItemId = retry?.evidenceItemId;
+      let duplicate = false;
+      if (!evidenceItemId) {
+        const original = new FormData();
+        original.set("merchant_id", mid); original.set("access_code", ac); original.set("source_provider", platform); original.set("file", file);
+        const retained = await fetch("/api/evidence/intake", { method: "POST", body: original });
+        const retainedResult = await retained.json() as { ok?: boolean; error?: string; evidence_item_id?: string; duplicate?: boolean };
+        if (!retained.ok || !retainedResult.ok) return { ok: false, error: retainedResult.error ?? "Could not retain the original evidence file." };
+        if (!retainedResult.evidence_item_id) return { ok: false, error: "The original file was stored but its evidence record could not be confirmed." };
+        evidenceItemId = retainedResult.evidence_item_id;
+        duplicate = Boolean(retainedResult.duplicate);
+      }
       const lowerName = file.name.toLowerCase();
       const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
       const isXlsx =
@@ -5322,9 +5332,9 @@ export function PrizeSkoutDashboard() {
         body.pdf_text = await extractPdfText(file);
       } else if (isXlsx) {
         const { extractXlsxAsCsv } = await import("@/lib/xlsx-text");
-        body.csv_text = retry?.csvText??await extractXlsxAsCsv(file);
+        body.csv_text = retry?.csvText ?? await extractXlsxAsCsv(file);
       } else {
-        body.csv_text = retry?.csvText??await file.text();
+        body.csv_text = retry?.csvText ?? await file.text();
       }
       const res = await fetch("/api/channels/connect", {
         method: "POST",
@@ -5333,9 +5343,9 @@ export function PrizeSkoutDashboard() {
       });
       const data = (await res.json()) as PayoutCheckData & { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
-        const csvText=typeof body.csv_text==="string"?body.csv_text:undefined;
-        const {csvHeaders}=csvText?await import("@/lib/manual-column-mapping"):{csvHeaders:()=>[]};
-        return { ok: false, error: data.error ?? "Could not read that file.",evidenceItemId,csvText,headers:csvText?csvHeaders(csvText):[] };
+        const csvText = typeof body.csv_text === "string" ? body.csv_text : undefined;
+        const { csvHeaders } = csvText ? await import("@/lib/manual-column-mapping") : { csvHeaders: () => [] };
+        return { ok: false, error: data.error ?? "Could not read that file.", evidenceItemId, csvText, headers: csvText ? csvHeaders(csvText) : [] };
       }
       return { ok: true, result: data, evidenceItemId: evidenceItemId!, duplicate };
     } catch {
@@ -5370,7 +5380,7 @@ export function PrizeSkoutDashboard() {
         { id, kind: "file", label: file.name, description, platform, status: "uploading" },
       ]);
       let outcome = await uploadOneFile(file, mid, ac, rate, platform, description);
-      if(!outcome.ok&&outcome.evidenceItemId&&outcome.csvText&&outcome.headers?.length){const expression=window.prompt(`PrizeSkout retained the original file but could not recognize its columns.\n\nHeaders: ${outcome.headers.join(", ")}\n\nMap columns as canonical=source, for example:\norder_id=Order Ref,date=Created At,gross_amount=Subtotal,commission=Platform Fee,net_payout=Transfer`);if(expression){try{const {parseColumnMapping,remapCsvHeader}=await import("@/lib/manual-column-mapping"),mapping=parseColumnMapping(expression,outcome.headers);outcome=await uploadOneFile(file,mid,ac,rate,platform,description,{evidenceItemId:outcome.evidenceItemId,csvText:remapCsvHeader(outcome.csvText,mapping)});}catch(error){outcome={ok:false,error:error instanceof Error?error.message:"Column mapping is invalid."}}}}
+      if (!outcome.ok && outcome.evidenceItemId && outcome.csvText && outcome.headers?.length) { const expression = window.prompt(`PrizeSkout retained the original file but could not recognize its columns.\n\nHeaders: ${outcome.headers.join(", ")}\n\nMap columns as canonical=source, for example:\norder_id=Order Ref,date=Created At,gross_amount=Subtotal,commission=Platform Fee,net_payout=Transfer`); if (expression) { try { const { parseColumnMapping, remapCsvHeader } = await import("@/lib/manual-column-mapping"), mapping = parseColumnMapping(expression, outcome.headers); outcome = await uploadOneFile(file, mid, ac, rate, platform, description, { evidenceItemId: outcome.evidenceItemId, csvText: remapCsvHeader(outcome.csvText, mapping) }); } catch (error) { outcome = { ok: false, error: error instanceof Error ? error.message : "Column mapping is invalid." } } } }
       setStagedItems((prev) =>
         prev.map((it) => {
           if (it.id !== id) return it;
