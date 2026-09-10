@@ -28,6 +28,16 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
     if(error) throw new Error(error.message);
     return data?{state:"completed",reason:"partner_event_normalized",detail:{receipt_id:data.id,event_type:data.event_type}}:{state:"waiting_evidence",reason:"partner_receipt_not_visible"};
   }
+  if(work.work_kind==="normalize_connector_event"){
+    const platform=String(event.payload.platform??"").toLowerCase(),receiptId=String(event.payload.receipt_id??"");
+    const tables:Record<string,string>={salla:"ps_salla_webhook_events",zid:"ps_zid_webhook_events",keeta:"ps_keeta_webhook_events",talabat:"ps_talabat_webhook_events"};
+    const table=tables[platform];if(!table||!receiptId)return {state:"dead_letter",reason:"connector_receipt_reference_invalid",detail:{platform,receipt_id:receiptId}};
+    const {data,error}=await db.from(table).select("id,status,error_message").eq("id",receiptId).eq("account_id",event.account_id).maybeSingle();
+    if(error)throw new Error(error.message);if(!data)return {state:"waiting_evidence",reason:"connector_receipt_not_visible",detail:{platform,receipt_id:receiptId}};
+    if(data.status==="failed")return {state:"dead_letter",reason:"connector_processing_failed",detail:{platform,receipt_id:data.id,error:data.error_message}};
+    if(data.status==="processed")return {state:"completed",reason:"connector_event_normalized",detail:{platform,receipt_id:data.id}};
+    throw new Error(`${platform} receipt ${receiptId} is still ${data.status}`);
+  }
   if(work.work_kind==="assess_order_economics"){
     const ids=Array.isArray(event.payload.normalized_event_ids)?event.payload.normalized_event_ids.map(String):[];
     if(!ids.length) return {state:"waiting_evidence",reason:"normalized_orders_missing"};
