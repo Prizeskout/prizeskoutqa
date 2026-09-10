@@ -662,7 +662,8 @@ export const Route = createFileRoute("/api/channels/connect")({
             // Also multiplexed here, same PipeOps-routing reason as above.
             // Read-only aggregation over ps_aggregator_dispatch_log for the
             // Revenue Hub hero + stat tiles — see dashboard-stats.ts.
-            const stats = await getDashboardStats(merchant_id);
+            const days=Math.max(1,Math.min(365,Number(body.days)||33));
+            const stats = await getDashboardStats(merchant_id,{days,platform:(body.platform_filter??"").trim()||undefined,branch:(body.branch_filter??"").trim()||undefined});
             return resp({ ok: true, ...stats }, 200);
           }
 

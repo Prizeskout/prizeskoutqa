@@ -15,7 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { sendAuthEmail, resolveUserLocale, normalizeLocale, type EmailLocale } from "@/server/email";
 import type { AuthEmailType } from "@/server/email/templates";
 
-function base64ToBytes(b64: string): Uint8Array {
+function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -49,7 +49,7 @@ async function verifySignature(rawBody: string, headers: Headers): Promise<boole
   if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) return false;
 
   const secretB64 = secretRaw.replace(/^v1,/, "").replace(/^whsec_/, "");
-  let keyBytes: Uint8Array;
+  let keyBytes: Uint8Array<ArrayBuffer>;
   try {
     keyBytes = base64ToBytes(secretB64);
   } catch {

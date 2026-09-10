@@ -161,10 +161,11 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
 
 const SPARKLINE_DAYS = 33;
 
-export async function getDashboardStats(accountId: string): Promise<DashboardStats> {
+export async function getDashboardStats(accountId: string,filters:{days?:number;platform?:string;branch?:string}={}): Promise<DashboardStats> {
   const now = new Date();
   const seriesStart = new Date(now);
-  seriesStart.setDate(seriesStart.getDate() - (SPARKLINE_DAYS - 1));
+  const selectedDays=Math.max(1,Math.min(365,filters.days??SPARKLINE_DAYS));
+  seriesStart.setDate(seriesStart.getDate() - (selectedDays - 1));
   seriesStart.setHours(0, 0, 0, 0);
 
   const [
@@ -234,10 +235,12 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
   let priceUpdatesToday = 0;
   const skus = new Set<string>();
   const marginDeltas: number[] = [];
-  const daily_series = new Array(SPARKLINE_DAYS).fill(0);
+  const daily_series = new Array(selectedDays).fill(0);
   const currentEventIds = new Set((heads ?? []).map((head: any) => head.current_event_id));
   const currentEvents = (normalizedRows ?? [])
     .filter((row: any) => currentEventIds.has(row.id))
+    .filter((row:any)=>!filters.platform||String(row.channel??"").toLowerCase()===filters.platform.toLowerCase())
+    .filter((row:any)=>!filters.branch||String(row.branch_external_id??"")===filters.branch)
     .map((row: any) => {
       if (row.event_kind !== "order_snapshot") return row;
       const summary = summarizeRestaurantOrderEconomics(row, costRows ?? []);
@@ -269,11 +272,11 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
     const dayIndex = Math.floor(
       (created.getTime() - seriesStart.getTime()) / (24 * 60 * 60 * 1000),
     );
-    if (dayIndex >= 0 && dayIndex < SPARKLINE_DAYS) daily_series[dayIndex] += delta;
+    if (dayIndex >= 0 && dayIndex < selectedDays) daily_series[dayIndex] += delta;
   }
 
   const economicTwin=summarizeEconomicTwin(currentEvents, recoveries ?? []);
-  await evaluateFinancialAlerts(accountId,economicTwin);
+  if(!filters.platform&&!filters.branch&&selectedDays===SPARKLINE_DAYS)await evaluateFinancialAlerts(accountId,economicTwin);
   return {
     profits_protected_this_month: Math.round(profitsProtected * 100) / 100,
     price_updates_this_month: priceUpdatesThisMonth,

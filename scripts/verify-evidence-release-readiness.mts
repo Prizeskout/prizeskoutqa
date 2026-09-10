@@ -9,7 +9,7 @@ const sql=files.map(name=>readFileSync(join(migrationDir,name),"utf8")).join("\n
 const tables=[...sql.matchAll(/create table if not exists public\.([a-z0-9_]+)/g)].map(match=>match[1]);
 for(const table of new Set(tables)){
   assert(sql.includes(`alter table public.${table} enable row level security`),`${table} does not enable RLS.`);
-  assert(sql.includes(`revoke all on public.${table} from anon,authenticated`),`${table} does not revoke anon/authenticated access.`);
+  assert(new RegExp(`revoke\\s+all\\s+on\\s+public\\.${table}\\s+from\\s+anon\\s*,\\s*authenticated`).test(sql),`${table} does not revoke anon/authenticated access.`);
 }
 for(const match of sql.matchAll(/create or replace function\s+public\.([a-z0-9_]+)\([^)]*\)[\s\S]*?as\s+\$\$/g)){
   const declaration=match[0];if(declaration.includes("security definer"))assert(declaration.includes("set search_path=public"),`${match[1]} is SECURITY DEFINER without a fixed search_path.`);
