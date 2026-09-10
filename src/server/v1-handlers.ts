@@ -129,7 +129,7 @@ import {
   handleRestaurantReconciliationRun,
   handleRestaurantSettlementBatch,
 } from "@/server/restaurant-settlement-handlers";
-import { handleDecideEngineApproval,handleEngineHealth,handleListEngineApprovals,handleListEngineWork,handleReplayEngineWork } from "@/server/engine-control-handlers";
+import { handleDecideEngineApproval,handleEngineHealth,handleGetEngineWork,handleListEngineApprovals,handleListEngineWork,handleReplayEngineWork,handleResumeEngineWork } from "@/server/engine-control-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -980,7 +980,9 @@ function compileRoute(
 const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/engine/health",(req,ctx)=>handleEngineHealth(req,ctx)),
   compileRoute("GET /v1/engine/work-items",(req,ctx)=>handleListEngineWork(req,ctx)),
+  compileRoute("GET /v1/engine/work-items/{id}",(req,ctx,p)=>handleGetEngineWork(req,ctx,p.id)),
   compileRoute("POST /v1/engine/work-items/{id}/replay",(req,ctx,p)=>handleReplayEngineWork(req,ctx,p.id)),
+  compileRoute("POST /v1/engine/work-items/{id}/resume",(req,ctx,p)=>handleResumeEngineWork(req,ctx,p.id)),
   compileRoute("GET /v1/engine/approvals",(req,ctx)=>handleListEngineApprovals(req,ctx)),
   compileRoute("POST /v1/engine/approvals/{id}/decision",(req,ctx,p)=>handleDecideEngineApproval(req,ctx,p.id)),
   // Canonical restaurant-commerce intake for enterprise POS/ERP adapters.

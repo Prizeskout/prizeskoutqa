@@ -6,6 +6,8 @@ assert.equal(canTransitionEngineWork("queued", "completed"), false);
 assert.equal(canTransitionEngineWork("completed", "queued"), false);
 assert.doesNotThrow(() => assertEngineTransition("processing", "waiting_approval"));
 assert.doesNotThrow(() => assertEngineTransition("waiting_approval", "dead_letter"));
+assert.doesNotThrow(() => assertEngineTransition("processing", "verifying"));
+assert.doesNotThrow(() => assertEngineTransition("verifying", "completed"));
 assert.throws(() => assertEngineTransition("completed", "processing"));
 assert.equal(nextFailureState(4, 5), "retry_scheduled");
 assert.equal(nextFailureState(5, 5), "dead_letter");

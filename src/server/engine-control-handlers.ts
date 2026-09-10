@@ -24,6 +24,19 @@ export async function handleListEngineWork(request:Request,ctx:V1Context):Promis
   return {status:200,body:{data:data??[]}};
 }
 
+export async function handleGetEngineWork(_request:Request,ctx:V1Context,id:string):Promise<V1Result>{
+  if(!ctx.scopes.includes("admin")&&!ctx.scopes.includes("read"))return forbidden();
+  const {data:work,error}=await db.from("ps_engine_work_items").select("*").eq("id",id).eq("account_id",ctx.accountId).maybeSingle();
+  if(error)throw new Error(error.message);if(!work)return {status:404,body:{error:{code:"not_found",message:"Engine work item not found."}}};
+  const [{data:event,error:eventError},{data:transitions,error:transitionError},{data:approvals,error:approvalError}]=await Promise.all([
+    db.from("ps_engine_events").select("*").eq("id",work.event_id).eq("account_id",ctx.accountId).maybeSingle(),
+    db.from("ps_engine_transitions").select("id,from_state,to_state,actor,reason,detail,created_at").eq("work_item_id",id).eq("account_id",ctx.accountId).order("created_at",{ascending:true}),
+    db.from("ps_engine_approval_requests").select("id,approval_scope,requested_by,context,expires_at,created_at,ps_engine_approval_decisions(id,decision,decided_by,reason,context,created_at)").eq("work_item_id",id).eq("account_id",ctx.accountId).order("created_at",{ascending:true}),
+  ]);
+  if(eventError||transitionError||approvalError)throw new Error(eventError?.message??transitionError?.message??approvalError?.message);
+  return {status:200,body:{data:{...work,event,transitions:transitions??[],approvals:approvals??[]}}};
+}
+
 export async function handleReplayEngineWork(request:Request,ctx:V1Context,id:string):Promise<V1Result>{
   if(!ctx.scopes.includes("admin"))return forbidden();
   const body=await request.json().catch(()=>({})) as {reason?:unknown}; const reason=typeof body.reason==="string"?body.reason.trim().slice(0,500):"";
@@ -32,7 +45,19 @@ export async function handleReplayEngineWork(request:Request,ctx:V1Context,id:st
   if(findError)throw new Error(findError.message);if(!work)return {status:404,body:{error:{code:"not_found",message:"Engine work item not found."}}};
   if(work.state!=="dead_letter")return {status:409,body:{error:{code:"invalid_state",message:"Only dead-lettered work can be replayed."}}};
   const {data,error}=await db.rpc("ps_engine_transition",{p_work_item_id:id,p_owner:"",p_to_state:"queued",p_actor:`api_key:${ctx.apiKeyId}`,p_reason:"manual_replay",p_detail:{reason},p_available_at:new Date().toISOString(),p_last_error:null});
-  if(error)throw new Error(error.message);return {status:202,body:{data:{id,state:"queued",replay_reason:reason,updated_at:data?.updated_at??new Date().toISOString()}}};
+  if(error)throw new Error(error.message);backgroundTask(processEngineQueue(`replay:${crypto.randomUUID()}`,5));return {status:202,body:{data:{id,state:"queued",replay_reason:reason,updated_at:data?.updated_at??new Date().toISOString()}}};
+}
+
+export async function handleResumeEngineWork(request:Request,ctx:V1Context,id:string):Promise<V1Result>{
+  if(!ctx.scopes.includes("admin"))return forbidden();
+  const body=await request.json().catch(()=>({})) as {reason?:unknown;evidence_reference?:unknown};
+  const reason=typeof body.reason==="string"?body.reason.trim().slice(0,500):"",evidenceReference=typeof body.evidence_reference==="string"?body.evidence_reference.trim().slice(0,500):"";
+  if(!reason||!evidenceReference)return {status:422,body:{error:{code:"validation_failed",message:"A reason and evidence_reference are required."}}};
+  const {data:work,error:findError}=await db.from("ps_engine_work_items").select("id,state").eq("id",id).eq("account_id",ctx.accountId).maybeSingle();
+  if(findError)throw new Error(findError.message);if(!work)return {status:404,body:{error:{code:"not_found",message:"Engine work item not found."}}};
+  if(work.state!=="waiting_evidence")return {status:409,body:{error:{code:"invalid_state",message:"Only work waiting for evidence can be resumed here."}}};
+  const {data,error}=await db.rpc("ps_engine_transition",{p_work_item_id:id,p_owner:"",p_to_state:"queued",p_actor:`api_key:${ctx.apiKeyId}`,p_reason:"evidence_supplied",p_detail:{reason,evidence_reference:evidenceReference},p_available_at:new Date().toISOString(),p_last_error:null});
+  if(error)throw new Error(error.message);backgroundTask(processEngineQueue(`evidence:${crypto.randomUUID()}`,5));return {status:202,body:{data:{id,state:"queued",evidence_reference:evidenceReference,updated_at:data?.updated_at??new Date().toISOString()}}};
 }
 
 export async function handleListEngineApprovals(_request:Request,ctx:V1Context):Promise<V1Result>{

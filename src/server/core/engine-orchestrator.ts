@@ -46,6 +46,18 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
     const incomplete=(data??[]).filter((row:any)=>row.evidence_strength!=="strong");
     return incomplete.length?{state:"waiting_evidence",reason:"order_evidence_incomplete",detail:{events:ids.length,incomplete:incomplete.length}}:{state:"completed",reason:"order_economics_evidence_ready",detail:{events:ids.length}};
   }
+  if(work.work_kind==="supervise_pricing_ingest"){
+    const ingestId=String(event.payload.ingest_event_id??"");
+    if(!ingestId)return {state:"dead_letter",reason:"pricing_ingest_reference_invalid"};
+    const [{data:ingest,error:ingestError},{data:decision,error:decisionError}]=await Promise.all([
+      db.from("ps_ingest_events").select("id,status,source_platform,merchant_id,sku").eq("id",ingestId).eq("account_id",event.account_id).maybeSingle(),
+      db.from("ps_decide_results").select("id,decision_action,floor_breached,recommended_price,net_margin,net_margin_pct").eq("ingest_event_id",ingestId).eq("account_id",event.account_id).order("created_at",{ascending:false}).limit(1).maybeSingle(),
+    ]);
+    if(ingestError||decisionError)throw new Error(ingestError?.message??decisionError?.message);if(!ingest)return {state:"waiting_evidence",reason:"pricing_ingest_not_visible"};
+    if(ingest.status==="failed")return {state:"dead_letter",reason:"pricing_ingest_failed",detail:{ingest_event_id:ingest.id,source_platform:ingest.source_platform,sku:ingest.sku}};
+    if(!decision)return {state:"waiting_evidence",reason:"approved_economics_or_decision_required",detail:{ingest_event_id:ingest.id,source_platform:ingest.source_platform,sku:ingest.sku}};
+    return {state:"completed",reason:"pricing_decision_verified",detail:{ingest_event_id:ingest.id,decision_id:decision.id,source_platform:ingest.source_platform,sku:ingest.sku,decision_action:decision.decision_action,floor_breached:decision.floor_breached,recommended_price:decision.recommended_price,net_margin:decision.net_margin,net_margin_pct:decision.net_margin_pct}};
+  }
   if(work.work_kind==="reconcile_settlement_evidence"){
     return event.payload.contract_term_id?{state:"completed",reason:"settlement_ready_for_explicit_reconciliation",detail:{contract_term_id:event.payload.contract_term_id}}:{state:"waiting_evidence",reason:"contract_terms_required"};
   }
@@ -80,7 +92,7 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
     if(!taskId)return {state:"waiting_evidence",reason:"store_manager_task_required"};
     const {data,error}=await db.from("ps_store_manager_tasks").select("id,status,risk_level,task_type,title,approved_by,approved_at").eq("id",taskId).eq("account_id",event.account_id).maybeSingle();
     if(error)throw new Error(error.message);if(!data)return {state:"waiting_evidence",reason:"store_manager_task_not_visible"};
-    if(data.status==="waiting_approval")return {state:"waiting_approval",reason:"merchant_approval_required",detail:{task_id:data.id,task_type:data.task_type,risk_level:data.risk_level,title:data.title},approval:{scope:`store_manager:${data.task_type}`,expiresAt:new Date(Date.now()+24*60*60_000).toISOString()}};
+    if(data.status==="waiting_approval")return {state:"waiting_approval",reason:"merchant_approval_required",detail:{task_id:data.id,task_type:data.task_type,risk_level:data.risk_level,title:data.title},approval:{scope:`store_manager:${data.task_type}:attempt:${work.attempt}`,expiresAt:new Date(Date.now()+24*60*60_000).toISOString()}};
     if(data.status==="cancelled")return {state:"dead_letter",reason:"store_manager_task_cancelled",detail:{task_id:data.id}};
     return {state:"completed",reason:"store_manager_task_authorized",detail:{task_id:data.id,status:data.status,approved_by:data.approved_by,approved_at:data.approved_at}};
   }
@@ -101,6 +113,9 @@ export async function processEngineQueue(owner=crypto.randomUUID(),limit=20){
       if(outcome.state==="waiting_approval"&&outcome.approval){
         const {error:approvalError}=await db.rpc("ps_engine_request_approval",{p_work_item_id:work.id,p_owner:owner,p_scope:outcome.approval.scope,p_requested_by:`worker:${owner}`,p_context:outcome.detail??{},p_expires_at:outcome.approval.expiresAt});
         if(approvalError)throw new Error(approvalError.message);
+      }else if(outcome.state==="completed"){
+        await transition(work,owner,"verifying","processor_output_ready",outcome.detail??{});
+        await transition(work,owner,"completed",outcome.reason,outcome.detail??{});
       }else await transition(work,owner,outcome.state,outcome.reason,outcome.detail??{});
       results.push({work_item_id:work.id,state:outcome.state});
     }catch(error){
