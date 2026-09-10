@@ -3,6 +3,13 @@
 -- Feature: app-sent email now renders in each user's chosen language. Two
 -- supporting pieces of state are added here.
 
+-- Note: an earlier migration (20260622020000_user_locale.sql) added
+-- accounts_v2.preferred_locale, but that column was never wired to any reader
+-- or writer (the intended localStorage->DB sync was never built) and
+-- accounts_v2 is a tenant/account entity, not a per-user row. This feature
+-- standardizes on profiles.preferred_locale, which is keyed by auth.users.id --
+-- the same identity used by notifications, the digest and the auth flow.
+--
 -- 1) Persist the user's UI/email language. Until now the locale lived only in
 --    browser localStorage (see src/lib/i18n.ts), so nothing server-side — and
 --    therefore no background email path — could know which language to send.

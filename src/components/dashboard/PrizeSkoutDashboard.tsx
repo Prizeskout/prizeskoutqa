@@ -15,7 +15,7 @@ import {
   WalletCards,
   type LucideIcon,
 } from "lucide-react";
-import {supabase} from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
@@ -99,7 +99,7 @@ const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
   manager: "manager",
   copilot: "rules",
   integrations: "vault",
-  evidence:"history",
+  evidence: "history",
   settings: "settings",
 };
 
@@ -112,7 +112,7 @@ function sidebarNavFromTab(tab: Tab): SidebarNavId {
   if (tab === "rules") return "defend";
   if (tab === "manager") return "manager";
   if (tab === "settings") return "settings";
-  if(tab==="history")return "evidence";
+  if (tab === "history") return "evidence";
   return "alerts";
 }
 const DASHBOARD_TABS: readonly Tab[] = [
@@ -159,7 +159,7 @@ interface Rule {
   approvalMode: ApprovalMode;
   minimumContribution: number;
 }
-type ChannelPolicyDraft={channel:string;servicePath:string;floor:number;minimumContribution:number;maxChangePct:number;approvalMode:ApprovalMode};
+type ChannelPolicyDraft = { channel: string; servicePath: string; floor: number; minimumContribution: number; maxChangePct: number; approvalMode: ApprovalMode };
 interface ImportedProduct {
   ingest_event_id: string;
   sku: string;
@@ -193,18 +193,18 @@ interface ImportedProduct {
     maximum_increase_pct: number;
     margin_floor_pct: number;
     minimum_contribution_amount: number;
-    policy_scope: "global"|"channel";
+    policy_scope: "global" | "channel";
     policy_version: number;
     approval_mode: ApprovalMode;
     evidence_blockers: string[];
     outcome:
-      | "safe"
-      | "blocked_missing_cost"
-      | "blocked_missing_economics"
-      | "blocked_stale_evidence"
-      | "within_limit"
-      | "over_limit"
-      | "cannot_reach_target_within_limit";
+    | "safe"
+    | "blocked_missing_cost"
+    | "blocked_missing_economics"
+    | "blocked_stale_evidence"
+    | "within_limit"
+    | "over_limit"
+    | "cannot_reach_target_within_limit";
   };
 }
 
@@ -1541,26 +1541,26 @@ type PayoutResultLike = {
     source: string;
   } | null;
   sale_lines?:
-    | {
-        order_id: string;
-        product_name: string;
-        sku: string | null;
-        quantity: number;
-        gross_sale: number;
-        commission: number;
-        vat_on_fees: number;
-        payment_fee: number;
-        fixed_order_fee: number;
-        delivery_contribution: number;
-        expected_net: number;
-        lifecycle_status?: string;
-        eligibility?: "eligible" | "cancelled" | "refunded" | "pending" | "unknown";
-        refund_amount?: number;
-        claims_ready?: boolean;
-        order_date: string | null;
-        expected_settlement_date: string | null;
-      }[]
-    | null;
+  | {
+    order_id: string;
+    product_name: string;
+    sku: string | null;
+    quantity: number;
+    gross_sale: number;
+    commission: number;
+    vat_on_fees: number;
+    payment_fee: number;
+    fixed_order_fee: number;
+    delivery_contribution: number;
+    expected_net: number;
+    lifecycle_status?: string;
+    eligibility?: "eligible" | "cancelled" | "refunded" | "pending" | "unknown";
+    refund_amount?: number;
+    claims_ready?: boolean;
+    order_date: string | null;
+    expected_settlement_date: string | null;
+  }[]
+  | null;
   settlement_forecast?: {
     as_of: string;
     confidence: "verified_contract" | "incomplete_contract" | "estimated_schedule";
@@ -1612,7 +1612,7 @@ function PayoutResultDetail({
   const hasRates = data.commission_rate_pct != null && data.effective_commission_pct != null;
   const expectedAtAgreed = hasRates
     ? data.expected_payout +
-      ((data.commission_amount ?? 0) - (data.sub_total_sum * (data.commission_rate_pct ?? 0)) / 100)
+    ((data.commission_amount ?? 0) - (data.sub_total_sum * (data.commission_rate_pct ?? 0)) / 100)
     : data.expected_payout;
   const agreedDelta = expectedAtAgreed - data.expected_payout;
   const showAgreedDelta = hasRates && Math.abs(agreedDelta) > 0.01;
@@ -2232,16 +2232,16 @@ function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
 }
 
 export function PrizeSkoutDashboard() {
-  const priceActionKeysRef = useRef(new Map<string,string>());
-  const priceActionKey = (eventId:string,targetPrice:number,purpose="publish") => {
-    const signature=`${purpose}:${eventId}:${targetPrice}`;
-    const existing=priceActionKeysRef.current.get(signature);
-    if(existing)return existing;
-    const created=`price:${crypto.randomUUID()}`;
-    priceActionKeysRef.current.set(signature,created);
+  const priceActionKeysRef = useRef(new Map<string, string>());
+  const priceActionKey = (eventId: string, targetPrice: number, purpose = "publish") => {
+    const signature = `${purpose}:${eventId}:${targetPrice}`;
+    const existing = priceActionKeysRef.current.get(signature);
+    if (existing) return existing;
+    const created = `price:${crypto.randomUUID()}`;
+    priceActionKeysRef.current.set(signature, created);
     return created;
   };
-  const clearPriceActionKey = (eventId:string,targetPrice:number,purpose="publish") => {
+  const clearPriceActionKey = (eventId: string, targetPrice: number, purpose = "publish") => {
     priceActionKeysRef.current.delete(`${purpose}:${eventId}:${targetPrice}`);
   };
   const [tab, setTab] = useState<Tab>(dashboardTabFromUrl);
@@ -2249,10 +2249,10 @@ export function PrizeSkoutDashboard() {
   const [sidebarNav, setSidebarNav] = useState<SidebarNavId>(() =>
     sidebarNavFromTab(dashboardTabFromUrl()),
   );
-  useEffect(()=>{
-    if(tab!=="rules"||window.location.hash!=="#channel-margin-overrides")return;
-    window.requestAnimationFrame(()=>document.getElementById("channel-margin-overrides")?.scrollIntoView({behavior:"smooth",block:"start"}));
-  },[tab]);
+  useEffect(() => {
+    if (tab !== "rules" || window.location.hash !== "#channel-margin-overrides") return;
+    window.requestAnimationFrame(() => document.getElementById("channel-margin-overrides")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [tab]);
   const tabHistoryReadyRef = useRef(false);
   const [theme, setTheme] = useState<Theme>("light");
   const [demoMode, setDemoMode] = useState(false);
@@ -2426,9 +2426,9 @@ export function PrizeSkoutDashboard() {
   ]);
   const [persistedGlobalFloor, setPersistedGlobalFloor] = useState(18);
   const [persistedMaxIncrease, setPersistedMaxIncrease] = useState(15);
-  const [persistedMinimumContribution,setPersistedMinimumContribution]=useState(0);
-  const [channelPolicyDrafts,setChannelPolicyDrafts]=useState<ChannelPolicyDraft[]>([]);
-  const [persistedChannelPolicies,setPersistedChannelPolicies]=useState<ChannelPolicyDraft[]>([]);
+  const [persistedMinimumContribution, setPersistedMinimumContribution] = useState(0);
+  const [channelPolicyDrafts, setChannelPolicyDrafts] = useState<ChannelPolicyDraft[]>([]);
+  const [persistedChannelPolicies, setPersistedChannelPolicies] = useState<ChannelPolicyDraft[]>([]);
   const [persistedApprovalMode, setPersistedApprovalMode] =
     useState<ApprovalMode>("recommend_only");
   const [policyVersion, setPolicyVersion] = useState(1);
@@ -2517,7 +2517,7 @@ export function PrizeSkoutDashboard() {
   const [auditResult, setAuditResult] = useState<ReturnType<typeof reconcile> | null>(null);
   const [savingAudit, setSavingAudit] = useState(false);
   const [auditSaved, setAuditSaved] = useState(false);
-  const [settlementRun,setSettlementRun]=useState<{status:string;summary:{counts?:Record<string,number>;claims_ready_amount?:number;exceptions?:number}}|null>(null);
+  const [settlementRun, setSettlementRun] = useState<{ status: string; summary: { counts?: Record<string, number>; claims_ready_amount?: number; exceptions?: number } } | null>(null);
 
   // Staged items — the incremental "add one at a time, describe it, then
   // Run Audit" flow. Each item is added (uploaded/entered) independently;
@@ -2579,13 +2579,13 @@ export function PrizeSkoutDashboard() {
     documents: (
       | ClassifiedDocument
       | {
-          file_name: string;
-          document_type: string;
-          order_count: number | null;
-          sub_total_sum: number | null;
-          description?: string | null;
-          received_amount?: number | null;
-        }
+        file_name: string;
+        document_type: string;
+        order_count: number | null;
+        sub_total_sum: number | null;
+        description?: string | null;
+        received_amount?: number | null;
+      }
     )[];
     findings: Finding[];
     ledger: LedgerRow[] | null;
@@ -2754,7 +2754,7 @@ export function PrizeSkoutDashboard() {
         .then((d) => {
           if (d?.ok) setHeroStats(d as HeroStats);
         })
-        .catch(() => {});
+        .catch(() => { });
     }
     const params = new URLSearchParams({ merchant_id: mid, access_code: ac });
     fetch(`/api/repricing/catalog?${params}`)
@@ -2943,8 +2943,8 @@ export function PrizeSkoutDashboard() {
               marginFloorPct: number;
               maxPriceIncreasePct: number;
               approvalMode: ApprovalMode;
-              minimumContributionAmount:number;
-              overrides:Array<{channel:string;servicePath:string;marginFloorPct:number;minimumContributionAmount:number;maxPriceIncreasePct:number;approvalMode:ApprovalMode}>;
+              minimumContributionAmount: number;
+              overrides: Array<{ channel: string; servicePath: string; marginFloorPct: number; minimumContributionAmount: number; maxPriceIncreasePct: number; approvalMode: ApprovalMode }>;
               version: number;
             };
             versions?: typeof policyVersions;
@@ -2956,9 +2956,9 @@ export function PrizeSkoutDashboard() {
           setPersistedGlobalFloor(pct);
           setPersistedMaxIncrease(maxIncrease);
           setPersistedApprovalMode(d.policy.approvalMode);
-          setPersistedMinimumContribution(d.policy.minimumContributionAmount??0);
-          const overrides=(d.policy.overrides??[]).map(item=>({channel:item.channel,servicePath:item.servicePath,floor:Math.round(item.marginFloorPct*100),minimumContribution:item.minimumContributionAmount,maxChangePct:Math.round(item.maxPriceIncreasePct*100),approvalMode:item.approvalMode}));
-          setChannelPolicyDrafts(overrides);setPersistedChannelPolicies(overrides);
+          setPersistedMinimumContribution(d.policy.minimumContributionAmount ?? 0);
+          const overrides = (d.policy.overrides ?? []).map(item => ({ channel: item.channel, servicePath: item.servicePath, floor: Math.round(item.marginFloorPct * 100), minimumContribution: item.minimumContributionAmount, maxChangePct: Math.round(item.maxPriceIncreasePct * 100), approvalMode: item.approvalMode }));
+          setChannelPolicyDrafts(overrides); setPersistedChannelPolicies(overrides);
           setPolicyVersion(d.policy.version);
           setPolicyVersions(d.versions ?? []);
           setRules((prev) =>
@@ -2967,14 +2967,14 @@ export function PrizeSkoutDashboard() {
               floor: pct,
               maxChangePct: maxIncrease,
               approvalMode: d.policy!.approvalMode,
-              minimumContribution:d.policy!.minimumContributionAmount??0,
+              minimumContribution: d.policy!.minimumContributionAmount ?? 0,
               status: "active",
               active: true,
             })),
           );
         },
       )
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         marginFloorLoadedRef.current = true;
       });
@@ -2994,7 +2994,7 @@ export function PrizeSkoutDashboard() {
       .then((d: { store_name?: string | null } | null) => {
         if (d?.store_name) setStoreName(d.store_name);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Live Execution Stream terminal — same repricing-dispatch history the
@@ -3055,7 +3055,7 @@ export function PrizeSkoutDashboard() {
           );
         },
       )
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -3083,7 +3083,7 @@ export function PrizeSkoutDashboard() {
           );
         },
       )
-      .catch(() => {});
+      .catch(() => { });
   }, [tab]);
 
   // Sync-capable channels only (Zid, Salla, Foodics — the platforms
@@ -3107,7 +3107,7 @@ export function PrizeSkoutDashboard() {
           setChannelStatuses(statuses);
           setKeetaNeedsShopId(data.channels.find(channel => channel.platform === "keeta")?.needs_shop_id ?? false);
         })
-        .catch(() => {});
+        .catch(() => { });
     };
     window.addEventListener("focus", refreshConnections);
     return () => window.removeEventListener("focus", refreshConnections);
@@ -3173,7 +3173,7 @@ export function PrizeSkoutDashboard() {
           .then((d: { products?: ImportedProduct[] } | null) => {
             if (d?.products) setImportedProducts(d.products);
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     } finally {
       setSyncingCatalog(false);
@@ -3245,8 +3245,8 @@ export function PrizeSkoutDashboard() {
         access_code: ac,
         preview_floor: String(rule.floor / 100),
         preview_max_increase: String(rule.maxChangePct / 100),
-        preview_minimum_contribution:String(rule.minimumContribution),
-        preview_channel_overrides:JSON.stringify(channelPolicyDrafts.map(item=>({channel:item.channel,marginFloorPct:item.floor/100,minimumContributionAmount:item.minimumContribution,maxPriceIncreasePct:item.maxChangePct/100}))),
+        preview_minimum_contribution: String(rule.minimumContribution),
+        preview_channel_overrides: JSON.stringify(channelPolicyDrafts.map(item => ({ channel: item.channel, marginFloorPct: item.floor / 100, minimumContributionAmount: item.minimumContribution, maxPriceIncreasePct: item.maxChangePct / 100 }))),
       });
       const response = await fetch(`/api/repricing/catalog?${params}`),
         data = response.ok ? ((await response.json()) as { products?: ImportedProduct[] }) : null;
@@ -3290,11 +3290,11 @@ export function PrizeSkoutDashboard() {
           platform: "margin_floor",
           action: "set",
           margin_floor_pct: rule.floor / 100,
-          minimum_contribution_amount:rule.minimumContribution,
+          minimum_contribution_amount: rule.minimumContribution,
           max_price_increase_pct: rule.maxChangePct / 100,
           approval_mode: rule.approvalMode,
           activated_by: storeName || "merchant",
-          channel_overrides:channelPolicyDrafts.map(item=>({channel:item.channel,service_path:item.servicePath,margin_floor_pct:item.floor/100,minimum_contribution_amount:item.minimumContribution,max_price_increase_pct:item.maxChangePct/100,approval_mode:item.approvalMode})),
+          channel_overrides: channelPolicyDrafts.map(item => ({ channel: item.channel, service_path: item.servicePath, margin_floor_pct: item.floor / 100, minimum_contribution_amount: item.minimumContribution, max_price_increase_pct: item.maxChangePct / 100, approval_mode: item.approvalMode })),
         }),
       });
       const data = (await response.json()) as { policy?: { version: number }; error?: string };
@@ -3375,7 +3375,7 @@ export function PrizeSkoutDashboard() {
         return (
           Number(b.floor_breached) - Number(a.floor_breached) ||
           Math.abs(b.recommended_price - b.current_price) -
-            Math.abs(a.recommended_price - a.current_price)
+          Math.abs(a.recommended_price - a.current_price)
         );
       });
   }, [importedProducts, productFilter, productSearch, productSort]);
@@ -3432,21 +3432,21 @@ export function PrizeSkoutDashboard() {
     return [
       missingCost
         ? {
-            label: `${missingCost} product${missingCost === 1 ? " has" : "s have"} unverified cost data`,
-            command: "Show products with missing or unverified costs",
-          }
+          label: `${missingCost} product${missingCost === 1 ? " has" : "s have"} unverified cost data`,
+          command: "Show products with missing or unverified costs",
+        }
         : null,
       marginRisk
         ? {
-            label: `${marginRisk} verified-cost product${marginRisk === 1 ? " is" : "s are"} below the active margin floor`,
-            command: null,
-          }
+          label: `${marginRisk} verified-cost product${marginRisk === 1 ? " is" : "s are"} below the active margin floor`,
+          command: null,
+        }
         : null,
       stockRisk
         ? {
-            label: `${stockRisk} product${stockRisk === 1 ? " needs" : "s need"} inventory attention`,
-            command: "Show products that need inventory attention",
-          }
+          label: `${stockRisk} product${stockRisk === 1 ? " needs" : "s need"} inventory attention`,
+          command: "Show products that need inventory attention",
+        }
         : null,
     ].filter((item): item is { label: string; command: string | null } => Boolean(item));
   }, [importedProducts]);
@@ -3615,7 +3615,7 @@ export function PrizeSkoutDashboard() {
             access_code: accessCode,
             ingest_event_id: selectedProduct.ingest_event_id,
             target_price: targetPrice,
-            idempotency_key: priceActionKey(selectedProduct.ingest_event_id,targetPrice),
+            idempotency_key: priceActionKey(selectedProduct.ingest_event_id, targetPrice),
             approval_confirmed: true,
           }),
         },
@@ -3627,7 +3627,7 @@ export function PrizeSkoutDashboard() {
         message?: string;
         downstream?: { channel: string; status: string; message: string } | null;
       };
-      clearPriceActionKey(selectedProduct.ingest_event_id,targetPrice);
+      clearPriceActionKey(selectedProduct.ingest_event_id, targetPrice);
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Price update failed");
       setImportedProducts((products) =>
@@ -3674,14 +3674,14 @@ export function PrizeSkoutDashboard() {
             access_code: accessCode,
             ingest_event_id: selectedProduct.ingest_event_id,
             target_price: productOriginalPrice,
-            idempotency_key: priceActionKey(selectedProduct.ingest_event_id,productOriginalPrice,"restore"),
+            idempotency_key: priceActionKey(selectedProduct.ingest_event_id, productOriginalPrice, "restore"),
             approval_confirmed: true,
           }),
         },
         30_000,
       );
       const result = (await response.json()) as { ok?: boolean; error?: string; message?: string };
-      clearPriceActionKey(selectedProduct.ingest_event_id,productOriginalPrice,"restore");
+      clearPriceActionKey(selectedProduct.ingest_event_id, productOriginalPrice, "restore");
       if (!response.ok || !result.ok)
         throw new Error(result.error ?? result.message ?? "Revert failed");
       setImportedProducts((products) =>
@@ -3906,8 +3906,8 @@ export function PrizeSkoutDashboard() {
           body: JSON.stringify({
             prompt,
             requested_role: requestedRole,
-            merchant_id:localStorage.getItem("ps_merchant_id")??undefined,
-            access_code:localStorage.getItem("ps_access_code")??undefined,
+            merchant_id: localStorage.getItem("ps_merchant_id") ?? undefined,
+            access_code: localStorage.getItem("ps_access_code") ?? undefined,
             context: {
               previous_operation: previousOperation ?? undefined,
               products: previousProducts.length ? previousProducts : catalogContext,
@@ -4012,7 +4012,7 @@ export function PrizeSkoutDashboard() {
     } catch (error) {
       const failureMessage = error instanceof Error ? error.message : "Request failed. Check your connection and try again.";
       setCpError(failureMessage);
-        appendCpThread("assistant", failureMessage, "error");
+      appendCpThread("assistant", failureMessage, "error");
       setCpPhase("idle");
       return false;
     }
@@ -4298,11 +4298,11 @@ export function PrizeSkoutDashboard() {
         setCpObj((current) =>
           current
             ? {
-                ...current,
-                test_store_id: p.store.id,
-                test_store_title: p.store.title,
-                confirm_test_store: true,
-              }
+              ...current,
+              test_store_id: p.store.id,
+              test_store_title: p.store.title,
+              confirm_test_store: true,
+            }
             : current,
         );
         const confirmation = p.store.test_store_confirmed
@@ -4330,18 +4330,18 @@ export function PrizeSkoutDashboard() {
               : {}),
             ...(operation.new_product_sku ? { sku: String(operation.new_product_sku) } : {}),
             ...(operation.product_price != null &&
-            Number.isFinite(Number(operation.product_price)) &&
-            Number(operation.product_price) > 0
+              Number.isFinite(Number(operation.product_price)) &&
+              Number(operation.product_price) > 0
               ? { price: Number(operation.product_price) }
               : {}),
             ...(operation.product_cost != null &&
-            Number.isFinite(Number(operation.product_cost)) &&
-            Number(operation.product_cost) >= 0
+              Number.isFinite(Number(operation.product_cost)) &&
+              Number(operation.product_cost) >= 0
               ? { cost: Number(operation.product_cost) }
               : {}),
             ...(operation.product_quantity != null &&
-            Number.isInteger(Number(operation.product_quantity)) &&
-            Number(operation.product_quantity) >= 0
+              Number.isInteger(Number(operation.product_quantity)) &&
+              Number(operation.product_quantity) >= 0
               ? { quantity: Number(operation.product_quantity) }
               : {}),
             ...(typeof operation.product_infinite === "boolean"
@@ -4385,10 +4385,10 @@ export function PrizeSkoutDashboard() {
         setCpObj((current) =>
           current
             ? {
-                ...current,
-                approval_token: preview.approval_token,
-                product_change_preview: preview,
-              }
+              ...current,
+              approval_token: preview.approval_token,
+              product_change_preview: preview,
+            }
             : current,
         );
         const first = preview.products[0],
@@ -4540,9 +4540,9 @@ export function PrizeSkoutDashboard() {
           setCpObj((current) =>
             current
               ? {
-                  ...current,
-                  coupon_candidates: risky,
-                }
+                ...current,
+                coupon_candidates: risky,
+              }
               : current,
           );
           setCpOperationMessage(
@@ -4641,8 +4641,8 @@ export function PrizeSkoutDashboard() {
         const excludedUnverified =
           op === "protect_margin"
             ? products.filter(
-                (product) => product.floor_breached && product.cost_confidence !== "verified",
-              ).length
+              (product) => product.floor_breached && product.cost_confidence !== "verified",
+            ).length
             : 0;
         setCpOperationMessage(
           matches.length
@@ -4654,14 +4654,14 @@ export function PrizeSkoutDashboard() {
                   ? `${matches.length} product${matches.length === 1 ? " does" : "s do"} not have a verified platform cost and cannot be safely auto-repriced.`
                   : op === "list_products"
                     ? `${matches.length} ${String(operation.platform ?? "connected")} product${matches.length === 1 ? " is" : "s are"} currently available to PrizeSkout. This is a read-only result.`
-                  : `${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
+                    : `${matches.length} product${matches.length === 1 ? "" : "s"} matched. Review the details below.`
             : op === "cost_attention"
               ? "Every product currently has verified cost information. There is nothing to review."
               : op === "low_stock"
                 ? "No products currently need stock attention."
                 : op === "list_products"
                   ? `No ${String(operation.platform ?? "connected")} products are currently available to PrizeSkout. Check that the channel is connected, run a catalogue sync, and try again.`
-                : "No matching products were found. Try a product name, SKU, or a broader request.",
+                  : "No matching products were found. Try a product name, SKU, or a broader request.",
         );
       }
       if (op === "sync_catalog") setCpOperationProducts(matchCopilotProducts(operation, products));
@@ -4815,11 +4815,11 @@ export function PrizeSkoutDashboard() {
         setCpObj((current) =>
           current
             ? {
-                ...current,
-                created_product_sku: result.results![0].after!.sku,
-                sku: result.results![0].after!.sku,
-                query: result.results![0].after!.sku,
-              }
+              ...current,
+              created_product_sku: result.results![0].after!.sku,
+              sku: result.results![0].after!.sku,
+              query: result.results![0].after!.sku,
+            }
             : current,
         );
       setCpObj((current) =>
@@ -4900,13 +4900,13 @@ export function PrizeSkoutDashboard() {
       setCpObj((current) =>
         current
           ? {
-              ...current,
-              operation: "product_change",
-              product_mode: "publish",
-              approval_token: data.preview!.approval_token,
-              product_change_preview: data.preview,
-              summary: `Publish ${data.preview!.products[0]?.name ?? sku}`,
-            }
+            ...current,
+            operation: "product_change",
+            product_mode: "publish",
+            approval_token: data.preview!.approval_token,
+            product_change_preview: data.preview,
+            summary: `Publish ${data.preview!.products[0]?.name ?? sku}`,
+          }
           : current,
       );
       setCpStoreActionResult(null);
@@ -4959,7 +4959,7 @@ export function PrizeSkoutDashboard() {
             access_code: accessCode,
             ingest_event_id: product.ingest_event_id,
             target_price: Math.round(targetPrice * 100) / 100,
-            idempotency_key: priceActionKey(product.ingest_event_id,Math.round(targetPrice*100)/100,"copilot"),
+            idempotency_key: priceActionKey(product.ingest_event_id, Math.round(targetPrice * 100) / 100, "copilot"),
             approval_confirmed: true,
           }),
         });
@@ -4972,7 +4972,7 @@ export function PrizeSkoutDashboard() {
           rolled_back?: boolean;
           action_id?: string;
         };
-        clearPriceActionKey(product.ingest_event_id,Math.round(targetPrice*100)/100,"copilot");
+        clearPriceActionKey(product.ingest_event_id, Math.round(targetPrice * 100) / 100, "copilot");
         if (!response.ok || !result.ok) {
           const message = result.error ?? result.message ?? "Rejected";
           failures.push(`${product.name_en || product.sku}: ${message}`);
@@ -5019,7 +5019,7 @@ export function PrizeSkoutDashboard() {
       }
     }
     setCpActionResults(actionResults);
-    await fetchCopilotCatalog().catch(() => {});
+    await fetchCopilotCatalog().catch(() => { });
     setCpOperationStatus(failures.length ? "failed" : "complete");
     setCpOperationMessage(
       `${succeeded} of ${cpOperationProducts.length} price update${cpOperationProducts.length === 1 ? "" : "s"} completed and confirmed live.${failures.length ? ` ${failures.length} did not complete: ${failures.slice(0, 2).join("; ")}` : ""}`,
@@ -5048,7 +5048,7 @@ export function PrizeSkoutDashboard() {
     const channels = Array.isArray(cpObj.channels) ? cpObj.channels.map(String) : [];
     const desc = String(
       cpObj.summary ??
-        `${cpObj.target_category || cpObj.target_sku_class || "all products"}${channels.length ? ` · ${channels.join(", ")}` : " · all channels"}`,
+      `${cpObj.target_category || cpObj.target_sku_class || "all products"}${channels.length ? ` · ${channels.join(", ")}` : " · all channels"}`,
     );
     setApplied(true);
     const compiledFloor = typeof cpObj.minimum_floor === "number" ? cpObj.minimum_floor : null;
@@ -5274,7 +5274,7 @@ export function PrizeSkoutDashboard() {
         setWelcomeAuditBanner(true);
         runPayoutCheck();
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [tab, channelStatuses]);
 
   // Parses one uploaded file into a PayoutCheckData without touching any
@@ -5291,12 +5291,12 @@ export function PrizeSkoutDashboard() {
     description: string,
   ): Promise<{ ok: true; result: PayoutCheckData; evidenceItemId: string; duplicate: boolean } | { ok: false; error: string }> => {
     try {
-      const original=new FormData();
-      original.set("merchant_id",mid);original.set("access_code",ac);original.set("source_provider",platform);original.set("file",file);
-      const retained=await fetch("/api/evidence/intake",{method:"POST",body:original});
-      const retainedResult=await retained.json() as {ok?:boolean;error?:string;evidence_item_id?:string;duplicate?:boolean};
-      if(!retained.ok||!retainedResult.ok)return {ok:false,error:retainedResult.error??"Could not retain the original evidence file."};
-      if(!retainedResult.evidence_item_id)return {ok:false,error:"The original file was stored but its evidence record could not be confirmed."};
+      const original = new FormData();
+      original.set("merchant_id", mid); original.set("access_code", ac); original.set("source_provider", platform); original.set("file", file);
+      const retained = await fetch("/api/evidence/intake", { method: "POST", body: original });
+      const retainedResult = await retained.json() as { ok?: boolean; error?: string; evidence_item_id?: string; duplicate?: boolean };
+      if (!retained.ok || !retainedResult.ok) return { ok: false, error: retainedResult.error ?? "Could not retain the original evidence file." };
+      if (!retainedResult.evidence_item_id) return { ok: false, error: "The original file was stored but its evidence record could not be confirmed." };
       const lowerName = file.name.toLowerCase();
       const isPdf = file.type === "application/pdf" || lowerName.endsWith(".pdf");
       const isXlsx =
@@ -5401,7 +5401,7 @@ export function PrizeSkoutDashboard() {
     periodEnd: string,
     platform: string,
     evidence: {
-      settlementReference:string;
+      settlementReference: string;
       depositType: string;
       currency: string;
     },
@@ -5449,7 +5449,7 @@ export function PrizeSkoutDashboard() {
           period_end: periodEnd,
           upload_platform: platform,
           confirmation_date: periodEnd,
-          settlement_reference:evidence.settlementReference,
+          settlement_reference: evidence.settlementReference,
           deposit_type: evidence.depositType,
           currency: evidence.currency,
         }),
@@ -5463,7 +5463,7 @@ export function PrizeSkoutDashboard() {
         platform?: string | null;
         classification?: PayoutCheckClassification;
         confirmation_date?: string;
-        settlement_reference?:string|null;
+        settlement_reference?: string | null;
         deposit_type?: string;
         currency?: string;
         evidence_file_name?: string;
@@ -5486,30 +5486,30 @@ export function PrizeSkoutDashboard() {
           it.id !== id
             ? it
             : {
-                ...it,
-                status: "done",
-                evidenceItemId: data.evidence_item_id,
-                classification: data.classification,
-                classifiedDoc: {
-                  id,
-                  file_name: it.label,
-                  document_type: "merchant_received",
-                  description: description || undefined,
-                  platform_guess: data.platform ?? null,
-                  result: {
-                    received_amount: data.received_amount,
-                    period_start: data.period_start,
-                    period_end: data.period_end,
-                    confirmation_date: data.confirmation_date,
-                    settlement_reference:data.settlement_reference,
-                    deposit_type: data.deposit_type,
-                    currency: data.currency,
-                    evidence_file_name: data.evidence_file_name,
-                    evidence_sha256: data.evidence_sha256,
-                    evidence_level: data.evidence_level,
-                  },
+              ...it,
+              status: "done",
+              evidenceItemId: data.evidence_item_id,
+              classification: data.classification,
+              classifiedDoc: {
+                id,
+                file_name: it.label,
+                document_type: "merchant_received",
+                description: description || undefined,
+                platform_guess: data.platform ?? null,
+                result: {
+                  received_amount: data.received_amount,
+                  period_start: data.period_start,
+                  period_end: data.period_end,
+                  confirmation_date: data.confirmation_date,
+                  settlement_reference: data.settlement_reference,
+                  deposit_type: data.deposit_type,
+                  currency: data.currency,
+                  evidence_file_name: data.evidence_file_name,
+                  evidence_sha256: data.evidence_sha256,
+                  evidence_level: data.evidence_level,
                 },
               },
+            },
         ),
       );
     } catch {
@@ -5571,7 +5571,7 @@ export function PrizeSkoutDashboard() {
     const rate = contract?.commission_rate_pct ?? (Number(payoutUploadRate) || 0);
     const normalized = classified.map(doc => ({
       ...doc,
-      result: { ...doc.result, platform:auditPlatform, commission_rate_pct:rate },
+      result: { ...doc.result, platform: auditPlatform, commission_rate_pct: rate },
     }));
     setPayoutDocuments(normalized);
     setAuditSaved(false);
@@ -5582,10 +5582,10 @@ export function PrizeSkoutDashboard() {
       setPayoutData(null);
     }
     setAuditResult(reconcile(normalized, rate, contract ? {
-      source:"approved_contract", platform:auditPlatform, contractId:contract.id,
-      contractName:contract.contract_name, reviewedBy:contract.reviewed_by,
-      effectiveFrom:contract.effective_from, effectiveTo:contract.effective_to,
-    } : { source:"merchant_entered", platform:auditPlatform }));
+      source: "approved_contract", platform: auditPlatform, contractId: contract.id,
+      contractName: contract.contract_name, reviewedBy: contract.reviewed_by,
+      effectiveFrom: contract.effective_from, effectiveTo: contract.effective_to,
+    } : { source: "merchant_entered", platform: auditPlatform }));
   };
 
   const handleSaveAudit = async () => {
@@ -5627,8 +5627,8 @@ export function PrizeSkoutDashboard() {
           net_sales_override_docs: auditResult.netSalesOverrideDocs ?? null,
         }),
       });
-      const data = (await res.json()) as { ok?: boolean;reconciliation?:{status:string;summary:{counts?:Record<string,number>;claims_ready_amount?:number;exceptions?:number}}|null };
-      if (res.ok && data.ok) {setAuditSaved(true);setSettlementRun(data.reconciliation??null);}
+      const data = (await res.json()) as { ok?: boolean; reconciliation?: { status: string; summary: { counts?: Record<string, number>; claims_ready_amount?: number; exceptions?: number } } | null };
+      if (res.ok && data.ok) { setAuditSaved(true); setSettlementRun(data.reconciliation ?? null); }
       else showToast("Could not save that audit. Please try again.");
     } catch {
       showToast("Could not save that audit. Please try again.");
@@ -5721,7 +5721,7 @@ export function PrizeSkoutDashboard() {
     rules[0].maxChangePct !== persistedMaxIncrease ||
     rules[0].approvalMode !== persistedApprovalMode ||
     rules[0].minimumContribution !== persistedMinimumContribution ||
-    JSON.stringify(channelPolicyDrafts)!==JSON.stringify(persistedChannelPolicies);
+    JSON.stringify(channelPolicyDrafts) !== JSON.stringify(persistedChannelPolicies);
 
   const navDefs: Array<{
     id: SidebarNavId;
@@ -5729,150 +5729,150 @@ export function PrizeSkoutDashboard() {
     label: string;
     icon: LucideIcon;
     tip: string;
-    targetId?:string;
+    targetId?: string;
     badge?: number;
   }> = [
-    {
-      id: "overview",
-      tab: "analytics",
-      label: "Overview",
-      icon: ChartNoAxesCombined,
-      tip: "See true profit, payout risk, alerts, and channel performance in one place.",
-    },
-    {
-      id: "catalog",
-      tab: "catalog",
-      label: "Catalog",
-      icon: PackageSearch,
-      tip: "Review products, costs, prices, and catalogue evidence.",
-    },
-    {
-      id: "margin",
-      tab: "analytics",
-      label: "Margin Intelligence",
-      icon: ChartNoAxesCombined,
-      tip: "Review true profit and margin performance across channels.",
-      targetId:"margin-intelligence-section",
-    },
-    {
-      id: "alerts",
-      tab: "today",
-      label: "Alerts",
-      icon: Bell,
-      tip: "See the work and risks that need attention now.",
-      badge: historyAttentionCount,
-    },
-    {
-      id: "recovery",
-      tab: "analytics",
-      label: "Payout Recovery",
-      icon: WalletCards,
-      tip: "Check payouts, investigate discrepancies, and manage recovery evidence.",
-      targetId:"ps-payout-assurance-card",
-    },
-    {
-      id: "promotions",
-      tab: "promotions",
-      label: "Promotion Simulator",
-      icon: BadgePercent,
-      tip: "Test promotion economics before approving a campaign.",
-    },
-    {
-      id: "defend",
-      tab: "rules",
-      label: "Defend Loop",
-      icon: ShieldCheck,
-      tip: "Set and review the guardrails that protect merchant margins.",
-    },
-    {
-      id: "manager",
-      tab: "manager",
-      label: "AI Store Manager",
-      icon: Bot,
-      tip: "Delegate store work and review protected actions.",
-    },
-    {
-      id: "copilot",
-      tab: "rules",
-      label: "CFO Copilot",
-      icon: CircleDollarSign,
-      tip: "Ask questions about profit, fees, payouts, and risk.",
-    },
-    {
-      id: "integrations",
-      tab: "vault",
-      label: "Integrations",
-      icon: PlugZap,
-      tip: "Connect and inspect commerce and delivery channels.",
-    },
-    {id:"evidence",tab:"history",label:"Evidence & History",icon:HistoryIcon,tip:"Review payout checks, price actions, investigations, and retained evidence."},
-    {
-      id: "settings",
-      tab: "settings",
-      label: "Settings",
-      icon: SettingsIcon,
-      tip: "Manage business, policy, and connection settings.",
-    },
-  ];
+      {
+        id: "overview",
+        tab: "analytics",
+        label: "Overview",
+        icon: ChartNoAxesCombined,
+        tip: "See true profit, payout risk, alerts, and channel performance in one place.",
+      },
+      {
+        id: "catalog",
+        tab: "catalog",
+        label: "Catalog",
+        icon: PackageSearch,
+        tip: "Review products, costs, prices, and catalogue evidence.",
+      },
+      {
+        id: "margin",
+        tab: "analytics",
+        label: "Margin Intelligence",
+        icon: ChartNoAxesCombined,
+        tip: "Review true profit and margin performance across channels.",
+        targetId: "margin-intelligence-section",
+      },
+      {
+        id: "alerts",
+        tab: "today",
+        label: "Alerts",
+        icon: Bell,
+        tip: "See the work and risks that need attention now.",
+        badge: historyAttentionCount,
+      },
+      {
+        id: "recovery",
+        tab: "analytics",
+        label: "Payout Recovery",
+        icon: WalletCards,
+        tip: "Check payouts, investigate discrepancies, and manage recovery evidence.",
+        targetId: "ps-payout-assurance-card",
+      },
+      {
+        id: "promotions",
+        tab: "promotions",
+        label: "Promotion Simulator",
+        icon: BadgePercent,
+        tip: "Test promotion economics before approving a campaign.",
+      },
+      {
+        id: "defend",
+        tab: "rules",
+        label: "Defend Loop",
+        icon: ShieldCheck,
+        tip: "Set and review the guardrails that protect merchant margins.",
+      },
+      {
+        id: "manager",
+        tab: "manager",
+        label: "AI Store Manager",
+        icon: Bot,
+        tip: "Delegate store work and review protected actions.",
+      },
+      {
+        id: "copilot",
+        tab: "rules",
+        label: "CFO Copilot",
+        icon: CircleDollarSign,
+        tip: "Ask questions about profit, fees, payouts, and risk.",
+      },
+      {
+        id: "integrations",
+        tab: "vault",
+        label: "Integrations",
+        icon: PlugZap,
+        tip: "Connect and inspect commerce and delivery channels.",
+      },
+      { id: "evidence", tab: "history", label: "Evidence & History", icon: HistoryIcon, tip: "Review payout checks, price actions, investigations, and retained evidence." },
+      {
+        id: "settings",
+        tab: "settings",
+        label: "Settings",
+        icon: SettingsIcon,
+        tip: "Manage business, policy, and connection settings.",
+      },
+    ];
 
   const headerSub =
     tab === "today"
       ? ui.todaySub
       : tab === "catalog"
         ? "Products, costs, availability, and synchronization from connected stores"
-      : tab === "analytics"
-        ? sidebarNav === "recovery"
-          ? "Verify expected payouts, investigate discrepancies, and prepare merchant-approved recovery evidence."
-          : sidebarNav === "margin"
-            ? "True profit, fees, costs, and payout performance across every connected channel."
-            : "Your financial command center for margin, payouts, risk, and next actions."
-        : tab === "manager"
-          ? lang === "ar"
-            ? "جهّز أعمال الكتالوج والتسعير والمخزون مع موافقة التاجر"
-            : lang === "fr"
-              ? "Préparez le catalogue, les prix et le stock avec validation"
-              : "Prepare catalog, pricing, inventory, and content work with merchant approval"
-          : tab === "promotions"
-            ? ui.promoSub
-            : tab === "rules"
-              ? sidebarNav === "copilot"
-                ? "Financial answers, evidence-backed insights, and merchant-controlled actions."
-                : t.subR
-              : tab === "settings"
-                ? t.settingsSub
-                : tab === "history"
-                  ? t.subH
-                  : t.subV;
+        : tab === "analytics"
+          ? sidebarNav === "recovery"
+            ? "Verify expected payouts, investigate discrepancies, and prepare merchant-approved recovery evidence."
+            : sidebarNav === "margin"
+              ? "True profit, fees, costs, and payout performance across every connected channel."
+              : "Your financial command center for margin, payouts, risk, and next actions."
+          : tab === "manager"
+            ? lang === "ar"
+              ? "جهّز أعمال الكتالوج والتسعير والمخزون مع موافقة التاجر"
+              : lang === "fr"
+                ? "Préparez le catalogue, les prix et le stock avec validation"
+                : "Prepare catalog, pricing, inventory, and content work with merchant approval"
+            : tab === "promotions"
+              ? ui.promoSub
+              : tab === "rules"
+                ? sidebarNav === "copilot"
+                  ? "Financial answers, evidence-backed insights, and merchant-controlled actions."
+                  : t.subR
+                : tab === "settings"
+                  ? t.settingsSub
+                  : tab === "history"
+                    ? t.subH
+                    : t.subV;
   const headerTitle =
     tab === "today"
       ? ui.today
       : tab === "catalog"
         ? "Catalog"
-      : tab === "analytics"
-        ? sidebarNav === "recovery"
-          ? "Payout Recovery"
-          : sidebarNav === "margin"
-            ? "True Margin Intelligence"
-            : "Overview"
-        : tab === "manager"
-          ? lang === "ar"
-            ? "مدير المتجر"
-            : lang === "fr"
-              ? "Gestionnaire IA"
-              : "AI Store Manager"
-          : tab === "promotions"
+        : tab === "analytics"
+          ? sidebarNav === "recovery"
+            ? "Payout Recovery"
+            : sidebarNav === "margin"
+              ? "True Margin Intelligence"
+              : "Overview"
+          : tab === "manager"
             ? lang === "ar"
-              ? "محاكي العروض"
+              ? "مدير المتجر"
               : lang === "fr"
-                ? "Simulateur de promotions"
-                : "Promo Simulator"
-            : tab === "rules"
-              ? sidebarNav === "copilot" ? "CFO Copilot" : t.navR
-              : tab === "settings"
-                ? t.settingsLabel
-                : tab === "history"
-                  ? t.navH
-                  : t.navV;
+                ? "Gestionnaire IA"
+                : "AI Store Manager"
+            : tab === "promotions"
+              ? lang === "ar"
+                ? "محاكي العروض"
+                : lang === "fr"
+                  ? "Simulateur de promotions"
+                  : "Promo Simulator"
+              : tab === "rules"
+                ? sidebarNav === "copilot" ? "CFO Copilot" : t.navR
+                : tab === "settings"
+                  ? t.settingsLabel
+                  : tab === "history"
+                    ? t.navH
+                    : t.navV;
 
   const md = modal != null ? disputes[modal] : null;
 
@@ -5890,9 +5890,9 @@ export function PrizeSkoutDashboard() {
   const openSidebarDestination = (item: (typeof navDefs)[number]) => {
     setSidebarNav(item.id);
     setTab(item.tab);
-    if(item.targetId)window.setTimeout(()=>document.getElementById(item.targetId!)?.scrollIntoView({behavior:"smooth",block:"start"}),50);
+    if (item.targetId) window.setTimeout(() => document.getElementById(item.targetId!)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
-  const handleSignOut=async()=>{
+  const handleSignOut = async () => {
     setSidebarOpen(false);
     await supabase.auth.signOut();
     localStorage.removeItem("ps_access_code");
@@ -6158,8 +6158,8 @@ export function PrizeSkoutDashboard() {
                 {storeName || t.myAccount}
               </span>
             </div>
-            <button type="button" onClick={()=>void handleSignOut()} style={{border:0,background:"transparent",color:"var(--muted)",borderRadius:9,padding:"9px 10px",display:"flex",alignItems:"center",gap:10,fontFamily:"inherit",fontSize:12.5,fontWeight:650,cursor:"pointer",textAlign:"start"}}>
-              <LogOut size={15} strokeWidth={1.8}/>Log out
+            <button type="button" onClick={() => void handleSignOut()} style={{ border: 0, background: "transparent", color: "var(--muted)", borderRadius: 9, padding: "9px 10px", display: "flex", alignItems: "center", gap: 10, fontFamily: "inherit", fontSize: 12.5, fontWeight: 650, cursor: "pointer", textAlign: "start" }}>
+              <LogOut size={15} strokeWidth={1.8} />Log out
             </button>
           </div>
         </aside>
@@ -6812,58 +6812,58 @@ export function PrizeSkoutDashboard() {
               >
                 {(selectedProduct.cost_confidence !== "verified"
                   ? [
-                      [
-                        "Current price",
-                        `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
-                      ],
-                      ["Cost status", "Not verified"],
-                      [
-                        "Inventory",
-                        selectedProduct.inventory_is_infinite
-                          ? "Always available"
-                          : selectedProduct.inventory_quantity == null
-                            ? "Quantity unavailable"
-                            : `${selectedProduct.inventory_quantity.toLocaleString()} in stock`,
-                      ],
-                    ]
+                    [
+                      "Current price",
+                      `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
+                    ],
+                    ["Cost status", "Not verified"],
+                    [
+                      "Inventory",
+                      selectedProduct.inventory_is_infinite
+                        ? "Always available"
+                        : selectedProduct.inventory_quantity == null
+                          ? "Quantity unavailable"
+                          : `${selectedProduct.inventory_quantity.toLocaleString()} in stock`,
+                    ],
+                  ]
                   : [
-                      [
-                        "Current price",
-                        `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
-                      ],
-                      [
-                        "Current contribution margin",
-                        selectedProduct.preview
-                          ? `${(selectedProduct.preview.current_margin_pct * 100).toFixed(1)}%`
-                          : selectedProduct.net_margin_pct == null
-                            ? "—"
-                            : `${(selectedProduct.net_margin_pct * 100).toFixed(1)}%`,
-                      ],
-                      [
-                        `Price required for ${((selectedProduct.preview?.margin_floor_pct ?? selectedProduct.margin_floor_pct ?? 0.18) * 100).toFixed(0)}% target`,
-                        selectedProduct.preview?.required_price == null
-                          ? "Unavailable"
-                          : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.required_price, selectedProduct.currency)}`,
-                      ],
-                      [
-                        "Required increase",
-                        selectedProduct.preview?.required_price == null
+                    [
+                      "Current price",
+                      `${selectedProduct.current_price.toLocaleString()} ${selectedProduct.currency}`,
+                    ],
+                    [
+                      "Current contribution margin",
+                      selectedProduct.preview
+                        ? `${(selectedProduct.preview.current_margin_pct * 100).toFixed(1)}%`
+                        : selectedProduct.net_margin_pct == null
                           ? "—"
-                          : `${(selectedProduct.preview.required_increase_pct * 100).toFixed(1)}%`,
-                      ],
-                      [
-                        "Highest price allowed now",
-                        selectedProduct.preview?.allowed_price == null
-                          ? "Unavailable"
-                          : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.allowed_price, selectedProduct.currency)}`,
-                      ],
-                      [
-                        "Margin at allowed price",
-                        selectedProduct.preview?.projected_margin_at_allowed == null
-                          ? "—"
-                          : `${(selectedProduct.preview.projected_margin_at_allowed * 100).toFixed(1)}%`,
-                      ],
-                    ]
+                          : `${(selectedProduct.net_margin_pct * 100).toFixed(1)}%`,
+                    ],
+                    [
+                      `Price required for ${((selectedProduct.preview?.margin_floor_pct ?? selectedProduct.margin_floor_pct ?? 0.18) * 100).toFixed(0)}% target`,
+                      selectedProduct.preview?.required_price == null
+                        ? "Unavailable"
+                        : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.required_price, selectedProduct.currency)}`,
+                    ],
+                    [
+                      "Required increase",
+                      selectedProduct.preview?.required_price == null
+                        ? "—"
+                        : `${(selectedProduct.preview.required_increase_pct * 100).toFixed(1)}%`,
+                    ],
+                    [
+                      "Highest price allowed now",
+                      selectedProduct.preview?.allowed_price == null
+                        ? "Unavailable"
+                        : `${selectedProduct.currency} ${fmtMoney(selectedProduct.preview.allowed_price, selectedProduct.currency)}`,
+                    ],
+                    [
+                      "Margin at allowed price",
+                      selectedProduct.preview?.projected_margin_at_allowed == null
+                        ? "—"
+                        : `${(selectedProduct.preview.projected_margin_at_allowed * 100).toFixed(1)}%`,
+                    ],
+                  ]
                 ).map(([label, value]) => (
                   <div
                     key={label}
@@ -6884,7 +6884,7 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
 
-              {["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") && (
+              {["over_limit", "cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome ?? "") && (
                 <div
                   style={{
                     marginTop: 14,
@@ -6899,9 +6899,9 @@ export function PrizeSkoutDashboard() {
                 >
                   <strong>The target price is not approved for publishing.</strong> Reaching the
                   margin target would require a{" "}
-                  {((selectedProduct.preview?.required_increase_pct??0) * 100).toFixed(1)}% increase,
+                  {((selectedProduct.preview?.required_increase_pct ?? 0) * 100).toFixed(1)}% increase,
                   while active policy v{selectedProduct.preview?.policy_version} allows{" "}
-                  {((selectedProduct.preview?.maximum_increase_pct??0) * 100).toFixed(1)}%. PrizeSkout has
+                  {((selectedProduct.preview?.maximum_increase_pct ?? 0) * 100).toFixed(1)}%. PrizeSkout has
                   stopped this recommendation instead of presenting a partial correction as protected.{" "}
                   <strong>Market acceptance has not been established.</strong> This target is based
                   on costs and charges, so review demand and comparable prices before approving a
@@ -7010,7 +7010,7 @@ export function PrizeSkoutDashboard() {
                     lineHeight: 1.55,
                   }}
                 >
-                  {["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"")
+                  {["over_limit", "cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome ?? "")
                     ? `This product cannot reach the full target within the active increase limit. Change and preview the policy or leave the price unchanged.`
                     : `The price that reaches your active margin target is prefilled. Review it before sending it to ${selectedProduct.source_platform}.`}
                 </p>
@@ -7156,7 +7156,7 @@ export function PrizeSkoutDashboard() {
                     <button
                       type="button"
                       disabled={
-                        productPushStatus === "pushing" || productPushStatus === "reverting" || selectedProduct.preview?.approval_mode === "recommend_only" || ["over_limit","cannot_reach_target_within_limit","blocked_stale_evidence"].includes(selectedProduct.preview?.outcome??"")
+                        productPushStatus === "pushing" || productPushStatus === "reverting" || selectedProduct.preview?.approval_mode === "recommend_only" || ["over_limit", "cannot_reach_target_within_limit", "blocked_stale_evidence"].includes(selectedProduct.preview?.outcome ?? "")
                       }
                       onClick={pushSelectedProductPrice}
                       style={{
@@ -7165,12 +7165,12 @@ export function PrizeSkoutDashboard() {
                         color: "#fff",
                         borderRadius: 9,
                         padding: "11px 16px",
-                        cursor: productPushStatus === "pushing" ? "wait" : selectedProduct.preview?.approval_mode === "recommend_only" || ["over_limit","cannot_reach_target_within_limit","blocked_stale_evidence"].includes(selectedProduct.preview?.outcome??"") ? "not-allowed" : "pointer",
+                        cursor: productPushStatus === "pushing" ? "wait" : selectedProduct.preview?.approval_mode === "recommend_only" || ["over_limit", "cannot_reach_target_within_limit", "blocked_stale_evidence"].includes(selectedProduct.preview?.outcome ?? "") ? "not-allowed" : "pointer",
                         fontFamily: "inherit",
                         fontWeight: 800,
                       }}
                     >
-                      {selectedProduct.preview?.approval_mode === "recommend_only" ? "Suggestion only — update in platform" : selectedProduct.preview?.outcome === "blocked_stale_evidence" ? "Refresh evidence before publishing" : ["over_limit","cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome??"") ? "Blocked by active increase limit" : productPushStatus === "pushing"
+                      {selectedProduct.preview?.approval_mode === "recommend_only" ? "Suggestion only — update in platform" : selectedProduct.preview?.outcome === "blocked_stale_evidence" ? "Refresh evidence before publishing" : ["over_limit", "cannot_reach_target_within_limit"].includes(selectedProduct.preview?.outcome ?? "") ? "Blocked by active increase limit" : productPushStatus === "pushing"
                         ? productPushStage === "sending"
                           ? "Sending"
                           : "Verifying"
@@ -7214,7 +7214,7 @@ export function PrizeSkoutDashboard() {
             </div>
 
             <div className="ps-catalog-insights">
-              <section className="ps-catalog-insight-card"><div><h3>Catalog health</h3><p>Products with verified cost evidence</p></div><div className="ps-catalog-health-ring" style={{ "--catalog-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Ready</small></div><ul><li><i className="ps-dot-green"/>Confirmed costs <b>{storeOpportunity.verified}</b></li><li><i className="ps-dot-orange"/>Missing evidence <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></li><li><i className="ps-dot-blue"/>Out of stock <b>{importedProducts.filter(product => product.inventory_status === "out_of_stock").length}</b></li></ul></section>
+              <section className="ps-catalog-insight-card"><div><h3>Catalog health</h3><p>Products with verified cost evidence</p></div><div className="ps-catalog-health-ring" style={{ "--catalog-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Ready</small></div><ul><li><i className="ps-dot-green" />Confirmed costs <b>{storeOpportunity.verified}</b></li><li><i className="ps-dot-orange" />Missing evidence <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></li><li><i className="ps-dot-blue" />Out of stock <b>{importedProducts.filter(product => product.inventory_status === "out_of_stock").length}</b></li></ul></section>
               <section className="ps-catalog-insight-card"><div><h3>Channel coverage</h3><p>Connected sources feeding the live catalog</p></div><div className="ps-catalog-channel-list">{(["zid", "salla"] as const).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform] === "connected" ? "is-connected" : ""}>{channelStatuses[platform] === "connected" ? "Connected" : "Not connected"}</span><em>{importedProducts.filter(product => product.source_platform === platform).length} items</em></div>)}</div><button type="button" onClick={() => setTab("vault")}>View integration health →</button></section>
               <section className="ps-catalog-insight-card"><div><h3>Priority review</h3><p>Evidence gaps and availability issues</p></div><div className="ps-catalog-priority"><strong>{storeOpportunity.estimated + storeOpportunity.unknown}</strong><span>products need cost evidence</span></div><div className="ps-catalog-priority"><strong>{storeOpportunity.atRisk.length}</strong><span>verified products need margin review</span></div><button type="button" onClick={() => openCatalogFilter("missing_cost")}>Open attention queue →</button></section>
             </div>
@@ -7265,7 +7265,7 @@ export function PrizeSkoutDashboard() {
                   <div className="table-scroll">
                     <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
                       <thead><tr style={{ background: "var(--surface2)", color: "var(--muted)", fontSize: 11, textTransform: "uppercase" }}>
-                        {['Product','Channel','Selling price','Product cost','Availability','Data status'].map(label => <th key={label} style={{ padding: "11px 14px", textAlign: "left" }}>{label}</th>)}
+                        {['Product', 'Channel', 'Selling price', 'Product cost', 'Availability', 'Data status'].map(label => <th key={label} style={{ padding: "11px 14px", textAlign: "left" }}>{label}</th>)}
                       </tr></thead>
                       <tbody>
                         {visibleProducts.map(product => (
@@ -7464,659 +7464,533 @@ export function PrizeSkoutDashboard() {
                 onIntegrations={() => setTab("vault")}
               />
             ) : (<>
-            {sidebarNav === "margin" && <>
-            <div id="margin-intelligence-section" style={{scrollMarginTop:24}}>
-              <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} orders={payoutData?.order_count ?? 0} expectedPayout={payoutData?.expected_payout ?? null} channels={overviewChannels} riskRows={overviewRisks} />
-            </div>
+              {sidebarNav === "margin" && <>
+                <div id="margin-intelligence-section" style={{ scrollMarginTop: 24 }}>
+                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} orders={payoutData?.order_count ?? 0} expectedPayout={payoutData?.expected_payout ?? null} channels={overviewChannels} riskRows={overviewRisks} />
+                </div>
 
-            {/* First-run welcome: we auto-ran a Talabat payout check the
+                {/* First-run welcome: we auto-ran a Talabat payout check the
                 moment Talabat was connected, since this merchant has never
                 had one — surface it here instead of leaving it for someone
                 to discover the button buried in the Payout Assurance card. */}
-            {welcomeAuditBanner && payoutData && !payoutError && (
-              <div
-                style={{
-                  background: `color-mix(in srgb,${GN} 8%,var(--surface))`,
-                  border: `1px solid color-mix(in srgb,${GN} 30%,transparent)`,
-                  borderRadius: 14,
-                  padding: "18px 22px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 16,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 800, color: GN }}>
-                    We checked your Talabat payouts automatically
-                  </div>
-                  <div style={{ fontSize: 13, color: "var(--muted)" }}>
-                    Last 30 days · {payoutData.order_count} orders · expected payout ≈ {currency}{" "}
-                    {fmtMoney(payoutData.expected_payout, currency)}. Compare this against what
-                    actually landed in your bank to catch any shortfall.
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWelcomeAuditBanner(false);
-                      document
-                        .getElementById("ps-payout-assurance-card")
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "9px 14px",
-                      background: GN,
-                      color: "#fff",
-                      fontFamily: "inherit",
-                      fontWeight: 800,
-                      fontSize: 12.5,
-                    }}
-                  >
-                    View full report
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Dismiss"
-                    onClick={() => setWelcomeAuditBanner(false)}
-                    style={{
-                      cursor: "pointer",
-                      border: "none",
-                      background: "transparent",
-                      color: "var(--muted)",
-                      fontSize: 18,
-                      lineHeight: 1,
-                      padding: "4px 6px",
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* The first screen after a store connection must explain the
-                commercial outcome, not merely that a catalogue synchronized. */}
-            {channelStatuses.zid === "connected" && importedProducts.length === 0 && (
-              <div
-                style={{
-                  padding: "22px 24px",
-                  borderRadius: 16,
-                  border: "1px solid color-mix(in srgb,#EF681A 30%,var(--border))",
-                  background: "color-mix(in srgb,#EF681A 7%,var(--surface))",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: OG,
-                    boxShadow: `0 0 0 6px color-mix(in srgb,${OG} 15%,transparent)`,
-                  }}
-                />
-                <div>
-                  <div style={{ fontWeight: 850 }}>
-                    Zid connected. PrizeSkout is scanning the store now.
-                  </div>
-                  <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 13 }}>
-                    We are checking what each product earns after its cost and channel charges. Your
-                    first results will appear here automatically.
-                  </div>
-                </div>
-              </div>
-            )}
-            {importedProducts.length > 0 && (
-              <div
-                data-tour="value-center"
-                style={{
-                  background:
-                    "linear-gradient(135deg,color-mix(in srgb,#EF681A 10%,var(--surface)),var(--surface))",
-                  border: "1px solid color-mix(in srgb,#EF681A 34%,var(--border))",
-                  borderRadius: 18,
-                  boxShadow: "var(--shadow)",
-                  padding: "26px 28px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 20,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 18,
-                    alignItems: "flex-start",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div style={{ maxWidth: 720 }}>
-                    <div
-                      style={{
-                        color: OG,
-                        fontSize: 11.5,
-                        fontWeight: 900,
-                        letterSpacing: ".08em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Your first PrizeSkout result
-                    </div>
-                    <h2
-                      style={{
-                        margin: "7px 0 7px",
-                        fontFamily: DISPLAY,
-                        fontSize: 30,
-                        lineHeight: 1.16,
-                      }}
-                    >
-                      We found {storeOpportunity.atRisk.length} product
-                      {storeOpportunity.atRisk.length === 1 ? "" : "s"} that need attention
-                    </h2>
-                    <p style={{ margin: 0, color: "var(--muted)", fontSize: 14, lineHeight: 1.6 }}>
-                      PrizeSkout checked {importedProducts.length} product
-                      {importedProducts.length === 1 ? "" : "s"} and found which ones leave you less
-                      than your {persistedGlobalFloor}% target after product cost and channel
-                      charges.
-                    </p>
-                  </div>
+                {welcomeAuditBanner && payoutData && !payoutError && (
                   <div
                     style={{
-                      minWidth: 230,
-                      padding: "16px 18px",
-                      borderRadius: 13,
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "var(--muted)",
-                        fontSize: 10.5,
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                        letterSpacing: ".06em",
-                      }}
-                    >
-                      More you could keep
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 6,
-                        fontFamily: DISPLAY,
-                        fontSize: 31,
-                        fontWeight: 800,
-                        color: storeOpportunity.correctionPerCatalogSale > 0 ? OG : GN,
-                      }}
-                    >
-                      {opportunityCurrency}{" "}
-                      {fmtMoney(storeOpportunity.correctionPerCatalogSale, opportunityCurrency)}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 4,
-                        color: "var(--muted)",
-                        fontSize: 11.5,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      if one of each affected product sells. Connect orders to see the monthly
-                      amount.
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-                    gap: 10,
-                  }}
-                >
-                  {[
-                    [
-                      "Products checked",
-                      String(importedProducts.length),
-                      "From your connected store",
-                    ],
-                    [
-                      "Earning below target",
-                      String(storeOpportunity.atRisk.length),
-                      "Review these first",
-                    ],
-                    [
-                      "Costs confirmed by store",
-                      String(storeOpportunity.verified),
-                      "Safe to calculate",
-                    ],
-                    [
-                      "Costs to confirm",
-                      String(storeOpportunity.estimated + storeOpportunity.unknown),
-                      "No automatic changes",
-                    ],
-                  ].map(([label, value, foot], index) => (
-                    <button
-                      type="button"
-                      key={label}
-                      onClick={() => {
-                        if (index === 0) openCatalogFilter("verified_risk");
-                        else if (index === 1) openCatalogFilter("verified");
-                        else openCatalogFilter("missing_cost");
-                      }}
-                      style={{
-                        padding: "14px 15px",
-                        borderRadius: 11,
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        color: "inherit",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        textAlign: "start",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 10.5,
-                          color: "var(--muted)",
-                          textTransform: "uppercase",
-                          fontWeight: 800,
-                        }}
-                      >
-                        {label}
-                      </div>
-                      <div
-                        style={{ fontFamily: DISPLAY, fontSize: 27, fontWeight: 800, marginTop: 5 }}
-                      >
-                        {value}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
-                        {foot}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {storeOpportunity.atRisk.length > 0 ? (
-                  <div
-                    style={{
+                      background: `color-mix(in srgb,${GN} 8%,var(--surface))`,
+                      border: `1px solid color-mix(in srgb,${GN} 30%,transparent)`,
+                      borderRadius: 14,
+                      padding: "18px 22px",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      gap: 14,
+                      gap: 16,
                       flexWrap: "wrap",
                     }}
                   >
-                    <div style={{ fontSize: 13, color: "var(--muted)" }}>
-                      <strong style={{ color: "var(--text)" }}>
-                        {storeOpportunity.atRisk[0].name_en || storeOpportunity.atRisk[0].sku}
-                      </strong>{" "}
-                      needs attention first. You can review one change, confirm it in Zid, and
-                      restore the original price.
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => openProduct(storeOpportunity.atRisk[0])}
-                      style={{
-                        border: "none",
-                        borderRadius: 9,
-                        padding: "11px 16px",
-                        background: OG,
-                        color: "white",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        fontWeight: 850,
-                      }}
-                    >
-                      Review the first price →
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      padding: "13px 15px",
-                      borderRadius: 10,
-                      background: `color-mix(in srgb,${GN} 8%,var(--surface))`,
-                      color: GN,
-                      fontWeight: 750,
-                    }}
-                  >
-                    Every product with a confirmed cost is currently meeting your target. PrizeSkout
-                    will keep checking new changes.
-                  </div>
-                )}
-
-                {(storeOpportunity.estimated > 0 || storeOpportunity.unknown > 0) && (
-                  <div
-                    style={{
-                      fontSize: 11.5,
-                      lineHeight: 1.55,
-                      color: "#92400E",
-                      background: "color-mix(in srgb,#F59E0B 9%,var(--surface))",
-                      border: "1px solid color-mix(in srgb,#F59E0B 28%,var(--border))",
-                      borderRadius: 9,
-                      padding: "10px 13px",
-                    }}
-                  >
-                    <strong>Some product costs need confirmation.</strong>{" "}
-                    {storeOpportunity.estimated} cost
-                    {storeOpportunity.estimated === 1 ? " is" : "s are"} estimated and{" "}
-                    {storeOpportunity.unknown} {storeOpportunity.unknown === 1 ? "is" : "are"}{" "}
-                    missing. PrizeSkout will show suggestions but will not change these products
-                    automatically.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Hero + stat grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))",
-                gap: 18,
-              }}
-            >
-              <div
-                data-tour="hero"
-                data-demo-tip="Profits protected this month — real QAR value from every price PrizeSkout defended, not a projection."
-                style={{
-                  gridColumn: "span 2",
-                  minWidth: "min(100%,560px)",
-                  position: "relative",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 16,
-                  boxShadow: "var(--shadow)",
-                  padding: "26px 28px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 18,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 9,
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    letterSpacing: "0.06em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase" as const,
-                  }}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: GN }} />
-                  {t.profLabel}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span
-                      style={{
-                        fontFamily: DISPLAY,
-                        fontSize: 18.5,
-                        fontWeight: 500,
-                        color: heroStats?.has_activity ? "var(--text)" : "var(--muted)",
-                      }}
-                    >
-                      {currency}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: DISPLAY,
-                        fontSize: 62,
-                        fontWeight: 700,
-                        lineHeight: 1,
-                        color: heroStats?.has_activity ? GN : "var(--muted)",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {heroStats?.has_activity
-                        ? fmtMoney(heroStats.profits_protected_this_month, currency)
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-                <div style={{ fontSize: 15, color: "var(--muted)" }}>
-                  {heroStats?.has_activity
-                    ? `${heroStats.price_updates_this_month} ${t.profDefensesLabel}`
-                    : t.profNoActivity}
-                </div>
-                {/* Sparkline: real daily-bucketed profit-protected totals when
-                    available, a flat dim placeholder otherwise. */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-end",
-                    gap: 4,
-                    height: 70,
-                    marginTop: 6,
-                    opacity: heroStats?.has_activity ? 1 : 0.18,
-                  }}
-                >
-                  {(heroStats?.daily_series ?? Array.from({ length: 33 }).map(() => 0)).map(
-                    (v, i) => {
-                      const max = Math.max(1, ...(heroStats?.daily_series ?? [1]));
-                      return (
-                        <span
-                          key={i}
-                          style={{
-                            flex: 1,
-                            borderRadius: "3px 3px 0 0",
-                            height: Math.max(4, (v / max) * 70),
-                            background: `color-mix(in srgb,${OG} ${v > 0 ? 85 : 40}%,var(--surface))`,
-                          }}
-                        />
-                      );
-                    },
-                  )}
-                </div>
-              </div>
-
-              {/* Stat cards */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
-                  gap: 18,
-                  gridColumn: "span 2",
-                  minWidth: "min(100%,420px)",
-                  alignContent: "stretch",
-                }}
-              >
-                {[
-                  {
-                    label: "Tracked Products",
-                    value: heroStats?.has_activity ? String(heroStats.tracked_products) : "—",
-                    foot: heroStats?.has_activity ? t.profTrackedFoot : "connect a store",
-                    footColor: "var(--muted)",
-                    tip: "Every product PrizeSkout has pulled in from your connected stores and is actively pricing.",
-                    action: () => openCatalogFilter("all"),
-                  },
-                  {
-                    label: "Price Updates Today",
-                    value: String(heroStats?.price_updates_today ?? 0),
-                    foot: "avg latency <2s",
-                    footColor: "var(--muted)",
-                    tip: "Automatic price changes pushed live today — under 2 seconds from decision to the price actually updating on the channel.",
-                    action: () => setTab("history"),
-                  },
-                  {
-                    label: "Avg. Margin Saved",
-                    value:
-                      heroStats?.avg_margin_saved_pct != null
-                        ? `+${heroStats.avg_margin_saved_pct.toFixed(1)}pp`
-                        : "—",
-                    foot:
-                      heroStats?.avg_margin_saved_pct != null ? t.profMarginFoot : "no data yet",
-                    footColor: "var(--muted)",
-                    tip: "Percentage points of margin recovered versus what you'd have made without PrizeSkout's price defenses.",
-                    action: () => setTab("analytics"),
-                  },
-                  {
-                    label: "Active Rules",
-                    value: String(rules.filter((r) => r.active).length),
-                    foot: "price guardrails",
-                    footColor: "var(--muted)",
-                    tip: "Margin policies currently enforced automatically — see Margin Policy Engine for the full rule book.",
-                    action: () => setTab("rules"),
-                  },
-                ].map((s) => (
-                  <button
-                    type="button"
-                    key={s.label}
-                    data-demo-tip={s.tip}
-                    onClick={s.action}
-                    style={{
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 16,
-                      boxShadow: "var(--shadow)",
-                      padding: "20px 22px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 12,
-                      justifyContent: "space-between",
-                      color: "inherit",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      textAlign: "start",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 12.5,
-                        fontWeight: 500,
-                        letterSpacing: "0.04em",
-                        color: "var(--muted)",
-                        textTransform: "uppercase" as const,
-                      }}
-                    >
-                      {s.label}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: DISPLAY,
-                        fontSize: 36.5,
-                        fontWeight: 700,
-                        lineHeight: 1,
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {s.value}
-                    </div>
-                    <div style={{ fontSize: 14, color: s.footColor }}>{s.foot}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Instant-value strip: a forward-looking channel pricing
-                opportunity (computed from data already loaded, same math as
-                Channel Price Architecture) plus a ranked worst-offenders
-                list — both readable without opening any other tab. */}
-            {importedProducts.length > 0 &&
-              (channelPricingGap.count > 0 || fixTheseFirst.length > 0) && (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,320px),1fr))",
-                    gap: 18,
-                  }}
-                >
-                  {channelPricingGap.count > 0 && (
-                    <div
-                      data-demo-tip="A snapshot of what Channel Price Architecture would find right now — the same math, surfaced here so you see it before opening that tab."
-                      style={{
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 16,
-                        boxShadow: "var(--shadow)",
-                        padding: "22px 24px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 12.5,
-                          fontWeight: 500,
-                          letterSpacing: "0.04em",
-                          color: "var(--muted)",
-                          textTransform: "uppercase" as const,
-                        }}
-                      >
-                        Channel pricing gap
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 800, color: GN }}>
+                        We checked your Talabat payouts automatically
                       </div>
-                      <div
-                        style={{
-                          fontFamily: DISPLAY,
-                          fontSize: 32,
-                          fontWeight: 700,
-                          lineHeight: 1,
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        <span style={{ fontSize: 18, fontWeight: 500, marginRight: 6 }}>
-                          {currency}
-                        </span>
-                        {fmtMoney(channelPricingGap.gap, currency)}
+                      <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                        Last 30 days · {payoutData.order_count} orders · expected payout ≈ {currency}{" "}
+                        {fmtMoney(payoutData.expected_payout, currency)}. Compare this against what
+                        actually landed in your bank to catch any shortfall.
                       </div>
-                      <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5 }}>
-                        {channelPricingGap.count} product{channelPricingGap.count === 1 ? "" : "s"}{" "}
-                        priced below their target margin on at least one of your channels — this is
-                        what publishing corrected prices would add.
-                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
                       <button
                         type="button"
                         onClick={() => {
-                          setPolicyTab("pricing");
+                          setWelcomeAuditBanner(false);
                           document
-                            .getElementById("ps-policy-center-card")
+                            .getElementById("ps-payout-assurance-card")
                             ?.scrollIntoView({ behavior: "smooth", block: "start" });
                         }}
                         style={{
-                          alignSelf: "flex-start",
                           cursor: "pointer",
                           border: "none",
                           borderRadius: 8,
                           padding: "9px 14px",
-                          background: OG,
+                          background: GN,
                           color: "#fff",
                           fontFamily: "inherit",
                           fontWeight: 800,
                           fontSize: 12.5,
-                          marginTop: 4,
                         }}
                       >
-                        Review channel pricing →
+                        View full report
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Dismiss"
+                        onClick={() => setWelcomeAuditBanner(false)}
+                        style={{
+                          cursor: "pointer",
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--muted)",
+                          fontSize: 18,
+                          lineHeight: 1,
+                          padding: "4px 6px",
+                        }}
+                      >
+                        ×
                       </button>
                     </div>
-                  )}
-                  {fixTheseFirst.length > 0 && (
-                    <div
-                      data-demo-tip="Your worst-margin products, ranked — click any row to review and apply its recommended price."
+                  </div>
+                )}
+
+                {/* The first screen after a store connection must explain the
+                commercial outcome, not merely that a catalogue synchronized. */}
+                {channelStatuses.zid === "connected" && importedProducts.length === 0 && (
+                  <div
+                    style={{
+                      padding: "22px 24px",
+                      borderRadius: 16,
+                      border: "1px solid color-mix(in srgb,#EF681A 30%,var(--border))",
+                      background: "color-mix(in srgb,#EF681A 7%,var(--surface))",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
                       style={{
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 16,
-                        boxShadow: "var(--shadow)",
-                        padding: "22px 24px",
+                        width: 12,
+                        height: 12,
+                        borderRadius: "50%",
+                        background: OG,
+                        boxShadow: `0 0 0 6px color-mix(in srgb,${OG} 15%,transparent)`,
+                      }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 850 }}>
+                        Zid connected. PrizeSkout is scanning the store now.
+                      </div>
+                      <div style={{ marginTop: 3, color: "var(--muted)", fontSize: 13 }}>
+                        We are checking what each product earns after its cost and channel charges. Your
+                        first results will appear here automatically.
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {importedProducts.length > 0 && (
+                  <div
+                    data-tour="value-center"
+                    style={{
+                      background:
+                        "linear-gradient(135deg,color-mix(in srgb,#EF681A 10%,var(--surface)),var(--surface))",
+                      border: "1px solid color-mix(in srgb,#EF681A 34%,var(--border))",
+                      borderRadius: 18,
+                      boxShadow: "var(--shadow)",
+                      padding: "26px 28px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 20,
+                    }}
+                  >
+                    <div
+                      style={{
                         display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
+                        justifyContent: "space-between",
+                        gap: 18,
+                        alignItems: "flex-start",
+                        flexWrap: "wrap",
                       }}
                     >
-                      <div>
+                      <div style={{ maxWidth: 720 }}>
+                        <div
+                          style={{
+                            color: OG,
+                            fontSize: 11.5,
+                            fontWeight: 900,
+                            letterSpacing: ".08em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Your first PrizeSkout result
+                        </div>
+                        <h2
+                          style={{
+                            margin: "7px 0 7px",
+                            fontFamily: DISPLAY,
+                            fontSize: 30,
+                            lineHeight: 1.16,
+                          }}
+                        >
+                          We found {storeOpportunity.atRisk.length} product
+                          {storeOpportunity.atRisk.length === 1 ? "" : "s"} that need attention
+                        </h2>
+                        <p style={{ margin: 0, color: "var(--muted)", fontSize: 14, lineHeight: 1.6 }}>
+                          PrizeSkout checked {importedProducts.length} product
+                          {importedProducts.length === 1 ? "" : "s"} and found which ones leave you less
+                          than your {persistedGlobalFloor}% target after product cost and channel
+                          charges.
+                        </p>
+                      </div>
+                      <div
+                        style={{
+                          minWidth: 230,
+                          padding: "16px 18px",
+                          borderRadius: 13,
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            color: "var(--muted)",
+                            fontSize: 10.5,
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            letterSpacing: ".06em",
+                          }}
+                        >
+                          More you could keep
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontFamily: DISPLAY,
+                            fontSize: 31,
+                            fontWeight: 800,
+                            color: storeOpportunity.correctionPerCatalogSale > 0 ? OG : GN,
+                          }}
+                        >
+                          {opportunityCurrency}{" "}
+                          {fmtMoney(storeOpportunity.correctionPerCatalogSale, opportunityCurrency)}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            color: "var(--muted)",
+                            fontSize: 11.5,
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          if one of each affected product sells. Connect orders to see the monthly
+                          amount.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+                        gap: 10,
+                      }}
+                    >
+                      {[
+                        [
+                          "Products checked",
+                          String(importedProducts.length),
+                          "From your connected store",
+                        ],
+                        [
+                          "Earning below target",
+                          String(storeOpportunity.atRisk.length),
+                          "Review these first",
+                        ],
+                        [
+                          "Costs confirmed by store",
+                          String(storeOpportunity.verified),
+                          "Safe to calculate",
+                        ],
+                        [
+                          "Costs to confirm",
+                          String(storeOpportunity.estimated + storeOpportunity.unknown),
+                          "No automatic changes",
+                        ],
+                      ].map(([label, value, foot], index) => (
+                        <button
+                          type="button"
+                          key={label}
+                          onClick={() => {
+                            if (index === 0) openCatalogFilter("verified_risk");
+                            else if (index === 1) openCatalogFilter("verified");
+                            else openCatalogFilter("missing_cost");
+                          }}
+                          style={{
+                            padding: "14px 15px",
+                            borderRadius: 11,
+                            background: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            color: "inherit",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            textAlign: "start",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: 10.5,
+                              color: "var(--muted)",
+                              textTransform: "uppercase",
+                              fontWeight: 800,
+                            }}
+                          >
+                            {label}
+                          </div>
+                          <div
+                            style={{ fontFamily: DISPLAY, fontSize: 27, fontWeight: 800, marginTop: 5 }}
+                          >
+                            {value}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 2 }}>
+                            {foot}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {storeOpportunity.atRisk.length > 0 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 14,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                          <strong style={{ color: "var(--text)" }}>
+                            {storeOpportunity.atRisk[0].name_en || storeOpportunity.atRisk[0].sku}
+                          </strong>{" "}
+                          needs attention first. You can review one change, confirm it in Zid, and
+                          restore the original price.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openProduct(storeOpportunity.atRisk[0])}
+                          style={{
+                            border: "none",
+                            borderRadius: 9,
+                            padding: "11px 16px",
+                            background: OG,
+                            color: "white",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            fontWeight: 850,
+                          }}
+                        >
+                          Review the first price →
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          padding: "13px 15px",
+                          borderRadius: 10,
+                          background: `color-mix(in srgb,${GN} 8%,var(--surface))`,
+                          color: GN,
+                          fontWeight: 750,
+                        }}
+                      >
+                        Every product with a confirmed cost is currently meeting your target. PrizeSkout
+                        will keep checking new changes.
+                      </div>
+                    )}
+
+                    {(storeOpportunity.estimated > 0 || storeOpportunity.unknown > 0) && (
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          lineHeight: 1.55,
+                          color: "#92400E",
+                          background: "color-mix(in srgb,#F59E0B 9%,var(--surface))",
+                          border: "1px solid color-mix(in srgb,#F59E0B 28%,var(--border))",
+                          borderRadius: 9,
+                          padding: "10px 13px",
+                        }}
+                      >
+                        <strong>Some product costs need confirmation.</strong>{" "}
+                        {storeOpportunity.estimated} cost
+                        {storeOpportunity.estimated === 1 ? " is" : "s are"} estimated and{" "}
+                        {storeOpportunity.unknown} {storeOpportunity.unknown === 1 ? "is" : "are"}{" "}
+                        missing. PrizeSkout will show suggestions but will not change these products
+                        automatically.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Hero + stat grid */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))",
+                    gap: 18,
+                  }}
+                >
+                  <div
+                    data-tour="hero"
+                    data-demo-tip="Profits protected this month — real QAR value from every price PrizeSkout defended, not a projection."
+                    style={{
+                      gridColumn: "span 2",
+                      minWidth: "min(100%,560px)",
+                      position: "relative",
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 16,
+                      boxShadow: "var(--shadow)",
+                      padding: "26px 28px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 18,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 9,
+                        fontSize: 12.5,
+                        fontWeight: 500,
+                        letterSpacing: "0.06em",
+                        color: "var(--muted)",
+                        textTransform: "uppercase" as const,
+                      }}
+                    >
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: GN }} />
+                      {t.profLabel}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                        <span
+                          style={{
+                            fontFamily: DISPLAY,
+                            fontSize: 18.5,
+                            fontWeight: 500,
+                            color: heroStats?.has_activity ? "var(--text)" : "var(--muted)",
+                          }}
+                        >
+                          {currency}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: DISPLAY,
+                            fontSize: 62,
+                            fontWeight: 700,
+                            lineHeight: 1,
+                            color: heroStats?.has_activity ? GN : "var(--muted)",
+                            fontVariantNumeric: "tabular-nums",
+                          }}
+                        >
+                          {heroStats?.has_activity
+                            ? fmtMoney(heroStats.profits_protected_this_month, currency)
+                            : "—"}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 15, color: "var(--muted)" }}>
+                      {heroStats?.has_activity
+                        ? `${heroStats.price_updates_this_month} ${t.profDefensesLabel}`
+                        : t.profNoActivity}
+                    </div>
+                    {/* Sparkline: real daily-bucketed profit-protected totals when
+                    available, a flat dim placeholder otherwise. */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-end",
+                        gap: 4,
+                        height: 70,
+                        marginTop: 6,
+                        opacity: heroStats?.has_activity ? 1 : 0.18,
+                      }}
+                    >
+                      {(heroStats?.daily_series ?? Array.from({ length: 33 }).map(() => 0)).map(
+                        (v, i) => {
+                          const max = Math.max(1, ...(heroStats?.daily_series ?? [1]));
+                          return (
+                            <span
+                              key={i}
+                              style={{
+                                flex: 1,
+                                borderRadius: "3px 3px 0 0",
+                                height: Math.max(4, (v / max) * 70),
+                                background: `color-mix(in srgb,${OG} ${v > 0 ? 85 : 40}%,var(--surface))`,
+                              }}
+                            />
+                          );
+                        },
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stat cards */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+                      gap: 18,
+                      gridColumn: "span 2",
+                      minWidth: "min(100%,420px)",
+                      alignContent: "stretch",
+                    }}
+                  >
+                    {[
+                      {
+                        label: "Tracked Products",
+                        value: heroStats?.has_activity ? String(heroStats.tracked_products) : "—",
+                        foot: heroStats?.has_activity ? t.profTrackedFoot : "connect a store",
+                        footColor: "var(--muted)",
+                        tip: "Every product PrizeSkout has pulled in from your connected stores and is actively pricing.",
+                        action: () => openCatalogFilter("all"),
+                      },
+                      {
+                        label: "Price Updates Today",
+                        value: String(heroStats?.price_updates_today ?? 0),
+                        foot: "avg latency <2s",
+                        footColor: "var(--muted)",
+                        tip: "Automatic price changes pushed live today — under 2 seconds from decision to the price actually updating on the channel.",
+                        action: () => setTab("history"),
+                      },
+                      {
+                        label: "Avg. Margin Saved",
+                        value:
+                          heroStats?.avg_margin_saved_pct != null
+                            ? `+${heroStats.avg_margin_saved_pct.toFixed(1)}pp`
+                            : "—",
+                        foot:
+                          heroStats?.avg_margin_saved_pct != null ? t.profMarginFoot : "no data yet",
+                        footColor: "var(--muted)",
+                        tip: "Percentage points of margin recovered versus what you'd have made without PrizeSkout's price defenses.",
+                        action: () => setTab("analytics"),
+                      },
+                      {
+                        label: "Active Rules",
+                        value: String(rules.filter((r) => r.active).length),
+                        foot: "price guardrails",
+                        footColor: "var(--muted)",
+                        tip: "Margin policies currently enforced automatically — see Margin Policy Engine for the full rule book.",
+                        action: () => setTab("rules"),
+                      },
+                    ].map((s) => (
+                      <button
+                        type="button"
+                        key={s.label}
+                        data-demo-tip={s.tip}
+                        onClick={s.action}
+                        style={{
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 16,
+                          boxShadow: "var(--shadow)",
+                          padding: "20px 22px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                          justifyContent: "space-between",
+                          color: "inherit",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          textAlign: "start",
+                        }}
+                      >
                         <div
                           style={{
                             fontSize: 12.5,
@@ -8126,1280 +8000,745 @@ export function PrizeSkoutDashboard() {
                             textTransform: "uppercase" as const,
                           }}
                         >
-                          Fix these first
+                          {s.label}
                         </div>
-                        <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>
-                          Ranked by how far below your margin floor they've fallen.
+                        <div
+                          style={{
+                            fontFamily: DISPLAY,
+                            fontSize: 36.5,
+                            fontWeight: 700,
+                            lineHeight: 1,
+                            fontVariantNumeric: "tabular-nums",
+                          }}
+                        >
+                          {s.value}
                         </div>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        {fixTheseFirst.map((product) => {
-                          const displayName =
-                            lang === "ar" && product.name_ar
-                              ? product.name_ar
-                              : product.name_en || product.sku;
-                          return (
-                            <div
-                              key={product.ingest_event_id}
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`Review ${displayName}`}
-                              onClick={() => openProduct(product)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  openProduct(product);
-                                }
-                              }}
-                              style={{
-                                cursor: "pointer",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                gap: 10,
-                                padding: "8px 6px",
-                                borderRadius: 8,
-                                borderBottom: "1px solid var(--border)",
-                              }}
-                            >
-                              <div style={{ minWidth: 0 }}>
-                                <div
-                                  style={{
-                                    fontSize: 13.5,
-                                    fontWeight: 700,
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  {displayName}
-                                </div>
-                                <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                                  {product.currency}{" "}
-                                  {fmtMoney(product.current_price, product.currency)} →{" "}
-                                  {fmtMoney(product.recommended_price, product.currency)}
-                                </div>
-                              </div>
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  color: "#B42318",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {product.decision_action === "reprice_up" ? "↑" : "↓"}{" "}
-                                {product.net_margin_pct != null
-                                  ? `${(product.net_margin_pct * 100).toFixed(1)}%`
-                                  : "—"}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-            {false && (<>
-            <div
-              id="legacy-imported-products"
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 16,
-                boxShadow: "var(--shadow)",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                data-demo-tip="These are real products pulled live from your connected store's API — not a mock catalogue. Each one gets a margin-floor price recommendation automatically."
-                style={{
-                  padding: "22px 26px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 14,
-                  flexWrap: "wrap",
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>Imported Products</h3>
-                  <div style={{ marginTop: 5, fontSize: 13.5, color: "var(--muted)" }}>
-                    Products from your connected stores, with the next safe action for each one.
+                        <div style={{ fontSize: 14, color: s.footColor }}>{s.foot}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={syncAllCatalogs}
-                  disabled={syncingCatalog}
-                  data-demo-tip="Pulls your catalogue straight from every connected store — no need to ask the Copilot for something this routine."
-                  style={{
-                    cursor: syncingCatalog ? "wait" : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    color: GN,
-                    background: `color-mix(in srgb,${GN} 10%,var(--surface))`,
-                    border: `1px solid color-mix(in srgb,${GN} 28%,transparent)`,
-                    borderRadius: 999,
-                    padding: "7px 14px",
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    fontFamily: "inherit",
-                    opacity: syncingCatalog ? 0.7 : 1,
-                  }}
-                >
-                  {syncingCatalog ? (
-                    "Syncing…"
-                  ) : (
-                    <>
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="23 4 23 10 17 10" />
-                        <polyline points="1 20 1 14 7 14" />
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                      </svg>
-                      Refresh products
-                    </>
-                  )}
-                </button>
-              </div>
-              <div
-                style={{
-                  padding: "14px 18px",
-                  display: "flex",
-                  gap: 10,
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  borderBottom: "1px solid var(--border)",
-                  background: "var(--surface2)",
-                }}
-              >
-                <input
-                  value={productSearch}
-                  onChange={(event) => setProductSearch(event.target.value)}
-                  placeholder="Search product name, SKU, or channel…"
-                  aria-label="Search imported products"
-                  style={{
-                    flex: "1 1 260px",
-                    minWidth: 0,
-                    border: "1px solid var(--border)",
-                    borderRadius: 9,
-                    background: "var(--surface)",
-                    color: "var(--text)",
-                    padding: "10px 12px",
-                    fontFamily: "inherit",
-                    fontSize: 13.5,
-                  }}
-                />
-                <select
-                  value={productFilter}
-                  onChange={(event) => setProductFilter(event.target.value as typeof productFilter)}
-                  aria-label="Filter imported products"
-                  style={{
-                    border: "1px solid var(--border)",
-                    borderRadius: 9,
-                    background: "var(--surface)",
-                    color: "var(--text)",
-                    padding: "10px 12px",
-                    fontFamily: "inherit",
-                    fontSize: 13,
-                  }}
-                >
-                  <option value="all">All products ({importedProducts.length})</option>
-                  <option value="risk">Earning below target</option>
-                  <option value="missing_cost">Cost needs confirmation</option>
-                  {productFilter === "verified_risk" && (
-                    <option value="verified_risk">Below target · cost confirmed</option>
-                  )}
-                  <option value="healthy">Meeting target</option>
-                  <option value="repriced">Price changed</option>
-                </select>
-                <select
-                  value={productSort}
-                  onChange={(event) => setProductSort(event.target.value as typeof productSort)}
-                  aria-label="Sort imported products"
-                  style={{
-                    border: "1px solid var(--border)",
-                    borderRadius: 9,
-                    background: "var(--surface)",
-                    color: "var(--text)",
-                    padding: "10px 12px",
-                    fontFamily: "inherit",
-                    fontSize: 13,
-                  }}
-                >
-                  <option value="risk">Priority first</option>
-                  <option value="name">Name A–Z</option>
-                  <option value="price">Highest price</option>
-                </select>
-              </div>
-              {catalogLoading ? (
-                <div style={{ padding: 28, color: "var(--muted)", fontSize: 14 }}>
-                  Loading catalogue…
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div
-                  style={{
-                    padding: 32,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 14,
-                    textAlign: "center",
-                  }}
-                >
-                  {importedProducts.length > 0 ? (
-                    <div style={{ color: "var(--muted)", fontSize: 14 }}>
-                      No products match this search or filter.
+
+                {/* Instant-value strip: a forward-looking channel pricing
+                opportunity (computed from data already loaded, same math as
+                Channel Price Architecture) plus a ranked worst-offenders
+                list — both readable without opening any other tab. */}
+                {importedProducts.length > 0 &&
+                  (channelPricingGap.count > 0 || fixTheseFirst.length > 0) && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,320px),1fr))",
+                        gap: 18,
+                      }}
+                    >
+                      {channelPricingGap.count > 0 && (
+                        <div
+                          data-demo-tip="A snapshot of what Channel Price Architecture would find right now — the same math, surfaced here so you see it before opening that tab."
+                          style={{
+                            background: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            borderRadius: 16,
+                            boxShadow: "var(--shadow)",
+                            padding: "22px 24px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: 12.5,
+                              fontWeight: 500,
+                              letterSpacing: "0.04em",
+                              color: "var(--muted)",
+                              textTransform: "uppercase" as const,
+                            }}
+                          >
+                            Channel pricing gap
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: DISPLAY,
+                              fontSize: 32,
+                              fontWeight: 700,
+                              lineHeight: 1,
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            <span style={{ fontSize: 18, fontWeight: 500, marginRight: 6 }}>
+                              {currency}
+                            </span>
+                            {fmtMoney(channelPricingGap.gap, currency)}
+                          </div>
+                          <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5 }}>
+                            {channelPricingGap.count} product{channelPricingGap.count === 1 ? "" : "s"}{" "}
+                            priced below their target margin on at least one of your channels — this is
+                            what publishing corrected prices would add.
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPolicyTab("pricing");
+                              document
+                                .getElementById("ps-policy-center-card")
+                                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }}
+                            style={{
+                              alignSelf: "flex-start",
+                              cursor: "pointer",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "9px 14px",
+                              background: OG,
+                              color: "#fff",
+                              fontFamily: "inherit",
+                              fontWeight: 800,
+                              fontSize: 12.5,
+                              marginTop: 4,
+                            }}
+                          >
+                            Review channel pricing →
+                          </button>
+                        </div>
+                      )}
+                      {fixTheseFirst.length > 0 && (
+                        <div
+                          data-demo-tip="Your worst-margin products, ranked — click any row to review and apply its recommended price."
+                          style={{
+                            background: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            borderRadius: 16,
+                            boxShadow: "var(--shadow)",
+                            padding: "22px 24px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 12,
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontSize: 12.5,
+                                fontWeight: 500,
+                                letterSpacing: "0.04em",
+                                color: "var(--muted)",
+                                textTransform: "uppercase" as const,
+                              }}
+                            >
+                              Fix these first
+                            </div>
+                            <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>
+                              Ranked by how far below your margin floor they've fallen.
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            {fixTheseFirst.map((product) => {
+                              const displayName =
+                                lang === "ar" && product.name_ar
+                                  ? product.name_ar
+                                  : product.name_en || product.sku;
+                              return (
+                                <div
+                                  key={product.ingest_event_id}
+                                  role="button"
+                                  tabIndex={0}
+                                  aria-label={`Review ${displayName}`}
+                                  onClick={() => openProduct(product)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault();
+                                      openProduct(product);
+                                    }
+                                  }}
+                                  style={{
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    gap: 10,
+                                    padding: "8px 6px",
+                                    borderRadius: 8,
+                                    borderBottom: "1px solid var(--border)",
+                                  }}
+                                >
+                                  <div style={{ minWidth: 0 }}>
+                                    <div
+                                      style={{
+                                        fontSize: 13.5,
+                                        fontWeight: 700,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {displayName}
+                                    </div>
+                                    <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                                      {product.currency}{" "}
+                                      {fmtMoney(product.current_price, product.currency)} →{" "}
+                                      {fmtMoney(product.recommended_price, product.currency)}
+                                    </div>
+                                  </div>
+                                  <span
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 800,
+                                      color: "#B42318",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {product.decision_action === "reprice_up" ? "↑" : "↓"}{" "}
+                                    {product.net_margin_pct != null
+                                      ? `${(product.net_margin_pct * 100).toFixed(1)}%`
+                                      : "—"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : SYNC_CAPABLE_PLATFORMS.some((p) => channelStatuses[p] === "connected") ? (
-                    <>
-                      <div style={{ color: "var(--text)", fontSize: 15, fontWeight: 700 }}>
-                        Your store is connected, but its products have not been loaded yet
-                      </div>
-                      <div style={{ color: "var(--muted)", fontSize: 13.5, maxWidth: 420 }}>
-                        Load your products to see what each sale leaves after cost and channel
-                        charges.
+                  )}
+
+                {false && (<>
+                  <div
+                    id="legacy-imported-products"
+                    style={{
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 16,
+                      boxShadow: "var(--shadow)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      data-demo-tip="These are real products pulled live from your connected store's API — not a mock catalogue. Each one gets a margin-floor price recommendation automatically."
+                      style={{
+                        padding: "22px 26px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 14,
+                        flexWrap: "wrap",
+                        borderBottom: "1px solid var(--border)",
+                      }}
+                    >
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>Imported Products</h3>
+                        <div style={{ marginTop: 5, fontSize: 13.5, color: "var(--muted)" }}>
+                          Products from your connected stores, with the next safe action for each one.
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={syncAllCatalogs}
                         disabled={syncingCatalog}
+                        data-demo-tip="Pulls your catalogue straight from every connected store — no need to ask the Copilot for something this routine."
                         style={{
                           cursor: syncingCatalog ? "wait" : "pointer",
-                          border: "none",
-                          borderRadius: 10,
-                          background: OG,
-                          color: "#fff",
-                          fontSize: 13.5,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 7,
+                          color: GN,
+                          background: `color-mix(in srgb,${GN} 10%,var(--surface))`,
+                          border: `1px solid color-mix(in srgb,${GN} 28%,transparent)`,
+                          borderRadius: 999,
+                          padding: "7px 14px",
+                          fontSize: 12.5,
                           fontWeight: 700,
-                          padding: "11px 20px",
                           fontFamily: "inherit",
                           opacity: syncingCatalog ? 0.7 : 1,
                         }}
                       >
-                        {syncingCatalog ? "Loading products…" : "Load my products"}
+                        {syncingCatalog ? (
+                          "Syncing…"
+                        ) : (
+                          <>
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="23 4 23 10 17 10" />
+                              <polyline points="1 20 1 14 7 14" />
+                              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg>
+                            Refresh products
+                          </>
+                        )}
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{ color: "var(--text)", fontSize: 15, fontWeight: 700 }}>
-                        No store connected yet
-                      </div>
-                      <div style={{ color: "var(--muted)", fontSize: 13.5, maxWidth: 420 }}>
-                        Connect Zid, Salla, or Foodics to check product earnings and review safe
-                        price changes.
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setTab("vault")}
+                    </div>
+                    <div
+                      style={{
+                        padding: "14px 18px",
+                        display: "flex",
+                        gap: 10,
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        borderBottom: "1px solid var(--border)",
+                        background: "var(--surface2)",
+                      }}
+                    >
+                      <input
+                        value={productSearch}
+                        onChange={(event) => setProductSearch(event.target.value)}
+                        placeholder="Search product name, SKU, or channel…"
+                        aria-label="Search imported products"
                         style={{
-                          cursor: "pointer",
-                          border: "none",
-                          borderRadius: 10,
-                          background: OG,
-                          color: "#fff",
-                          fontSize: 13.5,
-                          fontWeight: 700,
-                          padding: "11px 20px",
+                          flex: "1 1 260px",
+                          minWidth: 0,
+                          border: "1px solid var(--border)",
+                          borderRadius: 9,
+                          background: "var(--surface)",
+                          color: "var(--text)",
+                          padding: "10px 12px",
                           fontFamily: "inherit",
+                          fontSize: 13.5,
+                        }}
+                      />
+                      <select
+                        value={productFilter}
+                        onChange={(event) => setProductFilter(event.target.value as typeof productFilter)}
+                        aria-label="Filter imported products"
+                        style={{
+                          border: "1px solid var(--border)",
+                          borderRadius: 9,
+                          background: "var(--surface)",
+                          color: "var(--text)",
+                          padding: "10px 12px",
+                          fontFamily: "inherit",
+                          fontSize: 13,
                         }}
                       >
-                        Go to Integration Vault
-                      </button>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))",
-                      gap: 14,
-                      padding: 18,
-                    }}
-                  >
-                    {visibleProducts.map((product) => {
-                      const margin =
-                        product.net_margin_pct == null ? null : product.net_margin_pct * 100;
-                      const displayName =
-                        lang === "ar" && product.name_ar
-                          ? product.name_ar
-                          : product.name_en || product.sku;
-                      return (
+                        <option value="all">All products ({importedProducts.length})</option>
+                        <option value="risk">Earning below target</option>
+                        <option value="missing_cost">Cost needs confirmation</option>
+                        {productFilter === "verified_risk" && (
+                          <option value="verified_risk">Below target · cost confirmed</option>
+                        )}
+                        <option value="healthy">Meeting target</option>
+                        <option value="repriced">Price changed</option>
+                      </select>
+                      <select
+                        value={productSort}
+                        onChange={(event) => setProductSort(event.target.value as typeof productSort)}
+                        aria-label="Sort imported products"
+                        style={{
+                          border: "1px solid var(--border)",
+                          borderRadius: 9,
+                          background: "var(--surface)",
+                          color: "var(--text)",
+                          padding: "10px 12px",
+                          fontFamily: "inherit",
+                          fontSize: 13,
+                        }}
+                      >
+                        <option value="risk">Priority first</option>
+                        <option value="name">Name A–Z</option>
+                        <option value="price">Highest price</option>
+                      </select>
+                    </div>
+                    {catalogLoading ? (
+                      <div style={{ padding: 28, color: "var(--muted)", fontSize: 14 }}>
+                        Loading catalogue…
+                      </div>
+                    ) : filteredProducts.length === 0 ? (
+                      <div
+                        style={{
+                          padding: 32,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 14,
+                          textAlign: "center",
+                        }}
+                      >
+                        {importedProducts.length > 0 ? (
+                          <div style={{ color: "var(--muted)", fontSize: 14 }}>
+                            No products match this search or filter.
+                          </div>
+                        ) : SYNC_CAPABLE_PLATFORMS.some((p) => channelStatuses[p] === "connected") ? (
+                          <>
+                            <div style={{ color: "var(--text)", fontSize: 15, fontWeight: 700 }}>
+                              Your store is connected, but its products have not been loaded yet
+                            </div>
+                            <div style={{ color: "var(--muted)", fontSize: 13.5, maxWidth: 420 }}>
+                              Load your products to see what each sale leaves after cost and channel
+                              charges.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={syncAllCatalogs}
+                              disabled={syncingCatalog}
+                              style={{
+                                cursor: syncingCatalog ? "wait" : "pointer",
+                                border: "none",
+                                borderRadius: 10,
+                                background: OG,
+                                color: "#fff",
+                                fontSize: 13.5,
+                                fontWeight: 700,
+                                padding: "11px 20px",
+                                fontFamily: "inherit",
+                                opacity: syncingCatalog ? 0.7 : 1,
+                              }}
+                            >
+                              {syncingCatalog ? "Loading products…" : "Load my products"}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ color: "var(--text)", fontSize: 15, fontWeight: 700 }}>
+                              No store connected yet
+                            </div>
+                            <div style={{ color: "var(--muted)", fontSize: 13.5, maxWidth: 420 }}>
+                              Connect Zid, Salla, or Foodics to check product earnings and review safe
+                              price changes.
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setTab("vault")}
+                              style={{
+                                cursor: "pointer",
+                                border: "none",
+                                borderRadius: 10,
+                                background: OG,
+                                color: "#fff",
+                                fontSize: 13.5,
+                                fontWeight: 700,
+                                padding: "11px 20px",
+                                fontFamily: "inherit",
+                              }}
+                            >
+                              Go to Integration Vault
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <>
                         <div
-                          key={product.ingest_event_id}
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Open details for ${displayName}`}
-                          onClick={() => openProduct(product)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              openProduct(product);
-                            }
-                          }}
                           style={{
-                            cursor: "pointer",
-                            border: "1px solid var(--border)",
-                            borderRadius: 13,
-                            padding: "18px 19px",
-                            background: "var(--surface2)",
-                            display: "flex",
-                            flexDirection: "column",
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))",
                             gap: 14,
-                            transition:
-                              "transform .18s ease,border-color .18s ease,box-shadow .18s ease",
-                          }}
-                          onMouseEnter={(event) => {
-                            event.currentTarget.style.transform = "translateY(-2px)";
-                            event.currentTarget.style.borderColor = OG;
-                            event.currentTarget.style.boxShadow = "var(--shadow)";
-                          }}
-                          onMouseLeave={(event) => {
-                            event.currentTarget.style.transform = "none";
-                            event.currentTarget.style.borderColor = "var(--border)";
-                            event.currentTarget.style.boxShadow = "none";
+                            padding: 18,
                           }}
                         >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              justifyContent: "space-between",
-                              gap: 12,
-                            }}
-                          >
-                            <div style={{ minWidth: 0 }}>
+                          {visibleProducts.map((product) => {
+                            const margin =
+                              product.net_margin_pct == null ? null : product.net_margin_pct * 100;
+                            const displayName =
+                              lang === "ar" && product.name_ar
+                                ? product.name_ar
+                                : product.name_en || product.sku;
+                            return (
                               <div
-                                style={{ fontSize: 17, fontWeight: 800, overflowWrap: "anywhere" }}
-                              >
-                                {displayName}
-                              </div>
-                              <div
+                                key={product.ingest_event_id}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Open details for ${displayName}`}
+                                onClick={() => openProduct(product)}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    openProduct(product);
+                                  }
+                                }}
                                 style={{
-                                  fontFamily: MONO,
-                                  fontSize: 11.5,
-                                  color: "var(--muted)",
-                                  marginTop: 5,
+                                  cursor: "pointer",
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 13,
+                                  padding: "18px 19px",
+                                  background: "var(--surface2)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 14,
+                                  transition:
+                                    "transform .18s ease,border-color .18s ease,box-shadow .18s ease",
+                                }}
+                                onMouseEnter={(event) => {
+                                  event.currentTarget.style.transform = "translateY(-2px)";
+                                  event.currentTarget.style.borderColor = OG;
+                                  event.currentTarget.style.boxShadow = "var(--shadow)";
+                                }}
+                                onMouseLeave={(event) => {
+                                  event.currentTarget.style.transform = "none";
+                                  event.currentTarget.style.borderColor = "var(--border)";
+                                  event.currentTarget.style.boxShadow = "none";
                                 }}
                               >
-                                SKU {product.sku}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "flex-start",
+                                    justifyContent: "space-between",
+                                    gap: 12,
+                                  }}
+                                >
+                                  <div style={{ minWidth: 0 }}>
+                                    <div
+                                      style={{ fontSize: 17, fontWeight: 800, overflowWrap: "anywhere" }}
+                                    >
+                                      {displayName}
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontFamily: MONO,
+                                        fontSize: 11.5,
+                                        color: "var(--muted)",
+                                        marginTop: 5,
+                                      }}
+                                    >
+                                      SKU {product.sku}
+                                    </div>
+                                  </div>
+                                  <span
+                                    style={{
+                                      flexShrink: 0,
+                                      textTransform: "uppercase",
+                                      fontSize: 10.5,
+                                      fontWeight: 800,
+                                      color: OG,
+                                      border: `1px solid color-mix(in srgb,${OG} 30%,transparent)`,
+                                      borderRadius: 999,
+                                      padding: "4px 8px",
+                                    }}
+                                  >
+                                    {product.source_platform}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
+                                    gap: 10,
+                                  }}
+                                >
+                                  <div>
+                                    <div
+                                      style={{
+                                        fontSize: 10.5,
+                                        textTransform: "uppercase",
+                                        color: "var(--muted)",
+                                      }}
+                                    >
+                                      Current price
+                                    </div>
+                                    <div style={{ fontSize: 20, fontWeight: 800, marginTop: 3 }}>
+                                      {product.current_price.toLocaleString()}{" "}
+                                      <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                                        {product.currency}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div
+                                      style={{
+                                        fontSize: 10.5,
+                                        textTransform: "uppercase",
+                                        color: "var(--muted)",
+                                      }}
+                                    >
+                                      Recommended price
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: 20,
+                                        fontWeight: 800,
+                                        marginTop: 3,
+                                        color: product.cost_confidence === "verified" ? GN : "#B45309",
+                                      }}
+                                    >
+                                      {product.cost_confidence === "verified" ? (
+                                        <>
+                                          {product.recommended_price.toLocaleString(undefined, {
+                                            maximumFractionDigits: 2,
+                                          })}{" "}
+                                          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                                            {product.currency}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        "Cost needed"
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div
+                                      style={{
+                                        fontSize: 10.5,
+                                        textTransform: "uppercase",
+                                        color: "var(--muted)",
+                                      }}
+                                    >
+                                      Net margin
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: 20,
+                                        fontWeight: 800,
+                                        marginTop: 3,
+                                        color: product.floor_breached ? "#DC2626" : GN,
+                                      }}
+                                    >
+                                      {product.cost_confidence !== "verified" || margin == null
+                                        ? "Not available"
+                                        : `${margin.toFixed(1)}%`}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    gap: 10,
+                                    paddingTop: 12,
+                                    borderTop: "1px solid var(--border)",
+                                    fontSize: 12,
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color:
+                                        product.cost_confidence !== "verified"
+                                          ? "#B45309"
+                                          : product.floor_breached
+                                            ? "#DC2626"
+                                            : GN,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {product.cost_confidence !== "verified"
+                                      ? "Cost needed"
+                                      : product.floor_breached
+                                        ? "Below margin floor"
+                                        : "Margin healthy"}
+                                  </span>
+                                  <span style={{ color: "var(--muted)", textTransform: "capitalize" }}>
+                                    {product.cost_confidence !== "verified"
+                                      ? "Add cost to unlock a safe recommendation"
+                                      : `Recommendation: ${product.decision_action.replace(/_/g, " ")} · ${product.status.replace(/_/g, " ")}`}
+                                  </span>
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "flex-end",
+                                    color: OG,
+                                    fontSize: 12.5,
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  Open product details →
+                                </div>
                               </div>
-                            </div>
-                            <span
-                              style={{
-                                flexShrink: 0,
-                                textTransform: "uppercase",
-                                fontSize: 10.5,
-                                fontWeight: 800,
-                                color: OG,
-                                border: `1px solid color-mix(in srgb,${OG} 30%,transparent)`,
-                                borderRadius: 999,
-                                padding: "4px 8px",
-                              }}
-                            >
-                              {product.source_platform}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
-                              gap: 10,
-                            }}
-                          >
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: 10.5,
-                                  textTransform: "uppercase",
-                                  color: "var(--muted)",
-                                }}
-                              >
-                                Current price
-                              </div>
-                              <div style={{ fontSize: 20, fontWeight: 800, marginTop: 3 }}>
-                                {product.current_price.toLocaleString()}{" "}
-                                <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                                  {product.currency}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: 10.5,
-                                  textTransform: "uppercase",
-                                  color: "var(--muted)",
-                                }}
-                              >
-                                Recommended price
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: 20,
-                                  fontWeight: 800,
-                                  marginTop: 3,
-                                  color: product.cost_confidence === "verified" ? GN : "#B45309",
-                                }}
-                              >
-                                {product.cost_confidence === "verified" ? (
-                                  <>
-                                    {product.recommended_price.toLocaleString(undefined, {
-                                      maximumFractionDigits: 2,
-                                    })}{" "}
-                                    <span style={{ fontSize: 11, color: "var(--muted)" }}>
-                                      {product.currency}
-                                    </span>
-                                  </>
-                                ) : (
-                                  "Cost needed"
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <div
-                                style={{
-                                  fontSize: 10.5,
-                                  textTransform: "uppercase",
-                                  color: "var(--muted)",
-                                }}
-                              >
-                                Net margin
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: 20,
-                                  fontWeight: 800,
-                                  marginTop: 3,
-                                  color: product.floor_breached ? "#DC2626" : GN,
-                                }}
-                              >
-                                {product.cost_confidence !== "verified" || margin == null
-                                  ? "Not available"
-                                  : `${margin.toFixed(1)}%`}
-                              </div>
-                            </div>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              gap: 10,
-                              paddingTop: 12,
-                              borderTop: "1px solid var(--border)",
-                              fontSize: 12,
-                            }}
-                          >
-                            <span
-                              style={{
-                                color:
-                                  product.cost_confidence !== "verified"
-                                    ? "#B45309"
-                                    : product.floor_breached
-                                      ? "#DC2626"
-                                      : GN,
-                                fontWeight: 700,
-                              }}
-                            >
-                              {product.cost_confidence !== "verified"
-                                ? "Cost needed"
-                                : product.floor_breached
-                                  ? "Below margin floor"
-                                  : "Margin healthy"}
-                            </span>
-                            <span style={{ color: "var(--muted)", textTransform: "capitalize" }}>
-                              {product.cost_confidence !== "verified"
-                                ? "Add cost to unlock a safe recommendation"
-                                : `Recommendation: ${product.decision_action.replace(/_/g, " ")} · ${product.status.replace(/_/g, " ")}`}
-                            </span>
-                          </div>
+                            );
+                          })}
+                        </div>
+                        {productPageCount > 1 && (
                           <div
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "flex-end",
-                              color: OG,
+                              justifyContent: "space-between",
+                              gap: 12,
+                              padding: "14px 18px",
+                              borderTop: "1px solid var(--border)",
                               fontSize: 12.5,
-                              fontWeight: 800,
+                              color: "var(--muted)",
                             }}
                           >
-                            Open product details →
+                            <span>
+                              Showing {(productPage - 1) * productPageSize + 1}–
+                              {Math.min(productPage * productPageSize, filteredProducts.length)} of{" "}
+                              {filteredProducts.length}
+                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <button
+                                type="button"
+                                disabled={productPage === 1}
+                                onClick={() => setProductPage((page) => Math.max(1, page - 1))}
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  padding: "8px 11px",
+                                  cursor: productPage === 1 ? "not-allowed" : "pointer",
+                                  fontFamily: "inherit",
+                                }}
+                              >
+                                Previous
+                              </button>
+                              <span>
+                                Page {productPage} of {productPageCount}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={productPage === productPageCount}
+                                onClick={() =>
+                                  setProductPage((page) => Math.min(productPageCount, page + 1))
+                                }
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  padding: "8px 11px",
+                                  cursor: productPage === productPageCount ? "not-allowed" : "pointer",
+                                  fontFamily: "inherit",
+                                }}
+                              >
+                                Next
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </>
+                    )}
                   </div>
-                  {productPageCount > 1 && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        padding: "14px 18px",
-                        borderTop: "1px solid var(--border)",
-                        fontSize: 12.5,
-                        color: "var(--muted)",
-                      }}
-                    >
-                      <span>
-                        Showing {(productPage - 1) * productPageSize + 1}–
-                        {Math.min(productPage * productPageSize, filteredProducts.length)} of{" "}
-                        {filteredProducts.length}
-                      </span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <button
-                          type="button"
-                          disabled={productPage === 1}
-                          onClick={() => setProductPage((page) => Math.max(1, page - 1))}
-                          style={{
-                            border: "1px solid var(--border)",
-                            borderRadius: 8,
-                            background: "var(--surface)",
-                            color: "var(--text)",
-                            padding: "8px 11px",
-                            cursor: productPage === 1 ? "not-allowed" : "pointer",
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          Previous
-                        </button>
-                        <span>
-                          Page {productPage} of {productPageCount}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={productPage === productPageCount}
-                          onClick={() =>
-                            setProductPage((page) => Math.min(productPageCount, page + 1))
-                          }
-                          style={{
-                            border: "1px solid var(--border)",
-                            borderRadius: 8,
-                            background: "var(--surface)",
-                            color: "var(--text)",
-                            padding: "8px 11px",
-                            cursor: productPage === productPageCount ? "not-allowed" : "pointer",
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
 
-            {/* Payout Assurance — the flagship audit tool, kept focused on
+                  {/* Payout Assurance — the flagship audit tool, kept focused on
                 just the payout check and its results. Contract, promotion,
                 channel-pricing, and group-control configuration used to be
                 stacked in front of this (four unrelated workspaces a
                 merchant had to scroll past to reach the thing this page
                 exists for); they now live in their own Policy Center below. */}
-            </>)}
-            </>}
-            {sidebarNav === "recovery" && <>
-            <RecoveryDashboardSummary
-              currency={currency}
-              expectedPayout={payoutData?.expected_payout ?? null}
-              checks={historyPayoutChecks.length}
-              investigations={historyPayoutAudits.length}
-              recovered={recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0)}
-              submitted={recoveryCases.filter((item) => Boolean(item.submitted_at)).length}
-              openCases={recoveryCases.filter((item) => !["recovered", "closed", "rejected"].includes(item.status)).length}
-              channels={overviewChannels}
-              cases={recoveryCases}
-              onOpenTools={() => {
-                document.querySelector(".ps-db")?.classList.add("ps-show-recovery-tools");
-                window.setTimeout(() => document.getElementById("ps-payout-assurance-card")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-              }}
-            />
-            <div
-              id="ps-payout-assurance-card"
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 16,
-                boxShadow: "var(--shadow)",
-                padding: "26px 28px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 18,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: "-0.2px" }}>
-                    {t.payoutCheckTitle}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setTab("history")}
-                    style={{
-                      cursor: "pointer",
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      color: OG,
-                      background: "transparent",
-                      border: "none",
-                      padding: 0,
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    {lang === "en" ? "Past payout checks →" : t.historyViewLink}
-                  </button>
-                </div>
-                {payoutData && (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: payoutData.source === "upload" ? "#B45309" : GN,
-                      background:
-                        payoutData.source === "upload"
-                          ? "color-mix(in srgb,#B45309 10%,var(--surface))"
-                          : `color-mix(in srgb,${GN} 10%,var(--surface))`,
-                      border: `1px solid ${payoutData.source === "upload" ? "color-mix(in srgb,#B45309 28%,transparent)" : `color-mix(in srgb,${GN} 28%,transparent)`}`,
-                      borderRadius: 999,
-                      padding: "5px 12px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        background: payoutData.source === "upload" ? "#B45309" : GN,
-                      }}
-                    />
-                    {payoutData.source === "upload"
-                      ? t.payoutCheckSourceUpload
-                      : t.payoutCheckSourceLive}
-                    {" · "}
-                    {PAYOUT_UPLOAD_PLATFORMS.find((p) => p.value === payoutData.platform)?.label ??
-                      "Talabat"}
-                  </span>
-                )}
-              </div>
-              <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6 }}>
-                {t.payoutCheckDesc}
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: 8 }}>
-                {[
-                  ["1", "Choose evidence", "Connected orders, a statement, or receipt confirmation"],
-                  ["2", "Preview extraction", "Check the platform, period, amounts, and document type"],
-                  ["3", "Review & approve", "Only verified evidence enters reconciliation and recovery"],
-                ].map(([number,label,note]) => <div key={number} style={{ display: "flex", gap: 10, padding: "11px 12px", border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface2)" }}><span style={{ flex: "0 0 auto", width: 24, height: 24, display: "grid", placeItems: "center", borderRadius: "50%", background: number === "1" ? OG : "var(--surface)", color: number === "1" ? "#fff" : "var(--muted)", border: number === "1" ? 0 : "1px solid var(--border)", fontSize: 11, fontWeight: 850 }}>{number}</span><span><strong style={{ display: "block", color: "var(--text)", fontSize: 12 }}>{label}</strong><small style={{ display: "block", marginTop: 2, color: "var(--muted)", fontSize: 10.5, lineHeight: 1.35 }}>{note}</small></span></div>)}
-              </div>
-
-              {/* Tabs */}
-              <div
-                style={{
-                  display: "flex",
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 10,
-                  padding: 3,
-                  gap: 2,
-                  alignSelf: "flex-start",
-                }}
-              >
-                {(
-                  [
-                    ["live", lang === "en" ? "Connected orders" : t.payoutCheckLiveTab],
-                    ["upload", lang === "en" ? "Upload evidence" : t.payoutCheckUploadTab],
-                  ] as [typeof payoutTab, string][]
-                ).map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      setPayoutTab(id);
-                      setPayoutError(null);
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "9px 15px",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      fontFamily: "inherit",
-                      background: payoutTab === id ? OG : "transparent",
-                      color: payoutTab === id ? "#fff" : "var(--muted)",
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {payoutTab === "live" ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 14,
-                    alignItems: "flex-start",
-                    width: "100%",
-                    maxWidth: 720,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      border: "1px solid var(--border)",
-                      borderRadius: 12,
-                      padding: "16px 18px",
-                      background: "var(--surface2)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: 15, fontWeight: 800 }}>Check Talabat payout</div>
-                        <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>
-                          Compare connected orders with your agreed commission and expected
-                          settlement.
-                        </div>
-                      </div>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 800,
-                          color: GN,
-                          border: `1px solid color-mix(in srgb,${GN} 35%,transparent)`,
-                          borderRadius: 999,
-                          padding: "5px 9px",
-                        }}
-                      >
-                        CONNECTED PLATFORM
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: 7, marginTop: 14, flexWrap: "wrap" }}>
-                      {([7, 30] as const).map((days) => (
-                        <button
-                          key={days}
-                          type="button"
-                          onClick={() => setPayoutWindowDays(days)}
-                          style={{
-                            cursor: "pointer",
-                            border: `1px solid ${payoutWindowDays === days ? OG : "var(--border)"}`,
-                            borderRadius: 8,
-                            padding: "8px 11px",
-                            background:
-                              payoutWindowDays === days
-                                ? "color-mix(in srgb,#EF681A 9%,var(--surface))"
-                                : "var(--surface)",
-                            color: payoutWindowDays === days ? OG : "var(--text)",
-                            fontFamily: "inherit",
-                            fontWeight: 700,
-                          }}
-                        >
-                          Last {days} days
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={runPayoutCheck}
-                    disabled={payoutLoading}
-                    style={{
-                      cursor: payoutLoading ? "not-allowed" : "pointer",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: "#fff",
-                      background: payoutLoading ? "#94A3B8" : OG,
-                      border: "none",
-                      borderRadius: 10,
-                      padding: "11px 20px",
-                      fontFamily: "inherit",
-                      opacity: payoutLoading ? 0.7 : 1,
-                      transition: "background .2s,opacity .2s",
-                    }}
-                  >
-                    {payoutLoading ? t.payoutCheckBtnLoading : t.payoutCheckBtn}
-                  </button>
-                  <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                    {t.payoutCheckLiveOnlyNote}
-                  </span>
-                </div>
-              ) : (
-                <PayoutUploadStaging
-                  items={stagedItems}
-                  platforms={PAYOUT_UPLOAD_PLATFORMS}
-                  rate={payoutUploadRate}
-                  rateAuthorityLabel={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform)
-                    ? `Approved contract · ${approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform)?.contract_name}` : null}
-                  onRateChange={setPayoutUploadRate}
-                  onPlatformChange={(platform) => {
-                    setPayoutUploadPlatform(platform);
-                    const contract = approvedContracts.find(term => term.status === "approved" && term.platform === platform);
-                    setPayoutUploadRate(contract ? String(contract.commission_rate_pct) : "");
-                  }}
-                  onAddFile={addFileItems}
-                  onAddManual={addManualItem}
-                  onCorrectType={correctStagedDocumentType}
-                  onToggleNetSales={toggleNetSalesOverride}
-                  onRemove={removeStagedItem}
-                  onRunAudit={runStagedAudit}
-                />
-              )}
-
-              {payoutError && (
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "#DC2626",
-                    background: "color-mix(in srgb,#DC2626 8%,var(--surface))",
-                    border: "1px solid color-mix(in srgb,#DC2626 25%,transparent)",
-                    borderRadius: 9,
-                    padding: "10px 14px",
-                  }}
-                >
-                  {payoutError}
-                </div>
-              )}
-
-              {payoutData?.source === "live" &&
-                payoutData.settlement_forecast &&
-                payoutData.sale_lines && (
-                  <SettlementForecastPanel
-                    forecast={payoutData.settlement_forecast}
-                    lines={payoutData.sale_lines}
-                    currency={currency}
-                  />
-                )}
-              {payoutData && <PayoutResultDetail data={payoutData} currency={currency} t={t} />}
-
-              {auditResult &&
-                (auditResult.ledger.length > 0 || auditResult.findings.length > 0) && (
-                  <>
-                    <CommissionAuditPanel
-                      result={auditResult}
-                      currency={currency}
-                      documentCount={payoutDocuments.length}
-                      documents={payoutDocuments}
-                      approvedContract={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform) ?? null}
-                    />
-                    {payoutDocuments.some((document) => Boolean(document.evidence_item_id)) ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", padding: "14px 16px", border: "1px solid #FED7AA", borderRadius: 11, background: "#FFF7ED" }}>
-                        <div><strong style={{ display: "block", color: "#9A3412", fontSize: 13 }}>Preliminary extraction — not an approved audit</strong><span style={{ display: "block", marginTop: 4, color: "#9A3412", fontSize: 12, lineHeight: 1.45 }}>The original is safely retained. Verify its extracted values before PrizeSkout uses them for reconciliation or recovery.</span></div>
-                        <button type="button" onClick={() => setTab("history")} style={{ border: 0, borderRadius: 9, padding: "9px 13px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>Review retained evidence →</button>
-                      </div>
-                    ) : <div>
-                      <button
-                        type="button"
-                        onClick={handleSaveAudit}
-                        disabled={savingAudit || auditSaved}
-                        style={{
-                          cursor: savingAudit || auditSaved ? "not-allowed" : "pointer",
-                          fontFamily: "inherit",
-                          fontSize: 12.5,
-                          fontWeight: 700,
-                          color: auditSaved ? GN : "#fff",
-                          background: auditSaved ? "transparent" : OG,
-                          border: auditSaved ? `1px solid ${GN}` : "none",
-                          borderRadius: 9,
-                          padding: "9px 16px",
-                          opacity: savingAudit ? 0.7 : 1,
-                        }}
-                      >
-                        {auditSaved
-                          ? t.payoutAuditSaved
-                          : savingAudit
-                            ? t.payoutDownloadingPdf
-                            : t.payoutSaveAudit}
-                      </button>
-                      {auditSaved&&settlementRun&&<div style={{marginTop:9,padding:"9px 12px",border:"1px solid var(--border)",borderRadius:9,fontSize:12,color:"var(--muted)",background:"var(--surface2)"}}>
-                        Settlement ledger: <strong style={{color:"var(--text)"}}>{settlementRun.status.replaceAll("_"," ")}</strong> · {settlementRun.summary.exceptions??0} exception(s) · claim-ready {currency} {(settlementRun.summary.claims_ready_amount??0).toFixed(2)}. Aggregate or unreferenced evidence remains quarantined.
-                      </div>}
-                    </div>}
-                  </>
-                )}
-            </div>
-
-            {/* Policy Center — contract terms, promotions, channel pricing,
-                and group controls all feed the audit above but are
-                configured far less often than a payout check is run, so
-                they live in their own tabbed area instead of stacking in
-                front of it. */}
-            <div
-              id="ps-policy-center-card"
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 16,
-                boxShadow: "var(--shadow)",
-                padding: "26px 28px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 18,
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: "-0.2px" }}>
-                  Policy Center
-                </h3>
-                <div
-                  style={{ marginTop: 5, fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6 }}
-                >
-                  Set the business rules PrizeSkout should use when it checks payouts and recommends
-                  prices.
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 10,
-                  padding: 3,
-                  gap: 2,
-                  flexWrap: "wrap",
-                  alignSelf: "flex-start",
-                }}
-              >
-                {(
-                  [
-                    [
-                      "contract",
-                      "Contracts",
-                      "Contract Intelligence Vault — add your marketplace agreement, check the terms PrizeSkout finds, then approve them for payout checks.",
-                    ],
-                    [
-                      "promotions",
-                      "Promotions",
-                      "Promotion Profitability Control — simulate a discount campaign before running it, so you know if it actually makes money after commission and platform funding.",
-                    ],
-                    [
-                      "pricing",
-                      "Channel Pricing",
-                      "Channel Price Architecture — set different prices per channel (in-store, Talabat, Zid...) on purpose, without losing track of which price is live where.",
-                    ],
-                    [
-                      "group",
-                      "Group Controls",
-                      "Group Control Centre — for multi-branch operators: track every legal entity, brand, and branch under one roof, with finance and operations sign-off before changes go live.",
-                    ],
-                  ] as [typeof policyTab, string, string][]
-                ).map(([id, label, tip]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setPolicyTab(id)}
-                    data-demo-tip={tip}
-                    style={{
-                      cursor: "pointer",
-                      border: "none",
-                      borderRadius: 8,
-                      padding: "9px 15px",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      fontFamily: "inherit",
-                      background: policyTab === id ? OG : "transparent",
-                      color: policyTab === id ? "#fff" : "var(--muted)",
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {policyTab === "contract" && (
-                <ContractIntelligenceVault
-                  connectedPlatforms={Object.entries(channelStatuses).filter(([,status]) => status === "connected").map(([platform]) => platform)}
-                  onTermsChanged={(terms) => setApprovedContracts(terms.filter(term => term.status === "approved"))}
-                  onApproved={(term) => {
-                    setApprovedContract(term);
-                    setApprovedContracts(current => [term, ...current.filter(item => item.platform !== term.platform)]);
-                    setPayoutUploadRate(String(term.commission_rate_pct));
-                  }}
-                />
-              )}
-
-              {policyTab === "promotions" && (
-                <PromotionProfitabilityWorkspace
-                  products={importedProducts.map((product) => ({
-                    sku: product.sku,
-                    name: product.name_en || product.name_ar || product.sku,
-                    current_price: product.current_price,
-                    net_margin_pct: product.net_margin_pct,
-                    source_platform: product.source_platform,
-                    unit_cost: product.base_cost ?? null,
-                    cost_confidence: product.cost_confidence ?? "unknown",
-                  }))}
-                  contract={approvedContract}
+                </>)}
+              </>}
+              {sidebarNav === "recovery" && <>
+                <RecoveryDashboardSummary
                   currency={currency}
-                />
-              )}
-
-              {policyTab === "pricing" && (
-                <ChannelPriceArchitecture
-                  products={importedProducts.map((product) => ({
-                    sku: product.sku,
-                    name: product.name_en || product.name_ar || product.sku,
-                    current_price: product.current_price,
-                    net_margin_pct: product.net_margin_pct,
-                    source_platform: product.source_platform,
-                    ingest_event_id: product.ingest_event_id,
-                  }))}
-                  contract={approvedContract}
-                  currency={currency}
-                />
-              )}
-
-              {policyTab === "group" && (
-                <GroupControlWorkspace
-                  contract={approvedContract}
-                  currency={currency}
-                  productCount={importedProducts.length}
-                />
-              )}
-            </div>
-
-            {/* Stream + Dispute agent */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "space-between",
-                  gap: 14,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <h2
-                    style={{ margin: 0, fontSize: 19.5, fontWeight: 800, letterSpacing: "-0.2px" }}
-                  >
-                    {t.stream}
-                  </h2>
-                  <span style={{ fontSize: 14, color: "var(--muted)" }}>{t.streamS}</span>
-                </div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button
-                    onClick={downloadCsv}
-                    style={{
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      fontSize: 14.5,
-                      fontWeight: 600,
-                      color: "var(--text)",
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 10,
-                      padding: "11px 16px",
-                    }}
-                  >
-                    {t.downloadCsv}
-                  </button>
-                  <button
-                    onClick={exportDisputeProofs}
-                    disabled={!disputes.length && !feed.length}
-                    style={{
-                      cursor: !disputes.length && !feed.length ? "not-allowed" : "pointer",
-                      opacity: !disputes.length && !feed.length ? 0.55 : 1,
-                      fontFamily: "inherit",
-                      fontSize: 14.5,
-                      fontWeight: 700,
-                      color: OG,
-                      background: `color-mix(in srgb,${OG} 7%,var(--surface))`,
-                      border: `1px solid color-mix(in srgb,${OG} 30%,transparent)`,
-                      borderRadius: 10,
-                      padding: "11px 16px",
-                    }}
-                  >
-                    {t.exportProofs}
-                  </button>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))",
-                  gap: 18,
-                  alignItems: "stretch",
-                }}
-              >
-                {/* Terminal */}
-                <div
-                  dir="ltr"
-                  data-demo-tip="Every price PrizeSkout has pushed live, in real time — a raw audit trail you can hand to anyone who asks 'why did this price change?'"
-                  style={{
-                    background: "var(--term)",
-                    border: "1px solid var(--term-border)",
-                    borderRadius: 16,
-                    padding: "18px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                    minHeight: 340,
-                    maxHeight: 420,
-                    overflow: "hidden",
+                  expectedPayout={payoutData?.expected_payout ?? null}
+                  checks={historyPayoutChecks.length}
+                  investigations={historyPayoutAudits.length}
+                  recovered={recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0)}
+                  submitted={recoveryCases.filter((item) => Boolean(item.submitted_at)).length}
+                  openCases={recoveryCases.filter((item) => !["recovered", "closed", "rejected"].includes(item.status)).length}
+                  channels={overviewChannels}
+                  cases={recoveryCases}
+                  onOpenTools={() => {
+                    document.querySelector(".ps-db")?.classList.add("ps-show-recovery-tools");
+                    window.setTimeout(() => document.getElementById("ps-payout-assurance-card")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
                   }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 7,
-                      marginBottom: 12,
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
-                      <span
-                        style={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: "50%",
-                          background: "#FF5F57",
-                        }}
-                      />
-                      <span
-                        style={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: "50%",
-                          background: "#FEBC2E",
-                        }}
-                      />
-                      <span
-                        style={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: "50%",
-                          background: "#28C840",
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontFamily: MONO,
-                          fontSize: 13,
-                          color: "#5A6472",
-                          marginInlineStart: 8,
-                        }}
-                      >
-                        defend-loop · edge-doha-01
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setTab("history")}
-                      style={{
-                        cursor: "pointer",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: "#5A6472",
-                        background: "transparent",
-                        border: "none",
-                        padding: 0,
-                        fontFamily: MONO,
-                      }}
-                    >
-                      {t.historyViewLink}
-                    </button>
-                  </div>
-                  {feed.length === 0 ? (
-                    <div
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 10,
-                        color: "#5A6472",
-                        fontFamily: MONO,
-                        fontSize: 14,
-                        textAlign: "center",
-                      }}
-                    >
-                      <span style={{ fontSize: 23.5, opacity: 0.4 }}>◉</span>
-                      <span>No events yet · connect a store to start</span>
-                    </div>
-                  ) : (
-                    feed.map((f, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: "flex",
-                          gap: 10,
-                          alignItems: "baseline",
-                          fontFamily: MONO,
-                          fontSize: 14,
-                          lineHeight: 1.9,
-                          animation: "pk-in .3s ease",
-                        }}
-                      >
-                        <span style={{ color: "#5A6472", flex: "0 0 auto" }}>{f.time}</span>
-                        <span style={{ color: f.tagColor, fontWeight: 700, flex: "0 0 auto" }}>
-                          {f.tag}
-                        </span>
-                        <span
-                          style={{
-                            color: "var(--term-text)",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {f.text}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Dispute Audit Agent */}
+                />
                 <div
-                  data-demo-tip="Detects and tracks payout discrepancies through the recovery register. Manual controls remain available for testing and as a fallback when a partner cannot accept automated submissions."
+                  id="ps-payout-assurance-card"
                   style={{
                     background: "var(--surface)",
                     border: "1px solid var(--border)",
                     borderRadius: 16,
                     boxShadow: "var(--shadow)",
-                    padding: "22px 24px",
+                    padding: "26px 28px",
                     display: "flex",
                     flexDirection: "column",
                     gap: 18,
@@ -9414,622 +8753,1283 @@ export function PrizeSkoutDashboard() {
                       flexWrap: "wrap",
                     }}
                   >
-                    <h3
-                      style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.2px" }}
-                    >
-                      {t.agentTitle}
-                    </h3>
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: 13.5,
-                        fontWeight: 700,
-                        color: GN,
-                        background: `color-mix(in srgb,${GN} 10%,var(--surface))`,
-                        border: `1px solid color-mix(in srgb,${GN} 26%,transparent)`,
-                        borderRadius: 999,
-                        padding: "5px 12px",
-                      }}
-                    >
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                      <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: "-0.2px" }}>
+                        {t.payoutCheckTitle}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setTab("history")}
+                        style={{
+                          cursor: "pointer",
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                          color: OG,
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {lang === "en" ? "Past payout checks →" : t.historyViewLink}
+                      </button>
+                    </div>
+                    {payoutData && (
                       <span
                         style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: GN,
-                          animation: "pk-ring 1.8s infinite",
-                        }}
-                      />
-                      {t.agentActive}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
-                      gap: 10,
-                    }}
-                  >
-                    {[
-                      {
-                        value: `${currency} ${recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 2 })}`,
-                        label: "Money Recovered",
-                        color: "var(--muted)",
-                      },
-                      {
-                        value: String(
-                          recoveryCases.filter((item) => Boolean(item.submitted_at)).length,
-                        ),
-                        label: "Claims Submitted",
-                        color: "var(--text)",
-                      },
-                      {
-                        value: String(
-                          recoveryCases.filter(
-                            (item) => !["recovered", "closed", "rejected"].includes(item.status),
-                          ).length,
-                        ),
-                        label: "Open Recovery Cases",
-                        color: "var(--muted)",
-                      },
-                    ].map((m) => (
-                      <div
-                        key={m.label}
-                        style={{
-                          background: "var(--surface2)",
-                          border: "1px solid var(--border)",
-                          borderRadius: 12,
-                          padding: "13px 14px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 5,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: DISPLAY,
-                            fontSize: 20.5,
-                            fontWeight: 700,
-                            color: m.color,
-                            fontVariantNumeric: "tabular-nums",
-                          }}
-                        >
-                          {m.value}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 12.5,
-                            color: "var(--muted)",
-                            fontWeight: 600,
-                            lineHeight: 1.35,
-                          }}
-                        >
-                          {m.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div
-                      style={{
-                        fontSize: 12.5,
-                        fontWeight: 500,
-                        letterSpacing: "0.04em",
-                        color: "var(--muted)",
-                        textTransform: "uppercase" as const,
-                      }}
-                    >
-                      {t.discLog}
-                    </div>
-                    {recoveryLoading ? (
-                      <div
-                        style={{
-                          border: "1px solid var(--border)",
-                          background: "var(--surface2)",
-                          borderRadius: 12,
-                          padding: "24px 20px",
-                          fontSize: 15,
-                          color: "var(--muted)",
-                        }}
-                      >
-                        Loading recovery register…
-                      </div>
-                    ) : disputes.length === 0 ? (
-                      <div
-                        style={{
-                          border: "1px solid var(--border)",
-                          background: "var(--surface2)",
-                          borderRadius: 12,
-                          padding: "24px 20px",
                           display: "flex",
                           alignItems: "center",
-                          gap: 14,
+                          gap: 6,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: payoutData.source === "upload" ? "#B45309" : GN,
+                          background:
+                            payoutData.source === "upload"
+                              ? "color-mix(in srgb,#B45309 10%,var(--surface))"
+                              : `color-mix(in srgb,${GN} 10%,var(--surface))`,
+                          border: `1px solid ${payoutData.source === "upload" ? "color-mix(in srgb,#B45309 28%,transparent)" : `color-mix(in srgb,${GN} 28%,transparent)`}`,
+                          borderRadius: 999,
+                          padding: "5px 12px",
                         }}
                       >
                         <span
                           style={{
-                            width: 9,
-                            height: 9,
+                            width: 7,
+                            height: 7,
                             borderRadius: "50%",
-                            background: GN,
-                            flexShrink: 0,
-                            animation: "pk-pulse 2.4s infinite",
+                            background: payoutData.source === "upload" ? "#B45309" : GN,
                           }}
                         />
-                        <span style={{ fontSize: 15, color: "var(--muted)" }}>
-                          No recovery cases yet · run a payout audit or log a discrepancy
-                        </span>
-                      </div>
-                    ) : (
-                      disputes.map((d, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            border: "1px solid var(--border)",
-                            background: "var(--surface2)",
-                            borderRadius: 12,
-                            padding: "14px 16px",
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: 12,
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 6,
-                              minWidth: 0,
-                              flex: 1,
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                                fontSize: 15.5,
-                                fontWeight: 700,
-                              }}
-                            >
-                              ⚠ {d.title}
-                              <span
-                                style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 400 }}
-                              >
-                                (Order {d.order})
-                              </span>
-                            </div>
-                            <div style={{ fontSize: 13.5, color: "var(--muted)" }}>
-                              {d.place} · Contract: {d.contract} · Charged:{" "}
-                              <span style={{ color: OG, fontWeight: 700 }}>{d.charged}</span> ·
-                              Leak: <span style={{ color: OG, fontWeight: 700 }}>{d.leak}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setModal(i);
-                              setFileStep(0);
-                            }}
-                            className="ps-ig-btn"
-                            style={{
-                              cursor: "pointer",
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color: "var(--text)",
-                              background: "transparent",
-                              border: "1.5px solid var(--border)",
-                              borderRadius: 10,
-                              padding: "10px 15px",
-                              fontFamily: "inherit",
-                              transition: "border-color .2s,color .2s",
-                            }}
-                          >
-                            {t.genVoucher}
-                          </button>
-                        </div>
-                      ))
+                        {payoutData.source === "upload"
+                          ? t.payoutCheckSourceUpload
+                          : t.payoutCheckSourceLive}
+                        {" · "}
+                        {PAYOUT_UPLOAD_PLATFORMS.find((p) => p.value === payoutData.platform)?.label ??
+                          "Talabat"}
+                      </span>
                     )}
                   </div>
+                  <div style={{ fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6 }}>
+                    {t.payoutCheckDesc}
+                  </div>
 
-                  {/* Log Discrepancy button + form */}
-                  <button
-                    onClick={() => setShowDisputeForm((v) => !v)}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: 8 }}>
+                    {[
+                      ["1", "Choose evidence", "Connected orders, a statement, or receipt confirmation"],
+                      ["2", "Preview extraction", "Check the platform, period, amounts, and document type"],
+                      ["3", "Review & approve", "Only verified evidence enters reconciliation and recovery"],
+                    ].map(([number, label, note]) => <div key={number} style={{ display: "flex", gap: 10, padding: "11px 12px", border: "1px solid var(--border)", borderRadius: 10, background: "var(--surface2)" }}><span style={{ flex: "0 0 auto", width: 24, height: 24, display: "grid", placeItems: "center", borderRadius: "50%", background: number === "1" ? OG : "var(--surface)", color: number === "1" ? "#fff" : "var(--muted)", border: number === "1" ? 0 : "1px solid var(--border)", fontSize: 11, fontWeight: 850 }}>{number}</span><span><strong style={{ display: "block", color: "var(--text)", fontSize: 12 }}>{label}</strong><small style={{ display: "block", marginTop: 2, color: "var(--muted)", fontSize: 10.5, lineHeight: 1.35 }}>{note}</small></span></div>)}
+                  </div>
+
+                  {/* Tabs */}
+                  <div
                     style={{
-                      cursor: "pointer",
-                      alignSelf: "flex-start",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: showDisputeForm ? OG : "var(--text)",
-                      background: "transparent",
-                      border: `1.5px solid ${showDisputeForm ? OG : "var(--border)"}`,
+                      display: "flex",
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
                       borderRadius: 10,
-                      padding: "10px 15px",
-                      fontFamily: "inherit",
-                      transition: "border-color .2s,color .2s",
+                      padding: 3,
+                      gap: 2,
+                      alignSelf: "flex-start",
                     }}
                   >
-                    {showDisputeForm ? t.cancelBtn : t.logDiscrepancyBtn}
-                  </button>
+                    {(
+                      [
+                        ["live", lang === "en" ? "Connected orders" : t.payoutCheckLiveTab],
+                        ["upload", lang === "en" ? "Upload evidence" : t.payoutCheckUploadTab],
+                      ] as [typeof payoutTab, string][]
+                    ).map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => {
+                          setPayoutTab(id);
+                          setPayoutError(null);
+                        }}
+                        style={{
+                          cursor: "pointer",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "9px 15px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          fontFamily: "inherit",
+                          background: payoutTab === id ? OG : "transparent",
+                          color: payoutTab === id ? "#fff" : "var(--muted)",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
 
-                  {showDisputeForm && (
+                  {payoutTab === "live" ? (
                     <div
                       style={{
-                        border: "1px solid var(--border)",
-                        background: "var(--surface2)",
-                        borderRadius: 14,
-                        padding: "20px 22px",
                         display: "flex",
                         flexDirection: "column",
                         gap: 14,
-                        animation: "pk-in .2s ease",
+                        alignItems: "flex-start",
+                        width: "100%",
+                        maxWidth: 720,
                       }}
                     >
-                      <div style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text)" }}>
-                        {t.newDiscrepancy}
-                      </div>
                       <div
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,200px),1fr))",
-                          gap: 10,
+                          width: "100%",
+                          border: "1px solid var(--border)",
+                          borderRadius: 12,
+                          padding: "16px 18px",
+                          background: "var(--surface2)",
                         }}
                       >
-                        {/* Partner */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <label
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                              textTransform: "uppercase" as const,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            {t.partnerLabel}
-                          </label>
-                          <select
-                            value={disputePartner}
-                            onChange={(e) => setDisputePartner(e.target.value)}
-                            style={{
-                              border: "1px solid var(--border)",
-                              borderRadius: 8,
-                              padding: "8px 10px",
-                              background: "var(--surface)",
-                              color: "var(--text)",
-                              fontSize: 14.5,
-                              fontFamily: "inherit",
-                            }}
-                          >
-                            {["Talabat", "Jahez", "Noon", "Amazon", "Careem"].map((p) => (
-                              <option key={p}>{p}</option>
-                            ))}
-                          </select>
-                        </div>
-                        {/* Order ID */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <label
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                              textTransform: "uppercase" as const,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            {t.orderIdLabel}
-                          </label>
-                          <input
-                            value={disputeOrderId}
-                            onChange={(e) => setDisputeOrderId(e.target.value)}
-                            placeholder="e.g. #84201-A"
-                            style={{
-                              border: "1px solid var(--border)",
-                              borderRadius: 8,
-                              padding: "8px 10px",
-                              background: "var(--surface)",
-                              color: "var(--text)",
-                              fontSize: 14.5,
-                              fontFamily: "inherit",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                        {/* Location */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <label
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                              textTransform: "uppercase" as const,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            {t.branchLocationLabel}
-                          </label>
-                          <input
-                            value={disputePlace}
-                            onChange={(e) => setDisputePlace(e.target.value)}
-                            placeholder="e.g. Doha Mall branch"
-                            style={{
-                              border: "1px solid var(--border)",
-                              borderRadius: 8,
-                              padding: "8px 10px",
-                              background: "var(--surface)",
-                              color: "var(--text)",
-                              fontSize: 14.5,
-                              fontFamily: "inherit",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                        {/* Contracted rate */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <label
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                              textTransform: "uppercase" as const,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            {t.contractedRateLabel}
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            max="40"
-                            value={disputeRate}
-                            onChange={(e) => setDisputeRate(e.target.value)}
-                            placeholder="18"
-                            style={{
-                              border: "1px solid var(--border)",
-                              borderRadius: 8,
-                              padding: "8px 10px",
-                              background: "var(--surface)",
-                              color: "var(--text)",
-                              fontSize: 14.5,
-                              fontFamily: "inherit",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                        {/* Order value */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <label
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                              textTransform: "uppercase" as const,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            {t.orderValueLabel} ({currency})
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={disputeOurPrice}
-                            onChange={(e) => setDisputeOurPrice(e.target.value)}
-                            placeholder="120.00"
-                            style={{
-                              border: "1px solid var(--border)",
-                              borderRadius: 8,
-                              padding: "8px 10px",
-                              background: "var(--surface)",
-                              color: "var(--text)",
-                              fontSize: 14.5,
-                              fontFamily: "inherit",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                        {/* Charged amount */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <label
-                            style={{
-                              fontSize: 12.5,
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                              textTransform: "uppercase" as const,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            {t.chargedByPartnerLabel} ({currency})
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={disputeCharged}
-                            onChange={(e) => setDisputeCharged(e.target.value)}
-                            placeholder="30.00"
-                            style={{
-                              border: "1px solid var(--border)",
-                              borderRadius: 8,
-                              padding: "8px 10px",
-                              background: "var(--surface)",
-                              color: "var(--text)",
-                              fontSize: 14.5,
-                              fontFamily: "inherit",
-                              outline: "none",
-                            }}
-                          />
-                        </div>
-                      </div>
-                      {/* Notes */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <label
+                        <div
                           style={{
-                            fontSize: 12.5,
-                            fontWeight: 600,
-                            color: "var(--muted)",
-                            textTransform: "uppercase" as const,
-                            letterSpacing: "0.05em",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 12,
+                            flexWrap: "wrap",
                           }}
                         >
-                          {t.additionalNotesLabel}
-                        </label>
-                        <textarea
-                          value={disputeNotes}
-                          onChange={(e) => setDisputeNotes(e.target.value)}
-                          rows={2}
-                          placeholder="Any context about the discrepancy..."
-                          style={{
-                            border: "1px solid var(--border)",
-                            borderRadius: 8,
-                            padding: "8px 10px",
-                            resize: "vertical",
-                            background: "var(--surface)",
-                            color: "var(--text)",
-                            fontSize: 14.5,
-                            fontFamily: "inherit",
-                            outline: "none",
-                          }}
-                        />
+                          <div>
+                            <div style={{ fontSize: 15, fontWeight: 800 }}>Check Talabat payout</div>
+                            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>
+                              Compare connected orders with your agreed commission and expected
+                              settlement.
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: GN,
+                              border: `1px solid color-mix(in srgb,${GN} 35%,transparent)`,
+                              borderRadius: 999,
+                              padding: "5px 9px",
+                            }}
+                          >
+                            CONNECTED PLATFORM
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", gap: 7, marginTop: 14, flexWrap: "wrap" }}>
+                          {([7, 30] as const).map((days) => (
+                            <button
+                              key={days}
+                              type="button"
+                              onClick={() => setPayoutWindowDays(days)}
+                              style={{
+                                cursor: "pointer",
+                                border: `1px solid ${payoutWindowDays === days ? OG : "var(--border)"}`,
+                                borderRadius: 8,
+                                padding: "8px 11px",
+                                background:
+                                  payoutWindowDays === days
+                                    ? "color-mix(in srgb,#EF681A 9%,var(--surface))"
+                                    : "var(--surface)",
+                                color: payoutWindowDays === days ? OG : "var(--text)",
+                                fontFamily: "inherit",
+                                fontWeight: 700,
+                              }}
+                            >
+                              Last {days} days
+                            </button>
+                          ))}
+                        </div>
                       </div>
                       <button
-                        disabled={
-                          disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice
-                        }
-                        onClick={async () => {
-                          const mid = localStorage.getItem("ps_merchant_id") ?? "";
-                          const ac = localStorage.getItem("ps_access_code") ?? "";
-                          if (!mid || !ac) {
-                            showToast("Please connect your store first.");
-                            return;
-                          }
-                          setDisputeLoading(true);
-                          try {
-                            const res = await fetch("/api/dispute/voucher", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                merchant_id: mid,
-                                access_code: ac,
-                                partner: disputePartner,
-                                order_id: disputeOrderId,
-                                place: disputePlace || "Main branch",
-                                contracted_rate: Number(disputeRate),
-                                charged_amount: Number(disputeCharged),
-                                our_price: Number(disputeOurPrice),
-                                currency,
-                                notes: disputeNotes,
-                              }),
-                            });
-                            const data = (await res.json()) as Dispute & { error?: string };
-                            if (!res.ok || data.error) {
-                              showToast("⚠ " + (data.error ?? "Voucher generation failed"));
-                              return;
-                            }
-                            const expectedCharge =
-                              (Number(disputeOurPrice) * Number(disputeRate)) / 100;
-                            const discrepancyAmount = Math.max(
-                              0,
-                              Number(disputeCharged) - expectedCharge,
-                            );
-                            const caseResponse = await fetch("/api/channels/connect", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                merchant_id: mid,
-                                access_code: ac,
-                                platform: "recovery_cases",
-                                action: "create",
-                                exception_key: disputeOrderId,
-                                title: data.title,
-                                source_platform: disputePartner.toLowerCase(),
-                                case_status: "evidence_required",
-                                severity:
-                                  discrepancyAmount >= 1000
-                                    ? "high"
-                                    : discrepancyAmount >= 100
-                                      ? "medium"
-                                      : "low",
-                                exception_amount: discrepancyAmount,
-                                claims_ready_amount: 0,
-                                confidence: "low",
-                                affected_orders: 1,
-                                contract_term_id: null,
-                                contract_clause: `Merchant-entered ${disputeRate}% commission rate; reviewed contract not yet attached`,
-                                evidence_sources: [
-                                  "merchant_entered_discrepancy",
-                                  "generated_bilingual_voucher",
-                                ],
-                                calculation: {
-                                  order_value: Number(disputeOurPrice),
-                                  contracted_rate_pct: Number(disputeRate),
-                                  expected_charge: expectedCharge,
-                                  actual_charge: Number(disputeCharged),
-                                  discrepancy: discrepancyAmount,
-                                  voucher_hash: data.hash,
-                                },
-                                explanation_en: data.en,
-                                explanation_ar: data.ar,
-                                owner: "",
-                              }),
-                            });
-                            const savedCase = (await caseResponse.json()) as {
-                              ok?: boolean;
-                              error?: string;
-                            };
-                            if (!caseResponse.ok || !savedCase.ok) {
-                              showToast(
-                                "Voucher created, but the recovery case could not be saved: " +
-                                  (savedCase.error ?? "Unknown error"),
-                              );
-                              return;
-                            }
-                            await loadRecoveryRegister();
-                            setShowDisputeForm(false);
-                            setDisputeOrderId("");
-                            setDisputeCharged("");
-                            setDisputeOurPrice("");
-                            setDisputeNotes("");
-                            setDisputePlace("");
-                            showToast(
-                              "Discrepancy saved to the recovery register · evidence draft ready",
-                            );
-                          } catch {
-                            showToast("⚠ Network error — try again.");
-                          } finally {
-                            setDisputeLoading(false);
-                          }
-                        }}
+                        onClick={runPayoutCheck}
+                        disabled={payoutLoading}
                         style={{
-                          cursor:
-                            disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice
-                              ? "not-allowed"
-                              : "pointer",
-                          alignSelf: "flex-start",
-                          fontSize: 14.5,
+                          cursor: payoutLoading ? "not-allowed" : "pointer",
+                          fontSize: 14,
                           fontWeight: 700,
                           color: "#fff",
-                          background: disputeLoading ? "#94A3B8" : OG,
+                          background: payoutLoading ? "#94A3B8" : OG,
                           border: "none",
                           borderRadius: 10,
                           padding: "11px 20px",
                           fontFamily: "inherit",
-                          opacity:
-                            disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice
-                              ? 0.6
-                              : 1,
+                          opacity: payoutLoading ? 0.7 : 1,
                           transition: "background .2s,opacity .2s",
                         }}
                       >
-                        {disputeLoading ? "Saving…" : "Save Recovery Case & Generate Evidence ↗"}
+                        {payoutLoading ? t.payoutCheckBtnLoading : t.payoutCheckBtn}
                       </button>
+                      <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                        {t.payoutCheckLiveOnlyNote}
+                      </span>
+                    </div>
+                  ) : (
+                    <PayoutUploadStaging
+                      items={stagedItems}
+                      platforms={PAYOUT_UPLOAD_PLATFORMS}
+                      rate={payoutUploadRate}
+                      rateAuthorityLabel={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform)
+                        ? `Approved contract · ${approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform)?.contract_name}` : null}
+                      onRateChange={setPayoutUploadRate}
+                      onPlatformChange={(platform) => {
+                        setPayoutUploadPlatform(platform);
+                        const contract = approvedContracts.find(term => term.status === "approved" && term.platform === platform);
+                        setPayoutUploadRate(contract ? String(contract.commission_rate_pct) : "");
+                      }}
+                      onAddFile={addFileItems}
+                      onAddManual={addManualItem}
+                      onCorrectType={correctStagedDocumentType}
+                      onToggleNetSales={toggleNetSalesOverride}
+                      onRemove={removeStagedItem}
+                      onRunAudit={runStagedAudit}
+                    />
+                  )}
+
+                  {payoutError && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#DC2626",
+                        background: "color-mix(in srgb,#DC2626 8%,var(--surface))",
+                        border: "1px solid color-mix(in srgb,#DC2626 25%,transparent)",
+                        borderRadius: 9,
+                        padding: "10px 14px",
+                      }}
+                    >
+                      {payoutError}
                     </div>
                   )}
+
+                  {payoutData?.source === "live" &&
+                    payoutData.settlement_forecast &&
+                    payoutData.sale_lines && (
+                      <SettlementForecastPanel
+                        forecast={payoutData.settlement_forecast}
+                        lines={payoutData.sale_lines}
+                        currency={currency}
+                      />
+                    )}
+                  {payoutData && <PayoutResultDetail data={payoutData} currency={currency} t={t} />}
+
+                  {auditResult &&
+                    (auditResult.ledger.length > 0 || auditResult.findings.length > 0) && (
+                      <>
+                        <CommissionAuditPanel
+                          result={auditResult}
+                          currency={currency}
+                          documentCount={payoutDocuments.length}
+                          documents={payoutDocuments}
+                          approvedContract={approvedContracts.find(term => term.status === "approved" && term.platform === payoutUploadPlatform) ?? null}
+                        />
+                        {payoutDocuments.some((document) => Boolean(document.evidence_item_id)) ? (
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", padding: "14px 16px", border: "1px solid #FED7AA", borderRadius: 11, background: "#FFF7ED" }}>
+                            <div><strong style={{ display: "block", color: "#9A3412", fontSize: 13 }}>Preliminary extraction — not an approved audit</strong><span style={{ display: "block", marginTop: 4, color: "#9A3412", fontSize: 12, lineHeight: 1.45 }}>The original is safely retained. Verify its extracted values before PrizeSkout uses them for reconciliation or recovery.</span></div>
+                            <button type="button" onClick={() => setTab("history")} style={{ border: 0, borderRadius: 9, padding: "9px 13px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>Review retained evidence →</button>
+                          </div>
+                        ) : <div>
+                          <button
+                            type="button"
+                            onClick={handleSaveAudit}
+                            disabled={savingAudit || auditSaved}
+                            style={{
+                              cursor: savingAudit || auditSaved ? "not-allowed" : "pointer",
+                              fontFamily: "inherit",
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              color: auditSaved ? GN : "#fff",
+                              background: auditSaved ? "transparent" : OG,
+                              border: auditSaved ? `1px solid ${GN}` : "none",
+                              borderRadius: 9,
+                              padding: "9px 16px",
+                              opacity: savingAudit ? 0.7 : 1,
+                            }}
+                          >
+                            {auditSaved
+                              ? t.payoutAuditSaved
+                              : savingAudit
+                                ? t.payoutDownloadingPdf
+                                : t.payoutSaveAudit}
+                          </button>
+                          {auditSaved && settlementRun && <div style={{ marginTop: 9, padding: "9px 12px", border: "1px solid var(--border)", borderRadius: 9, fontSize: 12, color: "var(--muted)", background: "var(--surface2)" }}>
+                            Settlement ledger: <strong style={{ color: "var(--text)" }}>{settlementRun.status.replaceAll("_", " ")}</strong> · {settlementRun.summary.exceptions ?? 0} exception(s) · claim-ready {currency} {(settlementRun.summary.claims_ready_amount ?? 0).toFixed(2)}. Aggregate or unreferenced evidence remains quarantined.
+                          </div>}
+                        </div>}
+                      </>
+                    )}
                 </div>
-              </div>
-            </div>
-            </>}
+
+                {/* Policy Center — contract terms, promotions, channel pricing,
+                and group controls all feed the audit above but are
+                configured far less often than a payout check is run, so
+                they live in their own tabbed area instead of stacking in
+                front of it. */}
+                <div
+                  id="ps-policy-center-card"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 16,
+                    boxShadow: "var(--shadow)",
+                    padding: "26px 28px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 18,
+                  }}
+                >
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: "-0.2px" }}>
+                      Policy Center
+                    </h3>
+                    <div
+                      style={{ marginTop: 5, fontSize: 13.5, color: "var(--muted)", lineHeight: 1.6 }}
+                    >
+                      Set the business rules PrizeSkout should use when it checks payouts and recommends
+                      prices.
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10,
+                      padding: 3,
+                      gap: 2,
+                      flexWrap: "wrap",
+                      alignSelf: "flex-start",
+                    }}
+                  >
+                    {(
+                      [
+                        [
+                          "contract",
+                          "Contracts",
+                          "Contract Intelligence Vault — add your marketplace agreement, check the terms PrizeSkout finds, then approve them for payout checks.",
+                        ],
+                        [
+                          "promotions",
+                          "Promotions",
+                          "Promotion Profitability Control — simulate a discount campaign before running it, so you know if it actually makes money after commission and platform funding.",
+                        ],
+                        [
+                          "pricing",
+                          "Channel Pricing",
+                          "Channel Price Architecture — set different prices per channel (in-store, Talabat, Zid...) on purpose, without losing track of which price is live where.",
+                        ],
+                        [
+                          "group",
+                          "Group Controls",
+                          "Group Control Centre — for multi-branch operators: track every legal entity, brand, and branch under one roof, with finance and operations sign-off before changes go live.",
+                        ],
+                      ] as [typeof policyTab, string, string][]
+                    ).map(([id, label, tip]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setPolicyTab(id)}
+                        data-demo-tip={tip}
+                        style={{
+                          cursor: "pointer",
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "9px 15px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          fontFamily: "inherit",
+                          background: policyTab === id ? OG : "transparent",
+                          color: policyTab === id ? "#fff" : "var(--muted)",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {policyTab === "contract" && (
+                    <ContractIntelligenceVault
+                      connectedPlatforms={Object.entries(channelStatuses).filter(([, status]) => status === "connected").map(([platform]) => platform)}
+                      onTermsChanged={(terms) => setApprovedContracts(terms.filter(term => term.status === "approved"))}
+                      onApproved={(term) => {
+                        setApprovedContract(term);
+                        setApprovedContracts(current => [term, ...current.filter(item => item.platform !== term.platform)]);
+                        setPayoutUploadRate(String(term.commission_rate_pct));
+                      }}
+                    />
+                  )}
+
+                  {policyTab === "promotions" && (
+                    <PromotionProfitabilityWorkspace
+                      products={importedProducts.map((product) => ({
+                        sku: product.sku,
+                        name: product.name_en || product.name_ar || product.sku,
+                        current_price: product.current_price,
+                        net_margin_pct: product.net_margin_pct,
+                        source_platform: product.source_platform,
+                        unit_cost: product.base_cost ?? null,
+                        cost_confidence: product.cost_confidence ?? "unknown",
+                      }))}
+                      contract={approvedContract}
+                      currency={currency}
+                    />
+                  )}
+
+                  {policyTab === "pricing" && (
+                    <ChannelPriceArchitecture
+                      products={importedProducts.map((product) => ({
+                        sku: product.sku,
+                        name: product.name_en || product.name_ar || product.sku,
+                        current_price: product.current_price,
+                        net_margin_pct: product.net_margin_pct,
+                        source_platform: product.source_platform,
+                        ingest_event_id: product.ingest_event_id,
+                      }))}
+                      contract={approvedContract}
+                      currency={currency}
+                    />
+                  )}
+
+                  {policyTab === "group" && (
+                    <GroupControlWorkspace
+                      contract={approvedContract}
+                      currency={currency}
+                      productCount={importedProducts.length}
+                    />
+                  )}
+                </div>
+
+                {/* Stream + Dispute agent */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "space-between",
+                      gap: 14,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <h2
+                        style={{ margin: 0, fontSize: 19.5, fontWeight: 800, letterSpacing: "-0.2px" }}
+                      >
+                        {t.stream}
+                      </h2>
+                      <span style={{ fontSize: 14, color: "var(--muted)" }}>{t.streamS}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <button
+                        onClick={downloadCsv}
+                        style={{
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          fontSize: 14.5,
+                          fontWeight: 600,
+                          color: "var(--text)",
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 10,
+                          padding: "11px 16px",
+                        }}
+                      >
+                        {t.downloadCsv}
+                      </button>
+                      <button
+                        onClick={exportDisputeProofs}
+                        disabled={!disputes.length && !feed.length}
+                        style={{
+                          cursor: !disputes.length && !feed.length ? "not-allowed" : "pointer",
+                          opacity: !disputes.length && !feed.length ? 0.55 : 1,
+                          fontFamily: "inherit",
+                          fontSize: 14.5,
+                          fontWeight: 700,
+                          color: OG,
+                          background: `color-mix(in srgb,${OG} 7%,var(--surface))`,
+                          border: `1px solid color-mix(in srgb,${OG} 30%,transparent)`,
+                          borderRadius: 10,
+                          padding: "11px 16px",
+                        }}
+                      >
+                        {t.exportProofs}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))",
+                      gap: 18,
+                      alignItems: "stretch",
+                    }}
+                  >
+                    {/* Terminal */}
+                    <div
+                      dir="ltr"
+                      data-demo-tip="Every price PrizeSkout has pushed live, in real time — a raw audit trail you can hand to anyone who asks 'why did this price change?'"
+                      style={{
+                        background: "var(--term)",
+                        border: "1px solid var(--term-border)",
+                        borderRadius: 16,
+                        padding: "18px 20px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        minHeight: 340,
+                        maxHeight: 420,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 7,
+                          marginBottom: 12,
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+                          <span
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              background: "#FF5F57",
+                            }}
+                          />
+                          <span
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              background: "#FEBC2E",
+                            }}
+                          />
+                          <span
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              background: "#28C840",
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontFamily: MONO,
+                              fontSize: 13,
+                              color: "#5A6472",
+                              marginInlineStart: 8,
+                            }}
+                          >
+                            defend-loop · edge-doha-01
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setTab("history")}
+                          style={{
+                            cursor: "pointer",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: "#5A6472",
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            fontFamily: MONO,
+                          }}
+                        >
+                          {t.historyViewLink}
+                        </button>
+                      </div>
+                      {feed.length === 0 ? (
+                        <div
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 10,
+                            color: "#5A6472",
+                            fontFamily: MONO,
+                            fontSize: 14,
+                            textAlign: "center",
+                          }}
+                        >
+                          <span style={{ fontSize: 23.5, opacity: 0.4 }}>◉</span>
+                          <span>No events yet · connect a store to start</span>
+                        </div>
+                      ) : (
+                        feed.map((f, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: "flex",
+                              gap: 10,
+                              alignItems: "baseline",
+                              fontFamily: MONO,
+                              fontSize: 14,
+                              lineHeight: 1.9,
+                              animation: "pk-in .3s ease",
+                            }}
+                          >
+                            <span style={{ color: "#5A6472", flex: "0 0 auto" }}>{f.time}</span>
+                            <span style={{ color: f.tagColor, fontWeight: 700, flex: "0 0 auto" }}>
+                              {f.tag}
+                            </span>
+                            <span
+                              style={{
+                                color: "var(--term-text)",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {f.text}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Dispute Audit Agent */}
+                    <div
+                      data-demo-tip="Detects and tracks payout discrepancies through the recovery register. Manual controls remain available for testing and as a fallback when a partner cannot accept automated submissions."
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 16,
+                        boxShadow: "var(--shadow)",
+                        padding: "22px 24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 18,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <h3
+                          style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.2px" }}
+                        >
+                          {t.agentTitle}
+                        </h3>
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            fontSize: 13.5,
+                            fontWeight: 700,
+                            color: GN,
+                            background: `color-mix(in srgb,${GN} 10%,var(--surface))`,
+                            border: `1px solid color-mix(in srgb,${GN} 26%,transparent)`,
+                            borderRadius: 999,
+                            padding: "5px 12px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              background: GN,
+                              animation: "pk-ring 1.8s infinite",
+                            }}
+                          />
+                          {t.agentActive}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
+                          gap: 10,
+                        }}
+                      >
+                        {[
+                          {
+                            value: `${currency} ${recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 2 })}`,
+                            label: "Money Recovered",
+                            color: "var(--muted)",
+                          },
+                          {
+                            value: String(
+                              recoveryCases.filter((item) => Boolean(item.submitted_at)).length,
+                            ),
+                            label: "Claims Submitted",
+                            color: "var(--text)",
+                          },
+                          {
+                            value: String(
+                              recoveryCases.filter(
+                                (item) => !["recovered", "closed", "rejected"].includes(item.status),
+                              ).length,
+                            ),
+                            label: "Open Recovery Cases",
+                            color: "var(--muted)",
+                          },
+                        ].map((m) => (
+                          <div
+                            key={m.label}
+                            style={{
+                              background: "var(--surface2)",
+                              border: "1px solid var(--border)",
+                              borderRadius: 12,
+                              padding: "13px 14px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 5,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontFamily: DISPLAY,
+                                fontSize: 20.5,
+                                fontWeight: 700,
+                                color: m.color,
+                                fontVariantNumeric: "tabular-nums",
+                              }}
+                            >
+                              {m.value}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 12.5,
+                                color: "var(--muted)",
+                                fontWeight: 600,
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              {m.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div
+                          style={{
+                            fontSize: 12.5,
+                            fontWeight: 500,
+                            letterSpacing: "0.04em",
+                            color: "var(--muted)",
+                            textTransform: "uppercase" as const,
+                          }}
+                        >
+                          {t.discLog}
+                        </div>
+                        {recoveryLoading ? (
+                          <div
+                            style={{
+                              border: "1px solid var(--border)",
+                              background: "var(--surface2)",
+                              borderRadius: 12,
+                              padding: "24px 20px",
+                              fontSize: 15,
+                              color: "var(--muted)",
+                            }}
+                          >
+                            Loading recovery register…
+                          </div>
+                        ) : disputes.length === 0 ? (
+                          <div
+                            style={{
+                              border: "1px solid var(--border)",
+                              background: "var(--surface2)",
+                              borderRadius: 12,
+                              padding: "24px 20px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 14,
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 9,
+                                height: 9,
+                                borderRadius: "50%",
+                                background: GN,
+                                flexShrink: 0,
+                                animation: "pk-pulse 2.4s infinite",
+                              }}
+                            />
+                            <span style={{ fontSize: 15, color: "var(--muted)" }}>
+                              No recovery cases yet · run a payout audit or log a discrepancy
+                            </span>
+                          </div>
+                        ) : (
+                          disputes.map((d, i) => (
+                            <div
+                              key={i}
+                              style={{
+                                border: "1px solid var(--border)",
+                                background: "var(--surface2)",
+                                borderRadius: 12,
+                                padding: "14px 16px",
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 12,
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 6,
+                                  minWidth: 0,
+                                  flex: 1,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                    fontSize: 15.5,
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  ⚠ {d.title}
+                                  <span
+                                    style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 400 }}
+                                  >
+                                    (Order {d.order})
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: 13.5, color: "var(--muted)" }}>
+                                  {d.place} · Contract: {d.contract} · Charged:{" "}
+                                  <span style={{ color: OG, fontWeight: 700 }}>{d.charged}</span> ·
+                                  Leak: <span style={{ color: OG, fontWeight: 700 }}>{d.leak}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setModal(i);
+                                  setFileStep(0);
+                                }}
+                                className="ps-ig-btn"
+                                style={{
+                                  cursor: "pointer",
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  color: "var(--text)",
+                                  background: "transparent",
+                                  border: "1.5px solid var(--border)",
+                                  borderRadius: 10,
+                                  padding: "10px 15px",
+                                  fontFamily: "inherit",
+                                  transition: "border-color .2s,color .2s",
+                                }}
+                              >
+                                {t.genVoucher}
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Log Discrepancy button + form */}
+                      <button
+                        onClick={() => setShowDisputeForm((v) => !v)}
+                        style={{
+                          cursor: "pointer",
+                          alignSelf: "flex-start",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: showDisputeForm ? OG : "var(--text)",
+                          background: "transparent",
+                          border: `1.5px solid ${showDisputeForm ? OG : "var(--border)"}`,
+                          borderRadius: 10,
+                          padding: "10px 15px",
+                          fontFamily: "inherit",
+                          transition: "border-color .2s,color .2s",
+                        }}
+                      >
+                        {showDisputeForm ? t.cancelBtn : t.logDiscrepancyBtn}
+                      </button>
+
+                      {showDisputeForm && (
+                        <div
+                          style={{
+                            border: "1px solid var(--border)",
+                            background: "var(--surface2)",
+                            borderRadius: 14,
+                            padding: "20px 22px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 14,
+                            animation: "pk-in .2s ease",
+                          }}
+                        >
+                          <div style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text)" }}>
+                            {t.newDiscrepancy}
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,200px),1fr))",
+                              gap: 10,
+                            }}
+                          >
+                            {/* Partner */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <label
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: 600,
+                                  color: "var(--muted)",
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                {t.partnerLabel}
+                              </label>
+                              <select
+                                value={disputePartner}
+                                onChange={(e) => setDisputePartner(e.target.value)}
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  fontSize: 14.5,
+                                  fontFamily: "inherit",
+                                }}
+                              >
+                                {["Talabat", "Jahez", "Noon", "Amazon", "Careem"].map((p) => (
+                                  <option key={p}>{p}</option>
+                                ))}
+                              </select>
+                            </div>
+                            {/* Order ID */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <label
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: 600,
+                                  color: "var(--muted)",
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                {t.orderIdLabel}
+                              </label>
+                              <input
+                                value={disputeOrderId}
+                                onChange={(e) => setDisputeOrderId(e.target.value)}
+                                placeholder="e.g. #84201-A"
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  fontSize: 14.5,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                            {/* Location */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <label
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: 600,
+                                  color: "var(--muted)",
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                {t.branchLocationLabel}
+                              </label>
+                              <input
+                                value={disputePlace}
+                                onChange={(e) => setDisputePlace(e.target.value)}
+                                placeholder="e.g. Doha Mall branch"
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  fontSize: 14.5,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                            {/* Contracted rate */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <label
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: 600,
+                                  color: "var(--muted)",
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                {t.contractedRateLabel}
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="40"
+                                value={disputeRate}
+                                onChange={(e) => setDisputeRate(e.target.value)}
+                                placeholder="18"
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  fontSize: 14.5,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                            {/* Order value */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <label
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: 600,
+                                  color: "var(--muted)",
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                {t.orderValueLabel} ({currency})
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={disputeOurPrice}
+                                onChange={(e) => setDisputeOurPrice(e.target.value)}
+                                placeholder="120.00"
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  fontSize: 14.5,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                            {/* Charged amount */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              <label
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: 600,
+                                  color: "var(--muted)",
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                {t.chargedByPartnerLabel} ({currency})
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={disputeCharged}
+                                onChange={(e) => setDisputeCharged(e.target.value)}
+                                placeholder="30.00"
+                                style={{
+                                  border: "1px solid var(--border)",
+                                  borderRadius: 8,
+                                  padding: "8px 10px",
+                                  background: "var(--surface)",
+                                  color: "var(--text)",
+                                  fontSize: 14.5,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {/* Notes */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <label
+                              style={{
+                                fontSize: 12.5,
+                                fontWeight: 600,
+                                color: "var(--muted)",
+                                textTransform: "uppercase" as const,
+                                letterSpacing: "0.05em",
+                              }}
+                            >
+                              {t.additionalNotesLabel}
+                            </label>
+                            <textarea
+                              value={disputeNotes}
+                              onChange={(e) => setDisputeNotes(e.target.value)}
+                              rows={2}
+                              placeholder="Any context about the discrepancy..."
+                              style={{
+                                border: "1px solid var(--border)",
+                                borderRadius: 8,
+                                padding: "8px 10px",
+                                resize: "vertical",
+                                background: "var(--surface)",
+                                color: "var(--text)",
+                                fontSize: 14.5,
+                                fontFamily: "inherit",
+                                outline: "none",
+                              }}
+                            />
+                          </div>
+                          <button
+                            disabled={
+                              disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice
+                            }
+                            onClick={async () => {
+                              const mid = localStorage.getItem("ps_merchant_id") ?? "";
+                              const ac = localStorage.getItem("ps_access_code") ?? "";
+                              if (!mid || !ac) {
+                                showToast("Please connect your store first.");
+                                return;
+                              }
+                              setDisputeLoading(true);
+                              try {
+                                const res = await fetch("/api/dispute/voucher", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    merchant_id: mid,
+                                    access_code: ac,
+                                    partner: disputePartner,
+                                    order_id: disputeOrderId,
+                                    place: disputePlace || "Main branch",
+                                    contracted_rate: Number(disputeRate),
+                                    charged_amount: Number(disputeCharged),
+                                    our_price: Number(disputeOurPrice),
+                                    currency,
+                                    notes: disputeNotes,
+                                  }),
+                                });
+                                const data = (await res.json()) as Dispute & { error?: string };
+                                if (!res.ok || data.error) {
+                                  showToast("⚠ " + (data.error ?? "Voucher generation failed"));
+                                  return;
+                                }
+                                const expectedCharge =
+                                  (Number(disputeOurPrice) * Number(disputeRate)) / 100;
+                                const discrepancyAmount = Math.max(
+                                  0,
+                                  Number(disputeCharged) - expectedCharge,
+                                );
+                                const caseResponse = await fetch("/api/channels/connect", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    merchant_id: mid,
+                                    access_code: ac,
+                                    platform: "recovery_cases",
+                                    action: "create",
+                                    exception_key: disputeOrderId,
+                                    title: data.title,
+                                    source_platform: disputePartner.toLowerCase(),
+                                    case_status: "evidence_required",
+                                    severity:
+                                      discrepancyAmount >= 1000
+                                        ? "high"
+                                        : discrepancyAmount >= 100
+                                          ? "medium"
+                                          : "low",
+                                    exception_amount: discrepancyAmount,
+                                    claims_ready_amount: 0,
+                                    confidence: "low",
+                                    affected_orders: 1,
+                                    contract_term_id: null,
+                                    contract_clause: `Merchant-entered ${disputeRate}% commission rate; reviewed contract not yet attached`,
+                                    evidence_sources: [
+                                      "merchant_entered_discrepancy",
+                                      "generated_bilingual_voucher",
+                                    ],
+                                    calculation: {
+                                      order_value: Number(disputeOurPrice),
+                                      contracted_rate_pct: Number(disputeRate),
+                                      expected_charge: expectedCharge,
+                                      actual_charge: Number(disputeCharged),
+                                      discrepancy: discrepancyAmount,
+                                      voucher_hash: data.hash,
+                                    },
+                                    explanation_en: data.en,
+                                    explanation_ar: data.ar,
+                                    owner: "",
+                                  }),
+                                });
+                                const savedCase = (await caseResponse.json()) as {
+                                  ok?: boolean;
+                                  error?: string;
+                                };
+                                if (!caseResponse.ok || !savedCase.ok) {
+                                  showToast(
+                                    "Voucher created, but the recovery case could not be saved: " +
+                                    (savedCase.error ?? "Unknown error"),
+                                  );
+                                  return;
+                                }
+                                await loadRecoveryRegister();
+                                setShowDisputeForm(false);
+                                setDisputeOrderId("");
+                                setDisputeCharged("");
+                                setDisputeOurPrice("");
+                                setDisputeNotes("");
+                                setDisputePlace("");
+                                showToast(
+                                  "Discrepancy saved to the recovery register · evidence draft ready",
+                                );
+                              } catch {
+                                showToast("⚠ Network error — try again.");
+                              } finally {
+                                setDisputeLoading(false);
+                              }
+                            }}
+                            style={{
+                              cursor:
+                                disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice
+                                  ? "not-allowed"
+                                  : "pointer",
+                              alignSelf: "flex-start",
+                              fontSize: 14.5,
+                              fontWeight: 700,
+                              color: "#fff",
+                              background: disputeLoading ? "#94A3B8" : OG,
+                              border: "none",
+                              borderRadius: 10,
+                              padding: "11px 20px",
+                              fontFamily: "inherit",
+                              opacity:
+                                disputeLoading || !disputeOrderId || !disputeCharged || !disputeOurPrice
+                                  ? 0.6
+                                  : 1,
+                              transition: "background .2s,opacity .2s",
+                            }}
+                          >
+                            {disputeLoading ? "Saving…" : "Save Recovery Case & Generate Evidence ↗"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>}
             </>)}
           </section>
         )}
@@ -10076,7 +10076,7 @@ export function PrizeSkoutDashboard() {
                   safe campaign.
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10, margin: "18px 0" }}>
-                  {[ ["Projected contribution", "Not calculated"], ["Promotion cost", "Not calculated"], ["Expected lift", "Not calculated"], ["Net profit impact", "Not calculated"] ].map(([label, value]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface2)" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 19, fontWeight: 900, marginTop: 7 }}>{value}</div><div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>Connect verified catalog evidence</div></div>)}
+                  {[["Projected contribution", "Not calculated"], ["Promotion cost", "Not calculated"], ["Expected lift", "Not calculated"], ["Net profit impact", "Not calculated"]].map(([label, value]) => <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface2)" }}><div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase" }}>{label}</div><div style={{ fontSize: 19, fontWeight: 900, marginTop: 7 }}>{value}</div><div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>Connect verified catalog evidence</div></div>)}
                 </div>
                 <h3 style={{ margin: "20px 0 4px" }}>Connect or import a catalogue first</h3>
                 <button
@@ -10186,10 +10186,10 @@ export function PrizeSkoutDashboard() {
                   <div className="ps-cfo-question">Why did margin change this month?</div>
                   <div className="ps-cfo-answer"><b>PrizeSkout uses only retained evidence.</b><span>{storeOpportunity.atRisk.length ? `${storeOpportunity.atRisk.length} verified product${storeOpportunity.atRisk.length === 1 ? "" : "s"} currently need margin attention.` : "No verified products are currently below the protected margin target."}</span><span>{recoveryCases.length ? `${recoveryCases.length} recovery case${recoveryCases.length === 1 ? " is" : "s are"} being tracked.` : "No recovery cases are currently recorded."}</span></div>
                   <div className="ps-cfo-quick-questions">{["What drove payout discrepancy?", "Which channel needs attention?", "How could this affect next month?"].map((label) => <button type="button" key={label} onClick={() => { setCpInput(label); void runCopilot(label); }}>{label}</button>)}</div>
-                  <div className="ps-cfo-compact-input"><input value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void runCopilot(cpInput); }} placeholder="Ask a financial question…"/><button type="button" onClick={() => void runCopilot(cpInput)}>Send</button></div>
+                  <div className="ps-cfo-compact-input"><input value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void runCopilot(cpInput); }} placeholder="Ask a financial question…" /><button type="button" onClick={() => void runCopilot(cpInput)}>Send</button></div>
                 </section>
                 <section className="ps-cfo-insight"><div className="ps-cfo-panel-title"><div><h3>Financial Insight</h3><p>Evidence-backed, never guessed</p></div></div><strong>{currency} {storeOpportunity.correctionPerCatalogSale.toLocaleString("en-US", { maximumFractionDigits: 0 })}</strong><span>potential correction per catalog sale</span><h4>Recommendation</h4><p>{copilotAlerts.length ? copilotAlerts[0].label : "Keep cost evidence current and review payout differences before acting."}</p><button type="button" onClick={() => setCfoExpanded(true)}>View action plan →</button></section>
-                <section className="ps-cfo-forecast"><div className="ps-cfo-panel-title"><div><h3>Forecast (Next 30 Days)</h3><p>{payoutData ? "Based on current retained records" : "Complete a payout check to activate"}</p></div></div><div className="ps-cfo-line-chart"><i/><i/><i/><i/><i/><i/><i/></div><div className="ps-cfo-summary"><span><small>Products</small><b>{importedProducts.length}</b></span><span><small>At risk</small><b>{storeOpportunity.atRisk.length}</b></span><span><small>Recovered</small><b>{currency} {recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</b></span><span><small>Evidence</small><b>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</b></span></div></section>
+                <section className="ps-cfo-forecast"><div className="ps-cfo-panel-title"><div><h3>Forecast (Next 30 Days)</h3><p>{payoutData ? "Based on current retained records" : "Complete a payout check to activate"}</p></div></div><div className="ps-cfo-line-chart"><i /><i /><i /><i /><i /><i /><i /></div><div className="ps-cfo-summary"><span><small>Products</small><b>{importedProducts.length}</b></span><span><small>At risk</small><b>{storeOpportunity.atRisk.length}</b></span><span><small>Recovered</small><b>{currency} {recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</b></span><span><small>Evidence</small><b>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</b></span></div></section>
               </div>
               <button type="button" className="ps-cfo-expand" onClick={() => setCfoExpanded((value) => !value)}>{cfoExpanded ? "Hide full conversation ↑" : "Open full conversation →"}</button>
               <div className="ps-cfo-modes" style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
@@ -10524,21 +10524,21 @@ export function PrizeSkoutDashboard() {
                             : cpOperationStatus === "complete"
                               ? "Done"
                               : [
-                                    "publish_prices",
-                                    "change_order_status",
-                                    "create_product_draft",
-                                    "product_change",
-                                    "product_image_upload",
-                                    "image_job",
-                                    "variant_create",
-                                    "schedule_product_action",
-                                    "coupon_change",
-                                    "category_assign",
-                                    "loyalty_adjust",
-                                    "reverse_refund",
-                                    "seed_test_store",
-                                    "cleanup_test_store",
-                                  ].includes(String(cpObj.operation))
+                                "publish_prices",
+                                "change_order_status",
+                                "create_product_draft",
+                                "product_change",
+                                "product_image_upload",
+                                "image_job",
+                                "variant_create",
+                                "schedule_product_action",
+                                "coupon_change",
+                                "category_assign",
+                                "loyalty_adjust",
+                                "reverse_refund",
+                                "seed_test_store",
+                                "cleanup_test_store",
+                              ].includes(String(cpObj.operation))
                                 ? "Review before I continue"
                                 : "Here’s what I found"}
                       </div>
@@ -10846,15 +10846,15 @@ export function PrizeSkoutDashboard() {
                                   setCpObj((current) =>
                                     current
                                       ? {
-                                          ...current,
-                                          operation: "coupon_change",
-                                          coupon_mode: "disable",
-                                          coupon_code: coupon.code,
-                                          coupon_name: coupon.code,
-                                          requires_confirmation: true,
-                                          risk_level: "sensitive_write",
-                                          coupon_candidates: null,
-                                        }
+                                        ...current,
+                                        operation: "coupon_change",
+                                        coupon_mode: "disable",
+                                        coupon_code: coupon.code,
+                                        coupon_name: coupon.code,
+                                        requires_confirmation: true,
+                                        risk_level: "sensitive_write",
+                                        coupon_candidates: null,
+                                      }
                                       : current,
                                   );
                                   setCpOperationStatus("ready");
@@ -10894,134 +10894,134 @@ export function PrizeSkoutDashboard() {
                       "seed_test_store",
                       "cleanup_test_store",
                     ].includes(String(cpObj.operation)) && (
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: 14,
-                          flexWrap: "wrap",
-                          border: "1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",
-                          borderRadius: 11,
-                          padding: "13px 14px",
-                          background: "color-mix(in srgb,#F59E0B 8%,var(--surface))",
-                        }}
-                      >
-                        <div style={{ fontSize: 13.5, maxWidth: 720 }}>
-                          {[
-                            "product_change",
-                            "create_product_draft",
-                            "product_image_upload",
-                            "image_job",
-                            "variant_create",
-                            "schedule_product_action",
-                          ].includes(String(cpObj.operation)) ? (
-                            String(cpObj.product_mode) === "delete" ? (
-                              "This will permanently remove the product. Please check it carefully before continuing."
-                            ) : cpOperationStatus === "complete" ? (
-                              "The change was checked against Zid."
-                            ) : String(cpObj.operation) === "create_product_draft" &&
-                              (!String(cpObj.product_name ?? "").trim() ||
-                                Number(cpObj.product_price) <= 0) ? (
-                              "Complete the required fields above. Nothing will be sent to Zid until the product is ready and you confirm."
-                            ) : (
-                              "Nothing has changed yet. Continue when the product and details look right."
-                            )
-                          ) : (
-                            <>
-                              <strong>Confirmation needed.</strong> Nothing happens until you
-                              approve.
-                            </>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (
-                              String(cpObj.operation) === "product_change" &&
-                              !String(cpObj.approval_token ?? "").trim()
-                            ) {
-                              void prepareCopilotOperation(cpObj);
-                              return;
-                            }
-                            void executeCopilotStoreWrite();
-                          }}
-                          disabled={
-                            cpOperationStatus === "publishing" ||
-                            cpOperationStatus === "running" ||
-                            cpOperationStatus === "complete" ||
-                            (String(cpObj.operation) === "create_product_draft" &&
-                              (!String(cpObj.product_name ?? "").trim() ||
-                                Number(cpObj.product_price) <= 0)) ||
-                            (cpOperationStatus === "failed" &&
-                              Array.isArray(cpObj.product_candidates) &&
-                              cpObj.product_candidates.length > 0)
-                          }
+                        <div
                           style={{
-                            border: 0,
-                            borderRadius: 9,
-                            padding: "10px 14px",
-                            background:
-                              String(cpObj.operation) === "create_product_draft" &&
-                              (!String(cpObj.product_name ?? "").trim() ||
-                                Number(cpObj.product_price) <= 0)
-                                ? "var(--muted)"
-                                : cpOperationStatus === "complete"
-                                  ? GN
-                                  : OG,
-                            color: "white",
-                            fontFamily: "inherit",
-                            fontWeight: 800,
-                            cursor:
-                              cpOperationStatus === "publishing" || cpOperationStatus === "running"
-                                ? "wait"
-                                : String(cpObj.operation) === "create_product_draft" &&
-                                    (!String(cpObj.product_name ?? "").trim() ||
-                                      Number(cpObj.product_price) <= 0)
-                                  ? "not-allowed"
-                                  : cpOperationStatus === "complete"
-                                    ? "default"
-                                    : "pointer",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 14,
+                            flexWrap: "wrap",
+                            border: "1px solid color-mix(in srgb,#F59E0B 35%,var(--border))",
+                            borderRadius: 11,
+                            padding: "13px 14px",
+                            background: "color-mix(in srgb,#F59E0B 8%,var(--surface))",
                           }}
                         >
-                          {cpOperationStatus === "publishing"
-                            ? "Working..."
-                            : cpOperationStatus === "running"
-                              ? "Loading preview..."
-                              : cpOperationStatus === "complete"
-                                ? "Checked in Zid"
-                                : String(cpObj.operation) === "product_change" &&
+                          <div style={{ fontSize: 13.5, maxWidth: 720 }}>
+                            {[
+                              "product_change",
+                              "create_product_draft",
+                              "product_image_upload",
+                              "image_job",
+                              "variant_create",
+                              "schedule_product_action",
+                            ].includes(String(cpObj.operation)) ? (
+                              String(cpObj.product_mode) === "delete" ? (
+                                "This will permanently remove the product. Please check it carefully before continuing."
+                              ) : cpOperationStatus === "complete" ? (
+                                "The change was checked against Zid."
+                              ) : String(cpObj.operation) === "create_product_draft" &&
+                                (!String(cpObj.product_name ?? "").trim() ||
+                                  Number(cpObj.product_price) <= 0) ? (
+                                "Complete the required fields above. Nothing will be sent to Zid until the product is ready and you confirm."
+                              ) : (
+                                "Nothing has changed yet. Continue when the product and details look right."
+                              )
+                            ) : (
+                              <>
+                                <strong>Confirmation needed.</strong> Nothing happens until you
+                                approve.
+                              </>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (
+                                String(cpObj.operation) === "product_change" &&
+                                !String(cpObj.approval_token ?? "").trim()
+                              ) {
+                                void prepareCopilotOperation(cpObj);
+                                return;
+                              }
+                              void executeCopilotStoreWrite();
+                            }}
+                            disabled={
+                              cpOperationStatus === "publishing" ||
+                              cpOperationStatus === "running" ||
+                              cpOperationStatus === "complete" ||
+                              (String(cpObj.operation) === "create_product_draft" &&
+                                (!String(cpObj.product_name ?? "").trim() ||
+                                  Number(cpObj.product_price) <= 0)) ||
+                              (cpOperationStatus === "failed" &&
+                                Array.isArray(cpObj.product_candidates) &&
+                                cpObj.product_candidates.length > 0)
+                            }
+                            style={{
+                              border: 0,
+                              borderRadius: 9,
+                              padding: "10px 14px",
+                              background:
+                                String(cpObj.operation) === "create_product_draft" &&
+                                  (!String(cpObj.product_name ?? "").trim() ||
+                                    Number(cpObj.product_price) <= 0)
+                                  ? "var(--muted)"
+                                  : cpOperationStatus === "complete"
+                                    ? GN
+                                    : OG,
+                              color: "white",
+                              fontFamily: "inherit",
+                              fontWeight: 800,
+                              cursor:
+                                cpOperationStatus === "publishing" || cpOperationStatus === "running"
+                                  ? "wait"
+                                  : String(cpObj.operation) === "create_product_draft" &&
+                                    (!String(cpObj.product_name ?? "").trim() ||
+                                      Number(cpObj.product_price) <= 0)
+                                    ? "not-allowed"
+                                    : cpOperationStatus === "complete"
+                                      ? "default"
+                                      : "pointer",
+                            }}
+                          >
+                            {cpOperationStatus === "publishing"
+                              ? "Working..."
+                              : cpOperationStatus === "running"
+                                ? "Loading preview..."
+                                : cpOperationStatus === "complete"
+                                  ? "Checked in Zid"
+                                  : String(cpObj.operation) === "product_change" &&
                                     !String(cpObj.approval_token ?? "").trim()
-                                  ? Array.isArray(cpObj.product_candidates) &&
-                                    cpObj.product_candidates.length > 0
-                                    ? "Choose a product above"
-                                    : "Retry product preview"
-                                  : String(cpObj.operation) === "image_job"
-                                    ? "Approve image upload"
-                                  : String(cpObj.operation) === "reverse_refund"
-                                    ? "Confirm refund"
-                                    : String(cpObj.operation) === "loyalty_adjust"
-                                      ? "Confirm points change"
-                                      : String(cpObj.operation) === "coupon_change"
-                                        ? `Confirm ${String(cpObj.coupon_mode)}`
-                                        : String(cpObj.operation) === "category_assign"
-                                          ? "Assign category"
-                                          : String(cpObj.operation) === "create_product_draft"
-                                            ? !String(cpObj.product_name ?? "").trim() ||
-                                              Number(cpObj.product_price) <= 0
-                                              ? "Add required details"
-                                              : cpObj.publish_product === true
-                                                ? "Create and publish"
-                                                : "Create draft"
-                                            : String(cpObj.product_mode) === "duplicate"
-                                              ? cpObj.publish_duplicate === true
-                                                ? "Create and publish"
-                                                : "Create product"
-                                              : String(cpObj.product_mode) === "publish"
-                                                ? "Publish product"
-                                                : "Save change"}
-                        </button>
-                      </div>
-                    )}
+                                    ? Array.isArray(cpObj.product_candidates) &&
+                                      cpObj.product_candidates.length > 0
+                                      ? "Choose a product above"
+                                      : "Retry product preview"
+                                    : String(cpObj.operation) === "image_job"
+                                      ? "Approve image upload"
+                                      : String(cpObj.operation) === "reverse_refund"
+                                        ? "Confirm refund"
+                                        : String(cpObj.operation) === "loyalty_adjust"
+                                          ? "Confirm points change"
+                                          : String(cpObj.operation) === "coupon_change"
+                                            ? `Confirm ${String(cpObj.coupon_mode)}`
+                                            : String(cpObj.operation) === "category_assign"
+                                              ? "Assign category"
+                                              : String(cpObj.operation) === "create_product_draft"
+                                                ? !String(cpObj.product_name ?? "").trim() ||
+                                                  Number(cpObj.product_price) <= 0
+                                                  ? "Add required details"
+                                                  : cpObj.publish_product === true
+                                                    ? "Create and publish"
+                                                    : "Create draft"
+                                                : String(cpObj.product_mode) === "duplicate"
+                                                  ? cpObj.publish_duplicate === true
+                                                    ? "Create and publish"
+                                                    : "Create product"
+                                                  : String(cpObj.product_mode) === "publish"
+                                                    ? "Publish product"
+                                                    : "Save change"}
+                          </button>
+                        </div>
+                      )}
                     {cpStoreActionResult && (
                       <div style={{ display: "grid", gap: 10 }}>
                         {cpStoreActionResult.products?.map((product) => {
@@ -11198,7 +11198,7 @@ export function PrizeSkoutDashboard() {
                                       product.cost_confidence !== "verified"
                                         ? "#B45309"
                                         : (product.preview?.floor_breached ??
-                                            product.floor_breached)
+                                          product.floor_breached)
                                           ? "#DC2626"
                                           : GN,
                                   }}
@@ -11314,9 +11314,9 @@ export function PrizeSkoutDashboard() {
                             <span>
                               {order.created_at
                                 ? new Date(order.created_at).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
                                 : "Not supplied"}
                             </span>
                           </div>
@@ -11780,7 +11780,7 @@ export function PrizeSkoutDashboard() {
                 <div className="ps-kpi-tile"><span>Costs confirmed</span><strong>{storeOpportunity.verified}</strong><small>Products eligible for calculation</small></div>
               </div>
               <div className="ps-defend-snapshot">
-                <section><div><h3>Protection coverage</h3><p>How much of the catalog can safely use this policy</p></div><div className="ps-defend-ring" style={{ "--defend-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Covered</small></div><div className="ps-defend-legend"><span><i className="ps-dot-green"/>Eligible <b>{storeOpportunity.verified}</b></span><span><i className="ps-dot-orange"/>Evidence needed <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></span></div></section>
+                <section><div><h3>Protection coverage</h3><p>How much of the catalog can safely use this policy</p></div><div className="ps-defend-ring" style={{ "--defend-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Covered</small></div><div className="ps-defend-legend"><span><i className="ps-dot-green" />Eligible <b>{storeOpportunity.verified}</b></span><span><i className="ps-dot-orange" />Evidence needed <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></span></div></section>
                 <section><div><h3>Policy workflow</h3><p>Every protected change follows merchant controls</p></div><ol><li className="is-active"><i>1</i><span><b>Set protection floor</b><small>{rules[0]?.floor ?? 18}% minimum contribution</small></span></li><li><i>2</i><span><b>Preview affected products</b><small>No store changes yet</small></span></li><li><i>3</i><span><b>Review and activate</b><small>Approval mode remains enforced</small></span></li><li><i>4</i><span><b>Monitor outcomes</b><small>Audit evidence retained</small></span></li></ol></section>
                 <section><div><h3>Channel protection</h3><p>Connection and rule readiness stay separate</p></div><div className="ps-defend-channel">{(["zid", "salla"] as const).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform] === "connected" ? "is-connected" : ""}>{channelStatuses[platform] === "connected" ? "Connected" : "Not connected"}</span><em>{channelPolicyDrafts.some(item => item.channel === platform) ? "Override ready" : "Global policy"}</em></div>)}</div><button type="button" onClick={() => document.getElementById("channel-margin-overrides")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Review channel targets →</button></section>
               </div>
@@ -11898,29 +11898,29 @@ export function PrizeSkoutDashboard() {
                     Minimum cash contribution per sale
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
                       <input aria-label="Minimum cash contribution" type="number" min={0} step={0.5} value={rules[0].minimumContribution}
-                        onChange={(e)=>editRule(0,{minimumContribution:Math.max(0,Number(e.target.value))})}
-                        style={{width:"100%",padding:10,border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}/>
+                        onChange={(e) => editRule(0, { minimumContribution: Math.max(0, Number(e.target.value)) })}
+                        style={{ width: "100%", padding: 10, border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface2)", color: "var(--text)" }} />
                       <strong>{currency}</strong>
                     </div>
-                    <span style={{display:"block",fontSize:10.5,fontWeight:500,color:"var(--muted)",marginTop:4}}>Both the cash amount and percentage target must be met.</span>
+                    <span style={{ display: "block", fontSize: 10.5, fontWeight: 500, color: "var(--muted)", marginTop: 4 }}>Both the cash amount and percentage target must be met.</span>
                   </label>
                 </div>
-                <div id="channel-margin-overrides" style={{marginTop:18,borderTop:"1px solid var(--border)",paddingTop:16,scrollMarginTop:24}}>
-                  <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}>
-                    <div><strong style={{fontSize:13.5}}>Channel-specific targets</strong><div style={{fontSize:11.5,color:"var(--muted)",marginTop:3}}>Channels without an override inherit the global policy.</div></div>
-                    <select aria-label="Add channel policy" defaultValue="" onChange={e=>{const channel=e.target.value;if(!channel)return;setChannelPolicyDrafts(current=>current.some(item=>item.channel===channel)?current:[...current,{channel,servicePath:"default",floor:rules[0].floor,minimumContribution:rules[0].minimumContribution,maxChangePct:rules[0].maxChangePct,approvalMode:rules[0].approvalMode}]);e.target.value="";}}
-                      style={{padding:"8px 10px",border:"1px solid var(--border)",borderRadius:8,background:"var(--surface2)",color:"var(--text)"}}>
+                <div id="channel-margin-overrides" style={{ marginTop: 18, borderTop: "1px solid var(--border)", paddingTop: 16, scrollMarginTop: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                    <div><strong style={{ fontSize: 13.5 }}>Channel-specific targets</strong><div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>Channels without an override inherit the global policy.</div></div>
+                    <select aria-label="Add channel policy" defaultValue="" onChange={e => { const channel = e.target.value; if (!channel) return; setChannelPolicyDrafts(current => current.some(item => item.channel === channel) ? current : [...current, { channel, servicePath: "default", floor: rules[0].floor, minimumContribution: rules[0].minimumContribution, maxChangePct: rules[0].maxChangePct, approvalMode: rules[0].approvalMode }]); e.target.value = ""; }}
+                      style={{ padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface2)", color: "var(--text)" }}>
                       <option value="">Add channel override…</option>
-                      {["salla","zid","talabat","jahez","keeta","snoonu","deliveroo"].filter(channel=>!channelPolicyDrafts.some(item=>item.channel===channel)).map(channel=><option key={channel} value={channel}>{channel.toUpperCase()}</option>)}
+                      {["salla", "zid", "talabat", "jahez", "keeta", "snoonu", "deliveroo"].filter(channel => !channelPolicyDrafts.some(item => item.channel === channel)).map(channel => <option key={channel} value={channel}>{channel.toUpperCase()}</option>)}
                     </select>
                   </div>
-                  {channelPolicyDrafts.length>0&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:10,marginTop:12}}>{channelPolicyDrafts.map((item,index)=><div key={`${item.channel}:${item.servicePath}`} style={{border:"1px solid var(--border)",borderRadius:10,padding:12,background:"var(--surface2)"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><strong>{item.channel.toUpperCase()}</strong><button type="button" onClick={()=>setChannelPolicyDrafts(current=>current.filter((_,i)=>i!==index))} style={{border:0,background:"transparent",color:"#B42318",cursor:"pointer",fontWeight:800}}>Remove</button></div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:9}}>
-                      <label style={{fontSize:10.5,fontWeight:800}}>Target %<input type="number" min={1} max={99} value={item.floor} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,floor:Number(e.target.value)}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}/></label>
-                      <label style={{fontSize:10.5,fontWeight:800}}>Minimum {currency}<input type="number" min={0} step={0.5} value={item.minimumContribution} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,minimumContribution:Number(e.target.value)}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}/></label>
-                      <label style={{fontSize:10.5,fontWeight:800}}>Max increase %<input type="number" min={0} max={100} value={item.maxChangePct} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,maxChangePct:Number(e.target.value)}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}/></label>
-                      <label style={{fontSize:10.5,fontWeight:800}}>Handling<select value={item.approvalMode} onChange={e=>setChannelPolicyDrafts(current=>current.map((row,i)=>i===index?{...row,approvalMode:e.target.value as ApprovalMode}:row))} style={{width:"100%",boxSizing:"border-box",padding:8,border:"1px solid var(--border)",borderRadius:7,background:"var(--surface)"}}><option value="recommend_only">Suggestions only</option><option value="approval_every_change">Approval every time</option><option value="auto_within_limit">Automatic within limit</option></select></label>
+                  {channelPolicyDrafts.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 10, marginTop: 12 }}>{channelPolicyDrafts.map((item, index) => <div key={`${item.channel}:${item.servicePath}`} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 12, background: "var(--surface2)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><strong>{item.channel.toUpperCase()}</strong><button type="button" onClick={() => setChannelPolicyDrafts(current => current.filter((_, i) => i !== index))} style={{ border: 0, background: "transparent", color: "#B42318", cursor: "pointer", fontWeight: 800 }}>Remove</button></div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 9 }}>
+                      <label style={{ fontSize: 10.5, fontWeight: 800 }}>Target %<input type="number" min={1} max={99} value={item.floor} onChange={e => setChannelPolicyDrafts(current => current.map((row, i) => i === index ? { ...row, floor: Number(e.target.value) } : row))} style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--border)", borderRadius: 7, background: "var(--surface)" }} /></label>
+                      <label style={{ fontSize: 10.5, fontWeight: 800 }}>Minimum {currency}<input type="number" min={0} step={0.5} value={item.minimumContribution} onChange={e => setChannelPolicyDrafts(current => current.map((row, i) => i === index ? { ...row, minimumContribution: Number(e.target.value) } : row))} style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--border)", borderRadius: 7, background: "var(--surface)" }} /></label>
+                      <label style={{ fontSize: 10.5, fontWeight: 800 }}>Max increase %<input type="number" min={0} max={100} value={item.maxChangePct} onChange={e => setChannelPolicyDrafts(current => current.map((row, i) => i === index ? { ...row, maxChangePct: Number(e.target.value) } : row))} style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--border)", borderRadius: 7, background: "var(--surface)" }} /></label>
+                      <label style={{ fontSize: 10.5, fontWeight: 800 }}>Handling<select value={item.approvalMode} onChange={e => setChannelPolicyDrafts(current => current.map((row, i) => i === index ? { ...row, approvalMode: e.target.value as ApprovalMode } : row))} style={{ width: "100%", boxSizing: "border-box", padding: 8, border: "1px solid var(--border)", borderRadius: 7, background: "var(--surface)" }}><option value="recommend_only">Suggestions only</option><option value="approval_every_change">Approval every time</option><option value="auto_within_limit">Automatic within limit</option></select></label>
                     </div>
                   </div>)}</div>}
                 </div>
@@ -11936,7 +11936,7 @@ export function PrizeSkoutDashboard() {
                 >
                   Protection now: keep at least{" "}
                   <strong style={{ color: "var(--text)" }}>{persistedGlobalFloor}%</strong> from
-                  each sale, keep at least <strong style={{color:"var(--text)"}}>{currency} {persistedMinimumContribution.toFixed(2)}</strong>, and never increase a price by more than{" "}
+                  each sale, keep at least <strong style={{ color: "var(--text)" }}>{currency} {persistedMinimumContribution.toFixed(2)}</strong>, and never increase a price by more than{" "}
                   <strong style={{ color: "var(--text)" }}>{persistedMaxIncrease}%</strong>. Changes
                   you make here do nothing until you start the new settings.
                 </div>
@@ -12020,8 +12020,8 @@ export function PrizeSkoutDashboard() {
               {rulePreviewIndex === 0 &&
                 (() => {
                   const unavailable = importedProducts.filter(
-                      (p) => p.inventory_status === "out_of_stock",
-                    ),
+                    (p) => p.inventory_status === "out_of_stock",
+                  ),
                     previews = importedProducts
                       .filter((p) => p.inventory_status !== "out_of_stock")
                       .map((p) => ({ p, v: p.preview }));
@@ -12030,7 +12030,7 @@ export function PrizeSkoutDashboard() {
                     termsRequired = previews.filter(
                       (x) => x.v?.outcome === "blocked_missing_economics",
                     ),
-                    over = previews.filter((x) => ["over_limit","cannot_reach_target_within_limit"].includes(x.v?.outcome??""));
+                    over = previews.filter((x) => ["over_limit", "cannot_reach_target_within_limit"].includes(x.v?.outcome ?? ""));
                   return (
                     <div
                       style={{
@@ -12143,7 +12143,7 @@ export function PrizeSkoutDashboard() {
                                       ? "Confirm product cost first"
                                       : v?.outcome === "blocked_missing_economics"
                                         ? "Approve this channel's contract terms first"
-                                        : ["over_limit","cannot_reach_target_within_limit"].includes(v?.outcome??"")
+                                        : ["over_limit", "cannot_reach_target_within_limit"].includes(v?.outcome ?? "")
                                           ? "Active policy caps this increase; market acceptance is not established"
                                           : v?.outcome === "within_limit"
                                             ? "Within your active limit; review before publishing"
@@ -12398,8 +12398,8 @@ export function PrizeSkoutDashboard() {
                           max,
                           product.current_price
                             ? ((product.recommended_price - product.current_price) /
-                                product.current_price) *
-                                100
+                              product.current_price) *
+                            100
                             : 0,
                         ),
                       0,
@@ -13419,7 +13419,7 @@ export function PrizeSkoutDashboard() {
                         s +
                         (r.sub_total_sum *
                           ((r.effective_commission_pct as number) - r.commission_rate_pct)) /
-                          100,
+                        100,
                       0,
                     );
                     const unexplainedRows = rows.filter((r) => r.unexplained_charge != null);
@@ -13554,8 +13554,8 @@ export function PrizeSkoutDashboard() {
                           row.commission_rate_pct != null && row.effective_commission_pct != null;
                         const rowExpectedAtAgreed = rowHasRates
                           ? row.expected_payout +
-                            ((row.commission_amount ?? 0) -
-                              (row.sub_total_sum * (row.commission_rate_pct ?? 0)) / 100)
+                          ((row.commission_amount ?? 0) -
+                            (row.sub_total_sum * (row.commission_rate_pct ?? 0)) / 100)
                           : row.expected_payout;
                         const rowShowDelta =
                           rowHasRates && Math.abs(rowExpectedAtAgreed - row.expected_payout) > 0.01;
@@ -13858,8 +13858,8 @@ export function PrizeSkoutDashboard() {
                             : row.status === "success"
                               ? "#2563EB"
                               : row.status === "failed" ||
-                                  row.status === "schema_mismatch" ||
-                                  row.status === "circuit_open"
+                                row.status === "schema_mismatch" ||
+                                row.status === "circuit_open"
                                 ? "#DC2626"
                                 : row.status === "rate_limited" || row.status === "timeout"
                                   ? "#B45309"
@@ -14113,27 +14113,27 @@ export function PrizeSkoutDashboard() {
                                     ...(rule ? [{ label: t.historyDetailRule, value: rule }] : []),
                                     ...(marginBefore != null && marginAfter != null
                                       ? [
-                                          {
-                                            label: t.historyDetailMargin,
-                                            value: `${marginBefore.toFixed(1)}% → ${marginAfter.toFixed(1)}%`,
-                                          },
-                                        ]
+                                        {
+                                          label: t.historyDetailMargin,
+                                          value: `${marginBefore.toFixed(1)}% → ${marginAfter.toFixed(1)}%`,
+                                        },
+                                      ]
                                       : []),
                                     ...(row.duration_ms != null
                                       ? [
-                                          {
-                                            label: t.historyDetailDuration,
-                                            value: `${row.duration_ms} ms`,
-                                          },
-                                        ]
+                                        {
+                                          label: t.historyDetailDuration,
+                                          value: `${row.duration_ms} ms`,
+                                        },
+                                      ]
                                       : []),
                                     ...(row.completed_at
                                       ? [
-                                          {
-                                            label: t.historyDetailCompleted,
-                                            value: new Date(row.completed_at).toLocaleString(),
-                                          },
-                                        ]
+                                        {
+                                          label: t.historyDetailCompleted,
+                                          value: new Date(row.completed_at).toLocaleString(),
+                                        },
+                                      ]
                                       : []),
                                   ].map((f) => (
                                     <div
@@ -14521,21 +14521,21 @@ export function PrizeSkoutDashboard() {
                                     findings: row.findings,
                                     coverage: row.period_start
                                       ? {
-                                          start: row.period_start,
-                                          end: row.period_end ?? row.period_start,
-                                        }
+                                        start: row.period_start,
+                                        end: row.period_end ?? row.period_start,
+                                      }
                                       : null,
                                     // assurance is only ever non-null for audits saved after the
                                     // history-fidelity fix — older rows fall through to the panel's
                                     // existing "not retained for this historical audit" fallback.
                                     ...(row.assurance != null
                                       ? {
-                                          assurance: row.assurance,
-                                          fourWay: row.four_way ?? undefined,
-                                          crossCheckWindows: row.cross_check_windows ?? undefined,
-                                          netSalesOverrideDocs:
-                                            row.net_sales_override_docs ?? undefined,
-                                        }
+                                        assurance: row.assurance,
+                                        fourWay: row.four_way ?? undefined,
+                                        crossCheckWindows: row.cross_check_windows ?? undefined,
+                                        netSalesOverrideDocs:
+                                          row.net_sales_override_docs ?? undefined,
+                                      }
                                       : {}),
                                   }}
                                   currency={currency}
@@ -15168,8 +15168,8 @@ export function PrizeSkoutDashboard() {
                 </svg>
                 <span style={{ fontSize: 14.5, fontWeight: 500 }}>{t.backToSite}</span>
               </a>
-              <button type="button" onClick={()=>void handleSignOut()} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 10px",borderRadius:10,border:0,background:"transparent",color:"var(--muted)",fontFamily:"inherit",fontSize:14.5,fontWeight:600,cursor:"pointer",textAlign:"start"}}>
-                <LogOut size={15} strokeWidth={1.8}/>Log out
+              <button type="button" onClick={() => void handleSignOut()} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 10px", borderRadius: 10, border: 0, background: "transparent", color: "var(--muted)", fontFamily: "inherit", fontSize: 14.5, fontWeight: 600, cursor: "pointer", textAlign: "start" }}>
+                <LogOut size={15} strokeWidth={1.8} />Log out
               </button>
               <div style={{ height: 1, background: "var(--border)", marginBottom: 8 }} />
               {/* Defend Loop */}
