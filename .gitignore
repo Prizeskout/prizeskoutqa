@@ -37,3 +37,4 @@ dist-ssr
 
 # Supabase CLI local state (may contain connection details)
 supabase/.temp/
+.deploy-align/
