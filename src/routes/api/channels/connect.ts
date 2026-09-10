@@ -14,7 +14,7 @@ import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-p
 import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
 import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/server/core/payout-history";
 import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
-import { getDashboardStats } from "@/server/core/dashboard-stats";
+import { getDashboardStats, getProfitabilityTrends } from "@/server/core/dashboard-stats";
 import { getDefendLoopHealth } from "@/server/core/defend-loop-health";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -664,6 +664,17 @@ export const Route = createFileRoute("/api/channels/connect")({
             // Revenue Hub hero + stat tiles — see dashboard-stats.ts.
             const stats = await getDashboardStats(merchant_id);
             return resp({ ok: true, ...stats }, 200);
+          }
+
+          if (platform === "profitability_trends") {
+            // Read-only time-series over the economic twin for the overview
+            // trends panel — see getProfitabilityTrends in dashboard-stats.ts.
+            const trends = await getProfitabilityTrends(merchant_id, {
+              granularity: body.granularity,
+              dimension: body.dimension,
+              key: body.key ?? null,
+            });
+            return resp({ ok: true, ...trends }, 200);
           }
 
           if (platform === "defend_loop_health") {

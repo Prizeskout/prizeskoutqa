@@ -42,6 +42,7 @@ import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingL
 import { StoreManagerCommandBar } from "@/components/dashboard/StoreManagerCommandBar";
 import { MarginIntelligenceSummary, RecoveryDashboardSummary } from "@/components/dashboard/FocusedIntelligenceSummary";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
+import { ProfitabilityTrends } from "@/components/dashboard/overview/ProfitabilityTrends";
 import { EvidenceReviewWorkspace } from "@/components/dashboard/evidence/EvidenceReviewWorkspace";
 import { EvidenceSourceCoverage } from "@/components/dashboard/evidence/EvidenceSourceCoverage";
 import { EvidenceLibrary } from "@/components/dashboard/evidence/EvidenceLibrary";
@@ -7448,6 +7449,7 @@ export function PrizeSkoutDashboard() {
             }}
           >
             {sidebarNav === "overview" ? (
+              <>
               <ExecutiveOverview
                 currency={currency}
                 trackedProducts={importedProducts.length}
@@ -7467,6 +7469,8 @@ export function PrizeSkoutDashboard() {
                 onAlerts={() => setTab("today")}
                 onIntegrations={() => setTab("vault")}
               />
+              <ProfitabilityTrends currency={currency} />
+              </>
             ) : (<>
               {sidebarNav === "margin" && <>
                 <div id="margin-intelligence-section" style={{ scrollMarginTop: 24 }}>
