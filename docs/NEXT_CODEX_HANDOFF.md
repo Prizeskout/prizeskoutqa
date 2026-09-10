@@ -12,6 +12,50 @@ Read the repository and current git status before editing. Preserve all existing
 
 ## Primary objective
 
+### Active implementation sequence (started 2026-08-28)
+
+Continue these items in order, preserving the API-independent architecture and all existing user work:
+
+1. Resolve the remaining Supabase CLI project-role access blocker; the Talabat and scheduler migrations themselves are deployed.
+2. Deploy and smoke-test private forwarding-email intake end-to-end.
+3. Add production scheduling for evidence processing and source synchronization.
+4. Build the first complete read-only POS evidence adapter, beginning with Foodics.
+5. Add restricted Gmail and Microsoft mailbox OAuth.
+6. Implement Marn, Sapaad, Deliverect and Grubtech adapters.
+7. Build the watched-folder/local connector.
+8. Add an operational-readiness dashboard for intake freshness, processing failures, reconciliation coverage and missing evidence.
+
+Current investigation findings:
+
+- `npx supabase migration list` fails before reading migration history with Supabase platform error `LegacyDbConfigLoginRoleStatusError` and HTTP 403: the logged-in CLI account lacks access to the project's login-role endpoint. This is an account/project-role problem, not a PostgreSQL error in the Talabat migration.
+- A service-role REST smoke check against the configured production project confirms that `ps_talabat_vendor_availability`, `ps_talabat_orders`, `ps_talabat_order_actions`, `ps_merchant_channels`, `ps_merchant_evidence_items`, `ps_evidence_mailboxes`, and `ps_evidence_processing_attempts` all exist and are reachable by the server role. Do not reapply or rewrite those deployed migrations merely to work around the CLI 403.
+- The working tree contains substantial pre-existing modified and untracked work. Preserve it. In particular, the Talabat callback and action-queue files are currently untracked even though their corresponding production tables exist.
+- Talabat verification is complete: `npm run verify-talabat-contract` passes; service-role REST can read the Talabat callback/order/action tables; public-key requests receive HTTP 401. No SQL access-control correction is indicated. Fix the CLI 403 by granting the logged-in Supabase user an Owner/Administrator project role or relinking with an authorized access token; do not weaken RLS or table grants.
+- The live Cloudflare Worker already serves `/api/evidence/inbound-email` and `/api/public/hooks/evidence-process`; unsigned requests to both return HTTP 401. `EVIDENCE_PROCESSOR_SECRET` exists in Worker secrets. `INBOUND_EVIDENCE_WEBHOOK_SECRET`, `EVIDENCE_SOURCE_PULL_SECRET`, and the corresponding Supabase Vault secrets still need to be configured.
+- After the scheduler migration was deployed, the live `/api/public/hooks/evidence-source-pull` endpoint still returned HTTP 404 because the Worker build containing the new route has not been deployed. The scheduler's source-pull job therefore remains a no-op until the Worker route, Worker secret and matching Vault URL/secret are deployed together.
+- Do not create fake smoke evidence in the production project: evidence items are intentionally immutable. A full retained-file smoke test needs a dedicated test tenant/mailbox and a clearly approved test document, or a separate staging project.
+
+New local implementation in this session:
+
+- `src/server/core/foodics-evidence-adapter.ts` implements the first read-only Foodics order-evidence adapter against the official `/v2.1/orders` contract. It uses reference-based pagination, is bounded to 20 pages/1,000 records, accepts only a bearer token, filters branch scope, marks only closed orders final, preserves the external order reference and discards customer/payment/note/item/device payloads.
+- `scripts/verify-foodics-evidence-adapter.mts` and `npm run verify-foodics-evidence-adapter` cover mapping, minimization, cursor and request behavior. The fixture check passes.
+- `src/server/core/evidence-source-pull.ts` pulls due active Foodics sources using the existing connected Foodics channel credential, requires an explicit business currency, feeds the provider-neutral authorized evidence sync, records empty successful polls, and isolates failures per source.
+- `src/routes/api/public/hooks/evidence-source-pull.ts` exposes the pull worker behind constant-time bearer verification using `EVIDENCE_SOURCE_PULL_SECRET`.
+- `supabase/migrations/20260902000000_evidence_automation_scheduler.sql` was run successfully by the merchant on 2026-08-29 and is now deployed and immutable. It schedules evidence processing every five minutes and source pulling four times per hour. Both jobs remain safe no-ops until their URL/secret pairs exist in Supabase Vault.
+- `npm run typecheck` passes after these additions.
+
+Exact deployment prerequisites for the next session:
+
+1. The scheduler migration is deployed. The local CLI still receives `LegacyDbConfigLoginRoleStatusError` / HTTP 403 on `npx supabase migration list`; resolve this separately by granting the logged-in Supabase user the required project role or relinking with an authorized access token.
+2. Add Worker secret `INBOUND_EVIDENCE_WEBHOOK_SECRET` and configure the chosen inbound-email transport to sign the exact raw JSON body with HMAC-SHA256 in `x-prizeskout-signature`.
+3. Add Worker secret `EVIDENCE_SOURCE_PULL_SECRET`.
+4. Add Supabase Vault values:
+   - `evidence_processor_url=https://prizeskout.qa/api/public/hooks/evidence-process`
+   - `evidence_processor_secret=<same as Worker EVIDENCE_PROCESSOR_SECRET>`
+   - `evidence_source_pull_url=https://prizeskout.qa/api/public/hooks/evidence-source-pull`
+   - `evidence_source_pull_secret=<same as Worker EVIDENCE_SOURCE_PULL_SECRET>`
+5. Regenerate the TanStack route tree/build, deploy only after reviewing the dirty worktree so unrelated UI/Talabat changes are not accidentally published, then use an approved test tenant to smoke signed email retention, job enqueueing, processing outcome and deduplication.
+
 Implement the architecture described in:
 
 - `docs/PrizeSkout-API-Independent-Strategy.pdf`

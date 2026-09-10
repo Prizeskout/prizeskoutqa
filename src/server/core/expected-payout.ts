@@ -10,7 +10,7 @@
 // the platforms we integrate with expose that via API (confirmed by
 // research, not assumed).
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getValidTalabatAccessToken, getTalabatOrders } from "./talabat-client";
+import type { TalabatOrder } from "./talabat-client";
 import { classifyOrder, commissionBaseForOrder, duplicateOrderIds, orderIdentity, type OrderEligibility } from "./payout-order-accounting";
 import {applyMinimumPayoutThreshold, expectedSettlementDate, type SettlementCalendarTerms} from "./settlement-calendar";
 
@@ -224,28 +224,25 @@ export async function getTalabatExpectedPayout(
   const endTime = new Date();
   const startTime = new Date(endTime.getTime() - clampedDays * 24 * 60 * 60 * 1000);
 
-  const token = await getValidTalabatAccessToken({
-    id: channel.id,
-    manager_token: channel.manager_token ?? null,
-    bearer_token: channel.bearer_token ?? null,
-    metadata: channel.metadata as Record<string, unknown> | null,
+  const { data: storedOrders, error: storedOrdersError } = await supabaseAdmin.from("ps_talabat_orders")
+    .select("raw_order,status").eq("channel_id", channel.id)
+    .gte("occurred_at", startTime.toISOString()).lte("occurred_at", endTime.toISOString());
+  if (storedOrdersError) return { ok: false, error: "Could not read synchronized Talabat order history." };
+  const orders = (storedOrders ?? []).map(row => {
+    const raw = row.raw_order && typeof row.raw_order === "object" && !Array.isArray(row.raw_order)
+      ? row.raw_order as Record<string, unknown> : {};
+    const price = raw.price && typeof raw.price === "object" && !Array.isArray(raw.price) ? raw.price as Record<string, unknown> : {};
+    const payment = raw.payment && typeof raw.payment === "object" && !Array.isArray(raw.payment) ? raw.payment as Record<string, unknown> : {};
+    const numeric = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : undefined;
+    return {
+      ...raw,
+      order_id: String(raw.order_id ?? raw.token ?? ""),
+      status: String(raw.status ?? row.status ?? ""),
+      products: Array.isArray(raw.products) ? raw.products : Array.isArray(raw.items) ? raw.items : [],
+      payment: { ...payment, sub_total: numeric(payment.sub_total ?? price.totalNet), order_total: numeric(payment.order_total ?? price.grandTotal) },
+    } as TalabatOrder;
   });
-  if (!token.accessToken) {
-    return { ok: false, error: token.error ?? "Could not get a valid Talabat access token." };
-  }
-
-  const ordersResult = await getTalabatOrders({
-    chainId,
-    vendorId,
-    accessToken: token.accessToken,
-    startTime: startTime.toISOString(),
-    endTime: endTime.toISOString(),
-    environment: metadata.environment === "sandbox" ? "sandbox" : "production",
-  });
-
-  if (!ordersResult.ok || !ordersResult.data) {
-    return { ok: false, error: ordersResult.message ?? "Could not pull Talabat order history." };
-  }
+  const ordersResult = { data: orders };
 
   let subTotalSum = 0;
   let orderCount = 0;

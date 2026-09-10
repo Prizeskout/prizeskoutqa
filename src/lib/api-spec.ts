@@ -102,11 +102,32 @@ export type GroupSpec = {
 
 const COMMON_ERRORS: ErrorSpec[] = [
   { status: 401, code: "unauthorized", description: "Missing or invalid API key." },
-  { status: 403, code: "forbidden", description: "Your key is missing the required scope for this endpoint." },
-  { status: 404, code: "not_found", description: "The requested resource does not exist or is not visible to your account." },
-  { status: 422, code: "validation_failed", description: "One or more fields failed validation. The response includes per-field errors." },
-  { status: 429, code: "rate_limited", description: "You have exceeded the per-minute request quota. Retry after the Retry-After header." },
-  { status: 500, code: "internal_error", description: "Unexpected server error. Safe to retry with the same request id." },
+  {
+    status: 403,
+    code: "forbidden",
+    description: "Your key is missing the required scope for this endpoint.",
+  },
+  {
+    status: 404,
+    code: "not_found",
+    description: "The requested resource does not exist or is not visible to your account.",
+  },
+  {
+    status: 422,
+    code: "validation_failed",
+    description: "One or more fields failed validation. The response includes per-field errors.",
+  },
+  {
+    status: 429,
+    code: "rate_limited",
+    description:
+      "You have exceeded the per-minute request quota. Retry after the Retry-After header.",
+  },
+  {
+    status: 500,
+    code: "internal_error",
+    description: "Unexpected server error. Safe to retry with the same request id.",
+  },
 ];
 
 // ---------- Competitor Prices ----------
@@ -127,11 +148,35 @@ const COMPETITORS_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["competitors.read"],
       queryParams: [
-        { name: "category", type: "string", description: "Filter by category (Electronics, Grocery, etc.)", example: "Electronics" },
-        { name: "channel", type: "string", description: "Filter by channel: online, in-store, or both.", example: "online" },
-        { name: "competitor", type: "string", description: "Filter to a single competitor key.", example: "carrefour" },
-        { name: "limit", type: "integer", description: "Page size, 1-100. Defaults to 25.", example: "25" },
-        { name: "cursor", type: "string", description: "Pagination cursor returned by the previous page." },
+        {
+          name: "category",
+          type: "string",
+          description: "Filter by category (Electronics, Grocery, etc.)",
+          example: "Electronics",
+        },
+        {
+          name: "channel",
+          type: "string",
+          description: "Filter by channel: online, in-store, or both.",
+          example: "online",
+        },
+        {
+          name: "competitor",
+          type: "string",
+          description: "Filter to a single competitor key.",
+          example: "carrefour",
+        },
+        {
+          name: "limit",
+          type: "integer",
+          description: "Page size, 1-100. Defaults to 25.",
+          example: "25",
+        },
+        {
+          name: "cursor",
+          type: "string",
+          description: "Pagination cursor returned by the previous page.",
+        },
       ],
       responses: [
         {
@@ -173,7 +218,13 @@ const COMPETITORS_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["competitors.read"],
       pathParams: [
-        { name: "id", type: "string", required: true, description: "Price snapshot id (px_...).", example: "px_3f9c2" },
+        {
+          name: "id",
+          type: "string",
+          required: true,
+          description: "Price snapshot id (px_...).",
+          example: "px_3f9c2",
+        },
       ],
       responses: [
         {
@@ -205,8 +256,19 @@ const COMPETITORS_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["competitors.read"],
       queryParams: [
-        { name: "product", type: "string", required: true, description: "Exact product name as tracked.", example: "Sony WH-1000XM5" },
-        { name: "months", type: "integer", description: "Number of months to return. 1-24, default 6.", example: "6" },
+        {
+          name: "product",
+          type: "string",
+          required: true,
+          description: "Exact product name as tracked.",
+          example: "Sony WH-1000XM5",
+        },
+        {
+          name: "months",
+          type: "integer",
+          description: "Number of months to return. 1-24, default 6.",
+          example: "6",
+        },
       ],
       responses: [
         {
@@ -230,17 +292,28 @@ const COMPETITORS_GROUP: GroupSpec = {
       method: "POST",
       path: "/v1/competitors/scrape",
       title: "Trigger a fresh scrape",
-      summary: "Runs an out-of-band scrape for a specific URL or all tracked URLs. Returns immediately with a job id.",
+      summary:
+        "Runs an out-of-band scrape for a specific URL or all tracked URLs. Returns immediately with a job id.",
       auth: "bearer",
       scopes: ["competitors.write"],
       body: [
-        { name: "url", type: "string", description: "Optional. Scrape a single competitor URL. If omitted, runs all tracked URLs.", example: "https://www.carrefourqatar.com/.../sony-wh-1000xm5" },
+        {
+          name: "url",
+          type: "string",
+          description:
+            "Optional. Scrape a single competitor URL. If omitted, runs all tracked URLs.",
+          example: "https://www.carrefourqatar.com/.../sony-wh-1000xm5",
+        },
       ],
       responses: [
         {
           status: 202,
           label: "Job accepted",
-          example: { job_id: "scr_8f2a1", status: "queued", estimated_completion: "2026-04-23T10:18:00Z" },
+          example: {
+            job_id: "scr_8f2a1",
+            status: "queued",
+            estimated_completion: "2026-04-23T10:18:00Z",
+          },
         },
       ],
       errors: COMMON_ERRORS,
@@ -254,12 +327,23 @@ const COMPETITORS_GROUP: GroupSpec = {
       method: "GET",
       path: "/v1/competitors/patterns",
       title: "List detected behavior patterns",
-      summary: "Returns competitor pricing/promo patterns detected by the model with confidence scores.",
+      summary:
+        "Returns competitor pricing/promo patterns detected by the model with confidence scores.",
       auth: "bearer",
       scopes: ["competitors.read"],
       queryParams: [
-        { name: "competitor", type: "string", description: "Filter to a single competitor.", example: "talabat" },
-        { name: "min_confidence", type: "integer", description: "0-100. Default 70.", example: "80" },
+        {
+          name: "competitor",
+          type: "string",
+          description: "Filter to a single competitor.",
+          example: "talabat",
+        },
+        {
+          name: "min_confidence",
+          type: "integer",
+          description: "0-100. Default 70.",
+          example: "80",
+        },
       ],
       responses: [
         {
@@ -325,7 +409,11 @@ const PRICING_GROUP: GroupSpec = {
                 currency: "QAR",
                 confidence: 87,
                 reason: "Carrefour and Amazon both undercutting by 4-8% over the last 36 hours.",
-                expected: { net_monthly: "+QAR 14,200", margin_impact: "-1.8pp", unit_impact: "+22%" },
+                expected: {
+                  net_monthly: "+QAR 14,200",
+                  margin_impact: "-1.8pp",
+                  unit_impact: "+22%",
+                },
                 source: "engine_v3",
                 generated_at: "2026-04-23T08:02:00Z",
               },
@@ -344,7 +432,13 @@ const PRICING_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["pricing.read"],
       pathParams: [
-        { name: "id", type: "string", required: true, description: "Recommendation id (rec_...).", example: "rec_9a2c1" },
+        {
+          name: "id",
+          type: "string",
+          required: true,
+          description: "Recommendation id (rec_...).",
+          example: "rec_9a2c1",
+        },
       ],
       responses: [
         {
@@ -376,15 +470,42 @@ const PRICING_GROUP: GroupSpec = {
       method: "POST",
       path: "/v1/pricing/decisions",
       title: "Log a pricing decision",
-      summary: "Record an accept, override, or snooze action for a recommendation. Used for the audit trail and to retrain the model.",
+      summary:
+        "Record an accept, override, or snooze action for a recommendation. Used for the audit trail and to retrain the model.",
       auth: "bearer",
       scopes: ["pricing.write"],
       body: [
-        { name: "recommendation_id", type: "string", required: true, description: "The recommendation being acted on.", example: "rec_9a2c1" },
-        { name: "decision", type: "enum", required: true, description: "One of: accepted, overridden, rejected, snoozed.", example: "accepted" },
-        { name: "applied_price", type: "number", description: "Required when decision is overridden.", example: "1169" },
-        { name: "snooze_until", type: "string (ISO 8601)", description: "Required when decision is snoozed.", example: "2026-04-25T00:00:00Z" },
-        { name: "note", type: "string", description: "Free-text rationale, surfaced in the audit log." },
+        {
+          name: "recommendation_id",
+          type: "string",
+          required: true,
+          description: "The recommendation being acted on.",
+          example: "rec_9a2c1",
+        },
+        {
+          name: "decision",
+          type: "enum",
+          required: true,
+          description: "One of: accepted, overridden, rejected, snoozed.",
+          example: "accepted",
+        },
+        {
+          name: "applied_price",
+          type: "number",
+          description: "Required when decision is overridden.",
+          example: "1169",
+        },
+        {
+          name: "snooze_until",
+          type: "string (ISO 8601)",
+          description: "Required when decision is snoozed.",
+          example: "2026-04-25T00:00:00Z",
+        },
+        {
+          name: "note",
+          type: "string",
+          description: "Free-text rationale, surfaced in the audit log.",
+        },
       ],
       responses: [
         {
@@ -406,7 +527,8 @@ const PRICING_GROUP: GroupSpec = {
       method: "GET",
       path: "/v1/pricing/rules",
       title: "List pricing guardrails",
-      summary: "Returns the active pricing rules that constrain recommendations (min margin, MAP, channel parity, etc.).",
+      summary:
+        "Returns the active pricing rules that constrain recommendations (min margin, MAP, channel parity, etc.).",
       auth: "bearer",
       scopes: ["pricing.read"],
       responses: [
@@ -415,9 +537,21 @@ const PRICING_GROUP: GroupSpec = {
           label: "Rules returned",
           example: {
             data: [
-              { id: "rul_1", rule_text: "Never price below 8% gross margin on Electronics", enabled: true },
-              { id: "rul_2", rule_text: "Stay within ±3% of Talabat on grocery essentials", enabled: true },
-              { id: "rul_3", rule_text: "Never undercut iPhone pricing on weekends", enabled: false },
+              {
+                id: "rul_1",
+                rule_text: "Never price below 8% gross margin on Electronics",
+                enabled: true,
+              },
+              {
+                id: "rul_2",
+                rule_text: "Stay within ±3% of Talabat on grocery essentials",
+                enabled: true,
+              },
+              {
+                id: "rul_3",
+                rule_text: "Never undercut iPhone pricing on weekends",
+                enabled: false,
+              },
             ],
           },
         },
@@ -440,11 +574,16 @@ const PROMOTIONS_GROUP: GroupSpec = {
       method: "GET",
       path: "/v1/promotions/calendar",
       title: "Get the promotion calendar",
-      summary: "Returns live and upcoming competitor promotions across online and in-store channels.",
+      summary:
+        "Returns live and upcoming competitor promotions across online and in-store channels.",
       auth: "bearer",
       scopes: ["promotions.read"],
       queryParams: [
-        { name: "status", type: "string", description: "live, upcoming, or ended. Defaults to live+upcoming." },
+        {
+          name: "status",
+          type: "string",
+          description: "live, upcoming, or ended. Defaults to live+upcoming.",
+        },
         { name: "competitor", type: "string", description: "Filter by competitor key." },
       ],
       responses: [
@@ -475,14 +614,39 @@ const PROMOTIONS_GROUP: GroupSpec = {
       method: "POST",
       path: "/v1/promotions/simulate",
       title: "Simulate a campaign",
-      summary: "Returns predicted GMV uplift, cannibalization, incremental orders, and net ROI for a candidate campaign.",
+      summary:
+        "Returns predicted GMV uplift, cannibalization, incremental orders, and net ROI for a candidate campaign.",
       auth: "bearer",
       scopes: ["promotions.write"],
       body: [
-        { name: "category", type: "string", required: true, description: "Category to run the campaign on.", example: "Electronics" },
-        { name: "channel", type: "enum", required: true, description: "online, in-store, or both.", example: "online" },
-        { name: "depth_pct", type: "number", required: true, description: "Discount depth as a percentage (1-50).", example: "15" },
-        { name: "duration_days", type: "integer", required: true, description: "Campaign length in days (1-30).", example: "7" },
+        {
+          name: "category",
+          type: "string",
+          required: true,
+          description: "Category to run the campaign on.",
+          example: "Electronics",
+        },
+        {
+          name: "channel",
+          type: "enum",
+          required: true,
+          description: "online, in-store, or both.",
+          example: "online",
+        },
+        {
+          name: "depth_pct",
+          type: "number",
+          required: true,
+          description: "Discount depth as a percentage (1-50).",
+          example: "15",
+        },
+        {
+          name: "duration_days",
+          type: "integer",
+          required: true,
+          description: "Campaign length in days (1-30).",
+          example: "7",
+        },
       ],
       responses: [
         {
@@ -510,12 +674,11 @@ const PROMOTIONS_GROUP: GroupSpec = {
       method: "GET",
       path: "/v1/promotions/campaigns",
       title: "List your past campaigns",
-      summary: "Returns measured outcomes for campaigns you have run, with verdict and recommended changes.",
+      summary:
+        "Returns measured outcomes for campaigns you have run, with verdict and recommended changes.",
       auth: "bearer",
       scopes: ["promotions.read"],
-      queryParams: [
-        { name: "limit", type: "integer", description: "1-100. Default 25." },
-      ],
+      queryParams: [{ name: "limit", type: "integer", description: "1-100. Default 25." }],
       responses: [
         {
           status: 200,
@@ -554,7 +717,8 @@ const FIELD_GROUP: GroupSpec = {
       method: "GET",
       path: "/v1/field-intel/observations",
       title: "List recent observations",
-      summary: "Returns in-store observations submitted by your field team, including price, condition, and reviewer status.",
+      summary:
+        "Returns in-store observations submitted by your field team, including price, condition, and reviewer status.",
       auth: "bearer",
       scopes: ["field.read"],
       queryParams: [
@@ -595,12 +759,44 @@ const FIELD_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["field.write"],
       body: [
-        { name: "product", type: "string", required: true, description: "Product name or SKU.", example: "Samsung Galaxy S24 Ultra 256GB" },
-        { name: "store", type: "string", required: true, description: "Store identifier.", example: "Carrefour - Doha Festival City" },
-        { name: "price", type: "number", required: true, description: "Observed shelf price.", example: "3849" },
-        { name: "currency", type: "string", description: "ISO currency code. Defaults to account currency.", example: "QAR" },
-        { name: "condition", type: "enum", description: "Regular price, On promotion, or Clearance.", example: "On promotion" },
-        { name: "promo_detail", type: "string", description: "Free-text promo description if condition is On promotion." },
+        {
+          name: "product",
+          type: "string",
+          required: true,
+          description: "Product name or SKU.",
+          example: "Samsung Galaxy S24 Ultra 256GB",
+        },
+        {
+          name: "store",
+          type: "string",
+          required: true,
+          description: "Store identifier.",
+          example: "Carrefour - Doha Festival City",
+        },
+        {
+          name: "price",
+          type: "number",
+          required: true,
+          description: "Observed shelf price.",
+          example: "3849",
+        },
+        {
+          name: "currency",
+          type: "string",
+          description: "ISO currency code. Defaults to account currency.",
+          example: "QAR",
+        },
+        {
+          name: "condition",
+          type: "enum",
+          description: "Regular price, On promotion, or Clearance.",
+          example: "On promotion",
+        },
+        {
+          name: "promo_detail",
+          type: "string",
+          description: "Free-text promo description if condition is On promotion.",
+        },
       ],
       responses: [
         {
@@ -625,7 +821,8 @@ const FIELD_GROUP: GroupSpec = {
       method: "GET",
       path: "/v1/field-intel/price-gaps",
       title: "List in-store vs online price gaps",
-      summary: "Returns SKUs where the in-store price differs from the same competitor's online price by more than 1%.",
+      summary:
+        "Returns SKUs where the in-store price differs from the same competitor's online price by more than 1%.",
       auth: "bearer",
       scopes: ["field.read"],
       responses: [
@@ -692,12 +889,25 @@ const WEBHOOKS_GROUP: GroupSpec = {
       method: "POST",
       path: "/v1/webhooks/endpoints",
       title: "Create a webhook endpoint",
-      summary: "Register a new endpoint. We sign every delivery with HMAC-SHA256 using the returned signing_secret.",
+      summary:
+        "Register a new endpoint. We sign every delivery with HMAC-SHA256 using the returned signing_secret.",
       auth: "bearer",
       scopes: ["webhooks.write"],
       body: [
-        { name: "url", type: "string", required: true, description: "HTTPS URL to receive deliveries.", example: "https://api.acme.com/hooks/prizeskout" },
-        { name: "events", type: "string[]", required: true, description: "Event types to subscribe to.", example: '["price.dropped","recommendation.created"]' },
+        {
+          name: "url",
+          type: "string",
+          required: true,
+          description: "HTTPS URL to receive deliveries.",
+          example: "https://api.acme.com/hooks/prizeskout",
+        },
+        {
+          name: "events",
+          type: "string[]",
+          required: true,
+          description: "Event types to subscribe to.",
+          example: '["price.dropped","recommendation.created"]',
+        },
         { name: "description", type: "string", description: "Optional internal label." },
       ],
       responses: [
@@ -729,7 +939,11 @@ const WEBHOOKS_GROUP: GroupSpec = {
       scopes: ["webhooks.read"],
       queryParams: [
         { name: "endpoint_id", type: "string", description: "Filter to a single endpoint." },
-        { name: "success", type: "boolean", description: "Filter to successful (true) or failed (false) deliveries." },
+        {
+          name: "success",
+          type: "boolean",
+          description: "Filter to successful (true) or failed (false) deliveries.",
+        },
         { name: "limit", type: "integer", description: "1-100. Default 25." },
       ],
       responses: [
@@ -771,11 +985,18 @@ const WEBHOOKS_GROUP: GroupSpec = {
       method: "POST",
       path: "/v1/webhooks/deliveries/{id}/retry",
       title: "Retry a failed delivery",
-      summary: "Manually retries a failed delivery. The retry counts against the endpoint's max_attempts setting.",
+      summary:
+        "Manually retries a failed delivery. The retry counts against the endpoint's max_attempts setting.",
       auth: "bearer",
       scopes: ["webhooks.write"],
       pathParams: [
-        { name: "id", type: "string", required: true, description: "Delivery id (whd_...).", example: "whd_a90" },
+        {
+          name: "id",
+          type: "string",
+          required: true,
+          description: "Delivery id (whd_...).",
+          example: "whd_a90",
+        },
       ],
       responses: [
         {
@@ -800,7 +1021,8 @@ const WEBHOOKS_GROUP: GroupSpec = {
           name: "event_type",
           type: "string",
           required: true,
-          description: "One of: enrich.price_changed, enrich.promo_detected, enrich.new_competitor.",
+          description:
+            "One of: enrich.price_changed, enrich.promo_detected, enrich.new_competitor.",
           example: "enrich.price_changed",
         },
         {
@@ -819,9 +1041,7 @@ const WEBHOOKS_GROUP: GroupSpec = {
             event_type: "enrich.price_changed",
             delivered_count: 1,
             attempted_count: 1,
-            deliveries: [
-              { endpoint_id: "wh_e1c2", success: true, status_code: 200, error: null },
-            ],
+            deliveries: [{ endpoint_id: "wh_e1c2", success: true, status_code: 200, error: null }],
           },
         },
       ],
@@ -898,9 +1118,25 @@ const OPERATIONS_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["pricing.read"],
       body: [
-        { name: "sku", type: "string", required: true, description: "Catalog SKU.", example: "SKU-001" },
-        { name: "list_price", type: "number", description: "Override the catalog list price for the calculation.", example: "1149" },
-        { name: "channel", type: "string", description: "Channel for the catalog price lookup. Default: online.", example: "online" },
+        {
+          name: "sku",
+          type: "string",
+          required: true,
+          description: "Catalog SKU.",
+          example: "SKU-001",
+        },
+        {
+          name: "list_price",
+          type: "number",
+          description: "Override the catalog list price for the calculation.",
+          example: "1149",
+        },
+        {
+          name: "channel",
+          type: "string",
+          description: "Channel for the catalog price lookup. Default: online.",
+          example: "online",
+        },
       ],
       responses: [
         {
@@ -911,7 +1147,13 @@ const OPERATIONS_GROUP: GroupSpec = {
             product_id: "prod_3a9c2f",
             channel: "online",
             currency: "QAR",
-            inputs: { unit_cost: 700, freight: 25, duty_pct: 0.05, fees_pct: 0.08, list_price: 1199 },
+            inputs: {
+              unit_cost: 700,
+              freight: 25,
+              duty_pct: 0.05,
+              fees_pct: 0.08,
+              list_price: 1199,
+            },
             breakdown: { duty_amount: 35, fees_amount: 95.92, landed_cost: 855.92 },
             margin: { gross_margin: 343.08, gross_margin_pct: 0.2861 },
           },
@@ -929,9 +1171,25 @@ const OPERATIONS_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["pricing.write"],
       body: [
-        { name: "sku", type: "string", required: true, description: "Catalog SKU.", example: "SKU-001" },
-        { name: "channel", type: "string", description: "Channel. Default: online.", example: "online" },
-        { name: "target_margin_pct", type: "number", description: "Desired gross-margin floor as a fraction (0–0.95). Default: 0.20.", example: "0.25" },
+        {
+          name: "sku",
+          type: "string",
+          required: true,
+          description: "Catalog SKU.",
+          example: "SKU-001",
+        },
+        {
+          name: "channel",
+          type: "string",
+          description: "Channel. Default: online.",
+          example: "online",
+        },
+        {
+          name: "target_margin_pct",
+          type: "number",
+          description: "Desired gross-margin floor as a fraction (0–0.95). Default: 0.20.",
+          example: "0.25",
+        },
       ],
       responses: [
         {
@@ -982,7 +1240,12 @@ const NETWORK_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["network.read"],
       queryParams: [
-        { name: "metric", type: "string", description: "Filter to a single metric key.", example: "avg_price_volatility" },
+        {
+          name: "metric",
+          type: "string",
+          description: "Filter to a single metric key.",
+          example: "avg_price_volatility",
+        },
       ],
       responses: [
         {
@@ -1018,8 +1281,18 @@ const NETWORK_GROUP: GroupSpec = {
       auth: "bearer",
       scopes: ["network.read", "competitors.read"],
       queryParams: [
-        { name: "competitor", type: "string", description: "Filter to a single competitor.", example: "talabat" },
-        { name: "min_confidence", type: "integer", description: "0-100. Default 70.", example: "80" },
+        {
+          name: "competitor",
+          type: "string",
+          description: "Filter to a single competitor.",
+          example: "talabat",
+        },
+        {
+          name: "min_confidence",
+          type: "integer",
+          description: "0-100. Default 70.",
+          example: "80",
+        },
       ],
       responses: [
         {
@@ -1045,7 +1318,326 @@ const NETWORK_GROUP: GroupSpec = {
   ],
 };
 
+const RESTAURANT_COMMERCE_GROUP: GroupSpec = {
+  slug: "restaurant-commerce",
+  name: "Restaurant Commerce",
+  tagline: "Normalize POS, ERP and delivery orders into one economic record.",
+  pillar: "commerce-events",
+  endpoints: [
+    {
+      slug: "ingest-order-batch",
+      method: "POST",
+      path: "/v1/commerce/order-batches",
+      title: "Ingest a restaurant order batch",
+      summary:
+        "Accepts idempotent order batches from an ERP, POS, connector or customer data pipeline.",
+      description:
+        "The first canonical contract for enterprise restaurant groups. Source identifiers and original economic components are retained so the same payload can support Odoo, Oracle, CSV and custom integrations.",
+      auth: "bearer",
+      scopes: ["write"],
+      body: [
+        {
+          name: "batch_id",
+          type: "string",
+          required: true,
+          description: "Stable source batch identifier; reuse it for retries.",
+          example: "odoo:2026-09-05:001",
+        },
+        {
+          name: "source_provider",
+          type: "string",
+          required: true,
+          description: "POS, ERP or connector producing the batch.",
+          example: "odoo",
+        },
+        {
+          name: "schema_version",
+          type: "string",
+          required: true,
+          description: "Canonical contract version.",
+          example: "2026-09-05",
+        },
+        {
+          name: "delivery_complete",
+          type: "boolean",
+          required: true,
+          description: "Whether the source declares this batch complete.",
+        },
+        {
+          name: "declared_record_count",
+          type: "integer",
+          description: "Source-declared count used to detect partial delivery.",
+          example: "100",
+        },
+        {
+          name: "orders",
+          type: "array",
+          required: true,
+          description: "One to 1,000 canonical restaurant orders.",
+        },
+      ],
+      responses: [
+        {
+          status: 202,
+          label: "Batch accepted",
+          example: {
+            data: {
+              batch_id: "odoo:2026-09-05:001",
+              evidence_item_id: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+              duplicate: false,
+              accepted: 100,
+              events_created: 100,
+              delivery_complete: true,
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "The API rejects totals that do not reconcile with their supplied components.",
+        "Retries with the same API key, batch ID and normalized content return the original evidence identity.",
+        "Customer, card and unrelated personal fields are not part of this contract.",
+      ],
+    },
+    {
+      slug: "ingest-product-cost-batch",
+      method: "POST",
+      path: "/v1/commerce/cost-batches",
+      title: "Ingest product costs",
+      summary: "Accepts immutable, effective-dated product costs from an ERP or costing pipeline.",
+      description:
+        "Stores SKU costs at group, brand or branch scope and uses the most specific cost effective on an order's business date when calculating contribution.",
+      auth: "bearer",
+      scopes: ["write"],
+      body: [
+        {
+          name: "batch_id",
+          type: "string",
+          required: true,
+          description: "Stable source batch identifier used for safe retries.",
+          example: "odoo:costs:2026-09-05",
+        },
+        {
+          name: "source_provider",
+          type: "string",
+          required: true,
+          description: "ERP or costing source.",
+          example: "odoo",
+        },
+        {
+          name: "schema_version",
+          type: "string",
+          required: true,
+          description: "Canonical contract version.",
+          example: "2026-09-05",
+        },
+        {
+          name: "costs",
+          type: "array",
+          required: true,
+          description: "One to 5,000 effective-dated SKU cost records.",
+        },
+      ],
+      responses: [
+        {
+          status: 202,
+          label: "Costs accepted",
+          example: {
+            data: {
+              batch_id: "odoo:costs:2026-09-05",
+              duplicate: false,
+              accepted: 250,
+              costs_created: 250,
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Branch-scoped costs take precedence over brand-scoped and account-wide costs.",
+        "Historical records remain immutable; corrections arrive as new effective-dated evidence.",
+        "Contribution is withheld when any order-line SKU lacks applicable cost evidence.",
+      ],
+    },
+    {
+      slug: "get-order-economics",
+      method: "GET",
+      path: "/v1/profit/orders/{external_order_id}",
+      title: "Retrieve order economics",
+      summary: "Returns the current normalized economic record for an external order ID.",
+      description:
+        "Returns every current source record matching the order ID without overstating profit when product-cost or settlement evidence is absent.",
+      auth: "bearer",
+      scopes: ["read"],
+      pathParams: [
+        {
+          name: "external_order_id",
+          type: "string",
+          required: true,
+          description: "The order identifier supplied by the POS, ERP or delivery source.",
+          example: "POS/0042",
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Order economics returned",
+          example: {
+            data: [
+              {
+                external_order_id: "POS/0042",
+                channel: "talabat",
+                currency: "QAR",
+                economics: {
+                  gross_amount: 105,
+                  discount_amount: 10,
+                  tax_amount: 0,
+                  fee_amount: 0,
+                  net_amount: 95,
+                  product_cost_amount: null,
+                  contribution_amount: null,
+                },
+                completeness: "order_economics_without_product_cost",
+                evidence: { strength: "strong", limitations: [] },
+              },
+            ],
+            meta: { count: 1, note: null },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Contribution remains null until every order line has supported product-cost evidence.",
+        "Multiple current records are returned when different sources reuse the same external order ID.",
+      ],
+    },
+    {
+      slug: "ingest-settlement-batch",
+      method: "POST",
+      path: "/v1/commerce/settlement-batches",
+      title: "Ingest settlements and receipts",
+      summary: "Accepts platform settlement allocations and bank receipt confirmations.",
+      description:
+        "Normalizes order-level payout lines and bank confirmations into immutable evidence that can be reconciled against supported order and contract facts.",
+      auth: "bearer",
+      scopes: ["write"],
+      body: [
+        {
+          name: "batch_id",
+          type: "string",
+          required: true,
+          description: "Stable identifier used for idempotent retries.",
+          example: "talabat:settlement:2026-09-05",
+        },
+        {
+          name: "source_provider",
+          type: "string",
+          required: true,
+          description: "System that supplied the evidence.",
+          example: "talabat",
+        },
+        {
+          name: "channel",
+          type: "string",
+          required: true,
+          description: "Delivery or commerce channel being settled.",
+          example: "talabat",
+        },
+        {
+          name: "schema_version",
+          type: "string",
+          required: true,
+          description: "Canonical contract version.",
+          example: "2026-09-05",
+        },
+        {
+          name: "delivery_complete",
+          type: "boolean",
+          required: true,
+          description: "Whether the source declared the export complete.",
+        },
+        {
+          name: "settlements",
+          type: "array",
+          required: true,
+          description: "Platform payout lines, preferably allocated to external order IDs.",
+        },
+        {
+          name: "receipts",
+          type: "array",
+          required: true,
+          description: "Bank or treasury confirmations linked by settlement reference.",
+        },
+      ],
+      responses: [
+        {
+          status: 202,
+          label: "Settlement evidence accepted",
+          example: {
+            data: {
+              batch_id: "talabat:settlement:2026-09-05",
+              duplicate: false,
+              settlements_created: 100,
+              receipts_created: 1,
+              events_created: 101,
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Batch totals without order allocation are retained but never converted into fictional order-level discrepancies.",
+        "Component arithmetic is checked when all settlement components are supplied.",
+      ],
+    },
+    {
+      slug: "create-reconciliation-run",
+      method: "POST",
+      path: "/v1/profit/reconciliation-runs",
+      title: "Run settlement reconciliation",
+      summary: "Reconciles approved order, agreement, payout and receipt evidence.",
+      description:
+        "Creates an immutable reconciliation run and evidence-strength-aware findings. An explicit approved contract term is required so platform fees are not guessed.",
+      auth: "bearer",
+      scopes: ["write"],
+      body: [
+        {
+          name: "evidence_item_id",
+          type: "uuid",
+          required: true,
+          description: "Seed evidence item defining the reviewed reconciliation set.",
+        },
+        {
+          name: "contract_term_id",
+          type: "uuid",
+          required: true,
+          description: "Approved contract terms used to calculate expected settlement.",
+        },
+      ],
+      responses: [
+        {
+          status: 201,
+          label: "Reconciliation completed",
+          example: {
+            data: {
+              run_id: "a942e767-2476-4597-b2aa-728b7f3adad2",
+              status: "completed_with_exceptions",
+              duplicate: false,
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "The same evidence and contract inputs return the existing immutable run.",
+        "A claim-ready finding requires strong order, contract and allocated payout evidence.",
+      ],
+    },
+  ],
+};
+
 export const API_GROUPS: GroupSpec[] = [
+  RESTAURANT_COMMERCE_GROUP,
   COMPETITORS_GROUP,
   PRICING_GROUP,
   PROMOTIONS_GROUP,
@@ -1055,7 +1647,10 @@ export const API_GROUPS: GroupSpec[] = [
   NETWORK_GROUP,
 ];
 
-export function findEndpoint(groupSlug: string, endpointSlug: string): { group: GroupSpec; endpoint: EndpointSpec } | null {
+export function findEndpoint(
+  groupSlug: string,
+  endpointSlug: string,
+): { group: GroupSpec; endpoint: EndpointSpec } | null {
   const group = API_GROUPS.find((g) => g.slug === groupSlug);
   if (!group) return null;
   const endpoint = group.endpoints.find((e) => e.slug === endpointSlug);
@@ -1088,4 +1683,3 @@ export const API_BASE_URL = "https://api.prizeskout.com";
 export const ALL_SCOPES = Array.from(
   new Set(API_GROUPS.flatMap((g) => g.endpoints.flatMap((e) => e.scopes))),
 ).sort();
-

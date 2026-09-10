@@ -1,5 +1,4 @@
 ﻿import { useState, type CSSProperties, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import logoDark from "@/assets/logo-dark.svg";
 import logoLight from "@/assets/logo-light.svg";
@@ -8,8 +7,8 @@ export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) 
   const color = tone === "light" ? "#6B6B6B" : "#8A8A8A";
   const hoverColor = tone === "light" ? "#1A1A18" : "#FAFAF9";
   return (
-    <Link
-      to="/"
+    <a
+      href="/"
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -25,7 +24,7 @@ export function BackToHomeLink({ tone = "light" }: { tone?: "light" | "dark" }) 
     >
       <ArrowLeft size={14} aria-hidden="true" />
       Back to home
-    </Link>
+    </a>
   );
 }
 
@@ -137,10 +136,17 @@ export function AuthLeftPanel() {
   );
 }
 
-export function AuthShell({ children }: { children: ReactNode }) {
+export function AuthShell({
+  children,
+  tone = "dark",
+}: {
+  children: ReactNode;
+  tone?: "light" | "dark";
+}) {
+  const light = tone === "light";
   return (
     <div
-      className="ps-auth-shell"
+      className={`ps-auth-shell${light ? " ps-auth-shell-light" : ""}`}
       style={{
         display: "flex",
         minHeight: "100vh",
@@ -154,7 +160,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         tabIndex={-1}
         style={{
           flex: 1,
-          backgroundColor: "#080809",
+          backgroundColor: light ? "#faf9f6" : "#080809",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -164,9 +170,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
         }}
       >
         <div className="ps-auth-back" style={{ position: "absolute", top: 24, left: 24 }}>
-          <BackToHomeLink tone="dark" />
+          <BackToHomeLink tone={light ? "light" : "dark"} />
         </div>
-        <div style={{ maxWidth: 380, width: "100%" }}>{children}</div>
+        <div className="ps-auth-content" style={{ maxWidth: 380, width: "100%" }}>{children}</div>
       </main>
     </div>
   );

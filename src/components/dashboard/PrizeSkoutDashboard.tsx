@@ -256,6 +256,7 @@ const CSS = `
     --px:30px;
   }
   .ps-db h1,.ps-db h2,.ps-db h3,.ps-db h4,.ps-db button,.ps-db input,.ps-db select,.ps-db textarea{font-family:inherit}
+  .ps-db{scroll-padding-top:96px}
   .ps-db[data-theme="dark"]{
     --bg:#0B0E13;--surface:#141924;--surface2:#101520;--border:#232B38;
     --text:#F2F4F8;--muted:#8B93A3;--accent-text:#EF681A;
@@ -297,6 +298,7 @@ const CSS = `
   .ps-evidence-workspace{display:grid;gap:16px;padding:20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
   .ps-db input[type=range]{accent-color:var(--accent);height:28px;cursor:pointer}
   .ps-db button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .ps-db :is(a,input,select,textarea,[tabindex]:not([tabindex="-1"])):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .ps-pill-btn:hover{border-color:var(--accent)!important;color:var(--accent)!important}
   .ps-ig-btn:hover{border-color:var(--accent)!important;color:var(--accent)!important}
   .ps-db-controls{gap:8px!important}.ps-db-controls>button{height:38px!important}.ps-db-h1{font-size:27px!important;letter-spacing:-.035em!important}.ps-db-header>div:first-child>div+div{font-size:13px!important}
@@ -327,6 +329,10 @@ const CSS = `
     .ps-section-heading{align-items:flex-start;flex-direction:column;gap:12px}
     .ps-section-action,.ps-section-action button{width:100%}
     .ps-kpi-strip{grid-template-columns:1fr}
+    .ps-db button,.ps-db [role="button"]{min-height:44px;touch-action:manipulation}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .ps-db,.ps-db *,.ps-db *:before,.ps-db *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   }
   .ps-cfo-workspace>.ps-cfo-heading{display:none}.ps-cfo-workspace>.ps-cfo-kpis{order:2}.ps-cfo-workspace>.ps-cfo-kpis>div{min-height:106px}.ps-cfo-workspace>.ps-cfo-compact{order:3;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(210px,.55fr) minmax(300px,.9fr);gap:12px}.ps-cfo-chat-panel,.ps-cfo-insight,.ps-cfo-forecast{border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface);min-width:0}.ps-cfo-panel-title h3{font-size:13px;margin:0}.ps-cfo-panel-title p{font-size:9.5px;color:var(--muted);margin:3px 0 0}.ps-cfo-question{margin:15px 0 10px 28%;padding:9px 12px;border-radius:12px 12px 3px 12px;background:#2563eb;color:#fff;font-size:10px}.ps-cfo-answer{padding:12px;border:1px solid var(--border);border-radius:3px 12px 12px;background:var(--surface2);font-size:10px;line-height:1.5}.ps-cfo-answer b,.ps-cfo-answer span{display:block}.ps-cfo-answer span{margin-top:5px;color:var(--muted)}.ps-cfo-quick-questions{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}.ps-cfo-quick-questions button{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 8px;font:600 8px inherit;color:var(--text);cursor:pointer}.ps-cfo-compact-input{display:flex;border:1px solid var(--border);border-radius:9px;padding:4px}.ps-cfo-compact-input input{flex:1;min-width:0;border:0;background:transparent;padding:7px;outline:0;color:var(--text);font:10px inherit}.ps-cfo-compact-input button,.ps-cfo-insight button{border:0;border-radius:7px;background:#2563eb;color:#fff;padding:7px 11px;font:750 9px inherit;cursor:pointer}.ps-cfo-insight>strong{display:block;color:#f97316;font-size:21px;margin-top:18px}.ps-cfo-insight>span{font-size:9px;color:var(--muted)}.ps-cfo-insight h4{font-size:10px;margin:18px 0 5px}.ps-cfo-insight>p{font-size:9.5px;line-height:1.5;color:var(--muted)}.ps-cfo-insight button{margin-top:8px;background:transparent;color:#2563eb;padding-left:0}.ps-cfo-line-chart{height:145px;display:flex;align-items:flex-end;gap:7px;border-bottom:1px solid var(--border);margin:12px 0}.ps-cfo-line-chart i{flex:1;background:linear-gradient(#2563eb,#93c5fd);border-radius:5px 5px 0 0;height:30%}.ps-cfo-line-chart i:nth-child(2){height:38%}.ps-cfo-line-chart i:nth-child(3){height:51%}.ps-cfo-line-chart i:nth-child(4){height:45%}.ps-cfo-line-chart i:nth-child(5){height:65%}.ps-cfo-line-chart i:nth-child(6){height:76%}.ps-cfo-line-chart i:nth-child(7){height:92%}.ps-cfo-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ps-cfo-summary span{min-width:0}.ps-cfo-summary small,.ps-cfo-summary b{display:block}.ps-cfo-summary small{font-size:7px;color:var(--muted)}.ps-cfo-summary b{font-size:9px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-cfo-workspace>.ps-cfo-expand{order:4;align-self:flex-end;border:0;background:transparent;color:#2563eb;font:750 10px inherit;cursor:pointer}.ps-cfo-workspace:not(.ps-cfo-expanded)>*:not(.ps-cfo-kpis):not(.ps-cfo-compact):not(.ps-cfo-expand):not(.ps-cfo-heading){display:none!important}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-command{order:5}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-suggestions{order:6}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-alerts{order:7}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-modes{order:8;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-status{order:9}.ps-cfo-workspace.ps-cfo-expanded>div:not([class]){order:10}.ps-manager-workspace>header{display:none}.ps-manager-workspace>.ps-manager-kpis{order:2}.ps-manager-workspace>.ps-manager-workflow{order:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface2)}.ps-manager-workflow>div{display:flex;align-items:flex-start;gap:9px;padding:4px 12px;border-right:1px solid var(--border)}.ps-manager-workflow>div:last-child{border-right:0}.ps-manager-workflow i{font-style:normal;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:white;font-weight:850;font-size:11px;flex:0 0 auto}.ps-manager-workflow span{display:flex;flex-direction:column}.ps-manager-workflow b{font-size:11.5px}.ps-manager-workflow small{font-size:10px;color:var(--muted);margin-top:3px}.ps-manager-workspace>.ps-manager-desk{order:4}.ps-manager-workspace>.ps-manager-attention{order:5}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>*:not(.ps-manager-kpis):not(.ps-manager-workflow):not(.ps-manager-desk):not(.ps-manager-attention):not(.ps-manager-outcome){order:7}
   .ps-manager-workspace{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}.ps-manager-workspace>.ps-manager-main-grid{order:3;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(330px,.85fr);gap:14px}.ps-manager-workspace>.ps-manager-health-grid{order:4;display:grid;grid-template-columns:.9fr 1.1fr .8fr;gap:14px}.ps-manager-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0}.ps-manager-panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px}.ps-manager-panel-heading h3{font-size:14px;margin:0;color:var(--text)}.ps-manager-panel-heading p{font-size:10.5px;color:var(--muted);margin:3px 0 0}.ps-manager-panel-heading button,.ps-manager-expand{border:0;background:transparent;color:#2563eb;font:700 10.5px inherit;cursor:pointer}.ps-manager-queue-head,.ps-manager-queue-row{display:grid;grid-template-columns:minmax(0,2fr) .75fr .62fr .72fr;gap:10px;align-items:center}.ps-manager-queue-head{padding:7px 8px;border-bottom:1px solid var(--border);font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase}.ps-manager-queue-row{width:100%;padding:10px 8px;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;color:var(--text);font-family:inherit;cursor:pointer}.ps-manager-queue-row:last-child{border-bottom:0}.ps-manager-queue-row b{display:block;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-manager-queue-row small{display:block;font-size:8.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.ps-manager-queue-row>span:not(:first-child){font-size:9px;text-transform:capitalize}.ps-manager-priority{font-weight:800}.ps-manager-priority.ps-critical,.ps-manager-priority.ps-high{color:#dc2626}.ps-manager-priority.ps-medium{color:#d97706}.ps-manager-empty{display:grid;place-items:center;min-height:150px;color:var(--muted);font-size:11px}.ps-manager-workflow-card .ps-manager-workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:22px}.ps-manager-workflow-card .ps-manager-workflow>div{position:relative;text-align:center;padding:0 5px}.ps-manager-workflow-card .ps-manager-workflow>div:not(:last-child):after{content:"";position:absolute;left:58%;right:-42%;top:13px;height:1px;background:#cbd5e1}.ps-manager-workflow-card .ps-manager-workflow i{position:relative;z-index:1;width:27px;height:27px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:#fff;font-style:normal;font-size:10px;font-weight:850}.ps-manager-workflow-card .ps-manager-workflow span{display:block}.ps-manager-workflow-card .ps-manager-workflow b{display:block;font-size:9px}.ps-manager-workflow-card .ps-manager-workflow small{display:block;font-size:8px;color:var(--muted);margin-top:3px}.ps-manager-health-body{display:flex;align-items:center;gap:18px}.ps-manager-donut{width:112px;height:112px;border-radius:50%;background:conic-gradient(#10b981 var(--coverage),#f97316 0);display:grid;place-content:center;text-align:center;position:relative}.ps-manager-donut:before{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--surface)}.ps-manager-donut strong,.ps-manager-donut small{position:relative;z-index:1}.ps-manager-donut strong{font-size:20px}.ps-manager-donut small{font-size:8px;color:var(--muted)}.ps-manager-health-body>div:last-child{display:flex;flex-direction:column;gap:6px;font-size:10px}.ps-manager-health-body span{color:var(--muted)}.ps-manager-sync-row,.ps-manager-impact>div:not(.ps-manager-panel-heading){display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);align-items:center;font-size:10px}.ps-manager-sync-row span{color:#059669}.ps-manager-sync-row em{font-style:normal;color:var(--muted)}.ps-manager-impact>div:not(.ps-manager-panel-heading){grid-template-columns:1fr auto}.ps-manager-impact span{color:var(--muted)}.ps-manager-impact b{color:#059669}.ps-manager-workspace>.ps-manager-expand{order:5;justify-self:end;padding:8px 0}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>.ps-manager-attention{order:7}.ps-manager-workspace>.ps-manager-desk{order:8}.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-outcome,.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-attention,.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-desk{display:none!important}.ps-manager-workspace>.ps-manager-main-grid~div:not([class]),.ps-manager-workspace>.ps-manager-main-grid~button:not(.ps-manager-expand){order:9}
@@ -447,19 +453,20 @@ const BYOK_CONFIG: Record<string, { fields: ByokField[]; portalHint?: string }> 
   talabat: {
     fields: [
       {
-        key: "client_id",
-        label: "Client ID",
+        key: "username",
+        label: "Plugin username",
         hint: "Talabat Partner Portal → Settings → API Credentials",
       },
-      { key: "client_secret", label: "Client Secret" },
+      { key: "password", label: "Plugin password" },
+      { key: "middleware_jwt_secret", label: "Middleware JWT secret" },
       {
-        key: "vendor_id",
-        label: "Vendor ID",
+        key: "pos_vendor_id",
+        label: "POS vendor ID",
         hint: "Your store's vendor ID from the Talabat portal",
       },
       {
-        key: "chain_id",
-        label: "Chain ID",
+        key: "chain_code",
+        label: "Chain code",
         hint: "UUID format, e.g. 12345678-1234-1234-1234-123456789012 — from partner.talabat.com",
       },
       {
@@ -493,7 +500,7 @@ const BYOK_CONFIG: Record<string, { fields: ByokField[]; portalHint?: string }> 
         hint: "Restaurant-funded delivery amount per order. Enter 0 if none.",
       },
     ],
-    portalHint: "Find your credentials at partner.talabat.com",
+    portalHint: "Use the credentials from Talabat's PGP-encrypted email. Connections remain on staging until production activation.",
   },
   jahez: {
     fields: [
@@ -6355,21 +6362,6 @@ export function PrizeSkoutDashboard() {
               >
                 {headerTitle}
               </h1>
-              <span
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  letterSpacing: ".8px",
-                  color: GN,
-                  background: `color-mix(in srgb,${GN} 12%,var(--surface))`,
-                  border: `1px solid color-mix(in srgb,${GN} 28%,transparent)`,
-                  borderRadius: 7,
-                  padding: "3px 9px",
-                  fontFamily: MONO,
-                }}
-              >
-                {t.live}
-              </span>
             </div>
             <div style={{ fontSize: 15.5, color: "var(--muted)" }}>{headerSub}</div>
           </div>

@@ -1,5 +1,5 @@
 ﻿import { type ReactNode, useState } from "react";
-import { Link, useRouter, useLocation } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
@@ -67,20 +67,15 @@ function FL_Link({ label, to }: { label: string; to: FooterTo }) {
 }
 
 function FooterHashLink({ label, hash }: { label: string; hash: string }) {
-  const router = useRouter();
   const location = useLocation();
   const onLanding = location.pathname === "/";
   return (
     <a
       href={`/#${hash}`}
-      onClick={async (e) => {
+      onClick={(e) => {
+        if (!onLanding) return;
         e.preventDefault();
-        if (onLanding) {
-          smoothScrollToHash(hash);
-        } else {
-          await router.navigate({ to: "/", hash });
-          setTimeout(() => smoothScrollToHash(hash), 100);
-        }
+        smoothScrollToHash(hash);
       }}
       style={FL}
       onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
@@ -103,13 +98,7 @@ const COL_HEAD: React.CSSProperties = {
 
 function Footer() {
   const { t } = useTranslation();
-  const router = useRouter();
   const [supportOpen, setSupportOpen] = useState(false);
-  const handleLogoClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await router.navigate({ to: "/" });
-    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
-  };
 
   return (
     <footer style={{ background: "#000", color: "#F5F6FA", padding: "72px 24px 32px" }}>
@@ -118,7 +107,7 @@ function Footer() {
 
           {/* Brand */}
           <div>
-            <a href="/" onClick={handleLogoClick} style={{ textDecoration: "none" }}>
+            <a href="/" style={{ textDecoration: "none" }}>
               <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
             </a>
             <p style={{ marginTop: 18, fontSize: 14.5, lineHeight: 1.7, color: "#9BA1B0", maxWidth: 320 }}>

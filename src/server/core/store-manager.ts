@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
+import { processEngineQueue } from "./engine-orchestrator";
+import { backgroundTask } from "../cf-ctx";
 
 const MODES=["observe","assist","supervised","policy_controlled","exception_only"];
 const STATUSES=["detected","investigating","prepared","waiting_approval","approved","executing","verifying","completed","needs_attention","cancelled"];
@@ -82,6 +84,7 @@ export async function createStoreManagerTask(accountId:string,input:{title:strin
   const row={account_id:accountId,idempotency_key:idempotencyKey,source:input.workflow?"assistant":"merchant",task_type:(input.taskType??"store_admin").slice(0,60),title:title.slice(0,180),detail:(input.detail??"").slice(0,2000),status:approvalRequired?"waiting_approval":"detected",risk_level:riskLevel,priority,due_at:dueAt?.toISOString()??null,approval_required:approvalRequired,input:(input.workflow??{}) as Json};
   const {data,error}=await supabaseAdmin.from("ps_store_manager_tasks" as never).insert(row as never).select("*").single();if(error)throw error;
   await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:(data as any).id,from_status:null,to_status:(data as any).status,actor:"merchant",note:"Task created from the management dashboard."} as never);
+  if(approvalRequired)backgroundTask(processEngineQueue(`store-manager:${crypto.randomUUID()}`,5));
   return data;
 }
 
@@ -89,13 +92,27 @@ export async function transitionStoreManagerTask(accountId:string,input:{id:stri
   if(!STATUSES.includes(input.toStatus))throw new Error("Choose a valid task status.");
   const {data:current,error:readError}=await supabaseAdmin.from("ps_store_manager_tasks" as never).select("*").eq("account_id",accountId).eq("id",input.id).maybeSingle();if(readError||!current)throw new Error("Task not found.");
   const from=String((current as any).status);
+  const actor=(input.actor??"Merchant").slice(0,120),note=(input.note??"").trim().slice(0,500);
+  if(from==="waiting_approval"&&Boolean((current as any).approval_required)&&String((current as any).risk_level)!=="read_only"&&["approved","cancelled"].includes(input.toStatus)){
+    const {data:event,error:eventError}=await (supabaseAdmin as any).from("ps_engine_events").select("id").eq("account_id",accountId).eq("source","store_manager_task").eq("source_event_id",`${input.id}:waiting_approval`).maybeSingle();
+    if(eventError||!event)throw new Error("The durable approval request is still being prepared. Try again shortly.");
+    const {data:work,error:workError}=await (supabaseAdmin as any).from("ps_engine_work_items").select("id").eq("event_id",event.id).eq("account_id",accountId).eq("state","waiting_approval").maybeSingle();
+    if(workError||!work)throw new Error("This task is not currently waiting in the approval engine.");
+    const {data:request,error:requestError}=await (supabaseAdmin as any).from("ps_engine_approval_requests").select("id").eq("work_item_id",work.id).eq("account_id",accountId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+    if(requestError||!request)throw new Error("The durable approval request is still being prepared. Try again shortly.");
+    const reason=note||`${input.toStatus==="approved"?"Approved":"Rejected"} by the merchant from Store Manager.`;
+    const {error:decisionError}=await (supabaseAdmin as any).rpc("ps_engine_decide_approval",{p_request_id:request.id,p_account_id:accountId,p_decision:input.toStatus==="approved"?"approved":"rejected",p_decided_by:actor,p_reason:reason,p_context:{source:"store_manager_dashboard"}});
+    if(decisionError)throw new Error(decisionError.message);
+    const {data:updated,error:updateReadError}=await supabaseAdmin.from("ps_store_manager_tasks" as never).select("*").eq("account_id",accountId).eq("id",input.id).single();
+    if(updateReadError)throw updateReadError; if(input.toStatus==="approved")backgroundTask(processEngineQueue(`store-manager-approved:${crypto.randomUUID()}`,5)); return updated;
+  }
   const readOnlyReview=input.toStatus==="investigating"&&from==="waiting_approval"&&String((current as any).risk_level)==="read_only";
   const readOnlyCompletion=input.toStatus==="completed"&&["investigating","prepared","waiting_approval"].includes(from)&&String((current as any).risk_level)==="read_only";
   if(!(TRANSITIONS[from]??[]).includes(input.toStatus)&&!readOnlyReview&&!readOnlyCompletion)throw new Error(`A task cannot move from ${from.replaceAll("_"," ")} to ${input.toStatus.replaceAll("_"," ")}.`);
   const patch:Record<string,unknown>={status:input.toStatus};
-  if(input.toStatus==="approved")Object.assign(patch,{approved_by:(input.actor??"Merchant").slice(0,120),approved_at:new Date().toISOString()});
+  if(input.toStatus==="approved")Object.assign(patch,{approved_by:actor,approved_at:new Date().toISOString()});
   if(input.toStatus==="completed")patch.completed_at=new Date().toISOString();
   const {data,error}=await supabaseAdmin.from("ps_store_manager_tasks" as never).update(patch as never).eq("account_id",accountId).eq("id",input.id).select("*").single();if(error)throw error;
-  await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:input.id,from_status:from,to_status:input.toStatus,actor:(input.actor??"Merchant").slice(0,120),note:(input.note??"").slice(0,500)} as never);
+  await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:input.id,from_status:from,to_status:input.toStatus,actor,note} as never);
   return data;
 }

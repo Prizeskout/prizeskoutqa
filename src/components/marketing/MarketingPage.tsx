@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 export function MarketingHero({
@@ -21,8 +20,8 @@ export function MarketingHero({
       className="px-5 md:px-10"
     >
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <Link
-          to="/"
+        <a
+          href="/"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -39,7 +38,7 @@ export function MarketingHero({
         >
           <ArrowLeft size={14} aria-hidden="true" />
           Back to home
-        </Link>
+        </a>
         <div style={{ textAlign: "center" }}>
           {eyebrow && (
             <p

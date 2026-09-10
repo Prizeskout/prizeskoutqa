@@ -88,7 +88,7 @@ export const Route = createFileRoute("/api/channels/status")({
             const needsShopId = row?.status === "connected" && !row?.metadata?.shop_id;
             return { ...base, needs_shop_id: needsShopId };
           }
-          if (p === "talabat") return { ...base, environment: row?.metadata?.environment === "sandbox" ? "sandbox" : "production", webhook_token_configured: !!row?.webhook_secret };
+          if (p === "talabat") return { ...base, environment: row?.metadata?.environment === "production" ? "production" : "sandbox", webhook_token_configured: !!row?.webhook_secret };
           return base;
         });
 

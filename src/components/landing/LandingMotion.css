@@ -1,0 +1,96 @@
+/* PrizeSkout motion direction: evidence in motion.
+   Direct input is quick; guided product behavior is deliberate; decoration stays quiet. */
+
+.nlp {
+  --motion-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-settle: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Section choreography: surfaces arrive after their explanation, not at the same time. */
+.nlp .nlp-section .nlp-section-heading,
+.nlp .nlp-pricing .nlp-pricing-heading {
+  transition: transform 90ms linear;
+}
+
+.nlp .nlp-defend .dlp,
+.nlp .nlp-product .nlp-workflow-tabs,
+.nlp .nlp-product .nlp-capability-stage,
+.nlp .nlp-first-hours .nlp-onboarding-layout {
+  clip-path: inset(0 0 10% 0 round 2px);
+  transform: translate3d(0, 34px, 0) scale(0.985);
+  transform-origin: 50% 0;
+  opacity: 0;
+  transition:
+    clip-path 900ms var(--motion-enter),
+    transform 900ms var(--motion-enter),
+    opacity 420ms ease;
+}
+
+.nlp .nlp-defend .dlp.is-visible,
+.nlp .nlp-product .nlp-workflow-tabs.is-visible,
+.nlp .nlp-product .nlp-capability-stage.is-visible,
+.nlp .nlp-first-hours .nlp-onboarding-layout.is-visible {
+  clip-path: inset(0 round 2px);
+  transform: none;
+  opacity: 1;
+}
+
+.nlp .nlp-product .nlp-capability-stage { transition-delay: 90ms; }
+
+/* Pricing responds as a composed set; the recommended plan remains the anchor. */
+.nlp-plan-grid.is-visible > article {
+  animation: nlp-plan-settle 720ms calc(var(--plan-index) * 90ms) var(--motion-enter) both;
+}
+
+.nlp-plan-grid > article {
+  transition:
+    transform 480ms var(--motion-settle),
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 480ms var(--motion-settle);
+}
+
+.nlp-plan-grid > article:hover {
+  z-index: 2;
+  transform: translate3d(0, -8px, 0);
+  border-color: #6c4634;
+  box-shadow: 0 28px 70px rgb(0 0 0 / 0.25);
+}
+
+.nlp-plan-grid > article:hover + article { transform: translate3d(4px, 0, 0); }
+.nlp-plan-grid > article:has(+ article:hover) { transform: translate3d(-4px, 0, 0); }
+
+/* Buttons carry momentum through their icon, rather than moving the whole layout. */
+.nlp-button svg,
+.nlp-plan-grid article > a svg {
+  transition: transform 420ms var(--motion-settle);
+}
+
+.nlp-button:hover svg,
+.nlp-plan-grid article > a:hover svg { transform: translate3d(5px, 0, 0); }
+
+.nlp-button:active { transform: translateY(1px) scale(0.985); }
+
+@keyframes nlp-plan-settle {
+  from { opacity: 0; transform: translate3d(0, 28px, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 760px) {
+  .nlp-plan-grid > article:hover,
+  .nlp-plan-grid > article:hover + article,
+  .nlp-plan-grid > article:has(+ article:hover) { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nlp .nlp-defend .dlp,
+  .nlp .nlp-product .nlp-workflow-tabs,
+  .nlp .nlp-product .nlp-capability-stage,
+  .nlp .nlp-first-hours .nlp-onboarding-layout,
+  .nlp-plan-grid > article {
+    clip-path: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}

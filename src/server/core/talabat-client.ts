@@ -35,10 +35,10 @@
 // =============================================================================
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { buildTalabatOrderUpdate, validateTalabatOrderUpdate, type TalabatOrderUpdateStatus, type TalabatTransportType } from "./talabat-contract";
+import { buildTalabatOrderUpdate, validateTalabatOrderUpdate, type TalabatOrderUpdateStatus } from "./talabat-contract";
 
-export const TALABAT_BASE = "https://talabat.partner.deliveryhero.io/v2";
-export const TALABAT_SANDBOX_BASE = "https://sandbox.partner.deliveryhero.io/v2";
+export const TALABAT_BASE = "https://integration-middleware.eu.restaurant-partners.com";
+export const TALABAT_SANDBOX_BASE = "https://integration-middleware.stg.restaurant-partners.com";
 export type TalabatEnvironment = "production" | "sandbox";
 
 export function talabatBaseUrl(environment: TalabatEnvironment = "production"): string {
@@ -46,6 +46,7 @@ export function talabatBaseUrl(environment: TalabatEnvironment = "production"): 
 }
 
 const REFRESH_BUFFER_SECONDS = 300; // refresh once <5min remain on the short-lived JWT
+const posMiddlewareCatalogPublishingEnabled = () => false;
 
 export type TalabatCallResult<T = unknown> = {
   ok: boolean;
@@ -58,22 +59,22 @@ export type TalabatCallResult<T = unknown> = {
 type TalabatTokenResponse = { access_token: string; token_type: string; expires_in: number };
 
 export async function exchangeTalabatToken(
-  clientId: string,
-  clientSecret: string,
-  environment: TalabatEnvironment = "production",
+  username: string,
+  password: string,
+  environment: TalabatEnvironment = "sandbox",
 ): Promise<TalabatCallResult<TalabatTokenResponse>> {
   const start = Date.now();
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
 
-    const resp = await fetch(`${talabatBaseUrl(environment)}/oauth/token`, {
+    const resp = await fetch(`${talabatBaseUrl(environment)}/v2/login`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
       body: new URLSearchParams({
         grant_type: "client_credentials",
-        client_id: clientId,
-        client_secret: clientSecret,
+        username,
+        password,
       }),
       signal: controller.signal,
     });
@@ -111,20 +112,20 @@ export async function getValidTalabatAccessToken(
   channel: TalabatChannelRow,
 ): Promise<{ accessToken: string | null; error?: string }> {
   const metadata = channel.metadata ?? {};
-  const environment: TalabatEnvironment = metadata.environment === "sandbox" ? "sandbox" : "production";
+  const environment: TalabatEnvironment = metadata.environment === "production" ? "production" : "sandbox";
   const cachedToken = typeof metadata.access_token === "string" ? metadata.access_token : null;
   const expiresAt = typeof metadata.token_expires_at === "string" ? Date.parse(metadata.token_expires_at) : NaN;
 
   const stillValid = !!cachedToken && Number.isFinite(expiresAt) && (expiresAt - Date.now() > REFRESH_BUFFER_SECONDS * 1000);
   if (stillValid) return { accessToken: cachedToken };
 
-  const clientId = channel.manager_token;
-  const clientSecret = channel.bearer_token;
-  if (!clientId || !clientSecret) {
-    return { accessToken: null, error: "Talabat client_id/client_secret missing." };
+  const username = channel.manager_token;
+  const password = channel.bearer_token;
+  if (!username || !password) {
+    return { accessToken: null, error: "Talabat plugin username/password missing." };
   }
 
-  const result = await exchangeTalabatToken(clientId, clientSecret, environment);
+  const result = await exchangeTalabatToken(username, password, environment);
   if (!result.ok || !result.data?.access_token) {
     return { accessToken: null, error: result.message ?? "Talabat token exchange failed." };
   }
@@ -157,6 +158,11 @@ export async function updateTalabatPrice(params: {
     sourcePlanId?: string;
   };
 }): Promise<TalabatCallResult> {
+  // POS Middleware accepts a complete catalog import, not the legacy
+  // single-SKU Partner API payload. Fail closed until the catalog compiler
+  // can provide the full schema and callback URL required by Talabat.
+  if (!posMiddlewareCatalogPublishingEnabled())
+    return { ok: false, httpStatus: 501, message: "Talabat POS Middleware requires a full catalog import; single-SKU publishing is disabled.", durationMs: 0 };
   const { chainId, vendorId, sku, newPrice, accessToken, environment = "production" } = params;
   const start = Date.now();
   const url = `${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/catalog`;
@@ -207,6 +213,40 @@ export async function updateTalabatPrice(params: {
     const durationMs = Date.now() - start;
     const isTimeout = e instanceof Error && e.name === "AbortError";
     return { ok: false, httpStatus: isTimeout ? 504 : 500, message: isTimeout ? "ERR_TALABAT_TIMEOUT" : String(e), durationMs };
+  }
+}
+
+export async function submitTalabatCatalog(params: {
+  chainCode: string;
+  catalog: unknown;
+  accessToken: string;
+  environment?: TalabatEnvironment;
+  tracking: { channelId: string; accountId: string; licenseeId: string; merchantId: string; sourcePlanId?: string };
+}): Promise<TalabatCallResult<{ status: string; catalogImportId: string }>> {
+  const { chainCode, catalog, accessToken, environment = "sandbox", tracking } = params;
+  const start = Date.now();
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    const response = await fetch(`${talabatBaseUrl(environment)}/v2/chains/${encodeURIComponent(chainCode)}/catalog`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify(catalog), signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await response.json().catch(() => null) as { status?: string; catalogImportId?: string; errorCode?: string; message?: string } | null;
+    if (!response.ok || !data?.catalogImportId)
+      return { ok: false, httpStatus: response.status, message: data?.message ?? data?.errorCode ?? `HTTP ${response.status}`, durationMs: Date.now() - start };
+    await supabaseAdmin.from("ps_talabat_catalog_jobs").upsert({
+      channel_id: tracking.channelId, account_id: tracking.accountId, licensee_id: tracking.licenseeId,
+      merchant_id: tracking.merchantId, environment, job_id: data.catalogImportId,
+      operation: "full_catalog_import", source_plan_id: tracking.sourcePlanId ?? null,
+      status: data.status ?? "submitted", requested_products: [], updated_at: new Date().toISOString(),
+    }, { onConflict: "channel_id,job_id" });
+    return { ok: true, httpStatus: response.status, data: { status: data.status ?? "submitted", catalogImportId: data.catalogImportId }, durationMs: Date.now() - start };
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === "AbortError";
+    return { ok: false, httpStatus: timedOut ? 504 : 500, message: timedOut ? "ERR_TALABAT_TIMEOUT" : String(error), durationMs: Date.now() - start };
   }
 }
 
@@ -313,34 +353,36 @@ export async function readTalabatCatalogPrice(params:{
 }
 
 export async function updateTalabatOrder(params: {
-  chainId: string;
-  orderId: string;
   status: TalabatOrderUpdateStatus;
-  transportType?: TalabatTransportType;
-  cancellationReason?: string;
-  items: unknown[];
+  callbackUrl: string;
+  acceptanceTime?: string;
+  remoteOrderId?: string;
+  rejectionReason?: string;
+  message?: string;
   accessToken: string;
   environment?: TalabatEnvironment;
 }): Promise<TalabatCallResult> {
-  const { chainId, orderId, status, transportType, cancellationReason, items, accessToken, environment = "production" } = params;
+  const { status, callbackUrl, acceptanceTime, remoteOrderId, rejectionReason, message, accessToken, environment = "sandbox" } = params;
   const start = Date.now();
-  const validationError = validateTalabatOrderUpdate({ orderId, status, transportType, cancellationReason, items });
+  const validationError = validateTalabatOrderUpdate({ status, callbackUrl, environment, acceptanceTime, rejectionReason });
   if (validationError) return { ok: false, httpStatus: 422, message: validationError, durationMs: 0 };
 
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    const resp = await fetch(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/orders/${encodeURIComponent(orderId)}`, {
-      method: "PUT",
+    const resp = await fetch(callbackUrl, {
+      method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify(buildTalabatOrderUpdate({ orderId, status, cancellationReason, items })),
+      body: status === "order_prepared" ? undefined : JSON.stringify(buildTalabatOrderUpdate({ status, acceptanceTime, remoteOrderId, rejectionReason, message })),
       signal: controller.signal,
     });
     clearTimeout(timeout);
     const durationMs = Date.now() - start;
     if (!resp.ok) {
       const message = await resp.text().catch(() => "");
-      return { ok: false, httpStatus: resp.status, message: message.slice(0, 400) || `HTTP ${resp.status}`, durationMs };
+      let data: unknown;
+      try { data = JSON.parse(message); } catch { data = null; }
+      return { ok: false, httpStatus: resp.status, data, message: message.slice(0, 400) || `HTTP ${resp.status}`, durationMs };
     }
     return { ok: true, httpStatus: resp.status, data: await resp.json().catch(() => null), durationMs };
   } catch (error) {
@@ -395,40 +437,37 @@ export async function getTalabatOrders(params: {
   endTime: string;   // ISO 8601
   environment?: TalabatEnvironment;
 }): Promise<TalabatCallResult<TalabatOrder[]>> {
-  const { chainId, vendorId, accessToken, startTime, endTime, environment = "production" } = params;
+  // POS Order Report Service exposes IDs for at most the previous 24 hours,
+  // followed by individual order-detail reads. The former 60-day Partner API
+  // collection must not be called against Middleware.
+  const { chainId, vendorId, accessToken, startTime, endTime, environment = "sandbox" } = params;
   const start = Date.now();
+  const requestedHours = Math.ceil((Date.parse(endTime) - Date.parse(startTime)) / 3_600_000);
+  if (!Number.isFinite(requestedHours) || requestedHours < 1 || requestedHours > 24)
+    return { ok: false, httpStatus: 422, message: "Talabat Order Report supports windows from 1 to 24 hours.", durationMs: 0 };
   const allOrders: TalabatOrder[] = [];
 
   try {
-    for (let page = 1; page <= ORDERS_MAX_PAGES; page++) {
-      const url = new URL(`${talabatBaseUrl(environment)}/chains/${encodeURIComponent(chainId)}/vendors/${encodeURIComponent(vendorId)}/orders`);
-      url.searchParams.set("start_time", startTime);
-      url.searchParams.set("end_time", endTime);
-      url.searchParams.set("page", String(page));
-      url.searchParams.set("page_size", String(ORDERS_PAGE_SIZE));
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-
-      const resp = await fetch(url, {
-        method: "GET",
+    const ids = new Set<string>();
+    for (const status of ["accepted", "cancelled"] as const) {
+      const url = new URL(`${talabatBaseUrl(environment)}/v2/chains/${encodeURIComponent(chainId)}/orders/ids`);
+      url.searchParams.set("status", status);
+      url.searchParams.set("pastNumberOfHours", String(requestedHours));
+      if (vendorId) url.searchParams.set("vendorId", vendorId);
+      const response = await fetch(url, { headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` } });
+      if (!response.ok)
+        return { ok: false, httpStatus: response.status, message: (await response.text().catch(() => "")).slice(0, 400) || `HTTP ${response.status}`, durationMs: Date.now() - start };
+      const payload = await response.json().catch(() => null) as { orderIdentifiers?: string[] } | null;
+      for (const id of payload?.orderIdentifiers ?? []) if (id) ids.add(id);
+    }
+    for (const orderId of ids) {
+      const response = await fetch(`${talabatBaseUrl(environment)}/v2/chains/${encodeURIComponent(chainId)}/orders/${encodeURIComponent(orderId)}`, {
         headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` },
-        signal: controller.signal,
       });
-      clearTimeout(timeout);
-
-      if (!resp.ok) {
-        const text = await resp.text().catch(() => "");
-        return { ok: false, httpStatus: resp.status, message: text.slice(0, 400) || `HTTP ${resp.status}`, durationMs: Date.now() - start };
-      }
-
-      const json = await resp.json().catch(() => null) as TalabatOrdersPage | null;
-      if (!json?.orders) {
-        return { ok: false, httpStatus: resp.status, message: "Talabat did not return an orders array.", durationMs: Date.now() - start };
-      }
-
-      allOrders.push(...json.orders);
-      if (page >= json.total_pages) break;
+      if (!response.ok)
+        return { ok: false, httpStatus: response.status, message: `Could not retrieve Talabat order ${orderId}.`, durationMs: Date.now() - start };
+      const payload = await response.json().catch(() => null) as { order?: TalabatOrder } | null;
+      if (payload?.order) allOrders.push(payload.order);
     }
 
     return { ok: true, httpStatus: 200, data: allOrders, durationMs: Date.now() - start };

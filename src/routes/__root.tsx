@@ -117,8 +117,8 @@ function NotFoundPage() {
           >
             Back to dashboard
           </Link>
-          <Link
-            to="/"
+          <a
+            href="/"
             style={{
               fontSize: 13,
               color: "#6B6B6B",
@@ -130,7 +130,7 @@ function NotFoundPage() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B6B")}
           >
             Go to homepage
-          </Link>
+          </a>
         </div>
       </div>
     </div>

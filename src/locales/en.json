@@ -882,20 +882,23 @@
       "byok": {
         "talabat": {
           "clientId": {
-            "label": "Client ID",
+            "label": "Plugin username",
             "hint": "Talabat Partner Portal → Settings → API Credentials"
           },
           "clientSecret": {
-            "label": "Client Secret"
+            "label": "Plugin password"
+          },
+          "middlewareSecret": {
+            "label": "Middleware JWT secret"
           },
           "vendorId": {
-            "label": "Vendor ID",
+            "label": "POS vendor ID",
             "hint": "Your store's vendor ID from the Talabat portal"
           },
           "chainId": {
-            "label": "Chain ID"
+            "label": "Chain code"
           },
-          "portalHint": "Find your credentials at partner.talabat.com"
+          "portalHint": "Use the credentials decrypted from Talabat's email. Staging is used until production activation."
         },
         "jahez": {
           "apiKey": {

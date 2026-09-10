@@ -27,18 +27,9 @@ import {
   handleGetRecommendation,
   handleListRules,
 } from "@/server/pricing-handlers";
-import {
-  handleListCalendar,
-  handleListCampaigns,
-} from "@/server/promotions-handlers";
-import {
-  handleListObservations,
-  handleListPriceGaps,
-} from "@/server/field-intel-handlers";
-import {
-  handleListEndpoints,
-  handleListDeliveries,
-} from "@/server/webhooks-handlers";
+import { handleListCalendar, handleListCampaigns } from "@/server/promotions-handlers";
+import { handleListObservations, handleListPriceGaps } from "@/server/field-intel-handlers";
+import { handleListEndpoints, handleListDeliveries } from "@/server/webhooks-handlers";
 import { handleListBenchmarks } from "@/server/network-handlers";
 import {
   handleCreateDecision,
@@ -48,17 +39,25 @@ import {
   handleRetryDelivery,
 } from "@/server/v1-writes-handlers";
 import {
-  handleMarginCosts, handleMarginChannels, handleMarginSku,
-  handleMarginBreakeven, handleMarginImpact,
+  handleMarginCosts,
+  handleMarginChannels,
+  handleMarginSku,
+  handleMarginBreakeven,
+  handleMarginImpact,
 } from "@/server/margin-handlers";
 import {
-  handleListDecisions, handleGetDecision,
-  handleAuditSummary, handleAuditReport,
+  handleListDecisions,
+  handleGetDecision,
+  handleAuditSummary,
+  handleAuditReport,
 } from "@/server/audit-handlers";
 import {
-  handleCreateRule, handleListRulesTenant,
-  handleTenantPrice, handleCreateEvent,
-  handleListViolations, handleTenantStatus,
+  handleCreateRule,
+  handleListRulesTenant,
+  handleTenantPrice,
+  handleCreateEvent,
+  handleListViolations,
+  handleTenantStatus,
 } from "@/server/tenant-handlers";
 import {
   handleDynpriceConfig,
@@ -113,9 +112,24 @@ import {
   handleListEmbedScopes,
 } from "@/server/embed-handlers";
 import { handleSyncIngest } from "@/server/core/ingest-handler";
-import { handleChannelConnect, handleListChannels, handleRevokeChannel, handleChannelSync } from "@/server/core/channel-vault";
+import {
+  handleChannelConnect,
+  handleListChannels,
+  handleRevokeChannel,
+  handleChannelSync,
+} from "@/server/core/channel-vault";
 import { handleDefendDispatch, handleGetCircuitBreaker } from "@/server/core/defend-handler";
 import { handleListGovernAudit, handleGetGovernAuditEntry } from "@/server/core/govern-handler";
+import { handleProductCostBatch } from "@/server/core/restaurant-costs";
+import {
+  handleGetRestaurantOrderEconomics,
+  handleRestaurantOrderBatch,
+} from "@/server/restaurant-commerce-handlers";
+import {
+  handleRestaurantReconciliationRun,
+  handleRestaurantSettlementBatch,
+} from "@/server/restaurant-settlement-handlers";
+import { handleDecideEngineApproval,handleEngineHealth,handleGetEngineWork,handleListEngineApprovals,handleListEngineWork,handleReplayEngineWork,handleResumeEngineWork } from "@/server/engine-control-handlers";
 
 export type V1Context = {
   apiKeyId: string;
@@ -138,7 +152,12 @@ export type V1Result = {
 // Helpers
 // ----------------------------------------------------------------------------
 
-function err(code: string, message: string, status: number, extra?: Record<string, unknown>): V1Result {
+function err(
+  code: string,
+  message: string,
+  status: number,
+  extra?: Record<string, unknown>,
+): V1Result {
   return { status, body: { error: { code, message, ...extra } } };
 }
 
@@ -146,7 +165,9 @@ function ok(body: unknown, status = 200, headers?: Record<string, string>): V1Re
   return { status, body, headers };
 }
 
-async function readJson(request: Request): Promise<{ json: Record<string, unknown> | null; raw: string }> {
+async function readJson(
+  request: Request,
+): Promise<{ json: Record<string, unknown> | null; raw: string }> {
   const raw = await request.text();
   if (!raw) return { json: {}, raw };
   try {
@@ -283,8 +304,17 @@ export async function handleSync(request: Request, ctx: V1Context): Promise<V1Re
       continue;
     }
     const p = raw as SyncProduct;
-    if (typeof p.sku !== "string" || p.sku.length === 0 || typeof p.name !== "string" || p.name.length === 0) {
-      results.push({ sku: typeof p.sku === "string" ? p.sku : "(unknown)", status: "error", error: "sku and name are required" });
+    if (
+      typeof p.sku !== "string" ||
+      p.sku.length === 0 ||
+      typeof p.name !== "string" ||
+      p.name.length === 0
+    ) {
+      results.push({
+        sku: typeof p.sku === "string" ? p.sku : "(unknown)",
+        status: "error",
+        error: "sku and name are required",
+      });
       errCount++;
       continue;
     }
@@ -456,7 +486,12 @@ export async function handleMargin(request: Request, ctx: V1Context): Promise<V1
     .maybeSingle();
 
   if (prodErr) return err("internal_error", prodErr.message, 500);
-  if (!product) return err("not_found", `Product "${sku}" not found in your catalog. Sync it first via POST /v1/sync.`, 404);
+  if (!product)
+    return err(
+      "not_found",
+      `Product "${sku}" not found in your catalog. Sync it first via POST /v1/sync.`,
+      404,
+    );
 
   // Load margin inputs.
   const { data: inputs } = await supabaseAdmin
@@ -566,7 +601,10 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
   }
 
   const channel = typeof json.channel === "string" ? json.channel : "online";
-  const targetMarginPct = typeof json.target_margin_pct === "number" ? Math.max(0, Math.min(0.95, json.target_margin_pct)) : 0.2;
+  const targetMarginPct =
+    typeof json.target_margin_pct === "number"
+      ? Math.max(0, Math.min(0.95, json.target_margin_pct))
+      : 0.2;
 
   const { data: product } = await supabaseAdmin
     .from("catalog_products")
@@ -586,7 +624,9 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     .eq("product_id", product.id)
     .eq("channel", channel)
     .maybeSingle();
-  const currentPrice = currentPriceRow ? Number(currentPriceRow.sale_price ?? currentPriceRow.list_price) : null;
+  const currentPrice = currentPriceRow
+    ? Number(currentPriceRow.sale_price ?? currentPriceRow.list_price)
+    : null;
 
   // Margin floor from landed cost.
   const { data: inputs } = await supabaseAdmin
@@ -705,7 +745,11 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     unitCost: inputs ? Number(inputs.unit_cost) : null,
     category: (product as any).category ?? "",
   };
-  const { finalPrice: ruleAdjusted, effects } = evaluateRules(recommended, ruleCtx, structuredRules);
+  const { finalPrice: ruleAdjusted, effects } = evaluateRules(
+    recommended,
+    ruleCtx,
+    structuredRules,
+  );
   const clampedRules = effects.filter((e) => e.clamped);
   if (clampedRules.length > 0) {
     const rulesText = clampedRules.map((e) => e.reason).join("; ");
@@ -796,7 +840,9 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
     mode: ctx.planMode,
     applied: ctx.planMode === "automated",
     ...(ctx.planMode === "advisory"
-      ? { note: "Advisory mode: price recommendation returned but not applied. Upgrade to Standard to enable automated price application." }
+      ? {
+          note: "Advisory mode: price recommendation returned but not applied. Upgrade to Standard to enable automated price application.",
+        }
       : {}),
     reason,
     reason_code,
@@ -824,7 +870,11 @@ export async function handleDynprice(request: Request, ctx: V1Context): Promise<
 // records the result in webhook_deliveries.
 // ============================================================================
 
-const ENRICH_EVENTS = ["enrich.price_changed", "enrich.promo_detected", "enrich.new_competitor"] as const;
+const ENRICH_EVENTS = [
+  "enrich.price_changed",
+  "enrich.promo_detected",
+  "enrich.new_competitor",
+] as const;
 type EnrichEvent = (typeof ENRICH_EVENTS)[number];
 
 function isEnrichEvent(s: unknown): s is EnrichEvent {
@@ -844,9 +894,10 @@ export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Pr
     );
   }
   const eventType: EnrichEvent = json.event_type;
-  const payload = (typeof json.payload === "object" && json.payload !== null)
-    ? (json.payload as Record<string, unknown>)
-    : {};
+  const payload =
+    typeof json.payload === "object" && json.payload !== null
+      ? (json.payload as Record<string, unknown>)
+      : {};
 
   const result = await enqueueWebhookEvent({
     userId: ctx.userId,
@@ -860,7 +911,8 @@ export async function handleWebhooksEnrich(request: Request, ctx: V1Context): Pr
       event_type: eventType,
       delivered_count: 0,
       attempted_count: 0,
-      message: "No active subscribers for this event. Configure webhook endpoints in your dashboard.",
+      message:
+        "No active subscribers for this event. Configure webhook endpoints in your dashboard.",
     });
   }
 
@@ -904,10 +956,12 @@ function compileRoute(
 ): V1Route {
   const [, template] = key.split(" ");
   const paramNames: string[] = [];
-  const escaped = template.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\{([^}]+)\\\}/g, (_m, name) => {
-    paramNames.push(name);
-    return "([^/]+)";
-  });
+  const escaped = template
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\\\{([^}]+)\\\}/g, (_m, name) => {
+      paramNames.push(name);
+      return "([^/]+)";
+    });
   const pattern = new RegExp(`^${escaped}$`);
   return {
     key,
@@ -924,17 +978,46 @@ function compileRoute(
 }
 
 const V1_ROUTES: V1Route[] = [
+  compileRoute("GET /v1/engine/health",(req,ctx)=>handleEngineHealth(req,ctx)),
+  compileRoute("GET /v1/engine/work-items",(req,ctx)=>handleListEngineWork(req,ctx)),
+  compileRoute("GET /v1/engine/work-items/{id}",(req,ctx,p)=>handleGetEngineWork(req,ctx,p.id)),
+  compileRoute("POST /v1/engine/work-items/{id}/replay",(req,ctx,p)=>handleReplayEngineWork(req,ctx,p.id)),
+  compileRoute("POST /v1/engine/work-items/{id}/resume",(req,ctx,p)=>handleResumeEngineWork(req,ctx,p.id)),
+  compileRoute("GET /v1/engine/approvals",(req,ctx)=>handleListEngineApprovals(req,ctx)),
+  compileRoute("POST /v1/engine/approvals/{id}/decision",(req,ctx,p)=>handleDecideEngineApproval(req,ctx,p.id)),
+  // Canonical restaurant-commerce intake for enterprise POS/ERP adapters.
+  compileRoute("POST /v1/commerce/order-batches", (req, ctx) =>
+    handleRestaurantOrderBatch(req, ctx),
+  ),
+  compileRoute("POST /v1/commerce/cost-batches", (req, ctx) => handleProductCostBatch(req, ctx)),
+  compileRoute("POST /v1/commerce/settlement-batches", (req, ctx) =>
+    handleRestaurantSettlementBatch(req, ctx),
+  ),
+  compileRoute("POST /v1/profit/reconciliation-runs", (req, ctx) =>
+    handleRestaurantReconciliationRun(req, ctx),
+  ),
+  compileRoute("GET /v1/profit/orders/{external_order_id}", (req, ctx, params) =>
+    handleGetRestaurantOrderEconomics(req, ctx, params.external_order_id),
+  ),
   // New core: GCC pricing infrastructure pipeline
   // /v1/sync/ingest must be listed BEFORE /v1/sync so the literal isn't shadowed
-  compileRoute("POST /v1/sync/ingest",                       (req, ctx)    => handleSyncIngest(req, ctx)),
-  compileRoute("POST /v1/channels/connect/{platform}",       (req, ctx, p) => handleChannelConnect(req, ctx, p.platform)),
-  compileRoute("GET /v1/channels",                           (req, ctx)    => handleListChannels(req, ctx)),
-  compileRoute("DELETE /v1/channels/{platform}/{merchant_id}", (req, ctx, p) => handleRevokeChannel(req, ctx, p.platform, p.merchant_id)),
-  compileRoute("POST /v1/channels/sync/{platform}",            (req, ctx, p) => handleChannelSync(req, ctx, p.platform)),
-  compileRoute("POST /v1/defend/dispatch",                   (req, ctx)    => handleDefendDispatch(req, ctx)),
-  compileRoute("GET /v1/defend/circuit-breaker",             (req, ctx)    => handleGetCircuitBreaker(req, ctx)),
-  compileRoute("GET /v1/govern/audit",                       (req, ctx)    => handleListGovernAudit(req, ctx)),
-  compileRoute("GET /v1/govern/audit/{trace_id}",            (req, ctx, p) => handleGetGovernAuditEntry(req, ctx, p.trace_id)),
+  compileRoute("POST /v1/sync/ingest", (req, ctx) => handleSyncIngest(req, ctx)),
+  compileRoute("POST /v1/channels/connect/{platform}", (req, ctx, p) =>
+    handleChannelConnect(req, ctx, p.platform),
+  ),
+  compileRoute("GET /v1/channels", (req, ctx) => handleListChannels(req, ctx)),
+  compileRoute("DELETE /v1/channels/{platform}/{merchant_id}", (req, ctx, p) =>
+    handleRevokeChannel(req, ctx, p.platform, p.merchant_id),
+  ),
+  compileRoute("POST /v1/channels/sync/{platform}", (req, ctx, p) =>
+    handleChannelSync(req, ctx, p.platform),
+  ),
+  compileRoute("POST /v1/defend/dispatch", (req, ctx) => handleDefendDispatch(req, ctx)),
+  compileRoute("GET /v1/defend/circuit-breaker", (req, ctx) => handleGetCircuitBreaker(req, ctx)),
+  compileRoute("GET /v1/govern/audit", (req, ctx) => handleListGovernAudit(req, ctx)),
+  compileRoute("GET /v1/govern/audit/{trace_id}", (req, ctx, p) =>
+    handleGetGovernAuditEntry(req, ctx, p.trace_id),
+  ),
   // Existing real handlers
   compileRoute("POST /v1/sync", (req, ctx) => handleSync(req, ctx)),
   compileRoute("POST /v1/margin/costs", (req, ctx) => handleMarginCosts(req, ctx)),
@@ -954,8 +1037,12 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/competitors/patterns", (req, ctx) => handleListPatterns(req, ctx)),
   compileRoute("GET /v1/competitors/cache-stats", (req, ctx) => handleCacheStats(req, ctx)),
   // Pricing reads (Week 10 — pillar 2)
-  compileRoute("GET /v1/pricing/recommendations", (req, ctx) => handleListRecommendations(req, ctx)),
-  compileRoute("GET /v1/pricing/recommendations/{id}", (req, ctx, p) => handleGetRecommendation(req, ctx, p.id)),
+  compileRoute("GET /v1/pricing/recommendations", (req, ctx) =>
+    handleListRecommendations(req, ctx),
+  ),
+  compileRoute("GET /v1/pricing/recommendations/{id}", (req, ctx, p) =>
+    handleGetRecommendation(req, ctx, p.id),
+  ),
   compileRoute("GET /v1/pricing/rules", (req, ctx) => handleListRules(req, ctx)),
   // Promotions reads (Week 10 — pillar 3)
   compileRoute("GET /v1/promotions/calendar", (req, ctx) => handleListCalendar(req, ctx)),
@@ -965,11 +1052,13 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/field-intel/price-gaps", (req, ctx) => handleListPriceGaps(req, ctx)),
   // Webhooks reads (Week 10 — pillar 5)
   // Enriched Webhook Intelligence API (API 17)
-  compileRoute("POST /v1/webhooks/subscribe",              (req, ctx)    => handleWiSubscribe(req, ctx)),
-  compileRoute("GET /v1/webhooks/subscriptions",           (req, ctx)    => handleListWiSubscriptions(req, ctx)),
-  compileRoute("POST /v1/webhooks/test",                   (req, ctx)    => handleWiTest(req, ctx)),
-  compileRoute("DELETE /v1/webhooks/subscriptions/{id}",   (req, ctx, p) => handleDeleteWiSubscription(req, ctx, p.id)),
-  compileRoute("GET /v1/webhooks/deliveries",              (req, ctx)    => handleWiDeliveries(req, ctx)),
+  compileRoute("POST /v1/webhooks/subscribe", (req, ctx) => handleWiSubscribe(req, ctx)),
+  compileRoute("GET /v1/webhooks/subscriptions", (req, ctx) => handleListWiSubscriptions(req, ctx)),
+  compileRoute("POST /v1/webhooks/test", (req, ctx) => handleWiTest(req, ctx)),
+  compileRoute("DELETE /v1/webhooks/subscriptions/{id}", (req, ctx, p) =>
+    handleDeleteWiSubscription(req, ctx, p.id),
+  ),
+  compileRoute("GET /v1/webhooks/deliveries", (req, ctx) => handleWiDeliveries(req, ctx)),
   // Legacy webhook endpoints (pre-API-17)
   compileRoute("GET /v1/webhooks/endpoints", (req, ctx) => handleListEndpoints(req, ctx)),
   // Network reads (Week 10 — pillar 6)
@@ -979,9 +1068,13 @@ const V1_ROUTES: V1Route[] = [
   // Writes (Week 10 — final batch)
   compileRoute("POST /v1/pricing/decisions", (req, ctx) => handleCreateDecision(req, ctx)),
   compileRoute("POST /v1/promotions/simulate", (req, ctx) => handleSimulatePromotion(req, ctx)),
-  compileRoute("POST /v1/field-intel/observations", (req, ctx) => handleSubmitObservation(req, ctx)),
+  compileRoute("POST /v1/field-intel/observations", (req, ctx) =>
+    handleSubmitObservation(req, ctx),
+  ),
   compileRoute("POST /v1/webhooks/endpoints", (req, ctx) => handleCreateEndpoint(req, ctx)),
-  compileRoute("POST /v1/webhooks/deliveries/{id}/retry", (req, ctx, p) => handleRetryDelivery(req, ctx, p.id)),
+  compileRoute("POST /v1/webhooks/deliveries/{id}/retry", (req, ctx, p) =>
+    handleRetryDelivery(req, ctx, p.id),
+  ),
   // Audit / governance (API 04)
   compileRoute("GET /v1/audit/decisions", (req, ctx) => handleListDecisions(req, ctx)),
   compileRoute("GET /v1/audit/decisions/{id}", (req, ctx, p) => handleGetDecision(req, ctx, p.id)),
@@ -989,50 +1082,68 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/audit/report", (req, ctx) => handleAuditReport(req, ctx)),
   // Dynamic Pricing Engine (API 03 — /v1/dynprice/*)
   // Literals before dynamics; POST /v1/dynprice (old handler) remains untouched.
-  compileRoute("POST /v1/dynprice/config",                 (req, ctx)       => handleDynpriceConfig(req, ctx)),
-  compileRoute("GET /v1/dynprice/events",                  (req, ctx)       => handleDynpriceEvents(req, ctx)),
-  compileRoute("POST /v1/dynprice/events/custom",          (req, ctx)       => handleDynpriceCustomEvent(req, ctx)),
-  compileRoute("GET /v1/dynprice/current/{sku}",           (req, ctx, p)    => handleDynpriceCurrent(req, ctx, p.sku)),
-  compileRoute("GET /v1/dynprice/audit/{sku}",             (req, ctx, p)    => handleDynpriceAudit(req, ctx, p.sku)),
+  compileRoute("POST /v1/dynprice/config", (req, ctx) => handleDynpriceConfig(req, ctx)),
+  compileRoute("GET /v1/dynprice/events", (req, ctx) => handleDynpriceEvents(req, ctx)),
+  compileRoute("POST /v1/dynprice/events/custom", (req, ctx) =>
+    handleDynpriceCustomEvent(req, ctx),
+  ),
+  compileRoute("GET /v1/dynprice/current/{sku}", (req, ctx, p) =>
+    handleDynpriceCurrent(req, ctx, p.sku),
+  ),
+  compileRoute("GET /v1/dynprice/audit/{sku}", (req, ctx, p) =>
+    handleDynpriceAudit(req, ctx, p.sku),
+  ),
   // Group Buying Engine (API 12)
-  compileRoute("POST /v1/group/campaigns",              (req, ctx)    => handleCreateCampaign(req, ctx)),
-  compileRoute("POST /v1/group/join",                   (req, ctx)    => handleJoinCampaign(req, ctx)),
-  compileRoute("GET /v1/group/campaigns/{id}",          (req, ctx, p) => handleGetCampaign(req, ctx, p.id)),
-  compileRoute("GET /v1/group/campaigns/{id}/buyers",   (req, ctx, p) => handleListBuyers(req, ctx, p.id)),
-  compileRoute("POST /v1/group/campaigns/{id}/close",   (req, ctx, p) => handleCloseCampaign(req, ctx, p.id)),
+  compileRoute("POST /v1/group/campaigns", (req, ctx) => handleCreateCampaign(req, ctx)),
+  compileRoute("POST /v1/group/join", (req, ctx) => handleJoinCampaign(req, ctx)),
+  compileRoute("GET /v1/group/campaigns/{id}", (req, ctx, p) => handleGetCampaign(req, ctx, p.id)),
+  compileRoute("GET /v1/group/campaigns/{id}/buyers", (req, ctx, p) =>
+    handleListBuyers(req, ctx, p.id),
+  ),
+  compileRoute("POST /v1/group/campaigns/{id}/close", (req, ctx, p) =>
+    handleCloseCampaign(req, ctx, p.id),
+  ),
   // Loyalty & Segment Pricing (API 11)
   compileRoute("POST /v1/loyalty/segments", (req, ctx) => handleCreateSegment(req, ctx)),
-  compileRoute("GET /v1/loyalty/segments",  (req, ctx) => handleListSegments(req, ctx)),
-  compileRoute("POST /v1/loyalty/price",    (req, ctx) => handleLoyaltyPrice(req, ctx)),
-  compileRoute("POST /v1/loyalty/outcome",  (req, ctx) => handleLoyaltyOutcome(req, ctx)),
+  compileRoute("GET /v1/loyalty/segments", (req, ctx) => handleListSegments(req, ctx)),
+  compileRoute("POST /v1/loyalty/price", (req, ctx) => handleLoyaltyPrice(req, ctx)),
+  compileRoute("POST /v1/loyalty/outcome", (req, ctx) => handleLoyaltyOutcome(req, ctx)),
   // Cross-Border Price Parity API (API 15)
-  compileRoute("GET /v1/parity/analysis",   (req, ctx) => handleParityAnalysis(req, ctx)),
-  compileRoute("POST /v1/parity/rules",     (req, ctx) => handleCreateParityRule(req, ctx)),
+  compileRoute("GET /v1/parity/analysis", (req, ctx) => handleParityAnalysis(req, ctx)),
+  compileRoute("POST /v1/parity/rules", (req, ctx) => handleCreateParityRule(req, ctx)),
   compileRoute("GET /v1/parity/violations", (req, ctx) => handleListParityViolations(req, ctx)),
-  compileRoute("GET /v1/parity/report",     (req, ctx) => handleParityReport(req, ctx)),
+  compileRoute("GET /v1/parity/report", (req, ctx) => handleParityReport(req, ctx)),
   // MAP Compliance API (API 16)
   compileRoute("POST /v1/compliance/map/agreements", (req, ctx) => handleCreateAgreement(req, ctx)),
-  compileRoute("GET /v1/compliance/map/violations",  (req, ctx) => handleMapViolations(req, ctx)),
-  compileRoute("GET /v1/compliance/map/retailers",   (req, ctx) => handleRetailerCompliance(req, ctx)),
-  compileRoute("GET /v1/compliance/map/report",      (req, ctx) => handleComplianceReport(req, ctx)),
+  compileRoute("GET /v1/compliance/map/violations", (req, ctx) => handleMapViolations(req, ctx)),
+  compileRoute("GET /v1/compliance/map/retailers", (req, ctx) =>
+    handleRetailerCompliance(req, ctx),
+  ),
+  compileRoute("GET /v1/compliance/map/report", (req, ctx) => handleComplianceReport(req, ctx)),
   // Flash Sale Orchestration (API 09)
-  compileRoute("POST /v1/flash/events",                      (req, ctx)    => handleCreateFlashEvent(req, ctx)),
-  compileRoute("GET /v1/flash/events",                       (req, ctx)    => handleListFlashEvents(req, ctx)),
-  compileRoute("GET /v1/flash/events/{id}/report",           (req, ctx, p) => handleFlashEventReport(req, ctx, p.id)),
-  compileRoute("POST /v1/flash/events/{id}/cancel",          (req, ctx, p) => handleCancelFlashEvent(req, ctx, p.id)),
-  compileRoute("GET /v1/flash/events/{id}",                  (req, ctx, p) => handleGetFlashEvent(req, ctx, p.id)),
+  compileRoute("POST /v1/flash/events", (req, ctx) => handleCreateFlashEvent(req, ctx)),
+  compileRoute("GET /v1/flash/events", (req, ctx) => handleListFlashEvents(req, ctx)),
+  compileRoute("GET /v1/flash/events/{id}/report", (req, ctx, p) =>
+    handleFlashEventReport(req, ctx, p.id),
+  ),
+  compileRoute("POST /v1/flash/events/{id}/cancel", (req, ctx, p) =>
+    handleCancelFlashEvent(req, ctx, p.id),
+  ),
+  compileRoute("GET /v1/flash/events/{id}", (req, ctx, p) => handleGetFlashEvent(req, ctx, p.id)),
   // White-Label Embed API (API 13)
-  compileRoute("GET /v1/embed/config",   (req, ctx) => handleGetEmbedConfig(req, ctx)),
-  compileRoute("POST /v1/embed/config",  (req, ctx) => handleSetEmbedConfig(req, ctx)),
-  compileRoute("POST /v1/embed/token",   (req, ctx) => handleIssueEmbedToken(req, ctx)),
-  compileRoute("GET /v1/embed/scopes",   (req, ctx) => handleListEmbedScopes(req, ctx)),
+  compileRoute("GET /v1/embed/config", (req, ctx) => handleGetEmbedConfig(req, ctx)),
+  compileRoute("POST /v1/embed/config", (req, ctx) => handleSetEmbedConfig(req, ctx)),
+  compileRoute("POST /v1/embed/token", (req, ctx) => handleIssueEmbedToken(req, ctx)),
+  compileRoute("GET /v1/embed/scopes", (req, ctx) => handleListEmbedScopes(req, ctx)),
   // Tenant Pricing API (API 14)
-  compileRoute("POST /v1/tenant/rules",            (req, ctx)    => handleCreateRule(req, ctx)),
-  compileRoute("GET /v1/tenant/rules",             (req, ctx)    => handleListRulesTenant(req, ctx)),
-  compileRoute("POST /v1/tenant/prices",           (req, ctx)    => handleTenantPrice(req, ctx)),
-  compileRoute("POST /v1/tenant/events",           (req, ctx)    => handleCreateEvent(req, ctx)),
-  compileRoute("GET /v1/tenant/violations",        (req, ctx)    => handleListViolations(req, ctx)),
-  compileRoute("GET /v1/tenant/status/{tenant_id}", (req, ctx, p) => handleTenantStatus(req, ctx, p.tenant_id)),
+  compileRoute("POST /v1/tenant/rules", (req, ctx) => handleCreateRule(req, ctx)),
+  compileRoute("GET /v1/tenant/rules", (req, ctx) => handleListRulesTenant(req, ctx)),
+  compileRoute("POST /v1/tenant/prices", (req, ctx) => handleTenantPrice(req, ctx)),
+  compileRoute("POST /v1/tenant/events", (req, ctx) => handleCreateEvent(req, ctx)),
+  compileRoute("GET /v1/tenant/violations", (req, ctx) => handleListViolations(req, ctx)),
+  compileRoute("GET /v1/tenant/status/{tenant_id}", (req, ctx, p) =>
+    handleTenantStatus(req, ctx, p.tenant_id),
+  ),
 ];
 
 // Returns true if a real (non-mock) handler exists for the given method+path.
