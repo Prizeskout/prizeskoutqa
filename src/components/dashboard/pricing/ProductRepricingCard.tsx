@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ArrowRight, Check, AlertTriangle, Loader2, RotateCcw, Edit3 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import type { RepricingProduct } from "@/routes/api/repricing/catalog";
 
 type PushStatus = "idle" | "pushing" | "pushed" | "failed";
@@ -129,7 +130,7 @@ export function ProductRepricingCard({
       } else {
         actionKeyRef.current = null;
         setPushStatus("failed");
-        toast.error(data.error ?? data.message ?? "Push failed — try again.");
+        toast.error(friendlyClientMessage(data, "Push failed — try again."));
       }
     } catch {
       setPushStatus("failed");

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { RecommendationCard, type Recommendation, type PricingDecision } from "./RecommendationCard";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -58,7 +59,7 @@ export function RecommendationsList({
     try {
       const res = await recomputePricing();
       if (!res.ok) {
-        toast.error(res.error || "Could not refresh recommendations");
+        toast.error(friendlyClientMessage(res, "Could not refresh recommendations"));
         return;
       }
       if (res.written === 0) {
@@ -74,8 +75,7 @@ export function RecommendationsList({
       // Re-run the route loader to pull the fresh rows.
       await router.invalidate();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Refresh failed";
-      toast.error(msg);
+      toast.error(friendlyClientMessage(err, "Refresh failed"));
     } finally {
       setRefreshing(false);
     }

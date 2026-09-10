@@ -1,3 +1,5 @@
+import { looksTechnical } from "./error-classify";
+
 export type ApiErrorPayload = {
   error?: string;
   action?: string;
@@ -42,4 +44,28 @@ export function safeClientErrorMessage(error: unknown, fallback: string): string
   if (/permission|row-level|rls|401|403|unauthor|forbidden/.test(value)) return "Your session does not have permission to make this change. Sign in again and retry.";
   if (/network|fetch|timeout|timed out/.test(value)) return "PrizeSkout could not reach the service. Check your connection and try again.";
   return fallback;
+}
+
+function rawMessage(error: unknown): string {
+  if (error instanceof Error) return error.message ?? "";
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const record = error as { error?: unknown; message?: unknown };
+    if (typeof record.error === "string") return record.error;
+    if (typeof record.message === "string") return record.message;
+  }
+  return "";
+}
+
+/**
+ * The single rule for turning any thrown error or API payload into toast text:
+ * show a specific, already-human message when it is safe to display (so useful
+ * server messages like "You can't remove the last owner." survive), and
+ * otherwise map known technical failures to friendly language or the caller's
+ * (localized) fallback. Never returns raw technical/developer text.
+ */
+export function friendlyClientMessage(error: unknown, fallback: string): string {
+  const raw = rawMessage(error).trim();
+  if (raw && !looksTechnical(raw)) return raw;
+  return safeClientErrorMessage(error, fallback);
 }

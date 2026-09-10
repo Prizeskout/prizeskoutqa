@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Upload, FileText, CheckCircle2, AlertCircle, X, ChevronDown, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { MarginLayout } from "@/components/margin/MarginLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -339,7 +340,7 @@ function MarginUploadPage() {
       toast.success(`Processed ${rows.length} orders${skipped > 0 ? ` (${skipped} rows skipped)` : ""}`);
 
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Upload failed";
+      const msg = friendlyClientMessage(err, "Upload failed");
       setState({ status: "error", message: msg });
       toast.error(msg);
     }

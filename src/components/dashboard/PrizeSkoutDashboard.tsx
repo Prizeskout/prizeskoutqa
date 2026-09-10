@@ -43,6 +43,7 @@ import { StoreManagerCommandBar } from "@/components/dashboard/StoreManagerComma
 import { MarginIntelligenceSummary, RecoveryDashboardSummary } from "@/components/dashboard/FocusedIntelligenceSummary";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { ProfitabilityTrends } from "@/components/dashboard/overview/ProfitabilityTrends";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { EvidenceReviewWorkspace } from "@/components/dashboard/evidence/EvidenceReviewWorkspace";
 import { EvidenceSourceCoverage } from "@/components/dashboard/evidence/EvidenceSourceCoverage";
 import { EvidenceLibrary } from "@/components/dashboard/evidence/EvidenceLibrary";
@@ -5115,11 +5116,7 @@ export function PrizeSkoutDashboard() {
       showToast("Claim evidence downloaded. No platform submission was made.");
     } catch (error) {
       setFileStep(0);
-      showToast(
-        error instanceof Error
-          ? `Evidence export failed: ${error.message}`
-          : "Evidence export failed.",
-      );
+      showToast(friendlyClientMessage(error, "Evidence export failed."));
     }
   };
 
@@ -5150,11 +5147,7 @@ export function PrizeSkoutDashboard() {
         `Report downloaded · ${disputes.length} claim draft${disputes.length === 1 ? "" : "s"} · ${feed.length} recorded action${feed.length === 1 ? "" : "s"}`,
       );
     } catch (error) {
-      showToast(
-        error instanceof Error
-          ? `Evidence export failed: ${error.message}`
-          : "Evidence export failed.",
-      );
+      showToast(friendlyClientMessage(error, "Evidence export failed."));
     }
   };
 

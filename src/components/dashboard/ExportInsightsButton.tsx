@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Download, FileText, Loader2, ChevronDown } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import {
   getInsight,
   type InsightWindow,
@@ -40,14 +41,8 @@ export function ExportInsightsButton() {
       else await exportInsightsPdf(sections);
       toast.success(`AI insights ${format === "word" ? "Word document" : "PDF"} generated`);
     } catch (err) {
-      let msg = `Failed to export ${format === "word" ? "Word document" : "PDF"}`;
-      if (err instanceof Response) {
-        try { msg = (await err.text()) || `Export failed (${err.status})`; }
-        catch { msg = `Export failed (${err.status})`; }
-      } else if (err instanceof Error) {
-        msg = err.message;
-      }
-      toast.error(msg);
+      const fallback = `Failed to export ${format === "word" ? "Word document" : "PDF"}`;
+      toast.error(friendlyClientMessage(err, fallback));
     } finally {
       setBusy(false);
     }

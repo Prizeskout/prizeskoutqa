@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useState,type CSSProperties} from "react";
+import { friendlyClientMessage } from "@/lib/api-error";
 import {AlertTriangle,CheckCircle2,Clock3,Database,Loader2,PauseCircle,ShieldCheck} from "lucide-react";
 
 type Source={id:string;provider:string;connection_kind:string;status:string;authorized:boolean;health:{state:string;label:string;attention:boolean};coverage:{basis:string;completeness:string;period_start:string|null;period_end:string|null;records_seen:number;final_records:number;non_final_records:number;channels:string[];currencies:string[];branches:string[];successful_deliveries:number}};
@@ -9,7 +10,7 @@ const date=(value:string|null)=>value?new Date(value).toLocaleString():"No evide
 export function EvidenceSourceCoverage(){
   const [sources,setSources]=useState<Source[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
   const load=useCallback(async()=>{const auth=credentials(),response=await fetch("/api/evidence/sources",{headers:{"x-merchant-id":auth.merchant_id,"x-access-code":auth.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Evidence sources could not be loaded.");setSources(body.sources??[]);},[]);
-  useEffect(()=>{load().catch(reason=>setError(reason instanceof Error?reason.message:"Evidence sources could not be loaded.")).finally(()=>setLoading(false));},[load]);
+  useEffect(()=>{load().catch(reason=>setError(friendlyClientMessage(reason, "Evidence sources could not be loaded."))).finally(()=>setLoading(false));},[load]);
   return <section style={card}><div style={heading}><div><h2 style={h2}><Database size={18}/> Automatic evidence sources</h2><p style={muted}>Coverage shows only records PrizeSkout received. It does not guarantee the provider supplied every record.</p></div><span style={badge}>{sources.length} source{sources.length===1?"":"s"}</span></div>
     {loading?<div style={empty}><Loader2 size={18} className="animate-spin"/> Loading source coverage…</div>:error?<div style={warning}><AlertTriangle size={17}/>{error}</div>:sources.length===0?<div style={empty}>No automatic evidence sources are registered. Manual evidence remains available.</div>:<div style={{display:"grid",gap:10}}>{sources.map(source=>{
       const healthy=!source.health.attention,Icon=source.status==="paused"||source.status==="disconnected"?PauseCircle:healthy?CheckCircle2:AlertTriangle,c=source.coverage;

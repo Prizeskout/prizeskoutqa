@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { showError } from "@/lib/error-toast";
 import { MarginLayout } from "@/components/margin/MarginLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -124,7 +125,7 @@ function MarginSettingsPage() {
       }
       toast.success("Cost profiles saved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Save failed");
+      showError(err, "Save failed");
     } finally {
       setSaving(false);
     }

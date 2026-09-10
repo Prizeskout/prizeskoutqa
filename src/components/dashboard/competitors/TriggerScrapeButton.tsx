@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { scrapeCompetitorUrl } from "@/server/scrape-competitor.functions";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import {
   Dialog,
   DialogContent,
@@ -109,7 +110,7 @@ export function TriggerScrapeButton({ product, competitor }: Props) {
       setOpen(false);
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : "Scrape failed";
+      const msg = friendlyClientMessage(err, "Scrape failed");
       setServerError(msg);
       toast.error(msg);
     },

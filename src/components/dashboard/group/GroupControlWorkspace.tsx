@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from "react";
+import { friendlyClientMessage } from "@/lib/api-error";
 import {Building2,CheckCircle2,Plus,Save,Users} from "lucide-react";
 import type {ContractTerm} from "@/components/dashboard/payout/ContractIntelligenceVault";
 import type {GroupControls} from "@/server/core/group-controls";
@@ -29,11 +30,11 @@ export function GroupControlWorkspace({contract,currency,productCount}:{contract
     const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error??"Group-control request failed.");return data;
   };
   const apply=(group:GroupControls|null)=>{setSaved(group);if(!group)return;setGroupName(group.group_name);setEntities(group.legal_entities as string[]);setBrands(group.brands as string[]);setBranches(group.branches as Branch[]);setMembers(group.members as Member[]);if(group.active_margin_floor_pct!=null)setMarginFloor(String(group.active_margin_floor_pct));};
-  const load=()=>call({action:"get"}).then(data=>apply(data.group??null)).catch(err=>setError(err instanceof Error?err.message:"Could not load group controls."));
+  const load=()=>call({action:"get"}).then(data=>apply(data.group??null)).catch(err=>setError(friendlyClientMessage(err, "Could not load group controls.")));
   useEffect(()=>{load();},[]);
-  const save=async()=>{setBusy(true);setError(null);try{const data=await call({action:"save",group_name:groupName,legal_entities:entities,brands,branches,members});apply(data.group);}catch(err){setError(err instanceof Error?err.message:"Could not save group.");}finally{setBusy(false);}};
-  const approve=async(role:"finance"|"operations")=>{const reviewer=role==="finance"?financeReviewer:operationsReviewer;if(!reviewer){setError(`Choose a configured ${role} reviewer first.`);return;}setBusy(true);try{const data=await call({action:"approve",approval_role:role,reviewer});apply(data.group);}catch(err){setError(err instanceof Error?err.message:"Could not record approval.");}finally{setBusy(false);}};
-  const activate=async()=>{setBusy(true);setError(null);try{const data=await call({action:"activate",margin_floor_pct:Number(marginFloor)});apply(data.group);}catch(err){setError(err instanceof Error?err.message:"Could not activate group policy.");}finally{setBusy(false);}};
+  const save=async()=>{setBusy(true);setError(null);try{const data=await call({action:"save",group_name:groupName,legal_entities:entities,brands,branches,members});apply(data.group);}catch(err){setError(friendlyClientMessage(err, "Could not save group."));}finally{setBusy(false);}};
+  const approve=async(role:"finance"|"operations")=>{const reviewer=role==="finance"?financeReviewer:operationsReviewer;if(!reviewer){setError(`Choose a configured ${role} reviewer first.`);return;}setBusy(true);try{const data=await call({action:"approve",approval_role:role,reviewer});apply(data.group);}catch(err){setError(friendlyClientMessage(err, "Could not record approval."));}finally{setBusy(false);}};
+  const activate=async()=>{setBusy(true);setError(null);try{const data=await call({action:"activate",margin_floor_pct:Number(marginFloor)});apply(data.group);}catch(err){setError(friendlyClientMessage(err, "Could not activate group policy."));}finally{setBusy(false);}};
   const total=useMemo(()=>branches.reduce((a,b)=>({sales:a.sales+b.monthly_sales,expected:a.expected+b.expected_settlement,actual:a.actual+b.actual_settlement}),{sales:0,expected:0,actual:0}),[branches]);
   const addBranch=()=>{if(!branchDraft.name.trim())return;setBranches(current=>[...current,{id:id(),name:branchDraft.name.trim(),city:branchDraft.city,entity:branchDraft.entity,brand:branchDraft.brand,channels:branchDraft.channels.split(",").map(v=>v.trim().toLowerCase()).filter(Boolean),contract_id:contract?.id??null,monthly_sales:Number(branchDraft.monthly_sales)||0,expected_settlement:Number(branchDraft.expected)||0,actual_settlement:Number(branchDraft.actual)||0}]);setBranchDraft({...branchDraft,name:"",monthly_sales:"0",expected:"0",actual:"0"});};
 

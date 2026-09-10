@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { AlertTriangle, CheckCircle2, FileKey2, Plus, ScanText, ShieldCheck } from "lucide-react";
 import { extractPdfTextWithPages, renderPdfPagesForOcr, type OcrPageImage } from "@/lib/pdf-text";
 import { readApiJson } from "@/lib/api-error";
@@ -90,7 +91,7 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
     onTermsChanged?.(loaded);
     const current=loaded.find(term=>term.status==="approved");
     if(current)onApproved(current);
-  }).catch(err=>setError(err instanceof Error?err.message:"Could not load contracts."));
+  }).catch(err=>setError(friendlyClientMessage(err, "Could not load contracts.")));
   useEffect(()=>{load();},[]);
 
   const chooseFile=async(file:File|undefined)=>{
@@ -153,7 +154,7 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
         effective_from:extracted.effective_from||current.effective_from,
         effective_to:extracted.effective_to||current.effective_to,
       }));
-    }catch(err){setError(err instanceof Error?err.message:"Could not analyse the agreement.");}
+    }catch(err){setError(friendlyClientMessage(err, "Could not analyse the agreement."));}
     finally{setExtracting(false);}
   };
 
@@ -168,7 +169,7 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
       await load();setOpen(false);
       setForm(current=>({...current,contract_name:"",notes:"",source_file_name:"",source_sha256:""}));
       setExtraction(null);setExtractionModel("");
-    }catch(err){setError(err instanceof Error?err.message:"Could not save draft.");}
+    }catch(err){setError(friendlyClientMessage(err, "Could not save draft."));}
     finally{setBusy(false);}
   };
 
@@ -178,7 +179,7 @@ export function ContractIntelligenceVault({ onApproved, onTermsChanged, connecte
     try{
       const data=await call({action:"approve",id,reviewed_by:reviewer});
       await load();onApproved(data.term as ContractTerm);
-    }catch(err){setError(err instanceof Error?err.message:"Could not approve terms.");}
+    }catch(err){setError(friendlyClientMessage(err, "Could not approve terms."));}
     finally{setBusy(false);}
   };
 

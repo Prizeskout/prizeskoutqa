@@ -11,19 +11,19 @@ import {
   type InsightWindow,
 } from "@/server/ai-insights.functions";
 import { toast } from "sonner";
+import { apiErrorMessage, friendlyClientMessage, type ApiErrorPayload } from "@/lib/api-error";
 import { useAuth } from "@/lib/auth-context";
 
 async function safeMessage(err: unknown, fallback: string): Promise<string> {
   if (err instanceof Response) {
     try {
-      const text = await err.text();
-      return text || `${fallback} (${err.status})`;
+      const data = (await err.json()) as ApiErrorPayload;
+      return apiErrorMessage(data, fallback);
     } catch {
-      return `${fallback} (${err.status})`;
+      return fallback;
     }
   }
-  if (err instanceof Error) return err.message;
-  return fallback;
+  return friendlyClientMessage(err, fallback);
 }
 
 type Page = "overview" | "pricing" | "competitors" | "market";

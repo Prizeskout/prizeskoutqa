@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from "react";
+import { friendlyClientMessage } from "@/lib/api-error";
 import {CheckCircle2,Download,FileSpreadsheet,LockKeyhole,Save} from "lucide-react";
 import type {ClassifiedDocument,LedgerRow} from "@/lib/commission-audit";
 import {buildMonthEndClose} from "@/lib/month-end-close";
@@ -17,10 +18,10 @@ export function MonthEndCloseWorkspace({totals,documents,currency,coverage}:{tot
   const [saved,setSaved]=useState<SavedMonthEndClose[]>([]);
   const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);
   const call=async(payload:Record<string,unknown>)=>{const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??"",platform:"month_end_close",...payload})});const data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error??"Close request failed.");return data;};
-  const load=()=>call({action:"list"}).then(data=>setSaved(data.closes??[])).catch(err=>setError(err instanceof Error?err.message:"Could not load close history."));
+  const load=()=>call({action:"list"}).then(data=>setSaved(data.closes??[])).catch(err=>setError(friendlyClientMessage(err, "Could not load close history.")));
   useEffect(()=>{load();},[]);
-  const save=async()=>{setBusy(true);setError(null);try{await call({action:"save",period_start:coverage?.start??"",period_end:coverage?.end??"",currency,schedules:close.schedules,journals:close.journals,limitations:close.limitations,prepared_by:preparedBy});await load();}catch(err){setError(err instanceof Error?err.message:"Could not save close.");}finally{setBusy(false);}};
-  const advance=async(item:SavedMonthEndClose,status:"reviewed"|"approved"|"locked")=>{if(!reviewer.trim()){setError("Enter the finance reviewer’s name.");return;}setBusy(true);try{await call({action:"advance",id:item.id,close_status:status,reviewer});await load();}catch(err){setError(err instanceof Error?err.message:"Could not advance close.");}finally{setBusy(false);}};
+  const save=async()=>{setBusy(true);setError(null);try{await call({action:"save",period_start:coverage?.start??"",period_end:coverage?.end??"",currency,schedules:close.schedules,journals:close.journals,limitations:close.limitations,prepared_by:preparedBy});await load();}catch(err){setError(friendlyClientMessage(err, "Could not save close."));}finally{setBusy(false);}};
+  const advance=async(item:SavedMonthEndClose,status:"reviewed"|"approved"|"locked")=>{if(!reviewer.trim()){setError("Enter the finance reviewer’s name.");return;}setBusy(true);try{await call({action:"advance",id:item.id,close_status:status,reviewer});await load();}catch(err){setError(friendlyClientMessage(err, "Could not advance close."));}finally{setBusy(false);}};
   const mapping:Record<string,Record<string,string>>={
     "Generic CSV":{},"Xero":{"Marketplace receivable":"1200","Marketplace sales revenue":"2000","Platform commission expense":"4100"},
     "QuickBooks":{"Marketplace receivable":"Accounts Receivable","Marketplace sales revenue":"Sales of Product Income","Platform commission expense":"Commissions and fees"},

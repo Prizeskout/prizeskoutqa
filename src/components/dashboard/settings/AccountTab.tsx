@@ -12,6 +12,7 @@ import {
 } from "./primitives";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { getCompany, setCompany } from "@/lib/companyStore";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -167,8 +168,7 @@ export function AccountTab() {
       window.setTimeout(() => setSavedAt(null), 1800);
       toast.success("Account settings saved");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Could not save settings";
-      toast.error(msg);
+      toast.error(friendlyClientMessage(err, "Could not save settings"));
     } finally {
       setSaving(false);
     }

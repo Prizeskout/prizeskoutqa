@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { showError } from "@/lib/error-toast";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import {
@@ -159,7 +160,7 @@ function AddWebhookModal({
       onAdded();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.addFailed"));
+      showError(err, t("settingsTabs.integrations.webhooks.toasts.addFailed"));
     } finally {
       setSaving(false);
     }
@@ -322,7 +323,7 @@ function EditWebhookModal({
       onSaved({ ...hook, url: url.trim(), description: desc.trim() || null, events: selectedEvents });
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.updateFailed"));
+      showError(err, t("settingsTabs.integrations.webhooks.toasts.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -606,7 +607,7 @@ export function IntegrationsTab() {
         prev.map((w) => (w.id === hook.id ? { ...w, enabled: !hook.enabled } : w))
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.toggleFailed"));
+      showError(err, t("settingsTabs.integrations.webhooks.toasts.toggleFailed"));
     } finally {
       setTogglingId(null);
     }
@@ -620,7 +621,7 @@ export function IntegrationsTab() {
       setWebhooks((prev) => prev.filter((w) => w.id !== id));
       toast.success(t("settingsTabs.integrations.webhooks.toasts.removed"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.integrations.webhooks.toasts.removeFailed"));
+      showError(err, t("settingsTabs.integrations.webhooks.toasts.removeFailed"));
     } finally {
       setDeletingId(null);
     }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pencil, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { showError } from "@/lib/error-toast";
 import { Trans, useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
@@ -160,7 +161,7 @@ function InviteModal({
       onInvited();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.team.toasts.inviteFailed"));
+      showError(err, t("settingsTabs.team.toasts.inviteFailed"));
     } finally {
       setSaving(false);
     }
@@ -315,7 +316,7 @@ function EditRoleModal({
       onSaved({ ...member, role: role as LicenseeRole, functionalRole });
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.team.toasts.roleUpdateFailed"));
+      showError(err, t("settingsTabs.team.toasts.roleUpdateFailed"));
     } finally {
       setSaving(false);
     }

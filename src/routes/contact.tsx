@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Mail, MapPin, MessageSquare } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { submitContactMessage } from "@/server/contact.functions";
 import logo from "@/assets/logo-light.svg";
 
@@ -69,8 +70,7 @@ function ContactPage() {
       form.reset();
       toast.success("Thanks! We will get back to you shortly.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      toast.error(msg);
+      toast.error(friendlyClientMessage(err, "Something went wrong"));
     } finally {
       setBusy(false);
     }

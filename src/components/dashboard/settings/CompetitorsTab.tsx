@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { showError } from "@/lib/error-toast";
 import { Trans, useTranslation } from "react-i18next";
 import {
   Card,
@@ -154,7 +155,7 @@ function AddCompetitorModal({
       onAdded();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.competitors.toasts.addFailed"));
+      showError(err, t("settingsTabs.competitors.toasts.addFailed"));
     } finally {
       setSaving(false);
     }
@@ -339,7 +340,7 @@ function EditCompetitorModal({
       setNewChannel("zid");
       onChanged();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.competitors.toasts.urlAddFailed"));
+      showError(err, t("settingsTabs.competitors.toasts.urlAddFailed"));
     } finally {
       setAdding(false);
     }
@@ -356,7 +357,7 @@ function EditCompetitorModal({
       setUrls((prev) => prev.filter((u) => u.id !== id));
       onChanged();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.competitors.toasts.urlRemoveFailed"));
+      showError(err, t("settingsTabs.competitors.toasts.urlRemoveFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -544,7 +545,7 @@ export function CompetitorsTab() {
       setConfirmDelete(null);
       load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("settingsTabs.competitors.toasts.removeFailed"));
+      showError(err, t("settingsTabs.competitors.toasts.removeFailed"));
     } finally {
       setDeleting(false);
     }

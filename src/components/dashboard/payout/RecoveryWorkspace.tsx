@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { friendlyClientMessage } from "@/lib/api-error";
 import { BriefcaseBusiness, CheckCircle2, Clock3, Download } from "lucide-react";
 import type { Finding } from "@/lib/commission-audit";
 import type { ContractTerm } from "./ContractIntelligenceVault";
@@ -76,7 +77,7 @@ export function RecoveryWorkspace({
     call({ action: "list" })
       .then((data) => setCases(data.cases ?? []))
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Could not load recovery cases."),
+        setError(friendlyClientMessage(err, "Could not load recovery cases.")),
       );
   useEffect(() => {
     load();
@@ -116,7 +117,7 @@ export function RecoveryWorkspace({
       });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create recovery case.");
+      setError(friendlyClientMessage(err, "Could not create recovery case."));
     } finally {
       setBusy(null);
     }
@@ -137,7 +138,7 @@ export function RecoveryWorkspace({
       });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update recovery case.");
+      setError(friendlyClientMessage(err, "Could not update recovery case."));
     } finally {
       setBusy(null);
     }
@@ -176,9 +177,9 @@ export function RecoveryWorkspace({
       executions: [],
     });
   };
-  const preparePack=async(item:RecoveryCase)=>{setBusy(item.id);setError(null);try{await call({action:"prepare_pack",id:item.id});await load();}catch(err){setError(err instanceof Error?err.message:"Evidence pack could not be prepared.");}finally{setBusy(null);}};
-  const approvePack=async(item:RecoveryCase)=>{const approvedBy=window.prompt("Who reviewed and approved this evidence pack?",item.owner??"")?.trim();if(!approvedBy||!item.evidence_pack)return;setBusy(item.id);setError(null);try{await call({action:"approve_pack",pack_id:item.evidence_pack.id,approved_by:approvedBy});await load();}catch(err){setError(err instanceof Error?err.message:"Evidence pack could not be approved.");}finally{setBusy(null);}};
-  const downloadPack=async(item:RecoveryCase)=>{if(!item.evidence_pack)return;setBusy(item.id);setError(null);try{const result=await call({action:"get_pack",pack_id:item.evidence_pack.id}),blob=new Blob([JSON.stringify(result.pack,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),anchor=document.createElement("a");anchor.href=url;anchor.download=`recovery-evidence-pack-${item.id}.json`;anchor.click();URL.revokeObjectURL(url);}catch(err){setError(err instanceof Error?err.message:"Evidence pack could not be downloaded.");}finally{setBusy(null);}};
+  const preparePack=async(item:RecoveryCase)=>{setBusy(item.id);setError(null);try{await call({action:"prepare_pack",id:item.id});await load();}catch(err){setError(friendlyClientMessage(err, "Evidence pack could not be prepared."));}finally{setBusy(null);}};
+  const approvePack=async(item:RecoveryCase)=>{const approvedBy=window.prompt("Who reviewed and approved this evidence pack?",item.owner??"")?.trim();if(!approvedBy||!item.evidence_pack)return;setBusy(item.id);setError(null);try{await call({action:"approve_pack",pack_id:item.evidence_pack.id,approved_by:approvedBy});await load();}catch(err){setError(friendlyClientMessage(err, "Evidence pack could not be approved."));}finally{setBusy(null);}};
+  const downloadPack=async(item:RecoveryCase)=>{if(!item.evidence_pack)return;setBusy(item.id);setError(null);try{const result=await call({action:"get_pack",pack_id:item.evidence_pack.id}),blob=new Blob([JSON.stringify(result.pack,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),anchor=document.createElement("a");anchor.href=url;anchor.download=`recovery-evidence-pack-${item.id}.json`;anchor.click();URL.revokeObjectURL(url);}catch(err){setError(friendlyClientMessage(err, "Evidence pack could not be downloaded."));}finally{setBusy(null);}};
   const recordSubmission = async (item: RecoveryCase) => {
     const draft = submissionDrafts[item.id] ?? { reference: "", submittedBy: item.owner ?? "" };
     if (!draft.reference.trim() || !draft.submittedBy.trim()) {
@@ -196,7 +197,7 @@ export function RecoveryWorkspace({
       });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not record submission.");
+      setError(friendlyClientMessage(err, "Could not record submission."));
     } finally {
       setBusy(null);
     }
