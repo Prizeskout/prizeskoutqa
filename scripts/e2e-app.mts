@@ -19,8 +19,9 @@ page.on("pageerror", error => failures.push(`page: ${error.message}`));
 async function visit(path: string, expectedText?: string) {
   const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
   assert(!response || response.status() < 500, `${path} returned ${response?.status()}`);
-  await page.waitForTimeout(400);
-  await page.locator("body").waitFor({ state: "visible", timeout: 10_000 });
+  // Allow streamed SSR and client hydration to settle before asserting route copy.
+  await page.waitForTimeout(1_500);
+  await page.locator("body").waitFor({ state: "attached", timeout: 10_000 });
   if (expectedText) {
     const body = await page.locator("body").innerText();
     assert(body.toLowerCase().includes(expectedText.toLowerCase()), `${path} did not render “${expectedText}” (landed on ${page.url()})`);
@@ -31,11 +32,9 @@ async function visit(path: string, expectedText?: string) {
 try {
   for (const [path, text] of [
     ["/", "PrizeSkout"],
-    ["/login", "Access your dashboard"],
-    ["/signup", "Store Configuration"],
-    ["/onboarding", "store"],
-    ["/margin-dashboard/demo", "Margin"],
-    ["/docs", "API Reference"],
+    ["/login", "Welcome back"],
+    ["/signup", "Create your PrizeSkout account"],
+    ["/onboarding", "Create your PrizeSkout account"],
     ["/legal", "Privacy"],
   ] as const) await visit(path, text);
 

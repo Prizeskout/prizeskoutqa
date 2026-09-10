@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   LogOut,
   History as HistoryIcon,
+  FileText,
   WalletCards,
   type LucideIcon,
 } from "lucide-react";
@@ -385,6 +386,7 @@ const INBOUND_INTEGRATIONS = [
     kind: "POS Terminal",
     platform: "foodics",
     oauthPath: null as string | null,
+    availability: "file-only",
   },
   {
     name: "Zid",
@@ -392,6 +394,7 @@ const INBOUND_INTEGRATIONS = [
     kind: "E-Commerce",
     platform: "zid",
     oauthPath: "/api/auth/zid" as string | null,
+    availability: "production",
   },
   {
     name: "Salla",
@@ -399,6 +402,7 @@ const INBOUND_INTEGRATIONS = [
     kind: "E-Commerce",
     platform: "salla",
     oauthPath: "/api/auth/salla" as string | null,
+    availability: "production",
   },
 ] as const;
 
@@ -409,6 +413,7 @@ const OUTBOUND_INTEGRATIONS = [
     region: "QA · KSA · UAE",
     byok: true,
     oauthPath: null as string | null,
+    availability: "sandbox",
   },
   {
     name: "Snoonu",
@@ -416,6 +421,7 @@ const OUTBOUND_INTEGRATIONS = [
     region: "QA",
     byok: false,
     oauthPath: null as string | null,
+    availability: "unavailable",
   },
   {
     name: "Keeta",
@@ -423,6 +429,7 @@ const OUTBOUND_INTEGRATIONS = [
     region: "QA · KSA",
     byok: false,
     oauthPath: "/api/channels/connect?oauth=keeta" as string | null,
+    availability: "sandbox",
   },
   {
     name: "Jahez",
@@ -430,6 +437,7 @@ const OUTBOUND_INTEGRATIONS = [
     region: "KSA · hyperlocal",
     byok: true,
     oauthPath: null as string | null,
+    availability: "unavailable",
   },
   {
     name: "Deliveroo",
@@ -437,8 +445,16 @@ const OUTBOUND_INTEGRATIONS = [
     region: "UAE · QA",
     byok: false,
     oauthPath: null as string | null,
+    availability: "unavailable",
   },
-];
+] as const;
+
+const CONNECTOR_AVAILABILITY = {
+  production: { label: "Production", color: "#15803D" },
+  sandbox: { label: "Sandbox", color: "#B45309" },
+  "file-only": { label: "File-only", color: "#1D4ED8" },
+  unavailable: { label: "Unavailable", color: "#64748B" },
+} as const;
 
 // Platforms selectable for a manual payout-check upload — only Talabat has
 // a live API pull built (see expected-payout.ts); the others here rely on
@@ -11751,10 +11767,10 @@ export function PrizeSkoutDashboard() {
                     </div>
                   </div>
                   {cpImagePreviews.length > 0 && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{cpImagePreviews.map(({ file, url }) => <div key={`${file.name}-${file.lastModified}`} style={{ width: 92, border: "1px solid var(--border)", borderRadius: 9, padding: 6, background: "var(--surface)" }}><img src={url} alt="Attached product preview" style={{ width: "100%", height: 66, objectFit: "cover", borderRadius: 6 }} /><div title={file.name} style={{ fontSize: 9.5, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</div><button type="button" onClick={() => setCpImageAttachments(current => current.filter(item => item !== file))} style={{ border: 0, background: "transparent", color: "#B42318", fontSize: 9.5, padding: "3px 0", cursor: "pointer" }}>Remove</button></div>)}</div>}
-                  {cpDocumentAttachments.length > 0 && <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{cpDocumentAttachments.map(file => <div key={`${file.name}-${file.lastModified}`} style={{ display: "flex", gap: 7, alignItems: "center", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 9px", background: "var(--surface)", fontSize: 11 }}><span>📄 {file.name}</span><button type="button" onClick={() => setCpDocumentAttachments(current => current.filter(item => item !== file))} style={{ border: 0, background: "transparent", color: "#B42318", cursor: "pointer" }}>×</button></div>)}</div>}
+                  {cpDocumentAttachments.length > 0 && <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>{cpDocumentAttachments.map(file => <div key={`${file.name}-${file.lastModified}`} style={{ display: "flex", gap: 7, alignItems: "center", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 9px", background: "var(--surface)", fontSize: 11 }}><FileText size={14} aria-hidden="true" /><span>{file.name}</span><button type="button" aria-label={`Remove ${file.name}`} onClick={() => setCpDocumentAttachments(current => current.filter(item => item !== file))} style={{ border: 0, background: "transparent", color: "#B42318", cursor: "pointer" }}>×</button></div>)}</div>}
                   <div style={{ display: "flex", gap: 9, alignItems: "flex-end", padding: 8, border: `1.5px solid color-mix(in srgb,${OG} 30%,var(--border))`, borderRadius: 13, background: "var(--surface)" }}>
-                    <label title="Attach product images" style={{ flex: "0 0 auto", width: 38, height: 38, display: "grid", placeItems: "center", border: "1px solid var(--border)", borderRadius: 9, cursor: cpPhase === "loading" ? "not-allowed" : "pointer", color: OG, fontWeight: 900, fontSize: 20 }}>+<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={cpPhase === "loading"} onChange={event => { const files = Array.from(event.target.files ?? []).filter(file => ["image/jpeg", "image/png", "image/webp"].includes(file.type) && file.size <= 10 * 1024 * 1024).slice(0, 20); setCpImageAttachments(files); event.target.value = ""; }} style={{ display: "none" }} /></label>
-                    <label title="Attach payout documents" style={{ flex: "0 0 auto", width: 38, height: 38, display: "grid", placeItems: "center", border: "1px solid var(--border)", borderRadius: 9, cursor: cpPhase === "loading" ? "not-allowed" : "pointer", color: "var(--text)", fontSize: 16 }}>📄<input type="file" multiple accept=".csv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={cpPhase === "loading"} onChange={event => { setCpDocumentAttachments(Array.from(event.target.files ?? []).slice(0, 12)); event.target.value = ""; }} style={{ display: "none" }} /></label>
+                    <label aria-label="Attach product images" title="Attach product images" style={{ flex: "0 0 auto", width: 44, height: 44, display: "grid", placeItems: "center", border: "1px solid var(--border)", borderRadius: 9, cursor: cpPhase === "loading" ? "not-allowed" : "pointer", color: OG, fontWeight: 900, fontSize: 20 }}>+<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={cpPhase === "loading"} onChange={event => { const files = Array.from(event.target.files ?? []).filter(file => ["image/jpeg", "image/png", "image/webp"].includes(file.type) && file.size <= 10 * 1024 * 1024).slice(0, 20); setCpImageAttachments(files); event.target.value = ""; }} style={{ display: "none" }} /></label>
+                    <label aria-label="Attach payout documents" title="Attach payout documents" style={{ flex: "0 0 auto", width: 44, height: 44, display: "grid", placeItems: "center", border: "1px solid var(--border)", borderRadius: 9, cursor: cpPhase === "loading" ? "not-allowed" : "pointer", color: "var(--text)" }}><FileText size={18} aria-hidden="true" /><input type="file" multiple accept=".csv,.xlsx,.xls,.pdf,text/csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={cpPhase === "loading"} onChange={event => { setCpDocumentAttachments(Array.from(event.target.files ?? []).slice(0, 12)); event.target.value = ""; }} style={{ display: "none" }} /></label>
                     <textarea value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void runCopilot(cpInput); } }} rows={2} disabled={cpPhase === "loading"} placeholder="Ask a follow-up, add another instruction, or ask what was completed…" aria-label="Continue this chat" style={{ flex: 1, minWidth: 0, resize: "vertical", border: 0, outline: 0, padding: "8px 9px", background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 14, lineHeight: 1.45 }} />
                     <button type="button" onClick={() => void runCopilot(cpInput)} disabled={cpPhase === "loading" || !cpInput.trim()} style={{ flex: "0 0 auto", border: 0, borderRadius: 9, padding: "10px 15px", background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: cpPhase === "loading" || !cpInput.trim() ? "not-allowed" : "pointer", opacity: cpPhase === "loading" || !cpInput.trim() ? .55 : 1 }}>{cpPhase === "loading" ? "Working…" : "Send"}</button>
                   </div>
@@ -12832,6 +12848,7 @@ export function PrizeSkoutDashboard() {
                 {INBOUND_INTEGRATIONS.map((ig) => {
                   const isConnected = channelStatuses[ig.platform] === "connected";
                   const canConnect = !!ig.oauthPath;
+                  const availability = CONNECTOR_AVAILABILITY[ig.availability];
                   return (
                     <div
                       key={ig.name}
@@ -12877,6 +12894,9 @@ export function PrizeSkoutDashboard() {
                             <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
                               {ig.kind}
                             </div>
+                            <span style={{ display: "inline-block", marginTop: 6, padding: "3px 7px", borderRadius: 999, border: `1px solid color-mix(in srgb,${availability.color} 35%,transparent)`, color: availability.color, fontSize: 10.5, fontWeight: 800 }}>
+                              {availability.label}
+                            </span>
                           </div>
                         </div>
                         <span
@@ -12891,7 +12911,9 @@ export function PrizeSkoutDashboard() {
                         />
                       </div>
                       <div style={{ fontSize: 13.5, color: "var(--muted)" }}>
-                        {isConnected
+                        {ig.availability === "file-only"
+                          ? "Import merchant-owned exports through Evidence & History. No live API connection is implied."
+                          : isConnected
                           ? t.inboundConnectedMsg
                           : canConnect
                             ? t.inboundAuthorizeMsg
@@ -12988,6 +13010,7 @@ export function PrizeSkoutDashboard() {
                 {OUTBOUND_INTEGRATIONS.map((o) => {
                   const connected = channelStatuses[o.platform] === "connected";
                   const needsShopId = connected && o.platform === "keeta" && keetaNeedsShopId;
+                  const availability = CONNECTOR_AVAILABILITY[o.availability];
                   return (
                     <div
                       key={o.name}
@@ -13050,7 +13073,7 @@ export function PrizeSkoutDashboard() {
                           >
                             {t.live}
                           </span>
-                        ) : o.byok ? (
+                        ) : o.byok && o.availability !== "unavailable" ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -13112,6 +13135,9 @@ export function PrizeSkoutDashboard() {
                         )}
                       </div>
                       <div style={{ fontSize: 13, color: "var(--muted)" }}>{o.region}</div>
+                      <span style={{ alignSelf: "flex-start", padding: "3px 7px", borderRadius: 999, border: `1px solid color-mix(in srgb,${availability.color} 35%,transparent)`, color: availability.color, fontSize: 10.5, fontWeight: 800 }}>
+                        {availability.label}
+                      </span>
                       <div
                         style={{
                           display: "flex",
@@ -13137,7 +13163,9 @@ export function PrizeSkoutDashboard() {
                           ? t.keetaShopIdPending
                           : connected
                             ? t.storeConnectedSyncing
-                            : o.byok || o.oauthPath
+                            : o.availability === "unavailable"
+                              ? "Partner activation is required; no live capability is claimed."
+                              : o.byok || o.oauthPath
                               ? t.tapSetupMsg
                               : t.awaitingBuildMsg}
                       </div>
