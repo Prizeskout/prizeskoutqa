@@ -31,6 +31,7 @@ import {rematchEvidenceAfterContractApproval} from "@/server/core/evidence-agree
 import {approveRecoveryEvidencePack,getRecoveryEvidencePack,prepareRecoveryEvidencePack} from "@/server/core/recovery-evidence-pack";
 import { createRecoveryCase, listRecoveryCases, recordRecoverySubmission, updateRecoveryCase } from "@/server/core/recovery-cases";
 import { approvePromotionScenario, confirmPromotionChannelLaunch, listPromotionScenarios, preparePromotionLaunch, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
+import {approvePromotionAction,confirmPromotionAction,createPromotionAction,listPromotionActions,queuePromotionAction,type PromotionActionType} from "@/server/core/promotion-actions";
 import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
 import { activateGroupPolicy, approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
 import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
@@ -938,6 +939,27 @@ export const Route = createFileRoute("/api/channels/connect")({
               return resp({ok:true,scenario:item},200);
             }
             return resp({error:"Unsupported promotion-scenario action."},400);
+          }
+
+          if(platform==="promotion_actions"){
+            if(body.action==="list")return resp({ok:true,actions:await listPromotionActions(merchant_id)},200);
+            if(body.action==="create"){
+              const actionType=body.action_type as PromotionActionType,allowed=["stop","reduce_discount","remove_item","adjust_discount"];
+              if(!body.scenario_id||!body.target_platform||!body.target_reference||!allowed.includes(actionType)||!body.requested_by?.trim())return resp({error:"Scenario, platform, action, target reference, and requester are required."},400);
+              const raw=body as unknown as Record<string,unknown>,payload=raw.requested_payload&&typeof raw.requested_payload==="object"&&!Array.isArray(raw.requested_payload)?raw.requested_payload as Record<string,unknown>:{};
+              return resp({ok:true,promotion_action:await createPromotionAction({accountId:merchant_id,scenarioId:body.scenario_id,platform:body.target_platform.trim().toLowerCase(),actionType,targetReference:body.target_reference.trim().slice(0,200),payload,requestedBy:body.requested_by.trim().slice(0,160)})},200);
+            }
+            if(body.action==="decide"){
+              if(!body.id||!["approved","rejected"].includes(body.decision)||!body.reviewer?.trim())return resp({error:"Action, decision, and reviewer are required."},400);
+              return resp({ok:true,promotion_action:await approvePromotionAction(merchant_id,body.id,body.reviewer.trim().slice(0,160),body.decision as "approved"|"rejected")},200);
+            }
+            if(body.action==="execute"){
+              if(!body.id)return resp({error:"Action id is required."},400);return resp({ok:true,promotion_action:await queuePromotionAction(merchant_id,body.id)},200);
+            }
+            if(body.action==="confirm"){
+              if(!body.id||!body.partner_reference?.trim())return resp({error:"Action id and partner reference are required."},400);return resp({ok:true,promotion_action:await confirmPromotionAction(merchant_id,body.id,body.partner_reference.trim().slice(0,200),{})},200);
+            }
+            return resp({error:"Unsupported promotion action."},400);
           }
 
           if(platform==="channel_price_plans"){
