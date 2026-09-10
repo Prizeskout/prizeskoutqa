@@ -321,6 +321,27 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({error:"Unsupported location action."},400);
           }
 
+          if (platform === "branch_assignments") {
+            if (body.action === "list") {
+              const {data,error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").select("id,branch_id,platform,external_branch_id,pos_external_id,active,created_at").eq("account_id",merchant_id).order("created_at");
+              if(error)throw error;
+              return resp({ok:true,assignments:data??[]},200);
+            }
+            if(body.action === "save"){
+              const branchId=(body.branch_id??"").trim(),channel=(body.channel??"").trim().toLowerCase(),externalBranchId=(body.external_branch_id??"").trim(),posExternalId=(body.pos_external_id??"").trim()||null;
+              if(!branchId||!channel||!externalBranchId)return resp({error:"Branch, channel and external branch ID are required."},400);
+              const {data:branch,error:branchError}=await (supabaseAdmin as any).from("ps_enterprise_entities").select("id").eq("account_id",merchant_id).eq("entity_type","branch").eq("id",branchId).maybeSingle();
+              if(branchError)throw branchError;if(!branch)return resp({error:"Branch not found in this restaurant workspace."},404);
+              const {data,error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").upsert({account_id:merchant_id,branch_id:branchId,platform:channel,external_branch_id:externalBranchId,pos_external_id:posExternalId,active:true,updated_at:new Date().toISOString()},{onConflict:"account_id,branch_id,platform"}).select("id,branch_id,platform,external_branch_id,pos_external_id,active,created_at").single();
+              if(error)throw error;return resp({ok:true,assignment:data},200);
+            }
+            if(body.action === "delete"){
+              const {error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").update({active:false,updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("id",body.id);
+              if(error)throw error;return resp({ok:true},200);
+            }
+            return resp({error:"Unsupported branch assignment action."},400);
+          }
+
           if (platform === "notification_preferences") {
             const allowed = new Set(["margin_breach","reprice_applied","channel_down","competitor_drop","promo_overlap","weekly_digest"]);
             if (body.action === "list") {
@@ -346,7 +367,7 @@ export const Route = createFileRoute("/api/channels/connect")({
             }
             if(body.action==="save"){
               const metric=body.metric??"",operator=body.operator??"",severity=body.severity??"",threshold=Number(body.threshold),name=(body.name??"").trim().slice(0,160);
-              if(!name||!["money","percentage","contribution","payout_variance","margin"].includes(metric)||!["gt","gte","lt","lte"].includes(operator)||!["info","warning","critical"].includes(severity)||!Number.isFinite(threshold))return resp({error:"Name, metric, comparison, threshold, and severity are required."},400);
+              if(!name||!["gross_sales","contribution","payout_variance","margin","recoverable_amount"].includes(metric)||!["gt","gte","lt","lte"].includes(operator)||!["info","warning","critical"].includes(severity)||!Number.isFinite(threshold))return resp({error:"Name, metric, comparison, threshold, and severity are required."},400);
               const row={account_id:merchant_id,name,metric,operator,threshold,severity,platform:(body.scope_platform??"").trim()||null,branch_external_id:(body.branch_external_id??"").trim()||null,enabled:body.enabled!=="false",updated_at:new Date().toISOString()};
               const query=body.id?(supabaseAdmin as any).from("ps_alert_rules").update(row).eq("account_id",merchant_id).eq("id",body.id):(supabaseAdmin as any).from("ps_alert_rules").insert(row);
               const {data,error}=await query.select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").single();if(error)throw error;return resp({ok:true,rule:data},200);

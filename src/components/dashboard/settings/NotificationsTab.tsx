@@ -278,7 +278,7 @@ export function NotificationsTab() {
           onChange={(e) => setDraft((v) => ({ ...v, metric: e.target.value }))}
           style={field}
         >
-          {["money", "percentage", "contribution", "payout_variance", "margin"].map((v) => (
+          {["gross_sales", "contribution", "payout_variance", "margin", "recoverable_amount"].map((v) => (
             <option key={v} value={v}>
               {v.replaceAll("_", " ")}
             </option>

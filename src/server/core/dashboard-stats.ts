@@ -5,6 +5,7 @@
 // with real dispatch history.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { summarizeRestaurantOrderEconomics } from "@/server/restaurant-commerce-handlers";
+import { evaluateFinancialAlerts } from "./financial-alerts";
 
 export type DashboardStats = {
   has_activity: boolean;
@@ -271,6 +272,8 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
     if (dayIndex >= 0 && dayIndex < SPARKLINE_DAYS) daily_series[dayIndex] += delta;
   }
 
+  const economicTwin=summarizeEconomicTwin(currentEvents, recoveries ?? []);
+  await evaluateFinancialAlerts(accountId,economicTwin);
   return {
     profits_protected_this_month: Math.round(profitsProtected * 100) / 100,
     price_updates_this_month: priceUpdatesThisMonth,
@@ -282,6 +285,6 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
     has_activity: rows.length > 0 || catalogSkus.size > 0,
     tracked_products: catalogSkus.size,
     daily_series,
-    economic_twin: summarizeEconomicTwin(currentEvents, recoveries ?? []),
+    economic_twin: economicTwin,
   };
 }
