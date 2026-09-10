@@ -338,6 +338,24 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ error:"Unsupported notification preference action." }, 400);
           }
 
+          if(platform === "alert_rules"){
+            if(body.action==="list"){
+              const {data,error}=await (supabaseAdmin as any).from("ps_alert_rules").select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").eq("account_id",merchant_id).order("created_at");
+              if(error)throw error;return resp({ok:true,rules:data??[]},200);
+            }
+            if(body.action==="save"){
+              const metric=body.metric??"",operator=body.operator??"",severity=body.severity??"",threshold=Number(body.threshold),name=(body.name??"").trim().slice(0,160);
+              if(!name||!["money","percentage","contribution","payout_variance","margin"].includes(metric)||!["gt","gte","lt","lte"].includes(operator)||!["info","warning","critical"].includes(severity)||!Number.isFinite(threshold))return resp({error:"Name, metric, comparison, threshold, and severity are required."},400);
+              const row={account_id:merchant_id,name,metric,operator,threshold,severity,platform:(body.scope_platform??"").trim()||null,branch_external_id:(body.branch_external_id??"").trim()||null,enabled:body.enabled!=="false",updated_at:new Date().toISOString()};
+              const query=body.id?(supabaseAdmin as any).from("ps_alert_rules").update(row).eq("account_id",merchant_id).eq("id",body.id):(supabaseAdmin as any).from("ps_alert_rules").insert(row);
+              const {data,error}=await query.select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").single();if(error)throw error;return resp({ok:true,rule:data},200);
+            }
+            if(body.action==="delete"){
+              const {error}=await (supabaseAdmin as any).from("ps_alert_rules").delete().eq("account_id",merchant_id).eq("id",body.id);if(error)throw error;return resp({ok:true},200);
+            }
+            return resp({error:"Unsupported alert rule action."},400);
+          }
+
           if(platform==="merchant_experience"){
             if(body.action==="get")return resp({ok:true,...await getMerchantExperience(merchant_id),manager:await getStoreManager(merchant_id)},200);
             if(body.action==="attention"){
