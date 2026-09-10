@@ -2302,6 +2302,7 @@ export function PrizeSkoutDashboard() {
     avg_margin_saved_pct: number | null;
     tracked_products: number;
     daily_series: number[];
+    economic_twin: import("@/components/dashboard/ExecutiveOverview").EconomicTwinSummary;
   };
   const [heroStats, setHeroStats] = useState<HeroStats | null>(null);
   type DefendHealth = {
@@ -7447,6 +7448,7 @@ export function PrizeSkoutDashboard() {
                 attentionCount={historyAttentionCount}
                 confirmedActions={historyConfirmedCount}
                 expectedPayout={payoutData?.expected_payout ?? null}
+                economicTwin={heroStats?.economic_twin}
                 channels={overviewChannels}
                 risks={overviewRisks}
                 onCatalog={() => openCatalogFilter("all")}

@@ -24,14 +24,7 @@ import {
 } from "@/lib/plan-config";
 
 const INDUSTRIES = [
-  "E-commerce / Quick commerce",
-  "Retail / Hypermarket",
-  "Mall / Shopping center",
-  "Grocery",
-  "Fashion retail",
-  "Electronics retail",
-  "Multi-category retail",
-  "Other",
+  "Restaurant",
 ] as const;
 
 const COUNTRIES = [
@@ -51,14 +44,12 @@ const CURRENCIES = ["QAR", "USD", "AED", "SAR", "KWD", "BHD"] as const;
 export function AccountTab() {
   const { t } = useTranslation();
   const [companyName, setCompanyName] = useState(() => getCompany().name);
-  const [industry, setIndustry] = useState<string>("E-commerce / Quick commerce");
+  const [industry, setIndustry] = useState<string>("Restaurant");
   const [country, setCountry] = useState<string>("Qatar");
   const [currency, setCurrency] = useState<string>("QAR");
-  const [email, setEmail] = useState("pricing@snoonu.com");
-  const [phone, setPhone] = useState("+974 4000 0000");
-  const [description, setDescription] = useState(
-    "Qatar's leading super-app for delivery, grocery, and lifestyle services. Operating across food, grocery, electronics, fashion, and more.",
-  );
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [description, setDescription] = useState("");
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -106,6 +97,12 @@ export function AccountTab() {
         if (data.contact_phone) setPhone(data.contact_phone);
         if (data.description) setDescription(data.description);
       }
+      const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
+      if(merchantId&&accessCode){
+        const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,platform:"restaurant_workspace",action:"get"})});
+        const result=await response.json() as {workspace?:{name?:string;country_code?:string;currency?:string;metadata?:Record<string,unknown>}};
+        if(response.ok&&result.workspace){const countryByCode:Record<string,string>={QA:"Qatar",AE:"UAE",SA:"Saudi Arabia",KW:"Kuwait",BH:"Bahrain",OM:"Oman",EG:"Egypt",JO:"Jordan"};setCompanyName(result.workspace.name??companyName);setIndustry("Restaurant");setCountry(countryByCode[result.workspace.country_code??""]??country);setCurrency(result.workspace.currency??currency);setEmail(String(result.workspace.metadata?.contact_email??""));setPhone(String(result.workspace.metadata?.contact_phone??""));setDescription(String(result.workspace.metadata?.description??""));}
+      }
       setLoading(false);
     })();
     return () => {
@@ -141,6 +138,8 @@ export function AccountTab() {
           { onConflict: "user_id" },
         );
       if (error) throw error;
+      const merchantId=localStorage.getItem("ps_merchant_id")??"",accessCode=localStorage.getItem("ps_access_code")??"";
+      if(merchantId&&accessCode){const response=await fetch("/api/channels/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({merchant_id:merchantId,access_code:accessCode,platform:"restaurant_workspace",action:"save",name:trimmedCompany,country,currency,contact_email:email,contact_phone:phone,description})});if(!response.ok){const result=await response.json() as {error?:string};throw new Error(result.error??"Restaurant workspace could not be saved.");}}
       setCompany({ name: trimmedCompany });
       setSavedAt(Date.now());
       window.setTimeout(() => setSavedAt(null), 1800);
@@ -156,10 +155,10 @@ export function AccountTab() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Card>
-        <CardTitle>Company profile</CardTitle>
+        <CardTitle>Restaurant workspace</CardTitle>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
           <FieldRow>
-            <Field label="Company name">
+            <Field label="Restaurant or group name">
               <TextField value={companyName} onChange={setCompanyName} />
             </Field>
             <Field label="Industry">

@@ -27,6 +27,7 @@
     "verify-keeta-contract": "tsx scripts/verify-keeta-contract.mts",
     "verify-shadow-intelligence": "tsx scripts/verify-shadow-intelligence.mts",
     "verify-economic-evidence": "tsx scripts/verify-economic-evidence.mts",
+    "verify-economic-twin-dashboard": "tsx scripts/verify-economic-twin-dashboard.mts",
     "verify-payout-authority": "tsx scripts/verify-payout-authority.mts",
     "verify-price-action-safety": "tsx scripts/verify-price-action-safety.mts",
     "verify-pricing-evidence": "tsx scripts/verify-pricing-evidence.mts",

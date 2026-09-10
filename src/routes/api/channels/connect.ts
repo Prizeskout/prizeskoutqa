@@ -271,27 +271,49 @@ export const Route = createFileRoute("/api/channels/connect")({
             return resp({ error: "Unsupported Zid–Jahez bridge action." }, 400);
           }
 
+          if (platform === "restaurant_workspace") {
+            if(body.action === "get"){
+              const {data,error}=await (supabaseAdmin as any).from("ps_restaurant_workspaces").select("account_id,name,country_code,currency,industry,timezone,active,metadata").eq("account_id",merchant_id).maybeSingle();
+              if(error)throw error;
+              return resp({ok:true,workspace:data??null},200);
+            }
+            if(body.action === "save"){
+              const countries:Record<string,{code:string;timezone:string}>={"Qatar":{code:"QA",timezone:"Asia/Qatar"},"Saudi Arabia":{code:"SA",timezone:"Asia/Riyadh"},"UAE":{code:"AE",timezone:"Asia/Dubai"},"Kuwait":{code:"KW",timezone:"Asia/Kuwait"},"Bahrain":{code:"BH",timezone:"Asia/Bahrain"},"Oman":{code:"OM",timezone:"Asia/Muscat"},"Egypt":{code:"EG",timezone:"Africa/Cairo"},"Jordan":{code:"JO",timezone:"Asia/Amman"}};
+              const name=(body.name??"").trim().slice(0,160),country=countries[body.country??""],currency=(body.currency??"").trim().toUpperCase();
+              if(!name||!country||!/^[A-Z]{3}$/.test(currency))return resp({error:"Restaurant name, supported country, and ISO currency are required."},400);
+              const metadata={contact_email:(body.contact_email??"").trim()||null,contact_phone:(body.contact_phone??"").trim()||null,description:(body.description??"").trim()||null};
+              const {data,error}=await (supabaseAdmin as any).from("ps_restaurant_workspaces").upsert({account_id:merchant_id,name,country_code:country.code,currency,industry:"restaurant",timezone:country.timezone,metadata,updated_at:new Date().toISOString()},{onConflict:"account_id"}).select("account_id,name,country_code,currency,industry,timezone,active,metadata").single();
+              if(error)throw error;
+              return resp({ok:true,workspace:data},200);
+            }
+            return resp({error:"Unsupported restaurant workspace action."},400);
+          }
+
           if (platform === "locations") {
             if (body.action === "list") {
-              const { data, error } = await supabaseAdmin.from("ps_merchant_locations").select("id,name,city,region,active").eq("account_id", merchant_id).order("created_at");
+              const { data, error } = await (supabaseAdmin as any).from("ps_enterprise_entities").select("id,name,external_id,country_code,currency,active,metadata").eq("account_id", merchant_id).eq("entity_type", "branch").order("created_at");
               if (error) throw error;
-              return resp({ ok:true, locations:data ?? [] }, 200);
+              return resp({ ok:true, locations:(data ?? []).map((row:any)=>({id:row.id,name:row.name,external_id:row.external_id,city:String(row.metadata?.city??""),region:String(row.metadata?.region??""),country_code:row.country_code,currency:row.currency,active:row.active})) }, 200);
             }
             if (body.action === "create") {
-              const name=(body.name ?? "").trim().slice(0,160),city=(body.city ?? "").trim().slice(0,120),region=(body.region ?? "").trim();
+              const name=(body.name ?? "").trim().slice(0,160),city=(body.city ?? "").trim().slice(0,120),region=(body.region ?? "").trim(),externalId=(body.external_id??body.pos_external_id??crypto.randomUUID()).trim().slice(0,160);
               if (!name || !city || !["Qatar","Saudi Arabia","UAE","Kuwait","Bahrain","Oman"].includes(region)) return resp({error:"Name, city, and a supported region are required."},400);
-              const {data,error}=await supabaseAdmin.from("ps_merchant_locations").insert({account_id:merchant_id,name,city,region,active:true}).select("id,name,city,region,active").single();
+              const locale:Record<string,{country:string;currency:string;timezone:string}>={"Qatar":{country:"QA",currency:"QAR",timezone:"Asia/Qatar"},"Saudi Arabia":{country:"SA",currency:"SAR",timezone:"Asia/Riyadh"},"UAE":{country:"AE",currency:"AED",timezone:"Asia/Dubai"},"Kuwait":{country:"KW",currency:"KWD",timezone:"Asia/Kuwait"},"Bahrain":{country:"BH",currency:"BHD",timezone:"Asia/Bahrain"},"Oman":{country:"OM",currency:"OMR",timezone:"Asia/Muscat"}};
+              const details=locale[region];
+              const {data,error}=await (supabaseAdmin as any).from("ps_enterprise_entities").insert({account_id:merchant_id,entity_type:"branch",external_id:externalId,name,country_code:details.country,currency:details.currency,timezone:details.timezone,active:true,metadata:{city,region,pos_external_id:body.pos_external_id||null}}).select("id,name,external_id,country_code,currency,active,metadata").single();
               if(error)throw error;
-              return resp({ok:true,location:data},200);
+              return resp({ok:true,location:{id:data.id,name:data.name,external_id:data.external_id,city:data.metadata?.city??city,region:data.metadata?.region??region,country_code:data.country_code,currency:data.currency,active:data.active}},200);
             }
             if (body.action === "toggle") {
-              const {data,error}=await supabaseAdmin.from("ps_merchant_locations").update({active:body.active==="true"}).eq("account_id",merchant_id).eq("id",body.id).select("id,name,city,region,active").maybeSingle();
+              const {data,error}=await (supabaseAdmin as any).from("ps_enterprise_entities").update({active:body.active==="true",updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("entity_type","branch").eq("id",body.id).select("id,name,external_id,country_code,currency,active,metadata").maybeSingle();
               if(error)throw error;
               if(!data)return resp({error:"Location not found."},404);
-              return resp({ok:true,location:data},200);
+              return resp({ok:true,location:{id:data.id,name:data.name,external_id:data.external_id,city:data.metadata?.city??"",region:data.metadata?.region??"",country_code:data.country_code,currency:data.currency,active:data.active}},200);
             }
             if (body.action === "delete") {
-              const {error}=await supabaseAdmin.from("ps_merchant_locations").delete().eq("account_id",merchant_id).eq("id",body.id);
+              // Branch identities are historical dimensions. Deactivation is
+              // the only safe delete semantics once financial evidence exists.
+              const {error}=await (supabaseAdmin as any).from("ps_enterprise_entities").update({active:false,updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("entity_type","branch").eq("id",body.id);
               if(error)throw error;
               return resp({ok:true},200);
             }

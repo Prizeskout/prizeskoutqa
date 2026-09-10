@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 const OG = "#EF681A";
 interface Outlet {
   id: string;
+  external_id?: string;
   name: string;
   city: string;
   region: string;
@@ -18,7 +19,7 @@ const CITIES: Record<string, string[]> = {
   Bahrain: ["Manama", "Muharraq", "Riffa"],
   Oman: ["Muscat", "Salalah", "Sohar"],
 };
-const BLANK = { name: "", city: "", region: "Qatar" };
+const BLANK = { name: "", external_id: "", city: "", region: "Qatar" };
 
 export function LocationsTab() {
   const { t } = useTranslation();
@@ -73,6 +74,8 @@ export function LocationsTab() {
       const data = await call({
         action: "create",
         name: draft.name.trim(),
+        external_id: draft.external_id.trim(),
+        pos_external_id: draft.external_id.trim(),
         city: draft.city,
         region: draft.region,
       });
@@ -90,7 +93,7 @@ export function LocationsTab() {
     setError("");
     try {
       await call({ action: "delete", id });
-      setOutlets((current) => current.filter((outlet) => outlet.id !== id));
+      setOutlets((current) => current.map((outlet) => outlet.id === id ? {...outlet,active:false} : outlet));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Location could not be removed.");
     } finally {
@@ -222,6 +225,13 @@ export function LocationsTab() {
             placeholder={t("settingsTabs.locations.namePlaceholder")}
             value={draft.name}
             onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+            style={input}
+          />
+          <input
+            aria-label="POS branch identifier"
+            placeholder="POS branch ID (for example DOHA-01)"
+            value={draft.external_id}
+            onChange={(event) => setDraft((current) => ({ ...current, external_id: event.target.value }))}
             style={input}
           />
           <div style={{ display: "flex", gap: 10 }}>
