@@ -19,8 +19,10 @@ import { Route as MarginRouteImport } from './routes/margin'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ApiReferenceRouteImport } from './routes/api-reference'
 import { Route as AnotherLandingPageRouteImport } from './routes/another-landing-page'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessRouteImport } from './routes/access'
@@ -41,6 +43,8 @@ import { Route as MarginDashboardDemoRouteImport } from './routes/margin-dashboa
 import { Route as MarginDashboardChannelsRouteImport } from './routes/margin-dashboard.channels'
 import { Route as EmbeddedZidRouteImport } from './routes/embedded/zid'
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
+import { Route as DocsGuidesRouteImport } from './routes/docs.guides'
+import { Route as DocsChangelogRouteImport } from './routes/docs.changelog'
 import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
 import { Route as DashboardEvidenceRouteImport } from './routes/dashboard.evidence'
@@ -53,6 +57,11 @@ import { Route as AdminSignInRouteImport } from './routes/admin.sign-in'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
 import { Route as AdminCallbackRouteImport } from './routes/admin.callback'
+import { Route as DocsGuidesWebhooksRouteImport } from './routes/docs.guides.webhooks'
+import { Route as DocsGuidesSdkQuickstartRouteImport } from './routes/docs.guides.sdk-quickstart'
+import { Route as DocsGuidesQuickstartRouteImport } from './routes/docs.guides.quickstart'
+import { Route as DocsGuidesIntegrationPathsRouteImport } from './routes/docs.guides.integration-paths'
+import { Route as DocsGuidesAuthenticationRouteImport } from './routes/docs.guides.authentication'
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiSettingsLocaleRouteImport } from './routes/api/settings/locale'
@@ -158,6 +167,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -166,6 +180,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReferenceRoute = ApiReferenceRouteImport.update({
+  id: '/api-reference',
+  path: '/api-reference',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnotherLandingPageRoute = AnotherLandingPageRouteImport.update({
@@ -268,6 +287,16 @@ const EmbedWidgetRoute = EmbedWidgetRouteImport.update({
   path: '/embed/widget',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsGuidesRoute = DocsGuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => DocsRoute,
+} as any)
+const DocsChangelogRoute = DocsChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
+  getParentRoute: () => DocsRoute,
+} as any)
 const DashboardRevenueHubRoute = DashboardRevenueHubRouteImport.update({
   id: '/revenue-hub',
   path: '/revenue-hub',
@@ -328,6 +357,33 @@ const AdminCallbackRoute = AdminCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AdminRoute,
 } as any)
+const DocsGuidesWebhooksRoute = DocsGuidesWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => DocsGuidesRoute,
+} as any)
+const DocsGuidesSdkQuickstartRoute = DocsGuidesSdkQuickstartRouteImport.update({
+  id: '/sdk-quickstart',
+  path: '/sdk-quickstart',
+  getParentRoute: () => DocsGuidesRoute,
+} as any)
+const DocsGuidesQuickstartRoute = DocsGuidesQuickstartRouteImport.update({
+  id: '/quickstart',
+  path: '/quickstart',
+  getParentRoute: () => DocsGuidesRoute,
+} as any)
+const DocsGuidesIntegrationPathsRoute =
+  DocsGuidesIntegrationPathsRouteImport.update({
+    id: '/integration-paths',
+    path: '/integration-paths',
+    getParentRoute: () => DocsGuidesRoute,
+  } as any)
+const DocsGuidesAuthenticationRoute =
+  DocsGuidesAuthenticationRouteImport.update({
+    id: '/authentication',
+    path: '/authentication',
+    getParentRoute: () => DocsGuidesRoute,
+  } as any)
 const DashboardScenariosSlugRoute = DashboardScenariosSlugRouteImport.update({
   id: '/scenarios/$slug',
   path: '/scenarios/$slug',
@@ -628,8 +684,10 @@ export interface FileRoutesByFullPath {
   '/access': typeof AccessRoute
   '/admin': typeof AdminRouteWithChildren
   '/another-landing-page': typeof AnotherLandingPageRoute
+  '/api-reference': typeof ApiReferenceRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
@@ -652,6 +710,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/evidence': typeof DashboardEvidenceRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
+  '/docs/changelog': typeof DocsChangelogRoute
+  '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
   '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
@@ -691,6 +751,11 @@ export interface FileRoutesByFullPath {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/integration-paths': typeof DocsGuidesIntegrationPathsRoute
+  '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
+  '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
+  '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
@@ -727,7 +792,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access': typeof AccessRoute
   '/another-landing-page': typeof AnotherLandingPageRoute
+  '/api-reference': typeof ApiReferenceRoute
   '/contact': typeof ContactRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
@@ -749,6 +816,8 @@ export interface FileRoutesByTo {
   '/dashboard/evidence': typeof DashboardEvidenceRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
+  '/docs/changelog': typeof DocsChangelogRoute
+  '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
   '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
@@ -788,6 +857,11 @@ export interface FileRoutesByTo {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/integration-paths': typeof DocsGuidesIntegrationPathsRoute
+  '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
+  '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
+  '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
@@ -826,8 +900,10 @@ export interface FileRoutesById {
   '/access': typeof AccessRoute
   '/admin': typeof AdminRouteWithChildren
   '/another-landing-page': typeof AnotherLandingPageRoute
+  '/api-reference': typeof ApiReferenceRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/legal': typeof LegalRoute
   '/login': typeof LoginRoute
@@ -850,6 +926,8 @@ export interface FileRoutesById {
   '/dashboard/evidence': typeof DashboardEvidenceRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
+  '/docs/changelog': typeof DocsChangelogRoute
+  '/docs/guides': typeof DocsGuidesRouteWithChildren
   '/embed/widget': typeof EmbedWidgetRoute
   '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
@@ -889,6 +967,11 @@ export interface FileRoutesById {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/docs/guides/authentication': typeof DocsGuidesAuthenticationRoute
+  '/docs/guides/integration-paths': typeof DocsGuidesIntegrationPathsRoute
+  '/docs/guides/quickstart': typeof DocsGuidesQuickstartRoute
+  '/docs/guides/sdk-quickstart': typeof DocsGuidesSdkQuickstartRoute
+  '/docs/guides/webhooks': typeof DocsGuidesWebhooksRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
@@ -928,8 +1011,10 @@ export interface FileRouteTypes {
     | '/access'
     | '/admin'
     | '/another-landing-page'
+    | '/api-reference'
     | '/contact'
     | '/dashboard'
+    | '/docs'
     | '/forgot-password'
     | '/legal'
     | '/login'
@@ -952,6 +1037,8 @@ export interface FileRouteTypes {
     | '/dashboard/evidence'
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
+    | '/docs/changelog'
+    | '/docs/guides'
     | '/embed/widget'
     | '/embedded/zid'
     | '/margin-dashboard/channels'
@@ -991,6 +1078,11 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/docs/guides/authentication'
+    | '/docs/guides/integration-paths'
+    | '/docs/guides/quickstart'
+    | '/docs/guides/sdk-quickstart'
+    | '/docs/guides/webhooks'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
@@ -1027,7 +1119,9 @@ export interface FileRouteTypes {
     | '/'
     | '/access'
     | '/another-landing-page'
+    | '/api-reference'
     | '/contact'
+    | '/docs'
     | '/forgot-password'
     | '/legal'
     | '/login'
@@ -1049,6 +1143,8 @@ export interface FileRouteTypes {
     | '/dashboard/evidence'
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
+    | '/docs/changelog'
+    | '/docs/guides'
     | '/embed/widget'
     | '/embedded/zid'
     | '/margin-dashboard/channels'
@@ -1088,6 +1184,11 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/docs/guides/authentication'
+    | '/docs/guides/integration-paths'
+    | '/docs/guides/quickstart'
+    | '/docs/guides/sdk-quickstart'
+    | '/docs/guides/webhooks'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
@@ -1125,8 +1226,10 @@ export interface FileRouteTypes {
     | '/access'
     | '/admin'
     | '/another-landing-page'
+    | '/api-reference'
     | '/contact'
     | '/dashboard'
+    | '/docs'
     | '/forgot-password'
     | '/legal'
     | '/login'
@@ -1149,6 +1252,8 @@ export interface FileRouteTypes {
     | '/dashboard/evidence'
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
+    | '/docs/changelog'
+    | '/docs/guides'
     | '/embed/widget'
     | '/embedded/zid'
     | '/margin-dashboard/channels'
@@ -1188,6 +1293,11 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/docs/guides/authentication'
+    | '/docs/guides/integration-paths'
+    | '/docs/guides/quickstart'
+    | '/docs/guides/sdk-quickstart'
+    | '/docs/guides/webhooks'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
@@ -1226,8 +1336,10 @@ export interface RootRouteChildren {
   AccessRoute: typeof AccessRoute
   AdminRoute: typeof AdminRouteWithChildren
   AnotherLandingPageRoute: typeof AnotherLandingPageRoute
+  ApiReferenceRoute: typeof ApiReferenceRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LegalRoute: typeof LegalRoute
   LoginRoute: typeof LoginRoute
@@ -1374,6 +1486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -1386,6 +1505,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api-reference': {
+      id: '/api-reference'
+      path: '/api-reference'
+      fullPath: '/api-reference'
+      preLoaderRoute: typeof ApiReferenceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/another-landing-page': {
@@ -1528,6 +1654,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbedWidgetRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/guides': {
+      id: '/docs/guides'
+      path: '/guides'
+      fullPath: '/docs/guides'
+      preLoaderRoute: typeof DocsGuidesRouteImport
+      parentRoute: typeof DocsRoute
+    }
+    '/docs/changelog': {
+      id: '/docs/changelog'
+      path: '/changelog'
+      fullPath: '/docs/changelog'
+      preLoaderRoute: typeof DocsChangelogRouteImport
+      parentRoute: typeof DocsRoute
+    }
     '/dashboard/revenue-hub': {
       id: '/dashboard/revenue-hub'
       path: '/revenue-hub'
@@ -1611,6 +1751,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/callback'
       preLoaderRoute: typeof AdminCallbackRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/docs/guides/webhooks': {
+      id: '/docs/guides/webhooks'
+      path: '/webhooks'
+      fullPath: '/docs/guides/webhooks'
+      preLoaderRoute: typeof DocsGuidesWebhooksRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
+    '/docs/guides/sdk-quickstart': {
+      id: '/docs/guides/sdk-quickstart'
+      path: '/sdk-quickstart'
+      fullPath: '/docs/guides/sdk-quickstart'
+      preLoaderRoute: typeof DocsGuidesSdkQuickstartRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
+    '/docs/guides/quickstart': {
+      id: '/docs/guides/quickstart'
+      path: '/quickstart'
+      fullPath: '/docs/guides/quickstart'
+      preLoaderRoute: typeof DocsGuidesQuickstartRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
+    '/docs/guides/integration-paths': {
+      id: '/docs/guides/integration-paths'
+      path: '/integration-paths'
+      fullPath: '/docs/guides/integration-paths'
+      preLoaderRoute: typeof DocsGuidesIntegrationPathsRouteImport
+      parentRoute: typeof DocsGuidesRoute
+    }
+    '/docs/guides/authentication': {
+      id: '/docs/guides/authentication'
+      path: '/authentication'
+      fullPath: '/docs/guides/authentication'
+      preLoaderRoute: typeof DocsGuidesAuthenticationRouteImport
+      parentRoute: typeof DocsGuidesRoute
     }
     '/dashboard/scenarios/$slug': {
       id: '/dashboard/scenarios/$slug'
@@ -2033,6 +2208,38 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface DocsGuidesRouteChildren {
+  DocsGuidesAuthenticationRoute: typeof DocsGuidesAuthenticationRoute
+  DocsGuidesIntegrationPathsRoute: typeof DocsGuidesIntegrationPathsRoute
+  DocsGuidesQuickstartRoute: typeof DocsGuidesQuickstartRoute
+  DocsGuidesSdkQuickstartRoute: typeof DocsGuidesSdkQuickstartRoute
+  DocsGuidesWebhooksRoute: typeof DocsGuidesWebhooksRoute
+}
+
+const DocsGuidesRouteChildren: DocsGuidesRouteChildren = {
+  DocsGuidesAuthenticationRoute: DocsGuidesAuthenticationRoute,
+  DocsGuidesIntegrationPathsRoute: DocsGuidesIntegrationPathsRoute,
+  DocsGuidesQuickstartRoute: DocsGuidesQuickstartRoute,
+  DocsGuidesSdkQuickstartRoute: DocsGuidesSdkQuickstartRoute,
+  DocsGuidesWebhooksRoute: DocsGuidesWebhooksRoute,
+}
+
+const DocsGuidesRouteWithChildren = DocsGuidesRoute._addFileChildren(
+  DocsGuidesRouteChildren,
+)
+
+interface DocsRouteChildren {
+  DocsChangelogRoute: typeof DocsChangelogRoute
+  DocsGuidesRoute: typeof DocsGuidesRouteWithChildren
+}
+
+const DocsRouteChildren: DocsRouteChildren = {
+  DocsChangelogRoute: DocsChangelogRoute,
+  DocsGuidesRoute: DocsGuidesRouteWithChildren,
+}
+
+const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
+
 interface MarginDashboardRouteChildren {
   MarginDashboardChannelsRoute: typeof MarginDashboardChannelsRoute
   MarginDashboardDemoRoute: typeof MarginDashboardDemoRoute
@@ -2096,8 +2303,10 @@ const rootRouteChildren: RootRouteChildren = {
   AccessRoute: AccessRoute,
   AdminRoute: AdminRouteWithChildren,
   AnotherLandingPageRoute: AnotherLandingPageRoute,
+  ApiReferenceRoute: ApiReferenceRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LegalRoute: LegalRoute,
   LoginRoute: LoginRoute,

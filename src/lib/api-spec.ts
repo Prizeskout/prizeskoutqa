@@ -1636,7 +1636,410 @@ const RESTAURANT_COMMERCE_GROUP: GroupSpec = {
   ],
 };
 
+const CONNECTORS_GROUP: GroupSpec = {
+  slug: "connectors",
+  name: "Connector Management",
+  tagline: "Register and operate merchant-authorized POS and ERP connections.",
+  pillar: "multi-tenant-ops",
+  endpoints: [
+    {
+      slug: "list-definitions",
+      method: "GET",
+      path: "/v1/connectors/definitions",
+      title: "List available connectors",
+      summary:
+        "Returns every registered connector and its current readiness, authorization methods and supported data streams.",
+      auth: "bearer",
+      scopes: ["read"],
+      responses: [
+        {
+          status: 200,
+          label: "Connector definitions returned",
+          example: {
+            data: [
+              {
+                provider: "odoo",
+                display_name: "Odoo",
+                system_type: "pos_erp",
+                readiness: "sandbox",
+                auth_methods: ["api_key"],
+                capabilities: ["branches.read", "orders.read"],
+              },
+            ],
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+      notes: [
+        "Readiness is explicit. A listed connector is not necessarily enabled for production use.",
+      ],
+    },
+    {
+      slug: "list-connections",
+      method: "GET",
+      path: "/v1/connectors",
+      title: "List merchant connections",
+      summary: "Lists non-revoked connector connections belonging to the authenticated account.",
+      auth: "bearer",
+      scopes: ["read"],
+      responses: [
+        {
+          status: 200,
+          label: "Connections returned",
+          example: {
+            data: [
+              {
+                id: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+                merchant_id: "merchant_doha_01",
+                provider: "odoo",
+                environment: "sandbox",
+                auth_method: "api_key",
+                status: "setup_required",
+                requested_capabilities: ["orders.read"],
+              },
+            ],
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+    },
+    {
+      slug: "create-connection",
+      method: "POST",
+      path: "/v1/connectors",
+      title: "Create a merchant connection",
+      summary:
+        "Registers a tenant-owned connector without accepting raw credentials in its configuration.",
+      description:
+        "Create one connection for each merchant and provider environment. PrizeSkout checks that the requested authorization method and capabilities are advertised by the connector definition.",
+      auth: "bearer",
+      scopes: ["write"],
+      body: [
+        {
+          name: "merchant_id",
+          type: "string",
+          required: true,
+          description: "Your stable merchant identifier.",
+          example: "merchant_doha_01",
+        },
+        {
+          name: "provider",
+          type: "string",
+          required: true,
+          description: "Registered provider key.",
+          example: "odoo",
+        },
+        {
+          name: "environment",
+          type: "enum",
+          required: true,
+          description: "sandbox or production.",
+          example: "sandbox",
+        },
+        {
+          name: "auth_method",
+          type: "enum",
+          required: true,
+          description: "A method advertised by the connector definition.",
+          example: "api_key",
+        },
+        {
+          name: "external_merchant_id",
+          type: "string",
+          description: "Merchant identifier used by the source system.",
+          example: "odoo-company-7",
+        },
+        {
+          name: "requested_capabilities",
+          type: "string[]",
+          required: true,
+          description: "The minimum data permissions required.",
+          example: "orders.read",
+        },
+        {
+          name: "configuration",
+          type: "object",
+          description: "Non-secret connector settings. Odoo uses base_url, database and currency.",
+        },
+      ],
+      responses: [
+        {
+          status: 201,
+          label: "Connection registered",
+          example: {
+            data: {
+              id: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+              merchant_id: "merchant_doha_01",
+              provider: "odoo",
+              environment: "sandbox",
+              auth_method: "api_key",
+              status: "setup_required",
+              requested_capabilities: ["orders.read"],
+            },
+          },
+        },
+      ],
+      errors: [
+        ...COMMON_ERRORS,
+        {
+          status: 422,
+          code: "raw_credentials_forbidden",
+          description: "Configuration contains a password, token, key or other raw credential.",
+        },
+      ],
+      notes: [
+        "Do not place secrets in configuration. Use the credentials endpoint after the connection has been created.",
+      ],
+    },
+    {
+      slug: "store-credential",
+      method: "POST",
+      path: "/v1/connectors/{id}/credentials",
+      title: "Store an Odoo API key",
+      summary: "Encrypts a dedicated provider API key in the account-scoped credential vault.",
+      auth: "bearer",
+      scopes: ["write"],
+      pathParams: [
+        {
+          name: "id",
+          type: "uuid",
+          required: true,
+          description: "Connector connection ID.",
+          example: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+        },
+      ],
+      body: [
+        {
+          name: "api_key",
+          type: "string",
+          required: true,
+          description: "A dedicated provider API key. User passwords are rejected.",
+          example: "odoo_api_key_here",
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Credential encrypted",
+          example: {
+            data: {
+              connection_id: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+              credential_reference: "vault://credential-id",
+              status: "pending_approval",
+            },
+          },
+        },
+      ],
+      errors: [
+        ...COMMON_ERRORS,
+        {
+          status: 409,
+          code: "auth_method_mismatch",
+          description: "The connection was not configured for API-key authorization.",
+        },
+      ],
+      notes: ["The API key is write-only. PrizeSkout never returns its plaintext value."],
+    },
+    {
+      slug: "run-sync",
+      method: "POST",
+      path: "/v1/connectors/{id}/sync",
+      title: "Run a connector sync",
+      summary:
+        "Pulls the next bounded page from an enabled connector and advances its checkpoint after ingestion.",
+      auth: "bearer",
+      scopes: ["write"],
+      pathParams: [
+        {
+          name: "id",
+          type: "uuid",
+          required: true,
+          description: "Connector connection ID.",
+          example: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Sync completed",
+          example: {
+            data: {
+              connection_id: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+              stream: "orders",
+              records_seen: 100,
+              records_accepted: 100,
+              cursor_after: "opaque_cursor",
+              delivery_complete: false,
+            },
+          },
+        },
+      ],
+      errors: [
+        ...COMMON_ERRORS,
+        {
+          status: 409,
+          code: "adapter_unavailable",
+          description: "The provider has no enabled pull adapter.",
+        },
+        {
+          status: 502,
+          code: "connector_sync_failed",
+          description: "The provider request or downstream ingestion failed.",
+        },
+      ],
+      notes: [
+        "The managed pull adapter currently enabled is Odoo POS orders.",
+        "Retry after a 502. The saved checkpoint prevents already accepted pages from being treated as new evidence.",
+      ],
+    },
+    {
+      slug: "save-mapping",
+      method: "PATCH",
+      path: "/v1/connectors/{id}/mappings",
+      title: "Map a source identity",
+      summary:
+        "Maps a source branch, product or other identity to its canonical PrizeSkout record.",
+      auth: "bearer",
+      scopes: ["write"],
+      pathParams: [
+        {
+          name: "id",
+          type: "uuid",
+          required: true,
+          description: "Connector connection ID.",
+          example: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+        },
+      ],
+      body: [
+        {
+          name: "identity_type",
+          type: "enum",
+          required: true,
+          description: "legal_entity, brand, branch, revenue_center, product, customer or order.",
+          example: "branch",
+        },
+        {
+          name: "external_id",
+          type: "string",
+          required: true,
+          description: "Identity in the source system.",
+          example: "odoo-pos-config-4",
+        },
+        {
+          name: "canonical_id",
+          type: "string",
+          required: true,
+          description: "Approved PrizeSkout identity.",
+          example: "branch_west_bay",
+        },
+        {
+          name: "confidence",
+          type: "number",
+          description: "Confidence from 0 to 1 for a proposed mapping.",
+          example: "0.95",
+        },
+        {
+          name: "merchant_approved",
+          type: "boolean",
+          description: "Set true only after the merchant confirms the mapping.",
+          example: "true",
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Mapping saved",
+          example: {
+            data: {
+              identity_type: "branch",
+              external_id: "odoo-pos-config-4",
+              canonical_id: "branch_west_bay",
+              match_status: "confirmed",
+              confidence: 1,
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+    },
+    {
+      slug: "update-checkpoint",
+      method: "PATCH",
+      path: "/v1/connectors/{id}/checkpoints",
+      title: "Report a connector checkpoint",
+      summary:
+        "Records progress and health for a stream operated by an approved external connector worker.",
+      auth: "bearer",
+      scopes: ["write"],
+      pathParams: [
+        {
+          name: "id",
+          type: "uuid",
+          required: true,
+          description: "Connector connection ID.",
+          example: "7f43cf95-3fc0-4c0d-8d1f-2fe927a4cf03",
+        },
+      ],
+      body: [
+        {
+          name: "stream",
+          type: "string",
+          required: true,
+          description: "Logical stream, such as orders or costs.",
+          example: "orders",
+        },
+        {
+          name: "cursor",
+          type: "string",
+          description: "Opaque source cursor saved after successful processing.",
+          example: "page-42",
+        },
+        {
+          name: "watermark_at",
+          type: "string (ISO 8601)",
+          description: "Latest source event time known to be complete.",
+          example: "2026-09-11T10:00:00Z",
+        },
+        {
+          name: "status",
+          type: "enum",
+          required: true,
+          description: "idle, running, healthy, partial or failed.",
+          example: "healthy",
+        },
+        {
+          name: "records_received",
+          type: "integer",
+          description: "Records observed in this attempt.",
+          example: "100",
+        },
+        {
+          name: "error",
+          type: "string",
+          description: "Safe diagnostic text when status is failed.",
+        },
+      ],
+      responses: [
+        {
+          status: 200,
+          label: "Checkpoint updated",
+          example: {
+            data: {
+              stream: "orders",
+              cursor_value: "page-42",
+              status: "healthy",
+              records_received: 100,
+            },
+          },
+        },
+      ],
+      errors: COMMON_ERRORS,
+    },
+  ],
+};
+
 export const API_GROUPS: GroupSpec[] = [
+  CONNECTORS_GROUP,
   RESTAURANT_COMMERCE_GROUP,
   COMPETITORS_GROUP,
   PRICING_GROUP,
@@ -1678,7 +2081,7 @@ export function getGroupsByPillar(): PillarGroup[] {
   }));
 }
 
-export const API_BASE_URL = "https://api.prizeskout.com";
+export const API_BASE_URL = "https://prizeskout.qa/api/public";
 
 export const ALL_SCOPES = Array.from(
   new Set(API_GROUPS.flatMap((g) => g.endpoints.flatMap((e) => e.scopes))),

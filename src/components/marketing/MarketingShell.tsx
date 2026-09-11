@@ -6,7 +6,10 @@ import { ContactSupportModal } from "@/components/ContactSupportModal";
 import logoDark from "@/assets/logo-dark.svg";
 
 function smoothScrollToHash(hash: string) {
-  if (!hash) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  if (!hash) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
   const el = document.querySelector(`#${hash}`);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -38,7 +41,8 @@ function FA({ label, children }: { label: string; children?: React.ReactNode }) 
       onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
       onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
     >
-      {label}{children}
+      {label}
+      {children}
     </a>
   );
 }
@@ -51,7 +55,9 @@ type FooterTo =
   | "/products/competitors"
   | "/products/promotions"
   | "/products/market"
-  | "/products/field-intel";
+  | "/products/field-intel"
+  | "/docs"
+  | "/docs/guides";
 
 function FL_Link({ label, to }: { label: string; to: FooterTo }) {
   return (
@@ -104,13 +110,24 @@ function Footer() {
     <footer style={{ background: "#000", color: "#F5F6FA", padding: "72px 24px 32px" }}>
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div className="ps-footer-grid">
-
           {/* Brand */}
           <div>
             <a href="/" style={{ textDecoration: "none" }}>
-              <img src={logoDark} alt="PrizeSkout" style={{ height: 28, width: "auto", display: "block" }} />
+              <img
+                src={logoDark}
+                alt="PrizeSkout"
+                style={{ height: 28, width: "auto", display: "block" }}
+              />
             </a>
-            <p style={{ marginTop: 18, fontSize: 14.5, lineHeight: 1.7, color: "#9BA1B0", maxWidth: 320 }}>
+            <p
+              style={{
+                marginTop: 18,
+                fontSize: 14.5,
+                lineHeight: 1.7,
+                color: "#9BA1B0",
+                maxWidth: 320,
+              }}
+            >
               {t("footer.tagline")}
             </p>
             <div style={{ marginTop: 24, display: "flex", gap: 10 }}>
@@ -122,14 +139,27 @@ function Footer() {
                   aria-label={lbl === "X" ? t("footer.social.x") : t("footer.social.linkedin")}
                   className="ps-social-btn"
                   style={{
-                    width: 38, height: 38, borderRadius: 9,
+                    width: 38,
+                    height: 38,
+                    borderRadius: 9,
                     border: "1px solid rgba(255,255,255,0.08)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#9BA1B0", textDecoration: "none",
-                    fontSize: 14, fontWeight: 700, transition: "border-color 0.15s, color 0.15s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#9BA1B0",
+                    textDecoration: "none",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    transition: "border-color 0.15s, color 0.15s",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.color = "#F5F6FA"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#9BA1B0"; }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
+                    e.currentTarget.style.color = "#F5F6FA";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                    e.currentTarget.style.color = "#9BA1B0";
+                  }}
                 >
                   {lbl}
                 </a>
@@ -154,25 +184,38 @@ function Footer() {
           <div>
             <h4 style={COL_HEAD}>
               {t("footer.columns.agents")}
-              <span aria-hidden="true" style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: "#FF5A1F",
-                boxShadow: "0 0 8px rgba(255,90,31,0.7)",
-                display: "inline-block", flexShrink: 0,
-              }} />
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#FF5A1F",
+                  boxShadow: "0 0 8px rgba(255,90,31,0.7)",
+                  display: "inline-block",
+                  flexShrink: 0,
+                }}
+              />
             </h4>
             <span style={LAYER_TAG}>{t("footer.layerTags.intelligence")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               <FA label={t("footer.links.agentCfo")} />
               <FA label={t("footer.links.disputeAuditAgent")}>
-                <span style={{
-                  fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
-                  fontSize: 9.5, letterSpacing: "0.1em",
-                  color: "#FF5A1F",
-                  border: "1px solid rgba(255,90,31,0.35)",
-                  borderRadius: 4, padding: "2px 6px", marginLeft: 8,
-                  verticalAlign: "middle",
-                }}>{t("footer.links.new")}</span>
+                <span
+                  style={{
+                    fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
+                    fontSize: 9.5,
+                    letterSpacing: "0.1em",
+                    color: "#FF5A1F",
+                    border: "1px solid rgba(255,90,31,0.35)",
+                    borderRadius: 4,
+                    padding: "2px 6px",
+                    marginLeft: 8,
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {t("footer.links.new")}
+                </span>
               </FA>
             </div>
           </div>
@@ -182,6 +225,8 @@ function Footer() {
             <h4 style={COL_HEAD}>{t("footer.columns.developers")}</h4>
             <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <FL_Link label="API documentation" to="/docs" />
+              <FL_Link label="Integration guides" to="/docs/guides" />
               <FL_Link label={t("footer.links.support")} to="/contact" />
               <FA label={t("footer.links.status")} />
               <FL_Link label={t("footer.links.marginCalculator")} to="/roi-calculator" />
@@ -198,7 +243,10 @@ function Footer() {
               <FL_Link label={t("footer.links.contactSales")} to="/contact" />
               <a
                 href="#"
-                onClick={(e) => { e.preventDefault(); setSupportOpen(true); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSupportOpen(true);
+                }}
                 style={FL}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#F5F6FA")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#9BA1B0")}
@@ -211,17 +259,29 @@ function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div style={{
-          marginTop: 64, paddingTop: 28,
-          borderTop: "1px solid rgba(255,255,255,0.08)",
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap", gap: 20,
-        }}>
+        <div
+          style={{
+            marginTop: 64,
+            paddingTop: 28,
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 20,
+          }}
+        >
           <div style={{ color: "#6B7180", fontSize: 13.5 }}>
             {t("footer.bottomBar.copyright")}
-            <span style={{ fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace", fontSize: 11.5, color: "#6B7180" }}>
-              {" "}· {t("footer.bottomBar.qfcNumber")}
+            <span
+              style={{
+                fontFamily: "ui-monospace, 'SFMono-Regular', Menlo, Monaco, monospace",
+                fontSize: 11.5,
+                color: "#6B7180",
+              }}
+            >
+              {" "}
+              · {t("footer.bottomBar.qfcNumber")}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -230,28 +290,48 @@ function Footer() {
               onClick={(e) => e.preventDefault()}
               className="ps-bottom-pill ps-status-pill"
               style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
-                padding: "8px 14px", fontSize: 13, color: "#9BA1B0",
-                textDecoration: "none", transition: "border-color 0.15s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 8,
+                padding: "8px 14px",
+                fontSize: 13,
+                color: "#9BA1B0",
+                textDecoration: "none",
+                transition: "border-color 0.15s",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(16,185,129,0.5)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
             >
-              <span className="ps-status-dot" style={{
-                width: 7, height: 7, borderRadius: "50%",
-                background: "#10B981",
-                boxShadow: "0 0 8px rgba(16,185,129,0.8)",
-                flexShrink: 0,
-              }} />
+              <span
+                className="ps-status-dot"
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#10B981",
+                  boxShadow: "0 0 8px rgba(16,185,129,0.8)",
+                  flexShrink: 0,
+                }}
+              />
               {t("footer.bottomBar.allSystemsOperational")}
             </a>
             {[t("footer.bottomBar.uptime"), t("footer.bottomBar.dataResidency")].map((pill) => (
-              <span key={pill} style={{
-                display: "inline-flex", alignItems: "center",
-                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
-                padding: "8px 14px", fontSize: 13, color: "#9BA1B0",
-              }}>{pill}</span>
+              <span
+                key={pill}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 8,
+                  padding: "8px 14px",
+                  fontSize: 13,
+                  color: "#9BA1B0",
+                }}
+              >
+                {pill}
+              </span>
             ))}
           </div>
         </div>
@@ -306,7 +386,9 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     <div style={{ background: "#050505", minHeight: "100vh", overflowX: "hidden" }}>
       <style>{SHELL_STYLES}</style>
       <LandingNav />
-      <main id="main-content" tabIndex={-1} style={{ outline: "none" }}>{children}</main>
+      <main id="main-content" tabIndex={-1} style={{ outline: "none" }}>
+        {children}
+      </main>
       <Footer />
     </div>
   );
