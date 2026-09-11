@@ -6,6 +6,7 @@ import { listRecoveryCases } from "./recovery-cases";
 import { activateMerchantMarginPolicy, getMerchantMarginPolicy, type ApprovalMode } from "./merchant-pricing-config";
 import {syncReconciliationAttention} from "./reconciliation-attention";
 import {syncEvidenceSourceAttention} from "./evidence-source-attention";
+import { backgroundTask } from "../cf-ctx";
 
 async function persistAttention(accountId:string,fingerprint:string,row:Record<string,unknown>){
   const {data:existing}=await supabaseAdmin.from("ps_attention_items").select("id,status").eq("account_id",accountId).eq("fingerprint",fingerprint).maybeSingle();
@@ -35,20 +36,25 @@ export async function syncProfitBriefAttention(accountId:string,brief:ZidProfitB
 }
 
 export async function getMerchantExperience(accountId:string){
-  const [dispatches,recoveryCases]=await Promise.all([getRepricingHistory(accountId,30),listRecoveryCases(accountId).catch(()=>[])]);
-  await Promise.all([
-    syncReconciliationAttention(accountId).catch(error=>console.error("[reconciliation-attention] sync failed",error)),
-    syncEvidenceSourceAttention(accountId).catch(error=>console.error("[evidence-source-attention] sync failed",error)),
-  ]);
-  for(const dispatch of dispatches.filter(item=>!["success","confirmed","completed"].includes(item.status.toLowerCase()))){
-    await persistAttention(accountId,`dispatch:${dispatch.id}`,{item_type:"channel_failure",title:`${dispatch.target_channel??"Channel"} price update needs attention`,detail:dispatch.upstream_message??`The price update for ${dispatch.sku??"a product"} was not confirmed.`,priority:"high",amount:null,currency:dispatch.currency,evidence_strength:"verified",source_route:"history",copilot_prompt:`Explain the failed ${dispatch.target_channel??"channel"} price update for SKU ${dispatch.sku??"unknown"} and show the safest next step.`,context:{dispatch_id:dispatch.id,sku:dispatch.sku} as Json});
-  }
-  for(const recovery of recoveryCases){
-    if(recovery.status==="recovered"&&recovery.recovered_amount>0)await supabaseAdmin.from("ps_value_ledger").upsert({account_id:accountId,category:"recovered",source_type:"recovery_case",source_id:recovery.id,label:recovery.title,amount:recovery.recovered_amount,currency:"QAR",evidence_strength:"verified",metadata:{platform:recovery.platform} as Json},{onConflict:"account_id,source_type,source_id,category"});
-    if(!["recovered","closed","rejected"].includes(recovery.status))await persistAttention(accountId,`recovery:${recovery.id}`,{item_type:"payout_recovery",title:recovery.title,detail:recovery.explanation_en,priority:recovery.severity==="critical"?"critical":"high",amount:recovery.exception_amount,currency:"QAR",evidence_strength:recovery.confidence==="high"?"strong":"estimated",source_route:"history",copilot_prompt:`Review recovery case ${recovery.title} and tell me what evidence or action is still required.`,context:{recovery_case_id:recovery.id,platform:recovery.platform} as Json});
-  }
+  // Page loads must be read-only and fast. Deriving new attention items is
+  // maintenance work, so keep it alive through the Cloudflare request context
+  // without making the merchant wait for scans and writes to finish.
+  backgroundTask((async()=>{
+    const [dispatches,recoveryCases]=await Promise.all([getRepricingHistory(accountId,30),listRecoveryCases(accountId).catch(()=>[])]);
+    await Promise.all([
+      syncReconciliationAttention(accountId).catch(error=>console.error("[reconciliation-attention] sync failed",error)),
+      syncEvidenceSourceAttention(accountId).catch(error=>console.error("[evidence-source-attention] sync failed",error)),
+    ]);
+    for(const dispatch of dispatches.filter(item=>!["success","confirmed","completed"].includes(item.status.toLowerCase()))){
+      await persistAttention(accountId,`dispatch:${dispatch.id}`,{item_type:"channel_failure",title:`${dispatch.target_channel??"Channel"} price update needs attention`,detail:dispatch.upstream_message??`The price update for ${dispatch.sku??"a product"} was not confirmed.`,priority:"high",amount:null,currency:dispatch.currency,evidence_strength:"verified",source_route:"history",copilot_prompt:`Explain the failed ${dispatch.target_channel??"channel"} price update for SKU ${dispatch.sku??"unknown"} and show the safest next step.`,context:{dispatch_id:dispatch.id,sku:dispatch.sku} as Json});
+    }
+    for(const recovery of recoveryCases){
+      if(recovery.status==="recovered"&&recovery.recovered_amount>0)await supabaseAdmin.from("ps_value_ledger").upsert({account_id:accountId,category:"recovered",source_type:"recovery_case",source_id:recovery.id,label:recovery.title,amount:recovery.recovered_amount,currency:"QAR",evidence_strength:"verified",metadata:{platform:recovery.platform} as Json},{onConflict:"account_id,source_type,source_id,category"});
+      if(!["recovered","closed","rejected"].includes(recovery.status))await persistAttention(accountId,`recovery:${recovery.id}`,{item_type:"payout_recovery",title:recovery.title,detail:recovery.explanation_en,priority:recovery.severity==="critical"?"critical":"high",amount:recovery.exception_amount,currency:"QAR",evidence_strength:recovery.confidence==="high"?"strong":"estimated",source_route:"history",copilot_prompt:`Review recovery case ${recovery.title} and tell me what evidence or action is still required.`,context:{recovery_case_id:recovery.id,platform:recovery.platform} as Json});
+    }
+  })().catch(error=>console.error("[merchant-experience] background refresh failed",error)));
   const now=new Date().toISOString(),weekAgo=new Date(Date.now()-7*86400000).toISOString();
-  await supabaseAdmin.from("ps_attention_items").update({status:"open",snoozed_until:null}).eq("account_id",accountId).eq("status","snoozed").lte("snoozed_until",now);
+  backgroundTask(Promise.resolve(supabaseAdmin.from("ps_attention_items").update({status:"open",snoozed_until:null}).eq("account_id",accountId).eq("status","snoozed").lte("snoozed_until",now)).then(()=>undefined).catch(error=>console.error("[merchant-experience] snooze refresh failed",error)));
   const [items,ledger,settings,recentResolved,profitSnapshot,proofs,firstEngagement]=await Promise.all([
     supabaseAdmin.from("ps_attention_items").select("*").eq("account_id",accountId).order("updated_at",{ascending:false}).limit(100),
     supabaseAdmin.from("ps_value_ledger").select("*").eq("account_id",accountId).order("occurred_at",{ascending:false}).limit(200),
