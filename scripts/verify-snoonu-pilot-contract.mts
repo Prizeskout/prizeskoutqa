@@ -3,6 +3,7 @@ import { isFreshSnoonuTimestamp, normalizeSnoonuPilotEvent, parseSnoonuPilotEnve
 import { SNOONU_CONNECTOR_MANIFEST } from "../src/lib/snoonu-connector-capabilities";
 import { snoonuConnector } from "../src/server/connectors/snoonu";
 import { validateSnoonuActivationRequest } from "../src/server/connectors/snoonu/activation";
+import { validatePrizeSkoutMerchantId, validateSnoonuProvisioningInput } from "../src/server/connectors/snoonu/partner-control";
 
 const fixture = {
   schema_version: "2026-09-09", event_id: "evt_sn_001", event_type: "order.created",
@@ -33,4 +34,9 @@ const activation = validateSnoonuActivationRequest({ modes: ["partner_api_pull",
 assert.deepEqual(activation.modes, ["partner_api_pull", "partner_webhook_push"]);
 assert.deepEqual(activation.scopes, ["merchant:read", "branches:read", "orders:read", "settlements:read"]);
 assert.throws(() => validateSnoonuActivationRequest({ modes: ["invented_mode"] }), /unsupported mode/);
+const provisioning = validateSnoonuProvisioningInput({ external_merchant_id: "SN-M-42", branch_ids: ["SN-B-1", "SN-B-1", "SN-B-2"] });
+assert.deepEqual(provisioning.branchIds, ["SN-B-1", "SN-B-2"]);
+assert.equal(validatePrizeSkoutMerchantId("1202db01-a910-4ac0-95fb-24ab24925372"), "1202db01-a910-4ac0-95fb-24ab24925372");
+assert.throws(() => validatePrizeSkoutMerchantId("merchant-name"), /must be a UUID/);
+assert.throws(() => validateSnoonuProvisioningInput({ external_merchant_id: "SN-M-42", branch_ids: [] }), /between 1 and 500/);
 console.log("Snoonu pilot contract fixtures passed.");

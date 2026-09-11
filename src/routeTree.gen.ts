@@ -104,6 +104,7 @@ import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keet
 import { Route as ApiTalabatPluginOrderRemoteIdRouteImport } from './routes/api/talabat/plugin/order.$remoteId'
 import { Route as ApiTalabatPluginCatalogStatusRemoteIdRouteImport } from './routes/api/talabat/plugin/catalog-status.$remoteId'
 import { Route as ApiPublicV1WebhooksTestSignatureRouteImport } from './routes/api/public/v1/webhooks.test-signature'
+import { Route as ApiPartnersSnoonuV1SplatRouteImport } from './routes/api/partners/snoonu/v1/$'
 import { Route as ApiTalabatPluginRemoteIdRemoteIdAvailabilityRouteImport } from './routes/api/talabat/plugin/remoteId.$remoteId.availability'
 import { Route as ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRouteImport } from './routes/api/talabat/plugin/remoteId.$remoteId.remoteOrder.$remoteOrderId.posOrderStatus'
 
@@ -601,6 +602,12 @@ const ApiPublicV1WebhooksTestSignatureRoute =
     path: '/api/public/v1/webhooks/test-signature',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPartnersSnoonuV1SplatRoute =
+  ApiPartnersSnoonuV1SplatRouteImport.update({
+    id: '/api/partners/snoonu/v1/$',
+    path: '/api/partners/snoonu/v1/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiTalabatPluginRemoteIdRemoteIdAvailabilityRoute =
   ApiTalabatPluginRemoteIdRemoteIdAvailabilityRouteImport.update({
     id: '/api/talabat/plugin/remoteId/$remoteId/availability',
@@ -709,6 +716,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
+  '/api/partners/snoonu/v1/$': typeof ApiPartnersSnoonuV1SplatRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
   '/api/talabat/plugin/catalog-status/$remoteId': typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
   '/api/talabat/plugin/order/$remoteId': typeof ApiTalabatPluginOrderRemoteIdRoute
@@ -805,6 +813,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
+  '/api/partners/snoonu/v1/$': typeof ApiPartnersSnoonuV1SplatRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
   '/api/talabat/plugin/catalog-status/$remoteId': typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
   '/api/talabat/plugin/order/$remoteId': typeof ApiTalabatPluginOrderRemoteIdRoute
@@ -905,6 +914,7 @@ export interface FileRoutesById {
   '/api/public/hooks/weekly-margin-digest': typeof ApiPublicHooksWeeklyMarginDigestRoute
   '/api/public/v1/$': typeof ApiPublicV1SplatRoute
   '/api/webhooks/zid/app-market': typeof ApiWebhooksZidAppMarketRoute
+  '/api/partners/snoonu/v1/$': typeof ApiPartnersSnoonuV1SplatRoute
   '/api/public/v1/webhooks/test-signature': typeof ApiPublicV1WebhooksTestSignatureRoute
   '/api/talabat/plugin/catalog-status/$remoteId': typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
   '/api/talabat/plugin/order/$remoteId': typeof ApiTalabatPluginOrderRemoteIdRoute
@@ -1006,6 +1016,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
+    | '/api/partners/snoonu/v1/$'
     | '/api/public/v1/webhooks/test-signature'
     | '/api/talabat/plugin/catalog-status/$remoteId'
     | '/api/talabat/plugin/order/$remoteId'
@@ -1102,6 +1113,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
+    | '/api/partners/snoonu/v1/$'
     | '/api/public/v1/webhooks/test-signature'
     | '/api/talabat/plugin/catalog-status/$remoteId'
     | '/api/talabat/plugin/order/$remoteId'
@@ -1201,6 +1213,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/weekly-margin-digest'
     | '/api/public/v1/$'
     | '/api/webhooks/zid/app-market'
+    | '/api/partners/snoonu/v1/$'
     | '/api/public/v1/webhooks/test-signature'
     | '/api/talabat/plugin/catalog-status/$remoteId'
     | '/api/talabat/plugin/order/$remoteId'
@@ -1281,6 +1294,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWeeklyMarginDigestRoute: typeof ApiPublicHooksWeeklyMarginDigestRoute
   ApiPublicV1SplatRoute: typeof ApiPublicV1SplatRoute
   ApiWebhooksZidAppMarketRoute: typeof ApiWebhooksZidAppMarketRoute
+  ApiPartnersSnoonuV1SplatRoute: typeof ApiPartnersSnoonuV1SplatRoute
   ApiPublicV1WebhooksTestSignatureRoute: typeof ApiPublicV1WebhooksTestSignatureRoute
   ApiTalabatPluginCatalogStatusRemoteIdRoute: typeof ApiTalabatPluginCatalogStatusRemoteIdRoute
   ApiTalabatPluginOrderRemoteIdRoute: typeof ApiTalabatPluginOrderRemoteIdRoute
@@ -1955,6 +1969,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1WebhooksTestSignatureRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/partners/snoonu/v1/$': {
+      id: '/api/partners/snoonu/v1/$'
+      path: '/api/partners/snoonu/v1/$'
+      fullPath: '/api/partners/snoonu/v1/$'
+      preLoaderRoute: typeof ApiPartnersSnoonuV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/talabat/plugin/remoteId/$remoteId/availability': {
       id: '/api/talabat/plugin/remoteId/$remoteId/availability'
       path: '/api/talabat/plugin/remoteId/$remoteId/availability'
@@ -2146,6 +2167,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWeeklyMarginDigestRoute: ApiPublicHooksWeeklyMarginDigestRoute,
   ApiPublicV1SplatRoute: ApiPublicV1SplatRoute,
   ApiWebhooksZidAppMarketRoute: ApiWebhooksZidAppMarketRoute,
+  ApiPartnersSnoonuV1SplatRoute: ApiPartnersSnoonuV1SplatRoute,
   ApiPublicV1WebhooksTestSignatureRoute: ApiPublicV1WebhooksTestSignatureRoute,
   ApiTalabatPluginCatalogStatusRemoteIdRoute:
     ApiTalabatPluginCatalogStatusRemoteIdRoute,
