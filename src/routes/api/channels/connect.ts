@@ -47,6 +47,7 @@ import { compileTalabatCatalog, type TalabatCatalogSourceProduct } from "@/serve
 import { toMerchantError } from "@/server/merchant-errors";
 import { startKeetaOAuth } from "@/routes/api/auth/keeta";
 import { handleKeetaCallback } from "@/routes/api/auth/keeta/callback";
+import { requestSnoonuActivation, validateSnoonuActivationRequest } from "@/server/connectors/snoonu/activation";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -81,6 +82,18 @@ export const Route = createFileRoute("/api/channels/connect")({
         if (!authorized) return resp({ error: "Unauthorized." }, 401);
 
         try {
+          if (platform === "snoonu") {
+            const requestData = validateSnoonuActivationRequest(body);
+            const channel = await requestSnoonuActivation({ merchantId: merchant_id, ...requestData });
+            return resp({
+              ok: true,
+              platform,
+              status: channel.status,
+              approval_status: channel.status === "connected" ? "approved" : "awaiting_snoonu",
+              modes: requestData.modes,
+            }, 200);
+          }
+
           if (platform === "talabat") {
             const { username, password, middleware_jwt_secret, pos_vendor_id, chain_code, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, environment, contract_currency } = body;
             if (!username || !password || !middleware_jwt_secret || !pos_vendor_id || !chain_code || !commission_rate_pct) {

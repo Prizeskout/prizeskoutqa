@@ -80,7 +80,7 @@ function StatusBadge({ status, t }: { status: ChannelStatus; t: (key: string) =>
   );
 }
 
-function ConnectButton({ platform, onConnect, t }: { platform: string; onConnect: (p: string) => void; t: (key: string) => string }) {
+function ConnectButton({ platform, onConnect, t, label }: { platform: string; onConnect: (p: string) => void; t: (key: string) => string; label?: string }) {
   return (
     <button
       type="button"
@@ -92,7 +92,7 @@ function ConnectButton({ platform, onConnect, t }: { platform: string; onConnect
       }}
       onMouseEnter={e => { e.currentTarget.style.background = `${OG}10`; }}
       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-    >{t("settingsTabs.channels.actions.connect")}</button>
+    >{label ?? t("settingsTabs.channels.actions.connect")}</button>
   );
 }
 
@@ -154,6 +154,27 @@ export function ChannelsTab() {
       : "";
     if (!merchantId) {
       alert(t("settingsTabs.channels.alerts.noMerchantSession"));
+      return;
+    }
+    if (platform === "snoonu") {
+      const accessCode = localStorage.getItem("ps_access_code") ?? "";
+      const response = await fetch("/api/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant_id: merchantId,
+          access_code: accessCode,
+          platform: "snoonu",
+          modes: ["partner_api_pull", "partner_webhook_push"],
+          scopes: ["merchant:read", "branches:read", "orders:read", "settlements:read"],
+        }),
+      });
+      const result = await response.json() as { ok?: boolean; error?: string };
+      if (!response.ok || !result.ok) {
+        alert(result.error ?? "PrizeSkout could not request Snoonu activation.");
+        return;
+      }
+      setStatuses(previous => ({ ...previous, snoonu: "pending" }));
       return;
     }
     if (OAUTH_PLATFORMS.has(platform)) {
@@ -299,10 +320,13 @@ export function ChannelsTab() {
                       >{t("settingsTabs.channels.actions.reconnect")}</button>
                     </>
                   )}
+                  {!loading && status === "not_connected" && ch.platform === "snoonu" && (
+                    <ConnectButton platform={ch.platform} onConnect={handleConnect} t={t} label="Request activation" />
+                  )}
                   {!loading && status === "not_connected" && ch.readiness !== "file_only" && ch.readiness !== "unavailable" && !OAUTH_PLATFORMS.has(ch.platform) && ch.platform in BYOK_PLATFORMS && (
                     <ConnectButton platform={ch.platform} onConnect={handleConnect} t={t} />
                   )}
-                  {!loading && status === "not_connected" && (ch.readiness === "file_only" || ch.readiness === "unavailable" || (!OAUTH_PLATFORMS.has(ch.platform) && !(ch.platform in BYOK_PLATFORMS))) && (
+                  {!loading && status === "not_connected" && ch.platform !== "snoonu" && (ch.readiness === "file_only" || ch.readiness === "unavailable" || (!OAUTH_PLATFORMS.has(ch.platform) && !(ch.platform in BYOK_PLATFORMS))) && (
                     <button
                       type="button"
                       disabled

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { isFreshSnoonuTimestamp, normalizeSnoonuPilotEvent, parseSnoonuPilotEnvelope, signSnoonuPilotPayload, verifySnoonuPilotSignature } from "../src/server/core/snoonu-pilot-contract";
 import { SNOONU_CONNECTOR_MANIFEST } from "../src/lib/snoonu-connector-capabilities";
 import { snoonuConnector } from "../src/server/connectors/snoonu";
+import { validateSnoonuActivationRequest } from "../src/server/connectors/snoonu/activation";
 
 const fixture = {
   schema_version: "2026-09-09", event_id: "evt_sn_001", event_type: "order.created",
@@ -28,4 +29,8 @@ assert.equal(snoonuConnector.manifest.privacy.payoutReceiptConfirmationOptional,
 const incomplete = snoonuConnector.normalizeFixture({ ...fixture, data: { order_id: "SN-1002", currency: "QAR" } });
 assert.equal(incomplete.commission_amount, null);
 assert.equal(incomplete.net_amount, null);
+const activation = validateSnoonuActivationRequest({ modes: ["partner_api_pull", "partner_webhook_push"] });
+assert.deepEqual(activation.modes, ["partner_api_pull", "partner_webhook_push"]);
+assert.deepEqual(activation.scopes, ["merchant:read", "branches:read", "orders:read", "settlements:read"]);
+assert.throws(() => validateSnoonuActivationRequest({ modes: ["invented_mode"] }), /unsupported mode/);
 console.log("Snoonu pilot contract fixtures passed.");
