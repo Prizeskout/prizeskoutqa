@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { confidenceLabel, merchantStatus } from "../../lib/merchant-language";
 import { fetchWithTimeout } from "../../lib/fetch-with-timeout";
+import { supabase } from "../../integrations/supabase/client";
 import { OutcomeProofPanel, type OutcomeProof } from "./OutcomeProofPanel";
 
 type Item = {
@@ -131,11 +132,14 @@ export function MerchantOperatingLoop({
     [loadError, setLoadError] = useState(false),
     [newTask, setNewTask] = useState("");
   const call = async (body: Record<string, string>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
     const response = await fetchWithTimeout(
       "/api/channels/connect",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
           access_code: localStorage.getItem("ps_access_code") ?? "",

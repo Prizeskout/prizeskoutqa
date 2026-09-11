@@ -182,7 +182,23 @@ export const Route = createFileRoute("/api/channels/connect")({
         if (!merchant_id) return resp({ error: "merchant_id is required." }, 400);
         if (!platform) return resp({ error: "platform is required." }, 400);
 
-        const authorized = await verifyMerchantAccess(merchant_id, access_code ?? "");
+        let authorized = await verifyMerchantAccess(merchant_id, access_code ?? "");
+        if (!authorized) {
+          const authHeader = request.headers.get("authorization") ?? "";
+          const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+          if (token) {
+            const { data: userData } = await supabaseAdmin.auth.getUser(token);
+            const email = userData.user?.email?.trim().toLowerCase();
+            if (email) {
+              const { count } = await supabaseAdmin
+                .from("ps_access_codes")
+                .select("merchant_id", { count: "exact", head: true })
+                .eq("merchant_id", merchant_id)
+                .ilike("email", email);
+              authorized = typeof count === "number" && count > 0;
+            }
+          }
+        }
         if (!authorized) return resp({ error: "Unauthorized." }, 401);
 
         try {
