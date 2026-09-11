@@ -132,7 +132,11 @@ async function handle(request: Request, splat: string) {
     const plan: Plan = (acct.plan as Plan) ?? "starter";
     const isPlatform: boolean = acct.is_platform ?? false;
 
-    if (isLive && !isPlatform) {
+    const merchantLivePath = fullPath === "/v1/connectors"
+      || fullPath === "/v1/connectors/definitions"
+      || /^\/v1\/connectors\/[^/]+\/(mappings|checkpoints)$/.test(fullPath)
+      || ["/v1/commerce/order-batches", "/v1/commerce/cost-batches", "/v1/commerce/settlement-batches"].includes(fullPath);
+    if (isLive && !isPlatform && !merchantLivePath) {
       return json(
         {
           error: {

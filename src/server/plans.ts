@@ -158,6 +158,9 @@ export function requiredPlanForRoute(method: string, path: string): Plan {
   if (path.startsWith("/v1/embed/")) return "enterprise";
   if (path.startsWith("/v1/webhooks/")) return "enterprise";
 
+  // Merchant-owned POS/ERP connector control plane.
+  if (path.startsWith("/v1/connectors")) return "standard";
+
   // Standard features
   if (path.startsWith("/v1/dynprice/")) return "standard";
   if (path.startsWith("/v1/loyalty/")) return "standard";

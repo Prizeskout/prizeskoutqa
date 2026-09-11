@@ -19,6 +19,7 @@
     "verify-salla-contract": "tsx scripts/verify-salla-contract.mts",
     "verify-talabat-contract": "tsx scripts/verify-talabat-contract.mts",
     "verify-snoonu-pilot-contract": "tsx scripts/verify-snoonu-pilot-contract.mts",
+    "verify-universal-connector-contract": "tsx scripts/verify-universal-connector-contract.mts",
     "demo-snoonu-pilot": "tsx --env-file=.env.local scripts/demo-snoonu-pilot.mts",
     "verify-restaurant-commerce-contract": "tsx scripts/verify-restaurant-commerce-contract.mts",
     "verify-restaurant-cost-contract": "tsx scripts/verify-restaurant-cost-contract.mts",
