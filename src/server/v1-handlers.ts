@@ -131,7 +131,7 @@ import {
 } from "@/server/restaurant-settlement-handlers";
 import { handleDecideEngineApproval,handleEngineHealth,handleGetEngineWork,handleListEngineApprovals,handleListEngineWork,handleReplayEngineWork,handleResumeEngineWork } from "@/server/engine-control-handlers";
 import {confirmPromotionAction,listPendingPartnerPromotionActions} from "@/server/core/promotion-actions";
-import {handleCreateConnectorConnection,handleListConnectorConnections,handleListConnectorDefinitions,handleSaveConnectorMapping,handleUpdateConnectorCheckpoint} from "@/server/core/universal-connectors";
+import {handleCreateConnectorConnection,handleListConnectorConnections,handleListConnectorDefinitions,handleRunConnectorSync,handleSaveConnectorMapping,handleStoreConnectorCredential,handleUpdateConnectorCheckpoint} from "@/server/core/universal-connectors";
 
 export type V1Context = {
   apiKeyId: string;
@@ -986,6 +986,8 @@ const V1_ROUTES: V1Route[] = [
   compileRoute("GET /v1/connectors/definitions",(req,ctx)=>handleListConnectorDefinitions(req,ctx)),
   compileRoute("GET /v1/connectors",(req,ctx)=>handleListConnectorConnections(req,ctx)),
   compileRoute("POST /v1/connectors",(req,ctx)=>handleCreateConnectorConnection(req,ctx)),
+  compileRoute("POST /v1/connectors/{id}/credentials",(req,ctx,p)=>handleStoreConnectorCredential(req,ctx,p.id)),
+  compileRoute("POST /v1/connectors/{id}/sync",(req,ctx,p)=>handleRunConnectorSync(req,ctx,p.id)),
   compileRoute("PATCH /v1/connectors/{id}/mappings",(req,ctx,p)=>handleSaveConnectorMapping(req,ctx,p.id)),
   compileRoute("PATCH /v1/connectors/{id}/checkpoints",(req,ctx,p)=>handleUpdateConnectorCheckpoint(req,ctx,p.id)),
   compileRoute("GET /v1/engine/health",(req,ctx)=>handleEngineHealth(req,ctx)),

@@ -135,6 +135,7 @@ async function handle(request: Request, splat: string) {
     const merchantLivePath = fullPath === "/v1/connectors"
       || fullPath === "/v1/connectors/definitions"
       || /^\/v1\/connectors\/[^/]+\/(mappings|checkpoints)$/.test(fullPath)
+      || /^\/v1\/connectors\/[^/]+\/(credentials|sync)$/.test(fullPath)
       || ["/v1/commerce/order-batches", "/v1/commerce/cost-batches", "/v1/commerce/settlement-batches"].includes(fullPath);
     if (isLive && !isPlatform && !merchantLivePath) {
       return json(

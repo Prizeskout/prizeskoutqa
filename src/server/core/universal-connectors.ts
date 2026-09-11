@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
+import { fetchOdooPosOrders } from "./odoo-json2-adapter";
+import { syncEvidenceSourceOrders } from "./evidence-source-sync";
 
 const allowedAuth = new Set(["oauth2","api_key","service_account","partner_webhook","local_agent","file"]);
 const allowedCapabilities = new Set(["merchant.read","branches.read","catalogue.read","orders.read","refunds.read","payments.read","costs.read","settlements.read","promotions.read"]);
@@ -78,4 +80,49 @@ export async function handleUpdateConnectorCheckpoint(request:Request,ctx:V1Cont
     last_error:state==="failed"?cleanString(body.error,1000)||"Connector reported failure":null,updated_at:now},{onConflict:"connection_id,stream"}).select("*").single();
   if(!dbError)await db.from("ps_connector_connections").update({last_health_at:now,last_success_at:state==="healthy"?now:undefined,last_error:state==="failed"?cleanString(body.error,1000):null,status:state==="failed"?"degraded":undefined,updated_at:now}).eq("id",connectionId).eq("account_id",ctx.accountId);
   return dbError?error(500,"internal_error","Could not update the sync checkpoint."):result(200,{data});
+}
+
+export async function handleStoreConnectorCredential(request:Request,ctx:V1Context,connectionId:string):Promise<V1Result>{
+  if(!hasScope(ctx,true))return error(403,"forbidden","This API key requires write access.");
+  const body=await request.json().catch(()=>null) as Record<string,unknown>|null;
+  if(!body)return error(422,"validation_failed","Request body must be valid JSON.");
+  const allowedKeys=new Set(["api_key"]),keys=Object.keys(body);
+  if(keys.length!==1||keys.some(key=>!allowedKeys.has(key))||!cleanString(body.api_key,1000))return error(422,"validation_failed","Provide only the dedicated provider api_key. Usernames and passwords are not accepted.");
+  const db=supabaseAdmin as any,{data:connection}=await db.from("ps_connector_connections").select("id,provider,auth_method").eq("id",connectionId).eq("account_id",ctx.accountId).maybeSingle();
+  if(!connection)return error(404,"connection_not_found","Connector connection not found.");
+  if(connection.auth_method!=="api_key")return error(409,"auth_method_mismatch","This connection is not configured for API-key authorization.");
+  const {data:vaultId,error:rpcError}=await db.rpc("ps_store_connector_credential",{p_account_id:ctx.accountId,p_connection_id:connectionId,p_secret:{api_key:cleanString(body.api_key,1000)}});
+  if(rpcError||!vaultId)return error(500,"credential_storage_failed","Could not encrypt and store the connector credential.");
+  await db.from("ps_connector_connections").update({status:"pending_approval",last_error:null,updated_at:new Date().toISOString()}).eq("id",connectionId).eq("account_id",ctx.accountId);
+  return result(200,{data:{connection_id:connectionId,credential_reference:`vault://${vaultId}`,status:"pending_approval"}});
+}
+
+export async function handleRunConnectorSync(_request:Request,ctx:V1Context,connectionId:string):Promise<V1Result>{
+  if(!hasScope(ctx,true))return error(403,"forbidden","This API key requires write access.");
+  const db=supabaseAdmin as any,{data:connection}=await db.from("ps_connector_connections").select("*").eq("id",connectionId).eq("account_id",ctx.accountId).maybeSingle();
+  if(!connection)return error(404,"connection_not_found","Connector connection not found.");
+  if(connection.provider!=="odoo")return error(409,"adapter_unavailable",`A production pull adapter is not enabled for ${connection.provider}.`);
+  const {data:credential,error:credentialError}=await db.rpc("ps_read_connector_credential",{p_account_id:ctx.accountId,p_connection_id:connectionId});
+  if(credentialError||!cleanString(credential?.api_key,1000))return error(409,"credential_not_configured","Store the dedicated Odoo API key before synchronizing.");
+  const config=connection.configuration&&typeof connection.configuration==="object"?connection.configuration:{};
+  const baseUrl=cleanString(config.base_url,500),currency=cleanString(config.currency,3).toUpperCase(),database=cleanString(config.database,120)||null;
+  if(!baseUrl||!currency)return error(409,"configuration_incomplete","Odoo base_url and three-letter currency are required in connection configuration.");
+  const {data:checkpoint}=await db.from("ps_connector_sync_checkpoints").select("cursor_value").eq("connection_id",connectionId).eq("stream","orders").maybeSingle();
+  const started=new Date().toISOString();
+  await db.from("ps_connector_sync_checkpoints").upsert({connection_id:connectionId,stream:"orders",status:"running",last_attempt_at:started,updated_at:started},{onConflict:"connection_id,stream"});
+  try{
+    const page=await fetchOdooPosOrders({baseUrl,apiKey:credential.api_key,database,currency,cursor:checkpoint?.cursor_value});
+    let sourceQuery=db.from("ps_evidence_source_connections").select("id").eq("account_id",ctx.accountId).eq("provider","odoo").eq("external_connection_reference",connectionId).maybeSingle();
+    let {data:source}=await sourceQuery;
+    if(!source){const inserted=await db.from("ps_evidence_source_connections").insert({account_id:ctx.accountId,merchant_id:connection.merchant_id,provider:"odoo",connection_kind:"optional_api",status:"active",read_only:true,permissions:["orders.read"],branch_references:[],external_connection_reference:connectionId}).select("id").single();source=inserted.data;}
+    if(!source)throw new Error("Could not create the Odoo evidence source.");
+    const syncResult=page.records.length?await syncEvidenceSourceOrders({connectionId:source.id,batchId:`odoo:${checkpoint?.cursor_value??"start"}:${page.cursorAfter??"end"}`,cursorAfter:page.cursorAfter,records:page.records,deliveryComplete:page.deliveryComplete,declaredRecordCount:page.recordsSeen}):null;
+    const finished=new Date().toISOString();
+    await db.from("ps_connector_sync_checkpoints").upsert({connection_id:connectionId,stream:"orders",cursor_value:page.cursorAfter,status:"healthy",records_received:page.recordsSeen,last_attempt_at:started,last_success_at:finished,last_error:null,updated_at:finished},{onConflict:"connection_id,stream"});
+    await db.from("ps_connector_connections").update({status:"connected",granted_capabilities:connection.requested_capabilities.filter((value:string)=>value==="orders.read"||value==="branches.read"),last_health_at:finished,last_success_at:finished,last_error:null,connected_at:connection.connected_at??finished,updated_at:finished}).eq("id",connectionId).eq("account_id",ctx.accountId);
+    return result(200,{data:{connection_id:connectionId,stream:"orders",records_seen:page.recordsSeen,records_accepted:page.records.length,cursor_after:page.cursorAfter,delivery_complete:page.deliveryComplete,sync:syncResult}});
+  }catch(caught){const message=(caught instanceof Error?caught.message:"Odoo synchronization failed.").slice(0,1000),finished=new Date().toISOString();
+    await db.from("ps_connector_sync_checkpoints").upsert({connection_id:connectionId,stream:"orders",status:"failed",last_attempt_at:started,last_error:message,updated_at:finished},{onConflict:"connection_id,stream"});
+    await db.from("ps_connector_connections").update({status:"degraded",last_health_at:finished,last_error:message,updated_at:finished}).eq("id",connectionId).eq("account_id",ctx.accountId);
+    return error(502,"connector_sync_failed",message);}
 }

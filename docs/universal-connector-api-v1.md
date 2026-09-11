@@ -40,6 +40,27 @@ Content-Type: application/json
 
 The connection remains `setup_required` until its provider-specific adapter completes authorization and verification. Registration never implies that a provider API is available.
 
+## Store a dedicated provider credential
+
+Odoo 19 connections can store a dedicated bot-user API key through:
+
+```http
+POST /connectors/{connection_id}/credentials
+Content-Type: application/json
+
+{ "api_key": "<dedicated Odoo API key>" }
+```
+
+This is the only accepted field. PrizeSkout passes it directly to Supabase Vault, where it is encrypted with the project's separately managed key. The API returns only the opaque Vault reference and never returns the credential again. Ordinary Odoo usernames and passwords are not accepted.
+
+## Run an Odoo order synchronization
+
+```http
+POST /connectors/{connection_id}/sync
+```
+
+The Odoo connection configuration must contain `base_url`, `database` when required by the deployment, and `currency`. Synchronization uses Odoo 19's JSON-2 `pos.order/search_read` interface, a bounded page size and a stable `write_date + id` cursor. It reads only order identity, timestamps, totals, tax, state, company and POS configuration; it does not retrieve customer data.
+
 ## List tenant connections
 
 ```http
