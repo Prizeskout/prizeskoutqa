@@ -56,8 +56,7 @@ type FooterTo =
   | "/products/promotions"
   | "/products/market"
   | "/products/field-intel"
-  | "/docs"
-  | "/docs/guides";
+  | "/docs";
 
 function FL_Link({ label, to }: { label: string; to: FooterTo }) {
   return (
@@ -226,7 +225,6 @@ function Footer() {
             <span style={{ ...LAYER_TAG, visibility: "hidden" }}>_</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               <FL_Link label="API documentation" to="/docs" />
-              <FL_Link label="Integration guides" to="/docs/guides" />
               <FL_Link label={t("footer.links.support")} to="/contact" />
               <FA label={t("footer.links.status")} />
               <FL_Link label={t("footer.links.marginCalculator")} to="/roi-calculator" />
