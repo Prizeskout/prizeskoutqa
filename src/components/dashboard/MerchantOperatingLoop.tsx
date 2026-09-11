@@ -135,6 +135,33 @@ export function MerchantOperatingLoop({
     const { data: { session } } = await supabase.auth.getSession();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+    const resolveSessionMerchant = async () => {
+      if (!session?.access_token) return false;
+      const identityResponse = await fetchWithTimeout("/api/auth/resolve-merchant", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }, 15_000);
+      if (!identityResponse.ok) return false;
+      const identity = await identityResponse.json() as { merchant_id?: string; code?: string };
+      if (!identity.merchant_id) return false;
+      localStorage.setItem("ps_merchant_id", identity.merchant_id);
+      if (identity.code) localStorage.setItem("ps_access_code", identity.code);
+      return true;
+    };
+    const restoreCodeMerchant = async () => {
+      const accessCode = localStorage.getItem("ps_access_code")?.trim();
+      if (!accessCode) return false;
+      const restoreResponse = await fetchWithTimeout("/api/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: accessCode }),
+      }, 15_000);
+      if (!restoreResponse.ok) return false;
+      const restored = await restoreResponse.json() as { merchant_id?: string };
+      if (!restored.merchant_id) return false;
+      localStorage.setItem("ps_merchant_id", restored.merchant_id);
+      return true;
+    };
     const request = () => fetchWithTimeout(
       "/api/channels/connect", {
         method: "POST",
@@ -146,32 +173,45 @@ export function MerchantOperatingLoop({
           ...body,
         }),
       }, 25_000);
+
+    // A valid login can outlive browser storage. Repair the merchant identity
+    // before calling an endpoint that otherwise rejects an empty id with 400.
+    if (!localStorage.getItem("ps_merchant_id")?.trim()) {
+      await resolveSessionMerchant() || await restoreCodeMerchant();
+    }
     let response = await request();
     if (response.status === 401 && session?.access_token) {
-      const identityResponse = await fetchWithTimeout("/api/auth/resolve-merchant", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      }, 15_000);
-      if (identityResponse.ok) {
-        const identity = await identityResponse.json() as { merchant_id?: string; code?: string };
-        if (identity.merchant_id) localStorage.setItem("ps_merchant_id", identity.merchant_id);
-        if (identity.code) localStorage.setItem("ps_access_code", identity.code);
+      if (await resolveSessionMerchant()) {
         response = await request();
       }
     }
-    const result = await response.json();
-    if (!response.ok || !result.ok) throw new Error(result.error ?? "Request failed");
+    if (response.status === 401) {
+      if (await restoreCodeMerchant()) {
+        response = await request();
+      }
+    }
+    const raw = await response.text();
+    let result: Record<string, any>;
+    try {
+      result = raw ? JSON.parse(raw) : {};
+    } catch {
+      throw new Error(response.status === 504
+        ? "The server took too long to respond. Please try again."
+        : `The server returned an unreadable response (${response.status}).`);
+    }
+    if (!response.ok || !result.ok) throw new Error(`${result.error ?? "Request failed"} (${response.status})`);
     return result;
   };
   const load = async () => {
     try {
       const result = await call({ action: "get" });
-      setData(result);
+      setData(result as Experience);
       setLoadError(false);
       setMessage("");
-    } catch {
+    } catch (error) {
       setLoadError(true);
-      setMessage("Your attention list could not be loaded. Refresh and try again.");
+      const detail = error instanceof Error ? error.message : "Unknown error";
+      setMessage(`Your attention list could not be loaded: ${detail}`);
     } finally {
       setLoading(false);
     }
