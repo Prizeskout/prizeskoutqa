@@ -5,49 +5,145 @@
 //           connected Keeta channel — Keeta itself connects via /api/auth/keeta)
 
 import { createFileRoute } from "@tanstack/react-router";
-import {createHash} from "node:crypto";
-import { connectTalabat, connectJahez, verifyMerchantAccess, setKeetaShopId } from "@/server/core/byok-connect";
-import { activateMerchantMarginPolicy, getMerchantMarginPolicy, listMerchantMarginPolicyVersions, type ApprovalMode } from "@/server/core/merchant-pricing-config";
+import { createHash } from "node:crypto";
+import {
+  connectTalabat,
+  connectJahez,
+  verifyMerchantAccess,
+  setKeetaShopId,
+} from "@/server/core/byok-connect";
+import {
+  activateMerchantMarginPolicy,
+  getMerchantMarginPolicy,
+  listMerchantMarginPolicyVersions,
+  type ApprovalMode,
+} from "@/server/core/merchant-pricing-config";
 import { getTalabatExpectedPayout, type ExpectedPayoutResult } from "@/server/core/expected-payout";
 import { parseAggregatorDailyCsv } from "@/server/core/payout-csv-parser";
 import { parseTalabatPayoutStatementCsv } from "@/server/core/payout-statement-parser";
 import { parseSnoonuBrandReportPdf } from "@/server/core/payout-pdf-parser";
-import { savePayoutCheck, getPayoutCheckHistory, deletePayoutCheck } from "@/server/core/payout-history";
+import {
+  savePayoutCheck,
+  getPayoutCheckHistory,
+  deletePayoutCheck,
+} from "@/server/core/payout-history";
 import { getRepricingHistory, deleteRepricingEvent } from "@/server/core/dispatch-history";
 import { getDashboardStats, getProfitabilityTrends } from "@/server/core/dashboard-stats";
 import { getDefendLoopHealth } from "@/server/core/defend-loop-health";
 import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { approveContractTerm, listContractTerms, saveContractDraft } from "@/server/core/contract-terms";
-import { savePayoutAudit, getAuditHistory, deletePayoutAudit, type SavePayoutAuditInput } from "@/server/core/payout-audit-history";
-import {persistSettlementReconciliation} from "@/server/core/settlement-reconciliation-ledger";
+import {
+  approveContractTerm,
+  listContractTerms,
+  saveContractDraft,
+} from "@/server/core/contract-terms";
+import {
+  savePayoutAudit,
+  getAuditHistory,
+  deletePayoutAudit,
+  type SavePayoutAuditInput,
+} from "@/server/core/payout-audit-history";
+import { persistSettlementReconciliation } from "@/server/core/settlement-reconciliation-ledger";
 import { classifyUpload, buildParsedSummary } from "@/server/core/upload-classifier";
-import {appendEvidenceProcessingAttempt,registerMerchantEvidence,type MerchantDocumentKind} from "@/server/core/merchant-evidence-intake";
-import {persistNormalizedCommerceEvents} from "@/server/core/normalized-commerce-events";
-import {runNormalizedReconciliationShadow} from "@/server/core/normalized-reconciliation-shadow";
+import {
+  appendEvidenceProcessingAttempt,
+  registerMerchantEvidence,
+  type MerchantDocumentKind,
+} from "@/server/core/merchant-evidence-intake";
+import { persistNormalizedCommerceEvents } from "@/server/core/normalized-commerce-events";
+import { runNormalizedReconciliationShadow } from "@/server/core/normalized-reconciliation-shadow";
 import { classifyResult } from "@/lib/commission-audit";
 import { extractContractTerms, type ContractDocumentImage } from "@/server/core/contract-extractor";
-import {rematchEvidenceAfterContractApproval} from "@/server/core/evidence-agreement-matcher";
-import {approveRecoveryEvidencePack,getRecoveryEvidencePack,prepareRecoveryEvidencePack} from "@/server/core/recovery-evidence-pack";
-import { createRecoveryCase, listRecoveryCases, recordRecoverySubmission, updateRecoveryCase } from "@/server/core/recovery-cases";
-import { approvePromotionScenario, confirmPromotionChannelLaunch, listPromotionScenarios, preparePromotionLaunch, savePromotionScenario, updatePromotionScenario } from "@/server/core/promotion-scenarios";
-import {approvePromotionAction,confirmPromotionAction,createPromotionAction,listPromotionActions,queuePromotionAction,type PromotionActionType} from "@/server/core/promotion-actions";
-import { approveChannelPricePlan, listChannelPricePlans, saveChannelPricePlan, publishChannelPricePlan } from "@/server/core/channel-price-plans";
-import { activateGroupPolicy, approveGroupControls, getGroupControls, saveGroupControls } from "@/server/core/group-controls";
-import { advanceMonthEndClose, listMonthEndCloses, saveMonthEndClose } from "@/server/core/month-end-close";
-import { getMerchantExperience, saveExperienceSettings, trackMerchantEngagement, updateAttention } from "@/server/core/merchant-experience";
-import { confirmZidJahezPropagation, getZidJahezBridgeSettings, listZidJahezPropagationEvents, saveZidJahezBridgeSettings } from "@/server/core/zid-jahez-bridge";
-import { createStoreManagerTask, getStoreManager, saveStoreManagerPolicy, saveStoreManagerProfile, transitionStoreManagerTask } from "@/server/core/store-manager";
-import { addCopilotMessage, archiveCopilotConversation, createCopilotConversation, getCopilotConversation, linkCopilotTask, listCopilotConversations } from "@/server/core/copilot-conversations";
+import { rematchEvidenceAfterContractApproval } from "@/server/core/evidence-agreement-matcher";
+import {
+  approveRecoveryEvidencePack,
+  getRecoveryEvidencePack,
+  prepareRecoveryEvidencePack,
+} from "@/server/core/recovery-evidence-pack";
+import {
+  createRecoveryCase,
+  listRecoveryCases,
+  recordRecoverySubmission,
+  updateRecoveryCase,
+} from "@/server/core/recovery-cases";
+import {
+  approvePromotionScenario,
+  confirmPromotionChannelLaunch,
+  listPromotionScenarios,
+  preparePromotionLaunch,
+  savePromotionScenario,
+  updatePromotionScenario,
+} from "@/server/core/promotion-scenarios";
+import {
+  approvePromotionAction,
+  confirmPromotionAction,
+  createPromotionAction,
+  listPromotionActions,
+  queuePromotionAction,
+  type PromotionActionType,
+} from "@/server/core/promotion-actions";
+import {
+  approveChannelPricePlan,
+  listChannelPricePlans,
+  saveChannelPricePlan,
+  publishChannelPricePlan,
+} from "@/server/core/channel-price-plans";
+import {
+  activateGroupPolicy,
+  approveGroupControls,
+  getGroupControls,
+  saveGroupControls,
+} from "@/server/core/group-controls";
+import {
+  advanceMonthEndClose,
+  listMonthEndCloses,
+  saveMonthEndClose,
+} from "@/server/core/month-end-close";
+import {
+  getMerchantExperience,
+  saveExperienceSettings,
+  trackMerchantEngagement,
+  updateAttention,
+} from "@/server/core/merchant-experience";
+import {
+  confirmZidJahezPropagation,
+  getZidJahezBridgeSettings,
+  listZidJahezPropagationEvents,
+  saveZidJahezBridgeSettings,
+} from "@/server/core/zid-jahez-bridge";
+import {
+  createStoreManagerTask,
+  getStoreManager,
+  saveStoreManagerPolicy,
+  saveStoreManagerProfile,
+  transitionStoreManagerTask,
+} from "@/server/core/store-manager";
+import {
+  addCopilotMessage,
+  archiveCopilotConversation,
+  createCopilotConversation,
+  getCopilotConversation,
+  linkCopilotTask,
+  listCopilotConversations,
+} from "@/server/core/copilot-conversations";
 import { runScrape } from "@/server/scrape-runner";
 import { getValidTalabatAccessToken, submitTalabatCatalog } from "@/server/core/talabat-client";
 import type { TalabatOrderUpdateStatus } from "@/server/core/talabat-contract";
-import { enqueueTalabatOrderAction, processTalabatOrderAction } from "@/server/core/talabat-order-actions";
-import { compileTalabatCatalog, type TalabatCatalogSourceProduct } from "@/server/core/talabat-catalog";
+import {
+  enqueueTalabatOrderAction,
+  processTalabatOrderAction,
+} from "@/server/core/talabat-order-actions";
+import {
+  compileTalabatCatalog,
+  type TalabatCatalogSourceProduct,
+} from "@/server/core/talabat-catalog";
 import { toMerchantError } from "@/server/merchant-errors";
 import { startKeetaOAuth } from "@/routes/api/auth/keeta";
 import { handleKeetaCallback } from "@/routes/api/auth/keeta/callback";
-import { requestSnoonuActivation, validateSnoonuActivationRequest } from "@/server/connectors/snoonu/activation";
+import {
+  requestSnoonuActivation,
+  validateSnoonuActivationRequest,
+} from "@/server/connectors/snoonu/activation";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -59,24 +155,32 @@ export const Route = createFileRoute("/api/channels/connect")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         if (url.searchParams.get("oauth") === "keeta") {
-          return startKeetaOAuth(request, "/api/channels/connect?oauth_callback=keeta", "/api/channels/connect");
+          return startKeetaOAuth(
+            request,
+            "/api/channels/connect?oauth_callback=keeta",
+            "/api/channels/connect",
+          );
         }
         if (url.searchParams.get("oauth_callback") === "keeta") return handleKeetaCallback(request);
         return resp({ error: "Unsupported connection request." }, 400);
       },
       POST: async ({ request }) => {
-        const json = () => new Response(
-          JSON.stringify({ error: "Request body must be valid JSON." }),
-          { status: 422, headers: { "Content-Type": "application/json" } },
-        );
+        const json = () =>
+          new Response(JSON.stringify({ error: "Request body must be valid JSON." }), {
+            status: 422,
+            headers: { "Content-Type": "application/json" },
+          });
 
         let body: Body;
-        try { body = await request.json() as Body; }
-        catch { return json(); }
+        try {
+          body = (await request.json()) as Body;
+        } catch {
+          return json();
+        }
 
         const { merchant_id, access_code, platform } = body;
         if (!merchant_id) return resp({ error: "merchant_id is required." }, 400);
-        if (!platform)    return resp({ error: "platform is required." }, 400);
+        if (!platform) return resp({ error: "platform is required." }, 400);
 
         const authorized = await verifyMerchantAccess(merchant_id, access_code ?? "");
         if (!authorized) return resp({ error: "Unauthorized." }, 401);
@@ -84,37 +188,79 @@ export const Route = createFileRoute("/api/channels/connect")({
         try {
           if (platform === "snoonu") {
             const requestData = validateSnoonuActivationRequest(body);
-            const channel = await requestSnoonuActivation({ merchantId: merchant_id, ...requestData });
-            return resp({
-              ok: true,
-              platform,
-              status: channel.status,
-              approval_status: channel.status === "connected" ? "approved" : "awaiting_snoonu",
-              modes: requestData.modes,
-            }, 200);
+            const channel = await requestSnoonuActivation({
+              merchantId: merchant_id,
+              ...requestData,
+            });
+            return resp(
+              {
+                ok: true,
+                platform,
+                status: channel.status,
+                approval_status: channel.status === "connected" ? "approved" : "awaiting_snoonu",
+                modes: requestData.modes,
+              },
+              200,
+            );
           }
 
           if (platform === "talabat") {
-            const { username, password, middleware_jwt_secret, pos_vendor_id, chain_code, commission_rate_pct, vat_on_fees_pct, payment_fee_pct, fixed_order_fee, delivery_contribution, environment, contract_currency } = body;
-            if (!username || !password || !middleware_jwt_secret || !pos_vendor_id || !chain_code || !commission_rate_pct) {
-              return resp({ error: "Talabat requires username, password, middleware_jwt_secret, pos_vendor_id, chain_code, and commission_rate_pct." }, 400);
+            const {
+              username,
+              password,
+              middleware_jwt_secret,
+              pos_vendor_id,
+              chain_code,
+              commission_rate_pct,
+              vat_on_fees_pct,
+              payment_fee_pct,
+              fixed_order_fee,
+              delivery_contribution,
+              environment,
+              contract_currency,
+            } = body;
+            if (
+              !username ||
+              !password ||
+              !middleware_jwt_secret ||
+              !pos_vendor_id ||
+              !chain_code ||
+              !commission_rate_pct
+            ) {
+              return resp(
+                {
+                  error:
+                    "Talabat requires username, password, middleware_jwt_secret, pos_vendor_id, chain_code, and commission_rate_pct.",
+                },
+                400,
+              );
             }
             const result = await connectTalabat({
-              merchantId: merchant_id, username, password, middlewareJwtSecret: middleware_jwt_secret,
-              posVendorId: pos_vendor_id, chainCode: chain_code, commissionRatePct: commission_rate_pct,
-              vatOnFeesPct: vat_on_fees_pct, paymentFeePct: payment_fee_pct,
-              fixedOrderFee: fixed_order_fee, deliveryContribution: delivery_contribution,
+              merchantId: merchant_id,
+              username,
+              password,
+              middlewareJwtSecret: middleware_jwt_secret,
+              posVendorId: pos_vendor_id,
+              chainCode: chain_code,
+              commissionRatePct: commission_rate_pct,
+              vatOnFeesPct: vat_on_fees_pct,
+              paymentFeePct: payment_fee_pct,
+              fixedOrderFee: fixed_order_fee,
+              deliveryContribution: delivery_contribution,
               environment: environment === "production" ? "production" : "sandbox",
               contractCurrency: contract_currency,
             });
             return result.ok
-              ? resp({
-                  ok: true,
-                  platform,
-                  status: "connected",
-                  environment: environment === "production" ? "production" : "sandbox",
-                  plugin_base_url: `${new URL(request.url).origin}/api/talabat/plugin`,
-                }, 200)
+              ? resp(
+                  {
+                    ok: true,
+                    platform,
+                    status: "connected",
+                    environment: environment === "production" ? "production" : "sandbox",
+                    plugin_base_url: `${new URL(request.url).origin}/api/talabat/plugin`,
+                  },
+                  200,
+                )
               : resp({ ok: false, error: result.message }, 200);
           }
 
@@ -123,7 +269,12 @@ export const Route = createFileRoute("/api/channels/connect")({
             if (!api_key || !secret_code || !branch_id) {
               return resp({ error: "Jahez requires api_key, secret_code, and branch_id." }, 400);
             }
-            const result = await connectJahez({ merchantId: merchant_id, apiKey: api_key, secretCode: secret_code, branchId: branch_id });
+            const result = await connectJahez({
+              merchantId: merchant_id,
+              apiKey: api_key,
+              secretCode: secret_code,
+              branchId: branch_id,
+            });
             return result.ok
               ? resp({ ok: true, platform, status: "pending" }, 200)
               : resp({ ok: false, error: result.message }, 200);
@@ -150,35 +301,48 @@ export const Route = createFileRoute("/api/channels/connect")({
             // until that's resolved on PipeOps' side. See merchant-pricing-
             // config.ts for what actually enforces this value.
             if (body.action === "set") {
-              const result = await activateMerchantMarginPolicy(merchant_id,{
-                marginFloorPct:Number(body.margin_floor_pct),
-                minimumContributionAmount:Number(body.minimum_contribution_amount??0),
-                maxPriceIncreasePct:Number(body.max_price_increase_pct),
-                approvalMode:body.approval_mode as ApprovalMode,
-                activatedBy:(body.activated_by||"merchant").slice(0,160),
-                overrides:Array.isArray(body.channel_overrides)?body.channel_overrides.map((item:any)=>({
-                  channel:String(item.channel??"").toLowerCase(),servicePath:String(item.service_path??"default").toLowerCase(),
-                  marginFloorPct:Number(item.margin_floor_pct),minimumContributionAmount:Number(item.minimum_contribution_amount??0),
-                  maxPriceIncreasePct:Number(item.max_price_increase_pct),approvalMode:item.approval_mode as ApprovalMode,
-                })):[],
+              const result = await activateMerchantMarginPolicy(merchant_id, {
+                marginFloorPct: Number(body.margin_floor_pct),
+                minimumContributionAmount: Number(body.minimum_contribution_amount ?? 0),
+                maxPriceIncreasePct: Number(body.max_price_increase_pct),
+                approvalMode: body.approval_mode as ApprovalMode,
+                activatedBy: (body.activated_by || "merchant").slice(0, 160),
+                overrides: Array.isArray(body.channel_overrides)
+                  ? body.channel_overrides.map((item: any) => ({
+                      channel: String(item.channel ?? "").toLowerCase(),
+                      servicePath: String(item.service_path ?? "default").toLowerCase(),
+                      marginFloorPct: Number(item.margin_floor_pct),
+                      minimumContributionAmount: Number(item.minimum_contribution_amount ?? 0),
+                      maxPriceIncreasePct: Number(item.max_price_increase_pct),
+                      approvalMode: item.approval_mode as ApprovalMode,
+                    }))
+                  : [],
               });
               return result.ok
-                ? resp({ ok: true, policy:result.policy }, 200)
+                ? resp({ ok: true, policy: result.policy }, 200)
                 : resp({ ok: false, error: result.error }, 400);
             }
-            const policy=await getMerchantMarginPolicy(merchant_id);
-            const versions=await listMerchantMarginPolicyVersions(merchant_id);
+            const policy = await getMerchantMarginPolicy(merchant_id);
+            const versions = await listMerchantMarginPolicyVersions(merchant_id);
             return resp({ ok: true, policy, versions }, 200);
           }
 
           if (platform === "talabat_catalog") {
             const raw = body as unknown as Record<string, unknown>;
-            const products = Array.isArray(raw.products) ? raw.products as TalabatCatalogSourceProduct[] : [];
+            const products = Array.isArray(raw.products)
+              ? (raw.products as TalabatCatalogSourceProduct[])
+              : [];
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const db = supabaseAdmin as any;
-            const { data: channel } = await db.from("ps_merchant_channels")
-              .select("id,account_id,licensee_id,merchant_id,manager_token,bearer_token,metadata,status")
-              .eq("account_id", merchant_id).eq("platform", "talabat").eq("status", "connected").maybeSingle();
+            const { data: channel } = await db
+              .from("ps_merchant_channels")
+              .select(
+                "id,account_id,licensee_id,merchant_id,manager_token,bearer_token,metadata,status",
+              )
+              .eq("account_id", merchant_id)
+              .eq("platform", "talabat")
+              .eq("status", "connected")
+              .maybeSingle();
             if (!channel) return resp({ error: "Talabat is not connected." }, 409);
             const metadata = (channel.metadata ?? {}) as Record<string, unknown>;
             const posVendorId = String(metadata.pos_vendor_id ?? metadata.vendor_id ?? "");
@@ -186,19 +350,43 @@ export const Route = createFileRoute("/api/channels/connect")({
             const callbackUrl = `${new URL(request.url).origin}/api/talabat/plugin/catalog-status/${encodeURIComponent(posVendorId)}`;
             let catalog: ReturnType<typeof compileTalabatCatalog>;
             try {
-              catalog = compileTalabatCatalog({ posVendorId, callbackUrl, products,
+              catalog = compileTalabatCatalog({
+                posVendorId,
+                callbackUrl,
+                products,
                 menuId: typeof raw.menu_id === "string" ? raw.menu_id : undefined,
-                menuName: typeof raw.menu_name === "string" ? raw.menu_name : undefined });
+                menuName: typeof raw.menu_name === "string" ? raw.menu_name : undefined,
+              });
             } catch (error) {
-              return resp({ ok: false, error: error instanceof Error ? error.message : "Invalid Talabat catalog." }, 422);
+              return resp(
+                {
+                  ok: false,
+                  error: error instanceof Error ? error.message : "Invalid Talabat catalog.",
+                },
+                422,
+              );
             }
             if (raw.action === "preview") return resp({ ok: true, catalog }, 200);
             const token = await getValidTalabatAccessToken(channel);
-            if (!token.accessToken) return resp({ ok: false, error: token.error ?? "Talabat authentication failed." }, 502);
-            const result = await submitTalabatCatalog({ chainCode, catalog, accessToken: token.accessToken,
+            if (!token.accessToken)
+              return resp(
+                { ok: false, error: token.error ?? "Talabat authentication failed." },
+                502,
+              );
+            const result = await submitTalabatCatalog({
+              chainCode,
+              catalog,
+              accessToken: token.accessToken,
               environment: metadata.environment === "production" ? "production" : "sandbox",
-              tracking: { channelId: channel.id, accountId: channel.account_id, licenseeId: channel.licensee_id, merchantId: channel.merchant_id } });
-            return result.ok ? resp({ ok: true, import: result.data }, 202)
+              tracking: {
+                channelId: channel.id,
+                accountId: channel.account_id,
+                licenseeId: channel.licensee_id,
+                merchantId: channel.merchant_id,
+              },
+            });
+            return result.ok
+              ? resp({ ok: true, import: result.data }, 202)
               : resp({ ok: false, error: result.message, upstream_status: result.httpStatus }, 502);
           }
 
@@ -206,247 +394,831 @@ export const Route = createFileRoute("/api/channels/connect")({
             const raw = body as unknown as Record<string, unknown>;
             const orderId = String(raw.order_id ?? "");
             const aliases: Record<string, TalabatOrderUpdateStatus> = {
-              ACCEPTED: "order_accepted", REJECTED: "order_rejected", PREPARED: "order_prepared", PICKED_UP: "order_picked_up",
-              order_accepted: "order_accepted", order_rejected: "order_rejected", order_prepared: "order_prepared", order_picked_up: "order_picked_up",
+              ACCEPTED: "order_accepted",
+              REJECTED: "order_rejected",
+              PREPARED: "order_prepared",
+              PICKED_UP: "order_picked_up",
+              order_accepted: "order_accepted",
+              order_rejected: "order_rejected",
+              order_prepared: "order_prepared",
+              order_picked_up: "order_picked_up",
             };
             const requestedStatus = aliases[String(raw.order_status ?? "")];
             if (!orderId || !requestedStatus) {
-              return resp({ error: "Talabat requires order_id and a supported order_status." }, 400);
+              return resp(
+                { error: "Talabat requires order_id and a supported order_status." },
+                400,
+              );
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const db = supabaseAdmin as any;
-            const { data: channel } = await db.from("ps_merchant_channels")
+            const { data: channel } = await db
+              .from("ps_merchant_channels")
               .select("id,account_id,merchant_id,manager_token,bearer_token,metadata")
-              .eq("account_id", merchant_id).eq("merchant_id", merchant_id)
-              .eq("platform", "talabat").eq("status", "connected").maybeSingle();
+              .eq("account_id", merchant_id)
+              .eq("merchant_id", merchant_id)
+              .eq("platform", "talabat")
+              .eq("status", "connected")
+              .maybeSingle();
             if (!channel) return resp({ error: "Talabat is not connected." }, 409);
-            const { data: storedOrder } = await db.from("ps_talabat_orders")
+            const { data: storedOrder } = await db
+              .from("ps_talabat_orders")
               .select("raw_order,status")
-              .eq("channel_id", channel.id).eq("external_order_id", orderId).maybeSingle();
+              .eq("channel_id", channel.id)
+              .eq("external_order_id", orderId)
+              .maybeSingle();
             if (!storedOrder) return resp({ error: "Talabat order was not found." }, 404);
-            const orderPayload = storedOrder.raw_order && typeof storedOrder.raw_order === "object" ? storedOrder.raw_order as Record<string, unknown> : {};
-            const callbackUrls = orderPayload.callbackUrls && typeof orderPayload.callbackUrls === "object"
-              ? orderPayload.callbackUrls as Record<string, unknown> : {};
+            const orderPayload =
+              storedOrder.raw_order && typeof storedOrder.raw_order === "object"
+                ? (storedOrder.raw_order as Record<string, unknown>)
+                : {};
+            const callbackUrls =
+              orderPayload.callbackUrls && typeof orderPayload.callbackUrls === "object"
+                ? (orderPayload.callbackUrls as Record<string, unknown>)
+                : {};
             const callbackKey: Record<TalabatOrderUpdateStatus, string> = {
-              order_accepted: "orderAcceptedUrl", order_rejected: "orderRejectedUrl",
-              order_prepared: "orderPreparedUrl", order_picked_up: "orderPickedUpUrl",
+              order_accepted: "orderAcceptedUrl",
+              order_rejected: "orderRejectedUrl",
+              order_prepared: "orderPreparedUrl",
+              order_picked_up: "orderPickedUpUrl",
             };
             const callbackUrl = String(callbackUrls[callbackKey[requestedStatus]] ?? "");
-            if (!callbackUrl) return resp({ error: `Talabat did not provide ${callbackKey[requestedStatus]} for this order.` }, 409);
+            if (!callbackUrl)
+              return resp(
+                {
+                  error: `Talabat did not provide ${callbackKey[requestedStatus]} for this order.`,
+                },
+                409,
+              );
             const expeditionType = String(orderPayload.expeditionType ?? "").toLowerCase();
-            const deliveryInfo = orderPayload.delivery && typeof orderPayload.delivery === "object" ? orderPayload.delivery as Record<string, unknown> : {};
-            const ownDelivery = expeditionType === "delivery" && deliveryInfo.riderPickupTime != null;
+            const deliveryInfo =
+              orderPayload.delivery && typeof orderPayload.delivery === "object"
+                ? (orderPayload.delivery as Record<string, unknown>)
+                : {};
+            const ownDelivery =
+              expeditionType === "delivery" && deliveryInfo.riderPickupTime != null;
             if (requestedStatus === "order_prepared" && !ownDelivery)
-              return resp({ error: "Only Talabat rider-delivery orders can be marked prepared." }, 422);
+              return resp(
+                { error: "Only Talabat rider-delivery orders can be marked prepared." },
+                422,
+              );
             if (requestedStatus === "order_picked_up" && ownDelivery)
-              return resp({ error: "Talabat rider-delivery orders are picked up by Talabat and cannot be marked picked up by the vendor." }, 422);
+              return resp(
+                {
+                  error:
+                    "Talabat rider-delivery orders are picked up by Talabat and cannot be marked picked up by the vendor.",
+                },
+                422,
+              );
             const metadata = (channel.metadata ?? {}) as Record<string, unknown>;
             const payload = {
-              acceptanceTime: typeof raw.acceptance_time === "string" ? raw.acceptance_time : undefined,
+              acceptanceTime:
+                typeof raw.acceptance_time === "string" ? raw.acceptance_time : undefined,
               remoteOrderId: orderId,
-              rejectionReason: typeof raw.rejection_reason === "string" ? raw.rejection_reason : undefined,
+              rejectionReason:
+                typeof raw.rejection_reason === "string" ? raw.rejection_reason : undefined,
               message: typeof raw.message === "string" ? raw.message : undefined,
             };
             const queued = await enqueueTalabatOrderAction({
-              channelId: channel.id, accountId: channel.account_id, merchantId: channel.merchant_id,
-              orderId, action: requestedStatus, callbackUrl, payload,
-              expiresAt: requestedStatus === "order_accepted" && typeof orderPayload.expiryDate === "string" ? orderPayload.expiryDate : null,
+              channelId: channel.id,
+              accountId: channel.account_id,
+              merchantId: channel.merchant_id,
+              orderId,
+              action: requestedStatus,
+              callbackUrl,
+              payload,
+              expiresAt:
+                requestedStatus === "order_accepted" && typeof orderPayload.expiryDate === "string"
+                  ? orderPayload.expiryDate
+                  : null,
             });
             const actionDelivery = await processTalabatOrderAction(queued);
-            return resp({ ok: actionDelivery.ok, queued: true, platform, order_status: requestedStatus, delivery: actionDelivery },
-              actionDelivery.ok ? 200 : actionDelivery.state === "retrying" ? 202 : 502);
+            return resp(
+              {
+                ok: actionDelivery.ok,
+                queued: true,
+                platform,
+                order_status: requestedStatus,
+                delivery: actionDelivery,
+              },
+              actionDelivery.ok ? 200 : actionDelivery.state === "retrying" ? 202 : 502,
+            );
           }
 
           if (platform === "zid_jahez_bridge") {
-            if (body.action === "get") return resp({ ok: true, settings: await getZidJahezBridgeSettings(merchant_id), events: await listZidJahezPropagationEvents(merchant_id) }, 200);
+            if (body.action === "get")
+              return resp(
+                {
+                  ok: true,
+                  settings: await getZidJahezBridgeSettings(merchant_id),
+                  events: await listZidJahezPropagationEvents(merchant_id),
+                },
+                200,
+              );
             if (body.action === "save") {
               const raw = body as unknown as Record<string, unknown>;
-              const commission = raw.mazeed_commission_pct == null || raw.mazeed_commission_pct === "" ? null : Number(raw.mazeed_commission_pct);
-              const skus = Array.isArray(raw.eligible_skus) ? raw.eligible_skus.filter(value => typeof value === "string") as string[] : [];
+              const commission =
+                raw.mazeed_commission_pct == null || raw.mazeed_commission_pct === ""
+                  ? null
+                  : Number(raw.mazeed_commission_pct);
+              const skus = Array.isArray(raw.eligible_skus)
+                ? (raw.eligible_skus.filter((value) => typeof value === "string") as string[])
+                : [];
               try {
                 const settings = await saveZidJahezBridgeSettings(merchant_id, {
                   mazeed_active: raw.mazeed_active === true,
                   jahez_active: raw.jahez_active === true,
                   mazeed_commission_pct: commission,
-                  vat_mode: raw.vat_mode === "mazeed_adds_vat" ? "mazeed_adds_vat" : "store_includes_vat",
+                  vat_mode:
+                    raw.vat_mode === "mazeed_adds_vat" ? "mazeed_adds_vat" : "store_includes_vat",
                   eligible_skus: skus,
-                  confirmed_by: String(raw.confirmed_by ?? "").trim().slice(0, 160),
+                  confirmed_by: String(raw.confirmed_by ?? "")
+                    .trim()
+                    .slice(0, 160),
                 });
                 return resp({ ok: true, settings }, 200);
               } catch (error) {
                 return merchantFailure(error, "save the Zid–Jahez settings");
               }
             }
-            if(body.action==="confirm_propagation"){
-              const observed=Number(body.observed_price);
-              try{return resp({ok:true,event:await confirmZidJahezPropagation(merchant_id,body.id,observed,body.verified_by)},200);}
-              catch(error){return merchantFailure(error,"verify the Jahez price update");}
+            if (body.action === "confirm_propagation") {
+              const observed = Number(body.observed_price);
+              try {
+                return resp(
+                  {
+                    ok: true,
+                    event: await confirmZidJahezPropagation(
+                      merchant_id,
+                      body.id,
+                      observed,
+                      body.verified_by,
+                    ),
+                  },
+                  200,
+                );
+              } catch (error) {
+                return merchantFailure(error, "verify the Jahez price update");
+              }
             }
             return resp({ error: "Unsupported Zid–Jahez bridge action." }, 400);
           }
 
           if (platform === "restaurant_workspace") {
-            if(body.action === "get"){
-              const {data,error}=await (supabaseAdmin as any).from("ps_restaurant_workspaces").select("account_id,name,country_code,currency,industry,timezone,active,metadata").eq("account_id",merchant_id).maybeSingle();
-              if(error)throw error;
-              return resp({ok:true,workspace:data??null},200);
+            if (body.action === "get") {
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_restaurant_workspaces")
+                .select("account_id,name,country_code,currency,industry,timezone,active,metadata")
+                .eq("account_id", merchant_id)
+                .maybeSingle();
+              if (error) throw error;
+              return resp({ ok: true, workspace: data ?? null }, 200);
             }
-            if(body.action === "save"){
-              const countries:Record<string,{code:string;timezone:string}>={"Qatar":{code:"QA",timezone:"Asia/Qatar"},"Saudi Arabia":{code:"SA",timezone:"Asia/Riyadh"},"UAE":{code:"AE",timezone:"Asia/Dubai"},"Kuwait":{code:"KW",timezone:"Asia/Kuwait"},"Bahrain":{code:"BH",timezone:"Asia/Bahrain"},"Oman":{code:"OM",timezone:"Asia/Muscat"},"Egypt":{code:"EG",timezone:"Africa/Cairo"},"Jordan":{code:"JO",timezone:"Asia/Amman"}};
-              const name=(body.name??"").trim().slice(0,160),country=countries[body.country??""],currency=(body.currency??"").trim().toUpperCase();
-              if(!name||!country||!/^[A-Z]{3}$/.test(currency))return resp({error:"Restaurant name, supported country, and ISO currency are required."},400);
-              const metadata={contact_email:(body.contact_email??"").trim()||null,contact_phone:(body.contact_phone??"").trim()||null,description:(body.description??"").trim()||null};
-              const {data,error}=await (supabaseAdmin as any).from("ps_restaurant_workspaces").upsert({account_id:merchant_id,name,country_code:country.code,currency,industry:"restaurant",timezone:country.timezone,metadata,updated_at:new Date().toISOString()},{onConflict:"account_id"}).select("account_id,name,country_code,currency,industry,timezone,active,metadata").single();
-              if(error)throw error;
-              return resp({ok:true,workspace:data},200);
+            if (body.action === "save") {
+              const countries: Record<string, { code: string; timezone: string }> = {
+                Qatar: { code: "QA", timezone: "Asia/Qatar" },
+                "Saudi Arabia": { code: "SA", timezone: "Asia/Riyadh" },
+                UAE: { code: "AE", timezone: "Asia/Dubai" },
+                Kuwait: { code: "KW", timezone: "Asia/Kuwait" },
+                Bahrain: { code: "BH", timezone: "Asia/Bahrain" },
+                Oman: { code: "OM", timezone: "Asia/Muscat" },
+                Egypt: { code: "EG", timezone: "Africa/Cairo" },
+                Jordan: { code: "JO", timezone: "Asia/Amman" },
+              };
+              const name = (body.name ?? "").trim().slice(0, 160),
+                country = countries[body.country ?? ""],
+                currency = (body.currency ?? "").trim().toUpperCase();
+              if (!name || !country || !/^[A-Z]{3}$/.test(currency))
+                return resp(
+                  { error: "Restaurant name, supported country, and ISO currency are required." },
+                  400,
+                );
+              const metadata = {
+                contact_email: (body.contact_email ?? "").trim() || null,
+                contact_phone: (body.contact_phone ?? "").trim() || null,
+                description: (body.description ?? "").trim() || null,
+              };
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_restaurant_workspaces")
+                .upsert(
+                  {
+                    account_id: merchant_id,
+                    name,
+                    country_code: country.code,
+                    currency,
+                    industry: "restaurant",
+                    timezone: country.timezone,
+                    metadata,
+                    updated_at: new Date().toISOString(),
+                  },
+                  { onConflict: "account_id" },
+                )
+                .select("account_id,name,country_code,currency,industry,timezone,active,metadata")
+                .single();
+              if (error) throw error;
+              return resp({ ok: true, workspace: data }, 200);
             }
-            return resp({error:"Unsupported restaurant workspace action."},400);
+            return resp({ error: "Unsupported restaurant workspace action." }, 400);
           }
 
           if (platform === "locations") {
             if (body.action === "list") {
-              const { data, error } = await (supabaseAdmin as any).from("ps_enterprise_entities").select("id,name,external_id,country_code,currency,active,metadata").eq("account_id", merchant_id).eq("entity_type", "branch").order("created_at");
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_enterprise_entities")
+                .select("id,name,external_id,country_code,currency,active,metadata")
+                .eq("account_id", merchant_id)
+                .eq("entity_type", "branch")
+                .order("created_at");
               if (error) throw error;
-              return resp({ ok:true, locations:(data ?? []).map((row:any)=>({id:row.id,name:row.name,external_id:row.external_id,city:String(row.metadata?.city??""),region:String(row.metadata?.region??""),country_code:row.country_code,currency:row.currency,active:row.active})) }, 200);
+              return resp(
+                {
+                  ok: true,
+                  locations: (data ?? []).map((row: any) => ({
+                    id: row.id,
+                    name: row.name,
+                    external_id: row.external_id,
+                    city: String(row.metadata?.city ?? ""),
+                    region: String(row.metadata?.region ?? ""),
+                    country_code: row.country_code,
+                    currency: row.currency,
+                    active: row.active,
+                  })),
+                },
+                200,
+              );
             }
             if (body.action === "create") {
-              const name=(body.name ?? "").trim().slice(0,160),city=(body.city ?? "").trim().slice(0,120),region=(body.region ?? "").trim(),externalId=(body.external_id??body.pos_external_id??crypto.randomUUID()).trim().slice(0,160);
-              if (!name || !city || !["Qatar","Saudi Arabia","UAE","Kuwait","Bahrain","Oman"].includes(region)) return resp({error:"Name, city, and a supported region are required."},400);
-              const locale:Record<string,{country:string;currency:string;timezone:string}>={"Qatar":{country:"QA",currency:"QAR",timezone:"Asia/Qatar"},"Saudi Arabia":{country:"SA",currency:"SAR",timezone:"Asia/Riyadh"},"UAE":{country:"AE",currency:"AED",timezone:"Asia/Dubai"},"Kuwait":{country:"KW",currency:"KWD",timezone:"Asia/Kuwait"},"Bahrain":{country:"BH",currency:"BHD",timezone:"Asia/Bahrain"},"Oman":{country:"OM",currency:"OMR",timezone:"Asia/Muscat"}};
-              const details=locale[region];
-              const {data,error}=await (supabaseAdmin as any).from("ps_enterprise_entities").insert({account_id:merchant_id,entity_type:"branch",external_id:externalId,name,country_code:details.country,currency:details.currency,timezone:details.timezone,active:true,metadata:{city,region,pos_external_id:body.pos_external_id||null}}).select("id,name,external_id,country_code,currency,active,metadata").single();
-              if(error)throw error;
-              return resp({ok:true,location:{id:data.id,name:data.name,external_id:data.external_id,city:data.metadata?.city??city,region:data.metadata?.region??region,country_code:data.country_code,currency:data.currency,active:data.active}},200);
+              const name = (body.name ?? "").trim().slice(0, 160),
+                city = (body.city ?? "").trim().slice(0, 120),
+                region = (body.region ?? "").trim(),
+                externalId = (body.external_id ?? body.pos_external_id ?? crypto.randomUUID())
+                  .trim()
+                  .slice(0, 160);
+              if (
+                !name ||
+                !city ||
+                !["Qatar", "Saudi Arabia", "UAE", "Kuwait", "Bahrain", "Oman"].includes(region)
+              )
+                return resp({ error: "Name, city, and a supported region are required." }, 400);
+              const locale: Record<
+                string,
+                { country: string; currency: string; timezone: string }
+              > = {
+                Qatar: { country: "QA", currency: "QAR", timezone: "Asia/Qatar" },
+                "Saudi Arabia": { country: "SA", currency: "SAR", timezone: "Asia/Riyadh" },
+                UAE: { country: "AE", currency: "AED", timezone: "Asia/Dubai" },
+                Kuwait: { country: "KW", currency: "KWD", timezone: "Asia/Kuwait" },
+                Bahrain: { country: "BH", currency: "BHD", timezone: "Asia/Bahrain" },
+                Oman: { country: "OM", currency: "OMR", timezone: "Asia/Muscat" },
+              };
+              const details = locale[region];
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_enterprise_entities")
+                .insert({
+                  account_id: merchant_id,
+                  entity_type: "branch",
+                  external_id: externalId,
+                  name,
+                  country_code: details.country,
+                  currency: details.currency,
+                  timezone: details.timezone,
+                  active: true,
+                  metadata: { city, region, pos_external_id: body.pos_external_id || null },
+                })
+                .select("id,name,external_id,country_code,currency,active,metadata")
+                .single();
+              if (error) throw error;
+              return resp(
+                {
+                  ok: true,
+                  location: {
+                    id: data.id,
+                    name: data.name,
+                    external_id: data.external_id,
+                    city: data.metadata?.city ?? city,
+                    region: data.metadata?.region ?? region,
+                    country_code: data.country_code,
+                    currency: data.currency,
+                    active: data.active,
+                  },
+                },
+                200,
+              );
             }
             if (body.action === "toggle") {
-              const {data,error}=await (supabaseAdmin as any).from("ps_enterprise_entities").update({active:body.active==="true",updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("entity_type","branch").eq("id",body.id).select("id,name,external_id,country_code,currency,active,metadata").maybeSingle();
-              if(error)throw error;
-              if(!data)return resp({error:"Location not found."},404);
-              return resp({ok:true,location:{id:data.id,name:data.name,external_id:data.external_id,city:data.metadata?.city??"",region:data.metadata?.region??"",country_code:data.country_code,currency:data.currency,active:data.active}},200);
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_enterprise_entities")
+                .update({ active: body.active === "true", updated_at: new Date().toISOString() })
+                .eq("account_id", merchant_id)
+                .eq("entity_type", "branch")
+                .eq("id", body.id)
+                .select("id,name,external_id,country_code,currency,active,metadata")
+                .maybeSingle();
+              if (error) throw error;
+              if (!data) return resp({ error: "Location not found." }, 404);
+              return resp(
+                {
+                  ok: true,
+                  location: {
+                    id: data.id,
+                    name: data.name,
+                    external_id: data.external_id,
+                    city: data.metadata?.city ?? "",
+                    region: data.metadata?.region ?? "",
+                    country_code: data.country_code,
+                    currency: data.currency,
+                    active: data.active,
+                  },
+                },
+                200,
+              );
             }
             if (body.action === "delete") {
               // Branch identities are historical dimensions. Deactivation is
               // the only safe delete semantics once financial evidence exists.
-              const {error}=await (supabaseAdmin as any).from("ps_enterprise_entities").update({active:false,updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("entity_type","branch").eq("id",body.id);
-              if(error)throw error;
-              return resp({ok:true},200);
+              const { error } = await (supabaseAdmin as any)
+                .from("ps_enterprise_entities")
+                .update({ active: false, updated_at: new Date().toISOString() })
+                .eq("account_id", merchant_id)
+                .eq("entity_type", "branch")
+                .eq("id", body.id);
+              if (error) throw error;
+              return resp({ ok: true }, 200);
             }
-            return resp({error:"Unsupported location action."},400);
+            return resp({ error: "Unsupported location action." }, 400);
           }
 
           if (platform === "branch_assignments") {
             if (body.action === "list") {
-              const {data,error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").select("id,branch_id,platform,external_branch_id,pos_external_id,active,created_at").eq("account_id",merchant_id).order("created_at");
-              if(error)throw error;
-              return resp({ok:true,assignments:data??[]},200);
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_branch_channel_assignments")
+                .select(
+                  "id,branch_id,platform,external_branch_id,pos_external_id,active,created_at",
+                )
+                .eq("account_id", merchant_id)
+                .order("created_at");
+              if (error) throw error;
+              return resp({ ok: true, assignments: data ?? [] }, 200);
             }
-            if(body.action === "save"){
-              const branchId=(body.branch_id??"").trim(),channel=(body.channel??"").trim().toLowerCase(),externalBranchId=(body.external_branch_id??"").trim(),posExternalId=(body.pos_external_id??"").trim()||null;
-              if(!branchId||!channel||!externalBranchId)return resp({error:"Branch, channel and external branch ID are required."},400);
-              const {data:branch,error:branchError}=await (supabaseAdmin as any).from("ps_enterprise_entities").select("id").eq("account_id",merchant_id).eq("entity_type","branch").eq("id",branchId).maybeSingle();
-              if(branchError)throw branchError;if(!branch)return resp({error:"Branch not found in this restaurant workspace."},404);
-              const {data,error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").upsert({account_id:merchant_id,branch_id:branchId,platform:channel,external_branch_id:externalBranchId,pos_external_id:posExternalId,active:true,updated_at:new Date().toISOString()},{onConflict:"account_id,branch_id,platform"}).select("id,branch_id,platform,external_branch_id,pos_external_id,active,created_at").single();
-              if(error)throw error;return resp({ok:true,assignment:data},200);
+            if (body.action === "save") {
+              const branchId = (body.branch_id ?? "").trim(),
+                channel = (body.channel ?? "").trim().toLowerCase(),
+                externalBranchId = (body.external_branch_id ?? "").trim(),
+                posExternalId = (body.pos_external_id ?? "").trim() || null;
+              if (!branchId || !channel || !externalBranchId)
+                return resp({ error: "Branch, channel and external branch ID are required." }, 400);
+              const { data: branch, error: branchError } = await (supabaseAdmin as any)
+                .from("ps_enterprise_entities")
+                .select("id")
+                .eq("account_id", merchant_id)
+                .eq("entity_type", "branch")
+                .eq("id", branchId)
+                .maybeSingle();
+              if (branchError) throw branchError;
+              if (!branch)
+                return resp({ error: "Branch not found in this restaurant workspace." }, 404);
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_branch_channel_assignments")
+                .upsert(
+                  {
+                    account_id: merchant_id,
+                    branch_id: branchId,
+                    platform: channel,
+                    external_branch_id: externalBranchId,
+                    pos_external_id: posExternalId,
+                    active: true,
+                    updated_at: new Date().toISOString(),
+                  },
+                  { onConflict: "account_id,branch_id,platform" },
+                )
+                .select(
+                  "id,branch_id,platform,external_branch_id,pos_external_id,active,created_at",
+                )
+                .single();
+              if (error) throw error;
+              return resp({ ok: true, assignment: data }, 200);
             }
-            if(body.action === "delete"){
-              const {error}=await (supabaseAdmin as any).from("ps_branch_channel_assignments").update({active:false,updated_at:new Date().toISOString()}).eq("account_id",merchant_id).eq("id",body.id);
-              if(error)throw error;return resp({ok:true},200);
+            if (body.action === "delete") {
+              const { error } = await (supabaseAdmin as any)
+                .from("ps_branch_channel_assignments")
+                .update({ active: false, updated_at: new Date().toISOString() })
+                .eq("account_id", merchant_id)
+                .eq("id", body.id);
+              if (error) throw error;
+              return resp({ ok: true }, 200);
             }
-            return resp({error:"Unsupported branch assignment action."},400);
+            return resp({ error: "Unsupported branch assignment action." }, 400);
           }
 
           if (platform === "notification_preferences") {
-            const allowed = new Set(["margin_breach","reprice_applied","channel_down","competitor_drop","promo_overlap","weekly_digest"]);
+            const allowed = new Set([
+              "margin_breach",
+              "reprice_applied",
+              "channel_down",
+              "competitor_drop",
+              "promo_overlap",
+              "weekly_digest",
+            ]);
             if (body.action === "list") {
-              const { data, error } = await supabaseAdmin.from("ps_merchant_notification_settings").select("pref_key,enabled").eq("account_id", merchant_id);
+              const { data, error } = await supabaseAdmin
+                .from("ps_merchant_notification_settings")
+                .select("pref_key,enabled")
+                .eq("account_id", merchant_id);
               if (error) throw error;
-              return resp({ ok:true, preferences:data ?? [] }, 200);
+              return resp({ ok: true, preferences: data ?? [] }, 200);
             }
             if (body.action === "set") {
-              if (!allowed.has(body.pref_key ?? "") || !["true","false"].includes(body.enabled ?? "")) return resp({ error:"A valid notification preference and enabled value are required." }, 400);
-              const { data, error } = await supabaseAdmin.from("ps_merchant_notification_settings")
-                .upsert({ account_id:merchant_id, pref_key:body.pref_key, enabled:body.enabled === "true" }, { onConflict:"account_id,pref_key" })
-                .select("pref_key,enabled").single();
+              if (
+                !allowed.has(body.pref_key ?? "") ||
+                !["true", "false"].includes(body.enabled ?? "")
+              )
+                return resp(
+                  { error: "A valid notification preference and enabled value are required." },
+                  400,
+                );
+              const { data, error } = await supabaseAdmin
+                .from("ps_merchant_notification_settings")
+                .upsert(
+                  {
+                    account_id: merchant_id,
+                    pref_key: body.pref_key,
+                    enabled: body.enabled === "true",
+                  },
+                  { onConflict: "account_id,pref_key" },
+                )
+                .select("pref_key,enabled")
+                .single();
               if (error) throw error;
-              return resp({ ok:true, preference:data }, 200);
+              return resp({ ok: true, preference: data }, 200);
             }
-            return resp({ error:"Unsupported notification preference action." }, 400);
+            return resp({ error: "Unsupported notification preference action." }, 400);
           }
 
-          if(platform === "alert_rules"){
-            if(body.action==="list"){
-              const {data,error}=await (supabaseAdmin as any).from("ps_alert_rules").select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").eq("account_id",merchant_id).order("created_at");
-              if(error)throw error;return resp({ok:true,rules:data??[]},200);
+          if (platform === "alert_rules") {
+            if (body.action === "list") {
+              const { data, error } = await (supabaseAdmin as any)
+                .from("ps_alert_rules")
+                .select(
+                  "id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at",
+                )
+                .eq("account_id", merchant_id)
+                .order("created_at");
+              if (error) throw error;
+              return resp({ ok: true, rules: data ?? [] }, 200);
             }
-            if(body.action==="save"){
-              const metric=body.metric??"",operator=body.operator??"",severity=body.severity??"",threshold=Number(body.threshold),name=(body.name??"").trim().slice(0,160);
-              if(!name||!["gross_sales","contribution","payout_variance","margin","recoverable_amount"].includes(metric)||!["gt","gte","lt","lte"].includes(operator)||!["info","warning","critical"].includes(severity)||!Number.isFinite(threshold))return resp({error:"Name, metric, comparison, threshold, and severity are required."},400);
-              const row={account_id:merchant_id,name,metric,operator,threshold,severity,platform:(body.scope_platform??"").trim()||null,branch_external_id:(body.branch_external_id??"").trim()||null,enabled:body.enabled!=="false",updated_at:new Date().toISOString()};
-              const query=body.id?(supabaseAdmin as any).from("ps_alert_rules").update(row).eq("account_id",merchant_id).eq("id",body.id):(supabaseAdmin as any).from("ps_alert_rules").insert(row);
-              const {data,error}=await query.select("id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at").single();if(error)throw error;return resp({ok:true,rule:data},200);
+            if (body.action === "save") {
+              const metric = body.metric ?? "",
+                operator = body.operator ?? "",
+                severity = body.severity ?? "",
+                threshold = Number(body.threshold),
+                name = (body.name ?? "").trim().slice(0, 160);
+              if (
+                !name ||
+                ![
+                  "gross_sales",
+                  "contribution",
+                  "payout_variance",
+                  "margin",
+                  "recoverable_amount",
+                ].includes(metric) ||
+                !["gt", "gte", "lt", "lte"].includes(operator) ||
+                !["info", "warning", "critical"].includes(severity) ||
+                !Number.isFinite(threshold)
+              )
+                return resp(
+                  { error: "Name, metric, comparison, threshold, and severity are required." },
+                  400,
+                );
+              const row = {
+                account_id: merchant_id,
+                name,
+                metric,
+                operator,
+                threshold,
+                severity,
+                platform: (body.scope_platform ?? "").trim() || null,
+                branch_external_id: (body.branch_external_id ?? "").trim() || null,
+                enabled: body.enabled !== "false",
+                updated_at: new Date().toISOString(),
+              };
+              const query = body.id
+                ? (supabaseAdmin as any)
+                    .from("ps_alert_rules")
+                    .update(row)
+                    .eq("account_id", merchant_id)
+                    .eq("id", body.id)
+                : (supabaseAdmin as any).from("ps_alert_rules").insert(row);
+              const { data, error } = await query
+                .select(
+                  "id,name,metric,operator,threshold,severity,platform,branch_external_id,enabled,created_at,updated_at",
+                )
+                .single();
+              if (error) throw error;
+              return resp({ ok: true, rule: data }, 200);
             }
-            if(body.action==="delete"){
-              const {error}=await (supabaseAdmin as any).from("ps_alert_rules").delete().eq("account_id",merchant_id).eq("id",body.id);if(error)throw error;return resp({ok:true},200);
+            if (body.action === "delete") {
+              const { error } = await (supabaseAdmin as any)
+                .from("ps_alert_rules")
+                .delete()
+                .eq("account_id", merchant_id)
+                .eq("id", body.id);
+              if (error) throw error;
+              return resp({ ok: true }, 200);
             }
-            return resp({error:"Unsupported alert rule action."},400);
+            return resp({ error: "Unsupported alert rule action." }, 400);
           }
 
-          if(platform==="merchant_experience"){
-            if(body.action==="get")return resp({ok:true,...await getMerchantExperience(merchant_id),manager:await getStoreManager(merchant_id)},200);
-            if(body.action==="attention"){
-              if(!body.id||!["resolve","dismiss","assign","request_approval","snooze"].includes(body.attention_action))return resp({error:"Attention item and valid action are required."},400);
-              return resp({ok:true,item:await updateAttention(merchant_id,{id:body.id,action:body.attention_action,value:body.value})},200);
-            }
-            if(body.action==="settings")return resp({ok:true,settings:await saveExperienceSettings(merchant_id,{automationLevel:body.automation_level,weeklyReview:body.weekly_review_enabled!=="false",progressiveMode:body.progressive_mode!=="false"})},200);
-            if(body.action==="track"){await trackMerchantEngagement(merchant_id,body.event_name,body.object_id);return resp({ok:true},200);}
-            if(body.action==="manager_profile")return resp({ok:true,profile:await saveStoreManagerProfile(merchant_id,{operatingMode:body.operating_mode,dailyBriefEnabled:body.daily_brief_enabled!=="false",dailyBriefHour:Number(body.daily_brief_hour),timezone:body.timezone||"Asia/Riyadh",language:body.language||"en"})},200);
-            if(body.action==="manager_policy")return resp({ok:true,policy:await saveStoreManagerPolicy(merchant_id,{key:body.policy_key,enabled:body.enabled!=="false",behavior:body.behavior,description:body.description||body.policy_key,config:{approval_required:body.approval_required!=="false"}})},200);
-            if(body.action==="manager_task_create"){const raw=body as unknown as Record<string,unknown>;return resp({ok:true,task:await createStoreManagerTask(merchant_id,{title:body.title,detail:body.detail,taskType:body.task_type,priority:body.priority,dueAt:body.due_at,approvalRequired:body.approval_required!=="false",riskLevel:String(raw.risk_level??"read_only"),workflow:raw.workflow&&typeof raw.workflow==="object"?raw.workflow as Record<string,unknown>:undefined})},200);}
-            if(body.action==="manager_task_transition")return resp({ok:true,task:await transitionStoreManagerTask(merchant_id,{id:body.id,toStatus:body.to_status,actor:body.actor||"Merchant",note:body.value})},200);
-            return resp({error:"Unsupported merchant experience action."},400);
-          }
-
-          if(platform==="copilot_threads"){
-            const raw=body as unknown as Record<string,unknown>;
-            if(body.action==="list")return resp({ok:true,...await listCopilotConversations(merchant_id)},200);
-            if(body.action==="get")return resp({ok:true,...await getCopilotConversation(merchant_id,body.id)},200);
-            if(body.action==="create")return resp({ok:true,...await createCopilotConversation(merchant_id,body.title||"PrizeSkout conversation",raw.context&&typeof raw.context==="object"?raw.context as Record<string,unknown>:undefined)},200);
-            if(body.action==="message")return resp({ok:true,...await addCopilotMessage(merchant_id,{conversationId:body.id,role:body.role,content:body.content,messageType:body.message_type,taskId:body.task_id||null,metadata:raw.metadata&&typeof raw.metadata==="object"?raw.metadata as Record<string,unknown>:undefined})},200);
-            if(body.action==="link_task")return resp({ok:true,...await linkCopilotTask(merchant_id,body.id,body.task_id)},200);
-            if(body.action==="archive")return resp({ok:true,...await archiveCopilotConversation(merchant_id,body.id)},200);
-            return resp({error:"Unsupported Copilot conversation action."},400);
-          }
-
-          if(platform==="competitor_radar"){
-            if(body.action==="list"){
-              const [{data:targets,error:targetError},{data:scrapes,error:scrapeError}]=await Promise.all([
-                (supabaseAdmin.from("competitor_product_urls") as any).select("id,product,competitor,url,category,channel,match_status,match_confidence,created_at,updated_at").eq("user_id",merchant_id).order("created_at",{ascending:false}),
-                (supabaseAdmin.from("competitor_scrapes") as any).select("url,price,currency,availability,status,scraped_at,evidence,error").eq("user_id",merchant_id).order("scraped_at",{ascending:false}).limit(500),
+          if (platform === "merchant_experience") {
+            if (body.action === "get") {
+              const [experience, manager] = await Promise.all([
+                getMerchantExperience(merchant_id),
+                getStoreManager(merchant_id),
               ]);
-              if(targetError)throw targetError;if(scrapeError)throw scrapeError;
-              const latest=new Map<string,Record<string,unknown>>();for(const row of scrapes??[])if(!latest.has(row.url))latest.set(row.url,row);
-              return resp({ok:true,targets:(targets??[]).map((target:Record<string,unknown>)=>({...target,latest_scrape:latest.get(String(target.url))??null}))},200);
+              return resp({ ok: true, ...experience, manager }, 200);
             }
-            if(body.action==="add"){
-              const product=(body.product??"").trim(),competitor=(body.competitor??"").trim(),channel=(body.channel??"online").trim().toLowerCase(),category=(body.category??"").trim()||null;
-              if(!product||!competitor)return resp({error:"Product and competitor names are required."},400);
-              let parsed:URL;try{parsed=new URL(body.url??"");}catch{return resp({error:"Enter a valid public HTTPS product URL."},400);}
-              if(parsed.protocol!=="https:"||/^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(parsed.hostname))return resp({error:"Enter a public HTTPS product URL."},400);
-              if(!/^[a-z0-9][a-z0-9_-]{1,39}$/.test(channel))return resp({error:"Channel must use letters, numbers, hyphens, or underscores."},400);
-              const {data,error}=await (supabaseAdmin.from("competitor_product_urls") as any).insert({user_id:merchant_id,product:product.slice(0,240),competitor:competitor.slice(0,120),url:parsed.toString(),category,channel,match_status:"manual_confirmed",match_confidence:1}).select("id,product,competitor,url,category,channel,match_status,match_confidence,created_at").single();
-              if(error){if(error.code==="23505")return resp({error:"That competitor product is already tracked in this channel."},409);throw error;}return resp({ok:true,target:data},200);
+            if (body.action === "attention") {
+              if (
+                !body.id ||
+                !["resolve", "dismiss", "assign", "request_approval", "snooze"].includes(
+                  body.attention_action,
+                )
+              )
+                return resp({ error: "Attention item and valid action are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  item: await updateAttention(merchant_id, {
+                    id: body.id,
+                    action: body.attention_action,
+                    value: body.value,
+                  }),
+                },
+                200,
+              );
             }
-            if(body.action==="remove"){
-              if(!body.id)return resp({error:"Tracked product ID is required."},400);
-              const {data,error}=await (supabaseAdmin.from("competitor_product_urls") as any).delete().eq("user_id",merchant_id).eq("id",body.id).select("id").maybeSingle();if(error)throw error;if(!data)return resp({error:"Tracked competitor product was not found."},404);return resp({ok:true},200);
+            if (body.action === "settings")
+              return resp(
+                {
+                  ok: true,
+                  settings: await saveExperienceSettings(merchant_id, {
+                    automationLevel: body.automation_level,
+                    weeklyReview: body.weekly_review_enabled !== "false",
+                    progressiveMode: body.progressive_mode !== "false",
+                  }),
+                },
+                200,
+              );
+            if (body.action === "track") {
+              await trackMerchantEngagement(merchant_id, body.event_name, body.object_id);
+              return resp({ ok: true }, 200);
             }
-            if(body.action==="refresh"){
-              if(!body.id)return resp({error:"Tracked product ID is required."},400);
-              const {data:target,error}=await (supabaseAdmin.from("competitor_product_urls") as any).select("id,product,competitor,url,channel,match_confidence").eq("user_id",merchant_id).eq("id",body.id).maybeSingle();if(error)throw error;if(!target)return resp({error:"Tracked competitor product was not found."},404);
-              const result=await runScrape(supabaseAdmin,{userId:merchant_id,url:target.url,product:target.product,competitor:target.competitor,channel:target.channel,matchConfidence:Number(target.match_confidence??1)},{maxAttempts:1,timeoutMs:60_000});
-              return result.ok?resp({ok:true,status:"completed",scrape:{url:result.url,price:result.price,currency:result.currency}},200):resp({error:result.error},502);
+            if (body.action === "manager_profile")
+              return resp(
+                {
+                  ok: true,
+                  profile: await saveStoreManagerProfile(merchant_id, {
+                    operatingMode: body.operating_mode,
+                    dailyBriefEnabled: body.daily_brief_enabled !== "false",
+                    dailyBriefHour: Number(body.daily_brief_hour),
+                    timezone: body.timezone || "Asia/Riyadh",
+                    language: body.language || "en",
+                  }),
+                },
+                200,
+              );
+            if (body.action === "manager_policy")
+              return resp(
+                {
+                  ok: true,
+                  policy: await saveStoreManagerPolicy(merchant_id, {
+                    key: body.policy_key,
+                    enabled: body.enabled !== "false",
+                    behavior: body.behavior,
+                    description: body.description || body.policy_key,
+                    config: { approval_required: body.approval_required !== "false" },
+                  }),
+                },
+                200,
+              );
+            if (body.action === "manager_task_create") {
+              const raw = body as unknown as Record<string, unknown>;
+              return resp(
+                {
+                  ok: true,
+                  task: await createStoreManagerTask(merchant_id, {
+                    title: body.title,
+                    detail: body.detail,
+                    taskType: body.task_type,
+                    priority: body.priority,
+                    dueAt: body.due_at,
+                    approvalRequired: body.approval_required !== "false",
+                    riskLevel: String(raw.risk_level ?? "read_only"),
+                    workflow:
+                      raw.workflow && typeof raw.workflow === "object"
+                        ? (raw.workflow as Record<string, unknown>)
+                        : undefined,
+                  }),
+                },
+                200,
+              );
             }
-            return resp({error:"Unsupported Competitor Radar action."},400);
+            if (body.action === "manager_task_transition")
+              return resp(
+                {
+                  ok: true,
+                  task: await transitionStoreManagerTask(merchant_id, {
+                    id: body.id,
+                    toStatus: body.to_status,
+                    actor: body.actor || "Merchant",
+                    note: body.value,
+                  }),
+                },
+                200,
+              );
+            return resp({ error: "Unsupported merchant experience action." }, 400);
+          }
+
+          if (platform === "copilot_threads") {
+            const raw = body as unknown as Record<string, unknown>;
+            if (body.action === "list")
+              return resp({ ok: true, ...(await listCopilotConversations(merchant_id)) }, 200);
+            if (body.action === "get")
+              return resp(
+                { ok: true, ...(await getCopilotConversation(merchant_id, body.id)) },
+                200,
+              );
+            if (body.action === "create")
+              return resp(
+                {
+                  ok: true,
+                  ...(await createCopilotConversation(
+                    merchant_id,
+                    body.title || "PrizeSkout conversation",
+                    raw.context && typeof raw.context === "object"
+                      ? (raw.context as Record<string, unknown>)
+                      : undefined,
+                  )),
+                },
+                200,
+              );
+            if (body.action === "message")
+              return resp(
+                {
+                  ok: true,
+                  ...(await addCopilotMessage(merchant_id, {
+                    conversationId: body.id,
+                    role: body.role,
+                    content: body.content,
+                    messageType: body.message_type,
+                    taskId: body.task_id || null,
+                    metadata:
+                      raw.metadata && typeof raw.metadata === "object"
+                        ? (raw.metadata as Record<string, unknown>)
+                        : undefined,
+                  })),
+                },
+                200,
+              );
+            if (body.action === "link_task")
+              return resp(
+                { ok: true, ...(await linkCopilotTask(merchant_id, body.id, body.task_id)) },
+                200,
+              );
+            if (body.action === "archive")
+              return resp(
+                { ok: true, ...(await archiveCopilotConversation(merchant_id, body.id)) },
+                200,
+              );
+            return resp({ error: "Unsupported Copilot conversation action." }, 400);
+          }
+
+          if (platform === "competitor_radar") {
+            if (body.action === "list") {
+              const [{ data: targets, error: targetError }, { data: scrapes, error: scrapeError }] =
+                await Promise.all([
+                  (supabaseAdmin.from("competitor_product_urls") as any)
+                    .select(
+                      "id,product,competitor,url,category,channel,match_status,match_confidence,created_at,updated_at",
+                    )
+                    .eq("user_id", merchant_id)
+                    .order("created_at", { ascending: false }),
+                  (supabaseAdmin.from("competitor_scrapes") as any)
+                    .select("url,price,currency,availability,status,scraped_at,evidence,error")
+                    .eq("user_id", merchant_id)
+                    .order("scraped_at", { ascending: false })
+                    .limit(500),
+                ]);
+              if (targetError) throw targetError;
+              if (scrapeError) throw scrapeError;
+              const latest = new Map<string, Record<string, unknown>>();
+              for (const row of scrapes ?? []) if (!latest.has(row.url)) latest.set(row.url, row);
+              return resp(
+                {
+                  ok: true,
+                  targets: (targets ?? []).map((target: Record<string, unknown>) => ({
+                    ...target,
+                    latest_scrape: latest.get(String(target.url)) ?? null,
+                  })),
+                },
+                200,
+              );
+            }
+            if (body.action === "add") {
+              const product = (body.product ?? "").trim(),
+                competitor = (body.competitor ?? "").trim(),
+                channel = (body.channel ?? "online").trim().toLowerCase(),
+                category = (body.category ?? "").trim() || null;
+              if (!product || !competitor)
+                return resp({ error: "Product and competitor names are required." }, 400);
+              let parsed: URL;
+              try {
+                parsed = new URL(body.url ?? "");
+              } catch {
+                return resp({ error: "Enter a valid public HTTPS product URL." }, 400);
+              }
+              if (
+                parsed.protocol !== "https:" ||
+                /^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(
+                  parsed.hostname,
+                )
+              )
+                return resp({ error: "Enter a public HTTPS product URL." }, 400);
+              if (!/^[a-z0-9][a-z0-9_-]{1,39}$/.test(channel))
+                return resp(
+                  { error: "Channel must use letters, numbers, hyphens, or underscores." },
+                  400,
+                );
+              const { data, error } = await (supabaseAdmin.from("competitor_product_urls") as any)
+                .insert({
+                  user_id: merchant_id,
+                  product: product.slice(0, 240),
+                  competitor: competitor.slice(0, 120),
+                  url: parsed.toString(),
+                  category,
+                  channel,
+                  match_status: "manual_confirmed",
+                  match_confidence: 1,
+                })
+                .select(
+                  "id,product,competitor,url,category,channel,match_status,match_confidence,created_at",
+                )
+                .single();
+              if (error) {
+                if (error.code === "23505")
+                  return resp(
+                    { error: "That competitor product is already tracked in this channel." },
+                    409,
+                  );
+                throw error;
+              }
+              return resp({ ok: true, target: data }, 200);
+            }
+            if (body.action === "remove") {
+              if (!body.id) return resp({ error: "Tracked product ID is required." }, 400);
+              const { data, error } = await (supabaseAdmin.from("competitor_product_urls") as any)
+                .delete()
+                .eq("user_id", merchant_id)
+                .eq("id", body.id)
+                .select("id")
+                .maybeSingle();
+              if (error) throw error;
+              if (!data) return resp({ error: "Tracked competitor product was not found." }, 404);
+              return resp({ ok: true }, 200);
+            }
+            if (body.action === "refresh") {
+              if (!body.id) return resp({ error: "Tracked product ID is required." }, 400);
+              const { data: target, error } = await (
+                supabaseAdmin.from("competitor_product_urls") as any
+              )
+                .select("id,product,competitor,url,channel,match_confidence")
+                .eq("user_id", merchant_id)
+                .eq("id", body.id)
+                .maybeSingle();
+              if (error) throw error;
+              if (!target) return resp({ error: "Tracked competitor product was not found." }, 404);
+              const result = await runScrape(
+                supabaseAdmin,
+                {
+                  userId: merchant_id,
+                  url: target.url,
+                  product: target.product,
+                  competitor: target.competitor,
+                  channel: target.channel,
+                  matchConfidence: Number(target.match_confidence ?? 1),
+                },
+                { maxAttempts: 1, timeoutMs: 60_000 },
+              );
+              return result.ok
+                ? resp(
+                    {
+                      ok: true,
+                      status: "completed",
+                      scrape: { url: result.url, price: result.price, currency: result.currency },
+                    },
+                    200,
+                  )
+                : resp({ error: result.error }, 502);
+            }
+            return resp({ error: "Unsupported Competitor Radar action." }, 400);
           }
 
           if (platform === "talabat_expected_payout") {
@@ -457,7 +1229,14 @@ export const Route = createFileRoute("/api/channels/connect")({
               // or not-yet-connected platform. Not the real product
               // mechanism (see payout-csv-parser.ts header comment); doesn't
               // require that platform to be connected at all.
-              const { csv_text, pdf_text, commission_rate_pct, upload_platform, file_kind, description } = body;
+              const {
+                csv_text,
+                pdf_text,
+                commission_rate_pct,
+                upload_platform,
+                file_kind,
+                description,
+              } = body;
               const rate = Number(commission_rate_pct);
               if (!Number.isFinite(rate)) {
                 return resp({ error: "commission_rate_pct is required for an upload check." }, 400);
@@ -468,18 +1247,62 @@ export const Route = createFileRoute("/api/channels/connect")({
               // asks the LLM classifier to interpret it (see upload-
               // classifier.ts). A classification failure never fails the
               // upload itself; it's a soft-fail passenger on the response.
-              const respondWithClassification = async (result: ExpectedPayoutResult,sourceText:string,documentKind:MerchantDocumentKind,mediaType:string) => {
+              const respondWithClassification = async (
+                result: ExpectedPayoutResult,
+                sourceText: string,
+                documentKind: MerchantDocumentKind,
+                mediaType: string,
+              ) => {
                 // Shadow-only: the existing payout result remains authoritative
                 // for this request. Intake failure is recorded in logs and never
                 // changes the merchant's current upload outcome.
-                try{
-                  const contentSha256=createHash("sha256").update(sourceText).digest("hex");
-                  const intake=await registerMerchantEvidence({accountId:merchant_id,merchantId:merchant_id,sourceKind:"file_upload",sourceProvider:(result.platform||upload_platform||"unknown").toLowerCase(),sourceExternalId:`upload:${contentSha256}`,documentKind,contentSha256,mediaType,sourceMetadata:{shadow_only:true,original_bytes_retained:false,file_kind:file_kind||"csv"}});
-                  try{await appendEvidenceProcessingAttempt({evidenceItemId:intake.evidenceItemId,accountId:merchant_id,processorVersion:"legacy-payout-upload-shadow-v1",attemptNumber:intake.duplicate?2:1,state:result.ok?"accepted":"needs_review",detectedDocumentKind:documentKind,extractionSummary:{parser_ok:result.ok,platform:result.platform??upload_platform??null,period_start:result.period_start??null,period_end:result.period_end??null},limitations:["Compatibility parser retained temporarily while normalized-event parity is verified."]});}catch(error){console.warn("[merchant-evidence-shadow] compatibility attempt was already recorded",error);}
+                try {
+                  const contentSha256 = createHash("sha256").update(sourceText).digest("hex");
+                  const intake = await registerMerchantEvidence({
+                    accountId: merchant_id,
+                    merchantId: merchant_id,
+                    sourceKind: "file_upload",
+                    sourceProvider: (result.platform || upload_platform || "unknown").toLowerCase(),
+                    sourceExternalId: `upload:${contentSha256}`,
+                    documentKind,
+                    contentSha256,
+                    mediaType,
+                    sourceMetadata: {
+                      shadow_only: true,
+                      original_bytes_retained: false,
+                      file_kind: file_kind || "csv",
+                    },
+                  });
+                  try {
+                    await appendEvidenceProcessingAttempt({
+                      evidenceItemId: intake.evidenceItemId,
+                      accountId: merchant_id,
+                      processorVersion: "legacy-payout-upload-shadow-v1",
+                      attemptNumber: intake.duplicate ? 2 : 1,
+                      state: result.ok ? "accepted" : "needs_review",
+                      detectedDocumentKind: documentKind,
+                      extractionSummary: {
+                        parser_ok: result.ok,
+                        platform: result.platform ?? upload_platform ?? null,
+                        period_start: result.period_start ?? null,
+                        period_end: result.period_end ?? null,
+                      },
+                      limitations: [
+                        "Compatibility parser retained temporarily while normalized-event parity is verified.",
+                      ],
+                    });
+                  } catch (error) {
+                    console.warn(
+                      "[merchant-evidence-shadow] compatibility attempt was already recorded",
+                      error,
+                    );
+                  }
                   // The compatibility parser may preview the file, but it must
                   // not create normalized financial events. The durable
                   // evidence processor does that only after merchant review.
-                }catch(error){console.error("[merchant-evidence-shadow] payout upload intake failed",error);}
+                } catch (error) {
+                  console.error("[merchant-evidence-shadow] payout upload intake failed", error);
+                }
                 if (!result.ok) return resp({ ok: false, error: result.error }, 400);
                 // Uploaded files are previews until the merchant approves the
                 // retained extraction in Evidence & History. Do not place an
@@ -499,15 +1322,28 @@ export const Route = createFileRoute("/api/channels/connect")({
                 // see payout-pdf-parser.ts header comment for why this isn't
                 // opened up to other platforms yet.
                 if (upload_platform !== "snoonu") {
-                  return resp({ error: "PDF upload is only supported for Snoonu's Brand Performance Report right now." }, 400);
+                  return resp(
+                    {
+                      error:
+                        "PDF upload is only supported for Snoonu's Brand Performance Report right now.",
+                    },
+                    400,
+                  );
                 }
                 if (!pdf_text) {
                   return resp({ error: "pdf_text is required for a PDF upload check." }, 400);
                 }
-                return await respondWithClassification(parseSnoonuBrandReportPdf(pdf_text, rate),pdf_text,"order_summary","application/pdf");
+                return await respondWithClassification(
+                  parseSnoonuBrandReportPdf(pdf_text, rate),
+                  pdf_text,
+                  "order_summary",
+                  "application/pdf",
+                );
               }
 
-              const platformName = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(upload_platform ?? "")
+              const platformName = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(
+                upload_platform ?? "",
+              )
                 ? upload_platform
                 : "talabat";
               if (!csv_text) {
@@ -522,11 +1358,17 @@ export const Route = createFileRoute("/api/channels/connect")({
               // Keying this off `platformName` alone previously meant a
               // Talabat daily-log upload was force-routed to the statement
               // parser and hard-failed for missing statement columns.
-              const looksLikeStatement = /earnings range/i.test(csv_text) && /total payout/i.test(csv_text);
+              const looksLikeStatement =
+                /earnings range/i.test(csv_text) && /total payout/i.test(csv_text);
               const result = looksLikeStatement
                 ? parseTalabatPayoutStatementCsv(csv_text, rate)
                 : parseAggregatorDailyCsv(csv_text, rate, platformName);
-              return await respondWithClassification(result,csv_text,looksLikeStatement?"settlement_report":"order_export","text/csv");
+              return await respondWithClassification(
+                result,
+                csv_text,
+                looksLikeStatement ? "settlement_report" : "order_export",
+                "text/csv",
+              );
             }
 
             if (body.action === "manual_entry") {
@@ -543,13 +1385,18 @@ export const Route = createFileRoute("/api/channels/connect")({
                 return resp({ error: "A valid amount is required for a manual entry." }, 400);
               }
               if (!period_start || !period_end) {
-                return resp({ error: "period_start and period_end are required for a manual entry." }, 400);
+                return resp(
+                  { error: "period_start and period_end are required for a manual entry." },
+                  400,
+                );
               }
               // A merchant may confirm receipt without exposing private
               // financial-account or transaction details.
-              const confirmationDate=body.confirmation_date||period_end;
+              const confirmationDate = body.confirmation_date || period_end;
 
-              const uploadPlatform = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(body.upload_platform ?? "")
+              const uploadPlatform = (PAYOUT_UPLOAD_PLATFORMS as readonly string[]).includes(
+                body.upload_platform ?? "",
+              )
                 ? body.upload_platform
                 : undefined;
 
@@ -568,45 +1415,99 @@ export const Route = createFileRoute("/api/channels/connect")({
                 // used, and only to fill in what wasn't already selected.
                 if (outcome.ok) {
                   platformGuess = platformGuess ?? outcome.classification.platform;
-                  classification = { ok: true, restated: outcome.classification.restated, confidence: outcome.classification.confidence };
+                  classification = {
+                    ok: true,
+                    restated: outcome.classification.restated,
+                    confidence: outcome.classification.confidence,
+                  };
                 } else {
                   classification = outcome;
                 }
               }
 
-              const confirmationEvidence=JSON.stringify({
-                merchant_id,platform:platformGuess,amount:Math.round(amount*100)/100,
-                period_start,period_end,confirmation_date:confirmationDate,
-                settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null,
-                deposit_type:body.deposit_type??"regular_payout",currency:body.currency??"QAR",
-              });
-              const confirmationHash=createHash("sha256").update(confirmationEvidence).digest("hex");
-              const confirmationIntake=await registerMerchantEvidence({accountId:merchant_id,merchantId:merchant_id,sourceKind:"file_upload",sourceProvider:(platformGuess??"merchant").toLowerCase(),sourceExternalId:`confirmation:${confirmationHash}`,documentKind:"merchant_confirmation",contentSha256:confirmationHash,mediaType:"application/json",sourceMetadata:{original_bytes_retained:false,manual_assertion:true,period_start,period_end,confirmation_date:confirmationDate}});
-              if(!confirmationIntake.duplicate)await appendEvidenceProcessingAttempt({evidenceItemId:confirmationIntake.evidenceItemId,accountId:merchant_id,processorVersion:"merchant-receipt-confirmation-v1",attemptNumber:1,state:"accepted",detectedDocumentKind:"merchant_confirmation",extractionSummary:{received_amount:Math.round(amount*100)/100,currency:body.currency??"QAR",period_start,period_end,settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null},limitations:["Merchant assertion only; no bank transaction was requested or verified."]});
-
-              return resp({
-                ok: true,
-                evidence_item_id:confirmationIntake.evidenceItemId,
-                source: "manual",
-                role: "merchant_received",
-                received_amount: Math.round(amount * 100) / 100,
+              const confirmationEvidence = JSON.stringify({
+                merchant_id,
+                platform: platformGuess,
+                amount: Math.round(amount * 100) / 100,
                 period_start,
                 period_end,
-                platform: platformGuess,
                 confirmation_date: confirmationDate,
-                settlement_reference:(body.settlement_reference??"").trim().slice(0,120)||null,
+                settlement_reference:
+                  (body.settlement_reference ?? "").trim().slice(0, 120) || null,
                 deposit_type: body.deposit_type ?? "regular_payout",
                 currency: body.currency ?? "QAR",
-                evidence_level: "manual_assertion",
-                ...(classification ? { classification } : {}),
-              }, 200);
+              });
+              const confirmationHash = createHash("sha256")
+                .update(confirmationEvidence)
+                .digest("hex");
+              const confirmationIntake = await registerMerchantEvidence({
+                accountId: merchant_id,
+                merchantId: merchant_id,
+                sourceKind: "file_upload",
+                sourceProvider: (platformGuess ?? "merchant").toLowerCase(),
+                sourceExternalId: `confirmation:${confirmationHash}`,
+                documentKind: "merchant_confirmation",
+                contentSha256: confirmationHash,
+                mediaType: "application/json",
+                sourceMetadata: {
+                  original_bytes_retained: false,
+                  manual_assertion: true,
+                  period_start,
+                  period_end,
+                  confirmation_date: confirmationDate,
+                },
+              });
+              if (!confirmationIntake.duplicate)
+                await appendEvidenceProcessingAttempt({
+                  evidenceItemId: confirmationIntake.evidenceItemId,
+                  accountId: merchant_id,
+                  processorVersion: "merchant-receipt-confirmation-v1",
+                  attemptNumber: 1,
+                  state: "accepted",
+                  detectedDocumentKind: "merchant_confirmation",
+                  extractionSummary: {
+                    received_amount: Math.round(amount * 100) / 100,
+                    currency: body.currency ?? "QAR",
+                    period_start,
+                    period_end,
+                    settlement_reference:
+                      (body.settlement_reference ?? "").trim().slice(0, 120) || null,
+                  },
+                  limitations: [
+                    "Merchant assertion only; no bank transaction was requested or verified.",
+                  ],
+                });
+
+              return resp(
+                {
+                  ok: true,
+                  evidence_item_id: confirmationIntake.evidenceItemId,
+                  source: "manual",
+                  role: "merchant_received",
+                  received_amount: Math.round(amount * 100) / 100,
+                  period_start,
+                  period_end,
+                  platform: platformGuess,
+                  confirmation_date: confirmationDate,
+                  settlement_reference:
+                    (body.settlement_reference ?? "").trim().slice(0, 120) || null,
+                  deposit_type: body.deposit_type ?? "regular_payout",
+                  currency: body.currency ?? "QAR",
+                  evidence_level: "manual_assertion",
+                  ...(classification ? { classification } : {}),
+                },
+                200,
+              );
             }
 
             // Live path — pulls the merchant's real Talabat order history
             // and computes what they should have been paid, see
             // expected-payout.ts.
             const windowDays = Number(body.window_days);
-            const result = await getTalabatExpectedPayout(merchant_id, Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 30);
+            const result = await getTalabatExpectedPayout(
+              merchant_id,
+              Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 30,
+            );
             if (result.ok) await savePayoutCheck(merchant_id, result);
             return result.ok
               ? resp({ ...result, ok: true }, 200)
@@ -637,25 +1538,48 @@ export const Route = createFileRoute("/api/channels/connect")({
                 period_end: (raw.period_end as string) ?? null,
                 assurance: (raw.assurance as SavePayoutAuditInput["assurance"]) ?? null,
                 four_way: (raw.four_way as SavePayoutAuditInput["four_way"]) ?? null,
-                cross_check_windows: (raw.cross_check_windows as SavePayoutAuditInput["cross_check_windows"]) ?? null,
-                net_sales_override_docs: (raw.net_sales_override_docs as SavePayoutAuditInput["net_sales_override_docs"]) ?? null,
+                cross_check_windows:
+                  (raw.cross_check_windows as SavePayoutAuditInput["cross_check_windows"]) ?? null,
+                net_sales_override_docs:
+                  (raw.net_sales_override_docs as SavePayoutAuditInput["net_sales_override_docs"]) ??
+                  null,
               };
               const result = await savePayoutAudit(merchant_id, input);
-              let reconciliation:null|Awaited<ReturnType<typeof persistSettlementReconciliation>>=null;
-              if(result.ok&&result.id){try{reconciliation=await persistSettlementReconciliation(merchant_id,result.id,input.documents,rate,input.period_start,input.period_end);}catch(error){console.error("settlement reconciliation persistence failed",error);}}
+              let reconciliation: null | Awaited<
+                ReturnType<typeof persistSettlementReconciliation>
+              > = null;
+              if (result.ok && result.id) {
+                try {
+                  reconciliation = await persistSettlementReconciliation(
+                    merchant_id,
+                    result.id,
+                    input.documents,
+                    rate,
+                    input.period_start,
+                    input.period_end,
+                  );
+                } catch (error) {
+                  console.error("settlement reconciliation persistence failed", error);
+                }
+              }
               return result.ok
                 ? resp({ ok: true, reconciliation }, 200)
                 : resp({ ok: false, error: result.error }, 400);
             }
 
-            if (body.action === "delete_payout_check" || body.action === "delete_repricing" || body.action === "delete_payout_audit") {
+            if (
+              body.action === "delete_payout_check" ||
+              body.action === "delete_repricing" ||
+              body.action === "delete_payout_audit"
+            ) {
               const id = body.id;
               if (!id) return resp({ error: "id is required to delete a record." }, 400);
-              const result = body.action === "delete_payout_check"
-                ? await deletePayoutCheck(merchant_id, id)
-                : body.action === "delete_repricing"
-                ? await deleteRepricingEvent(merchant_id, id)
-                : await deletePayoutAudit(merchant_id, id);
+              const result =
+                body.action === "delete_payout_check"
+                  ? await deletePayoutCheck(merchant_id, id)
+                  : body.action === "delete_repricing"
+                    ? await deleteRepricingEvent(merchant_id, id)
+                    : await deletePayoutAudit(merchant_id, id);
               return result.ok
                 ? resp({ ok: true }, 200)
                 : resp({ ok: false, error: result.error }, 400);
@@ -663,11 +1587,12 @@ export const Route = createFileRoute("/api/channels/connect")({
 
             const limitRaw = Number(body.limit);
             const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 30;
-            const items = body.action === "repricings"
-              ? await getRepricingHistory(merchant_id, limit)
-              : body.action === "payout_audits"
-              ? await getAuditHistory(merchant_id, limit)
-              : await getPayoutCheckHistory(merchant_id, limit);
+            const items =
+              body.action === "repricings"
+                ? await getRepricingHistory(merchant_id, limit)
+                : body.action === "payout_audits"
+                  ? await getAuditHistory(merchant_id, limit)
+                  : await getPayoutCheckHistory(merchant_id, limit);
             return resp({ ok: true, items }, 200);
           }
 
@@ -675,8 +1600,12 @@ export const Route = createFileRoute("/api/channels/connect")({
             // Also multiplexed here, same PipeOps-routing reason as above.
             // Read-only aggregation over ps_aggregator_dispatch_log for the
             // Revenue Hub hero + stat tiles — see dashboard-stats.ts.
-            const days=Math.max(1,Math.min(365,Number(body.days)||33));
-            const stats = await getDashboardStats(merchant_id,{days,platform:(body.platform_filter??"").trim()||undefined,branch:(body.branch_filter??"").trim()||undefined});
+            const days = Math.max(1, Math.min(365, Number(body.days) || 33));
+            const stats = await getDashboardStats(merchant_id, {
+              days,
+              platform: (body.platform_filter ?? "").trim() || undefined,
+              branch: (body.branch_filter ?? "").trim() || undefined,
+            });
             return resp({ ok: true, ...stats }, 200);
           }
 
@@ -718,7 +1647,9 @@ export const Route = createFileRoute("/api/channels/connect")({
               creds: {
                 bearer_token: channel.bearer_token,
                 manager_token: channel.manager_token,
-                store_id: String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") || null,
+                store_id:
+                  String((channel.metadata as Record<string, unknown> | null)?.store_id ?? "") ||
+                  null,
               },
               accountId: merchant_id,
               licenseeId: merchant_id,
@@ -739,23 +1670,54 @@ export const Route = createFileRoute("/api/channels/connect")({
               const payment = Number(body.payment_fee_pct || 0);
               const fixed = Number(body.fixed_order_fee || 0);
               const delivery = Number(body.delivery_contribution || 0);
-              if (!body.contract_name?.trim() || !body.source_platform?.trim() || !body.effective_from) {
-                return resp({ error: "Contract name, platform, and effective date are required." }, 400);
+              if (
+                !body.contract_name?.trim() ||
+                !body.source_platform?.trim() ||
+                !body.effective_from
+              ) {
+                return resp(
+                  { error: "Contract name, platform, and effective date are required." },
+                  400,
+                );
               }
-              if (![commission, vat, payment, fixed, delivery].every(Number.isFinite) || commission < 0 || commission >= 100) {
-                return resp({ error: "Commercial terms contain an invalid amount or percentage." }, 400);
+              if (
+                ![commission, vat, payment, fixed, delivery].every(Number.isFinite) ||
+                commission < 0 ||
+                commission >= 100
+              ) {
+                return resp(
+                  { error: "Commercial terms contain an invalid amount or percentage." },
+                  400,
+                );
               }
               const optionalNumbers = [
-                body.promotion_funding_platform_pct, body.settlement_days,
-                body.settlement_weekday, body.settlement_cutoff_hour, body.settlement_reserve_days,
+                body.promotion_funding_platform_pct,
+                body.settlement_days,
+                body.settlement_weekday,
+                body.settlement_cutoff_hour,
+                body.settlement_reserve_days,
                 body.minimum_payout_threshold,
-                body.dispute_deadline_days, body.advertising_commitment, body.minimum_spend,
-              ].filter(value=>value !== "" && value != null).map(Number);
-              if (!optionalNumbers.every(value=>Number.isFinite(value)&&value>=0)
-                || (body.promotion_funding_platform_pct !== "" && Number(body.promotion_funding_platform_pct)>100)
-                || (body.settlement_weekday !== "" && body.settlement_weekday != null && Number(body.settlement_weekday)>6)
-                || (body.settlement_cutoff_hour !== "" && body.settlement_cutoff_hour != null && Number(body.settlement_cutoff_hour)>23)) {
-                return resp({ error: "An optional contract obligation contains an invalid value." }, 400);
+                body.dispute_deadline_days,
+                body.advertising_commitment,
+                body.minimum_spend,
+              ]
+                .filter((value) => value !== "" && value != null)
+                .map(Number);
+              if (
+                !optionalNumbers.every((value) => Number.isFinite(value) && value >= 0) ||
+                (body.promotion_funding_platform_pct !== "" &&
+                  Number(body.promotion_funding_platform_pct) > 100) ||
+                (body.settlement_weekday !== "" &&
+                  body.settlement_weekday != null &&
+                  Number(body.settlement_weekday) > 6) ||
+                (body.settlement_cutoff_hour !== "" &&
+                  body.settlement_cutoff_hour != null &&
+                  Number(body.settlement_cutoff_hour) > 23)
+              ) {
+                return resp(
+                  { error: "An optional contract obligation contains an invalid value." },
+                  400,
+                );
               }
               const term = await saveContractDraft(merchant_id, {
                 platform: body.source_platform.trim().toLowerCase(),
@@ -765,42 +1727,133 @@ export const Route = createFileRoute("/api/channels/connect")({
                 payment_fee_pct: payment,
                 fixed_order_fee: fixed,
                 delivery_contribution: delivery,
-                commission_base: ["gross_before_discount","net_after_discount","eligible_sales"].includes(body.commission_base)
-                  ? body.commission_base as "gross_before_discount"|"net_after_discount"|"eligible_sales"
+                commission_base: [
+                  "gross_before_discount",
+                  "net_after_discount",
+                  "eligible_sales",
+                ].includes(body.commission_base)
+                  ? (body.commission_base as
+                      | "gross_before_discount"
+                      | "net_after_discount"
+                      | "eligible_sales")
                   : "unknown",
-                promotion_funding_platform_pct: body.promotion_funding_platform_pct === "" || body.promotion_funding_platform_pct == null
-                  ? null : Number(body.promotion_funding_platform_pct),
-                refund_liability: ["merchant","platform","shared","conditional"].includes(body.refund_liability)
-                  ? body.refund_liability as "merchant"|"platform"|"shared"|"conditional" : "unknown",
-                cancellation_liability: ["merchant","platform","shared","conditional"].includes(body.cancellation_liability)
-                  ? body.cancellation_liability as "merchant"|"platform"|"shared"|"conditional" : "unknown",
+                promotion_funding_platform_pct:
+                  body.promotion_funding_platform_pct === "" ||
+                  body.promotion_funding_platform_pct == null
+                    ? null
+                    : Number(body.promotion_funding_platform_pct),
+                refund_liability: ["merchant", "platform", "shared", "conditional"].includes(
+                  body.refund_liability,
+                )
+                  ? (body.refund_liability as "merchant" | "platform" | "shared" | "conditional")
+                  : "unknown",
+                cancellation_liability: ["merchant", "platform", "shared", "conditional"].includes(
+                  body.cancellation_liability,
+                )
+                  ? (body.cancellation_liability as
+                      | "merchant"
+                      | "platform"
+                      | "shared"
+                      | "conditional")
+                  : "unknown",
                 settlement_frequency: body.settlement_frequency?.trim().slice(0, 100) || null,
-                settlement_days: body.settlement_days === "" || body.settlement_days == null ? null : Number(body.settlement_days),
-                settlement_day_basis: ["calendar_days","business_days"].includes(body.settlement_day_basis) ? body.settlement_day_basis as "calendar_days"|"business_days" : null,
-                settlement_schedule_type: ["daily","weekly","twice_monthly","monthly"].includes(body.settlement_schedule_type) ? body.settlement_schedule_type as "daily"|"weekly"|"twice_monthly"|"monthly" : null,
-                settlement_weekday: body.settlement_weekday === "" || body.settlement_weekday == null ? null : Number(body.settlement_weekday),
-                settlement_month_days: typeof body.settlement_month_days === "string" ? body.settlement_month_days.split(",").map(Number).filter(v=>Number.isInteger(v)&&v>=1&&v<=31) : [],
-                settlement_cutoff_hour: body.settlement_cutoff_hour === "" || body.settlement_cutoff_hour == null ? null : Number(body.settlement_cutoff_hour),
-                settlement_timezone: body.settlement_timezone?.trim().slice(0,100) || null,
-                settlement_weekend_days: typeof body.settlement_weekend_days === "string" ? body.settlement_weekend_days.split(",").map(Number).filter(v=>Number.isInteger(v)&&v>=0&&v<=6) : [],
-                settlement_holidays: typeof body.settlement_holidays === "string" ? body.settlement_holidays.split(",").map(v=>v.trim()).filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)) : [],
-                settlement_reserve_days: body.settlement_reserve_days === "" || body.settlement_reserve_days == null ? 0 : Number(body.settlement_reserve_days),
-                minimum_payout_threshold: body.minimum_payout_threshold === "" || body.minimum_payout_threshold == null ? null : Number(body.minimum_payout_threshold),
-                dispute_deadline_days: body.dispute_deadline_days === "" || body.dispute_deadline_days == null ? null : Number(body.dispute_deadline_days),
-                advertising_commitment: body.advertising_commitment === "" || body.advertising_commitment == null ? null : Number(body.advertising_commitment),
-                minimum_spend: body.minimum_spend === "" || body.minimum_spend == null ? null : Number(body.minimum_spend),
+                settlement_days:
+                  body.settlement_days === "" || body.settlement_days == null
+                    ? null
+                    : Number(body.settlement_days),
+                settlement_day_basis: ["calendar_days", "business_days"].includes(
+                  body.settlement_day_basis,
+                )
+                  ? (body.settlement_day_basis as "calendar_days" | "business_days")
+                  : null,
+                settlement_schedule_type: ["daily", "weekly", "twice_monthly", "monthly"].includes(
+                  body.settlement_schedule_type,
+                )
+                  ? (body.settlement_schedule_type as
+                      | "daily"
+                      | "weekly"
+                      | "twice_monthly"
+                      | "monthly")
+                  : null,
+                settlement_weekday:
+                  body.settlement_weekday === "" || body.settlement_weekday == null
+                    ? null
+                    : Number(body.settlement_weekday),
+                settlement_month_days:
+                  typeof body.settlement_month_days === "string"
+                    ? body.settlement_month_days
+                        .split(",")
+                        .map(Number)
+                        .filter((v) => Number.isInteger(v) && v >= 1 && v <= 31)
+                    : [],
+                settlement_cutoff_hour:
+                  body.settlement_cutoff_hour === "" || body.settlement_cutoff_hour == null
+                    ? null
+                    : Number(body.settlement_cutoff_hour),
+                settlement_timezone: body.settlement_timezone?.trim().slice(0, 100) || null,
+                settlement_weekend_days:
+                  typeof body.settlement_weekend_days === "string"
+                    ? body.settlement_weekend_days
+                        .split(",")
+                        .map(Number)
+                        .filter((v) => Number.isInteger(v) && v >= 0 && v <= 6)
+                    : [],
+                settlement_holidays:
+                  typeof body.settlement_holidays === "string"
+                    ? body.settlement_holidays
+                        .split(",")
+                        .map((v) => v.trim())
+                        .filter((v) => /^\d{4}-\d{2}-\d{2}$/.test(v))
+                    : [],
+                settlement_reserve_days:
+                  body.settlement_reserve_days === "" || body.settlement_reserve_days == null
+                    ? 0
+                    : Number(body.settlement_reserve_days),
+                minimum_payout_threshold:
+                  body.minimum_payout_threshold === "" || body.minimum_payout_threshold == null
+                    ? null
+                    : Number(body.minimum_payout_threshold),
+                dispute_deadline_days:
+                  body.dispute_deadline_days === "" || body.dispute_deadline_days == null
+                    ? null
+                    : Number(body.dispute_deadline_days),
+                advertising_commitment:
+                  body.advertising_commitment === "" || body.advertising_commitment == null
+                    ? null
+                    : Number(body.advertising_commitment),
+                minimum_spend:
+                  body.minimum_spend === "" || body.minimum_spend == null
+                    ? null
+                    : Number(body.minimum_spend),
                 currency: body.currency?.trim().toUpperCase().slice(0, 8) || null,
                 coverage_legal_entity: body.coverage_legal_entity?.trim().slice(0, 180) || null,
-                coverage_brands: typeof body.coverage_brands === "string" ? body.coverage_brands.split(",").map(v=>v.trim()).filter(Boolean).slice(0,100) : [],
-                coverage_branches: typeof body.coverage_branches === "string" ? body.coverage_branches.split(",").map(v=>v.trim()).filter(Boolean).slice(0,250) : [],
+                coverage_brands:
+                  typeof body.coverage_brands === "string"
+                    ? body.coverage_brands
+                        .split(",")
+                        .map((v) => v.trim())
+                        .filter(Boolean)
+                        .slice(0, 100)
+                    : [],
+                coverage_branches:
+                  typeof body.coverage_branches === "string"
+                    ? body.coverage_branches
+                        .split(",")
+                        .map((v) => v.trim())
+                        .filter(Boolean)
+                        .slice(0, 250)
+                    : [],
                 effective_from: body.effective_from,
                 effective_to: body.effective_to || null,
                 source_file_name: body.source_file_name?.trim().slice(0, 220) || null,
-                source_sha256: /^[a-f0-9]{64}$/i.test(body.source_sha256 || "") ? body.source_sha256.toLowerCase() : null,
-                notes: body.notes?.trim().slice(0, 1200) || null,
-                extraction_json: raw.extraction && typeof raw.extraction === "object"
-                  ? raw.extraction as Record<string, unknown>
+                source_sha256: /^[a-f0-9]{64}$/i.test(body.source_sha256 || "")
+                  ? body.source_sha256.toLowerCase()
                   : null,
+                notes: body.notes?.trim().slice(0, 1200) || null,
+                extraction_json:
+                  raw.extraction && typeof raw.extraction === "object"
+                    ? (raw.extraction as Record<string, unknown>)
+                    : null,
                 extraction_model: body.extraction_model?.trim().slice(0, 120) || null,
                 extraction_confidence: Number.isFinite(Number(body.extraction_confidence))
                   ? Number(body.extraction_confidence)
@@ -814,12 +1867,21 @@ export const Route = createFileRoute("/api/channels/connect")({
               const documentText = typeof raw.document_text === "string" ? raw.document_text : "";
               const documentImages = Array.isArray(raw.document_images) ? raw.document_images : [];
               if (documentText.length > 100_000) {
-                return resp({ error: "Agreement text is too large (maximum 100,000 characters)." }, 413);
+                return resp(
+                  { error: "Agreement text is too large (maximum 100,000 characters)." },
+                  413,
+                );
               }
               if (documentImages.length > 15) {
-                return resp({ error: "A maximum of 15 scanned pages can be analysed at once." }, 413);
+                return resp(
+                  { error: "A maximum of 15 scanned pages can be analysed at once." },
+                  413,
+                );
               }
-              const result = await extractContractTerms(documentText, documentImages as ContractDocumentImage[]);
+              const result = await extractContractTerms(
+                documentText,
+                documentImages as ContractDocumentImage[],
+              );
               return result.ok
                 ? resp({ ok: true, extraction: result.extraction, model: result.model }, 200)
                 : resp({ ok: false, error: result.error }, 422);
@@ -828,7 +1890,11 @@ export const Route = createFileRoute("/api/channels/connect")({
               if (!body.id || !body.reviewed_by?.trim()) {
                 return resp({ error: "Contract draft and reviewer name are required." }, 400);
               }
-              const term = await approveContractTerm(merchant_id, body.id, body.reviewed_by.trim().slice(0, 160));
+              const term = await approveContractTerm(
+                merchant_id,
+                body.id,
+                body.reviewed_by.trim().slice(0, 160),
+              );
               const { data: channel } = await supabaseAdmin
                 .from("ps_merchant_channels")
                 .select("id, metadata")
@@ -875,199 +1941,548 @@ export const Route = createFileRoute("/api/channels/connect")({
                   })
                   .eq("id", channel.id);
               }
-              const rematches=await rematchEvidenceAfterContractApproval({accountId:merchant_id,merchantId:merchant_id,platform:term.platform,contractTermId:term.id});
-              return resp({ ok: true, term, rematched_evidence:rematches.length }, 200);
+              const rematches = await rematchEvidenceAfterContractApproval({
+                accountId: merchant_id,
+                merchantId: merchant_id,
+                platform: term.platform,
+                contractTermId: term.id,
+              });
+              return resp({ ok: true, term, rematched_evidence: rematches.length }, 200);
             }
             return resp({ error: "Unsupported contract-terms action." }, 400);
           }
 
-          if(platform==="recovery_cases"){
-            if(body.action==="list")return resp({ok:true,cases:await listRecoveryCases(merchant_id)},200);
-            const raw=body as unknown as Record<string,unknown>;
-            if(body.action==="prepare_pack"){
-              if(!body.id)return resp({error:"Recovery case id is required."},400);
-              return resp({ok:true,pack:await prepareRecoveryEvidencePack(merchant_id,body.id)},200);
+          if (platform === "recovery_cases") {
+            if (body.action === "list")
+              return resp({ ok: true, cases: await listRecoveryCases(merchant_id) }, 200);
+            const raw = body as unknown as Record<string, unknown>;
+            if (body.action === "prepare_pack") {
+              if (!body.id) return resp({ error: "Recovery case id is required." }, 400);
+              return resp(
+                { ok: true, pack: await prepareRecoveryEvidencePack(merchant_id, body.id) },
+                200,
+              );
             }
-            if(body.action==="approve_pack"){
-              if(!body.pack_id||!body.approved_by?.trim())return resp({error:"Evidence pack and approver name are required."},400);
-              return resp({ok:true,approval:await approveRecoveryEvidencePack(merchant_id,body.pack_id,body.approved_by)},200);
+            if (body.action === "approve_pack") {
+              if (!body.pack_id || !body.approved_by?.trim())
+                return resp({ error: "Evidence pack and approver name are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  approval: await approveRecoveryEvidencePack(
+                    merchant_id,
+                    body.pack_id,
+                    body.approved_by,
+                  ),
+                },
+                200,
+              );
             }
-            if(body.action==="get_pack"){
-              if(!body.pack_id)return resp({error:"Evidence pack id is required."},400);
-              return resp({ok:true,pack:await getRecoveryEvidencePack(merchant_id,body.pack_id)},200);
+            if (body.action === "get_pack") {
+              if (!body.pack_id) return resp({ error: "Evidence pack id is required." }, 400);
+              return resp(
+                { ok: true, pack: await getRecoveryEvidencePack(merchant_id, body.pack_id) },
+                200,
+              );
             }
-            if(body.action==="create"){
-              if(!body.exception_key||!body.title||!body.explanation_en||!body.explanation_ar)return resp({error:"Exception identity and bilingual explanations are required."},400);
-              const exceptionAmount=raw.exception_amount==null?null:Number(raw.exception_amount);
-              const claimsReady=Number(raw.claims_ready_amount??0);
-              const recovered=Number(raw.recovered_amount??0);
-              if((exceptionAmount!=null&&!Number.isFinite(exceptionAmount))||![claimsReady,recovered].every(Number.isFinite))return resp({error:"Recovery case contains an invalid amount."},400);
-              const item=await createRecoveryCase(merchant_id,{
-                platform:(body.source_platform||"talabat").toLowerCase(),exception_key:body.exception_key.slice(0,180),title:body.title.slice(0,240),
-                status:body.case_status==="ready"?"ready":"evidence_required",severity:body.severity||"warning",
-                exception_amount:exceptionAmount,claims_ready_amount:claimsReady,confidence:body.confidence||"low",
-                affected_orders:raw.affected_orders==null?null:Number(raw.affected_orders),
-                contract_term_id:body.contract_term_id||null,contract_clause:body.contract_clause?.slice(0,500)||null,
-                regulatory_reference:body.regulatory_reference?.slice(0,500)||null,
-                evidence_sources:Array.isArray(raw.evidence_sources)?raw.evidence_sources.filter(v=>typeof v==="string").slice(0,50) as string[]:[],
-                calculation:raw.calculation&&typeof raw.calculation==="object"?raw.calculation as Record<string,unknown>:{},
-                explanation_en:body.explanation_en.slice(0,3000),explanation_ar:body.explanation_ar.slice(0,3000),
-                submission_deadline:body.submission_deadline||null,owner:body.owner?.slice(0,160)||null,
-                platform_response:null,recovered_amount:recovered,
+            if (body.action === "create") {
+              if (
+                !body.exception_key ||
+                !body.title ||
+                !body.explanation_en ||
+                !body.explanation_ar
+              )
+                return resp(
+                  { error: "Exception identity and bilingual explanations are required." },
+                  400,
+                );
+              const exceptionAmount =
+                raw.exception_amount == null ? null : Number(raw.exception_amount);
+              const claimsReady = Number(raw.claims_ready_amount ?? 0);
+              const recovered = Number(raw.recovered_amount ?? 0);
+              if (
+                (exceptionAmount != null && !Number.isFinite(exceptionAmount)) ||
+                ![claimsReady, recovered].every(Number.isFinite)
+              )
+                return resp({ error: "Recovery case contains an invalid amount." }, 400);
+              const item = await createRecoveryCase(merchant_id, {
+                platform: (body.source_platform || "talabat").toLowerCase(),
+                exception_key: body.exception_key.slice(0, 180),
+                title: body.title.slice(0, 240),
+                status: body.case_status === "ready" ? "ready" : "evidence_required",
+                severity: body.severity || "warning",
+                exception_amount: exceptionAmount,
+                claims_ready_amount: claimsReady,
+                confidence: body.confidence || "low",
+                affected_orders: raw.affected_orders == null ? null : Number(raw.affected_orders),
+                contract_term_id: body.contract_term_id || null,
+                contract_clause: body.contract_clause?.slice(0, 500) || null,
+                regulatory_reference: body.regulatory_reference?.slice(0, 500) || null,
+                evidence_sources: Array.isArray(raw.evidence_sources)
+                  ? (raw.evidence_sources
+                      .filter((v) => typeof v === "string")
+                      .slice(0, 50) as string[])
+                  : [],
+                calculation:
+                  raw.calculation && typeof raw.calculation === "object"
+                    ? (raw.calculation as Record<string, unknown>)
+                    : {},
+                explanation_en: body.explanation_en.slice(0, 3000),
+                explanation_ar: body.explanation_ar.slice(0, 3000),
+                submission_deadline: body.submission_deadline || null,
+                owner: body.owner?.slice(0, 160) || null,
+                platform_response: null,
+                recovered_amount: recovered,
               });
-              return resp({ok:true,case:item},200);
+              return resp({ ok: true, case: item }, 200);
             }
-            if(body.action==="update"){
-              if(!body.id)return resp({error:"Recovery case id is required."},400);
-              const allowed=["evidence_required","draft","ready","submitted_manually","platform_review","accepted","rejected","recovered","closed"];
-              const item=await updateRecoveryCase(merchant_id,body.id,{
-                status:allowed.includes(body.case_status)?body.case_status as any:undefined,
-                owner:body.owner?.slice(0,160)||null,submission_deadline:body.submission_deadline||null,
-                platform_response:body.platform_response?.slice(0,3000)||null,
-                recovered_amount:Number.isFinite(Number(raw.recovered_amount))?Number(raw.recovered_amount):0,
+            if (body.action === "update") {
+              if (!body.id) return resp({ error: "Recovery case id is required." }, 400);
+              const allowed = [
+                "evidence_required",
+                "draft",
+                "ready",
+                "submitted_manually",
+                "platform_review",
+                "accepted",
+                "rejected",
+                "recovered",
+                "closed",
+              ];
+              const item = await updateRecoveryCase(merchant_id, body.id, {
+                status: allowed.includes(body.case_status) ? (body.case_status as any) : undefined,
+                owner: body.owner?.slice(0, 160) || null,
+                submission_deadline: body.submission_deadline || null,
+                platform_response: body.platform_response?.slice(0, 3000) || null,
+                recovered_amount: Number.isFinite(Number(raw.recovered_amount))
+                  ? Number(raw.recovered_amount)
+                  : 0,
               });
-              return resp({ok:true,case:item},200);
+              return resp({ ok: true, case: item }, 200);
             }
-            if(body.action==="record_submission"){
-              if(!body.id||!body.submission_reference?.trim()||!body.submitted_by?.trim())return resp({error:"Case id, platform reference, and submitter are required."},400);
-              try{return resp({ok:true,case:await recordRecoverySubmission(merchant_id,body.id,body.submission_reference.trim().slice(0,200),body.submitted_by.trim().slice(0,160))},200);}
-              catch(err){return merchantFailure(err,"record this recovery submission");}
-            }
-            return resp({error:"Unsupported recovery-case action."},400);
-          }
-
-          if(platform==="promotion_scenarios"){
-            if(body.action==="list")return resp({ok:true,scenarios:await listPromotionScenarios(merchant_id)},200);
-            const raw=body as unknown as Record<string,unknown>;
-            if(body.action==="create"){
-              if(!body.name?.trim()||!body.source_platform?.trim())return resp({error:"Campaign name and platform are required."},400);
-              if(!raw.inputs||typeof raw.inputs!=="object"||!raw.results||typeof raw.results!=="object")return resp({error:"Simulation inputs and deterministic results are required."},400);
-              const item=await savePromotionScenario(merchant_id,{
-                name:body.name.trim().slice(0,180),platform:body.source_platform.trim().toLowerCase(),status:"draft",
-                inputs:raw.inputs as Record<string,unknown>,results:raw.results as Record<string,unknown>,
-                promised_platform_funding:null,actual_platform_funding:null,funding_variance:null,
-              });
-              return resp({ok:true,scenario:item},200);
-            }
-            if(body.action==="approve"){
-              if(!body.id||!["finance","operations"].includes(body.approval_role)||!body.reviewer?.trim())return resp({error:"Scenario id, approval role, and reviewer are required."},400);
-              try{return resp({ok:true,scenario:await approvePromotionScenario(merchant_id,body.id,body.approval_role as "finance"|"operations",body.reviewer.trim().slice(0,160))},200);}
-              catch(err){return merchantFailure(err,"approve this campaign");}
-            }
-            if(body.action==="activate"){
-              const marginFloor=Number(body.margin_floor_pct);
-              try{return resp({ok:true,group:await activateGroupPolicy(merchant_id,marginFloor)},200);}
-              catch(err){return merchantFailure(err,"activate the group policy");}
-            }
-            if(body.action==="prepare_launch"){
-              if(!body.id||!Array.isArray(raw.target_channels))return resp({error:"Scenario id and target channels are required."},400);
-              try{return resp({ok:true,scenario:await preparePromotionLaunch(merchant_id,body.id,(raw.target_channels as unknown[]).filter(value=>typeof value==="string") as string[])},200);}
-              catch(err){return merchantFailure(err,"prepare the campaign launch");}
-            }
-            if(body.action==="confirm_channel_launch"){
-              if(!body.id||!body.target_channel?.trim()||!body.partner_campaign_id?.trim())return resp({error:"Scenario id, target channel, and partner campaign id are required."},400);
-              try{return resp({ok:true,scenario:await confirmPromotionChannelLaunch(merchant_id,body.id,body.target_channel,body.partner_campaign_id.trim().slice(0,200))},200);}
-              catch(err){return merchantFailure(err,"confirm the campaign launch");}
-            }
-            if(body.action==="update"){
-              if(!body.id)return resp({error:"Scenario id is required."},400);
-              const allowed=["draft","approved","running","completed","cancelled"];
-              if(body.scenario_status&&!allowed.includes(body.scenario_status))return resp({error:"Invalid campaign status."},400);
-              const promised=raw.promised_platform_funding==null?null:Number(raw.promised_platform_funding);
-              const actual=raw.actual_platform_funding==null?null:Number(raw.actual_platform_funding);
-              if((promised!=null&&!Number.isFinite(promised))||(actual!=null&&!Number.isFinite(actual)))return resp({error:"Funding amounts must be valid numbers."},400);
-              const item=await updatePromotionScenario(merchant_id,body.id,{
-                ...(body.scenario_status?{status:body.scenario_status as "draft"|"approved"|"running"|"completed"|"cancelled"}:{}),
-                promised_platform_funding:promised,actual_platform_funding:actual,
-                funding_variance:promised!=null&&actual!=null?Math.round((actual-promised)*100)/100:null,
-                ...(body.scenario_status==="approved"?{approved_by:body.approved_by?.trim().slice(0,160)||"Merchant approver",approved_at:new Date().toISOString()}:{}),
-              });
-              return resp({ok:true,scenario:item},200);
-            }
-            return resp({error:"Unsupported promotion-scenario action."},400);
-          }
-
-          if(platform==="promotion_actions"){
-            if(body.action==="list")return resp({ok:true,actions:await listPromotionActions(merchant_id)},200);
-            if(body.action==="create"){
-              const actionType=body.action_type as PromotionActionType,allowed=["stop","reduce_discount","remove_item","adjust_discount"];
-              if(!body.scenario_id||!body.target_platform||!body.target_reference||!allowed.includes(actionType)||!body.requested_by?.trim())return resp({error:"Scenario, platform, action, target reference, and requester are required."},400);
-              const raw=body as unknown as Record<string,unknown>,payload=raw.requested_payload&&typeof raw.requested_payload==="object"&&!Array.isArray(raw.requested_payload)?raw.requested_payload as Record<string,unknown>:{};
-              return resp({ok:true,promotion_action:await createPromotionAction({accountId:merchant_id,scenarioId:body.scenario_id,platform:body.target_platform.trim().toLowerCase(),actionType,targetReference:body.target_reference.trim().slice(0,200),payload,requestedBy:body.requested_by.trim().slice(0,160)})},200);
-            }
-            if(body.action==="decide"){
-              if(!body.id||!["approved","rejected"].includes(body.decision)||!body.reviewer?.trim())return resp({error:"Action, decision, and reviewer are required."},400);
-              return resp({ok:true,promotion_action:await approvePromotionAction(merchant_id,body.id,body.reviewer.trim().slice(0,160),body.decision as "approved"|"rejected")},200);
-            }
-            if(body.action==="execute"){
-              if(!body.id)return resp({error:"Action id is required."},400);return resp({ok:true,promotion_action:await queuePromotionAction(merchant_id,body.id)},200);
-            }
-            if(body.action==="confirm"){
-              if(!body.id||!body.partner_reference?.trim())return resp({error:"Action id and partner reference are required."},400);return resp({ok:true,promotion_action:await confirmPromotionAction(merchant_id,body.id,body.partner_reference.trim().slice(0,200),{})},200);
-            }
-            return resp({error:"Unsupported promotion action."},400);
-          }
-
-          if(platform==="channel_price_plans"){
-            if(body.action==="list")return resp({ok:true,plans:await listChannelPricePlans(merchant_id)},200);
-            const raw=body as unknown as Record<string,unknown>;
-            if(body.action==="create"){
-              if(!body.name?.trim()||!Array.isArray(raw.channel_config)||!Array.isArray(raw.rows))return resp({error:"Plan name, channel configuration, and price rows are required."},400);
-              if(raw.rows.length>5000)return resp({error:"A price plan can contain at most 5,000 rows."},400);
-              return resp({ok:true,plan:await saveChannelPricePlan(merchant_id,body.name.trim().slice(0,180),raw.channel_config,raw.rows)},200);
-            }
-            if(body.action==="approve"){
-              if(!body.id||!body.approved_by?.trim())return resp({error:"Plan id and approver name are required."},400);
-              return resp({ok:true,plan:await approveChannelPricePlan(merchant_id,body.id,body.approved_by.trim().slice(0,160))},200);
-            }
-            if(body.action==="publish"){
-              if(!body.id)return resp({error:"Plan id is required."},400);
-              try{
-                const {plan,results}=await publishChannelPricePlan(merchant_id,body.id);
-                return resp({ok:true,plan,results},200);
-              }catch(err){
-                return merchantFailure(err,"publish this approved price plan");
+            if (body.action === "record_submission") {
+              if (!body.id || !body.submission_reference?.trim() || !body.submitted_by?.trim())
+                return resp(
+                  { error: "Case id, platform reference, and submitter are required." },
+                  400,
+                );
+              try {
+                return resp(
+                  {
+                    ok: true,
+                    case: await recordRecoverySubmission(
+                      merchant_id,
+                      body.id,
+                      body.submission_reference.trim().slice(0, 200),
+                      body.submitted_by.trim().slice(0, 160),
+                    ),
+                  },
+                  200,
+                );
+              } catch (err) {
+                return merchantFailure(err, "record this recovery submission");
               }
             }
-            return resp({error:"Unsupported channel-price-plan action."},400);
+            return resp({ error: "Unsupported recovery-case action." }, 400);
           }
 
-          if(platform==="group_controls"){
-            if(body.action==="get")return resp({ok:true,group:await getGroupControls(merchant_id)},200);
-            const raw=body as unknown as Record<string,unknown>;
-            if(body.action==="save"){
-              if(!body.group_name?.trim())return resp({error:"Group name is required."},400);
-              for(const key of ["legal_entities","brands","branches","members"]){
-                if(!Array.isArray(raw[key]))return resp({error:`${key} must be an array.`},400);
+          if (platform === "promotion_scenarios") {
+            if (body.action === "list")
+              return resp({ ok: true, scenarios: await listPromotionScenarios(merchant_id) }, 200);
+            const raw = body as unknown as Record<string, unknown>;
+            if (body.action === "create") {
+              if (!body.name?.trim() || !body.source_platform?.trim())
+                return resp({ error: "Campaign name and platform are required." }, 400);
+              if (
+                !raw.inputs ||
+                typeof raw.inputs !== "object" ||
+                !raw.results ||
+                typeof raw.results !== "object"
+              )
+                return resp(
+                  { error: "Simulation inputs and deterministic results are required." },
+                  400,
+                );
+              const item = await savePromotionScenario(merchant_id, {
+                name: body.name.trim().slice(0, 180),
+                platform: body.source_platform.trim().toLowerCase(),
+                status: "draft",
+                inputs: raw.inputs as Record<string, unknown>,
+                results: raw.results as Record<string, unknown>,
+                promised_platform_funding: null,
+                actual_platform_funding: null,
+                funding_variance: null,
+              });
+              return resp({ ok: true, scenario: item }, 200);
+            }
+            if (body.action === "approve") {
+              if (
+                !body.id ||
+                !["finance", "operations"].includes(body.approval_role) ||
+                !body.reviewer?.trim()
+              )
+                return resp(
+                  { error: "Scenario id, approval role, and reviewer are required." },
+                  400,
+                );
+              try {
+                return resp(
+                  {
+                    ok: true,
+                    scenario: await approvePromotionScenario(
+                      merchant_id,
+                      body.id,
+                      body.approval_role as "finance" | "operations",
+                      body.reviewer.trim().slice(0, 160),
+                    ),
+                  },
+                  200,
+                );
+              } catch (err) {
+                return merchantFailure(err, "approve this campaign");
               }
-              return resp({ok:true,group:await saveGroupControls(merchant_id,{
-                group_name:body.group_name.trim().slice(0,180),legal_entities:(raw.legal_entities as unknown[]).slice(0,50),
-                brands:(raw.brands as unknown[]).slice(0,100),branches:(raw.branches as unknown[]).slice(0,500),members:(raw.members as unknown[]).slice(0,250),
-              })},200);
             }
-            if(body.action==="approve"){
-              if(!["finance","operations"].includes(body.approval_role)||!body.reviewer?.trim())return resp({error:"Approval role and reviewer are required."},400);
-              return resp({ok:true,group:await approveGroupControls(merchant_id,body.approval_role as "finance"|"operations",body.reviewer.trim().slice(0,160))},200);
+            if (body.action === "activate") {
+              const marginFloor = Number(body.margin_floor_pct);
+              try {
+                return resp(
+                  { ok: true, group: await activateGroupPolicy(merchant_id, marginFloor) },
+                  200,
+                );
+              } catch (err) {
+                return merchantFailure(err, "activate the group policy");
+              }
             }
-            return resp({error:"Unsupported group-controls action."},400);
+            if (body.action === "prepare_launch") {
+              if (!body.id || !Array.isArray(raw.target_channels))
+                return resp({ error: "Scenario id and target channels are required." }, 400);
+              try {
+                return resp(
+                  {
+                    ok: true,
+                    scenario: await preparePromotionLaunch(
+                      merchant_id,
+                      body.id,
+                      (raw.target_channels as unknown[]).filter(
+                        (value) => typeof value === "string",
+                      ) as string[],
+                    ),
+                  },
+                  200,
+                );
+              } catch (err) {
+                return merchantFailure(err, "prepare the campaign launch");
+              }
+            }
+            if (body.action === "confirm_channel_launch") {
+              if (!body.id || !body.target_channel?.trim() || !body.partner_campaign_id?.trim())
+                return resp(
+                  { error: "Scenario id, target channel, and partner campaign id are required." },
+                  400,
+                );
+              try {
+                return resp(
+                  {
+                    ok: true,
+                    scenario: await confirmPromotionChannelLaunch(
+                      merchant_id,
+                      body.id,
+                      body.target_channel,
+                      body.partner_campaign_id.trim().slice(0, 200),
+                    ),
+                  },
+                  200,
+                );
+              } catch (err) {
+                return merchantFailure(err, "confirm the campaign launch");
+              }
+            }
+            if (body.action === "update") {
+              if (!body.id) return resp({ error: "Scenario id is required." }, 400);
+              const allowed = ["draft", "approved", "running", "completed", "cancelled"];
+              if (body.scenario_status && !allowed.includes(body.scenario_status))
+                return resp({ error: "Invalid campaign status." }, 400);
+              const promised =
+                raw.promised_platform_funding == null
+                  ? null
+                  : Number(raw.promised_platform_funding);
+              const actual =
+                raw.actual_platform_funding == null ? null : Number(raw.actual_platform_funding);
+              if (
+                (promised != null && !Number.isFinite(promised)) ||
+                (actual != null && !Number.isFinite(actual))
+              )
+                return resp({ error: "Funding amounts must be valid numbers." }, 400);
+              const item = await updatePromotionScenario(merchant_id, body.id, {
+                ...(body.scenario_status
+                  ? {
+                      status: body.scenario_status as
+                        | "draft"
+                        | "approved"
+                        | "running"
+                        | "completed"
+                        | "cancelled",
+                    }
+                  : {}),
+                promised_platform_funding: promised,
+                actual_platform_funding: actual,
+                funding_variance:
+                  promised != null && actual != null
+                    ? Math.round((actual - promised) * 100) / 100
+                    : null,
+                ...(body.scenario_status === "approved"
+                  ? {
+                      approved_by: body.approved_by?.trim().slice(0, 160) || "Merchant approver",
+                      approved_at: new Date().toISOString(),
+                    }
+                  : {}),
+              });
+              return resp({ ok: true, scenario: item }, 200);
+            }
+            return resp({ error: "Unsupported promotion-scenario action." }, 400);
           }
 
-          if(platform==="month_end_close"){
-            if(body.action==="list")return resp({ok:true,closes:await listMonthEndCloses(merchant_id)},200);
-            const raw=body as unknown as Record<string,unknown>;
-            if(body.action==="save"){
-              if(!body.currency||!Array.isArray(raw.schedules)||!Array.isArray(raw.journals)||!Array.isArray(raw.limitations))return resp({error:"Currency, schedules, journals, and limitations are required."},400);
-              return resp({ok:true,close:await saveMonthEndClose(merchant_id,{
-                period_start:body.period_start||null,period_end:body.period_end||null,currency:body.currency.slice(0,8),
-                status:"draft",schedules:(raw.schedules as unknown[]).slice(0,100),journals:(raw.journals as unknown[]).slice(0,250),
-                limitations:(raw.limitations as unknown[]).slice(0,100),prepared_by:body.prepared_by?.trim().slice(0,160)||"PrizeSkout close engine",
-              })},200);
+          if (platform === "promotion_actions") {
+            if (body.action === "list")
+              return resp({ ok: true, actions: await listPromotionActions(merchant_id) }, 200);
+            if (body.action === "create") {
+              const actionType = body.action_type as PromotionActionType,
+                allowed = ["stop", "reduce_discount", "remove_item", "adjust_discount"];
+              if (
+                !body.scenario_id ||
+                !body.target_platform ||
+                !body.target_reference ||
+                !allowed.includes(actionType) ||
+                !body.requested_by?.trim()
+              )
+                return resp(
+                  {
+                    error:
+                      "Scenario, platform, action, target reference, and requester are required.",
+                  },
+                  400,
+                );
+              const raw = body as unknown as Record<string, unknown>,
+                payload =
+                  raw.requested_payload &&
+                  typeof raw.requested_payload === "object" &&
+                  !Array.isArray(raw.requested_payload)
+                    ? (raw.requested_payload as Record<string, unknown>)
+                    : {};
+              return resp(
+                {
+                  ok: true,
+                  promotion_action: await createPromotionAction({
+                    accountId: merchant_id,
+                    scenarioId: body.scenario_id,
+                    platform: body.target_platform.trim().toLowerCase(),
+                    actionType,
+                    targetReference: body.target_reference.trim().slice(0, 200),
+                    payload,
+                    requestedBy: body.requested_by.trim().slice(0, 160),
+                  }),
+                },
+                200,
+              );
             }
-            if(body.action==="advance"){
-              if(!body.id||!["reviewed","approved","locked"].includes(body.close_status)||!body.reviewer?.trim())return resp({error:"Close id, valid status, and reviewer are required."},400);
-              return resp({ok:true,close:await advanceMonthEndClose(merchant_id,body.id,body.close_status as "reviewed"|"approved"|"locked",body.reviewer.trim().slice(0,160))},200);
+            if (body.action === "decide") {
+              if (
+                !body.id ||
+                !["approved", "rejected"].includes(body.decision) ||
+                !body.reviewer?.trim()
+              )
+                return resp({ error: "Action, decision, and reviewer are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  promotion_action: await approvePromotionAction(
+                    merchant_id,
+                    body.id,
+                    body.reviewer.trim().slice(0, 160),
+                    body.decision as "approved" | "rejected",
+                  ),
+                },
+                200,
+              );
             }
-            return resp({error:"Unsupported month-end-close action."},400);
+            if (body.action === "execute") {
+              if (!body.id) return resp({ error: "Action id is required." }, 400);
+              return resp(
+                { ok: true, promotion_action: await queuePromotionAction(merchant_id, body.id) },
+                200,
+              );
+            }
+            if (body.action === "confirm") {
+              if (!body.id || !body.partner_reference?.trim())
+                return resp({ error: "Action id and partner reference are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  promotion_action: await confirmPromotionAction(
+                    merchant_id,
+                    body.id,
+                    body.partner_reference.trim().slice(0, 200),
+                    {},
+                  ),
+                },
+                200,
+              );
+            }
+            return resp({ error: "Unsupported promotion action." }, 400);
+          }
+
+          if (platform === "channel_price_plans") {
+            if (body.action === "list")
+              return resp({ ok: true, plans: await listChannelPricePlans(merchant_id) }, 200);
+            const raw = body as unknown as Record<string, unknown>;
+            if (body.action === "create") {
+              if (
+                !body.name?.trim() ||
+                !Array.isArray(raw.channel_config) ||
+                !Array.isArray(raw.rows)
+              )
+                return resp(
+                  { error: "Plan name, channel configuration, and price rows are required." },
+                  400,
+                );
+              if (raw.rows.length > 5000)
+                return resp({ error: "A price plan can contain at most 5,000 rows." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  plan: await saveChannelPricePlan(
+                    merchant_id,
+                    body.name.trim().slice(0, 180),
+                    raw.channel_config,
+                    raw.rows,
+                  ),
+                },
+                200,
+              );
+            }
+            if (body.action === "approve") {
+              if (!body.id || !body.approved_by?.trim())
+                return resp({ error: "Plan id and approver name are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  plan: await approveChannelPricePlan(
+                    merchant_id,
+                    body.id,
+                    body.approved_by.trim().slice(0, 160),
+                  ),
+                },
+                200,
+              );
+            }
+            if (body.action === "publish") {
+              if (!body.id) return resp({ error: "Plan id is required." }, 400);
+              try {
+                const { plan, results } = await publishChannelPricePlan(merchant_id, body.id);
+                return resp({ ok: true, plan, results }, 200);
+              } catch (err) {
+                return merchantFailure(err, "publish this approved price plan");
+              }
+            }
+            return resp({ error: "Unsupported channel-price-plan action." }, 400);
+          }
+
+          if (platform === "group_controls") {
+            if (body.action === "get")
+              return resp({ ok: true, group: await getGroupControls(merchant_id) }, 200);
+            const raw = body as unknown as Record<string, unknown>;
+            if (body.action === "save") {
+              if (!body.group_name?.trim()) return resp({ error: "Group name is required." }, 400);
+              for (const key of ["legal_entities", "brands", "branches", "members"]) {
+                if (!Array.isArray(raw[key]))
+                  return resp({ error: `${key} must be an array.` }, 400);
+              }
+              return resp(
+                {
+                  ok: true,
+                  group: await saveGroupControls(merchant_id, {
+                    group_name: body.group_name.trim().slice(0, 180),
+                    legal_entities: (raw.legal_entities as unknown[]).slice(0, 50),
+                    brands: (raw.brands as unknown[]).slice(0, 100),
+                    branches: (raw.branches as unknown[]).slice(0, 500),
+                    members: (raw.members as unknown[]).slice(0, 250),
+                  }),
+                },
+                200,
+              );
+            }
+            if (body.action === "approve") {
+              if (!["finance", "operations"].includes(body.approval_role) || !body.reviewer?.trim())
+                return resp({ error: "Approval role and reviewer are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  group: await approveGroupControls(
+                    merchant_id,
+                    body.approval_role as "finance" | "operations",
+                    body.reviewer.trim().slice(0, 160),
+                  ),
+                },
+                200,
+              );
+            }
+            return resp({ error: "Unsupported group-controls action." }, 400);
+          }
+
+          if (platform === "month_end_close") {
+            if (body.action === "list")
+              return resp({ ok: true, closes: await listMonthEndCloses(merchant_id) }, 200);
+            const raw = body as unknown as Record<string, unknown>;
+            if (body.action === "save") {
+              if (
+                !body.currency ||
+                !Array.isArray(raw.schedules) ||
+                !Array.isArray(raw.journals) ||
+                !Array.isArray(raw.limitations)
+              )
+                return resp(
+                  { error: "Currency, schedules, journals, and limitations are required." },
+                  400,
+                );
+              return resp(
+                {
+                  ok: true,
+                  close: await saveMonthEndClose(merchant_id, {
+                    period_start: body.period_start || null,
+                    period_end: body.period_end || null,
+                    currency: body.currency.slice(0, 8),
+                    status: "draft",
+                    schedules: (raw.schedules as unknown[]).slice(0, 100),
+                    journals: (raw.journals as unknown[]).slice(0, 250),
+                    limitations: (raw.limitations as unknown[]).slice(0, 100),
+                    prepared_by:
+                      body.prepared_by?.trim().slice(0, 160) || "PrizeSkout close engine",
+                  }),
+                },
+                200,
+              );
+            }
+            if (body.action === "advance") {
+              if (
+                !body.id ||
+                !["reviewed", "approved", "locked"].includes(body.close_status) ||
+                !body.reviewer?.trim()
+              )
+                return resp({ error: "Close id, valid status, and reviewer are required." }, 400);
+              return resp(
+                {
+                  ok: true,
+                  close: await advanceMonthEndClose(
+                    merchant_id,
+                    body.id,
+                    body.close_status as "reviewed" | "approved" | "locked",
+                    body.reviewer.trim().slice(0, 160),
+                  ),
+                },
+                200,
+              );
+            }
+            return resp({ error: "Unsupported month-end-close action." }, 400);
           }
 
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);

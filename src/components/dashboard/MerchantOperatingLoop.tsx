@@ -95,10 +95,30 @@ export function MerchantOperatingLoop({
 }) {
   const tr = (en: string, ar: string, fr: string) => (lang === "ar" ? ar : lang === "fr" ? fr : en);
   const levels = [
-    { id: "observe", label: tr("Observe", "مراقبة", "Observer"), desc: tr("Monitor only", "المراقبة فقط", "Surveiller uniquement") },
-    { id: "recommend", label: tr("Recommend", "اقتراح", "Recommander"), desc: tr("Prepare safe actions", "تجهيز إجراءات آمنة", "Préparer des actions sûres") },
-    { id: "approve", label: tr("Approve", "الموافقة", "Valider"), desc: tr("Wait for every approval", "انتظار موافقتك دائماً", "Attendre chaque validation") },
-    { id: "auto_protect", label: tr("Auto-protect", "حماية تلقائية", "Protection automatique"), desc: tr("Act only inside active limits", "التنفيذ ضمن الحدود النشطة فقط", "Agir uniquement dans les limites actives") },
+    {
+      id: "observe",
+      label: tr("Observe", "مراقبة", "Observer"),
+      desc: tr("Monitor only", "المراقبة فقط", "Surveiller uniquement"),
+    },
+    {
+      id: "recommend",
+      label: tr("Recommend", "اقتراح", "Recommander"),
+      desc: tr("Prepare safe actions", "تجهيز إجراءات آمنة", "Préparer des actions sûres"),
+    },
+    {
+      id: "approve",
+      label: tr("Approve", "الموافقة", "Valider"),
+      desc: tr("Wait for every approval", "انتظار موافقتك دائماً", "Attendre chaque validation"),
+    },
+    {
+      id: "auto_protect",
+      label: tr("Auto-protect", "حماية تلقائية", "Protection automatique"),
+      desc: tr(
+        "Act only inside active limits",
+        "التنفيذ ضمن الحدود النشطة فقط",
+        "Agir uniquement dans les limites actives",
+      ),
+    },
   ];
   const [data, setData] = useState<Experience | null>(null),
     [loading, setLoading] = useState(true),
@@ -108,18 +128,23 @@ export function MerchantOperatingLoop({
     [workspaceExpanded, setWorkspaceExpanded] = useState(false),
     [detail, setDetail] = useState(false),
     [message, setMessage] = useState(""),
+    [loadError, setLoadError] = useState(false),
     [newTask, setNewTask] = useState("");
   const call = async (body: Record<string, string>) => {
-    const response = await fetchWithTimeout("/api/channels/connect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
-        access_code: localStorage.getItem("ps_access_code") ?? "",
-        platform: "merchant_experience",
-        ...body,
-      }),
-    }, 12_000);
+    const response = await fetchWithTimeout(
+      "/api/channels/connect",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
+          access_code: localStorage.getItem("ps_access_code") ?? "",
+          platform: "merchant_experience",
+          ...body,
+        }),
+      },
+      25_000,
+    );
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error ?? "Request failed");
     return result;
@@ -128,7 +153,10 @@ export function MerchantOperatingLoop({
     try {
       const result = await call({ action: "get" });
       setData(result);
+      setLoadError(false);
+      setMessage("");
     } catch {
+      setLoadError(true);
       setMessage("Your attention list could not be loaded. Refresh and try again.");
     } finally {
       setLoading(false);
@@ -298,7 +326,7 @@ export function MerchantOperatingLoop({
           ? "Task approved. No unsupported platform action was claimed as completed."
           : to === "completed"
             ? "Task completed and added to Activity."
-          : "Task status updated.",
+            : "Task status updated.",
       );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Task status was not updated.");
@@ -370,11 +398,27 @@ export function MerchantOperatingLoop({
       </section>
     );
   return (
-    <section className={`ps-manager-workspace${workspaceExpanded ? " ps-manager-expanded" : ""}`} data-tour="merchant-operating-loop" style={{ ...card, gap: 20 }}>
+    <section
+      className={`ps-manager-workspace${workspaceExpanded ? " ps-manager-expanded" : ""}`}
+      data-tour="merchant-operating-loop"
+      style={{ ...card, gap: 20 }}
+    >
       <Header
-        eyebrow={tr("AI Store Manager", "مدير المتجر بالذكاء الاصطناعي", "Gestionnaire de boutique IA")}
-        title={tr("Automate store operations with oversight", "أتمت عمليات المتجر مع الإشراف", "Automatisez les opérations avec supervision")}
-        sub={tr("Prepare catalog, pricing, inventory, and content work across connected channels—with merchant approval before protected changes.", "جهّز أعمال الكتالوج والتسعير والمخزون والمحتوى عبر القنوات المتصلة مع موافقة التاجر قبل التغييرات المحمية.", "Préparez le catalogue, les prix, le stock et le contenu avec validation avant toute modification protégée.")}
+        eyebrow={tr(
+          "AI Store Manager",
+          "مدير المتجر بالذكاء الاصطناعي",
+          "Gestionnaire de boutique IA",
+        )}
+        title={tr(
+          "Automate store operations with oversight",
+          "أتمت عمليات المتجر مع الإشراف",
+          "Automatisez les opérations avec supervision",
+        )}
+        sub={tr(
+          "Prepare catalog, pricing, inventory, and content work across connected channels—with merchant approval before protected changes.",
+          "جهّز أعمال الكتالوج والتسعير والمخزون والمحتوى عبر القنوات المتصلة مع موافقة التاجر قبل التغييرات المحمية.",
+          "Préparez le catalogue, les prix, le stock et le contenu avec validation avant toute modification protégée.",
+        )}
       />
       {urgent.length > 0 && (
         <button
@@ -398,10 +442,28 @@ export function MerchantOperatingLoop({
         }}
       >
         {[
-          ["Pending actions", openManagerTasks.length + active.length, "Needs attention", () => revealManagement("all")],
+          [
+            "Pending actions",
+            openManagerTasks.length + active.length,
+            "Needs attention",
+            () => revealManagement("all"),
+          ],
           ["Catalog sync", `${coverage}%`, "Verified cost coverage", onContinueSetup],
-          ["Tasks completed", data?.recent_resolved ?? 0, "Retained outcomes", () => { setWorkspaceExpanded(true); window.setTimeout(() => revealSection("money-identified"), 0); }],
-          ["Approval queue", approvalTasks.length, "Awaiting merchant approval", () => revealManagement("approval")],
+          [
+            "Tasks completed",
+            data?.recent_resolved ?? 0,
+            "Retained outcomes",
+            () => {
+              setWorkspaceExpanded(true);
+              window.setTimeout(() => revealSection("money-identified"), 0);
+            },
+          ],
+          [
+            "Approval queue",
+            approvalTasks.length,
+            "Awaiting merchant approval",
+            () => revealManagement("approval"),
+          ],
         ].map(([label, value, note, onClick]) => (
           <Metric
             key={String(label)}
@@ -415,38 +477,175 @@ export function MerchantOperatingLoop({
 
       <div className="ps-manager-main-grid">
         <section className="ps-manager-panel ps-manager-queue">
-          <div className="ps-manager-panel-heading"><div><h3>Action Queue</h3><p>Prepared work across connected channels</p></div><button type="button" onClick={() => revealManagement("all")}>View all</button></div>
-          <div className="ps-manager-queue-head"><span>Task</span><span>Type</span><span>Priority</span><span>Status</span></div>
-          {openManagerTasks.slice(0, 5).map((task) => <button className="ps-manager-queue-row" type="button" key={task.id} onClick={() => revealManagement(task.status === "waiting_approval" ? "approval" : "all")}><span><b>{task.title}</b><small>{task.detail}</small></span><span>{task.task_type.replaceAll("_", " ")}</span><span className={`ps-manager-priority ps-${task.priority}`}>{task.priority}</span><span>{merchantStatus(task.status)}</span></button>)}
-          {!openManagerTasks.length && urgent.slice(0, 5).map((item) => <button className="ps-manager-queue-row" type="button" key={item.id} onClick={() => { setWorkspaceExpanded(true); window.setTimeout(revealAttention, 0); }}><span><b>{item.title}</b><small>{item.detail}</small></span><span>{item.item_type.replaceAll("_", " ")}</span><span className={`ps-manager-priority ps-${item.priority}`}>{item.priority}</span><span>{merchantStatus(item.status)}</span></button>)}
-          {!openManagerTasks.length && !urgent.length && <div className="ps-manager-empty">No pending actions. PrizeSkout will keep monitoring.</div>}
+          <div className="ps-manager-panel-heading">
+            <div>
+              <h3>Action Queue</h3>
+              <p>Prepared work across connected channels</p>
+            </div>
+            <button type="button" onClick={() => revealManagement("all")}>
+              View all
+            </button>
+          </div>
+          <div className="ps-manager-queue-head">
+            <span>Task</span>
+            <span>Type</span>
+            <span>Priority</span>
+            <span>Status</span>
+          </div>
+          {openManagerTasks.slice(0, 5).map((task) => (
+            <button
+              className="ps-manager-queue-row"
+              type="button"
+              key={task.id}
+              onClick={() =>
+                revealManagement(task.status === "waiting_approval" ? "approval" : "all")
+              }
+            >
+              <span>
+                <b>{task.title}</b>
+                <small>{task.detail}</small>
+              </span>
+              <span>{task.task_type.replaceAll("_", " ")}</span>
+              <span className={`ps-manager-priority ps-${task.priority}`}>{task.priority}</span>
+              <span>{merchantStatus(task.status)}</span>
+            </button>
+          ))}
+          {!openManagerTasks.length &&
+            urgent.slice(0, 5).map((item) => (
+              <button
+                className="ps-manager-queue-row"
+                type="button"
+                key={item.id}
+                onClick={() => {
+                  setWorkspaceExpanded(true);
+                  window.setTimeout(revealAttention, 0);
+                }}
+              >
+                <span>
+                  <b>{item.title}</b>
+                  <small>{item.detail}</small>
+                </span>
+                <span>{item.item_type.replaceAll("_", " ")}</span>
+                <span className={`ps-manager-priority ps-${item.priority}`}>{item.priority}</span>
+                <span>{merchantStatus(item.status)}</span>
+              </button>
+            ))}
+          {!openManagerTasks.length && !urgent.length && (
+            <div className="ps-manager-empty">
+              No pending actions. PrizeSkout will keep monitoring.
+            </div>
+          )}
         </section>
         <section className="ps-manager-panel ps-manager-workflow-card">
-          <div className="ps-manager-panel-heading"><div><h3>Product Update Workflow</h3><p>Merchant oversight remains required</p></div></div>
+          <div className="ps-manager-panel-heading">
+            <div>
+              <h3>Product Update Workflow</h3>
+              <p>Merchant oversight remains required</p>
+            </div>
+          </div>
           <div className="ps-manager-workflow" aria-label="Product update workflow">
             {[
               ["1", "AI Suggests Changes", `${openManagerTasks.length} prepared`],
               ["2", "Review & Approve", `${approvalTasks.length} awaiting approval`],
               ["3", "Apply Updates", "Within permissions"],
               ["4", "Monitor Impact", "Outcomes retained"],
-            ].map(([step, label, note]) => <div key={step}><i>{step}</i><span><b>{label}</b><small>{note}</small></span></div>)}
+            ].map(([step, label, note]) => (
+              <div key={step}>
+                <i>{step}</i>
+                <span>
+                  <b>{label}</b>
+                  <small>{note}</small>
+                </span>
+              </div>
+            ))}
           </div>
         </section>
       </div>
 
       <div className="ps-manager-health-grid">
-        <section className="ps-manager-panel ps-manager-catalog-health"><div className="ps-manager-panel-heading"><div><h3>Catalog Health</h3><p>Verified evidence coverage</p></div></div><div className="ps-manager-health-body"><div className="ps-manager-donut" style={{ "--coverage": `${coverage * 3.6}deg` } as React.CSSProperties}><strong>{coverage}%</strong><small>Healthy</small></div><div><b>{coverage}% verified</b><span>{Math.max(0, 100 - coverage)}% needs evidence</span></div></div></section>
-        <section className="ps-manager-panel ps-manager-sync"><div className="ps-manager-panel-heading"><div><h3>Channel Sync Status</h3><p>Live workflows remain unchanged</p></div></div>{["Zid", "Salla"].map((channel) => <div className="ps-manager-sync-row" key={channel}><b>{channel}</b><span>Connected</span><em>{coverage}%</em></div>)}</section>
-        <section className="ps-manager-panel ps-manager-impact"><div className="ps-manager-panel-heading"><div><h3>Automation Impact</h3><p>Only retained, traceable outcomes</p></div></div><div><span>Tasks completed</span><b>{data?.recent_resolved ?? 0}</b></div><div><span>Manual reviews open</span><b>{active.length}</b></div><div><span>Value identified</span><b>{currency} {moneyAtRisk.toFixed(0)}</b></div></section>
+        <section className="ps-manager-panel ps-manager-catalog-health">
+          <div className="ps-manager-panel-heading">
+            <div>
+              <h3>Catalog Health</h3>
+              <p>Verified evidence coverage</p>
+            </div>
+          </div>
+          <div className="ps-manager-health-body">
+            <div
+              className="ps-manager-donut"
+              style={{ "--coverage": `${coverage * 3.6}deg` } as React.CSSProperties}
+            >
+              <strong>{coverage}%</strong>
+              <small>Healthy</small>
+            </div>
+            <div>
+              <b>{coverage}% verified</b>
+              <span>{Math.max(0, 100 - coverage)}% needs evidence</span>
+            </div>
+          </div>
+        </section>
+        <section className="ps-manager-panel ps-manager-sync">
+          <div className="ps-manager-panel-heading">
+            <div>
+              <h3>Channel Sync Status</h3>
+              <p>Live workflows remain unchanged</p>
+            </div>
+          </div>
+          {["Zid", "Salla"].map((channel) => (
+            <div className="ps-manager-sync-row" key={channel}>
+              <b>{channel}</b>
+              <span>Connected</span>
+              <em>{coverage}%</em>
+            </div>
+          ))}
+        </section>
+        <section className="ps-manager-panel ps-manager-impact">
+          <div className="ps-manager-panel-heading">
+            <div>
+              <h3>Automation Impact</h3>
+              <p>Only retained, traceable outcomes</p>
+            </div>
+          </div>
+          <div>
+            <span>Tasks completed</span>
+            <b>{data?.recent_resolved ?? 0}</b>
+          </div>
+          <div>
+            <span>Manual reviews open</span>
+            <b>{active.length}</b>
+          </div>
+          <div>
+            <span>Value identified</span>
+            <b>
+              {currency} {moneyAtRisk.toFixed(0)}
+            </b>
+          </div>
+        </section>
       </div>
 
-      <button type="button" className="ps-manager-expand" onClick={() => setWorkspaceExpanded((value) => !value)}>{workspaceExpanded ? "Hide detailed operations ↑" : "Open detailed operations →"}</button>
+      <button
+        type="button"
+        className="ps-manager-expand"
+        onClick={() => setWorkspaceExpanded((value) => !value)}
+      >
+        {workspaceExpanded ? "Hide detailed operations ↑" : "Open detailed operations →"}
+      </button>
 
-      <div className="ps-manager-outcome" id="money-identified" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
-        <OutcomeProofPanel proof={data?.outcome_proof}/>
+      <div
+        className="ps-manager-outcome"
+        id="money-identified"
+        tabIndex={-1}
+        style={{ scrollMarginTop: 18, outline: "none" }}
+      >
+        <OutcomeProofPanel proof={data?.outcome_proof} />
       </div>
 
-      <div className="ps-manager-attention" id="attention-inbox" tabIndex={-1} style={{ scrollMarginTop: 18, outline: "none" }}>
+      <div
+        className="ps-manager-attention"
+        id="attention-inbox"
+        tabIndex={-1}
+        style={{ scrollMarginTop: 18, outline: "none" }}
+      >
         <div
           style={{
             display: "flex",
@@ -492,7 +691,12 @@ export function MerchantOperatingLoop({
         <Items items={visible} busy={busy} onUpdate={update} onAsk={askCopilot} />
       </div>
 
-      <div className="ps-manager-desk" id="management-desk" tabIndex={-1} style={{ ...subCard, scrollMarginTop: 18, outline: "none" }}>
+      <div
+        className="ps-manager-desk"
+        id="management-desk"
+        tabIndex={-1}
+        style={{ ...subCard, scrollMarginTop: 18, outline: "none" }}
+      >
         <div
           style={{
             display: "flex",
@@ -503,7 +707,9 @@ export function MerchantOperatingLoop({
           }}
         >
           <div>
-            <h3 style={{ margin: 0 }}>{tr("Management desk", "مكتب الإدارة", "Bureau de gestion")}</h3>
+            <h3 style={{ margin: 0 }}>
+              {tr("Management desk", "مكتب الإدارة", "Bureau de gestion")}
+            </h3>
             <p style={{ ...copy, margin: "4px 0 0" }}>
               Tell PrizeSkout what you want handled. You will see the plan and approve any store
               changes before they happen.
@@ -516,12 +722,14 @@ export function MerchantOperatingLoop({
               </button>
             )}
             <Badge
-            text={
-              data?.manager?.available
-                ? (data.manager.profile.operating_mode ?? "supervised").replaceAll("_", " ")
-                : "setup required"
-            }
-              color={data?.manager?.available ? OG : "#B45309"}
+              text={
+                loadError && !data
+                  ? "temporarily unavailable"
+                  : data?.manager?.available
+                    ? (data.manager.profile.operating_mode ?? "supervised").replaceAll("_", " ")
+                    : "setup required"
+              }
+              color={loadError && !data ? RED : data?.manager?.available ? OG : "#B45309"}
             />
           </div>
         </div>
@@ -542,6 +750,11 @@ export function MerchantOperatingLoop({
         <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
           <input
             disabled={!data?.manager?.available}
+            title={
+              loadError && !data
+                ? "Reload the attention list to use the Management desk."
+                : undefined
+            }
             value={newTask}
             onChange={(event) => setNewTask(event.target.value)}
             onKeyDown={(event) => {
@@ -584,18 +797,24 @@ export function MerchantOperatingLoop({
             background: "color-mix(in srgb,#F59E0B 7%,var(--surface))",
           }}
         >
-          <strong>{tr("Finish your first-value setup", "أكمل إعداد القيمة الأولى", "Terminer la configuration initiale")}</strong>
+          <strong>
+            {tr(
+              "Finish your first-value setup",
+              "أكمل إعداد القيمة الأولى",
+              "Terminer la configuration initiale",
+            )}
+          </strong>
           <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>
             ✓ Zid connected · ✓ Orders checked · Next: confirm product costs. Evidence is{" "}
             {Math.round(data?.profit_brief?.verified_cost_coverage_pct ?? 0)}%.
           </div>
           {onContinueSetup && (
-            <button
-              type="button"
-              onClick={onContinueSetup}
-              style={linkButton}
-            >
-              {tr("Review products needing cost data →", "راجع المنتجات التي تحتاج إلى بيانات التكلفة ←", "Examiner les produits sans coût vérifié →")}
+            <button type="button" onClick={onContinueSetup} style={linkButton}>
+              {tr(
+                "Review products needing cost data →",
+                "راجع المنتجات التي تحتاج إلى بيانات التكلفة ←",
+                "Examiner les produits sans coût vérifié →",
+              )}
             </button>
           )}
         </div>
@@ -618,7 +837,13 @@ export function MerchantOperatingLoop({
         >
           <div style={subCard}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <h3 style={{ margin: "0 0 10px" }}>{tr("Weekly protection review", "مراجعة الحماية الأسبوعية", "Revue hebdomadaire de protection")}</h3>
+              <h3 style={{ margin: "0 0 10px" }}>
+                {tr(
+                  "Weekly protection review",
+                  "مراجعة الحماية الأسبوعية",
+                  "Revue hebdomadaire de protection",
+                )}
+              </h3>
               <button
                 onClick={() => {
                   void call({ action: "track", event_name: "weekly_review_opened" });
@@ -643,13 +868,23 @@ export function MerchantOperatingLoop({
                   note={
                     group.category === "identified" ? "Detected, not recovered" : "Evidence ledger"
                   }
-                  onClick={group.category === "identified" ? revealAttention : () => revealSection("attention-inbox")}
+                  onClick={
+                    group.category === "identified"
+                      ? revealAttention
+                      : () => revealSection("attention-inbox")
+                  }
                 />
               ))}
             </div>
           </div>
           <div style={subCard}>
-            <h3 style={{ margin: "0 0 6px" }}>{tr("How much should PrizeSkout do?", "ما مقدار العمل الذي ينفذه PrizeSkout؟", "Jusqu’où PrizeSkout doit-il intervenir ?")}</h3>
+            <h3 style={{ margin: "0 0 6px" }}>
+              {tr(
+                "How much should PrizeSkout do?",
+                "ما مقدار العمل الذي ينفذه PrizeSkout؟",
+                "Jusqu’où PrizeSkout doit-il intervenir ?",
+              )}
+            </h3>
             <p style={copy}>
               Increase automation only as trust grows. Active Margin Policy Engine limits still
               apply.
@@ -683,7 +918,9 @@ export function MerchantOperatingLoop({
             </div>
           </div>
           <div style={subCard}>
-            <h3 style={{ margin: "0 0 6px" }}>{tr("Store Manager mode", "وضع مدير المتجر", "Mode du gestionnaire de boutique")}</h3>
+            <h3 style={{ margin: "0 0 6px" }}>
+              {tr("Store Manager mode", "وضع مدير المتجر", "Mode du gestionnaire de boutique")}
+            </h3>
             <p style={copy}>
               Choose how much the manager can do. Money-related and permanent changes still follow
               your approval rules.
@@ -714,7 +951,13 @@ export function MerchantOperatingLoop({
             </div>
           </div>
           <div style={subCard}>
-            <h3 style={{ margin: "0 0 6px" }}>{tr("Standing management policies", "سياسات الإدارة الدائمة", "Politiques de gestion permanentes")}</h3>
+            <h3 style={{ margin: "0 0 6px" }}>
+              {tr(
+                "Standing management policies",
+                "سياسات الإدارة الدائمة",
+                "Politiques de gestion permanentes",
+              )}
+            </h3>
             <p style={copy}>
               Choose what PrizeSkout should watch, suggest, prepare, or handle automatically.
               Automatic work only happens when your connected sales channel supports it.
@@ -771,6 +1014,18 @@ export function MerchantOperatingLoop({
         }}
       >
         {message}
+        {loadError && (
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              void load();
+            }}
+            style={{ ...smallButton, marginInlineStart: 10, color: RED }}
+          >
+            Try again
+          </button>
+        )}
       </div>
     </section>
   );
@@ -849,7 +1104,8 @@ function ManagerTasks({
                   if (onRun) {
                     setRunningId(task.id);
                     const completed = await onRun(task.title);
-                    if (completed) onMove(task, task.risk_level === "read_only" ? "completed" : "prepared");
+                    if (completed)
+                      onMove(task, task.risk_level === "read_only" ? "completed" : "prepared");
                     setRunningId("");
                   } else {
                     onMove(task, "investigating");
@@ -861,7 +1117,8 @@ function ManagerTasks({
               </button>
             )}
             {["investigating", "prepared"].includes(task.status) &&
-              task.risk_level === "read_only" && onRun && (
+              task.risk_level === "read_only" &&
+              onRun && (
                 <button
                   disabled={busy === task.id || runningId === task.id}
                   onClick={async () => {
@@ -912,9 +1169,7 @@ function Items({
   const [decisionNote, setDecisionNote] = useState("");
   const beginDecision = (item: Item, action: "resolve" | "dismiss") => {
     setItemDecision({ id: item.id, action });
-    setDecisionNote(
-      action === "resolve" ? "Issue corrected" : "Not relevant to my business",
-    );
+    setDecisionNote(action === "resolve" ? "Issue corrected" : "Not relevant to my business");
   };
   if (!items.length)
     return (
@@ -992,7 +1247,9 @@ function Items({
                 Resolve
               </button>
               <details style={{ position: "relative" }}>
-                <summary style={{ ...smallButton, listStyle: "none", cursor: "pointer" }}>More</summary>
+                <summary style={{ ...smallButton, listStyle: "none", cursor: "pointer" }}>
+                  More
+                </summary>
                 <div
                   style={{
                     display: "flex",
@@ -1006,18 +1263,34 @@ function Items({
                   }}
                 >
                   <button
-                    onClick={() => void navigator.clipboard.writeText(`${location.origin}${location.pathname}#attention-${item.id}`)}
+                    onClick={() =>
+                      void navigator.clipboard.writeText(
+                        `${location.origin}${location.pathname}#attention-${item.id}`,
+                      )
+                    }
                     style={smallButton}
                   >
                     Copy link
                   </button>
-                  <button disabled={busy === item.id} onClick={() => onUpdate(item, "assign", "Merchant owner")} style={smallButton}>
+                  <button
+                    disabled={busy === item.id}
+                    onClick={() => onUpdate(item, "assign", "Merchant owner")}
+                    style={smallButton}
+                  >
                     Assign
                   </button>
-                  <button disabled={busy === item.id} onClick={() => onUpdate(item, "request_approval", "Finance approver")} style={smallButton}>
+                  <button
+                    disabled={busy === item.id}
+                    onClick={() => onUpdate(item, "request_approval", "Finance approver")}
+                    style={smallButton}
+                  >
                     Request approval
                   </button>
-                  <button disabled={busy === item.id} onClick={() => onUpdate(item, "snooze", "1")} style={smallButton}>
+                  <button
+                    disabled={busy === item.id}
+                    onClick={() => onUpdate(item, "snooze", "1")}
+                    style={smallButton}
+                  >
                     Snooze
                   </button>
                   <button
@@ -1065,18 +1338,22 @@ function Items({
                 }}
               >
                 {(itemDecision.action === "resolve"
-                  ? ["Issue corrected", "Reviewed, no further action needed", "Handled outside PrizeSkout"]
+                  ? [
+                      "Issue corrected",
+                      "Reviewed, no further action needed",
+                      "Handled outside PrizeSkout",
+                    ]
                   : ["Not relevant to my business", "Duplicate finding", "Incorrect finding"]
                 ).map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
-              <div style={{ display: "flex", gap: 7, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => setItemDecision(null)}
-                  style={smallButton}
-                >
+              <div
+                style={{ display: "flex", gap: 7, justifyContent: "flex-end", flexWrap: "wrap" }}
+              >
+                <button type="button" onClick={() => setItemDecision(null)} style={smallButton}>
                   Cancel
                 </button>
                 <button
@@ -1126,8 +1403,19 @@ function Header({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: 
     </div>
   );
 }
-function Metric({ label, value, note, onClick }: { label: string; value: string; note: string; onClick?: () => void }) {
-  const content = <>
+function Metric({
+  label,
+  value,
+  note,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  onClick?: () => void;
+}) {
+  const content = (
+    <>
       <div
         style={{
           fontSize: 10.5,
@@ -1140,7 +1428,8 @@ function Metric({ label, value, note, onClick }: { label: string; value: string;
       </div>
       <div style={{ fontSize: 21, fontWeight: 850, marginTop: 4 }}>{value}</div>
       <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{note}</div>
-    </>;
+    </>
+  );
   const metricStyle: React.CSSProperties = {
     padding: "12px 13px",
     border: "1px solid var(--border)",
@@ -1153,7 +1442,12 @@ function Metric({ label, value, note, onClick }: { label: string; value: string;
     cursor: onClick ? "pointer" : "default",
   };
   return onClick ? (
-    <button type="button" onClick={onClick} aria-label={`${label}: ${value}. ${note}`} style={metricStyle}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label}: ${value}. ${note}`}
+      style={metricStyle}
+    >
       {content}
     </button>
   ) : (
