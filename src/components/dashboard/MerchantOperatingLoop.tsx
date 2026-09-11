@@ -135,9 +135,8 @@ export function MerchantOperatingLoop({
     const { data: { session } } = await supabase.auth.getSession();
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-    const response = await fetchWithTimeout(
-      "/api/channels/connect",
-      {
+    const request = () => fetchWithTimeout(
+      "/api/channels/connect", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -146,9 +145,20 @@ export function MerchantOperatingLoop({
           platform: "merchant_experience",
           ...body,
         }),
-      },
-      25_000,
-    );
+      }, 25_000);
+    let response = await request();
+    if (response.status === 401 && session?.access_token) {
+      const identityResponse = await fetchWithTimeout("/api/auth/resolve-merchant", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      }, 15_000);
+      if (identityResponse.ok) {
+        const identity = await identityResponse.json() as { merchant_id?: string; code?: string };
+        if (identity.merchant_id) localStorage.setItem("ps_merchant_id", identity.merchant_id);
+        if (identity.code) localStorage.setItem("ps_access_code", identity.code);
+        response = await request();
+      }
+    }
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error ?? "Request failed");
     return result;
