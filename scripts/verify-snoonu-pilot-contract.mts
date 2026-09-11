@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { isFreshSnoonuTimestamp, normalizeSnoonuPilotEvent, parseSnoonuPilotEnvelope, signSnoonuPilotPayload, verifySnoonuPilotSignature } from "../src/server/core/snoonu-pilot-contract";
+import { SNOONU_CONNECTOR_MANIFEST } from "../src/lib/snoonu-connector-capabilities";
+import { snoonuConnector } from "../src/server/connectors/snoonu";
 
 const fixture = {
   schema_version: "2026-09-09", event_id: "evt_sn_001", event_type: "order.created",
@@ -16,4 +18,14 @@ assert.equal(await verifySnoonuPilotSignature(raw, timestamp, secret, `sha256=${
 assert.equal(await verifySnoonuPilotSignature(`${raw} `, timestamp, secret, signature), false);
 assert.equal(isFreshSnoonuTimestamp(timestamp, 1_788_955_200_000), true);
 assert.equal(isFreshSnoonuTimestamp(timestamp, 1_788_956_000_001), false);
+assert.equal(snoonuConnector.manifest, SNOONU_CONNECTOR_MANIFEST);
+assert.equal(snoonuConnector.capability("inboundOrderEvents"), "implemented_proposed_contract");
+assert.equal(snoonuConnector.capability("orderApi"), "partner_documentation_required");
+assert.equal(snoonuConnector.capability("settlementDocuments"), "document_supported");
+assert.equal(snoonuConnector.capability("fullBankStatementRequired"), "unavailable");
+assert.equal(snoonuConnector.manifest.privacy.fullBankStatementRequired, false);
+assert.equal(snoonuConnector.manifest.privacy.payoutReceiptConfirmationOptional, true);
+const incomplete = snoonuConnector.normalizeFixture({ ...fixture, data: { order_id: "SN-1002", currency: "QAR" } });
+assert.equal(incomplete.commission_amount, null);
+assert.equal(incomplete.net_amount, null);
 console.log("Snoonu pilot contract fixtures passed.");
