@@ -103,6 +103,18 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         const economicsIds=[...new Set<string>((decideRows??[]).map((row:any)=>String(row.economics_version_id??"")).filter((value:string)=>!!value))];
         const {data:economicsRows}=economicsIds.length?await (supabaseAdmin as any).from("ps_economics_versions").select("id,account_id,merchant_id,channel,status,effective_from,effective_to,source_contract_id").in("id",economicsIds):{data:[]};
         const economicsById=new Map((economicsRows??[]).map((row:any)=>[String(row.id),row]));
+        const { data: costEvidenceRows } = await (supabaseAdmin as any)
+          .from("ps_product_cost_evidence")
+          .select("sku,unit_cost,currency,effective_from,source_provider")
+          .eq("account_id", accountId)
+          .lte("effective_from", new Date().toISOString().slice(0, 10))
+          .or(`effective_to.is.null,effective_to.gte.${new Date().toISOString().slice(0, 10)}`)
+          .order("effective_from", { ascending: false });
+        const latestCostBySku = new Map<string, any>();
+        for (const row of costEvidenceRows ?? []) {
+          const key = String(row.sku ?? "").trim().toLowerCase();
+          if (key && !latestCostBySku.has(key)) latestCostBySku.set(key, row);
+        }
 
         const decisionByEvent=new Map<string,any>();
         for(const row of decideRows??[])if(!decisionByEvent.has(row.ingest_event_id))decisionByEvent.set(row.ingest_event_id,row);
@@ -116,6 +128,8 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           seenProducts.add(productKey);
           const rawPayload = evt.raw_payload as Record<string, unknown> | null;
           const costSource = String(rawPayload?.cost_source ?? "unknown");
+          const suppliedCost = latestCostBySku.get(String(evt.sku ?? "").trim().toLowerCase());
+          const hasConfirmedCost = costSource === "platform_catalog" || Boolean(suppliedCost);
           const missingEconomics = rawPayload?.economics_source === "approved_contract_required";
           // Never reuse a historical recommendation after a refresh establishes
           // that approved channel terms are currently unavailable.
@@ -127,8 +141,8 @@ export const Route = createFileRoute("/api/repricing/catalog")({
           const effectiveFloor=wantsPreview?(previewOverride?.marginFloorPct??previewFloor):resolvedPolicy.marginFloorPct;
           const effectiveMaxIncrease=wantsPreview?(previewOverride?.maxPriceIncreasePct??previewMaxIncrease):resolvedPolicy.maxPriceIncreasePct;
           const effectiveMinimumContribution=wantsPreview?(previewOverride?.minimumContributionAmount??previewMinimumContribution):resolvedPolicy.minimumContributionAmount;
-          const economics=decision?{region:"SA",baseCost:Number(decision.base_cost),commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),paymentFeeRate:Number(decision.payment_fee_rate??0),fixedOrderFee:Number(decision.fixed_order_fee??0),promotionContributionRate:Number(decision.promotion_contribution_rate??0),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:effectiveFloor,minimumContributionAmount:effectiveMinimumContribution}:null;
-          const currentAnalysis=costSource==="platform_catalog"&&economics?calculateMargin({...economics,currentRetailPrice:currentPrice}):null;
+          const economics=decision?{region:"SA",baseCost:suppliedCost?Number(suppliedCost.unit_cost):Number(decision.base_cost),commissionRate:Number(decision.commission_rate),vatRate:Number(decision.vat_rate),paymentFeeRate:Number(decision.payment_fee_rate??0),fixedOrderFee:Number(decision.fixed_order_fee??0),promotionContributionRate:Number(decision.promotion_contribution_rate??0),logisticsSubsidy:Number(decision.logistics_subsidy),marginFloorPct:effectiveFloor,minimumContributionAmount:effectiveMinimumContribution}:null;
+          const currentAnalysis=hasConfirmedCost&&economics?calculateMargin({...economics,currentRetailPrice:currentPrice}):null;
           const requiredPrice=currentAnalysis?.recommendedPrice??null;
           const maximumAllowedPrice=currentPrice>0?Math.round(currentPrice*(1+effectiveMaxIncrease)*100)/100:null;
           const allowedPrice=requiredPrice==null?null:maximumAllowedPrice==null?requiredPrice:Math.min(requiredPrice,maximumAllowedPrice);
@@ -159,12 +173,10 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             repriced_at: evt.status === "repriced" ? new Date().toISOString() : null,
             margin_floor_pct: Number(decision?.margin_floor_pct ?? 0.18),
             commission_rate: Number(decision?.commission_rate ?? 0),
-            cost_confidence: costSource === "platform_catalog"
+            cost_confidence: hasConfirmedCost
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
-            base_cost: costSource === "platform_catalog" && decision
-              ? Number(decision.base_cost)
-              : null,
+            base_cost: suppliedCost ? Number(suppliedCost.unit_cost) : costSource === "platform_catalog" && decision ? Number(decision.base_cost) : null,
             preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,approval_mode:resolvedPolicy.approvalMode,evidence_blockers:evidenceBlockers,outcome:evidenceBlockers.length?"blocked_stale_evidence":!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"cannot_reach_target_within_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,approval_mode:resolvedPolicy.approvalMode,evidence_blockers:evidenceBlockers,outcome:missingEconomics?"blocked_missing_economics":"blocked_missing_cost"},
           });
         }

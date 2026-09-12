@@ -21,6 +21,7 @@ import { authorizePricePublication, pricesMatch, validPriceActionKey } from "@/s
 import { publicationEvidenceBlockers } from "@/server/core/pricing-evidence";
 import { recordPendingJahezPropagation } from "@/server/core/zid-jahez-bridge";
 import { toMerchantError } from "@/server/merchant-errors";
+import { resolveVerifiedCost } from "@/server/core/economics-resolver";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -89,7 +90,12 @@ export const Route = createFileRoute("/api/repricing/apply")({
         const policy=await resolveMerchantMarginPolicy(accountId,evt.source_platform);
         const {data:decision}=await (supabaseAdmin as any).from("ps_decide_results").select("id,base_cost,current_retail_price,commission_rate,vat_rate,payment_fee_rate,fixed_order_fee,promotion_contribution_rate,logistics_subsidy,economics_version_id,margin_policy_version,cost_observed_at,cost_evidence_expires_at,decision_expires_at,evidence_channel,evidence_item_id,evidence_currency").eq("account_id",accountId).eq("ingest_event_id",ingestEventId).order("created_at",{ascending:false}).limit(1).maybeSingle();
         const rawPayload=evt.raw_payload as Record<string,unknown>|null;
-        if(!decision?.economics_version_id||rawPayload?.cost_source!=="platform_catalog"){
+        const verifiedCost = decision ? await resolveVerifiedCost({ accountId, merchantId: evt.merchant_id ?? merchantId, sku: evt.sku }) : null;
+        const platformCost = rawPayload?.cost_source === "platform_catalog";
+        const externalEvidenceMatches = Boolean(verifiedCost
+          && verifiedCost.currency.toUpperCase() === String(evt.currency ?? "SAR").toUpperCase()
+          && Math.abs(Number(verifiedCost.amount) - Number(decision?.base_cost)) < 0.00005);
+        if(!decision?.economics_version_id||(!platformCost&&!externalEvidenceMatches)){
           return json({ok:false,error:"This price cannot be published until the product cost and approved channel agreement are both verified."},409);
         }
         const {data:economicsRow}=await (supabaseAdmin as any).from("ps_economics_versions").select("id,account_id,merchant_id,channel,status,effective_from,effective_to,source_contract_id").eq("id",decision.economics_version_id).maybeSingle();

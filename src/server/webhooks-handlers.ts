@@ -59,7 +59,7 @@ export async function handleListEndpoints(_request: Request, ctx: V1Context): Pr
   if (error) return { status: 500, body: { error: { code: "internal_error", message: error.message } } };
 
   if (!data || data.length === 0) {
-    return ok({ data: SAMPLE_ENDPOINTS, _fallback: "sample" });
+    return ok({ data: [], evidence_status: "no_webhook_endpoints" });
   }
 
   return ok({
@@ -113,7 +113,7 @@ export async function handleListDeliveries(request: Request, ctx: V1Context): Pr
   if (error) return { status: 500, body: { error: { code: "internal_error", message: error.message } } };
 
   if (!data || data.length === 0) {
-    return ok({ data: SAMPLE_DELIVERIES, _fallback: "sample" });
+    return ok({ data: [], evidence_status: "no_webhook_deliveries" });
   }
 
   return ok({

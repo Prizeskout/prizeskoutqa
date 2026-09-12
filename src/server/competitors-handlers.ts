@@ -86,26 +86,7 @@ export async function handleListPrices(request: Request, ctx: V1Context): Promis
   }
 
   if (rows.length === 0) {
-    return ok({
-      data: [
-        {
-          id: "px_3f9c2",
-          product: "Sony WH-1000XM5",
-          category: "Electronics",
-          channel: "online",
-          your_price: 1199,
-          currency: "QAR",
-          competitors: {
-            carrefour: { price: 1149, observed_at: "2026-04-23T10:14:00Z" },
-            amazon: { price: 1179, observed_at: "2026-04-23T10:09:00Z" },
-            noon: { price: 1199, observed_at: "2026-04-23T10:11:00Z" },
-          },
-          signal: "undercut",
-        },
-      ],
-      page: { has_more: false, next_cursor: null },
-      _fallback: "sample",
-    });
+    return ok({ data: [], page: { has_more:false, next_cursor:null }, evidence_status:"no_competitor_prices" });
   }
 
   const hasMore = rows.length > limit;
@@ -416,6 +397,7 @@ export async function handleListPatterns(request: Request, ctx: V1Context): Prom
   }
 
   const rows = (data ?? []) as any[];
+  if (rows.length === 0) return ok({ data: [], evidence_status: "no_detected_patterns" });
   if (rows.length === 0) {
     return ok({
       data: [

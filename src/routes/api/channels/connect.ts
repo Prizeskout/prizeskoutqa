@@ -144,10 +144,14 @@ import {
   requestSnoonuActivation,
   validateSnoonuActivationRequest,
 } from "@/server/connectors/snoonu/activation";
+import {
+  persistProductCostBatch,
+  prepareProductCostBatch,
+} from "@/server/core/restaurant-costs";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
-type Body = Record<string, string>;
+type Body = Record<string, any>;
 
 export const Route = createFileRoute("/api/channels/connect")({
   server: {
@@ -202,6 +206,12 @@ export const Route = createFileRoute("/api/channels/connect")({
         if (!authorized) return resp({ error: "Unauthorized." }, 401);
 
         try {
+          if (platform === "product_cost_batch") {
+            const batch = prepareProductCostBatch(body);
+            const result = await persistProductCostBatch(merchant_id, batch, "dashboard");
+            return resp({ ok: true, data: result }, result.duplicate ? 200 : 202);
+          }
+
           if (platform === "snoonu") {
             const requestData = validateSnoonuActivationRequest(body);
             const channel = await requestSnoonuActivation({

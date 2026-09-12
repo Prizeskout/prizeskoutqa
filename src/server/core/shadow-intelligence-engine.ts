@@ -65,8 +65,8 @@ export function predictShadowMargin(input: ShadowDecisionInput): ShadowPredictio
     predictedMarginPct: round(marginPct, 8),
     predictedDemandChangePct: null,
     riskLevel: belowFloor ? "high" : input.floorBreached ? "medium" : "low",
-    confidence: 0.35,
-    recommendation: belowFloor ? "observe" : hasRecommendation ? "consider_reprice" : "hold",
+    confidence: 0,
+    recommendation: belowFloor ? "observe" : "hold",
     explanationCodes,
     featureSnapshot: {
       baseCost: input.baseCost,

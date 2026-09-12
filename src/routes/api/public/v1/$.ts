@@ -1,7 +1,7 @@
 // API dispatcher.
 // Test-mode keys return documented sample responses (sandbox).
-// Live-mode keys are accepted for platform accounts (is_platform = true) and
-// route to real production handlers. All other live keys are rejected.
+// Live-mode keys route documented endpoints to production handlers. Test-mode
+// keys return explicitly synthetic responses and never invoke those handlers.
 
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
@@ -60,7 +60,7 @@ async function handle(request: Request, splat: string) {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type, Idempotency-Key, X-Webhook-Signature, X-Request-Id",
       },
     });
   }
@@ -99,13 +99,32 @@ async function handle(request: Request, splat: string) {
   }
 
   const isLive = keyRow.mode === "live";
+  const endpointSpec = matchEndpoint(request.method, fullPath);
+  const keyScopes: string[] = Array.isArray(keyRow.scopes) ? (keyRow.scopes as string[]) : [];
+
+  // Enforce documented endpoint scopes in both live and sandbox mode.
+  if (endpointSpec) {
+    const missingScopes = endpointSpec.scopes.filter((required) => {
+      if (keyScopes.includes("admin") || keyScopes.includes(required)) return false;
+      if (required.endsWith(".read")) return !keyScopes.some(scope => scope === "read" || scope === "write");
+      if (required.endsWith(".write")) return !keyScopes.includes("write");
+      return true;
+    });
+    if (missingScopes.length > 0) {
+      return json({ error: {
+        code: "insufficient_scope",
+        message: `This endpoint requires scope(s): ${missingScopes.join(", ")}.`,
+        required_scopes: endpointSpec.scopes,
+      } }, 403);
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Real-handler branch: if this path/method has a real implementation,
   // resolve the account and run against actual Postgres tables.
-  // Live-mode keys are allowed only for platform accounts (is_platform = true).
+  // Access remains tenant-scoped through the account resolved from this key.
   // ---------------------------------------------------------------------------
-  if (V1_HANDLER_KEYS.has(`${request.method} ${fullPath}`)) {
+  if (isLive && endpointSpec && V1_HANDLER_KEYS.has(`${request.method} ${fullPath}`)) {
     // Resolve the account for this API key (uses find_account_for_api_key SQL helper).
     const { data: acctRows, error: acctErr } = await supabaseAdmin
       .rpc("find_account_for_api_key", { _api_key_id: keyRow.id });
@@ -131,26 +150,6 @@ async function handle(request: Request, splat: string) {
     };
     const plan: Plan = (acct.plan as Plan) ?? "starter";
     const isPlatform: boolean = acct.is_platform ?? false;
-
-    const merchantLivePath = fullPath === "/v1/connectors"
-      || fullPath === "/v1/connectors/definitions"
-      || /^\/v1\/connectors\/[^/]+\/(mappings|checkpoints)$/.test(fullPath)
-      || /^\/v1\/connectors\/[^/]+\/(credentials|sync)$/.test(fullPath)
-      || ["/v1/commerce/order-batches", "/v1/commerce/cost-batches", "/v1/commerce/settlement-batches"].includes(fullPath);
-    if (isLive && !isPlatform && !merchantLivePath) {
-      return json(
-        {
-          error: {
-            code: "live_mode_unavailable",
-            message:
-              "Live mode is not yet available for this account. Use a test key (sk_test_...) to explore the API in the sandbox.",
-          },
-        },
-        403,
-      );
-    }
-
-    const keyScopes: string[] = Array.isArray(keyRow.scopes) ? (keyRow.scopes as string[]) : [];
 
     // Reject keys whose scopes exceed what the plan allows.
     const badScopes = deniedScopes(keyScopes, plan);
@@ -260,17 +259,18 @@ async function handle(request: Request, splat: string) {
     return json(
       {
         error: {
-          code: "live_mode_unavailable",
-          message:
-            "Live mode is not yet available for this account. Use a test key (sk_test_...) to explore the API in the sandbox.",
+          code: endpointSpec ? "not_implemented" : "not_found",
+          message: endpointSpec
+            ? `The production handler for ${request.method} ${fullPath} is not available.`
+            : `No public endpoint matches ${request.method} ${fullPath}.`,
         },
       },
-      403,
+      endpointSpec ? 501 : 404,
     );
   }
 
   // Find the spec
-  const spec = matchEndpoint(request.method, fullPath);
+  const spec = endpointSpec;
   if (!spec) {
     return json(
       {
@@ -336,8 +336,11 @@ async function handle(request: Request, splat: string) {
 
   const sample = spec.sampleResponse ?? spec.responses[0]?.example ?? { ok: true };
   const status = spec.responses[0]?.status ?? 200;
+  const sandboxBody = sample && typeof sample === "object" && !Array.isArray(sample)
+    ? { ...(sample as Record<string, unknown>), _sandbox: { synthetic: true, no_production_effect: true } }
+    : { data: sample, _sandbox: { synthetic: true, no_production_effect: true } };
 
-  return json(sample, status, {
+  return json(sandboxBody, status, {
     "X-Request-Id": `req_test_${Math.random().toString(36).slice(2, 10)}`,
   });
 }

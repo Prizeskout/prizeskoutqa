@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { assertEngineTransition, canTransitionEngineWork, engineRetryDelayMs, nextFailureState } from "../src/server/core/engine-state-machine";
+import { decide } from "../src/server/core/decide-engine";
 
 assert.equal(canTransitionEngineWork("queued", "leased"), true);
 assert.equal(canTransitionEngineWork("queued", "completed"), false);
@@ -13,4 +14,7 @@ assert.equal(nextFailureState(4, 5), "retry_scheduled");
 assert.equal(nextFailureState(5, 5), "dead_letter");
 assert.equal(engineRetryDelayMs(1, 0), 5_000);
 assert.ok(engineRetryDelayMs(20, 42) <= 18 * 60_000);
+const restored = decide({ region:"SA", baseCost:10, currentRetailPrice:10, commissionRate:.21, vatRate:.15, paymentFeeRate:.02, fixedOrderFee:1, marginFloorPct:.18, minimumContributionAmount:5 });
+assert.ok(restored.recommendedPrice !== null);
+assert.equal(decide({ region:"SA", baseCost:10, currentRetailPrice:restored.recommendedPrice!, commissionRate:.21, vatRate:.15, paymentFeeRate:.02, fixedOrderFee:1, marginFloorPct:.18, minimumContributionAmount:5 }).floorBreached, false);
 console.log("Engine state-machine verification passed.");

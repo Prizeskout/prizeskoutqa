@@ -6,6 +6,8 @@ export type PromotionProduct = {
   source_platform: string;
   unit_cost?: number | null;
   cost_confidence?: "verified" | "estimated" | "unknown";
+  /** Historical share of orders containing this SKU, normalized at runtime. */
+  sales_mix_weight?: number | null;
 };
 
 export type PromotionInputs = {
@@ -20,6 +22,7 @@ export type PromotionInputs = {
   baseline_orders: number;
   duration_days: number;
   minimum_margin_pct: number;
+  conversion_lift_basis?: "merchant_assumption" | "historical_model";
 };
 
 export type PromotionProductResult = {
@@ -139,8 +142,12 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
   // Until an explicit product mix is supplied, use an equal-weight product
   // average. Summing every selected SKU incorrectly assumes each order buys
   // one unit of every product.
-  const baselinePerOrder = eligible.length ? eligible.reduce((sum, p) => sum + (p.baseline_contribution ?? 0), 0) / eligible.length : 0;
-  const campaignPerOrder = eligible.length ? eligible.reduce((sum, p) => sum + (p.expected_contribution ?? 0), 0) / eligible.length : 0;
+  const eligibleSource = products.filter((_, index) => results[index].eligible);
+  const hasSalesMix = eligibleSource.length > 0 && eligibleSource.every(product => Number.isFinite(product.sales_mix_weight) && Number(product.sales_mix_weight) > 0);
+  const weights = hasSalesMix ? eligibleSource.map(product => Number(product.sales_mix_weight)) : eligible.map(() => 1);
+  const weightTotal = weights.reduce((sum, value) => sum + value, 0);
+  const baselinePerOrder = weightTotal ? eligible.reduce((sum, p, index) => sum + (p.baseline_contribution ?? 0) * weights[index], 0) / weightTotal : 0;
+  const campaignPerOrder = weightTotal ? eligible.reduce((sum, p, index) => sum + (p.expected_contribution ?? 0) * weights[index], 0) / weightTotal : 0;
   const baselineOrders = Math.max(0, Math.round(inputs.baseline_orders));
   const expectedOrders = Math.max(0, Math.round(baselineOrders * (1 + inputs.expected_conversion_lift_pct / 100)));
   const baselineContribution = baselinePerOrder * baselineOrders;
@@ -148,7 +155,8 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
   const breakEvenOrders = campaignPerOrder > 0 ? Math.ceil(baselineContribution / campaignPerOrder) : null;
   const beatsBaseline = campaignContribution >= baselineContribution;
   const meetsMarginFloor = eligible.length > 0 && eligible.every(product => (product.expected_margin_pct ?? -Infinity) >= inputs.minimum_margin_pct);
-  const approvalReady = eligible.length > 0 && results.every(product => product.cost_basis === "verified") && inputs.commission_base !== "unknown" && inputs.commission_base !== "eligible_sales";
+  const modeledLift = inputs.conversion_lift_basis === "historical_model";
+  const approvalReady = eligible.length > 0 && results.every(product => product.cost_basis === "verified") && inputs.commission_base !== "unknown" && inputs.commission_base !== "eligible_sales" && hasSalesMix && modeledLift;
   return {
     products: results, eligible_products: eligible.length, excluded_products: results.length - eligible.length,
     baseline_orders: baselineOrders, expected_orders: expectedOrders, break_even_orders: breakEvenOrders,
@@ -160,8 +168,8 @@ export function simulatePromotion(products: PromotionProduct[], inputs: Promotio
       results.every(product => product.cost_basis === "verified")
         ? "Product cost is verified from the connected catalogue economics snapshot."
         : "Products without verified cost use a clearly labelled inference from current net margin.",
-      "Expected conversion lift is merchant-entered and is not presented as a forecast certainty.",
-      "Order economics use an equal product mix until explicit per-SKU order weights are supplied.",
+      modeledLift ? "Expected conversion lift is backed by a historical model." : "Expected conversion lift is a merchant-entered scenario and cannot authorize a campaign.",
+      hasSalesMix ? "Order economics use supplied historical per-SKU sales weights." : "Order economics use an equal product mix for exploration only; an actual sales mix is required for approval.",
       inputs.commission_base === "unknown"
         ? "Commission base is unknown; net-after-discount is used provisionally."
         : `Commission is calculated on ${inputs.commission_base.replaceAll("_", " ")}.`,

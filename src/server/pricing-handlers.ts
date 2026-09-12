@@ -44,6 +44,7 @@ function shapeRecommendationRow(row: any) {
       unit_impact: row.unit_impact,
     },
     source: row.source === "seed" ? "engine_seed" : "engine_v3",
+    authority: "advisory_recommendation",
     generated_at: row.created_at,
   };
 }
@@ -87,25 +88,7 @@ export async function handleListRecommendations(request: Request, ctx: V1Context
 
   const rows = (data ?? []) as any[];
   if (rows.length === 0) {
-    return ok({
-      data: [
-        {
-          id: "rec_9a2c1",
-          product: "Sony WH-1000XM5",
-          category: "Electronics",
-          channel: "online",
-          current_price: 1199,
-          recommended_price: 1149,
-          currency: "QAR",
-          confidence: 87,
-          reason: "Carrefour and Amazon both undercutting by 4-8% over the last 36 hours.",
-          expected: { net_monthly: "+QAR 14,200", margin_impact: "-1.8pp", unit_impact: "+22%" },
-          source: "engine_v3",
-          generated_at: "2026-04-23T08:02:00Z",
-        },
-      ],
-      _fallback: "sample",
-    });
+    return ok({ data: [], evidence_status: "no_recommendations" });
   }
 
   return ok({ data: rows.map(shapeRecommendationRow) });
@@ -134,24 +117,7 @@ export async function handleGetRecommendation(
 
   const row = (data ?? []).find((r: any) => (r.id as string).replace(/-/g, "").startsWith(short));
   if (!row) {
-    return ok({
-      id: recId,
-      product: "Sony WH-1000XM5",
-      category: "Electronics",
-      channel: "online",
-      current_price: 1199,
-      recommended_price: 1149,
-      currency: "QAR",
-      confidence: 87,
-      reason: "Carrefour and Amazon both undercutting by 4-8% over the last 36 hours.",
-      expected: { net_monthly: "+QAR 14,200", margin_impact: "-1.8pp", unit_impact: "+22%" },
-      evidence: [
-        { source: "carrefour", price: 1149, observed_at: "2026-04-23T10:14:00Z" },
-        { source: "amazon", price: 1179, observed_at: "2026-04-23T10:09:00Z" },
-      ],
-      generated_at: "2026-04-23T08:02:00Z",
-      _fallback: "sample",
-    });
+    return err("not_found", `Recommendation ${recId} was not found.`, 404);
   }
 
   // Best-effort evidence: pull this user's competitor_prices row for the same
@@ -194,6 +160,7 @@ export async function handleListRules(_request: Request, ctx: V1Context): Promis
   }
 
   const rows = (data ?? []) as any[];
+  if (rows.length === 0) return ok({ data: [], evidence_status: "no_pricing_rules" });
   if (rows.length === 0) {
     return ok({
       data: [

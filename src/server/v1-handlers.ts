@@ -595,6 +595,44 @@ function round4(n: number) {
 // ============================================================================
 
 export async function handleDynprice(request: Request, ctx: V1Context): Promise<V1Result> {
+  if (!ctx.scopes.some(scope => ["write", "admin", "pricing.write"].includes(scope)))
+    return err("forbidden", "This API key requires pricing write access.", 403);
+  const { json } = await readJson(request);
+  if (!json) return err("validation_failed", "Request body must be a valid JSON object.", 422);
+  const sku = typeof json.sku === "string" ? json.sku.trim() : "";
+  const channel = typeof json.channel === "string" ? json.channel.trim().toLowerCase() : "";
+  if (!sku) return err("validation_failed", "`sku` is required.", 422);
+  if (json.target_margin_pct != null)
+    return err("policy_override_not_allowed", "target_margin_pct cannot override the merchant's active approved margin policy.", 422);
+  let eventQuery = (supabaseAdmin as any).from("ps_ingest_events")
+    .select("id,item_id,sku,item_name_en,source_platform,current_retail_price,currency,status")
+    .eq("account_id", ctx.accountId).eq("sku", sku).order("created_at", { ascending:false }).limit(1);
+  if (channel && channel !== "all") eventQuery = eventQuery.eq("source_platform", channel);
+  const { data: event, error: eventError } = await eventQuery.maybeSingle();
+  if (eventError) return err("internal_error", eventError.message, 500);
+  if (!event) return err("not_found", `No synced product was found for SKU ${sku}${channel ? ` on ${channel}` : ""}.`, 404);
+  const { data: decision, error: decisionError } = await (supabaseAdmin as any).from("ps_decide_results")
+    .select("id,recommended_price,decision_action,net_margin,net_margin_pct,floor_breached,margin_floor_pct,minimum_contribution_amount,decision_expires_at,cost_evidence_expires_at,economics_version_id,margin_policy_version,created_at")
+    .eq("account_id", ctx.accountId).eq("ingest_event_id", event.id)
+    .order("created_at", { ascending:false }).limit(1).maybeSingle();
+  if (decisionError) return err("internal_error", decisionError.message, 500);
+  if (!decision) return err("evidence_required", "A verified product cost and approved channel agreement are required before a price recommendation can be calculated.", 409);
+  const blockers: string[] = [];
+  if (!decision.economics_version_id) blockers.push("approved_channel_economics_missing");
+  if (!decision.cost_evidence_expires_at || Date.parse(decision.cost_evidence_expires_at) <= Date.now()) blockers.push("cost_evidence_stale");
+  if (!decision.decision_expires_at || Date.parse(decision.decision_expires_at) <= Date.now()) blockers.push("decision_expired");
+  if (blockers.length) return err("evidence_refresh_required", "The latest recommendation is not backed by current pricing evidence.", 409, { blockers });
+  return ok({
+    sku:event.sku, product_id:event.item_id, channel:event.source_platform,
+    current_price:Number(event.current_retail_price), recommended_price:decision.recommended_price == null ? null : Number(decision.recommended_price),
+    currency:event.currency, action:decision.decision_action, floor_breached:Boolean(decision.floor_breached),
+    economics:{net_margin:Number(decision.net_margin),net_margin_pct:Number(decision.net_margin_pct),margin_floor_pct:Number(decision.margin_floor_pct),minimum_contribution_amount:Number(decision.minimum_contribution_amount??0)},
+    authority:"evidence_backed_margin_engine", decision_id:decision.id, policy_version:decision.margin_policy_version,
+    expires_at:decision.decision_expires_at,
+  });
+}
+
+async function handleLegacyDynprice(request: Request, ctx: V1Context): Promise<V1Result> {
   const { json } = await readJson(request);
   if (!json) return err("validation_failed", "Request body must be a valid JSON object.", 422);
 

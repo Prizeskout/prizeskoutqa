@@ -8,8 +8,8 @@ const safe = predictShadowMargin({
 assert.equal(safe.candidatePrice,90);
 assert.equal(safe.predictedMargin,31.1);
 assert.equal(safe.predictedDemandChangePct,null);
-assert.equal(safe.recommendation,"consider_reprice");
-assert.equal(safe.confidence,.35);
+assert.equal(safe.recommendation,"hold", "a margin-only shadow calculation must not recommend repricing without demand evidence");
+assert.equal(safe.confidence,0);
 
 const unsafe = predictShadowMargin({
   baseCost: 70,currentPrice: 80,recommendedPrice: 82,commissionRate: .2,

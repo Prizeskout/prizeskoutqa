@@ -39,6 +39,7 @@
     "verify-settlement-reconciliation": "tsx scripts/verify-settlement-reconciliation.mts",
     "verify-settlement-reference-intake": "tsx scripts/verify-settlement-reference-intake.mts",
     "verify-api-independent-foundation": "tsx scripts/verify-api-independent-foundation.mts",
+    "verify-public-api-safety": "tsx scripts/verify-public-api-safety.mts",
     "verify-foodics-evidence-adapter": "tsx scripts/verify-foodics-evidence-adapter.mts",
     "verify-evidence-release-readiness": "tsx scripts/verify-evidence-release-readiness.mts",
     "verify-zid-contract": "tsx scripts/verify-zid-contract.mts",

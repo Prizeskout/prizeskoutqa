@@ -471,7 +471,7 @@ const PRICING_GROUP: GroupSpec = {
       path: "/v1/pricing/decisions",
       title: "Log a pricing decision",
       summary:
-        "Record an accept, override, or snooze action for a recommendation. Used for the audit trail and to retrain the model.",
+        "Record an accept, override, reject, or snooze action for the audit trail. This endpoint does not execute a storefront price change.",
       auth: "bearer",
       scopes: ["pricing.write"],
       body: [
@@ -492,7 +492,7 @@ const PRICING_GROUP: GroupSpec = {
         {
           name: "applied_price",
           type: "number",
-          description: "Required when decision is overridden.",
+          description: "The merchant-approved override price. Required when decision is overridden; it is not applied by this endpoint.",
           example: "1169",
         },
         {
@@ -515,7 +515,9 @@ const PRICING_GROUP: GroupSpec = {
             id: "dec_b3e1",
             recommendation_id: "rec_9a2c1",
             decision: "accepted",
-            applied_price: 1149,
+            approved_price: 1149,
+            execution_status: "not_executed",
+            effect: "Decision recorded only; no storefront price was changed.",
             logged_at: "2026-04-23T10:31:00Z",
           },
         },
@@ -615,7 +617,7 @@ const PROMOTIONS_GROUP: GroupSpec = {
       path: "/v1/promotions/simulate",
       title: "Simulate a campaign",
       summary:
-        "Returns predicted GMV uplift, cannibalization, incremental orders, and net ROI for a candidate campaign.",
+        "Validates whether sufficient product-cost, channel-term, sales-mix, and measured demand evidence exists for a campaign projection. It fails closed when that evidence is incomplete.",
       auth: "bearer",
       scopes: ["promotions.write"],
       body: [
@@ -1167,7 +1169,7 @@ const OPERATIONS_GROUP: GroupSpec = {
       path: "/v1/dynprice",
       title: "Get a dynamic price recommendation",
       summary:
-        "Deterministic recommendation combining your margin floor (from margin_inputs) and the cheapest competitor price for this product. Every decision is appended to dynprice_decisions for audit.",
+        "Returns the latest evidence-backed margin decision for a synced product. Requires current product-cost evidence and approved channel economics.",
       auth: "bearer",
       scopes: ["pricing.write"],
       body: [
@@ -1181,11 +1183,11 @@ const OPERATIONS_GROUP: GroupSpec = {
         {
           name: "channel",
           type: "string",
-          description: "Channel. Default: online.",
-          example: "online",
+          description: "Connected source channel such as zid or salla. Omit to use the latest synced occurrence of the SKU.",
+          example: "zid",
         },
         {
-          name: "target_margin_pct",
+          name: "target_margin_pct (deprecated; rejected in live mode)",
           type: "number",
           description: "Desired gross-margin floor as a fraction (0–0.95). Default: 0.20.",
           example: "0.25",
@@ -1198,9 +1200,15 @@ const OPERATIONS_GROUP: GroupSpec = {
           example: {
             sku: "SKU-001",
             product_id: "prod_3a9c2f",
-            channel: "online",
+            channel: "zid",
             current_price: 1199,
             recommended_price: 1148,
+            action: "recommend",
+            authority: "evidence_backed_margin_engine",
+            floor_breached: false,
+            decision_id: "dec_3a9c2f",
+            policy_version: 4,
+            expires_at: "2026-04-23T11:14:00Z",
             reason:
               "Undercut cheapest competitor (1149) by 1 unit while respecting the 20% margin floor.",
             signals: {
@@ -1215,6 +1223,8 @@ const OPERATIONS_GROUP: GroupSpec = {
       ],
       errors: COMMON_ERRORS,
       notes: [
+        "Live recommendations use the merchant's active approved margin policy; request-level margin overrides are rejected.",
+        "This endpoint returns a recommendation and never changes a storefront price.",
         "Algorithm: max(margin_floor, competitor_min - 1). If only one signal is available, the other is skipped and the reason explains why.",
         "Active pricing_rules are returned as informational signals — the v1 engine does not enforce them automatically.",
       ],

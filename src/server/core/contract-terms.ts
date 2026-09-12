@@ -124,6 +124,9 @@ export async function approveContractTerm(accountId: string, id: string, reviewe
       const updated = existing.map(term=>term.id===id?approved:term.platform===found.platform&&term.effective_from===found.effective_from&&term.status==="approved"?{...term,status:"superseded" as const}:term);
       const { error } = await supabaseAdmin.from("ps_merchant_channels").update({ metadata:{...metadata,contract_terms:updated} as unknown as Json }).eq("id",channel.id);
       if(error)throw new Error(error.message);
+      // Approval is not complete until the pricing engine has an immutable,
+      // effective economics version to bind future decisions to.
+      await publishEconomicsVersion(accountId, approved, reviewedBy);
       return approved;
     }
     throw new Error("Contract draft was not found.");

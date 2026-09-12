@@ -6,6 +6,10 @@ import {
   registerMerchantEvidence,
 } from "./merchant-evidence-intake";
 import type { V1Context, V1Result } from "@/server/v1-handlers";
+import { resolveAuthoritativeEconomics } from "./economics-resolver";
+import { resolveMerchantMarginPolicy } from "./merchant-pricing-config";
+import { decide } from "./decide-engine";
+import { PRICE_DECISION_TTL_MS } from "./pricing-evidence";
 
 type JsonObject = Record<string, unknown>;
 export type ProductCostRecord = {
@@ -25,6 +29,15 @@ export type ProductCostBatch = {
   source_provider: string;
   schema_version: "2026-09-05";
   costs: ProductCostRecord[];
+};
+export type ProductCostBatchResult = {
+  batch_id: string;
+  evidence_item_id: string;
+  duplicate: boolean;
+  accepted: number;
+  costs_created?: number;
+  pricing_decisions_created?: number;
+  products_waiting_for_economics?: number;
 };
 const clean = (value: unknown, max: number) =>
   typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -130,13 +143,36 @@ export async function handleProductCostBatch(request: Request, ctx: V1Context): 
       },
     };
   }
+  try {
+    const result = await persistProductCostBatch(ctx.accountId, batch, `api:${ctx.apiKeyId}`);
+    return { status: result.duplicate ? 200 : 202, body: { data: result } };
+  } catch (error) {
+    if (error instanceof ProductCostBatchConflict) {
+      return { status: 409, body: { error: { code: "idempotency_conflict", message: error.message, evidence_item_id: error.evidenceItemId } } };
+    }
+    throw error;
+  }
+}
+
+export class ProductCostBatchConflict extends Error {
+  constructor(message: string, readonly evidenceItemId: string) {
+    super(message);
+  }
+}
+
+/** Persist normalized cost evidence without changing the connected storefront. */
+export async function persistProductCostBatch(
+  accountId: string,
+  batch: ProductCostBatch,
+  sourceNamespace = "dashboard",
+): Promise<ProductCostBatchResult> {
   const hash = createHash("sha256").update(JSON.stringify(batch)).digest("hex"),
-    sourceExternalId = `api:${ctx.apiKeyId}:costs:${batch.batch_id}`,
+    sourceExternalId = `${sourceNamespace}:costs:${batch.batch_id}`,
     db = supabaseAdmin as any;
   const { data: prior, error: priorError } = await db
     .from("ps_merchant_evidence_items")
     .select("id,content_sha256")
-    .eq("account_id", ctx.accountId)
+    .eq("account_id", accountId)
     .eq("source_kind", "optional_api")
     .eq("source_provider", batch.source_provider)
     .eq("source_external_id", sourceExternalId)
@@ -144,19 +180,13 @@ export async function handleProductCostBatch(request: Request, ctx: V1Context): 
     .maybeSingle();
   if (priorError) throw new Error(priorError.message);
   if (prior && prior.content_sha256 !== hash)
-    return {
-      status: 409,
-      body: {
-        error: {
-          code: "idempotency_conflict",
-          message: "This batch_id was already used with different normalized content.",
-          evidence_item_id: prior.id,
-        },
-      },
-    };
+    throw new ProductCostBatchConflict(
+      "This batch_id was already used with different normalized content.",
+      prior.id,
+    );
   const intake = await registerMerchantEvidence({
-    accountId: ctx.accountId,
-    merchantId: ctx.accountId,
+    accountId,
+    merchantId: accountId,
     sourceKind: "optional_api",
     sourceProvider: batch.source_provider,
     sourceExternalId,
@@ -170,21 +200,20 @@ export async function handleProductCostBatch(request: Request, ctx: V1Context): 
       data_minimized: true,
     },
   });
-  if (intake.duplicate)
+  if (intake.duplicate) {
+    const refresh = await refreshPricingDecisionsForCosts(accountId, batch, true);
     return {
-      status: 200,
-      body: {
-        data: {
           batch_id: batch.batch_id,
           evidence_item_id: intake.evidenceItemId,
           duplicate: true,
           accepted: batch.costs.length,
-        },
-      },
+          pricing_decisions_created: refresh.created,
+          products_waiting_for_economics: refresh.waitingForEconomics,
     };
+  }
   const rows = batch.costs.map((cost) => {
     const base = {
-      account_id: ctx.accountId,
+      account_id: accountId,
       evidence_item_id: intake.evidenceItemId,
       source_provider: batch.source_provider,
       ...cost,
@@ -193,9 +222,10 @@ export async function handleProductCostBatch(request: Request, ctx: V1Context): 
   });
   const { data, error } = await db.from("ps_product_cost_evidence").insert(rows).select("id");
   if (error) throw new Error(error.message);
+  const refresh = await refreshPricingDecisionsForCosts(accountId, batch);
   await appendEvidenceProcessingAttempt({
     evidenceItemId: intake.evidenceItemId,
-    accountId: ctx.accountId,
+    accountId,
     processorVersion: "restaurant-cost-normalizer-v1",
     attemptNumber: 1,
     state: "normalized",
@@ -207,15 +237,90 @@ export async function handleProductCostBatch(request: Request, ctx: V1Context): 
     },
   });
   return {
-    status: 202,
-    body: {
-      data: {
         batch_id: batch.batch_id,
         evidence_item_id: intake.evidenceItemId,
         duplicate: false,
         accepted: batch.costs.length,
         costs_created: data?.length ?? 0,
-      },
-    },
+        pricing_decisions_created: refresh.created,
+        products_waiting_for_economics: refresh.waitingForEconomics,
   };
+}
+
+const MERCHANT_COST_TTL_MS = 30 * 24 * 60 * 60_000;
+
+/** Rebuild the authoritative margin snapshot immediately after cost evidence changes. */
+async function refreshPricingDecisionsForCosts(accountId: string, batch: ProductCostBatch, onlyIfMissing = false) {
+  const db = supabaseAdmin as any;
+  const bySku = new Map(batch.costs.map(cost => [cost.sku.toLowerCase(), cost]));
+  const { data: events, error } = await db.from("ps_ingest_events")
+    .select("id,account_id,licensee_id,merchant_id,region,source_platform,item_id,sku,current_retail_price,currency,raw_payload,created_at")
+    .eq("account_id", accountId)
+    .in("sku", [...new Set(batch.costs.map(cost => cost.sku))])
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  const seen = new Set<string>();
+  let created = 0, waitingForEconomics = 0;
+  for (const event of events ?? []) {
+    const key = `${event.source_platform}:${event.item_id || event.sku}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const cost = bySku.get(String(event.sku).toLowerCase());
+    if (!cost || String(event.currency ?? cost.currency).toUpperCase() !== cost.currency) continue;
+    const observedAt = new Date().toISOString();
+    const expiresAt = cost.effective_to
+      ? new Date(`${cost.effective_to}T23:59:59.999Z`).toISOString()
+      : new Date(Date.now() + MERCHANT_COST_TTL_MS).toISOString();
+    const raw = event.raw_payload && typeof event.raw_payload === "object" ? event.raw_payload : {};
+    const economics = await resolveAuthoritativeEconomics({ accountId, merchantId: event.merchant_id ?? accountId, channel: event.source_platform });
+    await db.from("ps_ingest_events").update({
+      base_cost: cost.unit_cost,
+      status: economics ? "decided" : "received",
+      raw_payload: { ...raw, cost_source: "merchant_confirmed_evidence", cost_observed_at: observedAt, cost_evidence_expires_at: expiresAt, cost_currency: cost.currency, cost_sku: cost.sku, cost_item_id: event.item_id ?? event.sku, ...(economics ? { economics_source: "approved_contract" } : { economics_source: "approved_contract_required" }) },
+    }).eq("id", event.id).eq("account_id", accountId);
+    if (!economics) { waitingForEconomics += 1; continue; }
+    const policy = await resolveMerchantMarginPolicy(accountId, event.source_platform);
+    if (onlyIfMissing) {
+      const { data: currentDecision, error: currentError } = await db.from("ps_decide_results")
+        .select("base_cost,current_retail_price,economics_version_id,margin_policy_version,decision_expires_at,evidence_currency")
+        .eq("account_id", accountId).eq("ingest_event_id", event.id)
+        .order("created_at", { ascending:false }).limit(1).maybeSingle();
+      if (currentError) throw new Error(currentError.message);
+      const stillCurrent = currentDecision
+        && Math.abs(Number(currentDecision.base_cost) - cost.unit_cost) < 0.00005
+        && Math.abs(Number(currentDecision.current_retail_price) - Number(event.current_retail_price)) < 0.00005
+        && String(currentDecision.economics_version_id) === economics.id
+        && Number(currentDecision.margin_policy_version) === policy.version
+        && String(currentDecision.evidence_currency).toUpperCase() === cost.currency
+        && Date.parse(String(currentDecision.decision_expires_at)) > Date.now();
+      if (stillCurrent) continue;
+    }
+    const output = decide({
+      region: event.region ?? "QA", baseCost: cost.unit_cost, currentRetailPrice: Number(event.current_retail_price),
+      commissionRate: economics.commissionRate, vatRate: economics.vatRate, paymentFeeRate: economics.paymentFeeRate,
+      fixedOrderFee: economics.fixedOrderFee, promotionContributionRate: economics.promotionContributionRate,
+      logisticsSubsidy: economics.logisticsSubsidy, marginFloorPct: policy.marginFloorPct,
+      minimumContributionAmount: policy.minimumContributionAmount,
+    });
+    const { error: decisionError } = await db.from("ps_decide_results").insert({
+      ingest_event_id: event.id, account_id: accountId, licensee_id: event.licensee_id,
+      region: event.region ?? "QA", merchant_id: event.merchant_id ?? accountId, sku: event.sku,
+      base_cost: cost.unit_cost, current_retail_price: Number(event.current_retail_price),
+      commission_rate: economics.commissionRate, vat_rate: economics.vatRate,
+      payment_fee_rate: economics.paymentFeeRate, fixed_order_fee: economics.fixedOrderFee,
+      promotion_contribution_rate: economics.promotionContributionRate, logistics_subsidy: economics.logisticsSubsidy,
+      economics_version_id: economics.id, margin_floor_pct: policy.marginFloorPct,
+      minimum_contribution_amount: policy.minimumContributionAmount, contribution_amount: output.netMargin,
+      margin_policy_version: policy.version, margin_policy_scope: policy.scope, margin_policy_channel: policy.channel,
+      cost_observed_at: observedAt, cost_evidence_expires_at: expiresAt,
+      decision_expires_at: new Date(Date.now() + PRICE_DECISION_TTL_MS).toISOString(),
+      evidence_channel: event.source_platform, evidence_item_id: event.item_id ?? event.sku,
+      evidence_currency: cost.currency, net_margin: output.netMargin, net_margin_pct: output.netMarginPct,
+      floor_breached: output.floorBreached, recommended_price: output.recommendedPrice,
+      decision_action: output.decisionAction,
+    });
+    if (decisionError) throw new Error(decisionError.message);
+    created += 1;
+  }
+  return { created, waitingForEconomics };
 }

@@ -69,6 +69,7 @@ import { compactConversation, resolveProductReferences } from "@/lib/copilot-und
 import { workflowStepLabel } from "@/lib/merchant-language";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import { simulatePromotion } from "@/lib/promotion-profitability";
+import { CostCaptureWorkspace, type CostCaptureProduct } from "@/components/dashboard/catalog/CostCaptureWorkspace";
 
 type Tab =
   | "today"
@@ -2438,6 +2439,7 @@ export function PrizeSkoutDashboard() {
   const [selectedProduct, setSelectedProduct] = useState<ImportedProduct | null>(null);
   const [productPriceDraft, setProductPriceDraft] = useState("");
   const [productCostDraft, setProductCostDraft] = useState("");
+  const [costWorkspaceOpen, setCostWorkspaceOpen] = useState(false);
   const [productPushStatus, setProductPushStatus] = useState<
     "idle" | "confirm" | "pushing" | "success" | "reverting" | "failed"
   >("idle");
@@ -3599,6 +3601,7 @@ export function PrizeSkoutDashboard() {
     );
     setProductFilter(hasMissingCosts ? "missing_cost" : "all");
     setProductPage(1);
+    if (hasMissingCosts) setCostWorkspaceOpen(true);
     if (!hasMissingCosts) {
       showToast(
         "Refreshing product costs. The daily brief may be based on an earlier catalogue check.",
@@ -6026,6 +6029,42 @@ export function PrizeSkoutDashboard() {
       }
     }, 50);
   };
+
+  const saveProductCostEvidence = async (rows: Array<{ product: CostCaptureProduct; cost: number }>) => {
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) throw new Error("Your merchant session has expired. Sign in and try again.");
+    const date = new Date().toISOString().slice(0, 10);
+    const response = await fetch("/api/channels/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchant_id: merchantId,
+        access_code: accessCode,
+        platform: "product_cost_batch",
+        batch_id: `merchant-${Date.now()}`,
+        source_provider: "merchant_confirmed",
+        schema_version: "2026-09-05",
+        costs: rows.map(({ product, cost }, index) => ({
+          external_event_id: `${product.source_platform}:${product.sku}:${date}:${index}`,
+          sku: product.sku,
+          currency: product.currency || currency,
+          unit_cost: cost,
+          unit_of_measure: "unit",
+          effective_from: date,
+          cost_components: {},
+        })),
+      }),
+    });
+    const data = await response.json() as { error?: string; message?: string; data?: { pricing_decisions_created?: number; products_waiting_for_economics?: number } };
+    if (!response.ok) throw new Error(data.error ?? data.message ?? "Costs could not be saved.");
+    setCostWorkspaceOpen(false);
+    const waiting = data.data?.products_waiting_for_economics ?? 0;
+    showToast(waiting
+      ? `${rows.length} costs saved. ${waiting} product${waiting === 1 ? " is" : "s are"} waiting for approved channel terms before margin calculation.`
+      : `${rows.length} product cost${rows.length === 1 ? "" : "s"} saved and margin decisions refreshed.`);
+    await fetchCopilotCatalog();
+  };
   const handleSignOut = async () => {
     setSidebarOpen(false);
     await supabase.auth.signOut();
@@ -6823,6 +6862,17 @@ export function PrizeSkoutDashboard() {
           </nav>
         )}
         <ContactSupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
+        {costWorkspaceOpen && (
+          <CostCaptureWorkspace
+            products={importedProducts.filter(product => product.cost_confidence !== "verified")}
+            onClose={() => setCostWorkspaceOpen(false)}
+            onSave={saveProductCostEvidence}
+            onAskAI={() => {
+              setCostWorkspaceOpen(false);
+              void runPrizeSkoutAssistant("Help me complete missing product costs. Ask me for a supplier list or help me group similar products, explain every estimate, and do not mark any cost as confirmed until I approve it.");
+            }}
+          />
+        )}
         {selectedProduct && (
           <div
             role="presentation"
@@ -7364,6 +7414,12 @@ export function PrizeSkoutDashboard() {
               <section className="ps-catalog-insight-card"><div><h3>Channel coverage</h3><p>Connected sources feeding the live catalog</p></div><div className="ps-catalog-channel-list">{(["zid", "salla"] as const).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform] === "connected" ? "is-connected" : ""}>{channelStatuses[platform] === "connected" ? "Connected" : "Not connected"}</span><em>{importedProducts.filter(product => product.source_platform === platform).length} items</em></div>)}</div><button type="button" onClick={() => setTab("vault")}>View integration health →</button></section>
               <section className="ps-catalog-insight-card"><div><h3>Priority review</h3><p>Evidence gaps and availability issues</p></div><div className="ps-catalog-priority"><strong>{storeOpportunity.estimated + storeOpportunity.unknown}</strong><span>products need cost evidence</span></div><div className="ps-catalog-priority"><strong>{storeOpportunity.atRisk.length}</strong><span>verified products need margin review</span></div><button type="button" onClick={() => openCatalogFilter("missing_cost")}>Open attention queue →</button></section>
             </div>
+
+            {storeOpportunity.estimated + storeOpportunity.unknown > 0 && (
+              <button type="button" className="ps-header-action" onClick={() => setCostWorkspaceOpen(true)} style={{ alignSelf: "flex-start" }}>
+                Complete {storeOpportunity.estimated + storeOpportunity.unknown} missing costs in bulk →
+              </button>
+            )}
 
             <div id="imported-products" className="ps-catalog-table-card" style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, boxShadow: "var(--shadow)", overflow: "hidden" }}>
               <div style={{ padding: "20px 22px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap", borderBottom: "1px solid var(--border)" }}>

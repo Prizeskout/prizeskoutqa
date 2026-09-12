@@ -94,7 +94,11 @@ async function execute(event:Event,work:Work):Promise<Outcome>{
     if(error)throw new Error(error.message);if(!data)return {state:"waiting_evidence",reason:"store_manager_task_not_visible"};
     if(data.status==="waiting_approval")return {state:"waiting_approval",reason:"merchant_approval_required",detail:{task_id:data.id,task_type:data.task_type,risk_level:data.risk_level,title:data.title},approval:{scope:`store_manager:${data.task_type}:attempt:${work.attempt}`,expiresAt:new Date(Date.now()+24*60*60_000).toISOString()}};
     if(data.status==="cancelled")return {state:"dead_letter",reason:"store_manager_task_cancelled",detail:{task_id:data.id}};
-    return {state:"completed",reason:"store_manager_task_authorized",detail:{task_id:data.id,status:data.status,approved_by:data.approved_by,approved_at:data.approved_at}};
+    if (data.risk_level === "read_only")
+      return {state:"completed",reason:"store_manager_review_authorized",detail:{task_id:data.id,status:data.status,approved_by:data.approved_by,approved_at:data.approved_at}};
+    // Approval is authorization, not proof of execution. Keep the work open
+    // until a capability executor or a merchant/partner receipt is attached.
+    return {state:"waiting_evidence",reason:"execution_receipt_required",detail:{task_id:data.id,status:data.status,approved_by:data.approved_by,approved_at:data.approved_at}};
   }
   return {state:"dead_letter",reason:"unknown_work_kind"};
 }

@@ -758,6 +758,8 @@ export async function runPricingEngineForUser(
         source: "pricing_engine",
         trigger_type: triggerType,
         inputs_snapshot: {
+          authority: "advisory_market_signal",
+          publication_engine: "evidence_backed_margin_decide",
           self_price: diag?.selfPrice ?? null,
           self_price_source: diag?.selfPriceSource ?? null,
           competitor_prices: competitorPrices,
@@ -790,12 +792,12 @@ export async function runPricingEngineForUser(
       userId,
       category: "pricing",
       severity: "info",
-      title: `${written} new pricing recommendation${written === 1 ? "" : "s"}`,
-      body: `Refreshed from latest competitor scrapes. Review and approve.`,
+      title: `${written} new market pricing signal${written === 1 ? "" : "s"}`,
+      body: `Refreshed from competitor observations. These signals cannot publish a price until the evidence-backed margin engine validates cost, contract terms, and policy.`,
       linkTo: "/dashboard/revenue-hub",
       dedupeKey: `pricing:${new Date().toISOString().slice(0, 10)}`,
       dedupeWindowMinutes: 360,
-      metadata: { written, seedsWiped },
+      metadata: { written, seedsWiped, authority: "advisory_market_signal" },
     });
   }
 

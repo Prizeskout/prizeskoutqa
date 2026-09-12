@@ -100,7 +100,10 @@ export function decide(input: DecideInput): DecideOutput {
     } else {
       const percentageFloor = (baseCost + logisticsSubsidy + fixedOrderFee) / percentageDenominator;
       const cashFloor = (baseCost + logisticsSubsidy + fixedOrderFee + minimumContributionAmount) / cashDenominator;
-      recommendedPrice = r4(Math.max(percentageFloor, cashFloor));
+      // A floor-restoring recommendation must never round down. The publish
+      // guard recalculates the candidate and would correctly reject even a
+      // microscopic shortfall caused by ordinary nearest-value rounding.
+      recommendedPrice = ceil4(Math.max(percentageFloor, cashFloor));
       decisionAction = recommendedPrice > currentRetailPrice ? "reprice_up" : "reprice_down";
     }
   }
@@ -122,3 +125,4 @@ export function decide(input: DecideInput): DecideOutput {
 
 function r4(n: number) { return Math.round(n * 10000) / 10000; }
 function r6(n: number) { return Math.round(n * 1000000) / 1000000; }
+function ceil4(n: number) { return Math.ceil((n - Number.EPSILON) * 10000) / 10000; }

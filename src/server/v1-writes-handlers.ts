@@ -163,7 +163,9 @@ export async function handleCreateDecision(request: Request, ctx: V1Context): Pr
       id: `dec_${rowId.replace(/-/g, "").slice(0, 8)}`,
       recommendation_id: recIdRaw,
       decision: decisionRaw,
-      applied_price: finalPrice,
+      approved_price: finalPrice,
+      execution_status: "not_executed",
+      effect: "Decision recorded only; no storefront price was changed.",
       snooze_until: snoozeUntil,
       logged_at: new Date().toISOString(),
     },
@@ -180,6 +182,22 @@ export async function handleCreateDecision(request: Request, ctx: V1Context): Pr
 // GET /v1/promotions/campaigns.
 // ============================================================================
 export async function handleSimulatePromotion(request: Request, ctx: V1Context): Promise<V1Result> {
+  if (!ctx.scopes.some(scope => ["write", "admin", "promotions.write"].includes(scope)))
+    return err("forbidden", "This API key requires promotion write access.", 403);
+  const json = await readJson(request);
+  if (!json) return err("validation_failed", "Body must be a JSON object.", 422);
+  const required = ["category", "channel", "depth_pct", "duration_days"];
+  const missing = required.filter(field => json[field] == null || json[field] === "");
+  if (missing.length) return err("validation_failed", `Missing required fields: ${missing.join(", ")}.`, 422);
+  return err(
+    "simulation_evidence_required",
+    "A promotion cannot be projected safely from discount depth and duration alone. Verified product costs, approved channel terms, historical SKU sales mix, and a measured demand-uplift model are required.",
+    409,
+    { required_evidence:["verified_product_costs","approved_channel_terms","historical_sku_sales_mix","measured_demand_uplift_model"], no_scenario_saved:true },
+  );
+}
+
+async function handleLegacySimulatePromotion(request: Request, ctx: V1Context): Promise<V1Result> {
   const json = await readJson(request);
   if (!json) return err("validation_failed", "Body must be a JSON object.", 422);
 

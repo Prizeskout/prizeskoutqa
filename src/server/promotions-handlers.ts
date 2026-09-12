@@ -68,7 +68,7 @@ export async function handleListCalendar(request: Request, ctx: V1Context): Prom
   if (error) return { status: 500, body: { error: { code: "internal_error", message: error.message } } };
 
   if (!data || data.length === 0) {
-    return ok({ data: SAMPLE_CALENDAR, _fallback: "sample" });
+    return ok({ data: [], evidence_status: "no_campaign_calendar" });
   }
 
   return ok({
@@ -105,7 +105,7 @@ export async function handleListCampaigns(request: Request, ctx: V1Context): Pro
   if (error) return { status: 500, body: { error: { code: "internal_error", message: error.message } } };
 
   if (!data || data.length === 0) {
-    return ok({ data: SAMPLE_CAMPAIGNS, _fallback: "sample" });
+    return ok({ data: [], evidence_status: "no_measured_campaigns" });
   }
 
   return ok({

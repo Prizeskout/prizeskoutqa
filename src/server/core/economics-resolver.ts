@@ -25,5 +25,22 @@ export async function resolveVerifiedCost(input:{accountId:string;merchantId:str
     .eq("account_id",input.accountId).eq("merchant_id",input.merchantId).eq("sku",input.sku)
     .lte("effective_from",at).or(`effective_to.is.null,effective_to.gt.${at}`).order("effective_from",{ascending:false}).limit(1).maybeSingle();
   if(error) throw error;
-  return data as unknown as {id:string;amount:number;currency:string;source:string;effective_from:string;effective_to:string|null}|null;
+  if (data) return data as unknown as {id:string;amount:number;currency:string;source:string;effective_from:string;effective_to:string|null};
+  // Merchant/API cost batches are first-class evidence too. They intentionally
+  // do not mutate a connected store's catalogue cost field.
+  const date = at.slice(0, 10);
+  const { data: evidence, error: evidenceError } = await supabaseAdmin
+    .from("ps_product_cost_evidence" as never)
+    .select("id,unit_cost,currency,source_provider,effective_from,effective_to")
+    .eq("account_id", input.accountId)
+    .eq("sku", input.sku)
+    .lte("effective_from", date)
+    .or(`effective_to.is.null,effective_to.gte.${date}`)
+    .order("effective_from", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (evidenceError) throw evidenceError;
+  if (!evidence) return null;
+  const row = evidence as unknown as Record<string, unknown>;
+  return { id:String(row.id), amount:Number(row.unit_cost), currency:String(row.currency), source:String(row.source_provider), effective_from:`${row.effective_from}T00:00:00.000Z`, effective_to:row.effective_to?`${row.effective_to}T23:59:59.999Z`:null };
 }
