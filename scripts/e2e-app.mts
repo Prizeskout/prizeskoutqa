@@ -325,6 +325,7 @@ try {
   console.log("PASS Product Image Manager, secure batch picker, and image-job workspace are visible in the current merchant dashboard");
 
   await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.locator(".ps-mobile-quick-nav").isHidden(),true,"Phone layout must use one navigation pattern instead of duplicating the workspace list");
   await page.getByRole("button",{name:"Open navigation",exact:true}).click();
   await page.locator('nav[aria-label="PrizeSkout workspaces"]').getByRole("button",{name:"AI Store Manager",exact:true}).click();
   await page.getByText("Chat with your AI Store Manager",{exact:true}).waitFor({timeout:10_000});

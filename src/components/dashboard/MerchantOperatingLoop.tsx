@@ -414,16 +414,19 @@ export function MerchantOperatingLoop({
     approvalTasks = openManagerTasks.filter((task) => task.status === "waiting_approval");
   if (loading)
     return (
-      <div
-        style={{
-          padding: 20,
-          border: "1px solid var(--border)",
-          borderRadius: 14,
-          color: "var(--muted)",
-        }}
-      >
-        Preparing today’s merchant briefing…
-      </div>
+      <section className="ps-briefing-skeleton" aria-busy="true" aria-label="Preparing merchant briefing">
+        <div className="ps-briefing-skeleton-status" role="status">
+          <span aria-hidden="true" />
+          Preparing today’s merchant briefing…
+        </div>
+        <div className="ps-briefing-skeleton-metrics" aria-hidden="true">
+          {Array.from({ length: 4 }, (_, index) => <div key={index}><i /><b /><small /></div>)}
+        </div>
+        <div className="ps-briefing-skeleton-panels" aria-hidden="true">
+          <div><i /><b /><span /></div>
+          <div><i /><b /><span /></div>
+        </div>
+      </section>
     );
   const askCopilot = (prompt: string) => {
     void call({ action: "track", event_name: "copilot_from_attention" });

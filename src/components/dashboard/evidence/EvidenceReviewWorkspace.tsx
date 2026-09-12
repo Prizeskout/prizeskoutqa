@@ -926,11 +926,11 @@ export function EvidenceReviewWorkspace() {
 }
 
 const card: CSSProperties = {
-    background: "#FFF",
-    border: "1px solid #E5E2DB",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
     borderRadius: 12,
     padding: 18,
-    boxShadow: "0 1px 2px rgba(0,0,0,.03)",
+    boxShadow: "var(--shadow)",
   },
   sectionHead: CSSProperties = {
     display: "flex",
@@ -945,7 +945,7 @@ const card: CSSProperties = {
     gap: 8,
     fontSize: 16,
     margin: 0,
-    color: "#1C1917",
+    color: "var(--text)",
   },
   h3: CSSProperties = {
     fontSize: 12,
@@ -1007,7 +1007,7 @@ const card: CSSProperties = {
     width: "100%",
     marginTop: 4,
     padding: "8px 9px",
-    border: "1px solid #D6D3D1",
+    border: "1px solid var(--border)",
     borderRadius: 7,
     fontSize: 13,
     color: "#1C1917",
@@ -1039,8 +1039,8 @@ const card: CSSProperties = {
     border: "1px solid #D6D3D1",
     borderRadius: 8,
     padding: "9px 14px",
-    background: "#FFF",
-    color: "#991B1B",
+    background: "var(--surface)",
+    color: "var(--danger)",
     fontWeight: 600,
     cursor: "pointer",
   };

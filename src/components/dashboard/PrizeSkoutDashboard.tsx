@@ -14,6 +14,8 @@ import {
   History as HistoryIcon,
   FileText,
   WalletCards,
+  Moon,
+  Sun,
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +93,12 @@ type SidebarNavId =
   | "integrations"
   | "evidence"
   | "settings";
+
+const SIDEBAR_GROUP_STARTS: Partial<Record<SidebarNavId, string>> = {
+  overview: "Monitor",
+  recovery: "Protect & automate",
+  integrations: "Data & governance",
+};
 
 const SIDEBAR_NAV_TABS: Record<SidebarNavId, Tab> = {
   overview: "analytics",
@@ -289,6 +297,9 @@ const CSS = `
   .ps-dashboard-sidebar nav button[aria-current="page"]{background:linear-gradient(90deg,rgba(243,106,33,.18),rgba(255,255,255,.09))!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px rgba(255,255,255,.035)}
   .ps-dashboard-sidebar nav button:hover{background:rgba(255,255,255,.075)!important;color:#fff!important;transform:translateX(1px)}
   .ps-dashboard-sidebar nav button,.ps-dashboard-sidebar-footer button{transition:background-color 150ms var(--ease),color 150ms var(--ease),transform 150ms var(--ease)!important}
+  .ps-nav-group-label{padding:13px 11px 5px;color:rgba(255,255,255,.4);font-size:9px;font-weight:800;letter-spacing:.115em;text-transform:uppercase;user-select:none}
+  .ps-nav-group-label:first-child{padding-top:0}
+  .ps-mobile-quick-nav{scrollbar-width:none;scroll-snap-type:x proximity}.ps-mobile-quick-nav::-webkit-scrollbar{display:none}.ps-mobile-quick-nav>button{scroll-snap-align:start}
   .ps-dashboard-sidebar-footer{border-top:1px solid rgba(255,255,255,.09);padding-top:14px}
   .ps-dashboard-sidebar-footer button{color:rgba(255,255,255,.68)!important}
   .ps-dashboard-sidebar-footer button:hover{color:#fff!important;background:rgba(255,255,255,.065)!important}
@@ -333,6 +344,16 @@ const CSS = `
   .ps-command-deck:before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:3px;background:var(--accent)}
   .ps-command-deck input{min-height:40px;background:var(--surface)!important}
   .ps-command-deck button{border-radius:var(--radius-control)!important}
+  .ps-briefing-skeleton{display:grid;gap:14px;color:var(--muted)}
+  .ps-briefing-skeleton-status{min-height:48px;display:flex;align-items:center;gap:10px;padding:0 16px;border:1px solid var(--border);border-radius:var(--radius-panel);background:var(--surface);box-shadow:var(--shadow);font-size:12px;font-weight:650}
+  .ps-briefing-skeleton-status>span{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 11%,transparent);animation:pk-pulse 1.4s ease-in-out infinite}
+  .ps-evidence-loading{min-height:112px;display:flex;align-items:center;justify-content:center;gap:11px;padding:18px;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-panel);background:var(--surface2)}
+  .ps-evidence-loading>span{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 11%,transparent);animation:pk-pulse 1.4s ease-in-out infinite}
+  .ps-evidence-loading>div{display:flex;flex-direction:column;gap:3px}.ps-evidence-loading strong{color:var(--text);font-size:12px}.ps-evidence-loading small{font-size:11px}
+  .ps-briefing-skeleton-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ps-briefing-skeleton-metrics>div,.ps-briefing-skeleton-panels>div{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--border);border-radius:var(--radius-panel);background:var(--surface);box-shadow:var(--shadow)}
+  .ps-briefing-skeleton-metrics i,.ps-briefing-skeleton-metrics b,.ps-briefing-skeleton-metrics small,.ps-briefing-skeleton-panels i,.ps-briefing-skeleton-panels b,.ps-briefing-skeleton-panels span{display:block;border-radius:5px;background:linear-gradient(90deg,var(--surface2) 20%,color-mix(in srgb,var(--surface2) 55%,var(--border)) 50%,var(--surface2) 80%);background-size:220% 100%;animation:ps-ledger-shimmer 1.45s ease-in-out infinite}
+  .ps-briefing-skeleton-metrics i{width:46%;height:9px}.ps-briefing-skeleton-metrics b{width:34%;height:24px}.ps-briefing-skeleton-metrics small{width:72%;height:8px}.ps-briefing-skeleton-panels{display:grid;grid-template-columns:1.35fr .85fr;gap:12px}.ps-briefing-skeleton-panels>div{min-height:170px}.ps-briefing-skeleton-panels i{width:28%;height:11px}.ps-briefing-skeleton-panels b{width:52%;height:8px}.ps-briefing-skeleton-panels span{width:100%;height:82px;margin-top:12px}
+  @keyframes ps-ledger-shimmer{0%{background-position:200% 0}100%{background-position:-20% 0}}
   .ps-manager-panel,.ps-catalog-insight-card,.ps-defend-snapshot>section,.ps-focus-kpi,.ps-focus-panel,.ps-recovery-dashboard{border-color:var(--border)!important;border-radius:var(--radius-panel)!important;box-shadow:var(--shadow)!important}
   .ps-manager-panel-heading h3,.ps-catalog-insight-card h3,.ps-focus-panel h3,.ps-defend-snapshot h3{font-weight:750!important;letter-spacing:-.015em}
   .ps-manager-queue-row:hover{background:color-mix(in srgb,var(--info) 3%,var(--surface))}
@@ -354,6 +375,7 @@ const CSS = `
     [data-tour="copilot-command"] input{min-width:0!important}
     .ps-db [role="dialog"]{max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important}
     .ps-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .ps-briefing-skeleton-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(max-width:560px){
     .ps-db{--px:12px}
@@ -368,7 +390,9 @@ const CSS = `
     .ps-section-heading{align-items:flex-start;flex-direction:column;gap:12px}
     .ps-section-action,.ps-section-action button{width:100%}
     .ps-kpi-strip{grid-template-columns:1fr}
+    .ps-briefing-skeleton-metrics,.ps-briefing-skeleton-panels{grid-template-columns:1fr}
     .ps-db button,.ps-db [role="button"]{min-height:44px;touch-action:manipulation}
+    .ps-mobile-quick-nav{display:none!important}
   }
   @media(prefers-reduced-motion:reduce){
     .ps-db,.ps-db *,.ps-db *:before,.ps-db *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -6177,8 +6201,9 @@ export function PrizeSkoutDashboard() {
               const active = sidebarNav === item.id;
               const Icon = item.icon;
               return (
+                <Fragment key={item.id}>
+                {SIDEBAR_GROUP_STARTS[item.id] ? <div className="ps-nav-group-label" aria-hidden="true">{SIDEBAR_GROUP_STARTS[item.id]}</div> : null}
                 <button
-                  key={item.id}
                   type="button"
                   aria-label={item.label}
                   aria-describedby={item.badge ? `${item.id}-desktop-nav-status` : undefined}
@@ -6234,6 +6259,7 @@ export function PrizeSkoutDashboard() {
                     </span>
                   )}
                 </button>
+                </Fragment>
               );
             })}
           </nav>
@@ -6364,7 +6390,7 @@ export function PrizeSkoutDashboard() {
                     alignItems: "center",
                     gap: 5,
                     fontSize: 13.5,
-                    color: GN,
+                    color: Object.values(channelStatuses).includes("connected") ? GN : "var(--muted)",
                     fontWeight: 700,
                     fontFamily: MONO,
                   }}
@@ -6374,11 +6400,11 @@ export function PrizeSkoutDashboard() {
                       width: 7,
                       height: 7,
                       borderRadius: "50%",
-                      background: GN,
+                      background: Object.values(channelStatuses).includes("connected") ? GN : "var(--muted)",
                       animation: "pk-pulse 2s infinite",
                     }}
                   />
-                  LIVE
+                  {Object.values(channelStatuses).includes("connected") ? "CONNECTED" : "SETUP"}
                 </span>
                 <button
                   onClick={toggleTheme}
@@ -6396,7 +6422,7 @@ export function PrizeSkoutDashboard() {
                     fontSize: 17.5,
                   }}
                 >
-                  {theme === "dark" ? "☾" : "☀"}
+                  {theme === "dark" ? <Moon size={17} aria-hidden="true" /> : <Sun size={17} aria-hidden="true" />}
                 </button>
                 <button
                   onClick={() => setDemoMode((v) => !v)}
@@ -6422,12 +6448,13 @@ export function PrizeSkoutDashboard() {
                     fontSize: 17,
                   }}
                 >
-                  💬
+                  <MessageSquareText size={17} aria-hidden="true" />
                 </button>
               </div>
             </div>
             {/* Short-label pill nav */}
             <div
+              className="ps-mobile-quick-nav"
               style={{
                 display: "flex",
                 gap: 8,
@@ -6530,7 +6557,7 @@ export function PrizeSkoutDashboard() {
                   fontSize: 12.5,
                 }}
               >
-                {theme === "dark" ? "☾" : "☀"}
+                {theme === "dark" ? <Moon size={13} aria-hidden="true" /> : <Sun size={13} aria-hidden="true" />}
               </span>
             </button>
             {/* Demo mode — click-to-explain callouts for screen recordings, off by default */}
@@ -6557,7 +6584,7 @@ export function PrizeSkoutDashboard() {
                 fontSize: 17,
               }}
             >
-              💬
+              <MessageSquareText size={17} aria-hidden="true" />
             </button>
             {/* Currency */}
             <div
@@ -13611,7 +13638,7 @@ export function PrizeSkoutDashboard() {
                   })()}
 
                   {historyLoading ? (
-                    <div style={{ fontSize: 14, color: "var(--muted)" }}>{t.historyLoading}</div>
+                    <div className="ps-evidence-loading" role="status" aria-live="polite"><span aria-hidden="true"/><div><strong>{t.historyLoading}</strong></div></div>
                   ) : filteredHistoryPayouts.length === 0 ? (
                     <div
                       style={{
@@ -13953,7 +13980,7 @@ export function PrizeSkoutDashboard() {
                     </div>
                   </div>
                   {historyLoading ? (
-                    <div style={{ fontSize: 14, color: "var(--muted)" }}>{t.historyLoading}</div>
+                    <div className="ps-evidence-loading" role="status" aria-live="polite"><span aria-hidden="true"/><div><strong>{t.historyLoading}</strong></div></div>
                   ) : filteredHistoryRepricings.length === 0 ? (
                     <div
                       style={{
@@ -14371,7 +14398,7 @@ export function PrizeSkoutDashboard() {
                     </div>
                   </div>
                   {historyLoading ? (
-                    <div style={{ fontSize: 14, color: "var(--muted)" }}>{t.historyLoading}</div>
+                    <div className="ps-evidence-loading" role="status" aria-live="polite"><span aria-hidden="true"/><div><strong>{t.historyLoading}</strong></div></div>
                   ) : filteredHistoryAudits.length === 0 ? (
                     <div
                       style={{
@@ -15103,8 +15130,9 @@ export function PrizeSkoutDashboard() {
                 const active = sidebarNav === item.id;
                 const Icon = item.icon;
                 return (
+                  <Fragment key={item.id}>
+                  {SIDEBAR_GROUP_STARTS[item.id] ? <div className="ps-nav-group-label" aria-hidden="true">{SIDEBAR_GROUP_STARTS[item.id]}</div> : null}
                   <button
-                    key={item.id}
                     type="button"
                     aria-label={item.label}
                     aria-describedby={item.badge ? `${item.id}-mobile-nav-status` : undefined}
@@ -15159,6 +15187,7 @@ export function PrizeSkoutDashboard() {
                       </span>
                     )}
                   </button>
+                  </Fragment>
                 );
               })}
             </nav>
