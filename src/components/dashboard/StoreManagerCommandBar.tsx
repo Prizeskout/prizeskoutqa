@@ -61,6 +61,7 @@ export function StoreManagerCommandBar({
   return (
     <section
       data-tour="copilot-command"
+      className="ps-command-deck"
       style={{
         margin: "18px 30px 0",
         padding: "16px 18px",

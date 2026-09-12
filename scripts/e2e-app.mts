@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 import { chromium, type Page } from "playwright";
 import { createClient } from "@supabase/supabase-js";
 
 const baseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4177";
+const captureDashboard = process.env.E2E_DASHBOARD_SCREENSHOTS === "1";
+const dashboardCaptureDir = "output/dashboard-enterprise-review";
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 assert(supabaseUrl && serviceKey, "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
@@ -147,6 +150,9 @@ try {
   }, { merchantId: access.merchant_id, code: access.code });
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Overview", exact: true }).first().waitFor({ timeout: 15_000 });
+  if (captureDashboard) await mkdir(dashboardCaptureDir, { recursive: true });
+  const dashboardSidebar = page.locator("aside.ps-dashboard-sidebar");
+  const overviewSidebarBackground = await dashboardSidebar.evaluate((element) => getComputedStyle(element).backgroundImage);
   for (const [navigation, heading, view] of [
     ["Overview", "Overview", "overview"],
     ["Catalog", "Catalog", "catalog"],
@@ -163,7 +169,14 @@ try {
   ] as const) {
     await page.getByRole("button", { name: navigation, exact: true }).first().click();
     await page.locator(".ps-db-h1").getByText(heading, { exact: true }).waitFor({ timeout: 15_000 });
+    if (view !== "recovery") {
+      await page.waitForFunction(() => window.scrollY < 4, undefined, { timeout: 3_000 });
+    }
     assert.equal(new URL(page.url()).searchParams.get("view"), view, `${navigation} did not preserve its deep-link view`);
+    assert.equal(await dashboardSidebar.evaluate((element) => getComputedStyle(element).backgroundImage), overviewSidebarBackground, `${navigation} changed the shared sidebar theme`);
+    if (captureDashboard) {
+      await page.screenshot({ path: `${dashboardCaptureDir}/${view}-desktop.png`, fullPage: true });
+    }
   }
   await page.getByRole("button", { name: "Overview", exact: true }).first().click();
   console.log("PASS every desktop sidebar destination renders and preserves its deep link");
@@ -341,6 +354,9 @@ try {
       await page.locator(".ps-db-h1").getByText(heading, { exact: true }).waitFor({ timeout: 15_000 });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert(overflow <= 1, `${heading} overflows the ${viewport.label} viewport by ${overflow}px`);
+      if (captureDashboard && (viewport.label === "small phone" || viewport.label === "tablet")) {
+        await page.screenshot({ path: `${dashboardCaptureDir}/${view}-${viewport.label.replace(" ", "-")}.png`, fullPage: true });
+      }
     }
   }
   console.log("PASS responsive containment on small phone, tablet, laptop, and desktop workspaces");
