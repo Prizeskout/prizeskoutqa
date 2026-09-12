@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
+import { useAppDialog } from "@/components/dashboard/AppDialog";
 
 type AgreementMatch = {
   id: string;
@@ -215,6 +216,7 @@ const editablePayload = (review: Review) =>
       : { ...review.extraction_payload };
 
 export function EvidenceReviewWorkspace() {
+  const { prompt: askText, dialog } = useAppDialog();
   const [reviews, setReviews] = useState<Review[]>([]),
     [status, setStatus] = useState<ProcessingStatus | null>(null),
     [selected, setSelected] = useState<Review | null>(null),
@@ -262,10 +264,7 @@ export function EvidenceReviewWorkspace() {
     if (!selected || busy) return;
     const reason =
       decision === "rejected"
-        ? (window.prompt(
-            "Why are you rejecting this extraction? This will be kept in the audit record.",
-            "",
-          ) ?? "")
+        ? ((await askText({ title: "Reject extraction", message: "Explain why this extraction is being rejected. The reason will be kept in the audit record.", input: { label: "Rejection reason", multiline: true }, confirmLabel: "Reject extraction" })) ?? "")
         : "Merchant reviewed extracted values and source citations.";
     if (decision === "rejected" && !reason.trim()) return;
     setBusy(true);
@@ -310,13 +309,10 @@ export function EvidenceReviewWorkspace() {
     resolution: "exact" | "probable" | "unmatched" | "duplicate",
   ) => {
     const posReference = ["exact", "probable"].includes(resolution)
-      ? (window.prompt(
-          `Enter the POS order reference for aggregator order ${finding.order_external_id ?? "unknown"}:`,
-          finding.match_decision?.pos_order_reference ?? "",
-        ) ?? "")
+      ? ((await askText({ title: "Link POS order", message: `Aggregator order ${finding.order_external_id ?? "unknown"}`, input: { label: "POS order reference", initialValue: finding.match_decision?.pos_order_reference ?? "" } })) ?? "")
       : "";
     if (["exact", "probable"].includes(resolution) && !posReference.trim()) return;
-    const notes = window.prompt("Optional review note:", "") ?? "";
+    const notes = (await askText({ title: "Review note", input: { label: "Optional review note", multiline: true }, confirmLabel: "Save decision" })) ?? "";
     setBusy(true);
     try {
       const response = await fetch("/api/evidence/reviews", {
@@ -358,6 +354,7 @@ export function EvidenceReviewWorkspace() {
         gap: 16,
       }}
     >
+      {dialog}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {status && (
           <section style={card}>
@@ -807,15 +804,28 @@ export function EvidenceReviewWorkspace() {
                             Order match: {finding.match_decision.resolution.toUpperCase()}
                             {finding.match_decision.pos_order_reference
                               ? ` · POS ${finding.match_decision.pos_order_reference}`
-                              : ""} · {finding.match_decision.decided_by}
+                              : ""}{" "}
+                            · {finding.match_decision.decided_by}
                           </div>
-                        ) : <div style={{ color: "#78716C" }}>Order match requires merchant review.</div>}
+                        ) : (
+                          <div style={{ color: "#78716C" }}>
+                            Order match requires merchant review.
+                          </div>
+                        )}
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-                          {(["exact", "probable", "unmatched", "duplicate"] as const).map((resolution) => (
-                            <button key={resolution} type="button" disabled={busy} onClick={() => void decideMatch(finding, resolution)} style={{ ...rejectButton, padding: "6px 8px", color: "#57534E" }}>
-                              {resolution[0].toUpperCase() + resolution.slice(1)}
-                            </button>
-                          ))}
+                          {(["exact", "probable", "unmatched", "duplicate"] as const).map(
+                            (resolution) => (
+                              <button
+                                key={resolution}
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void decideMatch(finding, resolution)}
+                                style={{ ...rejectButton, padding: "6px 8px", color: "#57534E" }}
+                              >
+                                {resolution[0].toUpperCase() + resolution.slice(1)}
+                              </button>
+                            ),
+                          )}
                         </div>
                       </div>
                     )}

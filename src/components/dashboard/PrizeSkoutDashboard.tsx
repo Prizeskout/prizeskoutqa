@@ -21,6 +21,7 @@ import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { ContactSupportModal } from "@/components/ContactSupportModal";
 import { ProductTour, type TourStep } from "@/components/dashboard/ProductTour";
 import { DemoModeOverlay } from "@/components/dashboard/DemoModeOverlay";
+import { useAppDialog } from "@/components/dashboard/AppDialog";
 import {
   CommissionAuditPanel,
   type CommissionAuditResult,
@@ -414,6 +415,7 @@ const OUTBOUND_INTEGRATIONS = [
     byok: true,
     oauthPath: null as string | null,
     availability: "sandbox",
+    description: "Connect with Talabat plugin credentials. Sandbox is the default; production can be selected with approved credentials.",
   },
   {
     name: "Snoonu",
@@ -421,7 +423,8 @@ const OUTBOUND_INTEGRATIONS = [
     region: "QA",
     byok: false,
     oauthPath: null as string | null,
-    availability: "unavailable",
+    availability: "partner-pilot",
+    description: "Request partner activation for live data, or upload Snoonu payout reports now. Live price writes are not available.",
   },
   {
     name: "Keeta",
@@ -430,6 +433,7 @@ const OUTBOUND_INTEGRATIONS = [
     byok: false,
     oauthPath: "/api/channels/connect?oauth=keeta" as string | null,
     availability: "sandbox",
+    description: "OAuth and operational ingestion are available for sandbox testing; production access depends on partner approval.",
   },
   {
     name: "Jahez",
@@ -437,7 +441,8 @@ const OUTBOUND_INTEGRATIONS = [
     region: "KSA · hyperlocal",
     byok: true,
     oauthPath: null as string | null,
-    availability: "unavailable",
+    availability: "file-only",
+    description: "Payout files can be analysed. Live API credentials and price publishing are not verified for production.",
   },
   {
     name: "Deliveroo",
@@ -445,13 +450,15 @@ const OUTBOUND_INTEGRATIONS = [
     region: "UAE · QA",
     byok: false,
     oauthPath: null as string | null,
-    availability: "unavailable",
+    availability: "file-only",
+    description: "Payout files can be analysed. A live Deliveroo API connection is not available.",
   },
 ] as const;
 
 const CONNECTOR_AVAILABILITY = {
   production: { label: "Production", color: "#15803D" },
   sandbox: { label: "Sandbox", color: "#B45309" },
+  "partner-pilot": { label: "Partner pilot", color: "#7C3AED" },
   "file-only": { label: "File-only", color: "#1D4ED8" },
   unavailable: { label: "Unavailable", color: "#64748B" },
 } as const;
@@ -2257,6 +2264,7 @@ function buildTourSteps(t: (typeof T)["en"]): TourStepDef[] {
 }
 
 export function PrizeSkoutDashboard() {
+  const { prompt: askText, dialog } = useAppDialog();
   const priceActionKeysRef = useRef(new Map<string, string>());
   const priceActionKey = (eventId: string, targetPrice: number, purpose = "publish") => {
     const signature = `${purpose}:${eventId}:${targetPrice}`;
@@ -2481,6 +2489,7 @@ export function PrizeSkoutDashboard() {
   const [modal, setModal] = useState<number | null>(null);
   const [fileStep, setFileStep] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [toastAction, setToastAction] = useState<{ label: string; run: () => void } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [byokPlatform, setByokPlatform] = useState<string | null>(null);
   const [byokFields, setByokFields] = useState<Record<string, string>>({});
@@ -3207,10 +3216,14 @@ export function PrizeSkoutDashboard() {
   };
   const syncAllCatalogs = () => syncCatalogs();
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, action: { label: string; run: () => void } | null = null) => {
     if (toastT.current) clearTimeout(toastT.current);
     setToast(msg);
-    toastT.current = setTimeout(() => setToast(null), 4000);
+    setToastAction(action);
+    toastT.current = setTimeout(() => {
+      setToast(null);
+      setToastAction(null);
+    }, action ? 8000 : 4000);
   };
 
   const editRule = (index: number, patch: Partial<Rule>) => {
@@ -5390,7 +5403,10 @@ export function PrizeSkoutDashboard() {
         { id, kind: "file", label: file.name, description, platform, status: "uploading" },
       ]);
       let outcome = await uploadOneFile(file, mid, ac, rate, platform, description);
-      if (!outcome.ok && outcome.evidenceItemId && outcome.csvText && outcome.headers?.length) { const expression = window.prompt(`PrizeSkout retained the original file but could not recognize its columns.\n\nHeaders: ${outcome.headers.join(", ")}\n\nMap columns as canonical=source, for example:\norder_id=Order Ref,date=Created At,gross_amount=Subtotal,commission=Platform Fee,net_payout=Transfer`); if (expression) { try { const { parseColumnMapping, remapCsvHeader } = await import("@/lib/manual-column-mapping"), mapping = parseColumnMapping(expression, outcome.headers); outcome = await uploadOneFile(file, mid, ac, rate, platform, description, { evidenceItemId: outcome.evidenceItemId, csvText: remapCsvHeader(outcome.csvText, mapping) }); } catch (error) { outcome = { ok: false, error: error instanceof Error ? error.message : "Column mapping is invalid." } } } }
+      if (!outcome.ok && outcome.evidenceItemId && outcome.csvText && outcome.headers?.length) {
+        const expression = await askText({ title: "Map spreadsheet columns", message: `PrizeSkout retained the original file but could not recognize its columns.\n\nHeaders: ${outcome.headers.join(", ")}`, input: { label: "Column mapping", placeholder: "order_id=Order Ref,date=Created At,gross_amount=Subtotal", multiline: true }, confirmLabel: "Apply mapping" });
+        if (expression) { try { const { parseColumnMapping, remapCsvHeader } = await import("@/lib/manual-column-mapping"), mapping = parseColumnMapping(expression, outcome.headers); outcome = await uploadOneFile(file, mid, ac, rate, platform, description, { evidenceItemId: outcome.evidenceItemId, csvText: remapCsvHeader(outcome.csvText, mapping) }); } catch (error) { outcome = { ok: false, error: error instanceof Error ? error.message : "Column mapping is invalid." }; } }
+      }
       setStagedItems((prev) =>
         prev.map((it) => {
           if (it.id !== id) return it;
@@ -5971,7 +5987,10 @@ export function PrizeSkoutDashboard() {
     const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
     const accessCode = localStorage.getItem("ps_access_code") ?? "";
     if (!merchantId || !accessCode) {
-      showToast("Please complete onboarding first.");
+      showToast("Please complete onboarding first.", {
+        label: "Continue onboarding",
+        run: () => window.location.assign("/onboarding"),
+      });
       return;
     }
     const sallaWindow = path === "/api/auth/salla" ? window.open("about:blank", "_blank") : null;
@@ -5995,6 +6014,23 @@ export function PrizeSkoutDashboard() {
     } catch {
       sallaWindow?.close();
       showToast("PrizeSkout could not verify this connection request.");
+    }
+  };
+  const requestSnoonuConnection = async () => {
+    const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
+    const accessCode = localStorage.getItem("ps_access_code") ?? "";
+    if (!merchantId || !accessCode) {
+      showToast("Please complete onboarding first.", { label: "Continue onboarding", run: () => window.location.assign("/onboarding") });
+      return;
+    }
+    try {
+      const response = await fetch("/api/channels/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: merchantId, access_code: accessCode, platform: "snoonu", modes: ["partner_api_pull", "partner_webhook_push"], scopes: ["merchant:read", "branches:read", "orders:read", "settlements:read"] }) });
+      const result = await response.json() as { ok?: boolean; status?: string; error?: string };
+      if (!response.ok || !result.ok) throw new Error(result.error ?? "Snoonu activation could not be requested.");
+      setChannelStatuses(previous => ({ ...previous, snoonu: result.status ?? "pending" }));
+      showToast(result.status === "connected" ? "Snoonu is connected." : "Snoonu activation request received.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Snoonu activation could not be requested.");
     }
   };
   const assistantNudge = (targetTab: Tab) => (
@@ -6048,6 +6084,7 @@ export function PrizeSkoutDashboard() {
       }}
     >
       <style>{CSS}</style>
+      {dialog}
       <DemoModeOverlay active={demoMode} />
 
       {/* SIDEBAR */}
@@ -12848,7 +12885,7 @@ export function PrizeSkoutDashboard() {
                 {INBOUND_INTEGRATIONS.map((ig) => {
                   const isConnected = channelStatuses[ig.platform] === "connected";
                   const canConnect = !!ig.oauthPath;
-                  const availability = CONNECTOR_AVAILABILITY[ig.availability];
+                  const availability = isConnected ? { label: "Connected", color: GN } : CONNECTOR_AVAILABILITY[ig.availability];
                   return (
                     <div
                       key={ig.name}
@@ -13009,8 +13046,9 @@ export function PrizeSkoutDashboard() {
               >
                 {OUTBOUND_INTEGRATIONS.map((o) => {
                   const connected = channelStatuses[o.platform] === "connected";
+                  const pending = channelStatuses[o.platform] === "pending";
                   const needsShopId = connected && o.platform === "keeta" && keetaNeedsShopId;
-                  const availability = CONNECTOR_AVAILABILITY[o.availability];
+                  const availability = connected ? { label: "Connected", color: GN } : pending ? { label: "Activation pending", color: "#B45309" } : CONNECTOR_AVAILABILITY[o.availability];
                   return (
                     <div
                       key={o.name}
@@ -13073,7 +13111,11 @@ export function PrizeSkoutDashboard() {
                           >
                             {t.live}
                           </span>
-                        ) : o.byok && o.availability !== "unavailable" ? (
+                        ) : pending ? (
+                          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.8px", color: "#B45309", border: "1px solid color-mix(in srgb,#B45309 30%,transparent)", borderRadius: 6, padding: "3px 8px" }}>PENDING</span>
+                        ) : o.platform === "snoonu" ? (
+                          <button type="button" onClick={() => void requestSnoonuConnection()} style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.8px", background: `color-mix(in srgb,${OG} 10%,var(--surface))`, color: OG, border: `1px solid color-mix(in srgb,${OG} 30%,transparent)`, borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>REQUEST</button>
+                        ) : o.byok && o.availability !== "file-only" ? (
                           <button
                             type="button"
                             onClick={() => {
@@ -13130,7 +13172,7 @@ export function PrizeSkoutDashboard() {
                               padding: "3px 8px",
                             }}
                           >
-                            {t.soonBadge}
+                            {o.availability === "file-only" ? "FILE IMPORT" : t.soonBadge}
                           </span>
                         )}
                       </div>
@@ -13163,11 +13205,9 @@ export function PrizeSkoutDashboard() {
                           ? t.keetaShopIdPending
                           : connected
                             ? t.storeConnectedSyncing
-                            : o.availability === "unavailable"
-                              ? "Partner activation is required; no live capability is claimed."
-                              : o.byok || o.oauthPath
-                              ? t.tapSetupMsg
-                              : t.awaitingBuildMsg}
+                            : pending
+                              ? "Your activation request is waiting for partner approval."
+                              : o.description}
                       </div>
                     </div>
                   );
@@ -15936,6 +15976,7 @@ export function PrizeSkoutDashboard() {
       {/* TOAST */}
       {toast && (
         <div
+          role="status"
           style={{
             position: "fixed",
             bottom: 24,
@@ -15955,7 +15996,27 @@ export function PrizeSkoutDashboard() {
             alignItems: "center",
           }}
         >
-          {toast}
+          <span style={{ flex: 1 }}>{toast}</span>
+          {toastAction && (
+            <button
+              type="button"
+              onClick={toastAction.run}
+              style={{
+                minHeight: 44,
+                border: 0,
+                borderRadius: 9,
+                padding: "8px 12px",
+                background: OG,
+                color: "#fff",
+                font: "inherit",
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {toastAction.label} →
+            </button>
+          )}
         </div>
       )}
     </div>

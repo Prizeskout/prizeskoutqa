@@ -13,19 +13,19 @@ interface Channel {
   type:     "pos" | "aggregator";
   logo:     string;
   note?:    string;
-  readiness: "production" | "sandbox" | "file_only" | "unavailable";
+  readiness: "production" | "sandbox" | "partner_pilot" | "file_only" | "unavailable";
 }
 
 const CHANNELS: Channel[] = [
   { name: "Talabat", platform: "talabat", type: "aggregator", logo: "🟠", readiness: "sandbox" },
-  { name: "Snoonu", platform: "snoonu", type: "aggregator", logo: "🟣", readiness: "sandbox", note: "Inbound partner pilot; outbound API access requires Snoonu approval." },
+  { name: "Snoonu", platform: "snoonu", type: "aggregator", logo: "🟣", readiness: "partner_pilot", note: "Request activation for live partner data, or upload Snoonu payout reports now. Live price writes are unavailable." },
   { name: "Keeta", platform: "keeta", type: "aggregator", logo: "🟢", readiness: "sandbox" },
-  { name: "Jahez", platform: "jahez", type: "aggregator", logo: "🟡", readiness: "unavailable", note: "File import remains available while partner API access is verified." },
-  { name: "Deliveroo", platform: "deliveroo", type: "aggregator", logo: "🔵", readiness: "unavailable", note: "Partner credentials and certification required." },
-  { name: "Noon Food", platform: "noon", type: "aggregator", logo: "🟡", readiness: "file_only" },
-  { name: "Careem", platform: "careem", type: "aggregator", logo: "⚫", readiness: "file_only" },
-  { name: "Rafeeq", platform: "rafeeq", type: "aggregator", logo: "🟣", readiness: "unavailable" },
-  { name: "Foodics", platform: "foodics", type: "pos", logo: "🔵", readiness: "production" },
+  { name: "Jahez", platform: "jahez", type: "aggregator", logo: "🟡", readiness: "file_only", note: "Payout files can be analysed. Live API access and price publishing are not verified for production." },
+  { name: "Deliveroo", platform: "deliveroo", type: "aggregator", logo: "🔵", readiness: "file_only", note: "Payout files can be analysed. A live API connection is not available." },
+  { name: "Noon Food", platform: "noon", type: "aggregator", logo: "🟡", readiness: "unavailable", note: "No verified connector or dedicated import workflow is available." },
+  { name: "Careem", platform: "careem", type: "aggregator", logo: "⚫", readiness: "unavailable", note: "No verified connector or dedicated import workflow is available." },
+  { name: "Rafeeq", platform: "rafeeq", type: "aggregator", logo: "🟣", readiness: "unavailable", note: "No verified connector or dedicated import workflow is available." },
+  { name: "Foodics", platform: "foodics", type: "pos", logo: "🔵", readiness: "file_only", note: "File-based evidence is supported; self-service Foodics connection is not available." },
   { name: "Salla", platform: "salla", type: "pos", logo: "🟢", readiness: "production" },
   { name: "Zid", platform: "zid", type: "pos", logo: "🟤", readiness: "production" },
 ];
@@ -33,6 +33,7 @@ const CHANNELS: Channel[] = [
 const READINESS = {
   production: { label: "Production", color: "#087F5B", bg: "rgba(8,127,91,.09)" },
   sandbox: { label: "Sandbox", color: "#A16207", bg: "rgba(161,98,7,.09)" },
+  partner_pilot: { label: "Partner pilot", color: "#7C3AED", bg: "rgba(124,58,237,.09)" },
   file_only: { label: "File only", color: "#2563EB", bg: "rgba(37,99,235,.09)" },
   unavailable: { label: "Unavailable", color: "#6B7280", bg: "rgba(107,114,128,.09)" },
 } as const;
@@ -107,6 +108,7 @@ export function ChannelsTab() {
   const [byokFields, setByokFields]     = useState<Record<string, string>>({});
   const [byokStatus, setByokStatus]     = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [byokError, setByokError]       = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ title: string; message: string; action?: { label: string; run: () => void } } | null>(null);
 
   useEffect(() => {
     const merchantId = typeof window !== "undefined"
@@ -153,7 +155,11 @@ export function ChannelsTab() {
       ? (localStorage.getItem("ps_merchant_id") ?? "")
       : "";
     if (!merchantId) {
-      alert(t("settingsTabs.channels.alerts.noMerchantSession"));
+      setNotice({
+        title: "Finish setting up PrizeSkout",
+        message: t("settingsTabs.channels.alerts.noMerchantSession"),
+        action: { label: "Continue onboarding", run: () => window.location.assign("/onboarding") },
+      });
       return;
     }
     if (platform === "snoonu") {
@@ -171,7 +177,7 @@ export function ChannelsTab() {
       });
       const result = await response.json() as { ok?: boolean; error?: string };
       if (!response.ok || !result.ok) {
-        alert(result.error ?? "PrizeSkout could not request Snoonu activation.");
+        setNotice({ title: "Activation could not be requested", message: result.error ?? "PrizeSkout could not request Snoonu activation." });
         return;
       }
       setStatuses(previous => ({ ...previous, snoonu: "pending" }));
@@ -180,7 +186,7 @@ export function ChannelsTab() {
     if (OAUTH_PLATFORMS.has(platform)) {
       const sallaWindow = platform === "salla" ? window.open("about:blank", "_blank") : null;
       if (platform === "salla" && !sallaWindow) {
-        alert("Please allow pop-ups for PrizeSkout so Salla can open in a separate tab.");
+        setNotice({ title: "Allow Salla to open", message: "Please allow pop-ups for PrizeSkout, then try connecting Salla again." });
         return;
       }
       if (sallaWindow) sallaWindow.opener = null;
@@ -189,7 +195,7 @@ export function ChannelsTab() {
       const session = await response.json() as { token?: string };
       if (!response.ok || !session.token) {
         sallaWindow?.close();
-        alert("PrizeSkout could not verify this connection request.");
+        setNotice({ title: "Connection could not start", message: "PrizeSkout could not verify this connection request. Please try again." });
         return;
       }
       const destination = `/api/auth/${platform}?merchant_id=${encodeURIComponent(merchantId)}&onboarding_token=${encodeURIComponent(session.token)}`;
@@ -359,6 +365,34 @@ export function ChannelsTab() {
         <Section title={t("settingsTabs.channels.sections.aggregators")} items={aggregators} />
         <Section title={t("settingsTabs.channels.sections.pos")} items={pos} />
       </div>
+
+      {/* In-app notice replaces browser-native alert dialogs. */}
+      {notice && (
+        <div
+          role="presentation"
+          onClick={() => setNotice(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(9,12,18,.58)", backdropFilter: "blur(7px)", display: "grid", placeItems: "center", padding: 20 }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="channel-notice-title"
+            aria-describedby="channel-notice-description"
+            onClick={event => event.stopPropagation()}
+            style={{ width: "min(500px,100%)", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 20, boxShadow: "var(--shadow-lg)", padding: "28px 30px" }}
+          >
+            <div aria-hidden="true" style={{ width: 46, height: 46, borderRadius: 13, display: "grid", placeItems: "center", background: `${OG}12`, border: `1px solid ${OG}30`, color: OG, fontSize: 22, fontWeight: 800, marginBottom: 18 }}>i</div>
+            <h3 id="channel-notice-title" style={{ margin: 0, color: "var(--text)", fontSize: 20, fontWeight: 800 }}>{notice.title}</h3>
+            <p id="channel-notice-description" style={{ margin: "10px 0 0", color: "var(--muted)", fontSize: 14, lineHeight: 1.7 }}>{notice.message}</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => setNotice(null)} style={{ minHeight: 44, padding: "10px 17px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontFamily: "inherit", fontWeight: 700, cursor: "pointer" }}>{notice.action ? "Not now" : "Close"}</button>
+              {notice.action && (
+                <button type="button" onClick={notice.action.run} style={{ minHeight: 44, padding: "10px 17px", borderRadius: 9, border: 0, background: OG, color: "#fff", fontFamily: "inherit", fontWeight: 800, cursor: "pointer" }}>{notice.action.label} →</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* In-app channel disconnect confirmation */}
       {pendingDisconnect && (() => {

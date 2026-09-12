@@ -3,7 +3,8 @@ import { friendlyClientMessage } from "@/lib/api-error";
 import { BriefcaseBusiness, CheckCircle2, Clock3, Download } from "lucide-react";
 import type { Finding } from "@/lib/commission-audit";
 import type { ContractTerm } from "./ContractIntelligenceVault";
-import {allowedRecoveryTransitions,type RecoveryStatus} from "@/server/core/recovery-lifecycle";
+import { allowedRecoveryTransitions, type RecoveryStatus } from "@/server/core/recovery-lifecycle";
+import { useAppDialog } from "@/components/dashboard/AppDialog";
 
 type RecoveryCase = {
   id: string;
@@ -25,9 +26,26 @@ type RecoveryCase = {
   submitted_at?: string | null;
   submitted_by?: string | null;
   submission_evidence_hash?: string | null;
-  timeline?: Array<{id:string;event_type:string;from_status:string|null;to_status:string|null;previous_recovered_amount:number|null;recovered_amount:number|null;platform_response:string|null;recorded_by:string|null;created_at:string}>;
-  reconciliation_finding_id?:string|null;
-  evidence_pack?:{id:string;manifest_fingerprint:string;created_at:string;approved:boolean;approved_by:string|null;approved_at:string|null}|null;
+  timeline?: Array<{
+    id: string;
+    event_type: string;
+    from_status: string | null;
+    to_status: string | null;
+    previous_recovered_amount: number | null;
+    recovered_amount: number | null;
+    platform_response: string | null;
+    recorded_by: string | null;
+    created_at: string;
+  }>;
+  reconciliation_finding_id?: string | null;
+  evidence_pack?: {
+    id: string;
+    manifest_fingerprint: string;
+    created_at: string;
+    approved: boolean;
+    approved_by: string | null;
+    approved_at: string | null;
+  } | null;
 };
 const input = {
   border: "1px solid var(--border)",
@@ -52,6 +70,7 @@ export function RecoveryWorkspace({
   currency: string;
   orderCount: number;
 }) {
+  const { prompt: askText, dialog } = useAppDialog();
   const [cases, setCases] = useState<RecoveryCase[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,9 +95,7 @@ export function RecoveryWorkspace({
   const load = () =>
     call({ action: "list" })
       .then((data) => setCases(data.cases ?? []))
-      .catch((err) =>
-        setError(friendlyClientMessage(err, "Could not load recovery cases.")),
-      );
+      .catch((err) => setError(friendlyClientMessage(err, "Could not load recovery cases.")));
   useEffect(() => {
     load();
   }, []);
@@ -177,9 +194,55 @@ export function RecoveryWorkspace({
       executions: [],
     });
   };
-  const preparePack=async(item:RecoveryCase)=>{setBusy(item.id);setError(null);try{await call({action:"prepare_pack",id:item.id});await load();}catch(err){setError(friendlyClientMessage(err, "Evidence pack could not be prepared."));}finally{setBusy(null);}};
-  const approvePack=async(item:RecoveryCase)=>{const approvedBy=window.prompt("Who reviewed and approved this evidence pack?",item.owner??"")?.trim();if(!approvedBy||!item.evidence_pack)return;setBusy(item.id);setError(null);try{await call({action:"approve_pack",pack_id:item.evidence_pack.id,approved_by:approvedBy});await load();}catch(err){setError(friendlyClientMessage(err, "Evidence pack could not be approved."));}finally{setBusy(null);}};
-  const downloadPack=async(item:RecoveryCase)=>{if(!item.evidence_pack)return;setBusy(item.id);setError(null);try{const result=await call({action:"get_pack",pack_id:item.evidence_pack.id}),blob=new Blob([JSON.stringify(result.pack,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),anchor=document.createElement("a");anchor.href=url;anchor.download=`recovery-evidence-pack-${item.id}.json`;anchor.click();URL.revokeObjectURL(url);}catch(err){setError(friendlyClientMessage(err, "Evidence pack could not be downloaded."));}finally{setBusy(null);}};
+  const preparePack = async (item: RecoveryCase) => {
+    setBusy(item.id);
+    setError(null);
+    try {
+      await call({ action: "prepare_pack", id: item.id });
+      await load();
+    } catch (err) {
+      setError(friendlyClientMessage(err, "Evidence pack could not be prepared."));
+    } finally {
+      setBusy(null);
+    }
+  };
+  const approvePack = async (item: RecoveryCase) => {
+    const approvedBy = (await askText({ title: "Approve evidence pack", message: "Record who reviewed this evidence before approval.", input: { label: "Reviewer name or email", initialValue: item.owner ?? "" }, confirmLabel: "Approve pack" }))?.trim();
+    if (!approvedBy || !item.evidence_pack) return;
+    setBusy(item.id);
+    setError(null);
+    try {
+      await call({
+        action: "approve_pack",
+        pack_id: item.evidence_pack.id,
+        approved_by: approvedBy,
+      });
+      await load();
+    } catch (err) {
+      setError(friendlyClientMessage(err, "Evidence pack could not be approved."));
+    } finally {
+      setBusy(null);
+    }
+  };
+  const downloadPack = async (item: RecoveryCase) => {
+    if (!item.evidence_pack) return;
+    setBusy(item.id);
+    setError(null);
+    try {
+      const result = await call({ action: "get_pack", pack_id: item.evidence_pack.id }),
+        blob = new Blob([JSON.stringify(result.pack, null, 2)], { type: "application/json" }),
+        url = URL.createObjectURL(blob),
+        anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `recovery-evidence-pack-${item.id}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(friendlyClientMessage(err, "Evidence pack could not be downloaded."));
+    } finally {
+      setBusy(null);
+    }
+  };
   const recordSubmission = async (item: RecoveryCase) => {
     const draft = submissionDrafts[item.id] ?? { reference: "", submittedBy: item.owner ?? "" };
     if (!draft.reference.trim() || !draft.submittedBy.trim()) {
@@ -205,6 +268,7 @@ export function RecoveryWorkspace({
   const existing = new Set(cases.map((item) => item.exception_key));
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {dialog}
       <div
         style={{
           display: "flex",
@@ -297,8 +361,12 @@ export function RecoveryWorkspace({
                 <div>
                   <strong style={{ fontSize: 12.5 }}>{item.title}</strong>
                   <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2 }}>
-                    {item.confidence === "high" ? "Strong supporting records" : item.confidence === "medium" ? "Some supporting records" : "More records needed"} · created{" "}
-                    {new Date(item.created_at).toLocaleDateString()}
+                    {item.confidence === "high"
+                      ? "Strong supporting records"
+                      : item.confidence === "medium"
+                        ? "Some supporting records"
+                        : "More records needed"}{" "}
+                    · created {new Date(item.created_at).toLocaleDateString()}
                   </div>
                 </div>
               </div>
@@ -324,11 +392,13 @@ export function RecoveryWorkspace({
                   onChange={(e) => update(item, { case_status: e.target.value })}
                   style={{ ...input, width: "100%", display: "block", marginTop: 4 }}
                 >
-                  {[item.status,...allowedRecoveryTransitions(item.status as RecoveryStatus)].map((v) => (
-                    <option key={v} value={v}>
-                      {v.replaceAll("_", " ")}
-                    </option>
-                  ))}
+                  {[item.status, ...allowedRecoveryTransitions(item.status as RecoveryStatus)].map(
+                    (v) => (
+                      <option key={v} value={v}>
+                        {v.replaceAll("_", " ")}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
               <label style={{ fontSize: 10.5, fontWeight: 800 }}>
@@ -412,14 +482,25 @@ export function RecoveryWorkspace({
                   {item.explanation_ar}
                 </div>
               </div>
-              {Boolean(item.timeline?.length)&&<div style={{marginTop:10,borderTop:"1px solid var(--border)",paddingTop:8}}>
-                <strong style={{fontSize:11.5}}>Recovery timeline</strong>
-                {item.timeline!.map(event=><div key={event.id} style={{fontSize:10.5,color:"var(--muted)",marginTop:5}}>
-                  {new Date(event.created_at).toLocaleString()} · {event.from_status?.replaceAll("_"," ")} → {event.to_status?.replaceAll("_"," ")}
-                  {event.recovered_amount!==event.previous_recovered_amount?` · recovered ${money(Number(event.recovered_amount??0),currency)}`:""}
-                  {event.recorded_by?` · ${event.recorded_by}`:""}
-                </div>)}
-              </div>}
+              {Boolean(item.timeline?.length) && (
+                <div style={{ marginTop: 10, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+                  <strong style={{ fontSize: 11.5 }}>Recovery timeline</strong>
+                  {item.timeline!.map((event) => (
+                    <div
+                      key={event.id}
+                      style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 5 }}
+                    >
+                      {new Date(event.created_at).toLocaleString()} ·{" "}
+                      {event.from_status?.replaceAll("_", " ")} →{" "}
+                      {event.to_status?.replaceAll("_", " ")}
+                      {event.recovered_amount !== event.previous_recovered_amount
+                        ? ` · recovered ${money(Number(event.recovered_amount ?? 0), currency)}`
+                        : ""}
+                      {event.recorded_by ? ` · ${event.recorded_by}` : ""}
+                    </div>
+                  ))}
+                </div>
+              )}
               <textarea
                 defaultValue={item.platform_response ?? ""}
                 onBlur={(e) => update(item, { platform_response: e.target.value })}
@@ -429,9 +510,69 @@ export function RecoveryWorkspace({
               />
             </details>
             {item.status === "ready" && Boolean(item.reconciliation_finding_id) && (
-              <div style={{marginTop:10,padding:10,border:"1px solid var(--border)",borderRadius:8,fontSize:11.5}}>
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: 10,
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                }}
+              >
                 <strong>Verified recovery evidence pack</strong>
-                {!item.evidence_pack?<div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center",marginTop:6}}><span style={{color:"var(--muted)"}}>Prepare an immutable server manifest before recording a submission.</span><button disabled={busy===item.id} onClick={()=>preparePack(item)} style={{...input,fontWeight:800,cursor:"pointer"}}>Prepare pack</button></div>:<div style={{marginTop:6}}><div style={{color:item.evidence_pack.approved?"#087F5B":"#A16207",fontWeight:800}}>{item.evidence_pack.approved?`Approved by ${item.evidence_pack.approved_by}`:"Merchant approval required"} · {item.evidence_pack.manifest_fingerprint.slice(0,12)}…</div><div style={{display:"flex",gap:7,marginTop:7}}><button onClick={()=>downloadPack(item)} style={{...input,fontWeight:800,cursor:"pointer"}}>Download manifest</button>{!item.evidence_pack.approved&&<button disabled={busy===item.id} onClick={()=>approvePack(item)} style={{...input,fontWeight:800,cursor:"pointer",color:"#087F5B"}}>Approve pack</button>}</div></div>}
+                {!item.evidence_pack ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "center",
+                      marginTop: 6,
+                    }}
+                  >
+                    <span style={{ color: "var(--muted)" }}>
+                      Prepare an immutable server manifest before recording a submission.
+                    </span>
+                    <button
+                      disabled={busy === item.id}
+                      onClick={() => preparePack(item)}
+                      style={{ ...input, fontWeight: 800, cursor: "pointer" }}
+                    >
+                      Prepare pack
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 6 }}>
+                    <div
+                      style={{
+                        color: item.evidence_pack.approved ? "#087F5B" : "#A16207",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {item.evidence_pack.approved
+                        ? `Approved by ${item.evidence_pack.approved_by}`
+                        : "Merchant approval required"}{" "}
+                      · {item.evidence_pack.manifest_fingerprint.slice(0, 12)}…
+                    </div>
+                    <div style={{ display: "flex", gap: 7, marginTop: 7 }}>
+                      <button
+                        onClick={() => downloadPack(item)}
+                        style={{ ...input, fontWeight: 800, cursor: "pointer" }}
+                      >
+                        Download manifest
+                      </button>
+                      {!item.evidence_pack.approved && (
+                        <button
+                          disabled={busy === item.id}
+                          onClick={() => approvePack(item)}
+                          style={{ ...input, fontWeight: 800, cursor: "pointer", color: "#087F5B" }}
+                        >
+                          Approve pack
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {item.status === "ready" && (
@@ -482,7 +623,10 @@ export function RecoveryWorkspace({
                   />
                 </label>
                 <button
-                  disabled={busy === item.id || (Boolean(item.reconciliation_finding_id) && !item.evidence_pack?.approved)}
+                  disabled={
+                    busy === item.id ||
+                    (Boolean(item.reconciliation_finding_id) && !item.evidence_pack?.approved)
+                  }
                   onClick={() => recordSubmission(item)}
                   style={{
                     border: 0,
