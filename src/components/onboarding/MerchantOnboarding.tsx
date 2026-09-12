@@ -603,6 +603,8 @@ function ChannelsStep({
   email,
   businessName,
   location,
+  accessCode,
+  initialConnected,
   onBack,
   onComplete,
 }: {
@@ -611,6 +613,8 @@ function ChannelsStep({
   email: string;
   businessName: string;
   location: string;
+  accessCode?: string;
+  initialConnected?: ChannelId[];
   onBack: () => void;
   onComplete: (connected: string[], deferred: string[]) => void;
 }) {
@@ -622,8 +626,8 @@ function ChannelsStep({
       return [];
     }
   })();
-  const [selected, setSelected] = useState<ChannelId[]>(saved);
-  const [connected, setConnected] = useState<ChannelId[]>([]);
+  const [selected, setSelected] = useState<ChannelId[]>(() => [...new Set([...saved, ...(initialConnected ?? [])])]);
+  const [connected, setConnected] = useState<ChannelId[]>(initialConnected ?? []);
   const [talabat, setTalabat] = useState<FieldMap>({ environment: "sandbox" });
   const [jahez, setJahez] = useState<FieldMap>({});
   const [submitting, setSubmitting] = useState(false);
@@ -689,20 +693,18 @@ function ChannelsStep({
           "Complete all Jahez credential fields, or leave them empty and connect Jahez later.",
         );
 
-      const registration = await fetch("/api/register-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchant_id: merchantId,
-          onboarding_token: token,
-          region_code: REGION_CODE[location] ?? "QA",
-          email,
-          store_name: businessName,
-        }),
-      });
-      const registrationData = (await registration.json()) as { code?: string; error?: string };
-      if (!registration.ok || !registrationData.code)
-        throw new Error(registrationData.error ?? "Could not secure your workspace.");
+      let registrationData: { code?: string; error?: string } = { code: accessCode };
+      if (!accessCode) {
+        const registration = await fetch("/api/register-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ merchant_id: merchantId, onboarding_token: token, region_code: REGION_CODE[location] ?? "QA", email, store_name: businessName }),
+        });
+        registrationData = (await registration.json()) as { code?: string; error?: string };
+        if (!registration.ok || !registrationData.code) throw new Error(registrationData.error ?? "Could not secure your workspace.");
+      }
+      const activeAccessCode = registrationData.code;
+      if (!activeAccessCode) throw new Error("Could not restore your workspace access.");
 
       const newlyConnected = [...connected];
       for (const [platform, credentials, ready] of [
@@ -715,7 +717,7 @@ function ChannelsStep({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             merchant_id: merchantId,
-            access_code: registrationData.code,
+            access_code: activeAccessCode,
             platform,
             ...credentials,
             ...(platform === "talabat"
@@ -730,11 +732,11 @@ function ChannelsStep({
       }
 
       localStorage.setItem("ps_merchant_id", merchantId);
-      localStorage.setItem("ps_access_code", registrationData.code);
+      localStorage.setItem("ps_access_code", activeAccessCode);
       localStorage.setItem("ps_connected", "true");
       const uniqueConnected = [...new Set(newlyConnected)];
       const deferred = selected.filter((id) => !uniqueConnected.includes(id));
-      await supabase.auth.signOut();
+      if (!accessCode) await supabase.auth.signOut();
       onComplete(
         uniqueConnected.map((id) => CHANNELS.find((channel) => channel.id === id)?.name ?? id),
         deferred.map((id) => CHANNELS.find((channel) => channel.id === id)?.name ?? id),
@@ -1043,19 +1045,71 @@ export function MerchantOnboarding() {
   const [confirmationRequired, setConfirmationRequired] = useState(false);
   const [connected, setConnected] = useState<string[]>([]);
   const [deferred, setDeferred] = useState<string[]>([]);
+  const [legacyAccessCode, setLegacyAccessCode] = useState("");
+  const [existingConnected, setExistingConnected] = useState<ChannelId[]>([]);
+  const [initializing, setInitializing] = useState(true);
   const tr = (value: string) => (lang === "ar" ? (AR[value] ?? value) : value);
 
   useEffect(() => {
-    const storedToken = readSession("ps_ob_capability");
-    setMerchantId(readLocal("ps_merchant_id"));
-    setToken(storedToken);
-    setEmail(readSession("ps_ob_email"));
-    setBusinessName(readSession("ps_ob_business"));
-    setLocation(readSession("ps_ob_location"));
-    setConfirmationRequired(readSession("ps_ob_confirmation_required") === "1");
-    if (/(?:zid|salla|keeta)_connected=1/.test(window.location.search) || storedToken)
-      setStage("channels");
-    if (readLocal("ps_language") === "ar") setLang("ar");
+    let cancelled = false;
+    const initialize = async () => {
+      let storedMerchantId = readLocal("ps_merchant_id");
+      let storedAccessCode = readLocal("ps_access_code");
+      const storedToken = readSession("ps_ob_capability");
+      const resumeRequested = new URLSearchParams(window.location.search).get("resume") === "channels";
+      if ((!storedMerchantId || !storedAccessCode) && resumeRequested) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const response = await fetch("/api/auth/resolve-merchant", { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } });
+          if (response.ok) {
+            const identity = await response.json() as { merchant_id?: string; code?: string };
+            storedMerchantId = identity.merchant_id ?? "";
+            storedAccessCode = identity.code ?? "";
+            if (storedMerchantId) localStorage.setItem("ps_merchant_id", storedMerchantId);
+            if (storedAccessCode) localStorage.setItem("ps_access_code", storedAccessCode);
+          }
+        }
+      }
+      if (storedMerchantId && storedAccessCode) {
+        const sessionResponse = await fetch("/api/onboarding/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ merchant_id: storedMerchantId, access_code: storedAccessCode }) });
+        if (sessionResponse.ok) {
+          const resumed = await sessionResponse.json() as { token?: string };
+          if (resumed.token && !cancelled) {
+            sessionStorage.setItem("ps_ob_capability", resumed.token);
+            const statusResponse = await fetch(`/api/channels/status?merchant_id=${encodeURIComponent(storedMerchantId)}`, { headers: { "X-PrizeSkout-Access-Code": storedAccessCode } });
+            const status = statusResponse.ok ? await statusResponse.json() as { channels?: Array<{ platform: string; status: string }>; store_name?: string } : null;
+            const connectedChannels = (status?.channels ?? []).filter(channel => channel.status === "connected").map(channel => channel.platform).filter((platform): platform is ChannelId => CHANNELS.some(channel => channel.id === platform));
+            setMerchantId(storedMerchantId);
+            setToken(resumed.token);
+            setLegacyAccessCode(storedAccessCode);
+            setExistingConnected(connectedChannels);
+            setBusinessName(status?.store_name ?? readSession("ps_ob_business"));
+            setStage("channels");
+          }
+        } else if (resumeRequested) {
+          window.location.assign("/access?return_to=%2Fonboarding%3Fresume%3Dchannels");
+          return;
+        }
+      } else if (resumeRequested && !storedToken) {
+        window.location.assign("/access?return_to=%2Fonboarding%3Fresume%3Dchannels");
+        return;
+      }
+      if (!cancelled && !storedMerchantId) {
+        setMerchantId("");
+        setToken(storedToken);
+        if (/(?:zid|salla|keeta)_connected=1/.test(window.location.search) || storedToken) setStage("channels");
+      }
+      if (!cancelled) {
+        setEmail(readSession("ps_ob_email"));
+        setBusinessName(current => current || readSession("ps_ob_business"));
+        setLocation(readSession("ps_ob_location"));
+        setConfirmationRequired(readSession("ps_ob_confirmation_required") === "1");
+        if (readLocal("ps_language") === "ar") setLang("ar");
+        setInitializing(false);
+      }
+    };
+    void initialize();
+    return () => { cancelled = true; };
   }, []);
 
   function switchLanguage() {
@@ -1114,7 +1168,9 @@ export function MerchantOnboarding() {
           </aside>
           <section className="mo-card">
             <Progress stage={stage} />
-            {stage === "account" ? (
+            {initializing ? (
+              <div className="mo-form" role="status" style={{ minHeight: 360, display: "grid", placeItems: "center", color: "#687389" }}>Restoring your workspace…</div>
+            ) : stage === "account" ? (
               <AccountStep
                 onCreated={(data) => {
                   setMerchantId(data.merchantId);
@@ -1133,8 +1189,14 @@ export function MerchantOnboarding() {
                 email={email}
                 businessName={businessName}
                 location={location}
-                onBack={() => setStage("account")}
+                accessCode={legacyAccessCode || undefined}
+                initialConnected={existingConnected}
+                onBack={() => legacyAccessCode ? window.location.assign("/dashboard/revenue-hub?workspace=settings") : setStage("account")}
                 onComplete={(connectedChannels, deferredChannels) => {
+                  if (legacyAccessCode) {
+                    window.location.assign("/dashboard/revenue-hub?workspace=settings");
+                    return;
+                  }
                   setConnected(connectedChannels);
                   setDeferred(deferredChannels);
                   setStage("complete");

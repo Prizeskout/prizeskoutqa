@@ -158,7 +158,7 @@ export function ChannelsTab() {
       setNotice({
         title: "Finish setting up PrizeSkout",
         message: t("settingsTabs.channels.alerts.noMerchantSession"),
-        action: { label: "Continue onboarding", run: () => window.location.assign("/onboarding") },
+        action: { label: "Continue onboarding", run: () => window.location.assign("/onboarding?resume=channels") },
       });
       return;
     }

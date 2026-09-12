@@ -5989,7 +5989,7 @@ export function PrizeSkoutDashboard() {
     if (!merchantId || !accessCode) {
       showToast("Please complete onboarding first.", {
         label: "Continue onboarding",
-        run: () => window.location.assign("/onboarding"),
+        run: () => window.location.assign("/onboarding?resume=channels"),
       });
       return;
     }
@@ -6020,7 +6020,7 @@ export function PrizeSkoutDashboard() {
     const merchantId = localStorage.getItem("ps_merchant_id") ?? "";
     const accessCode = localStorage.getItem("ps_access_code") ?? "";
     if (!merchantId || !accessCode) {
-      showToast("Please complete onboarding first.", { label: "Continue onboarding", run: () => window.location.assign("/onboarding") });
+      showToast("Please complete onboarding first.", { label: "Continue onboarding", run: () => window.location.assign("/onboarding?resume=channels") });
       return;
     }
     try {
