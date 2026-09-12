@@ -81,7 +81,7 @@ function SiteHeader() {
         <div className="site-actions">
           <span>QA</span>
           <span>EN</span>
-          <a href="/auth">Sign in</a>
+          <a href="/access">Sign in</a>
           <a className="site-cta" href="/#audit">
             Book a Profit Audit
           </a>
