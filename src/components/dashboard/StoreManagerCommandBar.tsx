@@ -5,12 +5,12 @@ type Lang = "en" | "ar" | "fr";
 const OG = "#EF681A";
 const COPY = {
   en: {
-    name: "CFO Copilot and Shop Manager",
-    description: "Ask a question or describe an outcome. PrizeSkout will choose the right tool, act when safe, and ask once before any protected change.",
-    placeholder: "What would you like PrizeSkout to handle?",
-    submit: "Send",
+    name: "Chat with your AI Store Manager",
+    description: "Assign a task or describe the outcome you want. PrizeSkout will prepare the work and ask before any protected store change.",
+    placeholder: "Assign a task to your Store Manager…",
+    submit: "Assign task",
     working: "Working",
-    open: "Open assistant",
+    open: "Open task chat",
     suggestions: ["What needs my attention today?", "Find products with incomplete information", "Prepare my highest priority store tasks"],
   },
   ar: {

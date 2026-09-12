@@ -84,7 +84,9 @@ export async function createStoreManagerTask(accountId:string,input:{title:strin
   const row={account_id:accountId,idempotency_key:idempotencyKey,source:input.workflow?"assistant":"merchant",task_type:(input.taskType??"store_admin").slice(0,60),title:title.slice(0,180),detail:(input.detail??"").slice(0,2000),status:approvalRequired?"waiting_approval":"detected",risk_level:riskLevel,priority,due_at:dueAt?.toISOString()??null,approval_required:approvalRequired,input:(input.workflow??{}) as Json};
   const {data,error}=await supabaseAdmin.from("ps_store_manager_tasks" as never).insert(row as never).select("*").single();if(error)throw error;
   await supabaseAdmin.from("ps_store_manager_task_events" as never).insert({account_id:accountId,task_id:(data as any).id,from_status:null,to_status:(data as any).status,actor:"merchant",note:"Task created from the management dashboard."} as never);
-  if(approvalRequired)backgroundTask(processEngineQueue(`store-manager:${crypto.randomUUID()}`,5));
+  // Do not expose an approval button until the durable approval request exists.
+  // Otherwise an immediate merchant click races the background engine and fails.
+  if(approvalRequired)await processEngineQueue(`store-manager:${crypto.randomUUID()}`,5);
   return data;
 }
 

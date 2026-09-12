@@ -57,6 +57,14 @@ export function classifyError(technical: string, context = "complete that action
       retryable: false,
     };
   }
+  if (/cannot move from|already (?:complete|completed|cancelled)|invalid task (?:state|transition)/.test(normalized)) {
+    return {
+      error: "This task has already moved on and cannot perform that action from its current state.",
+      code: "task_state_conflict",
+      action: "Refresh the task list to see its latest status.",
+      retryable: false,
+    };
+  }
   if (/not found|no rows|pgrst116/.test(normalized)) {
     return {
       error: `We could not find the item needed to ${context}.`,

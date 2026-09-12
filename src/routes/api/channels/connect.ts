@@ -2504,7 +2504,8 @@ export const Route = createFileRoute("/api/channels/connect")({
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
         } catch (err) {
           const friendly = toMerchantError(err, "complete this request");
-          return resp({ ok: false, ...friendly }, friendly.retryable ? 503 : 400);
+          const status = friendly.code === "task_state_conflict" ? 409 : friendly.retryable ? 503 : 400;
+          return resp({ ok: false, ...friendly }, status);
         }
       },
     },

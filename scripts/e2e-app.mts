@@ -130,7 +130,7 @@ try {
     try{
       for(const status of ["approved","executing","verifying","completed"]){const response=await managerCall({action:"manager_task_transition",id:taskId,to_status:status,actor:"E2E merchant",value:`E2E transition to ${status}`}),body=await response.json() as {task?:{status:string};error?:string};assert.equal(response.status(),200,`Manager transition failed: ${body.error??status}`);assert.equal(body.task?.status,status);}
       const reload=await managerCall({action:"get"}),reloadBody=await reload.json() as {manager?:{tasks:Array<{id:string;status:string}>}};assert.equal(reloadBody.manager?.tasks.find(task=>task.id===taskId)?.status,"completed","Completed manager task did not persist after reload");
-      const invalid=await managerCall({action:"manager_task_transition",id:taskId,to_status:"executing",actor:"E2E merchant"});assert.equal(invalid.status(),500,"Completed tasks must reject invalid re-execution");
+      const invalid=await managerCall({action:"manager_task_transition",id:taskId,to_status:"executing",actor:"E2E merchant"});assert.equal(invalid.status(),409,"Completed tasks must return a state conflict for invalid re-execution");
       console.log("PASS Virtual Store Manager profile, default policies, task approval, execution, verification, persistence, and transition guards");
     }finally{
       await admin.from("ps_store_manager_tasks").delete().eq("id",taskId);
@@ -146,31 +146,45 @@ try {
     localStorage.setItem("ps_tour_v1_done", "1");
   }, { merchantId: access.merchant_id, code: access.code });
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByText("Revenue Protection Hub", { exact: false }).first().waitFor({ timeout: 15_000 });
-  await page.getByLabel("Ask CFO Copilot").waitFor({timeout:15_000});
-  await page.getByRole("tab",{name:"CFO Copilot",exact:true}).waitFor();
-  await page.getByRole("tab",{name:"Store Manager",exact:true}).waitFor();
-  await page.getByRole("button",{name:/Store Manager/}).first().waitFor();
-  await page.getByText("Store Manager",{exact:true}).first().click();
-  await page.getByText("Your daily store brief",{exact:true}).waitFor({timeout:15_000});
-  await page.getByText("Revenue Protection Hub",{exact:true}).first().click();
-  console.log("PASS CFO Copilot and Store Manager have equal persistent entry, with primary management navigation and daily brief");
-  await page.getByText("Imported Products", { exact: true }).waitFor({ timeout: 15_000 });
-  await page.getByText(/protection queue|need.*attention|being watched/i).first().waitFor({timeout:15_000});
-  await page.getByText("Attention Inbox",{exact:true}).waitFor();
-  console.log("PASS Today briefing and Attention Inbox render");
+  await page.getByRole("button", { name: "Overview", exact: true }).first().waitFor({ timeout: 15_000 });
+  for (const [navigation, heading, view] of [
+    ["Overview", "Overview", "overview"],
+    ["Catalog", "Catalog", "catalog"],
+    ["Margin Intelligence", "True Margin Intelligence", "margin"],
+    ["Alerts", "Today", "alerts"],
+    ["Payout Recovery", "Payout Recovery", "recovery"],
+    ["Promotion Simulator", "Promo Simulator", "promotions"],
+    ["Defend Loop", "Margin Policy Engine", "defend"],
+    ["AI Store Manager", "AI Store Manager", "manager"],
+    ["CFO Copilot", "CFO Copilot", "copilot"],
+    ["Integrations", "Integration Vault", "integrations"],
+    ["Evidence & History", "Activity & Evidence", "evidence"],
+    ["Settings", "Settings", "settings"],
+  ] as const) {
+    await page.getByRole("button", { name: navigation, exact: true }).first().click();
+    await page.locator(".ps-db-h1").getByText(heading, { exact: true }).waitFor({ timeout: 15_000 });
+    assert.equal(new URL(page.url()).searchParams.get("view"), view, `${navigation} did not preserve its deep-link view`);
+  }
+  await page.getByRole("button", { name: "Overview", exact: true }).first().click();
+  console.log("PASS every desktop sidebar destination renders and preserves its deep link");
+  await page.getByRole("button",{name:"CFO Copilot",exact:true}).first().waitFor();
+  await page.getByRole("button",{name:"AI Store Manager",exact:true}).first().waitFor();
+  await page.getByRole("button",{name:"AI Store Manager",exact:true}).first().click();
+  await page.getByText("Automate store operations with oversight",{exact:true}).waitFor({timeout:15_000});
+  await page.getByText("Chat with your AI Store Manager",{exact:true}).waitFor({timeout:15_000});
   if(!managerMigrationError){
+    await page.getByRole("button",{name:"Open detailed operations →",exact:true}).click();
     await page.getByText("Management desk",{exact:true}).waitFor({timeout:15_000});
     assert.equal(await page.getByText("setup required",{exact:true}).count(),0,"Manager UI still reports an unapplied migration");
     const uiTask=`E2E delegated UI task ${Date.now()}`;
     await page.getByPlaceholder("Example: prepare the new supplier products as drafts").fill(uiTask);
     await page.getByRole("button",{name:"Delegate task",exact:true}).click();
-    const taskRow=page.getByText(uiTask,{exact:true}).locator("..").locator("..");
-    await page.getByText(uiTask,{exact:true}).waitFor({timeout:10_000});
+    const taskRow=page.locator("#management-desk").getByText(uiTask,{exact:true}).locator("..").locator("..");
+    await page.locator("#management-desk").getByText(uiTask,{exact:true}).waitFor({timeout:10_000});
     let uiTaskId:string|undefined;
     try{
       await taskRow.getByRole("button",{name:"Approve",exact:true}).click();
-      await page.getByText("Task approved. No unsupported platform action was claimed as completed.",{exact:true}).waitFor({timeout:10_000});
+      await taskRow.getByText(/Approved/).waitFor({timeout:15_000});
       const {data:uiTaskRow}=await admin.from("ps_store_manager_tasks").select("id,status").eq("account_id",access.merchant_id).eq("title",uiTask).maybeSingle();
       uiTaskId=uiTaskRow?.id;assert.equal(uiTaskRow?.status,"approved","Dashboard approval did not persist through the manager API");
     }finally{
@@ -178,6 +192,14 @@ try {
     }
     console.log("PASS Virtual Store Manager dashboard delegation and approval journey");
   }
+  console.log("PASS CFO Copilot and Store Manager have equal persistent entry, with primary management navigation and task chat");
+  await page.getByRole("button",{name:"Catalog",exact:true}).first().click();
+  await page.getByText("Product catalog", { exact: true }).waitFor({ timeout: 15_000 });
+  await page.getByRole("button",{name:"Alerts",exact:true}).first().click();
+  await page.getByText("See what needs attention now",{exact:true}).waitFor({timeout:15_000});
+  await page.getByText("Action Queue",{exact:true}).waitFor();
+  console.log("PASS Catalog and Alerts workspaces render their current task surfaces");
+  await page.getByRole("button",{name:"Overview",exact:true}).first().click();
   console.log("PASS authenticated merchant dashboard loads");
 
   const channelStatus=await page.request.get(`${baseUrl}/api/channels/status?merchant_id=${encodeURIComponent(access.merchant_id)}`);
@@ -255,11 +277,12 @@ try {
     console.log("PASS margin alert opens matching verified products");
   }
 
-  await page.getByText("Margin Policy Engine", { exact: true }).first().click();
+  await page.getByRole("button", { name: "Defend Loop", exact: true }).first().click();
   await page.getByText("Protect what you keep from every sale", { exact: false }).waitFor();
   console.log("PASS margin policy navigation");
 
   await page.getByText("Settings", { exact: true }).first().click();
+  await page.getByRole("button", { name: "Protection", exact: true }).click();
   await page.getByRole("button", { name: /Margin Rules/ }).click();
   await page.getByText(/ACTIVE · VERSION/).waitFor({ timeout: 10_000 });
   console.log("PASS settings reads active margin policy");
@@ -274,17 +297,53 @@ try {
   assert.equal(await notificationSwitch.isEnabled(),true,"Notification switches must work for an access-code merchant session");
   console.log("PASS notification settings are interactive for access-code merchants");
 
+  await page.getByRole("button", { name: "Connections", exact: true }).click();
   await page.getByRole("button",{name:/Competitor Radar/}).click();
   await page.getByText("Add a competitor product",{exact:true}).waitFor({timeout:10_000});
   await page.getByPlaceholder("https://competitor.com/product/...").waitFor();
   await page.getByRole("button",{name:"Add to monitoring",exact:true}).waitFor();
   console.log("PASS Competitor Radar and exact product URL form are visible in the current merchant dashboard");
 
+  await page.getByRole("button", { name: "Catalogue", exact: true }).click();
   await page.getByRole("button",{name:/Product Images/}).click();
   await page.getByText("Product Image Manager",{exact:true}).waitFor({timeout:10_000});
   await page.getByText("Select product images",{exact:true}).waitFor();
   assert.equal(await page.locator('input[type="file"][multiple]').count(),1,"Product Image Manager must expose one multi-file picker");
   console.log("PASS Product Image Manager, secure batch picker, and image-job workspace are visible in the current merchant dashboard");
+
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole("button",{name:"Open navigation",exact:true}).click();
+  await page.locator('nav[aria-label="PrizeSkout workspaces"]').getByRole("button",{name:"AI Store Manager",exact:true}).click();
+  await page.getByText("Chat with your AI Store Manager",{exact:true}).waitFor({timeout:10_000});
+  await page.getByRole("button",{name:"Open task chat",exact:true}).click();
+  await page.getByRole("dialog",{name:"AI Store Manager",exact:true}).waitFor();
+  await page.getByRole("button",{name:"Close assistant",exact:true}).click();
+  const mobileOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
+  assert(mobileOverflow<=1,`Store Manager overflows the mobile viewport by ${mobileOverflow}px`);
+  await page.getByRole("button",{name:"Open navigation",exact:true}).click();
+  await page.locator('nav[aria-label="PrizeSkout workspaces"]').getByRole("button",{name:"Settings",exact:true}).click();
+  await page.locator(".ps-db-h1").getByText("Settings",{exact:true}).waitFor();
+  console.log("PASS mobile navigation, Store Manager task chat, Settings, and viewport containment");
+
+  for (const viewport of [
+    { width: 360, height: 800, label: "small phone" },
+    { width: 768, height: 1024, label: "tablet" },
+    { width: 1024, height: 768, label: "small laptop" },
+    { width: 1440, height: 1000, label: "desktop" },
+  ]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    for (const [workspace, view, heading] of [
+      ["catalog", "catalog", "Catalog"],
+      ["manager", "manager", "AI Store Manager"],
+      ["settings", "settings", "Settings"],
+    ] as const) {
+      await page.goto(`${baseUrl}/dashboard/revenue-hub?workspace=${workspace}&view=${view}`, { waitUntil: "networkidle" });
+      await page.locator(".ps-db-h1").getByText(heading, { exact: true }).waitFor({ timeout: 15_000 });
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert(overflow <= 1, `${heading} overflows the ${viewport.label} viewport by ${overflow}px`);
+    }
+  }
+  console.log("PASS responsive containment on small phone, tablet, laptop, and desktop workspaces");
 
   assert.deepEqual(failures, [], `Browser errors:\n${failures.join("\n")}`);
   console.log("E2E app journey passed.");

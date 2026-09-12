@@ -136,6 +136,12 @@ function dashboardTabFromUrl(): Tab {
   const workspace = new URLSearchParams(window.location.search).get("workspace");
   return DASHBOARD_TABS.includes(workspace as Tab) ? (workspace as Tab) : "analytics";
 }
+
+function dashboardNavFromUrl(tab = dashboardTabFromUrl()): SidebarNavId {
+  if (typeof window === "undefined") return sidebarNavFromTab(tab);
+  const view = new URLSearchParams(window.location.search).get("view") as SidebarNavId | null;
+  return view && SIDEBAR_NAV_TABS[view] === tab ? view : sidebarNavFromTab(tab);
+}
 type Theme = "light" | "dark";
 type Lang = "en" | "ar" | "fr";
 
@@ -2277,11 +2283,10 @@ export function PrizeSkoutDashboard() {
   const clearPriceActionKey = (eventId: string, targetPrice: number, purpose = "publish") => {
     priceActionKeysRef.current.delete(`${purpose}:${eventId}:${targetPrice}`);
   };
-  const [tab, setTab] = useState<Tab>(dashboardTabFromUrl);
+  const [tab, setTab] = useState<Tab>("analytics");
   const [settingsInitialTab, setSettingsInitialTab] = useState<"Store Access" | "Channels">("Store Access");
-  const [sidebarNav, setSidebarNav] = useState<SidebarNavId>(() =>
-    sidebarNavFromTab(dashboardTabFromUrl()),
-  );
+  const [sidebarNav, setSidebarNav] = useState<SidebarNavId>("overview");
+  const [urlStateReady, setUrlStateReady] = useState(false);
   useEffect(() => {
     if (tab !== "rules" || window.location.hash !== "#channel-margin-overrides") return;
     window.requestAnimationFrame(() => document.getElementById("channel-margin-overrides")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -2300,7 +2305,13 @@ export function PrizeSkoutDashboard() {
   const [feed, setFeed] = useState<FeedRow[]>([]);
 
   useEffect(() => {
-    const syncFromHistory = () => setTab(dashboardTabFromUrl());
+    const syncFromHistory = () => {
+      const nextTab = dashboardTabFromUrl();
+      setTab(nextTab);
+      setSidebarNav(dashboardNavFromUrl(nextTab));
+    };
+    syncFromHistory();
+    setUrlStateReady(true);
     window.addEventListener("popstate", syncFromHistory);
     return () => window.removeEventListener("popstate", syncFromHistory);
   }, []);
@@ -2310,16 +2321,18 @@ export function PrizeSkoutDashboard() {
   }, [sidebarNav, tab]);
 
   useEffect(() => {
+    if (!urlStateReady) return;
     const url = new URL(window.location.href);
-    if (url.searchParams.get("workspace") === tab) {
+    if (url.searchParams.get("workspace") === tab && url.searchParams.get("view") === sidebarNav) {
       tabHistoryReadyRef.current = true;
       return;
     }
     url.searchParams.set("workspace", tab);
+    url.searchParams.set("view", sidebarNav);
     const method = tabHistoryReadyRef.current ? "pushState" : "replaceState";
     window.history[method]({}, "", `${url.pathname}${url.search}${url.hash}`);
     tabHistoryReadyRef.current = true;
-  }, [tab]);
+  }, [tab, sidebarNav, urlStateReady]);
   type HeroStats = {
     has_activity: boolean;
     profits_protected_this_month: number;
@@ -5947,7 +5960,7 @@ export function PrizeSkoutDashboard() {
     const prompt = assistantDrawerInput.trim();
     if (!prompt || cpPhase === "loading") return;
     setCpInput(prompt);
-    void runCopilot(prompt);
+    void runCopilot(prompt, tab === "manager" ? "manager" : "auto");
   };
   const submitManagerCommand = (prompt: string, requestedRole: "cfo" | "manager" = "cfo") => {
     if (!prompt.trim() || cpPhase === "loading") return;
@@ -6122,6 +6135,8 @@ export function PrizeSkoutDashboard() {
                 <button
                   key={item.id}
                   type="button"
+                  aria-label={item.label}
+                  aria-describedby={item.badge ? `${item.id}-desktop-nav-status` : undefined}
                   aria-current={active ? "page" : undefined}
                   onClick={() => openSidebarDestination(item)}
                   data-demo-tip={item.tip}
@@ -6150,7 +6165,7 @@ export function PrizeSkoutDashboard() {
                   </span>
                   {!!item.badge && (
                     <span
-                      aria-label={`${item.badge} items need attention`}
+                      aria-hidden="true"
                       style={{
                         minWidth: 20,
                         height: 20,
@@ -6166,6 +6181,11 @@ export function PrizeSkoutDashboard() {
                       }}
                     >
                       {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
+                  {!!item.badge && (
+                    <span id={`${item.id}-desktop-nav-status`} style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>
+                      {item.badge} items need attention
                     </span>
                   )}
                 </button>
@@ -6655,22 +6675,18 @@ export function PrizeSkoutDashboard() {
             </button>
           </div>
         </header>
-        {false && sidebarNav === "manager" && <StoreManagerCommandBar
+        {sidebarNav === "manager" && <StoreManagerCommandBar
           context={headerTitle}
           examples={activeAssistantContext.examples}
           lang={lang}
           busy={cpPhase === "loading"}
-          onSubmit={runPrizeSkoutAssistant}
-          onOpenAssistant={() => {
-            setTab("rules");
-            window.setTimeout(
-              () =>
-                document
-                  .querySelector('[data-tour="copilot"]')
-                  ?.scrollIntoView({ behavior: "smooth", block: "center" }),
-              50,
-            );
+          onSubmit={(prompt) => {
+            setAssistantDrawerInput(prompt);
+            setAssistantDrawerOpen(true);
+            setCpInput(prompt);
+            void runCopilot(prompt, "manager");
           }}
+          onOpenAssistant={() => openAssistantDrawer()}
         />}
         {false && (["manager", "promotions", "rules"] as Tab[]).includes(tab) && (
           <nav
@@ -15045,6 +15061,8 @@ export function PrizeSkoutDashboard() {
                   <button
                     key={item.id}
                     type="button"
+                    aria-label={item.label}
+                    aria-describedby={item.badge ? `${item.id}-mobile-nav-status` : undefined}
                     aria-current={active ? "page" : undefined}
                     onClick={() => {
                       openSidebarDestination(item);
@@ -15073,6 +15091,7 @@ export function PrizeSkoutDashboard() {
                     </span>
                     {!!item.badge && (
                       <span
+                        aria-hidden="true"
                         style={{
                           minWidth: 20,
                           height: 20,
@@ -15087,6 +15106,11 @@ export function PrizeSkoutDashboard() {
                         }}
                       >
                         {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    )}
+                    {!!item.badge && (
+                      <span id={`${item.id}-mobile-nav-status`} style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>
+                        {item.badge} items need attention
                       </span>
                     )}
                   </button>
@@ -15706,7 +15730,7 @@ export function PrizeSkoutDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={tr(
-              "CFO Copilot and Shop Manager",
+              tab === "manager" ? "AI Store Manager" : "CFO Copilot",
               "المساعد المالي ومدير المتجر",
               "Copilote financier et gestionnaire de boutique",
             )}
@@ -15739,7 +15763,7 @@ export function PrizeSkoutDashboard() {
               <div>
                 <h2 style={{ margin: 0, fontSize: 20, fontWeight: 850 }}>
                   {tr(
-                    "CFO Copilot and Shop Manager",
+                    tab === "manager" ? "AI Store Manager" : "CFO Copilot",
                     "المساعد المالي ومدير المتجر",
                     "Copilote financier et gestionnaire de boutique",
                   )}
@@ -15753,7 +15777,9 @@ export function PrizeSkoutDashboard() {
                   }}
                 >
                   {tr(
-                    "Delegate store work or ask CFO Copilot about profit and payouts. PrizeSkout keeps your current page open and asks before protected changes.",
+                    tab === "manager"
+                      ? "Assign store work, refine the plan, and review the resulting task here. PrizeSkout asks before protected changes."
+                      : "Ask CFO Copilot about profit, payouts, and risk. PrizeSkout keeps your current page open and asks before protected changes.",
                     "فوّض أعمال المتجر أو اسأل المساعد المالي عن الأرباح والمدفوعات. يبقي PrizeSkout صفحتك الحالية مفتوحة ويطلب موافقتك قبل التغييرات المحمية.",
                     "Déléguez les tâches de la boutique ou interrogez le copilote financier sur les bénéfices et les versements. PrizeSkout conserve votre page ouverte et demande votre validation avant toute modification protégée.",
                   )}

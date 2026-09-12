@@ -351,6 +351,7 @@ export function MerchantOperatingLoop({
         task_type: "store_admin",
         priority: "medium",
         approval_required: "true",
+        risk_level: "reversible",
       });
       setNewTask("");
       await load();
