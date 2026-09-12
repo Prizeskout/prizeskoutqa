@@ -686,7 +686,7 @@ export function MerchantOperatingLoop({
         className="ps-manager-expand"
         onClick={() => setWorkspaceExpanded((value) => !value)}
       >
-        {workspaceExpanded ? "Hide detailed operations ↑" : "Open detailed operations →"}
+        {workspaceExpanded ? "Hide retained outcomes ↑" : "View retained outcomes →"}
       </button>
 
       <div

@@ -227,6 +227,9 @@ interface ImportedProduct {
 }
 
 const OG = "#EF681A";
+// Per-order payout allocations remain available to reconciliation and exports,
+// but the merchant workspace intentionally presents period-level results only.
+const SHOW_PER_ORDER_PAYOUT_DETAILS = false;
 const GN = "#10B981";
 const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
 const DISPLAY = "Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif";
@@ -363,7 +366,7 @@ const CSS = `
   .ps-cfo-question{background:var(--navy)!important}.ps-cfo-compact-input button{background:var(--accent)!important}.ps-cfo-workspace>.ps-cfo-expand,.ps-cfo-insight button{color:var(--info)!important}
   .ps-focus-kpi strong,.ps-kpi-tile strong,.ps-manager-donut strong,.ps-recovery-donut strong{font-variant-numeric:tabular-nums;letter-spacing:-.035em}
   .ps-promotion-intro{display:none!important}
-  #margin-intelligence-section~*{display:none!important}
+  .ps-legacy-margin-workspace{display:none!important}
   .ps-db:not(.ps-show-recovery-tools) .ps-recovery-dashboard~*{display:none!important}
   @media(max-width:979px){
     .ps-db{--px:16px}
@@ -406,6 +409,11 @@ const CSS = `
   @media(max-width:1100px){.ps-cfo-workspace>.ps-cfo-compact{grid-template-columns:1fr 1fr}.ps-cfo-chat-panel{grid-column:1/-1}}
   @media(max-width:900px){.ps-cfo-workspace>.ps-cfo-compact,.ps-manager-workspace>.ps-manager-main-grid,.ps-manager-workspace>.ps-manager-health-grid{grid-template-columns:1fr}.ps-cfo-chat-panel{grid-column:auto}.ps-manager-workflow-card .ps-manager-workflow{grid-template-columns:repeat(2,1fr);gap:18px}.ps-manager-workflow-card .ps-manager-workflow>div:after{display:none}}
   @media(max-width:760px){.ps-cfo-workspace>.ps-cfo-modes{grid-template-columns:1fr}.ps-manager-workflow-card .ps-manager-workflow{grid-template-columns:1fr 1fr}.ps-manager-queue-head{display:none}.ps-manager-queue-row{grid-template-columns:1fr auto;min-height:58px}.ps-manager-queue-row>span:nth-child(2),.ps-manager-queue-row>span:nth-child(3){display:none}.ps-manager-queue-row b{font-size:11.5px}.ps-manager-queue-row small{font-size:9.5px;line-height:1.4}.ps-manager-queue-row>span:last-child{font-size:9.5px}.ps-manager-workflow-card .ps-manager-workflow b{font-size:10px}.ps-manager-workflow-card .ps-manager-workflow small{font-size:8.5px;line-height:1.35}}
+  /* Primary work and material alerts must not depend on an expansion control. */
+  .ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-desk,.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-attention{display:block!important}
+  .ps-manager-workspace>.ps-manager-desk{order:3}.ps-manager-workspace>.ps-manager-main-grid{order:4}.ps-manager-workspace>.ps-manager-health-grid{order:5}.ps-manager-workspace>.ps-manager-attention{order:6}.ps-manager-workspace>.ps-manager-expand{order:7}.ps-manager-workspace>.ps-manager-outcome{order:8}
+  .ps-cfo-workspace:not(.ps-cfo-expanded)>.ps-cfo-suggestions{display:flex!important}.ps-cfo-workspace:not(.ps-cfo-expanded)>.ps-cfo-alerts,.ps-cfo-workspace:not(.ps-cfo-expanded)>.ps-cfo-status{display:grid!important}.ps-cfo-workspace>.ps-cfo-suggestions{order:4}.ps-cfo-workspace>.ps-cfo-alerts{order:5}.ps-cfo-workspace>.ps-cfo-status{order:6}.ps-cfo-workspace>.ps-cfo-expand{order:7}
+  @media(max-width:760px){.ps-manager-queue-row{grid-template-columns:minmax(0,1fr) auto auto}.ps-manager-queue-row>span:nth-child(2){display:none}.ps-manager-queue-row>span:nth-child(3){display:block}.ps-manager-priority{padding:3px 6px;border-radius:999px;background:var(--surface2)}}
   .ps-catalog-page,.ps-defend-page{background:var(--surface2)}.ps-catalog-kpis>button,.ps-defend-kpis>.ps-kpi-tile{min-height:112px;box-shadow:0 8px 24px rgba(15,35,70,.045)!important}.ps-catalog-insights{display:grid;grid-template-columns:.9fr 1.1fr .8fr;gap:14px}.ps-catalog-insight-card,.ps-defend-snapshot>section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:17px;min-width:0}.ps-catalog-insight-card>div:first-child h3,.ps-defend-snapshot h3{font-size:14px;margin:0}.ps-catalog-insight-card>div:first-child p,.ps-defend-snapshot section>div:first-child p{font-size:10.5px;color:var(--muted);margin:3px 0 12px}.ps-catalog-health-ring,.ps-defend-ring{width:122px;height:122px;border-radius:50%;margin:2px auto 14px;background:conic-gradient(#10b981 var(--catalog-ready,var(--defend-ready)),#f97316 0);display:grid;place-content:center;text-align:center;position:relative}.ps-catalog-health-ring:before,.ps-defend-ring:before{content:"";position:absolute;inset:19px;border-radius:50%;background:var(--surface)}.ps-catalog-health-ring strong,.ps-catalog-health-ring small,.ps-defend-ring strong,.ps-defend-ring small{position:relative;z-index:1}.ps-catalog-health-ring strong,.ps-defend-ring strong{font-size:21px}.ps-catalog-health-ring small,.ps-defend-ring small{font-size:8px;color:var(--muted)}.ps-catalog-insight-card ul{list-style:none;padding:0;margin:0;display:grid;gap:7px}.ps-catalog-insight-card li,.ps-defend-legend span{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--muted)}.ps-catalog-insight-card li b,.ps-defend-legend b{margin-left:auto;color:var(--text)}.ps-dot-green,.ps-dot-orange,.ps-dot-blue{width:7px;height:7px;border-radius:50%;display:inline-block;background:#10b981}.ps-dot-orange{background:#f97316}.ps-dot-blue{background:#2563eb}.ps-catalog-channel-list>div,.ps-defend-channel>div{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:10px;text-transform:capitalize}.ps-catalog-channel-list span,.ps-defend-channel span{color:var(--muted)}.ps-catalog-channel-list span.is-connected,.ps-defend-channel span.is-connected{color:#059669}.ps-catalog-channel-list em,.ps-defend-channel em{font-style:normal;color:var(--muted)}.ps-catalog-insight-card>button,.ps-defend-snapshot section>button{margin-top:14px;border:0;background:transparent;color:#2563eb;font:750 10px inherit;cursor:pointer;padding:0}.ps-catalog-priority{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}.ps-catalog-priority strong{font-size:22px;color:#f97316}.ps-catalog-priority span{font-size:10px;color:var(--muted)}.ps-catalog-table-card{box-shadow:0 12px 32px rgba(15,35,70,.055)!important}.ps-catalog-table-card tbody tr{transition:background .15s ease}.ps-catalog-table-card tbody tr:hover{background:color-mix(in srgb,#2563eb 3%,var(--surface))}.ps-defend-page{display:flex;flex-direction:column;gap:18px}.ps-defend-snapshot{display:grid;grid-template-columns:.85fr 1.2fr 1fr;gap:14px}.ps-defend-legend{display:grid;gap:7px}.ps-defend-snapshot ol{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.ps-defend-snapshot li{position:relative;text-align:center}.ps-defend-snapshot li:not(:last-child):after{content:"";position:absolute;top:13px;left:60%;right:-40%;height:1px;background:var(--border)}.ps-defend-snapshot li>i{position:relative;z-index:1;margin:auto;width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--border);font-style:normal;font-size:9px;font-weight:850}.ps-defend-snapshot li.is-active>i{background:#2563eb;color:#fff;border-color:#2563eb}.ps-defend-snapshot li span,.ps-defend-snapshot li b,.ps-defend-snapshot li small{display:block}.ps-defend-snapshot li b{font-size:8.5px;margin-top:7px}.ps-defend-snapshot li small{font-size:7.5px;color:var(--muted);margin-top:2px}.ps-defend-editor{box-shadow:0 12px 32px rgba(15,35,70,.055)}
   @media(max-width:1050px){.ps-catalog-insights,.ps-defend-snapshot{grid-template-columns:1fr 1fr}.ps-catalog-insight-card:first-child,.ps-defend-snapshot>section:first-child{grid-row:span 2}}
   @media(max-width:760px){.ps-catalog-insights,.ps-defend-snapshot{grid-template-columns:1fr}.ps-catalog-insight-card:first-child,.ps-defend-snapshot>section:first-child{grid-row:auto}.ps-defend-snapshot ol{grid-template-columns:1fr 1fr;gap:14px}.ps-defend-snapshot li:after{display:none}}
@@ -1916,7 +1924,7 @@ function PayoutResultDetail({
         </div>
       )}
 
-      {data.source === "live" && !!data.sale_lines?.length && (
+      {SHOW_PER_ORDER_PAYOUT_DETAILS && data.source === "live" && !!data.sale_lines?.length && (
         <div
           style={{
             background: "var(--surface)",
@@ -7610,6 +7618,7 @@ export function PrizeSkoutDashboard() {
                 <div id="margin-intelligence-section" style={{ scrollMarginTop: 24 }}>
                   <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} orders={payoutData?.order_count ?? 0} expectedPayout={payoutData?.expected_payout ?? null} channels={overviewChannels} riskRows={overviewRisks} />
                 </div>
+                <div className="ps-legacy-margin-workspace" aria-hidden="true">
 
                 {/* First-run welcome: we auto-ran a Talabat payout check the
                 moment Talabat was connected, since this merchant has never
@@ -8856,6 +8865,7 @@ export function PrizeSkoutDashboard() {
                 merchant had to scroll past to reach the thing this page
                 exists for); they now live in their own Policy Center below. */}
                 </>)}
+                </div>
               </>}
               {sidebarNav === "recovery" && <>
                 <RecoveryDashboardSummary
@@ -9140,7 +9150,7 @@ export function PrizeSkoutDashboard() {
                     </div>
                   )}
 
-                  {payoutData?.source === "live" &&
+                  {SHOW_PER_ORDER_PAYOUT_DETAILS && payoutData?.source === "live" &&
                     payoutData.settlement_forecast &&
                     payoutData.sale_lines && (
                       <SettlementForecastPanel
