@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronRight, HelpCircle, LifeBuoy, Mail, Minus, Search, Send, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, HelpCircle, LifeBuoy, Mail, MessageCircle, Minus, Search, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { submitContactMessage } from "@/server/contact.functions";
@@ -121,7 +121,7 @@ export function ContactSupportModal({ open, onClose }: { open: boolean; onClose:
       </header>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 5, padding: 4, borderRadius: 10, background: "var(--ps-hover,#F4F4F2)", marginBottom: 14 }}>
-        {([ ["chat", "Noura", Bot], ["ticket", "Human", Mail], ["help", "Help", HelpCircle] ] as const).map(([id, label, Icon]) => <button key={id} type="button" onClick={() => setMode(id)} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, padding: 8, border: 0, borderRadius: 7, background: mode === id ? "#fff" : "transparent", color: mode === id ? "#EF681A" : "#666", fontWeight: 700, cursor: "pointer" }}><Icon size={14}/>{label}</button>)}
+        {([ ["chat", "Noura", MessageCircle], ["ticket", "Human", Mail], ["help", "Help", HelpCircle] ] as const).map(([id, label, Icon]) => <button key={id} type="button" onClick={() => setMode(id)} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, padding: 8, border: 0, borderRadius: 7, background: mode === id ? "#fff" : "transparent", color: mode === id ? "#EF681A" : "#666", fontWeight: 700, cursor: "pointer" }}><Icon size={14}/>{label}</button>)}
       </div>
 
       {mode === "chat" ? <div>

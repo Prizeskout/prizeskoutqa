@@ -2,7 +2,7 @@ import { Fragment, useState, useEffect, useMemo, useRef, type ReactNode } from "
 import {
   BadgePercent,
   Bell,
-  Bot,
+  BriefcaseBusiness,
   ChartNoAxesCombined,
   CircleDollarSign,
   MessageSquareText,
@@ -254,7 +254,6 @@ function DashboardSectionHeader({ eyebrow, title, description, action }: {
 }
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   @keyframes pk-pulse{0%,100%{opacity:1}50%{opacity:.3}}
   @keyframes pk-ring{0%,100%{opacity:1}50%{opacity:.35}}
@@ -5919,7 +5918,7 @@ export function PrizeSkoutDashboard() {
         id: "manager",
         tab: "manager",
         label: "AI Store Manager",
-        icon: Bot,
+        icon: BriefcaseBusiness,
         tip: "Delegate store work and review protected actions.",
       },
       {

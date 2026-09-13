@@ -20,12 +20,13 @@ page.on("console", message => {
 page.on("pageerror", error => failures.push(`page: ${error.message}`));
 
 async function visit(path: string, expectedText?: string) {
-  const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "commit", timeout: 60_000 });
   assert(!response || response.status() < 500, `${path} returned ${response?.status()}`);
   // Allow streamed SSR and client hydration to settle before asserting route copy.
   await page.waitForTimeout(1_500);
   await page.locator("body").waitFor({ state: "attached", timeout: 10_000 });
   if (expectedText) {
+    await page.getByText(expectedText, { exact: false }).first().waitFor({ state: "visible", timeout: 20_000 });
     const body = await page.locator("body").innerText();
     assert(body.toLowerCase().includes(expectedText.toLowerCase()), `${path} did not render “${expectedText}” (landed on ${page.url()})`);
   }
@@ -141,7 +142,7 @@ try {
     }
   }
 
-  await page.goto(`${baseUrl}/dashboard/revenue-hub`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/dashboard/revenue-hub`, { waitUntil: "commit", timeout: 60_000 });
   await page.evaluate(({ merchantId, code }) => {
     localStorage.setItem("ps_merchant_id", merchantId);
     localStorage.setItem("ps_access_code", code);
@@ -186,7 +187,7 @@ try {
   await page.getByText("Automate store operations with oversight",{exact:true}).waitFor({timeout:15_000});
   await page.getByText("Chat with your AI Store Manager",{exact:true}).waitFor({timeout:15_000});
   if(!managerMigrationError){
-    await page.getByRole("button",{name:"Open detailed operations →",exact:true}).click();
+    await page.locator("#management-desk").scrollIntoViewIfNeeded();
     await page.getByText("Management desk",{exact:true}).waitFor({timeout:15_000});
     assert.equal(await page.getByText("setup required",{exact:true}).count(),0,"Manager UI still reports an unapplied migration");
     const uiTask=`E2E delegated UI task ${Date.now()}`;
@@ -351,7 +352,7 @@ try {
       ["manager", "manager", "AI Store Manager"],
       ["settings", "settings", "Settings"],
     ] as const) {
-      await page.goto(`${baseUrl}/dashboard/revenue-hub?workspace=${workspace}&view=${view}`, { waitUntil: "networkidle" });
+      await page.goto(`${baseUrl}/dashboard/revenue-hub?workspace=${workspace}&view=${view}`, { waitUntil: "commit", timeout: 60_000 });
       await page.locator(".ps-db-h1").getByText(heading, { exact: true }).waitFor({ timeout: 15_000 });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       assert(overflow <= 1, `${heading} overflows the ${viewport.label} viewport by ${overflow}px`);

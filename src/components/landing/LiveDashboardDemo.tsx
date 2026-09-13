@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, FileCheck2, ShieldCheck, Sparkles } from "lucide-react";
+import { Check, FileCheck2, ShieldCheck } from "lucide-react";
 import "./LiveDashboardDemo.css";
 
 const scenes = [
@@ -109,7 +109,7 @@ function PromotionScene({ step }: { step: number }) {
     <SceneHead eyebrow="Promotion simulator" title="Compare the economics before publishing" status={step < 4 ? "Scenario running" : "Recommendation ready"} />
     <div className="ldd-fields ldd-focus-region" data-region="input"><label>Campaign type<b>{step < 1 ? "Select" : "Percentage discount"}</b></label><label className="ldd-range">Discount<b><span className="ldd-value" key={discount}>{discount}%</span></b><input aria-label="Promotion discount" type="range" min="5" max="25" step="1" value={discount} onChange={(event) => setDiscount(Number(event.target.value))} /></label><label>Duration<b>{step < 2 ? "—" : "14 days"}</b></label><label>Protected margin floor<b>{step < 2 ? "—" : "18%"}</b></label></div>
     <div className="ldd-scenarios ldd-focus-region" data-region="calculation"><article><span>Baseline</span><strong>QAR 42,600</strong><small>Projected revenue</small><b>24.1% margin</b></article><article className={step >= 3 ? safe ? "safe" : "unsafe" : ""}><span>Requested · {discount}%</span><strong><span className="ldd-value" key={revenue}>{step < 3 ? "Calculating" : `QAR ${revenue.toLocaleString()}`}</span></strong><small>Projected revenue</small><b><span className="ldd-value" key={margin}>{step < 3 ? "—" : `${margin.toFixed(1)}% margin`}</span></b></article><article className={step >= 4 ? "safe" : ""}><span>Protected plan · 15%</span><strong>{step < 4 ? "Waiting" : "QAR 47,180"}</strong><small>Projected revenue</small><b>{step < 4 ? "—" : "18.7% margin"}</b></article></div>
-    <div className={`ldd-notice ldd-focus-region ${step >= 3 ? "show" : ""}`} data-region="result"><Sparkles /><div><b>{safe ? "This scenario protects the margin floor" : "Use the 15% scenario"}</b><span>{safe ? "The requested discount remains within the merchant’s policy." : "It protects the merchant’s margin floor while preserving projected growth."}</span></div></div>
+    <div className={`ldd-notice ldd-focus-region ${step >= 3 ? "show" : ""}`} data-region="result"><ShieldCheck /><div><b>{safe ? "This scenario protects the margin floor" : "Use the 15% scenario"}</b><span>{safe ? "The requested discount remains within the merchant’s policy." : "It protects the merchant’s margin floor while preserving projected growth."}</span></div></div>
   </>;
 }
 

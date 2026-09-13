@@ -5,7 +5,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts";
 import {
-  ArrowRight, Sparkles, TrendingDown, TrendingUp,
+  ArrowRight, FlaskConical, ScanSearch, TrendingDown, TrendingUp,
   AlertTriangle, Upload, X, Zap, Target, ChevronRight,
 } from "lucide-react";
 import { MarginLayout } from "@/components/margin/MarginLayout";
@@ -242,7 +242,7 @@ function DemoPage() {
           padding: "14px 18px", marginBottom: 22,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Sparkles size={16} color={BRAND} style={{ flexShrink: 0 }} />
+            <FlaskConical size={16} color={BRAND} style={{ flexShrink: 0 }} />
             <div>
               <span style={{ fontSize: 13, fontWeight: 700, color: "#FAFAF9" }}>Demo mode · </span>
               <span style={{ fontSize: 13, color: "#6A9A7A" }}>
@@ -417,7 +417,7 @@ function DemoPage() {
 
       {/* ── AI insights ────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 20 }}>
-        <SectionLabel><Sparkles size={11} color={BRAND} /> What Margin sees</SectionLabel>
+        <SectionLabel><ScanSearch size={11} color={BRAND} /> What Margin sees</SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {INSIGHTS.map((ins, i) => {
             const Icon = ins.icon;

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { Brain, RefreshCw, ArrowRight } from "lucide-react";
+import { ScanSearch, RefreshCw, ArrowRight } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -248,7 +248,7 @@ export function AIInsightsCard({
               flexShrink: 0,
             }}
           >
-            <Brain size={16} color="#FFFFFF" strokeWidth={2} />
+            <ScanSearch size={16} color="#FFFFFF" strokeWidth={2} />
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1A18", lineHeight: 1.2 }}>

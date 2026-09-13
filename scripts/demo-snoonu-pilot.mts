@@ -47,12 +47,14 @@ async function send(body: string, timestamp: string, signature: string) {
 const timestamp = String(Math.floor(Date.now() / 1000));
 const signature = await signSnoonuPilotPayload(raw, timestamp, secret);
 const accepted = await send(raw, timestamp, signature);
-assert.equal(accepted.status, 202, await accepted.text());
-const acceptedBody = await accepted.json() as { receipt_id: string };
+const acceptedText = await accepted.text();
+assert.equal(accepted.status, 202, acceptedText);
+const acceptedBody = JSON.parse(acceptedText) as { receipt_id: string };
 
 const duplicate = await send(raw, timestamp, signature);
-assert.equal(duplicate.status, 200, await duplicate.text());
-assert.equal((await duplicate.json() as { replay: boolean }).replay, true);
+const duplicateText = await duplicate.text();
+assert.equal(duplicate.status, 200, duplicateText);
+assert.equal((JSON.parse(duplicateText) as { replay: boolean }).replay, true);
 
 const tampered = await send(raw.replace('"gross_amount":100', '"gross_amount":999'), timestamp, signature);
 assert.equal(tampered.status, 401, await tampered.text());

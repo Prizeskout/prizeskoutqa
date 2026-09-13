@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
-import { RefreshCw, Sparkles } from "lucide-react";
+import { Radar, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyClientMessage } from "@/lib/api-error";
 import { RecommendationCard, type Recommendation, type PricingDecision } from "./RecommendationCard";
@@ -91,7 +91,7 @@ export function RecommendationsList({
         }}
       >
         <EmptyState
-          icon={<Sparkles size={20} strokeWidth={1.75} />}
+          icon={<Radar size={20} strokeWidth={1.75} />}
           title="No pricing recommendations yet"
           description="Add competitor product URLs (and one with competitor='self' for your own price) on the Competitors page, then trigger a scrape. Recommendations will appear here within a minute."
         />

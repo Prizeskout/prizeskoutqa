@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Check, FileSpreadsheet, Sparkles, X } from "lucide-react";
+import { Check, CircleCheck, FileSpreadsheet, ListChecks, MessagesSquare, X } from "lucide-react";
 import "./CostCaptureWorkspace.css";
 
 export type CostCaptureProduct = {
@@ -102,11 +102,11 @@ export function CostCaptureWorkspace({ products, onClose, onSave, onAskAI }: {
       </header>
       <div className="ps-cost-methods">
         <button type="button" onClick={() => inputRef.current?.click()}><FileSpreadsheet size={20}/><b>Upload cost sheet</b><small>CSV · assisted column and SKU matching</small></button>
-        <button type="button" onClick={onAskAI}><Sparkles size={20}/><b>Ask the AI cost assistant</b><small>Describe a supplier list or ask for help grouping similar products</small></button>
-        <div className="ps-cost-shared"><Sparkles size={20}/><b>Apply a shared cost</b><small>Use one value for the selected products</small><div><input inputMode="decimal" value={sharedCost} onChange={e => setSharedCost(e.target.value)} placeholder={products[0]?.currency ?? "Cost"}/><button type="button" onClick={applyShared}>Apply</button></div></div>
+        <button type="button" onClick={onAskAI}><MessagesSquare size={20}/><b>Ask the AI cost assistant</b><small>Describe a supplier list or ask for help grouping similar products</small></button>
+        <div className="ps-cost-shared"><ListChecks size={20}/><b>Apply a shared cost</b><small>Use one value for the selected products</small><div><input inputMode="decimal" value={sharedCost} onChange={e => setSharedCost(e.target.value)} placeholder={products[0]?.currency ?? "Cost"}/><button type="button" onClick={applyShared}>Apply</button></div></div>
         <input ref={inputRef} hidden type="file" accept=".csv,text/csv" onChange={event => void upload(event.target.files?.[0])}/>
       </div>
-      <div className="ps-cost-notice"><Sparkles size={16}/><span>{notice}</span></div>
+      <div className="ps-cost-notice"><CircleCheck size={16}/><span>{notice}</span></div>
       <div className="ps-cost-table-wrap"><table className="ps-cost-table">
         <thead><tr><th><input type="checkbox" checked={selected.size === products.length} onChange={event => setSelected(event.target.checked ? new Set(products.map(p => p.sku)) : new Set())} aria-label="Select all products"/></th><th>Product</th><th>Selling price</th><th>Planning range</th><th>Unit cost</th></tr></thead>
         <tbody>{products.map(product => {

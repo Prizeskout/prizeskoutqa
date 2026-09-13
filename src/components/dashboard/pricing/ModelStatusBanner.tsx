@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { Gauge } from "lucide-react";
 
 export function ModelStatusBanner() {
   return (
@@ -15,7 +15,7 @@ export function ModelStatusBanner() {
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flex: 1, minWidth: 0 }}>
-        <Brain size={20} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
+        <Gauge size={20} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1A18" }}>
             Your custom pricing model

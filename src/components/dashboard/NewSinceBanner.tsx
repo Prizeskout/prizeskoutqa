@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, X } from "lucide-react";
+import { BellDot, X } from "lucide-react";
 
 const STORAGE_PREFIX = "prizeskout:lastVisit:";
 
@@ -88,7 +88,7 @@ export function NewSinceBanner({
           flexShrink: 0,
         }}
       >
-        <Sparkles size={14} strokeWidth={2.25} />
+        <BellDot size={14} strokeWidth={2.25} />
       </span>
       <span
         style={{

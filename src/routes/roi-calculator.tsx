@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle, AlertTriangle, ChevronDown, TrendingUp, Shield, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle, AlertTriangle, ChevronDown, TrendingUp, Shield, Target } from "lucide-react";
 import { MarketingShell } from "@/components/marketing/MarketingShell";
 
 export const Route = createFileRoute("/roi-calculator")({
@@ -545,7 +545,7 @@ function RoiCalculatorPage() {
         }}>
           {[
             { Icon: TrendingUp, title: "Recovers what you can't see", body: "Live signals on every channel you sell on, so price moves never sit unanswered for days." },
-            { Icon: Sparkles, title: "Acts on the right ones", body: "AI ranks moves by margin impact, so your team works the signals that actually move the number." },
+            { Icon: Target, title: "Acts on the right ones", body: "AI ranks moves by margin impact, so your team works the signals that actually move the number." },
             { Icon: Shield, title: "Protects margin first", body: "Recommendations weigh elasticity and cannibalization before suggesting a price change." },
           ].map((b) => (
             <div key={b.title} style={{
