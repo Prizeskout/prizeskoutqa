@@ -86,6 +86,7 @@ import { Route as ApiPublicHooksTalabatOrderSyncRouteImport } from './routes/api
 import { Route as ApiPublicHooksTalabatOrderActionsRouteImport } from './routes/api/public/hooks/talabat-order-actions'
 import { Route as ApiPublicHooksShadowIntelligenceRouteImport } from './routes/api/public/hooks/shadow-intelligence'
 import { Route as ApiPublicHooksScrapeAllRouteImport } from './routes/api/public/hooks/scrape-all'
+import { Route as ApiPublicHooksOrderGuardRouteImport } from './routes/api/public/hooks/order-guard'
 import { Route as ApiPublicHooksMapMonitorRouteImport } from './routes/api/public/hooks/map-monitor'
 import { Route as ApiPublicHooksGroupExpireRouteImport } from './routes/api/public/hooks/group-expire'
 import { Route as ApiPublicHooksFlashStartRouteImport } from './routes/api/public/hooks/flash-start'
@@ -500,6 +501,12 @@ const ApiPublicHooksScrapeAllRoute = ApiPublicHooksScrapeAllRouteImport.update({
   path: '/api/public/hooks/scrape-all',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksOrderGuardRoute =
+  ApiPublicHooksOrderGuardRouteImport.update({
+    id: '/api/public/hooks/order-guard',
+    path: '/api/public/hooks/order-guard',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMapMonitorRoute =
   ApiPublicHooksMapMonitorRouteImport.update({
     id: '/api/public/hooks/map-monitor',
@@ -714,6 +721,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
+  '/api/public/hooks/order-guard': typeof ApiPublicHooksOrderGuardRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
   '/api/public/hooks/talabat-order-actions': typeof ApiPublicHooksTalabatOrderActionsRoute
@@ -812,6 +820,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
+  '/api/public/hooks/order-guard': typeof ApiPublicHooksOrderGuardRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
   '/api/public/hooks/talabat-order-actions': typeof ApiPublicHooksTalabatOrderActionsRoute
@@ -914,6 +923,7 @@ export interface FileRoutesById {
   '/api/public/hooks/flash-start': typeof ApiPublicHooksFlashStartRoute
   '/api/public/hooks/group-expire': typeof ApiPublicHooksGroupExpireRoute
   '/api/public/hooks/map-monitor': typeof ApiPublicHooksMapMonitorRoute
+  '/api/public/hooks/order-guard': typeof ApiPublicHooksOrderGuardRoute
   '/api/public/hooks/scrape-all': typeof ApiPublicHooksScrapeAllRoute
   '/api/public/hooks/shadow-intelligence': typeof ApiPublicHooksShadowIntelligenceRoute
   '/api/public/hooks/talabat-order-actions': typeof ApiPublicHooksTalabatOrderActionsRoute
@@ -1017,6 +1027,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
     | '/api/public/hooks/map-monitor'
+    | '/api/public/hooks/order-guard'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/shadow-intelligence'
     | '/api/public/hooks/talabat-order-actions'
@@ -1115,6 +1126,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
     | '/api/public/hooks/map-monitor'
+    | '/api/public/hooks/order-guard'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/shadow-intelligence'
     | '/api/public/hooks/talabat-order-actions'
@@ -1216,6 +1228,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/flash-start'
     | '/api/public/hooks/group-expire'
     | '/api/public/hooks/map-monitor'
+    | '/api/public/hooks/order-guard'
     | '/api/public/hooks/scrape-all'
     | '/api/public/hooks/shadow-intelligence'
     | '/api/public/hooks/talabat-order-actions'
@@ -1298,6 +1311,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFlashStartRoute: typeof ApiPublicHooksFlashStartRoute
   ApiPublicHooksGroupExpireRoute: typeof ApiPublicHooksGroupExpireRoute
   ApiPublicHooksMapMonitorRoute: typeof ApiPublicHooksMapMonitorRoute
+  ApiPublicHooksOrderGuardRoute: typeof ApiPublicHooksOrderGuardRoute
   ApiPublicHooksScrapeAllRoute: typeof ApiPublicHooksScrapeAllRoute
   ApiPublicHooksShadowIntelligenceRoute: typeof ApiPublicHooksShadowIntelligenceRoute
   ApiPublicHooksTalabatOrderActionsRoute: typeof ApiPublicHooksTalabatOrderActionsRoute
@@ -1856,6 +1870,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScrapeAllRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/order-guard': {
+      id: '/api/public/hooks/order-guard'
+      path: '/api/public/hooks/order-guard'
+      fullPath: '/api/public/hooks/order-guard'
+      preLoaderRoute: typeof ApiPublicHooksOrderGuardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/map-monitor': {
       id: '/api/public/hooks/map-monitor'
       path: '/api/public/hooks/map-monitor'
@@ -2177,6 +2198,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksFlashStartRoute: ApiPublicHooksFlashStartRoute,
   ApiPublicHooksGroupExpireRoute: ApiPublicHooksGroupExpireRoute,
   ApiPublicHooksMapMonitorRoute: ApiPublicHooksMapMonitorRoute,
+  ApiPublicHooksOrderGuardRoute: ApiPublicHooksOrderGuardRoute,
   ApiPublicHooksScrapeAllRoute: ApiPublicHooksScrapeAllRoute,
   ApiPublicHooksShadowIntelligenceRoute: ApiPublicHooksShadowIntelligenceRoute,
   ApiPublicHooksTalabatOrderActionsRoute:
