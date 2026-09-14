@@ -16,6 +16,7 @@
     "verify-copilot-prompts": "tsx scripts/verify-copilot-prompts.mts",
     "verify-product-images": "tsx --env-file=.env.local scripts/verify-product-images.mts",
     "verify-store-manager-ui": "tsx --env-file=.env.local scripts/verify-store-manager-ui.mts",
+    "verify-order-guard": "tsx scripts/verify-order-guard.mts",
     "verify-salla-contract": "tsx scripts/verify-salla-contract.mts",
     "verify-talabat-contract": "tsx scripts/verify-talabat-contract.mts",
     "verify-snoonu-pilot-contract": "tsx scripts/verify-snoonu-pilot-contract.mts",

@@ -17,12 +17,15 @@ import {
   handleTalabatWebhook,
 } from "@/server/core/platform-webhooks";
 import { snoonuConnector } from "@/server/connectors/snoonu";
+import { receiveUrbanPiperOrder } from "@/server/core/order-guard";
 
-const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta", "talabat", "snoonu"]);
+const SUPPORTED = new Set(["salla", "foodics", "zid", "keeta", "talabat", "snoonu", "urbanpiper"]);
 
 function notFound(platform: string): Response {
   return new Response(
-    JSON.stringify({ error: `Unknown platform: ${platform}. Supported: salla, foodics, zid, keeta, talabat.` }),
+    JSON.stringify({
+      error: `Unknown platform: ${platform}. Supported: salla, foodics, zid, keeta, talabat, snoonu, urbanpiper.`,
+    }),
     { status: 404, headers: { "Content-Type": "application/json" } },
   );
 }
@@ -37,12 +40,13 @@ async function handle(request: Request, platform: string): Promise<Response> {
 
   if (!SUPPORTED.has(platform)) return notFound(platform);
 
-  if (platform === "salla")   return handleSallaWebhook(request);
+  if (platform === "salla") return handleSallaWebhook(request);
   if (platform === "foodics") return handleFoodicsWebhook(request);
-  if (platform === "zid")     return handleZidWebhook(request);
-  if (platform === "keeta")   return handleKeetaWebhook(request);
+  if (platform === "zid") return handleZidWebhook(request);
+  if (platform === "keeta") return handleKeetaWebhook(request);
   if (platform === "talabat") return handleTalabatWebhook(request);
   if (platform === "snoonu") return snoonuConnector.receivePartnerEvent(request);
+  if (platform === "urbanpiper") return receiveUrbanPiperOrder(request);
 
   return notFound(platform);
 }
@@ -54,7 +58,11 @@ export const Route = createFileRoute("/api/webhooks/$platform")({
       // Platforms sometimes send HEAD or GET to verify the endpoint is reachable
       GET: ({ params }) =>
         new Response(
-          JSON.stringify({ ok: true, platform: params.platform, endpoint: "prizeskout-webhook-receiver" }),
+          JSON.stringify({
+            ok: true,
+            platform: params.platform,
+            endpoint: "prizeskout-webhook-receiver",
+          }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         ),
     },

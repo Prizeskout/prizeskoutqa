@@ -144,10 +144,8 @@ import {
   requestSnoonuActivation,
   validateSnoonuActivationRequest,
 } from "@/server/connectors/snoonu/activation";
-import {
-  persistProductCostBatch,
-  prepareProductCostBatch,
-} from "@/server/core/restaurant-costs";
+import { persistProductCostBatch, prepareProductCostBatch } from "@/server/core/restaurant-costs";
+import { actOnGuardOrder, getOrderGuard, provisionOrderGuard } from "@/server/core/order-guard";
 
 const PAYOUT_UPLOAD_PLATFORMS = ["talabat", "jahez", "snoonu", "deliveroo"] as const;
 
@@ -1061,6 +1059,40 @@ export const Route = createFileRoute("/api/channels/connect")({
                 200,
               );
             return resp({ error: "Unsupported merchant experience action." }, 400);
+          }
+
+          if (platform === "order_guard") {
+            if (body.action === "get")
+              return resp({ ok: true, guard: await getOrderGuard(merchant_id) }, 200);
+            if (body.action === "provision") {
+              const provisioned = await provisionOrderGuard(
+                merchant_id,
+                merchant_id,
+                String(body.external_business_id ?? ""),
+              );
+              return resp(
+                {
+                  ok: true,
+                  ...provisioned,
+                  webhook_url: `${new URL(request.url).origin}/api/webhooks/urbanpiper`,
+                },
+                201,
+              );
+            }
+            if (body.action === "order_action")
+              return resp(
+                {
+                  ok: true,
+                  order: await actOnGuardOrder(
+                    merchant_id,
+                    String(body.id ?? ""),
+                    String(body.order_action ?? ""),
+                    String(body.actor ?? "Branch team"),
+                  ),
+                },
+                200,
+              );
+            return resp({ error: "Unsupported Order Guard action." }, 400);
           }
 
           if (platform === "copilot_threads") {
@@ -2514,7 +2546,8 @@ export const Route = createFileRoute("/api/channels/connect")({
           return resp({ error: `Unsupported platform: ${platform}.` }, 400);
         } catch (err) {
           const friendly = toMerchantError(err, "complete this request");
-          const status = friendly.code === "task_state_conflict" ? 409 : friendly.retryable ? 503 : 400;
+          const status =
+            friendly.code === "task_state_conflict" ? 409 : friendly.retryable ? 503 : 400;
           return resp({ ok: false, ...friendly }, status);
         }
       },
