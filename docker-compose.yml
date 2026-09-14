@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Public vars are baked into the client bundle at build time.
+        # Override via: docker compose build --build-arg VITE_SUPABASE_URL=...
+        # Or set in shell before building.
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-https://itfhekcvmcbntjndvhzg.supabase.co}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID:-itfhekcvmcbntjndvhzg}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zmhla2N2bWNibnRqbmR2aHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzczNjYsImV4cCI6MjA5NTE1MzM2Nn0.Xz_3vvq_EY_jYBkXggC-7U_CdUSDLwroLTbyVlxfGMo}
+        SUPABASE_URL: ${SUPABASE_URL:-https://itfhekcvmcbntjndvhzg.supabase.co}
+        SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zmhla2N2bWNibnRqbmR2aHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzczNjYsImV4cCI6MjA5NTE1MzM2Nn0.Xz_3vvq_EY_jYBkXggC-7U_CdUSDLwroLTbyVlxfGMo}
+    image: prizeskoutqa:latest
+    container_name: prizeskoutqa
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      # Ensure these are set even if .env is missing
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      # PUBLIC_APP_URL / APP_URL used for invite links
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://prizeskout.qa}
+      APP_URL: ${APP_URL:-https://app.prizeskout.qa}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/').then(r=>{if(r.ok||r.status<500)process.exit(0);else process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

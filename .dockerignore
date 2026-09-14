@@ -1,10 +1,46 @@
 node_modules
-.wrangler
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist
+dist-ssr
+.output
+.vinxi
+.nitro
 .tanstack
-screenshots
-screenshots_test
-*.log
+.wrangler
+.dev.vars
+
+# Env secrets — never bake into image; passed at runtime via env_file / --env-file
 .env
 .env.local
+.env.*.local
+!.env.example
+
+# Git
 .git
-dist
+.gitignore
+
+# OS / editor
+.DS_Store
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.sln
+*.sw?
+Thumbs.db
+
+# Project clutter
+screenshots
+screenshots_test
+_to_delete
+coverage
+*.log
+
+# Supabase local state
+supabase/.temp
+.deploy-align
