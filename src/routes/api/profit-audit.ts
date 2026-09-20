@@ -5,12 +5,9 @@ import { z } from "zod";
 const AuditLead = z.object({
   company: z.string().trim().min(2).max(200),
   name: z.string().trim().min(2).max(200),
-  job_title: z.string().trim().min(2).max(160),
   email: z.string().trim().email().max(320),
-  phone: z.string().trim().max(60).optional().default(""),
-  company_size: z.enum(["1", "2-5", "6-20", "21-50", "51+"]),
-  commerce_stack: z.string().trim().max(1000).optional().default(""),
-  challenge: z.string().trim().min(10).max(3000),
+  company_type: z.enum(["merchant", "delivery_platform", "technology_partner", "other"]),
+  challenge: z.string().trim().max(3000).optional().default(""),
   market: z.string().trim().max(8).optional().default("QA"),
   language: z.enum(["en", "ar"]).optional().default("en"),
   website: z.string().max(0).optional().default(""),
@@ -43,17 +40,17 @@ export const Route = createFileRoute("/api/profit-audit")({
           return Response.json({ error: "The form is temporarily unavailable." }, { status: 503 });
         const supabase = createClient(supabaseUrl, supabaseKey);
         const structuredLead = {
-          lead_type: "profit_audit",
+          lead_type: "contact",
           name: parsed.name,
           company: parsed.company,
-          job_title: parsed.job_title,
           email: parsed.email,
-          phone: parsed.phone || null,
-          company_size: parsed.company_size,
-          commerce_stack: parsed.commerce_stack || null,
           market: parsed.market,
           preferred_language: parsed.language,
-          message: parsed.challenge,
+          message: [
+            `Company type: ${parsed.company_type.replaceAll("_", " ")}`,
+            "",
+            parsed.challenge || "No additional context supplied.",
+          ].join("\n"),
           user_agent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
         };
         let { error } = await supabase.from("contact_messages").insert(structuredLead);
@@ -61,15 +58,12 @@ export const Route = createFileRoute("/api/profit-audit")({
         // application code can arrive before the additive lead-field migration.
         if (error && ["42703", "PGRST204"].includes(error.code ?? "")) {
           const fallbackMessage = [
-            "Profit audit request",
-            `Role: ${parsed.job_title}`,
-            `Branches: ${parsed.company_size}`,
-            `Phone: ${parsed.phone || "Not supplied"}`,
-            `Stack: ${parsed.commerce_stack || "Not supplied"}`,
+            "Talk to our team request",
+            `Company type: ${parsed.company_type.replaceAll("_", " ")}`,
             `Market: ${parsed.market}`,
             `Preferred language: ${parsed.language}`,
             "",
-            parsed.challenge,
+            parsed.challenge || "No additional context supplied.",
           ].join("\n");
           ({ error } = await supabase.from("contact_messages").insert({
             name: parsed.name,
@@ -80,7 +74,7 @@ export const Route = createFileRoute("/api/profit-audit")({
           }));
         }
         if (error) {
-          console.error("Profit audit lead insert failed", error);
+          console.error("Contact lead insert failed", error);
           return Response.json(
             {
               error:

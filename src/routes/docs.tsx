@@ -82,8 +82,8 @@ function SiteHeader() {
           <span>QA</span>
           <span>EN</span>
           <a href="/access">Sign in</a>
-          <a className="site-cta" href="/#audit">
-            Book a Profit Audit
+          <a className="site-cta" href="/contact">
+            Talk to Our Team
           </a>
           <button
             type="button"

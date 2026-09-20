@@ -8,9 +8,10 @@ import { createClient } from "@supabase/supabase-js";
 
 const ContactSchema = z.object({
   name: z.string().trim().min(1).max(200),
-  company: z.string().trim().max(200).optional().nullable(),
+  company: z.string().trim().min(1).max(200),
   email: z.string().trim().email().max(320),
-  message: z.string().trim().min(1).max(5000),
+  companyType: z.enum(["merchant", "delivery_platform", "technology_partner", "other"]),
+  message: z.string().trim().max(5000).optional().default(""),
 });
 
 export const submitContactMessage = createServerFn({ method: "POST" })
@@ -24,9 +25,13 @@ export const submitContactMessage = createServerFn({ method: "POST" })
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { error } = await supabase.from("contact_messages").insert({
       name: data.name,
-      company: data.company ?? null,
+      company: data.company,
       email: data.email,
-      message: data.message,
+      message: [
+        `Company type: ${data.companyType.replaceAll("_", " ")}`,
+        "",
+        data.message || "No additional context supplied.",
+      ].join("\n"),
     });
     if (error) {
       console.error("contact_messages insert failed", error);

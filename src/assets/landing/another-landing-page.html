@@ -9507,7 +9507,7 @@
       }
     }
 
-    /* Profit-audit conversion dialog */
+    /* Contact conversion dialog */
     .audit-dialog {
       width: min(760px, calc(100% - 32px));
       max-height: min(880px, calc(100dvh - 32px));
@@ -9919,7 +9919,7 @@
           </div>
         </div>
         <a class="text-link hide-mobile" href="/access" aria-label="PrizeSkout sign in">Sign in</a>
-        <a class="button button-dark button-sm" href="#audit">Book a Profit Audit</a>
+        <a class="button button-dark button-sm" href="#audit">Talk to Our Team</a>
         <button class="menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
           <span></span><span></span>
         </button>
@@ -9951,8 +9951,8 @@
             <strong>true contribution profit</strong>, reconcile settlements and detect margin leakage order by order.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#audit">Book a Profit Audit <span aria-hidden="true">→</span></a>
-            <a class="button button-ghost" href="#api">Explore the API</a>
+            <a class="button button-primary" href="#audit">Talk to Our Team <span aria-hidden="true">→</span></a>
+            <a class="button button-ghost" href="/docs">View API Docs</a>
           </div>
           <div class="micro-trust" aria-label="Key product attributes">
             <span><i class="check">✓</i> No replacement required</span>
@@ -10194,7 +10194,7 @@
             <span>Embedded intelligence</span>
             <span>Enterprise ready webhooks</span>
           </div>
-          <a href="#audit" class="button button-white">Talk to us about the API <span aria-hidden="true">→</span></a>
+          <a href="/docs" class="button button-white">View API Docs <span aria-hidden="true">→</span></a>
         </div>
 
         <div class="api-stack-stage reveal delay-1">
@@ -10362,7 +10362,7 @@
             <div class="audit-card audit-card-four result-main"><span>Recoverable / protectable margin</span><strong>QAR
                 17,840</strong></div>
           </div>
-          <a class="button button-primary full-button" href="#profit-audit-form" data-open-audit>Run my Profit Audit
+          <a class="button button-primary full-button" href="#profit-audit-form" data-open-audit>Talk to Our Team
             <span aria-hidden="true">→</span></a>
           <p class="audit-foot">One branch. 30 days of data. Clear actions.</p>
         </div>
@@ -10411,8 +10411,8 @@
         <h2>Revenue tells you what you sold.<br><span>PrizeSkout tells you what you kept.</span></h2>
         <p>Connect your commerce stack and turn fragmented transaction data into one trusted profit layer.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#audit">Book a Profit Audit <span aria-hidden="true">→</span></a>
-          <a class="button button-outline-light" href="#api">Explore the API</a>
+          <a class="button button-primary" href="#audit">Talk to Our Team <span aria-hidden="true">→</span></a>
+          <a class="button button-outline-light" href="/docs">View API Docs</a>
         </div>
       </div>
     </section>
@@ -10445,78 +10445,63 @@
   <dialog class="audit-dialog" id="profit-audit-form" aria-labelledby="audit-dialog-title">
     <div class="audit-dialog-shell">
       <button class="audit-dialog-close" type="button" data-close-audit
-        aria-label="Close profit audit form">&times;</button>
+        aria-label="Close contact form">&times;</button>
       <div class="audit-form-view">
         <header class="audit-dialog-header">
-          <div class="eyebrow"><span class="eyebrow-dot"></span> <span data-copy="auditEyebrow">30-DAY PROFIT
-              AUDIT</span></div>
-          <h2 id="audit-dialog-title" data-copy="auditTitle">Let’s find what your orders should be earning.</h2>
-          <p data-copy="auditIntro">Tell us about your operation. We’ll review your stack and contact you to shape a
-            focused audit around one branch and 30 days of data.</p>
+          <div class="eyebrow"><span class="eyebrow-dot"></span> <span data-copy="auditEyebrow">TALK TO OUR
+              TEAM</span></div>
+          <h2 id="audit-dialog-title" data-copy="auditTitle">Let’s start a conversation.</h2>
+          <p data-copy="auditIntro">Tell us a little about your business and what you would like to improve. We’ll
+            reply within one business day.</p>
         </header>
         <form class="audit-form" novalidate>
           <input type="hidden" name="form_started_at">
           <div class="audit-honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1"
                 autocomplete="off"></label></div>
           <div class="audit-form-grid">
-            <div class="audit-field"><label for="audit-company"><span aria-hidden="true">*</span> <b
-                  data-copy="companyLabel">Company name</b></label><input id="audit-company" name="company"
-                autocomplete="organization" maxlength="200" required><small class="audit-field-error"
-                data-error-for="company"></small></div>
             <div class="audit-field"><label for="audit-name"><span aria-hidden="true">*</span> <b
                   data-copy="nameLabel">Your name</b></label><input id="audit-name" name="name" autocomplete="name"
                 maxlength="200" required><small class="audit-field-error" data-error-for="name"></small></div>
-            <div class="audit-field"><label for="audit-role"><span aria-hidden="true">*</span> <b
-                  data-copy="roleLabel">Your role</b></label><input id="audit-role" name="job_title"
-                autocomplete="organization-title" maxlength="160" placeholder="e.g. CFO, Finance Manager, COO"
-                data-placeholder="rolePlaceholder" required><small class="audit-field-error"
-                data-error-for="job_title"></small></div>
             <div class="audit-field"><label for="audit-email"><span aria-hidden="true">*</span> <b
                   data-copy="emailLabel">Work email</b></label><input id="audit-email" name="email" type="email"
                 inputmode="email" autocomplete="email" maxlength="320" required><small class="audit-field-error"
                 data-error-for="email"></small></div>
-            <div class="audit-field"><label for="audit-phone"><b data-copy="phoneLabel">Phone number</b> <small
-                  data-copy="optionalLabel">Optional</small></label><input id="audit-phone" name="phone" type="tel"
-                inputmode="tel" autocomplete="tel" maxlength="60"></div>
-            <div class="audit-field"><label for="audit-size"><span aria-hidden="true">*</span> <b
-                  data-copy="sizeLabel">Number of branches</b></label><select id="audit-size" name="company_size"
-                required>
+            <div class="audit-field"><label for="audit-company"><span aria-hidden="true">*</span> <b
+                  data-copy="companyLabel">Company</b></label><input id="audit-company" name="company"
+                autocomplete="organization" maxlength="200" required><small class="audit-field-error"
+                data-error-for="company"></small></div>
+            <div class="audit-field"><label for="audit-company-type"><span aria-hidden="true">*</span> <b
+                  data-copy="companyTypeLabel">Company type</b></label><select id="audit-company-type"
+                name="company_type" required>
                 <option value="" data-copy="selectOption">Select one</option>
-                <option value="1">1</option>
-                <option value="2-5">2–5</option>
-                <option value="6-20">6–20</option>
-                <option value="21-50">21–50</option>
-                <option value="51+">51+</option>
-              </select><small class="audit-field-error" data-error-for="company_size"></small></div>
-            <div class="audit-field audit-field-wide"><label for="audit-stack"><b data-copy="stackLabel">What systems do
-                  you use?</b> <small data-copy="optionalLabel">Optional</small></label><input id="audit-stack"
-                name="commerce_stack" maxlength="1000" placeholder="POS, ERP, Talabat, Snoonu, Foodics, Odoo…"
-                data-placeholder="stackPlaceholder"><small data-copy="stackHelp">A short list helps us prepare the right
-                integration path.</small></div>
-            <div class="audit-field audit-field-wide"><label for="audit-challenge"><span aria-hidden="true">*</span> <b
-                  data-copy="challengeLabel">What would you most like the audit to uncover?</b></label><textarea
-                id="audit-challenge" name="challenge" maxlength="3000"
-                placeholder="For example: unexplained payout deductions, branch-level profitability, or delivery-channel margin…"
-                data-placeholder="challengePlaceholder" required></textarea><small class="audit-field-error"
-                data-error-for="challenge"></small></div>
+                <option value="merchant" data-copy="merchantOption">Merchant</option>
+                <option value="delivery_platform" data-copy="platformOption">Delivery platform</option>
+                <option value="technology_partner" data-copy="partnerOption">Technology partner</option>
+                <option value="other" data-copy="otherOption">Other</option>
+              </select><small class="audit-field-error" data-error-for="company_type"></small></div>
+            <div class="audit-field audit-field-wide"><label for="audit-challenge"><b
+                  data-copy="challengeLabel">What would you like to improve?</b> <small
+                  data-copy="optionalLabel">Optional</small></label><textarea id="audit-challenge" name="challenge"
+                maxlength="3000" placeholder="Tell us what you’re exploring or trying to solve."
+                data-placeholder="challengePlaceholder"></textarea></div>
           </div>
           <label class="audit-consent"><input type="checkbox" name="consent" required><span data-copy="consentText">I
-              agree that PrizeSkout may contact me about this audit request. My information will be handled according to
+              agree that PrizeSkout may contact me about this request. My information will be handled according to
               the Privacy Policy.</span></label>
-          <button class="button button-primary audit-submit" type="submit"><span data-copy="submitLabel">Request my
-              Profit Audit</span> <span aria-hidden="true">→</span></button>
+          <button class="button button-primary audit-submit" type="submit"><span data-copy="submitLabel">Start the
+              Conversation</span> <span aria-hidden="true">→</span></button>
           <p class="audit-form-status" role="alert" aria-live="assertive"></p>
         </form>
       </div>
       <div class="audit-success" aria-live="polite" tabindex="-1">
         <div>
           <div class="audit-success-mark" aria-hidden="true">✓</div>
-          <h2 data-copy="successTitle">Your audit request is in.</h2>
-          <p data-copy="successBody">Thank you. A member of the PrizeSkout team will review your operation and contact
-            you within one business day to agree on the audit scope.</p>
-          <div class="audit-success-next"><span data-copy="successStep1">1. We review your stack</span><span
-              data-copy="successStep2">2. We agree one pilot branch</span><span data-copy="successStep3">3. We map the
-              required data</span></div><button type="button" data-success-close data-copy="successClose">Return to the
+          <h2 data-copy="successTitle">Thanks for reaching out.</h2>
+          <p data-copy="successBody">A member of the PrizeSkout team will review your message and reply within one
+            business day.</p>
+          <div class="audit-success-next"><span data-copy="successStep1">1. We review your message</span><span
+              data-copy="successStep2">2. We connect you with the right person</span><span data-copy="successStep3">3.
+              We agree the next step</span></div><button type="button" data-success-close data-copy="successClose">Return to the
             website</button>
         </div>
       </div>
@@ -10538,8 +10523,8 @@
     };
     const languageDefinitions = { en: 'EN', ar: 'AR' };
     const auditCopy = {
-      en: { auditEyebrow: '30-DAY PROFIT AUDIT', auditTitle: 'Let’s find what your orders should be earning.', auditIntro: 'Tell us about your operation. We’ll review your stack and contact you to shape a focused audit around one branch and 30 days of data.', companyLabel: 'Company name', nameLabel: 'Your name', roleLabel: 'Your role', rolePlaceholder: 'e.g. CFO, Finance Manager, COO', emailLabel: 'Work email', phoneLabel: 'Phone number', optionalLabel: 'Optional', sizeLabel: 'Number of branches', selectOption: 'Select one', stackLabel: 'What systems do you use?', stackPlaceholder: 'POS, ERP, Talabat, Snoonu, Foodics, Odoo…', stackHelp: 'A short list helps us prepare the right integration path.', challengeLabel: 'What would you most like the audit to uncover?', challengePlaceholder: 'For example: unexplained payout deductions, branch-level profitability, or delivery-channel margin…', consentText: 'I agree that PrizeSkout may contact me about this audit request. My information will be handled according to the Privacy Policy.', submitLabel: 'Request my Profit Audit', submitting: 'Submitting…', successTitle: 'Your audit request is in.', successBody: 'Thank you. A member of the PrizeSkout team will review your operation and contact you within one business day to agree on the audit scope.', successStep1: '1. We review your stack', successStep2: '2. We agree one pilot branch', successStep3: '3. We map the required data', successClose: 'Return to the website', required: 'This field is required.', emailError: 'Enter a valid work email.', challengeError: 'Tell us a little more so we can prepare.', consentError: 'Please confirm that we may contact you.', networkError: 'We could not submit your request. Please try again or email hello@prizeskout.qa.' },
-      ar: { auditEyebrow: 'تدقيق الربح لمدة 30 يوماً', auditTitle: 'لنكتشف ما الذي ينبغي أن تحققه طلباتك من أرباح.', auditIntro: 'أخبرنا عن عملياتك. سنراجع أنظمتك ونتواصل معك لتحديد تدقيق مركز لفرع واحد وبيانات 30 يوماً.', companyLabel: 'اسم الشركة', nameLabel: 'اسمك', roleLabel: 'منصبك', rolePlaceholder: 'مثلاً: المدير المالي، مدير العمليات', emailLabel: 'البريد الإلكتروني للعمل', phoneLabel: 'رقم الهاتف', optionalLabel: 'اختياري', sizeLabel: 'عدد الفروع', selectOption: 'اختر', stackLabel: 'ما الأنظمة التي تستخدمونها؟', stackPlaceholder: 'نقاط البيع، ERP، طلبات، سنونو، Foodics، Odoo…', stackHelp: 'قائمة مختصرة تساعدنا على إعداد مسار التكامل المناسب.', challengeLabel: 'ما أهم شيء تريد أن يكشفه التدقيق؟', challengePlaceholder: 'مثلاً: خصومات غير مبررة، ربحية الفروع، أو هامش قنوات التوصيل…', consentText: 'أوافق على أن تتواصل معي PrizeSkout بشأن طلب التدقيق هذا، وأن تتم معالجة معلوماتي وفق سياسة الخصوصية.', submitLabel: 'اطلب تدقيق الربح', submitting: 'جارٍ الإرسال…', successTitle: 'تم استلام طلب التدقيق.', successBody: 'شكراً لك. سيراجع أحد أعضاء فريق PrizeSkout عملياتك ويتواصل معك خلال يوم عمل واحد للاتفاق على نطاق التدقيق.', successStep1: '١. نراجع أنظمتك', successStep2: '٢. نتفق على فرع تجريبي', successStep3: '٣. نحدد البيانات المطلوبة', successClose: 'العودة إلى الموقع', required: 'هذا الحقل مطلوب.', emailError: 'أدخل بريداً إلكترونياً صحيحاً للعمل.', challengeError: 'أضف بعض التفاصيل حتى نتمكن من الاستعداد.', consentError: 'يرجى تأكيد موافقتك على التواصل معك.', networkError: 'تعذر إرسال طلبك. حاول مرة أخرى أو راسل hello@prizeskout.qa.' }
+      en: { auditEyebrow: 'TALK TO OUR TEAM', auditTitle: 'Let’s start a conversation.', auditIntro: 'Tell us a little about your business and what you would like to improve. We’ll reply within one business day.', companyLabel: 'Company', nameLabel: 'Your name', emailLabel: 'Work email', companyTypeLabel: 'Company type', selectOption: 'Select one', merchantOption: 'Merchant', platformOption: 'Delivery platform', partnerOption: 'Technology partner', otherOption: 'Other', optionalLabel: 'Optional', challengeLabel: 'What would you like to improve?', challengePlaceholder: 'Tell us what you’re exploring or trying to solve.', consentText: 'I agree that PrizeSkout may contact me about this request. My information will be handled according to the Privacy Policy.', submitLabel: 'Start the Conversation', submitting: 'Submitting…', successTitle: 'Thanks for reaching out.', successBody: 'A member of the PrizeSkout team will review your message and reply within one business day.', successStep1: '1. We review your message', successStep2: '2. We connect you with the right person', successStep3: '3. We agree the next step', successClose: 'Return to the website', required: 'This field is required.', emailError: 'Enter a valid work email.', consentError: 'Please confirm that we may contact you.', networkError: 'We could not submit your request. Please try again or email hello@prizeskout.qa.' },
+      ar: { auditEyebrow: 'تحدث مع فريقنا', auditTitle: 'لنبدأ محادثة.', auditIntro: 'أخبرنا قليلاً عن شركتك وما الذي ترغب في تحسينه. سنرد عليك خلال يوم عمل واحد.', companyLabel: 'الشركة', nameLabel: 'اسمك', emailLabel: 'البريد الإلكتروني للعمل', companyTypeLabel: 'نوع الشركة', selectOption: 'اختر', merchantOption: 'تاجر', platformOption: 'منصة توصيل', partnerOption: 'شريك تقني', otherOption: 'أخرى', optionalLabel: 'اختياري', challengeLabel: 'ما الذي ترغب في تحسينه؟', challengePlaceholder: 'أخبرنا عما تستكشفه أو تحاول حله.', consentText: 'أوافق على أن تتواصل معي PrizeSkout بشأن هذا الطلب، وأن تتم معالجة معلوماتي وفق سياسة الخصوصية.', submitLabel: 'ابدأ المحادثة', submitting: 'جارٍ الإرسال…', successTitle: 'شكراً لتواصلك معنا.', successBody: 'سيراجع أحد أعضاء فريق PrizeSkout رسالتك ويرد عليك خلال يوم عمل واحد.', successStep1: '١. نراجع رسالتك', successStep2: '٢. نوصلك بالشخص المناسب', successStep3: '٣. نتفق على الخطوة التالية', successClose: 'العودة إلى الموقع', required: 'هذا الحقل مطلوب.', emailError: 'أدخل بريداً إلكترونياً صحيحاً للعمل.', consentError: 'يرجى تأكيد موافقتك على التواصل معك.', networkError: 'تعذر إرسال طلبك. حاول مرة أخرى أو راسل hello@prizeskout.qa.' }
     };
     const arabicPageCopy = new Map(Object.entries({
       'Skip to content': 'تخطَّ إلى المحتوى', 'Merchant onboarding underway.': 'بدأ انضمام التجار.', 'Join early access': 'انضم إلى الوصول المبكر', 'Platform': 'المنصة', 'Intelligence': 'الذكاء', 'Solutions': 'الحلول', 'Profit Audit': 'تدقيق الربح', 'Sign in': 'تسجيل الدخول', 'Book a Profit Audit': 'احجز تدقيق الربح', 'Know what every order': 'اعرف ما يحققه كل طلب', 'actually earns.': 'فعلياً.', 'Book a Profit Audit →': 'احجز تدقيق الربح ←', 'Explore the API': 'استكشف واجهة API', 'No replacement required': 'لا حاجة لاستبدال أنظمتك', 'API first': 'واجهة API أولاً', 'Merchant controlled': 'بإدارة التاجر', 'Your POS knows the sale.': 'نظام نقاط البيع يعرف عملية البيع.', 'Your platform knows the order.': 'منصة التوصيل تعرف الطلب.', 'Your ERP knows the accounting.': 'نظام ERP يعرف المحاسبة.', 'PrizeSkout knows the profit.': 'PrizeSkout يعرف الربح.', 'API FIRST': 'واجهة API أولاً', 'Built around your stack': 'مصمم حول أنظمتك', 'MERCHANT CONTROLLED': 'بإدارة التاجر', 'Actions stay inside your rules': 'الإجراءات تبقى ضمن قواعدك', 'ONE ECONOMIC TRUTH': 'حقيقة اقتصادية واحدة', 'Your systems see transactions.': 'أنظمتك ترى المعاملات.', 'PrizeSkout sees the economics.': 'PrizeSkout يرى اقتصادياتها.', 'INPUTS': 'المدخلات', 'Sales + COGS': 'المبيعات + تكلفة البضاعة', 'Finance + inventory': 'المالية + المخزون', 'Orders + promos': 'الطلبات + العروض', 'Fees + settlements': 'الرسوم + التسويات', 'OUTPUTS': 'المخرجات', 'True profit': 'الربح الحقيقي', 'Settlement variance': 'فروقات التسوية', 'Margin leakage': 'تسرب الهامش', 'Recommended action': 'الإجراء المقترح', '30-DAY PROFIT AUDIT': 'تدقيق الربح لمدة 30 يوماً', 'Run my Profit Audit →': 'ابدأ تدقيق الربح ←', 'One branch. 30 days of data. Clear actions.': 'فرع واحد. بيانات 30 يوماً. إجراءات واضحة.', 'QUICK ANSWERS': 'إجابات سريعة', 'Built to fit your stack without replacing it.': 'مصمم ليتوافق مع أنظمتك دون استبدالها.', 'Is PrizeSkout another restaurant dashboard?': 'هل PrizeSkout مجرد لوحة تحكم أخرى للمطاعم؟', 'Do we need an API integration to start?': 'هل نحتاج إلى تكامل API للبدء؟', 'Will PrizeSkout replace our POS or ERP?': 'هل سيستبدل PrizeSkout نظام نقاط البيع أو ERP؟', 'Does PrizeSkout change prices automatically?': 'هل يغيّر PrizeSkout الأسعار تلقائياً؟', 'What can we measure?': 'ما الذي يمكننا قياسه؟', 'PROFIT IS THE SIGNAL': 'الربح هو الإشارة', 'Revenue tells you what you sold.': 'الإيرادات تخبرك بما بعته.', 'PrizeSkout tells you what you kept.': 'PrizeSkout يخبرك بما احتفظت به.', 'Merchant controlled · API first': 'بإدارة التاجر · واجهة API أولاً', 'Profit Intelligence Infrastructure for Digital Commerce.': 'بنية ذكاء الربح للتجارة الرقمية.'
@@ -10553,9 +10538,14 @@
     Object.entries({
       'PrizeSkout | Profit Intelligence Infrastructure': 'PrizeSkout | بنية ذكاء الربح', 'PRIZESKOUT × ZID': 'PRIZESKOUT × ZID', 'MARKET / CURRENCY': 'السوق / العملة', 'Qatar': 'قطر', 'Saudi Arabia': 'المملكة العربية السعودية', 'United Arab Emirates': 'الإمارات العربية المتحدة', 'Oman': 'عُمان', 'Kuwait': 'الكويت', 'Bahrain': 'البحرين', 'LANGUAGE': 'اللغة', 'English': 'الإنجليزية', 'Arabic': 'العربية', 'QFC LICENSED': 'مرخص من مركز قطر للمال', 'QFC No. 04412 · Doha, Qatar': 'رقم مركز قطر للمال 04412 · الدوحة، قطر', 'Doha, Qatar': 'الدوحة، قطر', 'ZID PARTNER': 'شريك زد', 'BACKED BY QSTP': 'مدعوم من واحة قطر للعلوم والتكنولوجيا', 'Qatar Science & Technology Park': 'واحة قطر للعلوم والتكنولوجيا', 'DELIVERY': 'التوصيل', 'PAYOUTS': 'المدفوعات', 'PRIZESKOUT': 'PRIZESKOUT', 'GMV': 'إجمالي قيمة المبيعات', 'COGS': 'تكلفة البضاعة المباعة', 'ORDERS': 'الطلبات', 'profit': 'الربح', 'settlement': 'التسوية', 'action': 'الإجراء', 'Run my Profit Audit': 'ابدأ تدقيق الربح', 'Branch 01': 'الفرع 01', 'Branch 02': 'الفرع 02', 'Branch 03': 'الفرع 03', 'Branch 04': 'الفرع 04', 'Website': 'الموقع الإلكتروني', 'Platform + promo costs': 'تكاليف المنصة والعروض', 'Settlement variance': 'فروقات التسوية', 'Orders': 'الطلبات', 'Payouts': 'المدفوعات', 'Fees': 'الرسوم', 'Promotions': 'العروض'
     }).forEach(([english, arabic]) => arabicPageCopy.set(english, arabic));
+    arabicPageCopy.set('Talk to Our Team', 'تحدث مع فريقنا');
+    arabicPageCopy.set('Talk to Our Team →', 'تحدث مع فريقنا ←');
+    arabicPageCopy.set('View API Docs', 'عرض وثائق API');
+    arabicPageCopy.set('View API Docs →', 'عرض وثائق API ←');
     const arabicAttributeCopy = new Map(Object.entries({
       'Primary navigation': 'التنقل الرئيسي', 'Mobile navigation': 'تنقل الهاتف', 'Region and language preferences': 'تفضيلات المنطقة واللغة', 'Select country and currency': 'اختر البلد والعملة', 'Country and currency': 'البلد والعملة', 'Select language': 'اختر اللغة', 'Language': 'اللغة', 'PrizeSkout sign in': 'تسجيل الدخول إلى PrizeSkout', 'Open menu': 'فتح القائمة', 'Close menu': 'إغلاق القائمة', 'Key product attributes': 'خصائص المنتج الرئيسية', 'Interactive PrizeSkout economic workflow': 'سير عمل اقتصادي تفاعلي من PrizeSkout', 'See the whole order. Activate to reveal order details.': 'شاهد الطلب كاملاً. اضغط لعرض تفاصيل الطلب.', 'Know what you should earn. Activate to reveal expected economics.': 'اعرف ما ينبغي أن تربحه. اضغط لعرض الاقتصاديات المتوقعة.', 'Catch what is missing. Activate to reveal discrepancy details.': 'اكتشف المبالغ المفقودة. اضغط لعرض تفاصيل الفرق.', 'Choose what happens next. Activate to reveal policy status.': 'اختر ما يحدث تالياً. اضغط لعرض حالة السياسة.', 'Keep the proof. Activate to reveal retained evidence.': 'احتفظ بالإثبات. اضغط لعرض الأدلة المحفوظة.', 'Close profit audit form': 'إغلاق نموذج تدقيق الربح'
     }));
+    arabicAttributeCopy.set('Close contact form', 'إغلاق نموذج التواصل');
     const desktopMarketPicker = qs('.nav-actions [data-market-picker]');
     const desktopLanguagePicker = qs('.nav-actions [data-language-picker]');
     qsa('.mobile-utilities [data-market-picker]').forEach(picker => { picker.innerHTML = desktopMarketPicker?.innerHTML || ''; });
@@ -10675,7 +10665,7 @@
       if (started) started.value = String(Date.now());
       if (typeof auditDialog.showModal === 'function') auditDialog.showModal();
       else auditDialog.setAttribute('open', '');
-      requestAnimationFrame(() => qs('[name="company"]', auditForm)?.focus());
+      requestAnimationFrame(() => qs('[name="name"]', auditForm)?.focus());
     }
     function closeAuditDialog() {
       if (!auditDialog) return;
@@ -10701,11 +10691,10 @@
       qsa('.audit-field-error', auditForm).forEach(error => { error.textContent = ''; });
       qsa('[aria-invalid]', auditForm).forEach(field => field.setAttribute('aria-invalid', 'false'));
       let firstInvalid = null;
-      for (const name of ['company', 'name', 'job_title', 'email', 'company_size', 'challenge']) {
+      for (const name of ['name', 'email', 'company', 'company_type']) {
         const value = String(values[name] || '').trim();
         let message = !value ? copy.required : '';
         if (name === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) message = copy.emailError;
-        if (name === 'challenge' && value.length > 0 && value.length < 10) message = copy.challengeError;
         const field = auditError(name, message); if (message && !firstInvalid) firstInvalid = field;
       }
       if (!data.get('consent')) {
@@ -10717,7 +10706,7 @@
       const button = qs('.audit-submit', auditForm), label = qs('[data-copy="submitLabel"]', button);
       button.disabled = true; if (label) label.textContent = copy.submitting;
       try {
-        const response = await fetch('/api/profit-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: String(values.company).trim(), name: String(values.name).trim(), job_title: String(values.job_title).trim(), email: String(values.email).trim(), phone: String(values.phone || '').trim(), company_size: String(values.company_size), commerce_stack: String(values.commerce_stack || '').trim(), challenge: String(values.challenge).trim(), website: String(values.website || ''), form_started_at: Number(values.form_started_at), market: localStorage.getItem('ps-market') || 'QA', language }) });
+        const response = await fetch('/api/profit-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: String(values.name).trim(), email: String(values.email).trim(), company: String(values.company).trim(), company_type: String(values.company_type), challenge: String(values.challenge || '').trim(), website: String(values.website || ''), form_started_at: Number(values.form_started_at), market: localStorage.getItem('ps-market') || 'QA', language }) });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || copy.networkError);
         qs('.audit-form-view', auditDialog).hidden = true;
