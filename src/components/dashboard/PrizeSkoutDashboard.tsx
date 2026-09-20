@@ -44,6 +44,7 @@ import { GroupControlWorkspace } from "@/components/dashboard/group/GroupControl
 import { ZidProfitBrief } from "@/components/dashboard/ZidProfitBrief";
 import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
 import { StoreManagerCommandBar } from "@/components/dashboard/StoreManagerCommandBar";
+import { CfoCopilotPanel } from "@/components/dashboard/CfoCopilotPanel";
 import { MarginIntelligenceSummary, RecoveryDashboardSummary } from "@/components/dashboard/FocusedIntelligenceSummary";
 import { ExecutiveOverview } from "@/components/dashboard/ExecutiveOverview";
 import { ProfitabilityTrends } from "@/components/dashboard/overview/ProfitabilityTrends";
@@ -70,6 +71,7 @@ import { workflowStepLabel } from "@/lib/merchant-language";
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout";
 import { simulatePromotion } from "@/lib/promotion-profitability";
 import { CostCaptureWorkspace, type CostCaptureProduct } from "@/components/dashboard/catalog/CostCaptureWorkspace";
+import type { CfoInsight } from "@/lib/cfo-insight";
 
 type Tab =
   | "today"
@@ -404,7 +406,7 @@ const CSS = `
     .ps-db{--border:#B7C1D0;--muted:#4D5D78}
     .ps-dashboard-sidebar nav button{color:rgba(255,255,255,.88)!important}
   }
-  .ps-cfo-workspace>.ps-cfo-heading{display:none}.ps-cfo-workspace>.ps-cfo-kpis{order:2}.ps-cfo-workspace>.ps-cfo-kpis>div{min-height:106px}.ps-cfo-workspace>.ps-cfo-compact{order:3;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(210px,.55fr) minmax(300px,.9fr);gap:12px}.ps-cfo-chat-panel,.ps-cfo-insight,.ps-cfo-forecast{border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface);min-width:0}.ps-cfo-panel-title h3{font-size:13px;margin:0}.ps-cfo-panel-title p{font-size:9.5px;color:var(--muted);margin:3px 0 0}.ps-cfo-question{margin:15px 0 10px 28%;padding:9px 12px;border-radius:12px 12px 3px 12px;background:#2563eb;color:#fff;font-size:10px}.ps-cfo-answer{padding:12px;border:1px solid var(--border);border-radius:3px 12px 12px;background:var(--surface2);font-size:10px;line-height:1.5}.ps-cfo-answer b,.ps-cfo-answer span{display:block}.ps-cfo-answer span{margin-top:5px;color:var(--muted)}.ps-cfo-quick-questions{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}.ps-cfo-quick-questions button{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 8px;font:600 8px inherit;color:var(--text);cursor:pointer}.ps-cfo-compact-input{display:flex;border:1px solid var(--border);border-radius:9px;padding:4px}.ps-cfo-compact-input input{flex:1;min-width:0;border:0;background:transparent;padding:7px;outline:0;color:var(--text);font:10px inherit}.ps-cfo-compact-input button,.ps-cfo-insight button{border:0;border-radius:7px;background:#2563eb;color:#fff;padding:7px 11px;font:750 9px inherit;cursor:pointer}.ps-cfo-insight>strong{display:block;color:#f97316;font-size:21px;margin-top:18px}.ps-cfo-insight>span{font-size:9px;color:var(--muted)}.ps-cfo-insight h4{font-size:10px;margin:18px 0 5px}.ps-cfo-insight>p{font-size:9.5px;line-height:1.5;color:var(--muted)}.ps-cfo-insight button{margin-top:8px;background:transparent;color:#2563eb;padding-left:0}.ps-cfo-line-chart{height:145px;display:flex;align-items:flex-end;gap:7px;border-bottom:1px solid var(--border);margin:12px 0}.ps-cfo-line-chart i{flex:1;background:linear-gradient(#2563eb,#93c5fd);border-radius:5px 5px 0 0;height:30%}.ps-cfo-line-chart i:nth-child(2){height:38%}.ps-cfo-line-chart i:nth-child(3){height:51%}.ps-cfo-line-chart i:nth-child(4){height:45%}.ps-cfo-line-chart i:nth-child(5){height:65%}.ps-cfo-line-chart i:nth-child(6){height:76%}.ps-cfo-line-chart i:nth-child(7){height:92%}.ps-cfo-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ps-cfo-summary span{min-width:0}.ps-cfo-summary small,.ps-cfo-summary b{display:block}.ps-cfo-summary small{font-size:7px;color:var(--muted)}.ps-cfo-summary b{font-size:9px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-cfo-workspace>.ps-cfo-expand{order:4;align-self:flex-end;border:0;background:transparent;color:#2563eb;font:750 10px inherit;cursor:pointer}.ps-cfo-workspace:not(.ps-cfo-expanded)>*:not(.ps-cfo-kpis):not(.ps-cfo-compact):not(.ps-cfo-expand):not(.ps-cfo-heading){display:none!important}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-command{order:5}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-suggestions{order:6}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-alerts{order:7}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-modes{order:8;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-status{order:9}.ps-cfo-workspace.ps-cfo-expanded>div:not([class]){order:10}.ps-manager-workspace>header{display:none}.ps-manager-workspace>.ps-manager-kpis{order:2}.ps-manager-workspace>.ps-manager-workflow{order:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface2)}.ps-manager-workflow>div{display:flex;align-items:flex-start;gap:9px;padding:4px 12px;border-right:1px solid var(--border)}.ps-manager-workflow>div:last-child{border-right:0}.ps-manager-workflow i{font-style:normal;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:white;font-weight:850;font-size:11px;flex:0 0 auto}.ps-manager-workflow span{display:flex;flex-direction:column}.ps-manager-workflow b{font-size:11.5px}.ps-manager-workflow small{font-size:10px;color:var(--muted);margin-top:3px}.ps-manager-workspace>.ps-manager-desk{order:4}.ps-manager-workspace>.ps-manager-attention{order:5}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>*:not(.ps-manager-kpis):not(.ps-manager-workflow):not(.ps-manager-desk):not(.ps-manager-attention):not(.ps-manager-outcome){order:7}
+  .ps-cfo-workspace>.ps-cfo-heading{display:none}.ps-cfo-workspace>.ps-cfo-kpis{order:2}.ps-cfo-workspace>.ps-cfo-kpis>div{min-height:106px}.ps-cfo-workspace>.ps-cfo-compact{order:3;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(210px,.55fr) minmax(260px,.72fr);gap:12px}.ps-cfo-chat-panel,.ps-cfo-insight,.ps-cfo-forecast{border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface);min-width:0}.ps-cfo-panel-title h3{font-size:13px;margin:0}.ps-cfo-panel-title p{font-size:9.5px;color:var(--muted);margin:3px 0 0}.ps-cfo-question{margin:15px 0 10px 28%;padding:9px 12px;border-radius:12px 12px 3px 12px;background:#2563eb;color:#fff;font-size:10px}.ps-cfo-answer{padding:12px;border:1px solid var(--border);border-radius:3px 12px 12px;background:var(--surface2);font-size:10px;line-height:1.5}.ps-cfo-answer b,.ps-cfo-answer span{display:block}.ps-cfo-answer span{margin-top:5px;color:var(--muted)}.ps-cfo-quick-questions{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}.ps-cfo-quick-questions button{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 8px;font:600 8px inherit;color:var(--text);cursor:pointer}.ps-cfo-compact-input{display:flex;border:1px solid var(--border);border-radius:9px;padding:4px}.ps-cfo-compact-input input{flex:1;min-width:0;border:0;background:transparent;padding:7px;outline:0;color:var(--text);font:10px inherit}.ps-cfo-compact-input button,.ps-cfo-insight button{border:0;border-radius:7px;background:#2563eb;color:#fff;padding:7px 11px;font:750 9px inherit;cursor:pointer}.ps-cfo-insight>strong{display:block;color:#f97316;font-size:21px;margin-top:18px}.ps-cfo-insight>span{font-size:9px;color:var(--muted)}.ps-cfo-insight h4{font-size:10px;margin:18px 0 5px}.ps-cfo-insight>p{font-size:9.5px;line-height:1.5;color:var(--muted)}.ps-cfo-insight button{margin-top:8px;background:transparent;color:#2563eb;padding-left:0}.ps-cfo-line-chart{height:145px;display:flex;align-items:flex-end;gap:7px;border-bottom:1px solid var(--border);margin:12px 0}.ps-cfo-line-chart i{flex:1;background:linear-gradient(#2563eb,#93c5fd);border-radius:5px 5px 0 0;height:30%}.ps-cfo-line-chart i:nth-child(2){height:38%}.ps-cfo-line-chart i:nth-child(3){height:51%}.ps-cfo-line-chart i:nth-child(4){height:45%}.ps-cfo-line-chart i:nth-child(5){height:65%}.ps-cfo-line-chart i:nth-child(6){height:76%}.ps-cfo-line-chart i:nth-child(7){height:92%}.ps-cfo-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ps-cfo-summary span{min-width:0}.ps-cfo-summary small,.ps-cfo-summary b{display:block}.ps-cfo-summary small{font-size:7px;color:var(--muted)}.ps-cfo-summary b{font-size:9px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-cfo-workspace>.ps-cfo-expand{order:4;align-self:flex-end;border:0;background:transparent;color:#2563eb;font:750 10px inherit;cursor:pointer}.ps-cfo-workspace:not(.ps-cfo-expanded)>*:not(.ps-cfo-kpis):not(.ps-cfo-compact):not(.ps-cfo-expand):not(.ps-cfo-heading){display:none!important}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-command{order:5}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-suggestions{order:6}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-alerts{order:7}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-modes{order:8;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}.ps-cfo-workspace.ps-cfo-expanded>.ps-cfo-status{order:9}.ps-cfo-workspace.ps-cfo-expanded>div:not([class]){order:10}.ps-manager-workspace>header{display:none}.ps-manager-workspace>.ps-manager-kpis{order:2}.ps-manager-workspace>.ps-manager-workflow{order:3;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:13px;padding:15px;background:var(--surface2)}.ps-manager-workflow>div{display:flex;align-items:flex-start;gap:9px;padding:4px 12px;border-right:1px solid var(--border)}.ps-manager-workflow>div:last-child{border-right:0}.ps-manager-workflow i{font-style:normal;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:white;font-weight:850;font-size:11px;flex:0 0 auto}.ps-manager-workflow span{display:flex;flex-direction:column}.ps-manager-workflow b{font-size:11.5px}.ps-manager-workflow small{font-size:10px;color:var(--muted);margin-top:3px}.ps-manager-workspace>.ps-manager-desk{order:4}.ps-manager-workspace>.ps-manager-attention{order:5}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>*:not(.ps-manager-kpis):not(.ps-manager-workflow):not(.ps-manager-desk):not(.ps-manager-attention):not(.ps-manager-outcome){order:7}
   .ps-manager-workspace{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}.ps-manager-workspace>.ps-manager-main-grid{order:3;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(330px,.85fr);gap:14px}.ps-manager-workspace>.ps-manager-health-grid{order:4;display:grid;grid-template-columns:.9fr 1.1fr .8fr;gap:14px}.ps-manager-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0}.ps-manager-panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px}.ps-manager-panel-heading h3{font-size:14px;margin:0;color:var(--text)}.ps-manager-panel-heading p{font-size:10.5px;color:var(--muted);margin:3px 0 0}.ps-manager-panel-heading button,.ps-manager-expand{border:0;background:transparent;color:#2563eb;font:700 10.5px inherit;cursor:pointer}.ps-manager-queue-head,.ps-manager-queue-row{display:grid;grid-template-columns:minmax(0,2fr) .75fr .62fr .72fr;gap:10px;align-items:center}.ps-manager-queue-head{padding:7px 8px;border-bottom:1px solid var(--border);font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase}.ps-manager-queue-row{width:100%;padding:10px 8px;border:0;border-bottom:1px solid var(--border);background:transparent;text-align:left;color:var(--text);font-family:inherit;cursor:pointer}.ps-manager-queue-row:last-child{border-bottom:0}.ps-manager-queue-row b{display:block;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-manager-queue-row small{display:block;font-size:8.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.ps-manager-queue-row>span:not(:first-child){font-size:9px;text-transform:capitalize}.ps-manager-priority{font-weight:800}.ps-manager-priority.ps-critical,.ps-manager-priority.ps-high{color:#dc2626}.ps-manager-priority.ps-medium{color:#d97706}.ps-manager-empty{display:grid;place-items:center;min-height:150px;color:var(--muted);font-size:11px}.ps-manager-workflow-card .ps-manager-workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:22px}.ps-manager-workflow-card .ps-manager-workflow>div{position:relative;text-align:center;padding:0 5px}.ps-manager-workflow-card .ps-manager-workflow>div:not(:last-child):after{content:"";position:absolute;left:58%;right:-42%;top:13px;height:1px;background:#cbd5e1}.ps-manager-workflow-card .ps-manager-workflow i{position:relative;z-index:1;width:27px;height:27px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;background:#2563eb;color:#fff;font-style:normal;font-size:10px;font-weight:850}.ps-manager-workflow-card .ps-manager-workflow span{display:block}.ps-manager-workflow-card .ps-manager-workflow b{display:block;font-size:9px}.ps-manager-workflow-card .ps-manager-workflow small{display:block;font-size:8px;color:var(--muted);margin-top:3px}.ps-manager-health-body{display:flex;align-items:center;gap:18px}.ps-manager-donut{width:112px;height:112px;border-radius:50%;background:conic-gradient(#10b981 var(--coverage),#f97316 0);display:grid;place-content:center;text-align:center;position:relative}.ps-manager-donut:before{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--surface)}.ps-manager-donut strong,.ps-manager-donut small{position:relative;z-index:1}.ps-manager-donut strong{font-size:20px}.ps-manager-donut small{font-size:8px;color:var(--muted)}.ps-manager-health-body>div:last-child{display:flex;flex-direction:column;gap:6px;font-size:10px}.ps-manager-health-body span{color:var(--muted)}.ps-manager-sync-row,.ps-manager-impact>div:not(.ps-manager-panel-heading){display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);align-items:center;font-size:10px}.ps-manager-sync-row span{color:#059669}.ps-manager-sync-row em{font-style:normal;color:var(--muted)}.ps-manager-impact>div:not(.ps-manager-panel-heading){grid-template-columns:1fr auto}.ps-manager-impact span{color:var(--muted)}.ps-manager-impact b{color:#059669}.ps-manager-workspace>.ps-manager-expand{order:5;justify-self:end;padding:8px 0}.ps-manager-workspace>.ps-manager-outcome{order:6}.ps-manager-workspace>.ps-manager-attention{order:7}.ps-manager-workspace>.ps-manager-desk{order:8}.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-outcome,.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-attention,.ps-manager-workspace:not(.ps-manager-expanded)>.ps-manager-desk{display:none!important}.ps-manager-workspace>.ps-manager-main-grid~div:not([class]),.ps-manager-workspace>.ps-manager-main-grid~button:not(.ps-manager-expand){order:9}
   @media(max-width:1100px){.ps-cfo-workspace>.ps-cfo-compact{grid-template-columns:1fr 1fr}.ps-cfo-chat-panel{grid-column:1/-1}}
   @media(max-width:900px){.ps-cfo-workspace>.ps-cfo-compact,.ps-manager-workspace>.ps-manager-main-grid,.ps-manager-workspace>.ps-manager-health-grid{grid-template-columns:1fr}.ps-cfo-chat-panel{grid-column:auto}.ps-manager-workflow-card .ps-manager-workflow{grid-template-columns:repeat(2,1fr);gap:18px}.ps-manager-workflow-card .ps-manager-workflow>div:after{display:none}}
@@ -2447,7 +2449,6 @@ export function PrizeSkoutDashboard() {
   const [productOriginalPrice, setProductOriginalPrice] = useState<number | null>(null);
   const [cpPhase, setCpPhase] = useState<"idle" | "loading" | "result">("idle");
   const [cpInput, setCpInput] = useState("");
-  const [cfoExpanded, setCfoExpanded] = useState(false);
   const [cpImageAttachments, setCpImageAttachments] = useState<File[]>([]);
   const [cpDocumentAttachments, setCpDocumentAttachments] = useState<File[]>([]);
   const cpImagePreviews = useMemo(() => cpImageAttachments.map(file => ({ file, url: URL.createObjectURL(file) })), [cpImageAttachments]);
@@ -2459,6 +2460,8 @@ export function PrizeSkoutDashboard() {
     metadata?: Record<string, unknown>;
   };
   const [cpThread, setCpThread] = useState<CopilotThreadMessage[]>([]);
+  const cfoThread = useMemo(() => cpThread.filter(message => message.metadata?.assistant_role === "cfo"), [cpThread]);
+  const managerThread = useMemo(() => cpThread.filter(message => message.metadata?.assistant_role === "manager"), [cpThread]);
   const [cpConversations, setCpConversations] = useState<Array<{ id: string; title: string; last_message_at: string }>>([]);
   const [cpConversationTitle, setCpConversationTitle] = useState("Current conversation");
   const [cpPersistenceAvailable, setCpPersistenceAvailable] = useState(false);
@@ -2472,6 +2475,7 @@ export function PrizeSkoutDashboard() {
   const cpPersistenceQueueRef = useRef<Promise<void>>(Promise.resolve());
   const cpConversationRestoredRef = useRef(false);
   const cpPendingDraftRef = useRef<Record<string, unknown> | null>(null);
+  const cpActiveRoleRef = useRef<"cfo" | "manager" | "auto">("auto");
   const [cpOperationProducts, setCpOperationProducts] = useState<ImportedProduct[]>([]);
   const [cpOperationStatus, setCpOperationStatus] = useState<
     "idle" | "running" | "ready" | "publishing" | "complete" | "failed"
@@ -3854,8 +3858,9 @@ export function PrizeSkoutDashboard() {
   }
 
   const appendCpThread = (role: "user" | "assistant", text: string, messageType: CopilotThreadMessage["messageType"] = "text", metadata: Record<string, unknown> = {}) => {
-    setCpThread((current) => [...current, { role, text, messageType, metadata }].slice(-40));
-    queueCopilotMessage(role, text, messageType, metadata);
+    const roleMetadata = { assistant_role: cpActiveRoleRef.current, ...metadata };
+    setCpThread((current) => [...current, { role, text, messageType, metadata: roleMetadata }].slice(-40));
+    queueCopilotMessage(role, text, messageType, roleMetadata);
   };
 
   const openCopilotConversation = async (id: string) => {
@@ -3901,6 +3906,7 @@ export function PrizeSkoutDashboard() {
   const runCopilot = async (text: string, requestedRole: "cfo" | "manager" | "auto" = "auto") => {
     const prompt = text.trim();
     if (!prompt || cpPhase === "loading") return false;
+    cpActiveRoleRef.current = requestedRole;
     const previousOperation = cpObj && (cpObj._type === "operation" || cpObj._type === "manager_workflow") ? cpObj : cpPendingDraftRef.current;
     const previousProducts = cpOperationProducts.map((product) => ({
       name: product.name_en || product.name_ar,
@@ -3916,8 +3922,13 @@ export function PrizeSkoutDashboard() {
             platform: "zid",
           });
       }
+    const roleConversation = requestedRole === "auto"
+      ? cpConversationRef.current
+      : cpThread
+          .filter(message => message.metadata?.assistant_role === requestedRole)
+          .map(message => ({ role: message.role, text: message.text }));
     const conversation = compactConversation([
-      ...cpConversationRef.current,
+      ...roleConversation,
       { role: "user", text: prompt },
     ]);
     const catalogContext = importedProducts.slice(0, 100).map((product) => ({
@@ -3962,7 +3973,7 @@ export function PrizeSkoutDashboard() {
         cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
         return true;
       }
-      if (cpImageAttachments.length) {
+      if (requestedRole !== "cfo" && cpImageAttachments.length) {
         const haystack = prompt.toLowerCase();
         const directMatches = importedProducts.filter(product => product.source_platform === "zid" && [product.sku, product.name_en, product.name_ar].filter(Boolean).some(value => haystack.includes(String(value).toLowerCase())));
         const contextualSku = directMatches.length === 1 ? directMatches[0].sku : directMatches.length === 0 && previousProducts.length === 1 ? previousProducts[0].sku : "";
@@ -4062,6 +4073,7 @@ export function PrizeSkoutDashboard() {
         draft_operation?: Record<string, unknown>;
         draft_workflow?: Record<string, unknown>;
         message?: string;
+        insight?: CfoInsight;
         error?: string;
       } = {};
       try {
@@ -4119,7 +4131,7 @@ export function PrizeSkoutDashboard() {
           ...conversation,
           { role: "assistant", text: data.message },
         ]);
-        appendCpThread("assistant", data.message);
+        appendCpThread("assistant", data.message, "text", data.insight ? { kind: "cfo_insight", insight: data.insight } : {});
         return true;
       } else if (data.rule) {
         setCpObj(data.rule);
@@ -6018,6 +6030,8 @@ export function PrizeSkoutDashboard() {
     setAssistantDrawerOpen(true);
   };
   const openSidebarDestination = (item: (typeof navDefs)[number]) => {
+    if (item.id === "copilot") cpActiveRoleRef.current = "cfo";
+    if (item.id === "manager") cpActiveRoleRef.current = "manager";
     setSidebarNav(item.id);
     setTab(item.tab);
     window.setTimeout(() => {
@@ -6796,7 +6810,7 @@ export function PrizeSkoutDashboard() {
         {sidebarNav === "manager" && <StoreManagerCommandBar
           context={headerTitle}
           examples={activeAssistantContext.examples}
-          messages={cpThread}
+          messages={managerThread}
           lang={lang}
           busy={cpPhase === "loading"}
           saved={cpPersistenceAvailable}
@@ -10339,8 +10353,8 @@ export function PrizeSkoutDashboard() {
           >
             {/* CFO Copilot and Shop Manager */}
             {sidebarNav === "copilot" && <div
-              className={`ps-cfo-workspace${cfoExpanded ? " ps-cfo-expanded" : ""}`}
-              data-demo-tip="CFO Copilot and Shop Manager answer business questions, run safe checks, prepare store work, and ask once before protected changes."
+              className="ps-cfo-workspace ps-cfo-expanded"
+              data-demo-tip="CFO Copilot answers financial questions from retained evidence and clearly identifies missing evidence."
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
@@ -10407,14 +10421,24 @@ export function PrizeSkoutDashboard() {
                 ))}
               </div>
               <div className="ps-cfo-compact">
-                <section className="ps-cfo-chat-panel">
-                  <div className="ps-cfo-panel-title"><div><h3>Ask anything about your finances</h3><p>Profit, payouts, trends, and next actions</p></div></div>
-                  <div className="ps-cfo-question">Why did margin change this month?</div>
-                  <div className="ps-cfo-answer"><b>PrizeSkout uses only retained evidence.</b><span>{storeOpportunity.atRisk.length ? `${storeOpportunity.atRisk.length} verified product${storeOpportunity.atRisk.length === 1 ? "" : "s"} currently need margin attention.` : "No verified products are currently below the protected margin target."}</span><span>{recoveryCases.length ? `${recoveryCases.length} recovery case${recoveryCases.length === 1 ? " is" : "s are"} being tracked.` : "No recovery cases are currently recorded."}</span></div>
-                  <div className="ps-cfo-quick-questions">{["What drove payout discrepancy?", "Which channel needs attention?", "What evidence is missing for a forecast?"].map((label) => <button type="button" key={label} disabled={cpPhase === "loading"} onClick={() => { setCpInput(label); void runCopilot(label); }}>{label}</button>)}</div>
-                  <div className="ps-cfo-compact-input"><input value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && cpInput.trim() && cpPhase !== "loading") void runCopilot(cpInput); }} placeholder="Ask a financial question…" /><button type="button" disabled={!cpInput.trim() || cpPhase === "loading"} onClick={() => void runCopilot(cpInput)}>{cpPhase === "loading" ? "Working…" : "Send"}</button></div>
-                </section>
-                <section className="ps-cfo-insight"><div className="ps-cfo-panel-title"><div><h3>Identified opportunity</h3><p>Calculated from retained product evidence</p></div></div><strong>{currency} {storeOpportunity.correctionPerCatalogSale.toLocaleString("en-US", { maximumFractionDigits: 0 })}</strong><span>potential correction if one of each affected product sells</span><h4>Recommendation</h4><p>{copilotAlerts.length ? copilotAlerts[0].label : "Keep cost evidence current and review payout differences before acting."}</p><button type="button" onClick={() => setCfoExpanded(true)}>View action plan →</button></section>
+                <CfoCopilotPanel
+                  messages={cfoThread}
+                  value={cpInput}
+                  onChange={setCpInput}
+                  onSubmit={(prompt) => void runCopilot(prompt, "cfo")}
+                  onNewChat={startNewCopilotConversation}
+                  onSwitchToManager={() => {
+                    cpActiveRoleRef.current = "manager";
+                    setSidebarNav("manager");
+                    setTab("manager");
+                  }}
+                  documents={cpDocumentAttachments}
+                  onDocumentsChange={setCpDocumentAttachments}
+                  saved={cpPersistenceAvailable}
+                  busy={cpPhase === "loading"}
+                  error={cpError}
+                />
+                <section className="ps-cfo-insight"><div className="ps-cfo-panel-title"><div><h3>Identified opportunity</h3><p>Calculated from retained product evidence</p></div></div><strong>{currency} {storeOpportunity.correctionPerCatalogSale.toLocaleString("en-US", { maximumFractionDigits: 0 })}</strong><span>potential correction if one of each affected product sells</span><h4>Recommendation</h4><p>{copilotAlerts.length ? copilotAlerts[0].label : "Keep cost evidence current and review payout differences before acting."}</p><button type="button" onClick={() => void runCopilot("Build a prioritized financial action plan from my retained evidence.", "cfo")}>Ask CFO for action plan →</button></section>
                 <section className="ps-cfo-forecast">
                   <div className="ps-cfo-panel-title"><div><h3>Financial evidence readiness</h3><p>What Copilot can support without guessing</p></div></div>
                   <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
@@ -10427,29 +10451,6 @@ export function PrizeSkoutDashboard() {
                   </div>
                   <p style={{ margin: "12px 0 0", color: "var(--muted)", fontSize: 9.5, lineHeight: 1.45 }}>PrizeSkout does not present a forecast until the required payout and cost evidence exists.</p>
                 </section>
-              </div>
-              <button type="button" className="ps-cfo-expand" onClick={() => setCfoExpanded((value) => !value)}>{cfoExpanded ? "Hide full conversation ↑" : "Open full conversation →"}</button>
-              <div className="ps-cfo-modes" style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
-                {[
-                  ["Ask about my business", "Profit, margins, orders, payouts and risks"],
-                  ["Manage my store", "Create, edit, publish and organise products"],
-                ].map(([label, description]) => (
-                  <div
-                    key={label}
-                    style={{
-                      flex: "1 1 280px",
-                      border: "1px solid var(--border)",
-                      borderRadius: 12,
-                      padding: "11px 13px",
-                      background: "var(--surface2)",
-                    }}
-                  >
-                    <div style={{ fontSize: 13.5, fontWeight: 800 }}>{label}</div>
-                    <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
-                      {description}
-                    </div>
-                  </div>
-                ))}
               </div>
               <div
                 className="ps-cfo-status"
@@ -10517,7 +10518,7 @@ export function PrizeSkoutDashboard() {
                     <button
                       key={alert.label}
                       onClick={() =>
-                        alert.command ? runCopilot(alert.command) : reviewVerifiedMarginRisks()
+                        alert.command ? runCopilot(alert.command, "cfo") : reviewVerifiedMarginRisks()
                       }
                       style={{
                         display: "flex",
@@ -10541,104 +10542,7 @@ export function PrizeSkoutDashboard() {
                   ))}
                 </div>
               )}
-              <div
-                className="ps-cfo-command"
-                data-tour="copilot"
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "center",
-                  background: "var(--surface)",
-                  border: "1.5px solid var(--border)",
-                  borderRadius: 14,
-                  padding: "6px 8px 6px 18px",
-                  boxShadow: "var(--shadow)",
-                }}
-              >
-                <span style={{ fontSize: 17.5, opacity: 0.55 }}>✦</span>
-                <input
-                  value={cpInput}
-                  onChange={(e) => setCpInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") runCopilot(cpInput);
-                  }}
-                  placeholder={
-                    lang === "ar"
-                      ? "اكتب المهمة التي تريد تنفيذها في متجرك..."
-                      : "Ask about your business or tell PrizeSkout what to do…"
-                  }
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    color: "var(--text)",
-                    fontSize: 16,
-                    fontFamily: "inherit",
-                    padding: "10px 0",
-                  }}
-                />
-                <button
-                  onClick={() => runCopilot(cpInput)}
-                  style={{
-                    cursor: "pointer",
-                    flex: "0 0 auto",
-                    border: "none",
-                    borderRadius: 10,
-                    background: OG,
-                    color: "#fff",
-                    fontSize: 14.5,
-                    fontWeight: 700,
-                    padding: "11px 18px",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {t.compile}
-                </button>
-              </div>
-              {cpObj?._type === "operation" && cpOperationStatus !== "running" && (
-                <div style={{ marginTop: -10, fontSize: 12.5, color: "var(--muted)" }}>
-                  Follow up naturally—Copilot remembers this product scope. Try “show only this
-                  product”, “reprice it”, or “push it live”.
-                </div>
-              )}
-              <div className="ps-cfo-suggestions" style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center" }}>
-                <span style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 600 }}>
-                  {t.try}
-                </span>
-                {[
-                  "What did I actually keep from orders this month?",
-                  "Show products losing money",
-                  "Change the stock of Wireless Charger to 20",
-                  "Create and publish a new product",
-                  "Check whether my active coupon is safe",
-                ].map((label) => (
-                  <button
-                    key={label}
-                    className="ps-pill-btn"
-                    onClick={() => {
-                      setCpInput(label);
-                      runCopilot(label);
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--text)",
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 999,
-                      padding: "8px 14px",
-                      fontFamily: "inherit",
-                      transition: "border-color .2s,color .2s",
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {cpPhase === "loading" && (
+              {false && cpPhase === "loading" && (
                 <div
                   style={{
                     display: "flex",
@@ -10670,7 +10574,7 @@ export function PrizeSkoutDashboard() {
                   </span>
                 </div>
               )}
-              {cpError && cpPhase === "idle" && (
+              {false && cpError && cpPhase === "idle" && (
                 <div
                   style={{
                     fontSize: 14,
@@ -10685,7 +10589,7 @@ export function PrizeSkoutDashboard() {
                   {cpError}
                 </div>
               )}
-              {cpPhase === "result" && cpChatMessage && (
+              {false && cpPhase === "result" && cpChatMessage && (
                 <div
                   style={{
                     animation: "pk-in .35s ease",
@@ -10725,7 +10629,9 @@ export function PrizeSkoutDashboard() {
                   </div>
                 </div>
               )}
-              {cpPhase === "result" && cpObj?._type === "operation" && (
+              {cpActiveRoleRef.current !== "cfo" &&
+                cpPhase === "result" &&
+                cpObj?._type === "operation" && (
                 <div
                   style={{
                     border: "1px solid var(--border)",
@@ -11648,7 +11554,9 @@ export function PrizeSkoutDashboard() {
                   </div>
                 </div>
               )}
-              {cpPhase === "result" && cpObj?._type === "manager_workflow" && (
+              {cpActiveRoleRef.current !== "cfo" &&
+                cpPhase === "result" &&
+                cpObj?._type === "manager_workflow" && (
                 <div
                   style={{
                     border: "1px solid color-mix(in srgb,#EF681A 28%,var(--border))",
@@ -11732,7 +11640,8 @@ export function PrizeSkoutDashboard() {
                   </div>
                 </div>
               )}
-              {cpPhase === "result" &&
+              {cpActiveRoleRef.current !== "cfo" &&
+                cpPhase === "result" &&
                 cpObj &&
                 cpObj._type !== "operation" &&
                 cpObj._type !== "manager_workflow" && (
@@ -11942,7 +11851,7 @@ export function PrizeSkoutDashboard() {
                     </div>
                   </div>
                 )}
-              {cpThread.length > 0 && cpPhase !== "idle" && (
+              {false && cpThread.length > 0 && cpPhase !== "idle" && (
                 <div style={{ display: "grid", gap: 12, marginTop: 4 }}>
                   <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>

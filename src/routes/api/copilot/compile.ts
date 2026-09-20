@@ -16,6 +16,7 @@ import {STORE_MANAGER_CAPABILITIES,validateManagerWorkflow} from "@/server/core/
 import {STORE_MANAGER_PLAYBOOKS} from "@/server/core/store-manager-playbooks";
 import {verifyMerchantAccess} from "@/server/core/byok-connect";
 import {getCopilotFinancialEvidence} from "@/server/core/copilot-financial-evidence";
+import { CFO_SYSTEM, parseCfoInsight } from "@/server/core/cfo-insight";
 
 // Used only when the input is a conversational question.
 // No JSON schema — model outputs plain text, we return it as-is.
@@ -447,6 +448,21 @@ export const Route = createFileRoute("/api/copilot/compile")({
             const riskOrder=["read_only","reversible","financial","external_commitment","permanent"],risk=validated.steps.reduce((highest,step)=>riskOrder.indexOf(String(step.risk))>riskOrder.indexOf(highest)?String(step.risk):highest,"read_only");
             return json({type:"workflow",workflow:{_type:"manager_workflow",title:String(parsed.title??"Store management workflow").slice(0,180),summary:String(parsed.summary??normalizedPrompt).slice(0,1000),priority:["critical","high","medium","low"].includes(String(parsed.priority))?parsed.priority:"medium",risk_level:risk,approval_required:validated.steps.some(step=>step.approval_required),steps:validated.steps,assumptions:Array.isArray(parsed.assumptions)?parsed.assumptions.map(String).slice(0,10):[]},latency_ms:Date.now()-t0});
           }catch(error){return json({error:`The Store Manager could not prepare a reliable workflow: ${error instanceof Error?error.message:String(error)}`},502);}
+        }
+
+        if (body?.requested_role === "cfo") {
+          if (!process.env.OPENAI_API_KEY && !process.env.GROQ_API_KEY && !process.env.ANTHROPIC_API_KEY) return json({ error: "AI service not configured" }, 503);
+          if (!body.merchant_id || !body.access_code || !await verifyMerchantAccess(body.merchant_id, body.access_code)) return json({ error: "Unauthorized" }, 401);
+          const t0 = Date.now();
+          try {
+            const financialEvidence = await getCopilotFinancialEvidence(body.merchant_id);
+            const cfoContext = { conversation: body.context?.conversation ?? [], language: body.context?.language ?? "en", currency: body.context?.currency ?? null, connected_channels: body.context?.connected_channels ?? [] };
+            const raw = (await callAI({ system: CFO_SYSTEM, user: `${normalizedPrompt}\n\nCONVERSATION CONTEXT (use only to resolve references; it is not financial evidence):\n${JSON.stringify(cfoContext)}\n\nVERIFIED PRIZESKOUT FINANCIAL EVIDENCE (authoritative; never invent missing values):\n${JSON.stringify(financialEvidence)}`, maxTokens: 1200 })).text;
+            const insight = parseCfoInsight(raw);
+            return json({ type: "chat", message: insight.conclusion, insight, evidence_context: { generated_at: financialEvidence.generated_at, reviewed_evidence_count: financialEvidence.reviewed_evidence_count, verified: true }, latency_ms: Date.now() - t0 });
+          } catch (error) {
+            return json({ error: `CFO Copilot could not produce a reliable evidence-backed answer: ${error instanceof Error ? error.message : String(error)}` }, 502);
+          }
         }
 
         const recoveredCoupon = recoverPendingCouponFromConversation(normalizedPrompt, body?.context?.conversation);

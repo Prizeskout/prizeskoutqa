@@ -2,6 +2,8 @@ import { deterministicZidInsight } from "../src/routes/api/copilot/compile";
 import { productMatches } from "../src/server/core/zid-product-match";
 import {compactConversation,normalizeCopilotPrompt,resolveProductReferences} from "../src/lib/copilot-understanding";
 import {validateManagerWorkflow} from "../src/server/core/store-manager-capabilities";
+import { parseCfoInsight } from "../src/server/core/cfo-insight";
+import { summarizeCopilotFinancialEvidence } from "../src/server/core/copilot-financial-evidence";
 
 type Parsed = { type?:string; message?:string; operation?: { operation?: string; product_mode?: string; publish_product?: boolean; query?: string; coupon_code?:string; coupon_name?:string; coupon_discount_pct?:number; coupon_start_date?:string; product_price?:number } };
 
@@ -93,3 +95,84 @@ console.log("PASS: manager workflows derive approvals, verification, risk, and m
 const invalidWorkflow=validateManagerWorkflow({steps:[{title:"Pretend tool",capability:"invented.magic"}]});
 if(invalidWorkflow.ok)throw new Error("Unsupported manager capability was accepted");
 console.log("PASS: unsupported capabilities cannot be presented as connected automation");
+
+const cfoInsight = parseCfoInsight(
+  JSON.stringify({
+    conclusion: "Net retained revenue improved by QAR 120.",
+    impact: { label: "30-day net change", amount: 120, currency: "QAR" },
+    drivers: [
+      {
+        label: "Lower retained fees",
+        amount: 40,
+        direction: "positive",
+        evidence_refs: ["commerce.period_comparison"],
+      },
+    ],
+    confidence: "high",
+    evidence_used: [
+      {
+        label: "Normalized orders",
+        source: "ps_normalized_commerce_events",
+        period: "30 days",
+        freshness: "2026-09-20",
+      },
+    ],
+    limitations: [],
+    actions: [
+      { label: "Compare channels", prompt: "Compare net revenue by channel.", kind: "ask" },
+    ],
+  }),
+);
+if (
+  cfoInsight.confidence !== "high" ||
+  cfoInsight.impact.amount !== 120 ||
+  cfoInsight.actions[0]?.kind !== "ask"
+)
+  throw new Error(`CFO insight parsing failed: ${JSON.stringify(cfoInsight)}`);
+console.log("PASS: CFO insight output is normalized into the evidence-backed response contract");
+
+const financialEvidence = summarizeCopilotFinancialEvidence({
+  runs: [],
+  findings: [],
+  contracts: [],
+  cases: [],
+  evidenceCount: 2,
+  now: new Date("2026-09-20T00:00:00.000Z"),
+  events: [
+    {
+      event_kind: "order_snapshot",
+      channel: "talabat",
+      occurred_at: "2026-09-10T12:00:00.000Z",
+      currency: "QAR",
+      gross_amount: 500,
+      fee_amount: 100,
+      net_amount: 400,
+      evidence_strength: "confirmed",
+    },
+    {
+      event_kind: "order_snapshot",
+      channel: "talabat",
+      occurred_at: "2026-08-10T12:00:00.000Z",
+      currency: "QAR",
+      gross_amount: 300,
+      fee_amount: 80,
+      net_amount: 220,
+      evidence_strength: "confirmed",
+    },
+  ],
+  costs: [
+    {
+      sku: "SKU-1",
+      currency: "QAR",
+      unit_cost: 12,
+      effective_from: "2026-09-01",
+      created_at: "2026-09-01T00:00:00.000Z",
+    },
+  ],
+});
+if (
+  financialEvidence.commerce.period_comparison.change.net !== 180 ||
+  financialEvidence.product_costs.covered_skus !== 1
+)
+  throw new Error(`CFO financial evidence summary failed: ${JSON.stringify(financialEvidence)}`);
+console.log("PASS: CFO evidence computes deterministic period changes and cost coverage");
