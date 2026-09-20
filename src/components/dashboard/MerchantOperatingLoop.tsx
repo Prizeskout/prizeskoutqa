@@ -125,6 +125,7 @@ export function MerchantOperatingLoop({
   ];
   const [data, setData] = useState<Experience | null>(null),
     [loading, setLoading] = useState(true),
+    [slowLoad, setSlowLoad] = useState(false),
     [busy, setBusy] = useState(""),
     [filter, setFilter] = useState("active"),
     [taskFocus, setTaskFocus] = useState<"all" | "approval">("all"),
@@ -226,6 +227,7 @@ export function MerchantOperatingLoop({
       const result = await call({ action: "get" });
       setData(result as Experience);
       setLoadError(false);
+      setSlowLoad(false);
       setMessage("");
     } catch (error) {
       setLoadError(true);
@@ -238,11 +240,14 @@ export function MerchantOperatingLoop({
   useEffect(() => {
     void load();
     void call({ action: "track", event_name: "today_viewed" }).catch(() => undefined);
-    const refresh = window.setTimeout(() => void load(), 3000);
+    // Avoid a second overlapping briefing request while the first is still
+    // resolving. Reveal an honest delayed-data state after four seconds while
+    // the original request remains in flight.
+    const slowLoadTimer = window.setTimeout(() => setSlowLoad(true), 4_000);
     const refreshAfterDelegation = () => void load();
     window.addEventListener("prizeskout:manager-task-created", refreshAfterDelegation);
     return () => {
-      window.clearTimeout(refresh);
+      window.clearTimeout(slowLoadTimer);
       window.removeEventListener("prizeskout:manager-task-created", refreshAfterDelegation);
     };
   }, []);
@@ -431,7 +436,7 @@ export function MerchantOperatingLoop({
       (task) => !["completed", "cancelled"].includes(task.status),
     ),
     approvalTasks = openManagerTasks.filter((task) => task.status === "waiting_approval");
-  if (loading)
+  if (loading && !slowLoad)
     return (
       <section
         className="ps-briefing-skeleton"
@@ -498,6 +503,44 @@ export function MerchantOperatingLoop({
       data-tour="merchant-operating-loop"
       style={{ ...card, gap: 20 }}
     >
+      {loading && slowLoad && !data && (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+            padding: "12px 14px",
+            border: "1px solid color-mix(in srgb,#F59E0B 32%,var(--border))",
+            borderRadius: 11,
+            background: "color-mix(in srgb,#F59E0B 8%,var(--surface))",
+          }}
+        >
+          <div>
+            <strong style={{ display: "block", fontSize: 13.5 }}>
+              Live briefing is taking longer than expected
+            </strong>
+            <span
+              style={{ display: "block", marginTop: 3, color: "var(--muted)", fontSize: 12.5 }}
+            >
+              The workspace remains available. No task or store change is being executed while data loads.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              setSlowLoad(false);
+              void load();
+            }}
+            style={{ ...smallButton, minHeight: 40, background: "var(--surface)" }}
+          >
+            Retry briefing
+          </button>
+        </div>
+      )}
       <Header
         eyebrow={tr(
           "AI Store Manager",

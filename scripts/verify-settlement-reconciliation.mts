@@ -8,6 +8,7 @@ const result=reconcileSettlementEvidence({
 });
 assert.equal(result.allocations.find(row=>row.orderId==="A")?.state,"reconciled");
 assert.equal(result.allocations.find(row=>row.orderId==="B")?.state,"claim_ready");
+assert.equal(result.allocations.find(row=>row.orderId==="B")?.matchBasis,"exact_order_reference");
 assert.equal(result.claimsReadyAmount,10);
 assert.equal(result.allocations.find(row=>row.orderId==="C")?.state,"awaiting_settlement");
 const duplicate=reconcileSettlementEvidence({orders:[{orderId:"A",amount:10,currency:"QAR",final:true,evidenceReady:true}],settlements:[{settlementReference:"S1",orderId:"A",amount:10,currency:"QAR"},{settlementReference:"S2",orderId:"A",amount:10,currency:"QAR"}],receipts:[]});

@@ -7410,7 +7410,7 @@ export function PrizeSkoutDashboard() {
 
             <div className="ps-catalog-insights">
               <section className="ps-catalog-insight-card"><div><h3>Catalog health</h3><p>Products with verified cost evidence</p></div><div className="ps-catalog-health-ring" style={{ "--catalog-ready": `${(importedProducts.length ? storeOpportunity.verified / importedProducts.length : 0) * 360}deg` } as React.CSSProperties}><strong>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</strong><small>Ready</small></div><ul><li><i className="ps-dot-green" />Confirmed costs <b>{storeOpportunity.verified}</b></li><li><i className="ps-dot-orange" />Missing evidence <b>{storeOpportunity.estimated + storeOpportunity.unknown}</b></li><li><i className="ps-dot-blue" />Out of stock <b>{importedProducts.filter(product => product.inventory_status === "out_of_stock").length}</b></li></ul></section>
-              <section className="ps-catalog-insight-card"><div><h3>Channel coverage</h3><p>Connected sources feeding the live catalog</p></div><div className="ps-catalog-channel-list">{(["zid", "salla"] as const).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform] === "connected" ? "is-connected" : ""}>{channelStatuses[platform] === "connected" ? "Connected" : "Not connected"}</span><em>{importedProducts.filter(product => product.source_platform === platform).length} items</em></div>)}</div><button type="button" onClick={() => setTab("vault")}>View integration health →</button></section>
+              <section className="ps-catalog-insight-card"><div><h3>Channel coverage</h3><p>Connected sources feeding the live catalog</p></div><div className="ps-catalog-channel-list">{Array.from(new Set(["zid", "salla", ...importedProducts.map(product => product.source_platform).filter(Boolean)])).map(platform => <div key={platform}><b>{platform}</b><span className={channelStatuses[platform as keyof typeof channelStatuses] === "connected" || importedProducts.some(product => product.source_platform === platform) ? "is-connected" : ""}>{channelStatuses[platform as keyof typeof channelStatuses] === "connected" || importedProducts.some(product => product.source_platform === platform) ? "Connected" : "Not connected"}</span><em>{importedProducts.filter(product => product.source_platform === platform).length} items</em></div>)}</div><button type="button" onClick={() => setTab("vault")}>View integration health →</button></section>
               <section className="ps-catalog-insight-card"><div><h3>Priority review</h3><p>Evidence gaps and availability issues</p></div><div className="ps-catalog-priority"><strong>{storeOpportunity.estimated + storeOpportunity.unknown}</strong><span>products need cost evidence</span></div><div className="ps-catalog-priority"><strong>{storeOpportunity.atRisk.length}</strong><span>verified products need margin review</span></div><button type="button" onClick={() => openCatalogFilter("missing_cost")}>Open attention queue →</button></section>
             </div>
 
@@ -10375,10 +10375,10 @@ export function PrizeSkoutDashboard() {
               </div>
               <div className="ps-cfo-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 10 }}>
                 {[
-                  ["True profit", payoutData ? `${currency} ${Math.max(0, Number(payoutData.expected_payout ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "Awaiting data", payoutData ? "Latest retained payout view" : "Run a payout check first"],
-                  ["Runway impact", importedProducts.length ? `+${Math.max(1, Math.round((storeOpportunity.verified / importedProducts.length) * 30))} days` : "Awaiting data", "Based on verified cost coverage"],
+                  ["Expected platform payout", payoutData ? `${currency} ${Math.max(0, Number(payoutData.expected_payout ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "Awaiting data", payoutData ? "Calculated from the latest retained payout check" : "Run a payout check first"],
+                  ["Cost evidence coverage", importedProducts.length ? `${Math.round((storeOpportunity.verified / importedProducts.length) * 100)}%` : "Awaiting data", importedProducts.length ? `${storeOpportunity.verified} of ${importedProducts.length} products have confirmed costs` : "Connect or import a catalogue first"],
                   ["Recovered revenue", `${currency} ${recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, "Recorded recovery outcomes"],
-                  ["Forecast trend", payoutData ? "Ready" : "Awaiting data", payoutData ? "Evidence-backed outlook" : "Run a payout check first"],
+                  ["Forecast basis", payoutData && storeOpportunity.verified > 0 ? "Inputs available" : "Incomplete", payoutData && storeOpportunity.verified > 0 ? "Payout and verified-cost evidence are available" : "Requires payout and verified-cost evidence"],
                 ].map(([label, value, note]) => (
                   <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "14px 15px", background: "var(--surface)", boxShadow: "0 8px 22px rgba(15,35,70,.04)" }}>
                     <div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 850, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div>
@@ -10392,11 +10392,22 @@ export function PrizeSkoutDashboard() {
                   <div className="ps-cfo-panel-title"><div><h3>Ask anything about your finances</h3><p>Profit, payouts, trends, and next actions</p></div></div>
                   <div className="ps-cfo-question">Why did margin change this month?</div>
                   <div className="ps-cfo-answer"><b>PrizeSkout uses only retained evidence.</b><span>{storeOpportunity.atRisk.length ? `${storeOpportunity.atRisk.length} verified product${storeOpportunity.atRisk.length === 1 ? "" : "s"} currently need margin attention.` : "No verified products are currently below the protected margin target."}</span><span>{recoveryCases.length ? `${recoveryCases.length} recovery case${recoveryCases.length === 1 ? " is" : "s are"} being tracked.` : "No recovery cases are currently recorded."}</span></div>
-                  <div className="ps-cfo-quick-questions">{["What drove payout discrepancy?", "Which channel needs attention?", "How could this affect next month?"].map((label) => <button type="button" key={label} onClick={() => { setCpInput(label); void runCopilot(label); }}>{label}</button>)}</div>
-                  <div className="ps-cfo-compact-input"><input value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void runCopilot(cpInput); }} placeholder="Ask a financial question…" /><button type="button" onClick={() => void runCopilot(cpInput)}>Send</button></div>
+                  <div className="ps-cfo-quick-questions">{["What drove payout discrepancy?", "Which channel needs attention?", "What evidence is missing for a forecast?"].map((label) => <button type="button" key={label} disabled={cpPhase === "loading"} onClick={() => { setCpInput(label); void runCopilot(label); }}>{label}</button>)}</div>
+                  <div className="ps-cfo-compact-input"><input value={cpInput} onChange={(event) => setCpInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && cpInput.trim() && cpPhase !== "loading") void runCopilot(cpInput); }} placeholder="Ask a financial question…" /><button type="button" disabled={!cpInput.trim() || cpPhase === "loading"} onClick={() => void runCopilot(cpInput)}>{cpPhase === "loading" ? "Working…" : "Send"}</button></div>
                 </section>
-                <section className="ps-cfo-insight"><div className="ps-cfo-panel-title"><div><h3>Financial Insight</h3><p>Evidence-backed, never guessed</p></div></div><strong>{currency} {storeOpportunity.correctionPerCatalogSale.toLocaleString("en-US", { maximumFractionDigits: 0 })}</strong><span>potential correction per catalog sale</span><h4>Recommendation</h4><p>{copilotAlerts.length ? copilotAlerts[0].label : "Keep cost evidence current and review payout differences before acting."}</p><button type="button" onClick={() => setCfoExpanded(true)}>View action plan →</button></section>
-                <section className="ps-cfo-forecast"><div className="ps-cfo-panel-title"><div><h3>Forecast (Next 30 Days)</h3><p>{payoutData ? "Based on current retained records" : "Complete a payout check to activate"}</p></div></div><div className="ps-cfo-line-chart"><i /><i /><i /><i /><i /><i /><i /></div><div className="ps-cfo-summary"><span><small>Products</small><b>{importedProducts.length}</b></span><span><small>At risk</small><b>{storeOpportunity.atRisk.length}</b></span><span><small>Recovered</small><b>{currency} {recoveryCases.reduce((sum, item) => sum + Number(item.recovered_amount || 0), 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}</b></span><span><small>Evidence</small><b>{importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}%</b></span></div></section>
+                <section className="ps-cfo-insight"><div className="ps-cfo-panel-title"><div><h3>Identified opportunity</h3><p>Calculated from retained product evidence</p></div></div><strong>{currency} {storeOpportunity.correctionPerCatalogSale.toLocaleString("en-US", { maximumFractionDigits: 0 })}</strong><span>potential correction if one of each affected product sells</span><h4>Recommendation</h4><p>{copilotAlerts.length ? copilotAlerts[0].label : "Keep cost evidence current and review payout differences before acting."}</p><button type="button" onClick={() => setCfoExpanded(true)}>View action plan →</button></section>
+                <section className="ps-cfo-forecast">
+                  <div className="ps-cfo-panel-title"><div><h3>Financial evidence readiness</h3><p>What Copilot can support without guessing</p></div></div>
+                  <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
+                    {[
+                      ["Payout baseline", payoutData ? "Available" : "Missing", Boolean(payoutData)],
+                      ["Verified product costs", importedProducts.length ? `${Math.round((storeOpportunity.verified / importedProducts.length) * 100)}% covered` : "Missing", storeOpportunity.verified > 0],
+                      ["Recovery outcomes", `${recoveryCases.length} recorded`, recoveryCases.length > 0],
+                      ["30-day forecast", "Not calculated", false],
+                    ].map(([label, value, ready]) => <div key={String(label)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "9px 10px", borderRadius: 9, background: "var(--surface2)", border: "1px solid var(--border)" }}><span style={{ fontSize: 10.5, color: "var(--muted)" }}>{label}</span><strong style={{ fontSize: 10.5, color: ready ? GN : "#B45309" }}>{String(value)}</strong></div>)}
+                  </div>
+                  <p style={{ margin: "12px 0 0", color: "var(--muted)", fontSize: 9.5, lineHeight: 1.45 }}>PrizeSkout does not present a forecast until the required payout and cost evidence exists.</p>
+                </section>
               </div>
               <button type="button" className="ps-cfo-expand" onClick={() => setCfoExpanded((value) => !value)}>{cfoExpanded ? "Hide full conversation ↑" : "Open full conversation →"}</button>
               <div className="ps-cfo-modes" style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
@@ -13362,6 +13373,23 @@ export function PrizeSkoutDashboard() {
                               ? "Your activation request is waiting for partner approval."
                               : o.description}
                       </div>
+                      {o.platform === "snoonu" && !connected && (
+                        <a
+                          href="/snoonu-pilot-demo"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            alignSelf: "flex-start",
+                            minHeight: 40,
+                            color: OG,
+                            fontSize: 12.5,
+                            fontWeight: 800,
+                            textDecoration: "none",
+                          }}
+                        >
+                          Open contract simulation →
+                        </a>
+                      )}
                     </div>
                   );
                 })}

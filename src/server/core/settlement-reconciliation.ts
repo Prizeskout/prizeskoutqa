@@ -37,7 +37,7 @@ export function reconcileSettlementEvidence(input:{orders:ExpectedOrder[];settle
     else if(receivedValue<settled-tolerance)state=receivedValue>0?"partially_paid":"unexplained_deduction";
     else if(receivedValue>settled+tolerance)state="overpaid";
     else state=order.final&&order.evidenceReady&&receipt.evidenceReady?"reconciled":"ambiguous";
-    allocations.push({orderId:order.orderId,settlementReference:settlement.settlementReference,bankReference:receipt?.bankReference??null,expectedAmount:money(order.amount),settledAmount:settled,receivedAmount:received,variance, state,matchBasis:receipt?"exact_settlement_reference":"exact_order_reference",blockers});
+    allocations.push({orderId:order.orderId,settlementReference:settlement.settlementReference,bankReference:receipt?.bankReference??null,expectedAmount:money(order.amount),settledAmount:settled,receivedAmount:received,variance, state,matchBasis:"exact_order_reference",blockers});
   }
   const usedOrders=new Set(input.orders.map(row=>row.orderId));
   for(const settlement of input.settlements.filter(row=>!row.orderId||!usedOrders.has(row.orderId))){allocations.push({orderId:settlement.orderId,settlementReference:settlement.settlementReference,bankReference:null,expectedAmount:0,settledAmount:money(settlement.amount),receivedAmount:null,variance:null,state:"ambiguous",matchBasis:"unmatched",blockers:["Settlement line has no unique matching expected order."]});}

@@ -104,6 +104,14 @@ const shadowInput=buildNormalizedReconciliationInput(normalized.events,{
 });
 assert.equal(shadowInput.orders[0].amount,75.75);
 assert.equal(shadowInput.settlements[0].amount,82);
+const restaurantFinal=buildNormalizedReconciliationInput([{
+  event_kind:"order_snapshot",channel:"snoonu",order_external_id:"SN-1",settlement_reference:null,
+  occurred_at:"2026-09-14T09:30:00Z",currency:"QAR",gross_amount:100,discount_amount:0,net_amount:100,
+  normalized_payload:{final:true},evidence_strength:"confirmed",event_fingerprint:"restaurant-final",
+}],{
+  id:"contract-1",platform:"snoonu",contract_name:"Reviewed agreement",commission_rate_pct:18,vat_on_fees_pct:5,payment_fee_pct:0,fixed_order_fee:1,delivery_contribution:0,commission_base:"eligible_sales",promotion_funding_platform_pct:null,refund_liability:"merchant",cancellation_liability:"merchant",settlement_frequency:null,settlement_days:null,settlement_day_basis:null,settlement_schedule_type:null,settlement_weekday:null,settlement_month_days:[],settlement_cutoff_hour:null,settlement_timezone:null,settlement_weekend_days:[],settlement_holidays:[],settlement_reserve_days:0,minimum_payout_threshold:null,dispute_deadline_days:null,advertising_commitment:null,minimum_spend:null,currency:"QAR",coverage_legal_entity:null,coverage_brands:[],coverage_branches:[],effective_from:"2026-01-01",effective_to:null,status:"approved",source_file_name:null,source_sha256:null,notes:null,reviewed_by:"owner",approved_at:"2026-01-01T00:00:00Z",created_at:"2026-01-01T00:00:00Z",extraction_json:null,extraction_model:null,extraction_confidence:null,extracted_at:null,
+});
+assert.equal(restaurantFinal.orders[0].final,true);
 const shadowWithReceipt=buildNormalizedReconciliationInput([...normalized.events,...receipt.events],null);
 assert.equal(shadowWithReceipt.receipts[0].bankReference,"CONF-1");assert.equal(shadowWithReceipt.receipts[0].amount,82);
 const noContract=buildNormalizedReconciliationInput(normalized.events,null);
@@ -116,6 +124,7 @@ assert.deepEqual(reconciliationCoverage([{event_kind:"payout_total",channel:"tal
 assert.deepEqual(assessReconciliationReadiness({orderCount:2,settlementCount:2,contractTermId:"contract-1",allocatedSettlementCount:2,strongOrderCount:2,currencyCount:1}).state,"ready");
 const blockedReadiness=assessReconciliationReadiness({orderCount:0,settlementCount:1,contractTermId:null,allocatedSettlementCount:0,strongOrderCount:0,currencyCount:1});assert.equal(blockedReadiness.state,"blocked");assert(blockedReadiness.missing.some(item=>item.includes("order-level")));assert(blockedReadiness.missing.some(item=>item.includes("agreement")));
 assert.deepEqual(classifyAllocationFinding({expectedAmount:100,settledAmount:90,orderId:"ORDER-1",matchBasis:"exact_order_reference",contractTermId:"contract-1",evidenceStrength:"confirmed",blockers:[]}),{conclusion:"confirmed_discrepancy",recoverability:"claims_ready",variance:-10,explanation:"Order, agreement and allocated payout evidence support a specific discrepancy."});
+assert.equal(classifyAllocationFinding({expectedAmount:100,settledAmount:90,orderId:"ORDER-1",matchBasis:"exact_order_reference",contractTermId:"contract-1",evidenceStrength:"strong",blockers:[]}).recoverability,"claims_ready");
 assert.equal(classifyAllocationFinding({expectedAmount:100,settledAmount:90,orderId:null,matchBasis:"unmatched",contractTermId:"contract-1",evidenceStrength:"partial",blockers:[]}).conclusion,"unallocated_batch_difference");
 assert.equal(classifyAllocationFinding({expectedAmount:100,settledAmount:110,orderId:"ORDER-1",matchBasis:"exact_order_reference",contractTermId:"contract-1",evidenceStrength:"confirmed",blockers:[]}).recoverability,"review_required");
 const recoveryDraft=buildRecoveryCaseFromFinding({id:"finding-1",run_id:"run-1",account_id:"account-1",evidence_item_id:"evidence-1",contract_term_id:"contract-1",conclusion:"confirmed_discrepancy",recoverability:"claims_ready",order_external_id:"ORDER-1",settlement_reference:"SET-1",currency:"QAR",expected_amount:100,reported_amount:90,variance:-10,evidence_strength:"confirmed",explanation:"Supported difference.",blockers:[]});

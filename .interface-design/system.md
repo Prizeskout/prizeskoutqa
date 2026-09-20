@@ -74,3 +74,4 @@ Key workflows should expose a consistent sequence: source → confidence → rec
 - 2026-09-11: Align dashboard craft with the public landing page while keeping all existing workflows and content.
 - 2026-09-11: Reject equal-weight demo-card grids in favor of operational hierarchy and progressive disclosure.
 - 2026-09-11: Use brand orange only for decisions and primary actions; blue is informational, not a competing CTA color.
+- 2026-09-19: Snoonu demonstrations use an explicitly labeled, deterministic contract simulation and evidence chain; never imply a live merchant connection or external write.

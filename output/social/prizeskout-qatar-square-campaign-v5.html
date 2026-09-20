@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PrizeSkout Qatar Campaign V5</title>
+  <style>
+    :root { --navy:#050b18; --orange:#ff6b35; --paper:#f5f0e7; --maroon:#8a1538; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; }
+    body { font-family:Arial,Helvetica,sans-serif; background:var(--navy); }
+    .post { position:relative; width:100%; height:100%; overflow:hidden; background:var(--navy); color:#fff; isolation:isolate; }
+    .portrait { position:absolute; right:0; top:0; width:64%; height:100%; object-fit:cover; object-position:59% center; z-index:-4; }
+    .wash { position:absolute; inset:0; z-index:-3; background:linear-gradient(90deg,var(--navy) 0%,var(--navy) 42%,rgba(5,11,24,.86) 53%,rgba(5,11,24,.08) 76%); }
+    .orange-rule { position:absolute; left:0; top:0; width:100%; height:.75%; background:var(--orange); }
+    .qatar-corner { position:absolute; right:0; top:0; width:16%; height:8%; background:var(--maroon); clip-path:polygon(16% 0,100% 0,100% 100%,0 100%); }
+    .logo { position:absolute; left:5.8%; top:6%; width:22%; }
+    .chapter { position:absolute; left:5.8%; top:20%; color:#ff8b62; font-size:1.35vw; font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+    h1 { position:absolute; left:5.6%; top:25%; width:46%; margin:0; color:var(--paper); font-size:7.5vw; line-height:.91; letter-spacing:-.065em; font-weight:760; }
+    h1 span { color:var(--orange); }
+    .intro { position:absolute; left:5.8%; top:48.5%; width:41%; margin:0; color:#d5dae2; font-size:1.85vw; line-height:1.4; }
+    .intro strong { color:#fff; }
+    .proof { position:absolute; left:5.8%; bottom:10.5%; width:39%; overflow:hidden; border-radius:1.15vw; background:#12151c; border:1px solid rgba(255,255,255,.19); box-shadow:0 2vw 4vw rgba(0,0,0,.34); }
+    .proof img { display:block; width:100%; height:auto; }
+    .proof-label { position:absolute; left:7.2%; bottom:29.2%; z-index:2; padding:.65vw .8vw; background:var(--navy); border-left:.28vw solid var(--orange); font-size:.85vw; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .footer { position:absolute; left:5.8%; right:5.8%; bottom:4.4%; display:flex; justify-content:space-between; align-items:center; padding-top:1.25vw; border-top:1px solid rgba(255,255,255,.26); }
+    .footer span { font-size:1.12vw; color:#b2bac6; }
+    .url { color:#fff; font-size:1.4vw; font-weight:800; padding-bottom:.32vw; border-bottom:.25vw solid var(--orange); }
+    .location { position:absolute; right:4.4%; top:11.8%; color:#fff; font-size:1vw; font-weight:800; letter-spacing:.2em; text-transform:uppercase; text-shadow:0 2px 15px #000; }
+
+    body.tiktok .portrait { top:38%; width:100%; height:62%; object-position:58% center; }
+    body.tiktok .wash { background:linear-gradient(180deg,var(--navy) 0%,var(--navy) 42%,rgba(5,11,24,.12) 64%,rgba(5,11,24,.62) 100%); }
+    body.tiktok .orange-rule { height:.5%; }
+    body.tiktok .qatar-corner { width:25%; height:4%; }
+    body.tiktok .logo { left:7%; top:5.8%; width:28%; }
+    body.tiktok .chapter { left:7%; top:14.7%; font-size:2vw; }
+    body.tiktok h1 { left:6.8%; top:18%; width:75%; font-size:11.5vw; }
+    body.tiktok .intro { left:7%; top:34%; width:78%; font-size:2.65vw; }
+    body.tiktok .proof { left:7%; bottom:12.8%; width:48%; border-radius:2vw; }
+    body.tiktok .proof-label { left:9%; bottom:30%; padding:1vw 1.2vw; font-size:1.4vw; }
+    body.tiktok .footer { left:7%; right:7%; bottom:7%; padding-top:2vw; }
+    body.tiktok .footer span { font-size:1.9vw; }
+    body.tiktok .url { font-size:2.5vw; border-bottom-width:.45vw; }
+    body.tiktok .location { right:5%; top:7.4%; font-size:1.6vw; }
+  </style>
+</head>
+<body>
+  <main class="post">
+    <img class="portrait" src="prizeskout-qatar-merchant-portrait-v1.png" alt="Fictional GCC restaurant merchant" />
+    <div class="wash"></div><div class="orange-rule"></div><div class="qatar-corner"></div>
+    <img class="logo" src="../../src/assets/logo-dark.svg" alt="PrizeSkout" />
+    <div class="chapter">A new chapter for PrizeSkout</div>
+    <h1>Hello,<br /><span>Qatar.</span></h1>
+    <p class="intro"><strong>We are now operating from Qatar.</strong><br />Helping GCC merchants protect margin on every order.</p>
+    <div class="proof-label">Live margin visibility</div>
+    <figure class="proof"><img src="prizeskout-revenue-dashboard-crop-v1.png" alt="PrizeSkout revenue dashboard" /></figure>
+    <div class="location">Doha · Qatar</div>
+    <footer class="footer"><span>Built for profitable commerce.</span><div class="url">prizeskout.qa</div></footer>
+  </main>
+  <script>if(new URLSearchParams(location.search).get('format')==='tiktok')document.body.classList.add('tiktok');</script>
+</body>
+</html>

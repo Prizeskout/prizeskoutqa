@@ -40,7 +40,7 @@ export function classifyReconciliationEvidence(input: ReconciliationEvidence): R
   if (!input.hasOrderTruth || !input.hasOrderLevelPayoutAllocation) {
     return "unallocated_batch_difference";
   }
-  return (input.evidenceStrength ?? "confirmed") === "confirmed"
+  return ["confirmed", "strong"].includes(input.evidenceStrength ?? "confirmed")
     ? "confirmed_discrepancy"
     : "probable_discrepancy";
 }

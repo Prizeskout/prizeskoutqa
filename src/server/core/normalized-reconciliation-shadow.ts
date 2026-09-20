@@ -57,7 +57,9 @@ export function buildNormalizedReconciliationInput(events: CommerceEventRow[], c
       orders.push({
         orderId: event.order_external_id!, amount: money(expected),
         currency: (event.currency || contract.currency || "UNKNOWN").toUpperCase(),
-        final: event.normalized_payload?.eligible === true,
+        final:
+          event.normalized_payload?.eligible === true ||
+          event.normalized_payload?.final === true,
         evidenceReady: event.evidence_strength === "confirmed" || event.evidence_strength === "strong",
       });
     }

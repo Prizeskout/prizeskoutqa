@@ -103,13 +103,35 @@ export const Route = createFileRoute("/api/repricing/catalog")({
         const economicsIds=[...new Set<string>((decideRows??[]).map((row:any)=>String(row.economics_version_id??"")).filter((value:string)=>!!value))];
         const {data:economicsRows}=economicsIds.length?await (supabaseAdmin as any).from("ps_economics_versions").select("id,account_id,merchant_id,channel,status,effective_from,effective_to,source_contract_id").in("id",economicsIds):{data:[]};
         const economicsById=new Map((economicsRows??[]).map((row:any)=>[String(row.id),row]));
-        const { data: costEvidenceRows } = await (supabaseAdmin as any)
+        const { data: restaurantCostRows, error: restaurantCostError } = await (supabaseAdmin as any)
           .from("ps_product_cost_evidence")
           .select("sku,unit_cost,currency,effective_from,source_provider")
           .eq("account_id", accountId)
           .lte("effective_from", new Date().toISOString().slice(0, 10))
           .or(`effective_to.is.null,effective_to.gte.${new Date().toISOString().slice(0, 10)}`)
           .order("effective_from", { ascending: false });
+        let costEvidenceRows = restaurantCostRows ?? [];
+        if (restaurantCostError?.code === "PGRST205" || restaurantCostError?.code === "42P01") {
+          const { data: versionRows, error: versionError } = await (supabaseAdmin as any)
+            .from("ps_product_cost_versions")
+            .select("sku,amount,currency,effective_from,source")
+            .eq("account_id", accountId)
+            .eq("merchant_id", accountId)
+            .is("effective_to", null)
+            .order("effective_from", { ascending: false });
+          if (versionError) {
+            return json({ error: "We could not load verified product costs.", action: "Refresh the page and try again. No prices were changed." }, 500);
+          }
+          costEvidenceRows = (versionRows ?? []).map((row:any) => ({
+            sku: row.sku,
+            unit_cost: row.amount,
+            currency: row.currency,
+            effective_from: String(row.effective_from).slice(0,10),
+            source_provider: row.source,
+          }));
+        } else if (restaurantCostError) {
+          return json({ error: "We could not load verified product costs.", action: "Refresh the page and try again. No prices were changed." }, 500);
+        }
         const latestCostBySku = new Map<string, any>();
         for (const row of costEvidenceRows ?? []) {
           const key = String(row.sku ?? "").trim().toLowerCase();
@@ -158,7 +180,7 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             sku: decision?.sku ?? evt.sku ?? "",
             name_en: evt.item_name_en ?? "",
             name_ar: (evt as unknown as Record<string, unknown>).item_name_ar as string ?? "",
-            source_platform: evt.source_platform ?? "",
+            source_platform: String(rawPayload?.target_channel ?? evt.source_platform ?? ""),
             item_id: evt.item_id,
             current_price: Number(evt.current_retail_price ?? 0),
             recommended_price: requiredPrice ?? currentPrice,

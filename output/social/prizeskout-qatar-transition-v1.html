@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1080, initial-scale=1" />
+  <title>PrizeSkout Qatar — Transition Announcement</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1080px; height: 1350px; overflow: hidden; }
+    body { font-family: Inter, "Segoe UI", Arial, sans-serif; background: #050b16; color: #fff; }
+    .artboard { position: relative; width: 1080px; height: 1350px; overflow: hidden; isolation: isolate; }
+    .background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -3; }
+    .shade {
+      position: absolute; inset: 0; z-index: -2;
+      background:
+        linear-gradient(180deg, rgba(3,8,18,.20) 0%, rgba(3,8,18,.04) 45%, rgba(3,8,18,.18) 100%),
+        linear-gradient(90deg, rgba(3,8,18,.42) 0%, rgba(3,8,18,.10) 66%, transparent 100%);
+    }
+    .frame { position: absolute; inset: 34px; border: 1px solid rgba(255,255,255,.14); pointer-events: none; }
+    .topline { position: absolute; top: 0; left: 0; width: 100%; height: 7px; background: #ff6b35; }
+    .logo { position: absolute; left: 76px; top: 74px; width: 218px; height: auto; }
+    .qatar-marker {
+      position: absolute; right: 76px; top: 82px; display: flex; align-items: center; gap: 13px;
+      font-size: 13px; font-weight: 750; letter-spacing: 2.2px; text-transform: uppercase; color: #f4e9df;
+    }
+    .qatar-marker::before { content: ""; width: 34px; height: 2px; background: #8a1538; }
+    .copy { position: absolute; left: 76px; top: 245px; width: 720px; }
+    .eyebrow { margin: 0 0 25px; color: #ff6b35; font-size: 15px; line-height: 1; font-weight: 760; letter-spacing: 2.7px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 78px; line-height: .99; letter-spacing: -3.6px; font-weight: 690; }
+    h1 span { color: #ff6b35; }
+    .description { margin: 34px 0 0; width: 610px; color: #d5d9df; font-size: 24px; line-height: 1.42; letter-spacing: -.25px; }
+    .footer { position: absolute; left: 76px; right: 76px; bottom: 69px; display: flex; align-items: flex-end; justify-content: space-between; }
+    .statement { color: #f8fafc; font-size: 18px; line-height: 1.4; font-weight: 580; }
+    .statement span { display: block; margin-top: 4px; color: #a9b1bd; font-size: 14px; font-weight: 450; }
+    .url { padding: 15px 21px 14px; border: 1px solid rgba(255,107,53,.76); color: #fff; font-size: 17px; font-weight: 650; letter-spacing: .1px; }
+  </style>
+</head>
+<body>
+  <main class="artboard">
+    <img class="background" src="prizeskout-qatar-transition-background-v1.png" alt="" />
+    <div class="shade"></div>
+    <div class="topline"></div>
+    <div class="frame"></div>
+    <img class="logo" src="../../src/assets/logo-dark.svg" alt="PrizeSkout" />
+    <div class="qatar-marker">Qatar</div>
+    <section class="copy">
+      <p class="eyebrow">Our next chapter</p>
+      <h1>A new chapter<br />begins in <span>Qatar.</span></h1>
+      <p class="description">Margin intelligence and controlled repricing for GCC merchants.</p>
+    </section>
+    <footer class="footer">
+      <div class="statement">Built in Qatar. Ready for the GCC.<span>Protect every order. Grow with confidence.</span></div>
+      <div class="url">prizeskout.qa</div>
+    </footer>
+  </main>
+</body>
+</html>

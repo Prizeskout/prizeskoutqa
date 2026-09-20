@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SnoonuPilotDemoRouteImport } from './routes/snoonu-pilot-demo'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoiCalculatorRouteImport } from './routes/roi-calculator'
 import { Route as PreviousLandingPageRouteImport } from './routes/previous-landing-page'
@@ -110,6 +111,11 @@ import { Route as ApiPartnersSnoonuV1SplatRouteImport } from './routes/api/partn
 import { Route as ApiTalabatPluginRemoteIdRemoteIdAvailabilityRouteImport } from './routes/api/talabat/plugin/remoteId.$remoteId.availability'
 import { Route as ApiTalabatPluginRemoteIdRemoteIdRemoteOrderRemoteOrderIdPosOrderStatusRouteImport } from './routes/api/talabat/plugin/remoteId.$remoteId.remoteOrder.$remoteOrderId.posOrderStatus'
 
+const SnoonuPilotDemoRoute = SnoonuPilotDemoRouteImport.update({
+  id: '/snoonu-pilot-demo',
+  path: '/snoonu-pilot-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -654,6 +660,7 @@ export interface FileRoutesByFullPath {
   '/previous-landing-page': typeof PreviousLandingPageRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/snoonu-pilot-demo': typeof SnoonuPilotDemoRoute
   '/admin/callback': typeof AdminCallbackRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
@@ -753,6 +760,7 @@ export interface FileRoutesByTo {
   '/previous-landing-page': typeof PreviousLandingPageRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/snoonu-pilot-demo': typeof SnoonuPilotDemoRoute
   '/admin/callback': typeof AdminCallbackRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
@@ -856,6 +864,7 @@ export interface FileRoutesById {
   '/previous-landing-page': typeof PreviousLandingPageRoute
   '/roi-calculator': typeof RoiCalculatorRoute
   '/signup': typeof SignupRoute
+  '/snoonu-pilot-demo': typeof SnoonuPilotDemoRoute
   '/admin/callback': typeof AdminCallbackRoute
   '/admin/merchants': typeof AdminMerchantsRoute
   '/admin/operations': typeof AdminOperationsRoute
@@ -960,6 +969,7 @@ export interface FileRouteTypes {
     | '/previous-landing-page'
     | '/roi-calculator'
     | '/signup'
+    | '/snoonu-pilot-demo'
     | '/admin/callback'
     | '/admin/merchants'
     | '/admin/operations'
@@ -1059,6 +1069,7 @@ export interface FileRouteTypes {
     | '/previous-landing-page'
     | '/roi-calculator'
     | '/signup'
+    | '/snoonu-pilot-demo'
     | '/admin/callback'
     | '/admin/merchants'
     | '/admin/operations'
@@ -1161,6 +1172,7 @@ export interface FileRouteTypes {
     | '/previous-landing-page'
     | '/roi-calculator'
     | '/signup'
+    | '/snoonu-pilot-demo'
     | '/admin/callback'
     | '/admin/merchants'
     | '/admin/operations'
@@ -1264,6 +1276,7 @@ export interface RootRouteChildren {
   PreviousLandingPageRoute: typeof PreviousLandingPageRoute
   RoiCalculatorRoute: typeof RoiCalculatorRoute
   SignupRoute: typeof SignupRoute
+  SnoonuPilotDemoRoute: typeof SnoonuPilotDemoRoute
   ApiProfitAuditRoute: typeof ApiProfitAuditRoute
   ApiRegisterCodeRoute: typeof ApiRegisterCodeRoute
   ApiRestoreRoute: typeof ApiRestoreRoute
@@ -1331,6 +1344,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/snoonu-pilot-demo': {
+      id: '/snoonu-pilot-demo'
+      path: '/snoonu-pilot-demo'
+      fullPath: '/snoonu-pilot-demo'
+      preLoaderRoute: typeof SnoonuPilotDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -2150,6 +2170,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreviousLandingPageRoute: PreviousLandingPageRoute,
   RoiCalculatorRoute: RoiCalculatorRoute,
   SignupRoute: SignupRoute,
+  SnoonuPilotDemoRoute: SnoonuPilotDemoRoute,
   ApiProfitAuditRoute: ApiProfitAuditRoute,
   ApiRegisterCodeRoute: ApiRegisterCodeRoute,
   ApiRestoreRoute: ApiRestoreRoute,
