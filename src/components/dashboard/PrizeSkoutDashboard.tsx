@@ -6796,15 +6796,34 @@ export function PrizeSkoutDashboard() {
         {sidebarNav === "manager" && <StoreManagerCommandBar
           context={headerTitle}
           examples={activeAssistantContext.examples}
+          messages={cpThread}
           lang={lang}
           busy={cpPhase === "loading"}
+          saved={cpPersistenceAvailable}
           onSubmit={(prompt) => {
-            setAssistantDrawerInput(prompt);
-            setAssistantDrawerOpen(true);
             setCpInput(prompt);
             void runCopilot(prompt, "manager");
           }}
-          onOpenAssistant={() => openAssistantDrawer()}
+          onNewChat={startNewCopilotConversation}
+          error={cpError}
+          needsReview={Boolean(
+            cpObj &&
+            cpObj.requires_confirmation === true &&
+            cpOperationStatus !== "complete" &&
+            cpOperationStatus !== "failed"
+          )}
+          approvalReady={cpOperationStatus === "ready"}
+          onApprove={() => void executeCopilotStoreWrite()}
+          onReview={() => {
+            setTab("rules");
+            window.setTimeout(
+              () =>
+                document
+                  .querySelector('[data-tour="copilot"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+              50,
+            );
+          }}
         />}
         {false && (["manager", "promotions", "rules"] as Tab[]).includes(tab) && (
           <nav
