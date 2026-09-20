@@ -32,6 +32,12 @@ export type RepricingProduct = {
   repriced_at: string | null;
   margin_floor_pct: number;
   commission_rate: number;
+  vat_rate: number;
+  payment_fee_rate: number;
+  fixed_order_fee: number;
+  promotion_contribution_rate: number;
+  logistics_subsidy: number;
+  contribution_amount: number | null;
   cost_confidence: "verified" | "estimated" | "unknown";
   base_cost: number | null;
   preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; minimum_contribution_amount:number; policy_version:number; policy_scope:"global"|"channel"; approval_mode:"recommend_only"|"auto_within_limit"|"approval_every_change"; evidence_blockers:string[]; outcome:"safe"|"blocked_missing_cost"|"blocked_missing_economics"|"blocked_stale_evidence"|"within_limit"|"cannot_reach_target_within_limit" };
@@ -195,6 +201,12 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             repriced_at: evt.status === "repriced" ? new Date().toISOString() : null,
             margin_floor_pct: Number(decision?.margin_floor_pct ?? 0.18),
             commission_rate: Number(decision?.commission_rate ?? 0),
+            vat_rate: Number(decision?.vat_rate ?? 0),
+            payment_fee_rate: Number(decision?.payment_fee_rate ?? 0),
+            fixed_order_fee: Number(decision?.fixed_order_fee ?? 0),
+            promotion_contribution_rate: Number(decision?.promotion_contribution_rate ?? 0),
+            logistics_subsidy: Number(decision?.logistics_subsidy ?? 0),
+            contribution_amount: currentAnalysis?.netMargin ?? (decision?.net_margin == null ? null : Number(decision.net_margin)),
             cost_confidence: hasConfirmedCost
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",

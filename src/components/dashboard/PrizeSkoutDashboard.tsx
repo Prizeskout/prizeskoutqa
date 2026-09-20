@@ -200,6 +200,12 @@ interface ImportedProduct {
   inventory_is_infinite?: boolean;
   margin_floor_pct?: number;
   commission_rate?: number;
+  vat_rate?: number;
+  payment_fee_rate?: number;
+  fixed_order_fee?: number;
+  promotion_contribution_rate?: number;
+  logistics_subsidy?: number;
+  contribution_amount?: number | null;
   cost_confidence?: "verified" | "estimated" | "unknown";
   base_cost?: number | null;
   preview?: {
@@ -7704,7 +7710,7 @@ export function PrizeSkoutDashboard() {
             ) : (<>
               {sidebarNav === "margin" && <>
                 <div id="margin-intelligence-section" style={{ scrollMarginTop: 24 }}>
-                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} orders={payoutData?.order_count ?? 0} expectedPayout={payoutData?.expected_payout ?? null} channels={overviewChannels} riskRows={overviewRisks} />
+                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} orders={payoutData?.order_count ?? 0} expectedPayout={payoutData?.expected_payout ?? null} channels={overviewChannels} riskRows={overviewRisks} productRows={importedProducts} />
                 </div>
                 <div className="ps-legacy-margin-workspace" aria-hidden="true">
 
