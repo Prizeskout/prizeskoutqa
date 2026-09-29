@@ -291,7 +291,7 @@ export async function getCopilotFinancialEvidence(accountId: string) {
   const db = supabaseAdmin as any;
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - 365);
-  const [runs, findings, contracts, cases, evidence, events, costs] = await Promise.all([
+  const [runs, findings, contracts, cases, evidence, events] = await Promise.all([
     db
       .from("ps_settlement_reconciliation_runs")
       .select("id,platform,currency,period_start,period_end,status,summary,created_at")
@@ -336,15 +336,36 @@ export async function getCopilotFinancialEvidence(accountId: string) {
       .gte("occurred_at", since.toISOString())
       .order("occurred_at", { ascending: false })
       .limit(1000),
-    db
-      .from("ps_product_cost_evidence")
-      .select("sku,currency,unit_cost,effective_from,effective_to,source_provider,created_at")
+  ]);
+  for (const result of [runs, findings, contracts, cases, evidence, events])
+    if (result.error) throw new Error(result.error.message);
+  let costs = await db
+    .from("ps_product_cost_evidence")
+    .select("sku,currency,unit_cost,effective_from,effective_to,source_provider,created_at")
+    .eq("account_id", accountId)
+    .order("effective_from", { ascending: false })
+    .limit(1000);
+  if (costs.error?.code === "PGRST205" || costs.error?.code === "42P01") {
+    const legacy = await db
+      .from("ps_product_cost_versions")
+      .select("sku,currency,amount,effective_from,effective_to,source,created_at")
       .eq("account_id", accountId)
       .order("effective_from", { ascending: false })
-      .limit(1000),
-  ]);
-  for (const result of [runs, findings, contracts, cases, evidence, events, costs])
-    if (result.error) throw new Error(result.error.message);
+      .limit(1000);
+    costs = legacy.error ? legacy : {
+      ...legacy,
+      data: (legacy.data ?? []).map((row: Record<string, unknown>) => ({
+        sku: row.sku,
+        currency: row.currency,
+        unit_cost: row.amount,
+        effective_from: row.effective_from,
+        effective_to: row.effective_to,
+        source_provider: row.source,
+        created_at: row.created_at,
+      })),
+    };
+  }
+  if (costs.error) throw new Error(costs.error.message);
   return summarizeCopilotFinancialEvidence({
     runs: runs.data ?? [],
     findings: findings.data ?? [],

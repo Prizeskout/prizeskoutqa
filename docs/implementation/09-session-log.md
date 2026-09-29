@@ -320,3 +320,45 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Implementation: `src/routes/embedded/salla.tsx`, `src/server/core/salla-account-link.ts`, `src/server/email/index.ts`, `src/server/email/strings.ts`, and `src/server/email/templates.ts`.
 - Continuity: `docs/implementation/state.yaml`, this active task packet, and `docs/implementation/09-session-log.md`.
 - Exact next action: review and deploy this copy/UI revision, then verify the rendered English and Arabic email/embedded experience in a Partner demo store. This does not replace the separate real-merchant pilot requirement.
+
+## 2026-09-29 — Logged-in Salla product smoke and dashboard truthfulness fixes
+
+### Production exercise and fixes
+
+- Preserved the existing untracked user artifacts and resumed from `P0-SALLA-001`.
+- Used the already logged-in PrizeSkout account. Salla and Zid were already connected; no new merchant authorization or account was created.
+- Ran Salla catalogue synchronization. The combined catalogue remained 32 products: 20 Salla and 12 Zid, with 8 confirmed costs and 24 missing.
+- Corrected integration sync feedback so only the requested channel displays `Syncing…`.
+- Removed historical repricing decision margins/contribution from the current catalogue response when current cost/economics evidence is missing; added an explicit `terms_ready` boundary.
+- Corrected per-product currency display and prevented unverified products from showing contribution or margin as current financial truth.
+- Corrected Store Manager cost coverage from 0% to the shared 8/32 (25%) catalogue result, including the setup footer.
+- Corrected promotion inputs from decimal margin ratios to whole percentages, filtered products to selected target channels, and derived the displayed currency from the selected products. A live Zid-only scenario showed SAR and contained no Salla rows.
+- Clarified that the empty immutable Evidence Library is distinct from retained legacy payout checks and activity.
+- Added a safe Copilot fallback from the unavailable `ps_product_cost_evidence` table to legacy `ps_product_cost_versions`. A fresh live Copilot question returned an evidence-backed insufficient-data answer instead of a schema-cache error.
+- Order Guard remains unavailable with a contained HTTP 503 because the production Order Guard tables are not provisioned. No migration was deployed because production migration state is not verified.
+- No protected price publication, approval, dispute, refund, outbound message, or destructive merchant action was executed.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` — passed.
+- Startup and final `npm run verify-salla-contract` — passed.
+- Startup and final `npm run verify-zid-contract` — passed.
+- `npm run typecheck` — passed after the final implementation.
+- `npx tsx scripts/verify-promotion-profitability.mts` — passed.
+- `npx tsx scripts/verify-copilot-prompts.mts` — passed.
+- `npm run verify-api-independent-foundation` — passed.
+- `npm run build` — passed after the final implementation; existing Vite chunk-size and dynamic/static-import warnings only.
+- `npx wrangler deploy --config dist/server/wrangler.json` — passed; final version `bab47b84-5fbd-4b8d-8caf-ffc2ce5528cb`, routes `prizeskout.qa/*` and `app.prizeskout.qa`.
+- HTTP smoke: `https://prizeskout.qa/`, `https://app.prizeskout.qa/`, and both apex/app `/embedded/salla` routes returned 200.
+- Live Salla sync — passed; only Salla displayed `Syncing…`, then returned to ready state with 32-product coverage.
+- Live Margin Intelligence — passed; Salla and Zid prices displayed as SAR, missing evidence produced `Not calculated`, and Salla rows required terms/cost evidence.
+- Live Store Manager — passed after data load; cost coverage, catalogue health, channel status, and setup footer all displayed 25%.
+- Live Promotion Simulator — passed; Zid-only results displayed SAR, excluded Salla products, and did not invent contribution for products without eligible evidence.
+- Live Evidence & History — passed; immutable-vault empty state explicitly preserved access to legacy checks/history.
+- Live CFO Copilot — passed; the forecast-evidence prompt returned an evidence-backed insufficient-data response with three evidence references.
+
+### Changed files and exact next action
+
+- Implementation: `src/routes/api/repricing/catalog.ts`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, `src/components/dashboard/FocusedIntelligenceSummary.tsx`, `src/components/dashboard/MerchantOperatingLoop.tsx`, `src/components/dashboard/evidence/EvidenceLibrary.tsx`, `src/components/dashboard/promotions/PromotionProfitabilityWorkspace.tsx`, `src/lib/promotion-profitability.ts`, `src/server/core/copilot-financial-evidence.ts`, and `scripts/verify-salla-contract.mts`.
+- Continuity: `docs/implementation/state.yaml`, `01-current-state.md`, `05-deployment-register.md`, `07-risk-register.md`, this session log, and the active task packet.
+- Exact next action: reconcile the production migration ledger and, only with explicit authorization, provision and verify Order Guard. Separately render-check the revised welcome email and embedded checklist in English and Arabic and obtain an approved real-merchant pilot before changing readiness.

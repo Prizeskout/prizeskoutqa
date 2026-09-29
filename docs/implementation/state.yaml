@@ -30,14 +30,14 @@ tasks:
   P0-SALLA-001:
     title: Recover and complete the Salla integration end to end
     status: in_progress
-    code: embedded_bootstrap_delivery_aware_value_led_welcome_and_evidence_checklist_retry_scope_bulk_sync_and_refresh_rotation_implemented
-    tests: type_contract_and_production_build_passing
+    code: embedded_bootstrap_delivery_aware_value_led_welcome_and_evidence_checklist_retry_scope_bulk_sync_refresh_rotation_and_dashboard_truthfulness_fixes_implemented
+    tests: type_contract_promotion_copilot_foundation_and_production_build_passing
     migration: unknown
     configuration: easy_mode_embedded_page_onboarding_resend_and_current_salla_oauth_credentials_configured
-    deployment: apex_and_app_custom_domain_worker_routes_deployed_version_f39b637f
-    production_verification: partner_demo_store_only_fresh_install_reopen_sync_scope_failure_retry_authenticated_arabic_exact_viewports_provider_email_delivery_one_time_link_rejection_and_single_use_refresh_rotation_verified_no_real_merchant_evidence
+    deployment: apex_and_app_custom_domain_worker_routes_deployed_version_bab47b84
+    production_verification: partner_demo_store_and_logged_in_prizeskout_account_only_salla_sync_32_product_catalog_currency_margin_coverage_promotion_evidence_and_copilot_flows_verified_no_real_merchant_evidence_order_guard_unprovisioned
     customer_readiness: not_ready
-    next_action: Review and deploy the revised Salla welcome email and embedded evidence checklist, then verify their rendered English and Arabic production experience in a Partner demo store. Separately decide whether to roll the exposed Salla client secret and obtain an approved real-merchant pilot before customer readiness can change.
+    next_action: Provision and verify the Order Guard database migration only after production migration state is authorized and reconciled. Separately render-check the revised welcome email and embedded checklist in English and Arabic, decide whether to roll the exposed Salla client secret, and obtain an approved real-merchant pilot before customer readiness can change.
   P0-001:
     title: Productionize forwarding-email intake
     status: ready_after_priority_task

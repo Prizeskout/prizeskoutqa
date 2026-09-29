@@ -4,6 +4,7 @@ export type PromotionProduct = {
   current_price: number;
   net_margin_pct: number | null;
   source_platform: string;
+  currency?: string;
   unit_cost?: number | null;
   cost_confidence?: "verified" | "estimated" | "unknown";
   /** Historical share of orders containing this SKU, normalized at runtime. */

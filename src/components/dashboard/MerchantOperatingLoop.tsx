@@ -88,12 +88,14 @@ export function MerchantOperatingLoop({
   onAskCopilot,
   onRunTask,
   onContinueSetup,
+  catalogCoverage,
   lang = "en",
 }: {
   mode?: "hub" | "history";
   onAskCopilot?: (prompt: string) => void;
   onRunTask?: (prompt: string) => Promise<boolean>;
   onContinueSetup?: () => void;
+  catalogCoverage?: number;
   lang?: "en" | "ar" | "fr";
 }) {
   const tr = (en: string, ar: string, fr: string) => (lang === "ar" ? ar : lang === "fr" ? fr : en);
@@ -485,7 +487,7 @@ export function MerchantOperatingLoop({
     setTaskFocus(focus);
     window.setTimeout(() => revealSection("management-desk"), 0);
   };
-  const coverage = Math.round(data?.profit_brief?.verified_cost_coverage_pct ?? 0);
+  const coverage = Math.round(catalogCoverage ?? data?.profit_brief?.verified_cost_coverage_pct ?? 0);
   if (mode === "history")
     return (
       <section style={card}>
@@ -927,7 +929,7 @@ export function MerchantOperatingLoop({
         />
       </div>
 
-      {(data?.profit_brief?.verified_cost_coverage_pct ?? 100) < 80 && (
+      {coverage < 80 && (
         <div
           style={{
             padding: "14px 16px",
@@ -944,8 +946,8 @@ export function MerchantOperatingLoop({
             )}
           </strong>
           <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>
-            ✓ Zid connected · ✓ Orders checked · Next: confirm product costs. Evidence is{" "}
-            {Math.round(data?.profit_brief?.verified_cost_coverage_pct ?? 0)}%.
+            ✓ Channels connected · ✓ Orders checked · Next: confirm product costs. Evidence is{" "}
+            {coverage}%.
           </div>
           {onContinueSetup && (
             <button type="button" onClick={onContinueSetup} style={linkButton}>

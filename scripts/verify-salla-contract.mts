@@ -56,6 +56,15 @@ const embeddedSource = readFileSync("src/routes/embedded/salla.tsx", "utf8");
 assert.match(embeddedSource, /sessionToken\.current\s*=\s*token/);
 assert.match(embeddedSource, /sessionToken\.current\s*\?\?\s*embedded\.auth\.getToken\(\)/);
 
+const catalogSource = readFileSync("src/routes/api/repricing/catalog.ts", "utf8");
+assert.match(catalogSource, /net_margin_pct:\s*currentAnalysis\?\.netMarginPct\s*\?\?\s*null/);
+assert.match(catalogSource, /contribution_amount:\s*currentAnalysis\?\.netMargin\s*\?\?\s*null/);
+assert.match(catalogSource, /terms_ready:\s*!missingEconomics\s*&&\s*Boolean\(decision\)/);
+
+const copilotEvidenceSource = readFileSync("src/server/core/copilot-financial-evidence.ts", "utf8");
+assert.match(copilotEvidenceSource, /ps_product_cost_versions/);
+assert.match(copilotEvidenceSource, /PGRST205/);
+
 const rawBody = JSON.stringify({ event: "app.store.authorize", merchant: 123 });
 const secret = "salla-test-secret";
 const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);

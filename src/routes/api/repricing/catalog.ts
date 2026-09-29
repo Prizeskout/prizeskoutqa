@@ -40,6 +40,7 @@ export type RepricingProduct = {
   contribution_amount: number | null;
   cost_confidence: "verified" | "estimated" | "unknown";
   base_cost: number | null;
+  terms_ready: boolean;
   preview?: { required_price:number|null; allowed_price:number|null; current_margin_pct:number; projected_margin_at_required:number|null; projected_margin_at_allowed:number|null; floor_breached:boolean; required_increase_pct:number; allowed_increase_pct:number; maximum_increase_pct:number; margin_floor_pct:number; minimum_contribution_amount:number; policy_version:number; policy_scope:"global"|"channel"; approval_mode:"recommend_only"|"auto_within_limit"|"approval_every_change"; evidence_blockers:string[]; outcome:"safe"|"blocked_missing_cost"|"blocked_missing_economics"|"blocked_stale_evidence"|"within_limit"|"cannot_reach_target_within_limit" };
 };
 
@@ -190,8 +191,11 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             item_id: evt.item_id,
             current_price: Number(evt.current_retail_price ?? 0),
             recommended_price: requiredPrice ?? currentPrice,
-            net_margin_pct: currentAnalysis?.netMarginPct??(decision?Number(decision.net_margin_pct):null),
-            floor_breached: currentAnalysis?.floorBreached??Boolean(decision?.floor_breached),
+            // Historical decisions remain useful provenance, but must never be
+            // presented as current financial truth after cost evidence or
+            // approved economics becomes unavailable.
+            net_margin_pct: currentAnalysis?.netMarginPct ?? null,
+            floor_breached: currentAnalysis?.floorBreached ?? false,
             decision_action: decision?.decision_action ?? (missingEconomics ? "blocked_missing_economics" : "blocked_missing_cost"),
             currency: evt.currency ?? "SAR",
             status: evt.status ?? "received",
@@ -206,11 +210,12 @@ export const Route = createFileRoute("/api/repricing/catalog")({
             fixed_order_fee: Number(decision?.fixed_order_fee ?? 0),
             promotion_contribution_rate: Number(decision?.promotion_contribution_rate ?? 0),
             logistics_subsidy: Number(decision?.logistics_subsidy ?? 0),
-            contribution_amount: currentAnalysis?.netMargin ?? (decision?.net_margin == null ? null : Number(decision.net_margin)),
+            contribution_amount: currentAnalysis?.netMargin ?? null,
             cost_confidence: hasConfirmedCost
               ? "verified"
               : costSource.startsWith("estimated_") ? "estimated" : "unknown",
             base_cost: suppliedCost ? Number(suppliedCost.unit_cost) : costSource === "platform_catalog" && decision ? Number(decision.base_cost) : null,
+            terms_ready: !missingEconomics && Boolean(decision),
             preview:currentAnalysis?{required_price:requiredPrice==null?null:Math.round(requiredPrice*100)/100,allowed_price:allowedPrice==null?null:Math.round(allowedPrice*100)/100,current_margin_pct:currentAnalysis.netMarginPct,projected_margin_at_required:projectedRequired?.netMarginPct??null,projected_margin_at_allowed:projectedAllowed?.netMarginPct??null,floor_breached:currentAnalysis.floorBreached,required_increase_pct:requiredIncrease,allowed_increase_pct:allowedIncrease,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,approval_mode:resolvedPolicy.approvalMode,evidence_blockers:evidenceBlockers,outcome:evidenceBlockers.length?"blocked_stale_evidence":!currentAnalysis.floorBreached?"safe":requiredIncrease<=effectiveMaxIncrease?"within_limit":"cannot_reach_target_within_limit"}:{required_price:null,allowed_price:null,current_margin_pct:Number(decision?.net_margin_pct??0),projected_margin_at_required:null,projected_margin_at_allowed:null,floor_breached:Boolean(decision?.floor_breached),required_increase_pct:0,allowed_increase_pct:0,maximum_increase_pct:effectiveMaxIncrease,margin_floor_pct:effectiveFloor,minimum_contribution_amount:effectiveMinimumContribution,policy_version:resolvedPolicy.version,policy_scope:resolvedPolicy.scope,approval_mode:resolvedPolicy.approvalMode,evidence_blockers:evidenceBlockers,outcome:missingEconomics?"blocked_missing_economics":"blocked_missing_cost"},
           });
         }

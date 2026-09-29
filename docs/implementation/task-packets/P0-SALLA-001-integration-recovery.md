@@ -67,12 +67,12 @@ Fresh install, repeat callback, existing account, reopen, missing scope, sync fa
 | Dimension | State |
 |---|---|
 | Design | Easy Mode retained; embedded recovery implemented |
-| Code | Embedded bootstrap, provisioning, delivery-aware welcome flow, retained iframe retry token, corrected scope checks, bulk catalog sync, refresh lease, standards-compliant refresh request, CSP, and onboarding implemented |
-| Tests | Typecheck, Salla contract, Zid contract, and production build passing after refresh fix |
+| Code | Embedded bootstrap, provisioning, delivery-aware welcome flow, retained iframe retry token, corrected scope checks, bulk catalog sync, refresh lease, standards-compliant refresh request, CSP, onboarding, and logged-in dashboard truthfulness fixes implemented |
+| Tests | Typecheck, Salla contract, Zid contract, promotion, Copilot, API-independent foundation, continuity, and production build passing |
 | Migration | Unknown |
 | Partner configuration | Easy Mode retained; embedded page and onboarding step configured; Resend sending domain verified |
-| Deployment | Worker version `f39b637f-c1f7-412a-9134-c29e6230a294` deployed on `prizeskout.qa/*` and `app.prizeskout.qa`; current Salla OAuth credentials installed |
-| Production verification | Partner demo-store environment only: fresh authorization, test-account provisioning, Resend delivery, activation, consumed-link rejection, 20-product sync, persisted single-use refresh rotation, reopen/reinstall, missing-scope and forced-failure recovery, authenticated Arabic, and exact 375/768/1440 viewport matrix verified. No real Salla merchant evidence exists. |
+| Deployment | Worker version `bab47b84-5fbd-4b8d-8caf-ffc2ce5528cb` deployed on `prizeskout.qa/*` and `app.prizeskout.qa`; current Salla OAuth credentials installed |
+| Production verification | Partner demo-store lifecycle plus a logged-in PrizeSkout smoke account: Salla sync, 32-product combined catalog, 25% cost coverage, SAR display, evidence-gated margins, channel-filtered promotion simulation, evidence messaging, and Copilot answer verified. Order Guard remains unprovisioned. No real Salla merchant evidence exists. |
 | Customer readiness | Not ready |
 
 ## Baseline verification
@@ -135,6 +135,7 @@ npm run typecheck
 - With user confirmation, deleted PrizeSkout only from `PrizeSkout Fresh Install QA`; Salla showed an explicit successful-deletion notice. Reinstalled immediately and Salla created a new installed-app record, with its app log showing the new subscription and preceding deletion as distinct events.
 - The reinstalled app opened successfully in a newly issued embedded iframe session, but it reused the existing PrizeSkout connection and immediately showed the prior completed 20-product state. Resend still showed `No sent emails yet`. This directly confirms that reinstalling the same demo merchant does not force a new `app.store.authorize` payload or welcome dispatch.
 - Salla Partner webhook logs showed 100% health but no visible rows under the current default filters. A never-before-used demo merchant is required to verify first authorization and token issuance. The Create Demo Store form is open, paused before credential entry/account creation for action-time user confirmation.
+- 2026-09-29 logged-in product smoke: the account already had connected Zid and Salla sources. A live Salla sync completed and retained 32 products total (20 Salla, 12 Zid). Fixed channel-local sync feedback, stale margin values shown without current evidence, Salla/Zid SAR rendering, Store Manager coverage disagreement, promotion percentage conversion/channel filtering/currency, ambiguous immutable-vault empty copy, and Copilot failure when `ps_product_cost_evidence` is absent. Production version `bab47b84-5fbd-4b8d-8caf-ffc2ce5528cb` passed live retest. Order Guard still returns a contained 503 because its production tables are not provisioned.
 
 ## Changed files
 
@@ -153,10 +154,18 @@ npm run typecheck
 - `src/server/email/index.ts`
 - `src/server/email/strings.ts`
 - `src/server/email/templates.ts`
+- `src/routes/api/repricing/catalog.ts`
+- `src/components/dashboard/PrizeSkoutDashboard.tsx`
+- `src/components/dashboard/FocusedIntelligenceSummary.tsx`
+- `src/components/dashboard/MerchantOperatingLoop.tsx`
+- `src/components/dashboard/evidence/EvidenceLibrary.tsx`
+- `src/components/dashboard/promotions/PromotionProfitabilityWorkspace.tsx`
+- `src/lib/promotion-profitability.ts`
+- `src/server/core/copilot-financial-evidence.ts`
 - `scripts/verify-salla-contract.mts`
 - `src/worker-entry.ts`
 - `wrangler.jsonc`
 
 ## Exact next action
 
-Review and deploy the revised Salla welcome email and embedded evidence checklist, then verify their rendered English and Arabic production experience in a Partner demo store. Treat all completed lifecycle checks as Partner demo-store validation only. Separately decide whether to roll the exposed Salla client secret and obtain an approved real Salla merchant pilot before changing customer readiness.
+Reconcile the production migration ledger and provision Order Guard only with explicit authorization, then verify its read-only status flow. Separately render-check the revised welcome email and embedded checklist in English and Arabic, decide whether to roll the exposed Salla client secret, and obtain an approved real Salla merchant pilot before changing customer readiness.

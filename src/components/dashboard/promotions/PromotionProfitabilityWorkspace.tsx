@@ -46,7 +46,7 @@ const promoCss = `
 export function PromotionProfitabilityWorkspace({
   products,
   contract,
-  currency,
+  currency: fallbackCurrency,
 }: {
   products: PromotionProduct[];
   contract: ContractTerm | null;
@@ -78,6 +78,18 @@ export function PromotionProfitabilityWorkspace({
   const [targetChannels, setTargetChannels] = useState<string[]>([
     products[0]?.source_platform ?? "zid",
   ]);
+  const selectedCurrencies = new Set(
+    products
+      .filter(
+        (product) =>
+          selected.includes(product.sku) && targetChannels.includes(product.source_platform),
+      )
+      .map((product) => product.currency)
+      .filter((value): value is string => Boolean(value)),
+  );
+  const currency = selectedCurrencies.size === 1
+    ? [...selectedCurrencies][0]
+    : fallbackCurrency;
   const [financeReviewer, setFinanceReviewer] = useState("");
   const [operationsReviewer, setOperationsReviewer] = useState("");
   const [launchReferences, setLaunchReferences] = useState<Record<string, string>>({});
@@ -252,8 +264,11 @@ export function PromotionProfitabilityWorkspace({
     simulationRequest && simulationRequest.signature !== inputSignature,
   );
   const simulatedProducts = useMemo(
-    () => products.filter((product) => (simulationRequest?.selected ?? []).includes(product.sku)),
-    [products, simulationRequest],
+    () => products.filter((product) =>
+      (simulationRequest?.selected ?? []).includes(product.sku) &&
+      targetChannels.includes(product.source_platform)
+    ),
+    [products, simulationRequest, targetChannels],
   );
   const simulatedInputs = simulationRequest?.inputs ?? inputs;
   const result = useMemo(

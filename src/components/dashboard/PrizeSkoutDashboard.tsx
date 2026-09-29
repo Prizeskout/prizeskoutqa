@@ -208,6 +208,7 @@ interface ImportedProduct {
   contribution_amount?: number | null;
   cost_confidence?: "verified" | "estimated" | "unknown";
   base_cost?: number | null;
+  terms_ready?: boolean;
   preview?: {
     required_price: number | null;
     allowed_price: number | null;
@@ -3246,6 +3247,7 @@ export function PrizeSkoutDashboard() {
   const SYNC_CAPABLE_PLATFORMS = ["zid", "salla", "foodics"] as const;
   type SyncCapablePlatform = (typeof SYNC_CAPABLE_PLATFORMS)[number];
   const [syncingCatalog, setSyncingCatalog] = useState(false);
+  const [syncingPlatforms, setSyncingPlatforms] = useState<Set<string>>(() => new Set());
   const syncCatalogs = async (
     platforms: readonly SyncCapablePlatform[] = SYNC_CAPABLE_PLATFORMS,
   ) => {
@@ -3253,6 +3255,7 @@ export function PrizeSkoutDashboard() {
     const ac = localStorage.getItem("ps_access_code") ?? "";
     if (!mid || !ac || syncingCatalog) return;
     setSyncingCatalog(true);
+    setSyncingPlatforms(new Set(platforms));
     try {
       const results = await Promise.all(
         platforms.map(async (platform) => {
@@ -3307,6 +3310,7 @@ export function PrizeSkoutDashboard() {
       }
     } finally {
       setSyncingCatalog(false);
+      setSyncingPlatforms(new Set());
     }
   };
   const syncAllCatalogs = () => syncCatalogs();
@@ -4034,7 +4038,7 @@ export function PrizeSkoutDashboard() {
         if (!contract || [contract.commission_rate_pct, contract.promotion_funding_platform_pct, contract.vat_on_fees_pct, contract.payment_fee_pct, contract.fixed_order_fee].some(value => value == null) || !["gross_before_discount", "net_after_discount"].includes(String(contract.commission_base))) throw new Error(`Complete and approve the ${platform.toUpperCase()} commercial terms before simulating this campaign.`);
         const scoped = importedProducts.filter(product => product.source_platform === platform && (prompt.toLowerCase().includes("all") || [product.sku, product.name_en, product.name_ar].some(value => value && prompt.toLowerCase().includes(String(value).toLowerCase()))));
         if (!scoped.length) throw new Error(`Name a ${platform.toUpperCase()} product or say “all ${platform.toUpperCase()} products.”`);
-        const simulation = simulatePromotion(scoped.map(product => ({ sku: product.sku, name: product.name_en || product.name_ar, current_price: product.current_price, net_margin_pct: product.net_margin_pct, source_platform: product.source_platform, unit_cost: product.base_cost, cost_confidence: product.cost_confidence })), { discount_pct: Number(discountMatch[1] ?? discountMatch[2]), platform_funding_pct: Number(contract.promotion_funding_platform_pct), commission_pct: Number(contract.commission_rate_pct), vat_on_fees_pct: Number(contract.vat_on_fees_pct), payment_fee_pct: Number(contract.payment_fee_pct), fixed_order_fee: Number(contract.fixed_order_fee), commission_base: contract.commission_base as "gross_before_discount" | "net_after_discount", expected_conversion_lift_pct: Number(liftMatch[1]), baseline_orders: Number(ordersMatch[1] ?? ordersMatch[2]), duration_days: Number(daysMatch[1]), minimum_margin_pct: persistedGlobalFloor });
+        const simulation = simulatePromotion(scoped.map(product => ({ sku: product.sku, name: product.name_en || product.name_ar, current_price: product.current_price, net_margin_pct: product.net_margin_pct == null ? null : product.net_margin_pct * 100, source_platform: product.source_platform, currency: product.currency, unit_cost: product.base_cost, cost_confidence: product.cost_confidence })), { discount_pct: Number(discountMatch[1] ?? discountMatch[2]), platform_funding_pct: Number(contract.promotion_funding_platform_pct), commission_pct: Number(contract.commission_rate_pct), vat_on_fees_pct: Number(contract.vat_on_fees_pct), payment_fee_pct: Number(contract.payment_fee_pct), fixed_order_fee: Number(contract.fixed_order_fee), commission_base: contract.commission_base as "gross_before_discount" | "net_after_discount", expected_conversion_lift_pct: Number(liftMatch[1]), baseline_orders: Number(ordersMatch[1] ?? ordersMatch[2]), duration_days: Number(daysMatch[1]), minimum_margin_pct: persistedGlobalFloor });
         const metrics = { products: simulation.products.length, eligible: simulation.eligible_products, expected_orders: simulation.expected_orders, baseline_contribution: simulation.baseline_contribution, campaign_contribution: simulation.campaign_contribution, incremental_contribution: simulation.incremental_contribution, margin_floor: `${persistedGlobalFloor}%`, decision: simulation.profitable ? "safe for review" : "not approval ready" };
         const reply = simulation.profitable ? "The promotion beats the baseline, every included product meets the active margin floor, and the evidence is ready for review." : "The promotion is not ready for approval. Review the result below: it either misses the baseline, breaches a product margin floor, or lacks verified cost evidence.";
         const operation: Record<string, unknown> = { _type: "operation", operation: "promotion_simulation", platform, summary: reply, requires_confirmation: false, risk_level: "read", metrics };
@@ -7629,6 +7633,7 @@ export function PrizeSkoutDashboard() {
               onAskCopilot={runPrizeSkoutAssistant}
               onRunTask={runPreparedManagerTask}
               onContinueSetup={reviewProductsMissingCosts}
+              catalogCoverage={importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}
             />
 
             <button
@@ -7668,6 +7673,7 @@ export function PrizeSkoutDashboard() {
               onAskCopilot={runPrizeSkoutAssistant}
               onRunTask={runPreparedManagerTask}
               onContinueSetup={reviewProductsMissingCosts}
+              catalogCoverage={importedProducts.length ? Math.round((storeOpportunity.verified / importedProducts.length) * 100) : 0}
             />
           </section>
         )}
@@ -9408,8 +9414,9 @@ export function PrizeSkoutDashboard() {
                         sku: product.sku,
                         name: product.name_en || product.name_ar || product.sku,
                         current_price: product.current_price,
-                        net_margin_pct: product.net_margin_pct,
+                        net_margin_pct: product.net_margin_pct == null ? null : product.net_margin_pct * 100,
                         source_platform: product.source_platform,
+                        currency: product.currency,
                         unit_cost: product.base_cost ?? null,
                         cost_confidence: product.cost_confidence ?? "unknown",
                       }))}
@@ -10298,8 +10305,9 @@ export function PrizeSkoutDashboard() {
                   sku: product.sku,
                   name: product.name_en || product.name_ar || product.sku,
                   current_price: product.current_price,
-                  net_margin_pct: product.net_margin_pct,
+                  net_margin_pct: product.net_margin_pct == null ? null : product.net_margin_pct * 100,
                   source_platform: product.source_platform,
+                  currency: product.currency,
                   unit_cost: product.base_cost ?? null,
                   cost_confidence: product.cost_confidence ?? "unknown",
                 }))}
@@ -13080,9 +13088,9 @@ export function PrizeSkoutDashboard() {
                           <button
                             type="button"
                             onClick={() => void syncCatalogs([ig.platform])}
-                            disabled={syncingCatalog}
+                            disabled={syncingPlatforms.has(ig.platform)}
                             style={{
-                              cursor: syncingCatalog ? "wait" : "pointer",
+                              cursor: syncingPlatforms.has(ig.platform) ? "wait" : "pointer",
                               fontSize: 12.5,
                               fontWeight: 700,
                               color: "var(--text)",
@@ -13091,10 +13099,10 @@ export function PrizeSkoutDashboard() {
                               borderRadius: 9,
                               padding: "9px 12px",
                               fontFamily: "inherit",
-                              opacity: syncingCatalog ? 0.7 : 1,
+                              opacity: syncingPlatforms.has(ig.platform) ? 0.7 : 1,
                             }}
                           >
-                            {syncingCatalog ? "Syncing…" : "Sync now"}
+                            {syncingPlatforms.has(ig.platform) ? "Syncing…" : "Sync now"}
                           </button>
                         </div>
                       )}

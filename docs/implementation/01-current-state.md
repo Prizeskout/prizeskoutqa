@@ -20,7 +20,7 @@ Last reconciled with the repository: 2026-09-29.
 
 ## Deployment knowledge
 
-- Salla recovery Worker version `f39b637f-c1f7-412a-9134-c29e6230a294` is deployed on `prizeskout.qa/*` and the preserved `app.prizeskout.qa` custom domain. Both public routes and `/embedded/salla` returned 200 after deployment, and the CSP permits the exact Salla dashboard origin plus the Salla domain family.
+- Salla recovery Worker version `bab47b84-5fbd-4b8d-8caf-ffc2ce5528cb` is deployed on `prizeskout.qa/*` and the preserved `app.prizeskout.qa` custom domain. Both public routes and `/embedded/salla` returned 200 after deployment. A logged-in PrizeSkout smoke pass synchronized the connected Salla demo catalog and verified 32 total products (20 Salla, 12 Zid), 25% cost coverage, SAR currency integrity, evidence-gated margin output, target-channel promotion filtering, and the Copilot legacy-cost fallback.
 - Salla app `1493851737` remains in Easy Mode with embedded `dashboard` and matching onboarding. All lifecycle evidence is from Salla Partner demo stores; PrizeSkout does not yet have a real Salla merchant. A never-before-used Partner demo store completed first authorization, test-account provisioning, 20-product sync, delivered welcome email, activation sign-in, consumed-link rejection, and persisted single-use access/refresh-token rotation. Reopen, uninstall/reinstall, controlled missing-scope recovery, forced HTTP-401 sync failure and successful retry, authenticated Arabic RTL, and 375/768/1440 viewport checks are also verified in demo stores only. The current Partner Portal client ID and secret are installed in the Worker; the secret became visible during portal verification and must be treated as a credential risk until the user decides whether to roll it after assessing installation impact. Customer readiness remains false, and none of this is real-merchant production evidence.
 
 - The legacy handoff explicitly reports production deployment of the API-independent evidence migrations from `20260830000000` through `20260833000000`, then `20260835000000` through `20260848000000`, with `20260834000000` notably reported as still needing deployment at the time it was written.
@@ -37,6 +37,7 @@ Last reconciled with the repository: 2026-09-29.
 - Real merchant samples are required before a provider layout can be described as verified.
 - No real Salla merchant has installed or validated PrizeSkout. Partner demo-store success must not be described as merchant adoption, customer validation, or production merchant verification.
 - Automatic connectors must never imply complete coverage merely because a sync succeeded.
+- Order Guard remains unavailable in production because its database objects are not provisioned. The UI correctly contains the failure as HTTP 503 and does not mutate store data; do not deploy an unverified migration solely to clear the message.
 
 ## Protected production surfaces
 
