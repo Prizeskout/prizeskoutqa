@@ -28,7 +28,7 @@ const CSP_POLICY = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-  "frame-ancestors 'self' https://zid.sa https://*.zid.sa https://zid.store https://*.zid.store",
+  "frame-ancestors 'self' https://zid.sa https://*.zid.sa https://zid.store https://*.zid.store https://salla.sa https://s.salla.sa https://*.salla.sa",
   "form-action 'self'",
   "base-uri 'self'",
 ].join("; ");

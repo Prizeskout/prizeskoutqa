@@ -42,6 +42,7 @@ import { Route as MarginDashboardItemsRouteImport } from './routes/margin-dashbo
 import { Route as MarginDashboardDemoRouteImport } from './routes/margin-dashboard.demo'
 import { Route as MarginDashboardChannelsRouteImport } from './routes/margin-dashboard.channels'
 import { Route as EmbeddedZidRouteImport } from './routes/embedded/zid'
+import { Route as EmbeddedSallaRouteImport } from './routes/embedded/salla'
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
@@ -101,6 +102,8 @@ import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/pu
 import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
 import { Route as ApiPublicHooksCopilotSchedulesRouteImport } from './routes/api/public/hooks/copilot-schedules'
 import { Route as ApiPublicHooksAuthEmailRouteImport } from './routes/api/public/hooks/auth-email'
+import { Route as ApiEmbeddedSallaSyncRouteImport } from './routes/api/embedded/salla/sync'
+import { Route as ApiEmbeddedSallaBootstrapRouteImport } from './routes/api/embedded/salla/bootstrap'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
@@ -274,6 +277,11 @@ const MarginDashboardChannelsRoute = MarginDashboardChannelsRouteImport.update({
 const EmbeddedZidRoute = EmbeddedZidRouteImport.update({
   id: '/embedded/zid',
   path: '/embedded/zid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmbeddedSallaRoute = EmbeddedSallaRouteImport.update({
+  id: '/embedded/salla',
+  path: '/embedded/salla',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmbedWidgetRoute = EmbedWidgetRouteImport.update({
@@ -588,6 +596,17 @@ const ApiPublicHooksAuthEmailRoute = ApiPublicHooksAuthEmailRouteImport.update({
   path: '/api/public/hooks/auth-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEmbeddedSallaSyncRoute = ApiEmbeddedSallaSyncRouteImport.update({
+  id: '/api/embedded/salla/sync',
+  path: '/api/embedded/salla/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmbeddedSallaBootstrapRoute =
+  ApiEmbeddedSallaBootstrapRouteImport.update({
+    id: '/api/embedded/salla/bootstrap',
+    path: '/api/embedded/salla/bootstrap',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -674,6 +693,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/embed/widget': typeof EmbedWidgetRoute
+  '/embedded/salla': typeof EmbeddedSallaRoute
   '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
   '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
@@ -715,6 +735,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
+  '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
   '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
@@ -774,6 +796,7 @@ export interface FileRoutesByTo {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/embed/widget': typeof EmbedWidgetRoute
+  '/embedded/salla': typeof EmbeddedSallaRoute
   '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
   '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
@@ -815,6 +838,8 @@ export interface FileRoutesByTo {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
+  '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
   '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
@@ -878,6 +903,7 @@ export interface FileRoutesById {
   '/dashboard/pricing': typeof DashboardPricingRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/embed/widget': typeof EmbedWidgetRoute
+  '/embedded/salla': typeof EmbeddedSallaRoute
   '/embedded/zid': typeof EmbeddedZidRoute
   '/margin-dashboard/channels': typeof MarginDashboardChannelsRoute
   '/margin-dashboard/demo': typeof MarginDashboardDemoRoute
@@ -919,6 +945,8 @@ export interface FileRoutesById {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
+  '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
   '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
@@ -983,6 +1011,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/embed/widget'
+    | '/embedded/salla'
     | '/embedded/zid'
     | '/margin-dashboard/channels'
     | '/margin-dashboard/demo'
@@ -1024,6 +1053,8 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/embedded/salla/bootstrap'
+    | '/api/embedded/salla/sync'
     | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
@@ -1083,6 +1114,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/embed/widget'
+    | '/embedded/salla'
     | '/embedded/zid'
     | '/margin-dashboard/channels'
     | '/margin-dashboard/demo'
@@ -1124,6 +1156,8 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/embedded/salla/bootstrap'
+    | '/api/embedded/salla/sync'
     | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
@@ -1186,6 +1220,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing'
     | '/dashboard/revenue-hub'
     | '/embed/widget'
+    | '/embedded/salla'
     | '/embedded/zid'
     | '/margin-dashboard/channels'
     | '/margin-dashboard/demo'
@@ -1227,6 +1262,8 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/embedded/salla/bootstrap'
+    | '/api/embedded/salla/sync'
     | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
@@ -1282,6 +1319,7 @@ export interface RootRouteChildren {
   ApiRestoreRoute: typeof ApiRestoreRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   EmbedWidgetRoute: typeof EmbedWidgetRoute
+  EmbeddedSallaRoute: typeof EmbeddedSallaRoute
   EmbeddedZidRoute: typeof EmbeddedZidRoute
   ProductsCompetitorsRoute: typeof ProductsCompetitorsRoute
   ProductsFieldIntelRoute: typeof ProductsFieldIntelRoute
@@ -1311,6 +1349,8 @@ export interface RootRouteChildren {
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiSettingsLocaleRoute: typeof ApiSettingsLocaleRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
+  ApiEmbeddedSallaBootstrapRoute: typeof ApiEmbeddedSallaBootstrapRoute
+  ApiEmbeddedSallaSyncRoute: typeof ApiEmbeddedSallaSyncRoute
   ApiPublicHooksAuthEmailRoute: typeof ApiPublicHooksAuthEmailRoute
   ApiPublicHooksCopilotSchedulesRoute: typeof ApiPublicHooksCopilotSchedulesRoute
   ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
@@ -1573,6 +1613,13 @@ declare module '@tanstack/react-router' {
       path: '/embedded/zid'
       fullPath: '/embedded/zid'
       preLoaderRoute: typeof EmbeddedZidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embedded/salla': {
+      id: '/embedded/salla'
+      path: '/embedded/salla'
+      fullPath: '/embedded/salla'
+      preLoaderRoute: typeof EmbeddedSallaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/embed/widget': {
@@ -1988,6 +2035,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAuthEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/embedded/salla/sync': {
+      id: '/api/embedded/salla/sync'
+      path: '/api/embedded/salla/sync'
+      fullPath: '/api/embedded/salla/sync'
+      preLoaderRoute: typeof ApiEmbeddedSallaSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/embedded/salla/bootstrap': {
+      id: '/api/embedded/salla/bootstrap'
+      path: '/api/embedded/salla/bootstrap'
+      fullPath: '/api/embedded/salla/bootstrap'
+      preLoaderRoute: typeof ApiEmbeddedSallaBootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid/callback': {
       id: '/api/auth/zid/callback'
       path: '/callback'
@@ -2176,6 +2237,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRestoreRoute: ApiRestoreRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   EmbedWidgetRoute: EmbedWidgetRoute,
+  EmbeddedSallaRoute: EmbeddedSallaRoute,
   EmbeddedZidRoute: EmbeddedZidRoute,
   ProductsCompetitorsRoute: ProductsCompetitorsRoute,
   ProductsFieldIntelRoute: ProductsFieldIntelRoute,
@@ -2205,6 +2267,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiSettingsLocaleRoute: ApiSettingsLocaleRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
+  ApiEmbeddedSallaBootstrapRoute: ApiEmbeddedSallaBootstrapRoute,
+  ApiEmbeddedSallaSyncRoute: ApiEmbeddedSallaSyncRoute,
   ApiPublicHooksAuthEmailRoute: ApiPublicHooksAuthEmailRoute,
   ApiPublicHooksCopilotSchedulesRoute: ApiPublicHooksCopilotSchedulesRoute,
   ApiPublicHooksDispatchConfirmationRoute:

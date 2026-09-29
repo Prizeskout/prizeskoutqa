@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
 import { backgroundTask } from "@/server/cf-ctx";
-import { syncPlatformCatalog } from "./platform-sync";
+import { syncSallaCatalog } from "./salla-catalog-sync";
 import { registerSallaWebhooks } from "./salla-webhooks";
 import { linkSallaChannelByVerifiedEmail } from "./salla-account-link";
 
@@ -26,6 +26,7 @@ type SallaChannel = {
   licensee_id: string;
   merchant_id: string;
   metadata: Json;
+  bearer_token?: string | null;
 };
 
 const APP_EVENTS = new Set([
@@ -212,19 +213,7 @@ export async function handleSallaAppEvent(payload: SallaWebhookPayload, webhookO
       })());
     }
 
-    backgroundTask(syncPlatformCatalog({
-      platform: "salla",
-      creds: { bearer_token: accessToken },
-      accountId: channel.account_id,
-      licenseeId: channel.licensee_id,
-      merchantId,
-      region: "SA",
-    }).catch(async error => {
-      await supabaseAdmin.from("ps_merchant_channels").update({
-        error_message: `Initial Salla sync failed: ${String(error).slice(0, 350)}`,
-        updated_at: new Date().toISOString(),
-      }).eq("id", channel.id);
-    }));
+    backgroundTask(syncSallaCatalog({ ...channel, bearer_token: accessToken }).catch(() => undefined));
     return { received: true, processed: true, event, status: "connected" };
   }
 

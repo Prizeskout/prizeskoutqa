@@ -26,6 +26,15 @@ function tokenExpiry(tokens: TokenResponse): string {
   return new Date(Date.now() + seconds * 1000).toISOString();
 }
 
+export function sallaRefreshRequestBody(clientId: string, clientSecret: string, refreshToken: string): URLSearchParams {
+  return new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+}
+
 export async function getValidSallaAccessToken(channel: RefreshableSallaChannel): Promise<string> {
   const metadata = objectMetadata(channel.metadata);
   if (channel.bearer_token && !sallaTokenNeedsRefresh(metadata)) return channel.bearer_token;
@@ -44,10 +53,14 @@ export async function getValidSallaAccessToken(channel: RefreshableSallaChannel)
   // single-use refresh token at the same time.
   const lease = crypto.randomUUID();
   const lockedMetadata = { ...metadata, refresh_lock: lease, refresh_lock_at: new Date().toISOString() };
-  const { data: locked } = await supabaseAdmin.from("ps_merchant_channels")
+  let lockQuery = supabaseAdmin.from("ps_merchant_channels")
     .update({ metadata: lockedMetadata as Json, updated_at: new Date().toISOString() })
     .eq("id", channel.id)
-    .eq("metadata", metadata as { [key: string]: Json | undefined })
+    .filter("metadata->>refresh_token", "eq", refreshToken);
+  lockQuery = channel.bearer_token === null
+    ? lockQuery.is("bearer_token", null)
+    : lockQuery.eq("bearer_token", channel.bearer_token);
+  const { data: locked } = await lockQuery
     .select("id").maybeSingle();
   if (!locked) throw new Error("Salla token refresh is already in progress; retry shortly.");
 
@@ -57,9 +70,8 @@ export async function getValidSallaAccessToken(channel: RefreshableSallaChannel)
       headers: {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
       },
-      body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+      body: sallaRefreshRequestBody(clientId, clientSecret, refreshToken),
     });
     if (!response.ok) throw new Error(`Salla token refresh failed with HTTP ${response.status}`);
     const tokens = await response.json() as TokenResponse;

@@ -23,7 +23,12 @@ export type EmailStrings = {
     b1: string;
     b2: string;
     b3: string;
+    b4: string;
+    b5: string;
     cta: string;
+    connected: string; // {platform}
+    nextSteps: string;
+    secureLink: string;
     help: string;
   };
   digest: {
@@ -65,13 +70,18 @@ const en: EmailStrings = {
   },
   welcome: {
     subject: "Welcome to PrizeSkout",
-    preview: "Your dashboard is ready — start protecting your margins.",
+    preview: "Your workspace is ready — turn commerce evidence into clearer profit and payout decisions.",
     heading: "Welcome aboard, {store}",
-    intro: "Your PrizeSkout account is ready. From here on we watch your delivery-app prices and margins so you don't have to.",
-    b1: "See every channel's live price and margin in one place.",
-    b2: "Get alerted the moment a price drops below your target margin.",
-    b3: "Let PrizeSkout reprice automatically within the rules you set.",
-    cta: "Open your dashboard",
+    intro: "Your PrizeSkout workspace is ready. It brings the evidence behind your sales, costs, fees, and payouts together so you can see what you actually earned and where money may be missing.",
+    b1: "Understand contribution profit after product cost, discounts, fees, tax, and fulfillment.",
+    b2: "Compare expected payouts with platform evidence and investigate unexplained differences.",
+    b3: "Find margin leakage across products, orders, channels, branches, and promotions.",
+    b4: "Prepare evidence-backed recovery cases while keeping every external action under your approval.",
+    b5: "Model safer pricing and margin decisions using the rules and limits you control.",
+    cta: "Securely open PrizeSkout",
+    connected: "Your {platform} store is securely connected.",
+    nextSteps: "Next: confirm your imported data, add product costs and commercial terms, provide payout evidence, then run your first profit and payout audit.",
+    secureLink: "This is a private, one-time sign-in link. It expires shortly and should not be forwarded.",
     help: "Questions? Just reply to this email — a real person will read it.",
   },
   digest: {
@@ -133,13 +143,18 @@ const ar: EmailStrings = {
   },
   welcome: {
     subject: "مرحبًا بك في PrizeSkout",
-    preview: "لوحة التحكم جاهزة — ابدأ بحماية هوامشك.",
+    preview: "مساحة عملك جاهزة — حوّل أدلة التجارة إلى قرارات أوضح بشأن الربح والدفعات.",
     heading: "أهلًا بك، {store}",
-    intro: "أصبح حسابك في PrizeSkout جاهزًا. من الآن سنراقب أسعار وهوامش تطبيقات التوصيل نيابةً عنك.",
-    b1: "شاهد السعر والهامش الحي لكل قناة في مكان واحد.",
-    b2: "احصل على تنبيه فور انخفاض السعر تحت الهامش المستهدف.",
-    b3: "دع PrizeSkout يعيد التسعير تلقائيًا ضمن القواعد التي تحددها.",
-    cta: "افتح لوحة التحكم",
+    intro: "مساحة عملك في PrizeSkout جاهزة. تجمع الأدلة وراء المبيعات والتكاليف والرسوم والدفعات لتعرف ما ربحته فعليًا وأين قد تكون هناك أموال مفقودة.",
+    b1: "افهم ربح المساهمة بعد تكلفة المنتج والخصومات والرسوم والضريبة والتنفيذ.",
+    b2: "قارن الدفعات المتوقعة بأدلة المنصة وحقق في الفروقات غير المفسرة.",
+    b3: "اكتشف تسرب الهامش عبر المنتجات والطلبات والقنوات والفروع والعروض.",
+    b4: "أعد ملفات استرداد مدعومة بالأدلة مع إبقاء كل إجراء خارجي خاضعًا لموافقتك.",
+    b5: "اختبر قرارات تسعير وهوامش أكثر أمانًا ضمن القواعد والحدود التي تتحكم بها.",
+    cta: "افتح PrizeSkout بأمان",
+    connected: "تم ربط متجرك على {platform} بأمان.",
+    nextSteps: "الخطوة التالية: راجع البيانات المستوردة، وأضف تكاليف المنتجات والشروط التجارية وأدلة الدفع، ثم شغّل أول تدقيق للربح والدفعات.",
+    secureLink: "هذا رابط دخول خاص يُستخدم مرة واحدة. تنتهي صلاحيته قريبًا، فلا تعِد توجيهه.",
     help: "لديك سؤال؟ فقط رُد على هذه الرسالة — سيقرأها شخص حقيقي.",
   },
   digest: {
@@ -201,13 +216,18 @@ const fr: EmailStrings = {
   },
   welcome: {
     subject: "Bienvenue chez PrizeSkout",
-    preview: "Votre tableau de bord est prêt — protégez vos marges dès maintenant.",
+    preview: "Votre espace est prêt — transformez vos preuves commerciales en décisions plus claires sur les bénéfices et paiements.",
     heading: "Bienvenue, {store}",
-    intro: "Votre compte PrizeSkout est prêt. Désormais, nous surveillons vos prix et marges sur les applications de livraison à votre place.",
-    b1: "Voyez le prix et la marge en direct de chaque canal au même endroit.",
-    b2: "Soyez alerté dès qu'un prix passe sous votre marge cible.",
-    b3: "Laissez PrizeSkout réajuster les prix automatiquement selon vos règles.",
-    cta: "Ouvrir le tableau de bord",
+    intro: "Votre espace PrizeSkout est prêt. Il rassemble les preuves liées aux ventes, coûts, frais et paiements afin de montrer ce que vous avez réellement gagné et où de l'argent peut manquer.",
+    b1: "Comprenez la marge contributive après coûts produit, remises, frais, taxes et exécution.",
+    b2: "Comparez les paiements attendus aux preuves de la plateforme et examinez les écarts inexpliqués.",
+    b3: "Repérez les pertes de marge par produit, commande, canal, succursale et promotion.",
+    b4: "Préparez des dossiers de récupération étayés, tout en gardant chaque action externe sous votre approbation.",
+    b5: "Simulez des décisions de prix et de marge plus sûres selon les règles et limites que vous contrôlez.",
+    cta: "Ouvrir PrizeSkout en sécurité",
+    connected: "Votre boutique {platform} est connectée en toute sécurité.",
+    nextSteps: "Prochaine étape : vérifiez les données importées, ajoutez vos coûts et conditions commerciales, fournissez les justificatifs de paiement, puis lancez votre premier audit de rentabilité et de paiement.",
+    secureLink: "Ceci est un lien de connexion privé à usage unique. Il expire prochainement et ne doit pas être transféré.",
     help: "Une question ? Répondez simplement à cet e-mail — une vraie personne le lira.",
   },
   digest: {

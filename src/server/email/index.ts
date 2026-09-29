@@ -44,10 +44,11 @@ export async function sendWelcomeEmail(params: {
   locale?: EmailLocale | string;
   store?: string;
   dashboardUrl?: string;
+  platform?: string;
 }): Promise<SendResult> {
   const locale = await pickLocale(params.locale, params.userId);
   const { subject, html, text } = welcomeEmail(
-    { store: params.store, dashboardUrl: params.dashboardUrl ?? appUrl("/dashboard") },
+    { store: params.store, dashboardUrl: params.dashboardUrl ?? appUrl("/dashboard"), platform: params.platform },
     locale,
   );
   return sendEmail({ to: params.to, subject, html, text });

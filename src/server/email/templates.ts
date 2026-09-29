@@ -7,7 +7,7 @@ import { renderEmail } from "./render";
 export type RenderedEmail = { subject: string; html: string; text: string };
 
 export function welcomeEmail(
-  data: { store?: string; dashboardUrl: string },
+  data: { store?: string; dashboardUrl: string; platform?: string },
   locale: EmailLocale,
 ): RenderedEmail {
   const s = strings(locale);
@@ -16,7 +16,18 @@ export function welcomeEmail(
     locale,
     previewText: s.welcome.preview,
     heading: fill(s.welcome.heading, { store }),
-    bodyLines: [s.welcome.intro, `• ${s.welcome.b1}`, `• ${s.welcome.b2}`, `• ${s.welcome.b3}`, s.welcome.help],
+    bodyLines: [
+      ...(data.platform ? [fill(s.welcome.connected, { platform: data.platform })] : []),
+      s.welcome.intro,
+      `• ${s.welcome.b1}`,
+      `• ${s.welcome.b2}`,
+      `• ${s.welcome.b3}`,
+      `• ${s.welcome.b4}`,
+      `• ${s.welcome.b5}`,
+      s.welcome.nextSteps,
+      s.welcome.secureLink,
+      s.welcome.help,
+    ],
     cta: { label: s.welcome.cta, url: data.dashboardUrl },
   });
   return { subject: s.welcome.subject, html, text };

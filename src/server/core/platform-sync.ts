@@ -384,8 +384,60 @@ export async function syncPlatformCatalog(params: {
   let economicsRequired = 0;
   const evidenceWindow=pricingEvidenceWindow();
 
-  for (const product of products) {
-    if (!product.sku || product.price <= 0) continue;
+  const eligibleProducts = products.filter(product => product.sku && product.price > 0);
+  if (eligibleProducts.length > 0 && eligibleProducts.every(product => product.cost == null)) {
+    const missingCostRows = eligibleProducts.map(product => ({
+      account_id: accountId,
+      licensee_id: licenseeId,
+      api_key_id: apiKeyId ?? null,
+      event_id: `${platform}-${product.external_id}`,
+      idempotency_key: `platform-sync:${platform}:${merchantId}:${product.external_id}`,
+      region,
+      source_platform: platform,
+      merchant_id: merchantId,
+      item_id: product.external_id,
+      sku: product.sku,
+      item_name_en: product.name_en,
+      item_name_ar: product.name_ar,
+      inventory_status: product.in_stock ? "in_stock" : "out_of_stock",
+      base_cost: 0,
+      current_retail_price: product.price,
+      currency: product.currency,
+      vat_rate: economics?.vatRate ?? 0,
+      raw_payload: {
+        source: "platform_sync",
+        external_id: product.external_id,
+        platform,
+        cost_source: "missing_requires_verified_cost",
+        cost_observed_at: null,
+        cost_evidence_expires_at: null,
+        cost_currency: product.currency,
+        cost_sku: product.sku,
+        cost_item_id: product.external_id,
+        quantity: product.quantity,
+        is_infinite: product.is_infinite,
+      },
+      status: "failed",
+    }));
+    const { error: upsertError } = await supabaseAdmin.from("ps_ingest_events")
+      .upsert(missingCostRows as never, { onConflict: "account_id,idempotency_key" });
+    if (upsertError) throw upsertError;
+    await supabaseAdmin.from("ps_merchant_channels").update({ last_verified_at: new Date().toISOString() })
+      .eq("account_id", accountId).eq("merchant_id", merchantId).eq("platform", platform);
+    return {
+      platform,
+      merchant_id: merchantId,
+      items_found: products.length,
+      items_stored: eligibleProducts.length,
+      items_below_floor: 0,
+      items_requiring_cost: eligibleProducts.length,
+      items_requiring_economics: 0,
+      errors: 0,
+    };
+  }
+
+  const processProduct = async (product: PlatformProduct): Promise<void> => {
+    if (!product.sku || product.price <= 0) return;
 
     // Build an idempotency key so re-syncing the same catalog is safe
     const idempotencyKey = `platform-sync:${platform}:${merchantId}:${product.external_id}`;
@@ -426,7 +478,7 @@ export async function syncPlatformCatalog(params: {
       if (product.cost == null) {
         await supabaseAdmin.from("ps_ingest_events").update({status:"failed",raw_payload:{source:"platform_sync",external_id:product.external_id,platform,cost_source:"missing_requires_verified_cost",cost_currency:product.currency,cost_sku:product.sku,cost_item_id:product.external_id,quantity:product.quantity,is_infinite:product.is_infinite}}).eq("id",existing.id);
         stored++; costRequired++;
-        continue;
+        return;
       }
       if (!economics) {
         await supabaseAdmin.from("ps_ingest_events").update({
@@ -434,7 +486,7 @@ export async function syncPlatformCatalog(params: {
           raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", cost_observed_at:evidenceWindow.costObservedAt,cost_evidence_expires_at:evidenceWindow.costEvidenceExpiresAt,cost_currency:product.currency,cost_sku:product.sku,cost_item_id:product.external_id,economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
         }).eq("id", existing.id);
         stored++; economicsRequired++;
-        continue;
+        return;
       }
       const baseCost = product.cost;
       const decideOutput = decide({
@@ -488,7 +540,7 @@ export async function syncPlatformCatalog(params: {
         .eq("id", existing.id);
       if (decideOutput.floorBreached && product.in_stock) belowFloor++;
       stored++;
-      continue;
+      return;
     }
 
     const { data: ingestRow, error: insertErr } = await supabaseAdmin
@@ -529,11 +581,11 @@ export async function syncPlatformCatalog(params: {
       .select("id")
       .single();
 
-    if (insertErr || !ingestRow) { errors++; continue; }
+    if (insertErr || !ingestRow) { errors++; return; }
     if (product.cost == null) {
       await supabaseAdmin.from("ps_ingest_events").update({status:"failed"}).eq("id",ingestRow.id);
       stored++; costRequired++;
-      continue;
+      return;
     }
     if (!economics) {
       await supabaseAdmin.from("ps_ingest_events").update({
@@ -541,7 +593,7 @@ export async function syncPlatformCatalog(params: {
         raw_payload: { source: "platform_sync", external_id: product.external_id, platform, cost_source: "platform_catalog", cost_observed_at:evidenceWindow.costObservedAt,cost_evidence_expires_at:evidenceWindow.costEvidenceExpiresAt,cost_currency:product.currency,cost_sku:product.sku,cost_item_id:product.external_id,economics_source: "approved_contract_required", quantity: product.quantity, is_infinite: product.is_infinite },
       }).eq("id", ingestRow.id);
       stored++; economicsRequired++;
-      continue;
+      return;
     }
 
     // 2. Run decide engine on each item
@@ -599,6 +651,14 @@ export async function syncPlatformCatalog(params: {
 
     if (decideOutput.floorBreached && product.in_stock) belowFloor++;
     stored++;
+  };
+
+  // Keep a bounded amount of database work in flight. Sequential per-product
+  // round trips can exceed the embedded request lifetime even for a 20-item
+  // demo catalog, while an unbounded Promise.all would overload large stores.
+  const concurrency = 5;
+  for (let index = 0; index < products.length; index += concurrency) {
+    await Promise.all(products.slice(index, index + concurrency).map(processProduct));
   }
 
   // Update last_verified_at on the channel record

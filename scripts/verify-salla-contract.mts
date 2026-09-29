@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   buildSallaPriceUpdate,
   sallaHasNextPage,
@@ -7,9 +8,10 @@ import {
   sallaProductCost,
   sallaProductQuantity,
   sallaScopeString,
+  missingRequiredSallaScopes,
 } from "../src/server/core/salla-contract";
 import { isSallaAppEvent } from "../src/server/core/salla-easy-mode";
-import { sallaTokenNeedsRefresh } from "../src/server/core/salla-token";
+import { sallaRefreshRequestBody, sallaTokenNeedsRefresh } from "../src/server/core/salla-token";
 import { verifyHmac } from "../src/server/core/platform-webhooks";
 import { isSallaOperationalEvent, sallaEventKey } from "../src/server/core/salla-store-events";
 import { SALLA_SUBSCRIBED_EVENTS } from "../src/server/core/salla-webhooks";
@@ -21,10 +23,12 @@ assert.deepEqual(scopes, [
   "orders.read",
   "products.read_write",
   "categories.read",
-  "brands.read",
   "webhooks.read_write",
 ]);
 assert.equal(scopes.includes("products.write"), false);
+assert.deepEqual(missingRequiredSallaScopes(scopes), []);
+assert.deepEqual(missingRequiredSallaScopes(scopes.map(scope => scope === "categories.read" ? "categories.read_write" : scope)), []);
+assert.deepEqual(missingRequiredSallaScopes(scopes.filter(scope => scope !== "orders.read")), ["orders.read"]);
 
 assert.equal(sallaHasNextPage({ pagination: { currentPage: 1, totalPages: 2 } }, 1), true);
 assert.equal(sallaHasNextPage({ pagination: { currentPage: 2, totalPages: 2 } }, 2), false);
@@ -43,6 +47,14 @@ assert.equal(isSallaAppEvent("product.created"), false);
 const now = Date.now();
 assert.equal(sallaTokenNeedsRefresh({ expires_at: new Date(now + 60_000).toISOString() }, now), true);
 assert.equal(sallaTokenNeedsRefresh({ expires_at: new Date(now + 600_000).toISOString() }, now), false);
+assert.equal(
+  sallaRefreshRequestBody("client", "سر", "refresh").toString(),
+  "grant_type=refresh_token&refresh_token=refresh&client_id=client&client_secret=%D8%B3%D8%B1",
+);
+
+const embeddedSource = readFileSync("src/routes/embedded/salla.tsx", "utf8");
+assert.match(embeddedSource, /sessionToken\.current\s*=\s*token/);
+assert.match(embeddedSource, /sessionToken\.current\s*\?\?\s*embedded\.auth\.getToken\(\)/);
 
 const rawBody = JSON.stringify({ event: "app.store.authorize", merchant: 123 });
 const secret = "salla-test-secret";

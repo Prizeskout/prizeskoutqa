@@ -1,0 +1,22 @@
+# Risk Register
+
+| ID | Risk | Current protection | Next control |
+|---|---|---|---|
+| R-001 | A provider refuses API access | Email, exports, files, and merchant-controlled sources | Preserve API-independent onboarding |
+| R-002 | Provider report format changes | Versioned layouts, fingerprints, review gate | Production drift monitoring and reviewed samples |
+| R-003 | Wrong agreement applied | Effective dates, scoped matching, confirmation | Reconciliation workbench and clearer blockers |
+| R-004 | Partial data appears complete | Freshness/coverage/completeness separation | Connection Center with honest observed-through labels |
+| R-005 | AI invents financial facts | Structured extraction drafts and deterministic services | Governed metric catalog and answer lineage |
+| R-006 | External action occurs without authority | Separate approvals and action-safety services | End-to-end approval verification |
+| R-007 | Migration file mistaken for deployed state | Deployment register | Authorized read-only production audit |
+| R-008 | Handoff becomes stale or truncated | Structured continuity pack and task packets | Run `verify-continuity` every session |
+| R-009 | Dirty worktree is overwritten | Required startup `git status` and scoped edits | Record session file list; no destructive reset |
+| R-010 | Browser/portal connector fragility | Optional adapters and retained-source fallbacks | Health, retry, drift, and reauthorization workflows |
+| R-011 | Secrets leak into documentation | Record names/status only | Secret scanning and review before delivery |
+| R-012 | Worker deploy succeeds while the production domain serves an older version | Verify both workers.dev and public-domain routes | Restore and smoke-test `prizeskout.qa`, the embedded path, and CSP after every deploy |
+| R-013 | Salla metadata claims a welcome email was sent when delivery was not observed | Customer readiness remains false; controlled-inbox verification is required | Record provider acceptance/delivery evidence and activation-link expiry before release |
+| R-014 | Salla uninstall/reinstall is temporarily throttled | Demo reinstall was retried after the platform cooldown and succeeded | Include cooldown handling and retry guidance in the demo/support runbook |
+| R-015 | Salla welcome delivery is not proven despite configured production mail transport | Verified sender, `EMAIL_FROM`, and encrypted Worker key exist; Resend still shows no sent email and delivery metadata remains false | Rotate the exposed key, trigger a new authorization event, and verify provider delivery plus link expiry |
+| R-016 | Salla access-token refresh may not execute from the embedded retry path | Atomic current bearer/refresh-token lease is deployed; controlled retry left no persisted `refreshed_at` and the store was restored | Trace a newly issued embedded session through introspection and verify rotated token plus future expiry |
+| R-017 | Browser viewport override is ignored by the current Chrome surface | Resolved 2026-09-29 with an exact browser viewport capability; authenticated Arabic iframe measured without overflow at 375, 768, and 1440 px | Retain the three-size matrix in release checks |
+| R-018 | Resend key values were exposed by one-time secret dialogs through accessibility output | The first unused key was revoked; the replacement is deployed but was later exposed when its still-open Resend dialog was inspected. The user explicitly accepted this risk and directed that the key remain active | Do not expose the value again; monitor provider activity and rotate only on later user direction or evidence of misuse |

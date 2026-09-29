@@ -6,7 +6,6 @@ export const SALLA_REQUIRED_SCOPES = [
   "orders.read",
   "products.read_write",
   "categories.read",
-  "brands.read",
   "webhooks.read_write",
 ] as const;
 
@@ -32,6 +31,16 @@ export type SallaProductPage = {
 
 export function sallaScopeString(): string {
   return SALLA_REQUIRED_SCOPES.join(" ");
+}
+
+export function missingRequiredSallaScopes(scopes: readonly string[]): string[] {
+  const granted = new Set(scopes);
+  return SALLA_REQUIRED_SCOPES.filter(scope => {
+    if (granted.has(scope)) return false;
+    // Salla exposes one access level per resource. Read/write is a strict
+    // superset of the corresponding read-only permission.
+    return !scope.endsWith(".read") || !granted.has(`${scope.slice(0, -5)}.read_write`);
+  });
 }
 
 export function sallaHasNextPage(page: SallaProductPage, requestedPage: number): boolean {

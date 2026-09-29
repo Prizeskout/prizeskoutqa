@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Json } from "@/integrations/supabase/types";
+import { secureAccessCode } from "@/server/onboarding-capability";
+import { appUrl, sendWelcomeEmail } from "@/server/email";
 
 type SallaLinkableChannel = {
   id: string;
@@ -51,6 +53,59 @@ async function readVerifiedSallaStore(channel: SallaLinkableChannel) {
   }
 }
 
+async function provisionFirstTimeMerchant(
+  channel: SallaLinkableChannel,
+  store: { email: string; storeId: string; storeName: string; storeType: string },
+): Promise<{ created: boolean; code: string | null }> {
+  const { data: existing } = await supabaseAdmin
+    .from("ps_access_codes")
+    .select("code")
+    .eq("merchant_id", channel.account_id)
+    .ilike("email", store.email)
+    .limit(1)
+    .maybeSingle();
+  if (existing?.code) return { created: false, code: existing.code };
+
+  const code = secureAccessCode("SA");
+  const { error } = await supabaseAdmin.from("ps_access_codes").insert({
+    code,
+    merchant_id: channel.account_id,
+    email: store.email,
+    store_name: store.storeName || `Salla Store ${store.storeId}`,
+  });
+  if (error) return { created: false, code: null };
+
+  return { created: true, code };
+}
+
+async function sendSecureSallaWelcome(
+  store: { email: string; storeId: string; storeName: string; storeType: string },
+): Promise<{ sent: boolean; providerId?: string; error?: string }> {
+  // Provision passwordless access. The welcome CTA is a one-time Supabase
+  // action link; no reusable password or access code is sent by email.
+  await supabaseAdmin.auth.admin.createUser({
+    email: store.email,
+    email_confirm: true,
+  }).catch(() => null);
+  const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+    type: "magiclink",
+    email: store.email,
+    options: { redirectTo: appUrl("/auth/callback") },
+  });
+  if (linkError || !link?.properties?.action_link) {
+    return { sent: false, error: "secure_activation_link_failed" };
+  }
+  const result = await sendWelcomeEmail({
+    to: store.email,
+    store: store.storeName || undefined,
+    dashboardUrl: link.properties.action_link,
+    platform: "Salla",
+  }).catch(() => ({ ok: false, error: "welcome_send_threw", id: undefined, skipped: false }));
+  return result.ok
+    ? { sent: true, providerId: result.id }
+    : { sent: false, error: result.skipped ? "email_transport_not_configured" : (result.error ?? "welcome_send_failed").slice(0, 180) };
+}
+
 /**
  * Salla Easy Mode sends credentials to our webhook without carrying the
  * PrizeSkout account that initiated installation. We close that gap by
@@ -74,6 +129,32 @@ export async function linkSallaChannelByVerifiedEmail(
     store_type: store.storeType,
     store_email_verified: true,
   };
+
+  const provisioned = await provisionFirstTimeMerchant(channel, store);
+  if (provisioned.created) {
+    Object.assign(enrichedMetadata, {
+      merchant_access_provisioned_at: new Date().toISOString(),
+    });
+  }
+  if (metadata.welcome_email_delivery_verified !== true && typeof metadata.welcome_email_provider_accepted_at !== "string") {
+    const attemptedAt = new Date().toISOString();
+    const welcome = await sendSecureSallaWelcome(store);
+    Object.assign(enrichedMetadata, {
+      welcome_email_attempted_at: attemptedAt,
+      // Provider acceptance is not proof that the message reached the inbox.
+      // Delivery is marked separately only after provider/webhook or controlled
+      // inbox evidence confirms it.
+      welcome_email_delivery_verified: false,
+      ...(welcome.sent ? {
+        welcome_email_sent_at: attemptedAt,
+        welcome_email_provider_accepted_at: attemptedAt,
+        welcome_email_provider_id: welcome.providerId ?? null,
+        welcome_email_error: null,
+      } : {
+        welcome_email_error: welcome.error ?? "welcome_send_failed",
+      }),
+    });
+  }
 
   const { data: codes } = await supabaseAdmin
     .from("ps_access_codes")
