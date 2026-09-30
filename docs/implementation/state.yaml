@@ -31,11 +31,11 @@ tasks:
     title: Complete the Zid marketplace and embedded merchant experience
     status: in_progress
     code: state_bound_oauth_idempotent_passwordless_provisioning_embedded_bootstrap_retry_checklist_and_channel_safe_financial_views_implemented
-    tests: zid_salla_typecheck_and_production_build_passing
+    tests: zid_salla_copilot_prompt_typecheck_and_production_build_passing
     migration: not_expected_verify_before_change
-    configuration: published_oauth_app_7116_urls_and_webhook_verified_broad_scopes_require_separate_impact_decision
-    deployment: worker_version_6b718054
-    production_verification: authenticated_iframe_and_standalone_merchant_journey_passed_currency_and_workflow_language_fixed_order_guard_dependency_contained_demo_app_deactivated_fresh_email_pending
+    configuration: published_oauth_app_7116_urls_and_webhook_verified_cloudflare_git_build_supabase_variables_configured_broad_scopes_require_separate_impact_decision
+    deployment: worker_version_8bbd6b31
+    production_verification: authenticated_iframe_and_standalone_merchant_journey_passed_ai_store_manager_50_prompt_audit_and_focused_regression_passed_currency_and_workflow_language_fixed_order_guard_dependency_contained_demo_app_deactivated_fresh_email_pending
     customer_readiness: not_ready
     next_action: Choose a Zid-reviewed 7-day trial revision, the already authorized paid checkout, or a Zid Partner Support request for no-charge development access; then verify the full lifecycle. Provision Order Guard only after production migration state is authorized and reconciled.
   P0-SALLA-001:

@@ -466,3 +466,44 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Changed implementation files: `src/server/core/merchant-experience.ts`, `src/lib/merchant-language.ts`, `src/components/dashboard/MerchantOperatingLoop.tsx`, `src/components/dashboard/OrderGuardPanel.tsx`, `src/components/dashboard/OrderGuardPanel.css`, `src/components/dashboard/payout/RecoveryWorkspace.tsx`, and `scripts/verify-zid-contract.mts`.
 - Changed continuity files: active task packet, `state.yaml`, `01-current-state.md`, `05-deployment-register.md`, `07-risk-register.md`, and this session log.
 - Exact next action: continue the pending Zid activation decision for full fresh-install lifecycle verification; separately reconcile Order Guard production migration state before any schema deployment.
+
+## 2026-09-29 — AI Store Manager 50-prompt merchant audit and hardening
+
+- Exercised 50 live prompts across attention, catalogue, pricing, margin, payouts, evidence, inventory, promotions, content, permissions, Arabic, and hypothetical scenarios. No approval was granted and no protected store write was executed.
+- Found excessive task preparation for read-only questions, at least eight raw JSON parser failures, ignored supplied inputs in some workflow prompts, connector-centric evidence language, and unsafe currency inference on a legacy recovery case.
+- Added authenticated merchant access to the manager route, a direct evidence-backed read-only path, one retry for malformed workflow JSON with safe containment, and destructive-workflow sequencing that requires reviewing exact affected records before approval.
+- Added authoritative current-catalogue context and a deterministic coverage answer. Live result: `Verified cost coverage is 25%: 8 of 32 imported products have verified costs.`
+- Added explicit commerce coverage language so missing retained events do not imply zero real activity, exact recovery `amount_label` values, strict no-currency-inheritance instructions, and an output sanitizer that removes markdown and any currency code attached to an amount whose case currency is absent.
+- Live focused regression passed: payout evidence answer stated that no retained records does not establish zero real orders/revenue/payouts; the Talabat 679.06 case did not claim a currency; and `Raise every Zid price by 10% immediately` remained a prepared task behind approval.
+- A Cloudflare automatic deployment `5e9eb3f0-f9a7-4b16-9807-96bc62d1e10e` briefly served a client missing Supabase environment values. Rolled back to `6b718054-cd9b-4474-91ee-6e12766053f3`, then deployed the audited fixes. Final Worker version: `8bbd6b31-f7b9-4829-ba5c-beda14ab2a33`.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` — passed.
+- `npm run verify-copilot-prompts` — passed after both implementation rounds, including deterministic cost coverage, absence wording, missing-currency labeling, and output sanitization.
+- `npm run verify-zid-contract` — passed.
+- `npm run verify-salla-contract` — passed.
+- `npm run typecheck` — passed after both implementation rounds.
+- `npm run build` — passed after both implementation rounds; existing chunk-size and mixed dynamic/static-import warnings only.
+- `npx wrangler deploy --config dist/server/wrangler.json` — passed; intermediate `eeeac187-82df-459f-b08b-ece9ca613481`, final `8bbd6b31-f7b9-4829-ba5c-beda14ab2a33`.
+
+### Changed files and exact next action
+
+- Implementation: `src/routes/api/copilot/compile.ts`, `src/server/core/copilot-financial-evidence.ts`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, and `scripts/verify-copilot-prompts.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, `05-deployment-register.md`, `07-risk-register.md`, and this session log.
+- Exact next action: reconcile Cloudflare automatic-build environment variables before the next push, then continue the pending Zid activation decision for the fresh-install lifecycle. Separately reconcile Order Guard production migration state before any schema deployment.
+
+## 2026-09-29 — Cloudflare automatic-build environment correction
+
+- Inspected the connected `prizeskoutqa` Worker build settings. The Git integration used `npm run build` followed by `npx wrangler deploy`, but its build-specific variables section was empty even though equivalent runtime variables existed.
+- Added and saved the required build-time variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_PROJECT_ID`, and `VITE_SUPABASE_PUBLISHABLE_KEY` in Cloudflare. Reloaded the settings page and confirmed all three persisted. Values are intentionally not recorded here.
+- Added a fail-closed Vite build plugin in `vite.config.ts`; production builds now stop with a precise error if any required client Supabase variable is missing instead of emitting a dashboard bundle that fails at runtime.
+- `npm run typecheck` — passed.
+- `npm run build` — passed with the configured values; existing chunk-size and mixed dynamic/static-import warnings only.
+- No deployment was triggered and production Worker version `8bbd6b31-f7b9-4829-ba5c-beda14ab2a33` was not changed. The first Git-triggered deployment after commit/push should receive a normal dashboard and embedded-route smoke check.
+- Changed file: `vite.config.ts`, plus continuity records.
+- Exact next action: on the next explicitly authorized commit/push, monitor the Cloudflare Git build and smoke-test the dashboard plus Zid/Salla embedded routes before closing R-022.
+
+### Commit authorization
+
+- User explicitly requested commit and push. Commit the tracked AI Store Manager and deployment-safety changes only; preserve unrelated untracked artifacts. After pushing `main`, monitor the Cloudflare Git deployment and smoke-test production before ending the session.

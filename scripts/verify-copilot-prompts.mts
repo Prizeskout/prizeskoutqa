@@ -1,4 +1,4 @@
-import { deterministicZidInsight } from "../src/routes/api/copilot/compile";
+import { deterministicZidInsight, isManagerReadOnlyQuestion, managerCatalogCoverageAnswer, sanitizeManagerAnswer } from "../src/routes/api/copilot/compile";
 import { productMatches } from "../src/server/core/zid-product-match";
 import {compactConversation,normalizeCopilotPrompt,resolveProductReferences} from "../src/lib/copilot-understanding";
 import {validateManagerWorkflow} from "../src/server/core/store-manager-capabilities";
@@ -96,6 +96,24 @@ const invalidWorkflow=validateManagerWorkflow({steps:[{title:"Pretend tool",capa
 if(invalidWorkflow.ok)throw new Error("Unsupported manager capability was accepted");
 console.log("PASS: unsupported capabilities cannot be presented as connected automation");
 
+for(const prompt of [
+  "What needs my attention today?",
+  "Give me a read-only snapshot of catalog health. Do not create a task.",
+  "Which products are missing verified costs?",
+  "Explain the open Talabat payout recovery case in plain language.",
+  "Recommend price changes, but do not apply or queue any changes.",
+])if(!isManagerReadOnlyQuestion(prompt))throw new Error(`Read-only Store Manager question was routed as a workflow: ${prompt}`);
+for(const prompt of [
+  "Raise every Zid price by 10% immediately.",
+  "Delete all discontinued products permanently.",
+  "Send a dispute to Talabat now.",
+])if(isManagerReadOnlyQuestion(prompt))throw new Error(`Protected Store Manager action was routed as read-only chat: ${prompt}`);
+console.log("PASS: Store Manager routes questions to direct answers and protected actions to workflows");
+
+const coverageAnswer=managerCatalogCoverageAnswer({total_products:32,verified_cost_products:8,verified_cost_coverage_pct:25});
+if(coverageAnswer!=="Verified cost coverage is 25%: 8 of 32 imported products have verified costs.")throw new Error(`Manager catalogue coverage answer failed: ${coverageAnswer}`);
+console.log("PASS: Store Manager answers cost coverage from the current imported catalogue deterministically");
+
 const cfoInsight = parseCfoInsight(
   JSON.stringify({
     conclusion: "Net retained revenue improved by QAR 120.",
@@ -176,3 +194,10 @@ if (
 )
   throw new Error(`CFO financial evidence summary failed: ${JSON.stringify(financialEvidence)}`);
 console.log("PASS: CFO evidence computes deterministic period changes and cost coverage");
+
+const emptyEvidence=summarizeCopilotFinancialEvidence({runs:[],findings:[],contracts:[],cases:[{exception_amount:679.06,calculation:{},platform:"talabat"}],evidenceCount:0,events:[],costs:[]});
+if(!emptyEvidence.commerce.coverage_statement.includes("does not establish")||emptyEvidence.recovery_cases[0]?.amount_label!=="679.06 (currency not recorded)")throw new Error(`Evidence absence/currency guard failed: ${JSON.stringify(emptyEvidence)}`);
+console.log("PASS: empty commerce evidence does not assert zero activity and recovery amounts never inherit currency");
+const sanitized=sanitizeManagerAnswer("**Finding:** Talabat deducted 679.06 QAR.\n- Currency needs confirmation.",{recovery_cases:[{exception_amount:679.06,currency:null}]});
+if(sanitized.includes("**")||sanitized.includes("679.06 QAR")||!sanitized.includes("679.06 (currency not recorded)"))throw new Error(`Manager answer sanitizer failed: ${sanitized}`);
+console.log("PASS: Store Manager strips markdown and removes inferred currency from recovery amounts");

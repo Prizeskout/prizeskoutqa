@@ -193,6 +193,9 @@ export function summarizeCopilotFinancialEvidence(input: {
       period_comparison: periodComparison(events, input.now ?? new Date()),
       latest_event_at: latestEvent,
       truncated: events.length >= 1000,
+      coverage_statement: events.length
+        ? `This snapshot contains ${events.length} retained normalized commerce record${events.length === 1 ? "" : "s"}.`
+        : "No retained normalized commerce records are available. This does not establish that the merchant had zero real orders, revenue, fees, payouts, or balances.",
     },
     product_costs: {
       evidence_rows: costs.length,
@@ -257,16 +260,27 @@ export function summarizeCopilotFinancialEvidence(input: {
       effective_to: row.effective_to,
       status: row.status,
     })),
-    recovery_cases: input.cases.map((row) => ({
+    recovery_cases: input.cases.map((row) => {
+      const currency=row.calculation && typeof row.calculation === "object"
+        ? String((row.calculation as Record<string, unknown>).currency ?? "") || null
+        : null;
+      const exceptionAmount=number(row.exception_amount);
+      return {
       id: row.id,
       title: row.title,
       platform: row.platform,
       status: row.status,
+      exception_amount: exceptionAmount,
       claims_ready_amount: number(row.claims_ready_amount),
       recovered_amount: number(row.recovered_amount),
+      currency,
+      amount_label: exceptionAmount == null ? null : currency ? `${exceptionAmount} ${currency}` : `${exceptionAmount} (currency not recorded)`,
+      confidence: row.confidence,
+      explanation: row.explanation_en,
       submission_reference: row.submission_reference,
       updated_at: row.updated_at,
-    })),
+      };
+    }),
     limitations: [
       "Only reviewed and stored PrizeSkout evidence is included.",
       "Absence from this snapshot does not prove that a platform paid correctly.",
@@ -318,7 +332,7 @@ export async function getCopilotFinancialEvidence(accountId: string) {
     db
       .from("ps_recovery_cases")
       .select(
-        "id,title,platform,status,claims_ready_amount,recovered_amount,submission_reference,updated_at",
+        "id,title,platform,status,exception_amount,claims_ready_amount,recovered_amount,calculation,confidence,explanation_en,submission_reference,updated_at",
       )
       .eq("account_id", accountId)
       .order("updated_at", { ascending: false })
@@ -339,22 +353,26 @@ export async function getCopilotFinancialEvidence(accountId: string) {
   ]);
   for (const result of [runs, findings, contracts, cases, evidence, events])
     if (result.error) throw new Error(result.error.message);
-  let costs = await db
+  const costs = await db
     .from("ps_product_cost_evidence")
     .select("sku,currency,unit_cost,effective_from,effective_to,source_provider,created_at")
     .eq("account_id", accountId)
     .order("effective_from", { ascending: false })
     .limit(1000);
-  if (costs.error?.code === "PGRST205" || costs.error?.code === "42P01") {
-    const legacy = await db
+  if (costs.error && costs.error.code !== "PGRST205" && costs.error.code !== "42P01")
+    throw new Error(costs.error.message);
+  const legacy = await db
       .from("ps_product_cost_versions")
       .select("sku,currency,amount,effective_from,effective_to,source,created_at")
       .eq("account_id", accountId)
       .order("effective_from", { ascending: false })
       .limit(1000);
-    costs = legacy.error ? legacy : {
-      ...legacy,
-      data: (legacy.data ?? []).map((row: Record<string, unknown>) => ({
+  if (legacy.error && legacy.error.code !== "PGRST205" && legacy.error.code !== "42P01")
+    throw new Error(legacy.error.message);
+  const primaryRows = costs.error ? [] : (costs.data ?? []);
+  const primaryKeys = new Set(primaryRows.map((row: Record<string, unknown>) => `${row.sku}:${row.effective_from ?? ""}`));
+  const legacyRows = (legacy.error ? [] : (legacy.data ?? []))
+    .map((row: Record<string, unknown>) => ({
         sku: row.sku,
         currency: row.currency,
         unit_cost: row.amount,
@@ -362,10 +380,9 @@ export async function getCopilotFinancialEvidence(accountId: string) {
         effective_to: row.effective_to,
         source_provider: row.source,
         created_at: row.created_at,
-      })),
-    };
-  }
-  if (costs.error) throw new Error(costs.error.message);
+      }))
+    .filter((row: Record<string, unknown>) => !primaryKeys.has(`${row.sku}:${row.effective_from ?? ""}`));
+  const mergedCosts = [...primaryRows, ...legacyRows];
   return summarizeCopilotFinancialEvidence({
     runs: runs.data ?? [],
     findings: findings.data ?? [],
@@ -373,6 +390,6 @@ export async function getCopilotFinancialEvidence(accountId: string) {
     cases: cases.data ?? [],
     evidenceCount: evidence.count ?? 0,
     events: events.data ?? [],
-    costs: costs.data ?? [],
+    costs: mergedCosts,
   });
 }

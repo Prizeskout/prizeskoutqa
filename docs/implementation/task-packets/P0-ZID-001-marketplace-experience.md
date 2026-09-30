@@ -40,8 +40,8 @@ npm run typecheck
 | Tests | Zid contract, Salla contract, typecheck, and production build passing |
 | Migration | Not expected; verify before changing |
 | Partner configuration | Published OAuth app `7116`; URLs and app-market webhook verified; scope reduction requires a separate capability/reconnection decision |
-| Deployment | Worker version `6b718054-cd9b-4474-91ee-6e12766053f3` |
-| Production verification | PrizeSkout and authenticated Zid iframe sync/reopen/English/Arabic/responsive checks passed; standalone merchant journey rechecked with truthful currency, merchant-readable workflow states, and contained Order Guard dependency; demo app deactivated for the authorized lifecycle test and reinstall is blocked at a real SAR 412.85/month checkout |
+| Deployment | Worker version `8bbd6b31-f7b9-4829-ba5c-beda14ab2a33` |
+| Production verification | PrizeSkout and authenticated Zid iframe sync/reopen/English/Arabic/responsive checks passed; standalone merchant journey and a 50-prompt AI Store Manager audit passed after direct-answer, evidence, currency, and parser hardening; demo app deactivated for the authorized lifecycle test and reinstall is blocked at a real SAR 412.85/month checkout |
 | Customer readiness | Not ready |
 
 ## Findings log
@@ -69,6 +69,9 @@ npm run typecheck
 - Zid's `Application Testing` section still marks development store `3181397` as `Installed` and offers `View your app here`, but following that link after merchant-side deactivation opens the public PrizeSkout page with `Subscribe`. A fresh second development store, `3251312` (`PrizeSkout Lifecycle QA 2`), was then created. Partner one-click `Install App` reported success with no checkout and changed its Partner status to `Installed`, but the merchant dashboard places PrizeSkout under `Deactivated apps` and its app page still requires `Subscribe` at SAR 412.85/month. The Partner testing control therefore does not bypass billing for this already-published paid app.
 - Standalone merchant audit traversed Overview, Catalog and bulk-cost setup, Integrations, Margin Intelligence, Alerts, Payout Recovery, Promotion Simulator, AI Store Manager, and Evidence & History without submitting protected actions. The same AED 679 recovery case was mislabeled QAR in merchant attention, raw workflow identifiers were exposed, and Order Guard exposed a 503 plus unusable setup controls.
 - Deployed fixes now derive recovery currency only from retained case evidence, refuse to sum mixed/unproven currencies, retain currency on newly created cases, translate internal workflow details into merchant language, and replace the unavailable Order Guard controls with a non-destructive readiness message. The legacy case has no recorded currency and now truthfully displays `Currency not recorded` rather than an inferred code.
+- A 50-prompt live AI Store Manager audit found that many read-only questions were unnecessarily converted into tasks and malformed model JSON leaked parser diagnostics. The manager endpoint now authenticates merchant access, routes read-only questions to evidence-backed chat, retries malformed workflow JSON once, and returns a safe failure if repair fails. Protected writes still require approval.
+- Focused production regressions now report verified cost coverage deterministically as 25% (8 of 32 imported products), describe absent retained commerce records as unknown rather than zero activity, and present the Talabat 679.06 recovery amount without inventing QAR or SAR. A requested 10% bulk Zid price increase produced a prepared approval-gated task; it was not approved or executed.
+- An environment-less Cloudflare automatic deployment briefly broke the dashboard after a push. It was rolled back, and manual deployment restored service. Cloudflare Git builds now have the three required `VITE_SUPABASE_*` build variables, and the Vite configuration fails the build rather than emitting a broken client when any are absent. The first post-fix Git-triggered deployment still requires a standard smoke check.
 
 ## Exact next action
 

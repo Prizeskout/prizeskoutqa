@@ -3948,7 +3948,9 @@ export function PrizeSkoutDashboard() {
       name: product.name_en || product.name_ar,
       sku: product.sku,
       platform: product.source_platform,
+      cost_verified: product.cost_confidence === "verified",
     }));
+    const verifiedCostProducts = importedProducts.filter((product) => product.cost_confidence === "verified").length;
     setCpPhase("loading");
     appendCpThread("user", prompt);
     setCpPrompt(prompt);
@@ -4060,6 +4062,13 @@ export function PrizeSkoutDashboard() {
             context: {
               previous_operation: previousOperation ?? undefined,
               products: previousProducts.length ? previousProducts : catalogContext,
+              catalog_summary: {
+                total_products: importedProducts.length,
+                verified_cost_products: verifiedCostProducts,
+                verified_cost_coverage_pct: importedProducts.length
+                  ? Math.round((verifiedCostProducts / importedProducts.length) * 100)
+                  : null,
+              },
               conversation,
               current_page: tab,
               language: lang,
