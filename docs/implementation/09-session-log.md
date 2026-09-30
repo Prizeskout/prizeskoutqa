@@ -559,3 +559,13 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - No commit, push, deployment, connector write, scope change, credential change, or migration occurred.
 - Exact next action: after explicit commit/push authorization, deploy through the configured Git build and repeat the five-operation Zid demo audit. Verify every approved action with the operation receipt and a fresh connector readback before describing it as complete.
 - Initial post-deployment sync prompt still became a generic task because the contextual planner added a non-connected reporting step to an otherwise supported request. Tightened the bridge so prompts already recognized by the deterministic commerce-operation classifier enter that executor even when the higher-level workflow contains an unnecessary manual/reporting step. Unsupported requests still cannot enter the allowed operation set.
+
+## 2026-09-30 — Deployed remediation and repeated 20-action audit
+
+- Committed and pushed the manager execution/context fix as `09a0415`, the supported-operation routing follow-up as `5c9ea66`, and deterministic Zid sync routing as `0b2c0e9`. Cloudflare deployed final Worker version `88f131ee-2949-4a05-841b-fae06ae07837`.
+- Repeated all 20 production prompts in the logged-in PrizeSkout account. The channel comparison now correctly reports 12 Zid and 20 Salla products, with 8 verified costs and 1 Zid product out of stock. Product context retained Bose SKU `Z.DEMO-I38YG538`, its name, SAR 999 price, and stock mode.
+- Remaining production defect: read-only connector work still uses the generic `Task prepared` chat presentation without a visible completion/readback receipt. The final sync therefore cannot yet be represented as visibly completed.
+- Prepared but did not approve five reversible demo-store writes: Bose price SAR 999 to 1,009; stock to 7; rename to `Bose QC Ultra Demo`; unpublished `PrizeSkout QA Mug` at cost 10, price 25, stock 5; and inactive `QA10` at 10%. Unlimited stock and coupon disable were not approved. Action-time user confirmation is pending.
+- `npm run verify-copilot-prompts`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, `npm run typecheck`, `npm run verify-continuity`, and `git diff --check` passed before the final push; Git reported only LF-to-CRLF warnings.
+- Changed implementation files: `src/routes/api/copilot/compile.ts` and `scripts/verify-copilot-prompts.mts`. Changed continuity files: active task packet, `state.yaml`, and this session log.
+- Exact next action: after user confirmation, approve and run only the five listed demo-store writes, then verify each connector receipt and fresh Zid readback. Do not approve unlimited stock, coupon disable, or older queued actions.

@@ -79,4 +79,6 @@ npm run typecheck
 
 ## Exact next action
 
+The manager execution/context remediation is deployed through Worker `88f131ee-2949-4a05-841b-fae06ae07837`. A repeated 20-prompt production audit corrected the channel context to 12 Zid / 20 Salla, but read-only work still lacks a visible completion receipt in chat. Five reversible demo-store writes are prepared and await action-time confirmation; none has been approved or represented as executed.
+
 Choose between submitting a Zid-reviewed 7-day trial revision, completing the already authorized SAR 412.85/month checkout, or asking Zid Partner Support to grant/reset no-charge testing access for development store `3251312`. The documented Partner one-click install did not activate the published paid app. After safe activation, verify state-bound OAuth, welcome delivery, one-time activation, and reopen restoration; separately reconcile and provision Order Guard only after production migration state is authorized.
