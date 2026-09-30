@@ -507,3 +507,6 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Commit authorization
 
 - User explicitly requested commit and push. Commit the tracked AI Store Manager and deployment-safety changes only; preserve unrelated untracked artifacts. After pushing `main`, monitor the Cloudflare Git deployment and smoke-test production before ending the session.
+- Committed as `5a4652e` (`Harden AI store manager and deployment builds`) and pushed `main` to `origin`.
+- Cloudflare build `5d610f37-fd35-4c01-afde-c9f65d6a86bd` recognized all three build variables, completed build and deploy stages, and produced Worker version `089bdce8-a787-4c2d-b1b2-9679eef6d0fe`.
+- `https://prizeskout.qa/`, `https://app.prizeskout.qa/`, `/embedded/salla`, and `/embedded/zid` returned HTTP 200. The logged-in production dashboard loaded normally with no missing-Supabase environment error.

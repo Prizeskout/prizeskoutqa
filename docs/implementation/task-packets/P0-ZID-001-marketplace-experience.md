@@ -40,7 +40,7 @@ npm run typecheck
 | Tests | Zid contract, Salla contract, typecheck, and production build passing |
 | Migration | Not expected; verify before changing |
 | Partner configuration | Published OAuth app `7116`; URLs and app-market webhook verified; scope reduction requires a separate capability/reconnection decision |
-| Deployment | Worker version `8bbd6b31-f7b9-4829-ba5c-beda14ab2a33` |
+| Deployment | Git-deployed Worker version `089bdce8-a787-4c2d-b1b2-9679eef6d0fe` |
 | Production verification | PrizeSkout and authenticated Zid iframe sync/reopen/English/Arabic/responsive checks passed; standalone merchant journey and a 50-prompt AI Store Manager audit passed after direct-answer, evidence, currency, and parser hardening; demo app deactivated for the authorized lifecycle test and reinstall is blocked at a real SAR 412.85/month checkout |
 | Customer readiness | Not ready |
 
@@ -71,7 +71,7 @@ npm run typecheck
 - Deployed fixes now derive recovery currency only from retained case evidence, refuse to sum mixed/unproven currencies, retain currency on newly created cases, translate internal workflow details into merchant language, and replace the unavailable Order Guard controls with a non-destructive readiness message. The legacy case has no recorded currency and now truthfully displays `Currency not recorded` rather than an inferred code.
 - A 50-prompt live AI Store Manager audit found that many read-only questions were unnecessarily converted into tasks and malformed model JSON leaked parser diagnostics. The manager endpoint now authenticates merchant access, routes read-only questions to evidence-backed chat, retries malformed workflow JSON once, and returns a safe failure if repair fails. Protected writes still require approval.
 - Focused production regressions now report verified cost coverage deterministically as 25% (8 of 32 imported products), describe absent retained commerce records as unknown rather than zero activity, and present the Talabat 679.06 recovery amount without inventing QAR or SAR. A requested 10% bulk Zid price increase produced a prepared approval-gated task; it was not approved or executed.
-- An environment-less Cloudflare automatic deployment briefly broke the dashboard after a push. It was rolled back, and manual deployment restored service. Cloudflare Git builds now have the three required `VITE_SUPABASE_*` build variables, and the Vite configuration fails the build rather than emitting a broken client when any are absent. The first post-fix Git-triggered deployment still requires a standard smoke check.
+- An environment-less Cloudflare automatic deployment briefly broke the dashboard after a push. Cloudflare Git builds now have the three required `VITE_SUPABASE_*` build variables, and the Vite configuration fails the build rather than emitting a broken client when any are absent. Commit `5a4652e` subsequently Git-deployed version `089bdce8-a787-4c2d-b1b2-9679eef6d0fe`; the dashboard and four public/embedded route checks passed.
 
 ## Exact next action
 
