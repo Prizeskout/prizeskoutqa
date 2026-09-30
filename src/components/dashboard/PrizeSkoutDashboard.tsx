@@ -6861,7 +6861,7 @@ export function PrizeSkoutDashboard() {
             void runCopilot(prompt, "manager");
           }}
           onNewChat={startNewCopilotConversation}
-          error={cpError}
+          error={cpError ?? (cpOperationStatus === "failed" ? cpOperationMessage : null)}
           needsReview={Boolean(
             cpObj &&
             cpObj.requires_confirmation === true &&
