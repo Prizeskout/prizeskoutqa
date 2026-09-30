@@ -128,7 +128,7 @@ export function RecoveryWorkspace({
           finding.evidence_level ?? "ungraded",
           finding.assertion ?? "reconciliation",
         ],
-        calculation: { amount: finding.amount ?? null, trace: finding.trace ?? null },
+        calculation: { amount: finding.amount ?? null, currency, trace: finding.trace ?? null },
         explanation_en: `PrizeSkout identified ${finding.title.toLowerCase()}. ${finding.detail} This is a ${ready ? "claims-ready draft subject to reviewer approval" : "case requiring additional evidence before submission"}.`,
         explanation_ar: `حددت برايزسكاوت حالة تتعلق بـ ${finding.title}. ${ready ? "تم إعداد مسودة مطالبة، وتظل خاضعة لمراجعة واعتماد المسؤول المالي قبل تقديمها." : "تتطلب الحالة أدلة إضافية قبل أن تصبح جاهزة للمطالبة."}`,
       });

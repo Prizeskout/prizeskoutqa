@@ -100,7 +100,12 @@ export function PromotionProfitabilityWorkspace({
     calculatedAt: string;
   } | null>(null);
 
-  useEffect(() => setSelected(products.map((p) => p.sku)), [products]);
+  // Selection must follow the active campaign channels. Otherwise a Zid-only
+  // scenario can be labelled ZID while its headline count includes Salla SKUs.
+  useEffect(
+    () => setSelected(products.filter((p) => targetChannels.includes(p.source_platform)).map((p) => p.sku)),
+    [products, targetChannels],
+  );
   useEffect(() => {
     if (!contract) return;
     if (contract.promotion_funding_platform_pct != null)

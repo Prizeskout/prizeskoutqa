@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { confidenceLabel, merchantStatus } from "../../lib/merchant-language";
+import { confidenceLabel, merchantDetail, merchantStatus } from "../../lib/merchant-language";
 import { fetchWithTimeout } from "../../lib/fetch-with-timeout";
 import { supabase } from "../../integrations/supabase/client";
 import { OutcomeProofPanel, type OutcomeProof } from "./OutcomeProofPanel";
@@ -423,14 +423,34 @@ export function MerchantOperatingLoop({
   const visible =
     filter === "active" ? active : filter === "resolved" ? resolved : (data?.items ?? []);
   const urgent = active.filter((item) => ["critical", "high"].includes(item.priority)),
-    moneyAtRisk = active.reduce((sum, item) => sum + (item.amount ?? 0), 0),
-    currency = active.find((item) => item.currency)?.currency ?? data?.ledger[0]?.currency ?? "SAR";
+    valuedItems = active.filter((item) => typeof item.amount === "number" && item.amount !== 0),
+    missingCurrency = valuedItems.some((item) => !item.currency || item.currency === "UNKNOWN"),
+    valueByCurrency = valuedItems.reduce((totals, item) => {
+      if (item.currency && item.currency !== "UNKNOWN")
+        totals.set(item.currency, (totals.get(item.currency) ?? 0) + Number(item.amount));
+      return totals;
+    }, new Map<string, number>()),
+    valueIdentified = missingCurrency
+      ? "Currency not recorded"
+      : valueByCurrency.size
+        ? [...valueByCurrency].map(([code, amount]) => `${code} ${amount.toFixed(0)}`).join(" + ")
+        : "Not calculated";
   const ledgerGroups = useMemo(
     () =>
-      ["recovered", "protected", "identified", "estimated", "pending"].map((category) => ({
-        category,
-        value: data?.totals[category] ?? 0,
-      })),
+      ["recovered", "protected", "identified", "estimated", "pending"].map((category) => {
+        const entries = data?.ledger.filter((entry) => entry.category === category) ?? [];
+        if (!entries.length) return { category, value: "Not calculated" };
+        if (entries.some((entry) => !entry.currency || entry.currency === "UNKNOWN"))
+          return { category, value: "Currency not recorded" };
+        const totals = entries.reduce((byCurrency, entry) => {
+          byCurrency.set(entry.currency, (byCurrency.get(entry.currency) ?? 0) + entry.amount);
+          return byCurrency;
+        }, new Map<string, number>());
+        return {
+          category,
+          value: [...totals].map(([code, amount]) => `${code} ${amount.toFixed(2)}`).join(" + "),
+        };
+      }),
     [data],
   );
   const managerTasks = data?.manager?.tasks ?? [],
@@ -644,7 +664,7 @@ export function MerchantOperatingLoop({
             >
               <span>
                 <b>{task.title}</b>
-                <small>{task.detail}</small>
+                <small>{merchantDetail(task.detail)}</small>
               </span>
               <span>{task.task_type.replaceAll("_", " ")}</span>
               <span className={`ps-manager-priority ps-${task.priority}`}>{task.priority}</span>
@@ -664,7 +684,7 @@ export function MerchantOperatingLoop({
               >
                 <span>
                   <b>{item.title}</b>
-                  <small>{item.detail}</small>
+                  <small>{merchantDetail(item.detail)}</small>
                 </span>
                 <span>{item.item_type.replaceAll("_", " ")}</span>
                 <span className={`ps-manager-priority ps-${item.priority}`}>{item.priority}</span>
@@ -757,9 +777,7 @@ export function MerchantOperatingLoop({
           </div>
           <div>
             <span>Value identified</span>
-            <b>
-              {currency} {moneyAtRisk.toFixed(0)}
-            </b>
+            <b>{valueIdentified}</b>
           </div>
         </section>
       </div>
@@ -1005,7 +1023,7 @@ export function MerchantOperatingLoop({
                 <Metric
                   key={group.category}
                   label={group.category}
-                  value={`${currency} ${group.value.toFixed(2)}`}
+                  value={group.value}
                   note={
                     group.category === "identified" ? "Detected, not recovered" : "Evidence ledger"
                   }
@@ -1364,7 +1382,7 @@ function Items({
               <Badge text={merchantStatus(item.status)} color="var(--muted)" />
             </div>
             <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4, lineHeight: 1.5 }}>
-              {item.detail}
+              {merchantDetail(item.detail)}
             </div>
             {history && (
               <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 5 }}>

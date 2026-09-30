@@ -1599,8 +1599,11 @@ function convertMoney(n: number, from: string, to: DisplayCurrency): number {
 }
 
 function fmtMoney(n: number, currency: string): string {
-  const target = isDisplayCurrency(currency) ? currency : "QAR";
-  return Math.round(n * QAR_RATES[target]).toLocaleString("en-US");
+  // Values passed with their source currency are already denominated in that
+  // currency. Applying an exchange multiplier again inflated SAR catalogue prices (for
+  // example, SAR 999 rendered as SAR 1,029).
+  void currency;
+  return Math.round(n).toLocaleString("en-US");
 }
 
 function fmtConvertedMoney(n: number, from: string, to: DisplayCurrency): string {
@@ -9410,7 +9413,9 @@ export function PrizeSkoutDashboard() {
 
                   {policyTab === "promotions" && (
                     <PromotionProfitabilityWorkspace
-                      products={importedProducts.map((product) => ({
+                      products={importedProducts
+                        .filter((product) => !approvedContract?.platform || product.source_platform === approvedContract.platform)
+                        .map((product) => ({
                         sku: product.sku,
                         name: product.name_en || product.name_ar || product.sku,
                         current_price: product.current_price,

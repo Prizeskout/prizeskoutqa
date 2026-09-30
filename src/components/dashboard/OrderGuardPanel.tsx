@@ -80,6 +80,7 @@ export function OrderGuardPanel({
       ) ?? [],
     [guard],
   );
+  const unavailable = /\(503\)/.test(error);
 
   const provision = async () => {
     if (!businessId.trim()) return setError("Enter the UrbanPiper business ID.");
@@ -148,12 +149,23 @@ export function OrderGuardPanel({
       </div>
 
       {error && (
-        <div className="ps-order-guard__error" role="alert">
-          <CircleAlert size={17} /> {error}
+        <div
+          className={unavailable ? "ps-order-guard__unavailable" : "ps-order-guard__error"}
+          role={unavailable ? "status" : "alert"}
+        >
+          <CircleAlert size={17} />
+          <div>
+            <strong>{unavailable ? "Order Guard is not available in this workspace yet" : "Order Guard needs attention"}</strong>
+            <span>
+              {unavailable
+                ? "Your catalog, prices, and connected-store data are unchanged. You can continue using the rest of PrizeSkout while order protection is being enabled."
+                : error}
+            </span>
+          </div>
         </div>
       )}
 
-      {!guard?.source ? (
+      {!guard?.source && !unavailable ? (
         <div className="ps-order-guard__setup">
           <div>
             <strong>Connect UrbanPiper Order Relay</strong>
@@ -172,7 +184,7 @@ export function OrderGuardPanel({
             {busy === "setup" ? "Activating…" : "Activate Order Guard"}
           </button>
         </div>
-      ) : (
+      ) : guard?.source ? (
         <>
           <div className="ps-order-guard__metrics">
             <Metric label="Live orders" value={guard.summary.live} tone="#2563EB" />
@@ -213,7 +225,7 @@ export function OrderGuardPanel({
             </div>
           )}
         </>
-      )}
+      ) : null}
 
       {setup && <SetupCredential setup={setup} />}
     </section>

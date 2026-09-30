@@ -362,3 +362,107 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Implementation: `src/routes/api/repricing/catalog.ts`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, `src/components/dashboard/FocusedIntelligenceSummary.tsx`, `src/components/dashboard/MerchantOperatingLoop.tsx`, `src/components/dashboard/evidence/EvidenceLibrary.tsx`, `src/components/dashboard/promotions/PromotionProfitabilityWorkspace.tsx`, `src/lib/promotion-profitability.ts`, `src/server/core/copilot-financial-evidence.ts`, and `scripts/verify-salla-contract.mts`.
 - Continuity: `docs/implementation/state.yaml`, `01-current-state.md`, `05-deployment-register.md`, `07-risk-register.md`, this session log, and the active task packet.
 - Exact next action: reconcile the production migration ledger and, only with explicit authorization, provision and verify Order Guard. Separately render-check the revised welcome email and embedded checklist in English and Arabic and obtain an approved real-merchant pilot before changing readiness.
+
+## 2026-09-29 — Zid marketplace, embedded onboarding, and live dashboard hardening
+
+### Implementation and production evidence
+
+- Audited published Zid OAuth app `7116`, production URLs, app-market lifecycle webhook, development-store installation, and selected scopes. No Partner setting was mutated.
+- Rejected OAuth codes without the state-bound session and corrected marketplace completion to return to the embedded Zid app.
+- Added idempotent verified-store tenant/access provisioning, Supabase one-time magic-link generation bound to the Zid merchant, localized welcome delivery metadata, and a strict no-reusable-credential email boundary.
+- Replaced the embedded redirect shim with a bilingual UUID-validated connection, webhook, catalogue sync/retry, secure access, and first-value checklist workspace.
+- Live Zid catalogue sync completed and returned to ready state. PrizeSkout showed 12 Zid plus 20 Salla products and preserved evidence gates for missing cost/terms.
+- Fixed double conversion of native SAR catalogue prices; the same Zid SKU now displays SAR 999 in catalogue and margin views.
+- Fixed Zid promotion selection/counting so a ZID-labelled scenario uses 12 Zid products instead of the 32-product mixed catalogue.
+- Deployed final Worker version `c0f6ff05-db76-4ebc-87d6-cf84096cd6ee` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- Authenticated embedded-store and fresh-install email verification remain pending because the available Zid merchant-dashboard tab is at the login screen. Login was not automated.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` — passed.
+- Startup and final `npm run verify-zid-contract` — passed.
+- Startup and final `npm run verify-salla-contract` — passed.
+- Startup and final `npm run typecheck` — passed.
+- Final `npm run build` — passed; existing Vite chunk-size and dynamic/static-import warnings only.
+- `npx wrangler deploy --config dist/server/wrangler.json` — passed; final version `c0f6ff05-db76-4ebc-87d6-cf84096cd6ee`.
+- Live Zid sync — passed; only Zid showed `Syncing…`, then returned to ready.
+- Live catalogue/margin — passed after correction; 12 Zid items, SAR 999 consistent, unverified economics `Not calculated`.
+- Live Promotion Simulator — passed after correction; `12 products · ZID`.
+
+### Changed files and exact next action
+
+- Implementation: `src/routes/api/auth/zid/callback.ts`, `src/routes/api/auth/resolve-merchant.ts`, `src/routes/api/embedded/zid/bootstrap.ts`, `src/routes/api/embedded/zid/sync.ts`, `src/routes/embedded/zid.tsx`, `src/server/core/zid-account-link.ts`, `src/server/core/zid-embedded.ts`, `src/server/core/zid-install.ts`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, `src/components/dashboard/promotions/PromotionProfitabilityWorkspace.tsx`, `src/routeTree.gen.ts`, and `scripts/verify-zid-contract.mts`.
+- Continuity: `state.yaml`, `01-current-state.md`, `05-deployment-register.md`, `07-risk-register.md`, this session log, and the active task packet.
+- Exact next action: after the user signs into the Zid development-store merchant dashboard, verify fresh marketplace authorization, authenticated English/Arabic embedded states, welcome delivery and one-time activation, reopen/retry, and responsive iframe behavior. Scope or credential changes require a separate impact decision and confirmation.
+
+## 2026-09-29 — Authenticated Zid embedded verification
+
+- User completed the Zid merchant login manually; authentication was not automated.
+- Opened installed PrizeSkout inside Zid store `3181397`. Embedded bootstrap showed a healthy connection and secure in-Zid access.
+- Ran the embedded retry: it visibly progressed from `Synchronizing…` to `Complete` with 9 products.
+- Continued into the full PrizeSkout workspace inside the Zid iframe. After load, the dashboard showed 9 products, 8 confirmed costs, 1 missing cost, 89% coverage, and Zid connected; it did not invent payout results.
+- Reloaded the Zid app route. The embedded checklist reopened with the completed 9-product state.
+- Found that Zid sends `language=ar` while the route only read `locale`/`lang`. Added `language` support plus document `lang` and `dir` metadata and a localized missing-store-name fallback.
+- Deployed final Worker version `2710a628-5fac-468f-aaea-bbf6c8e575aa`.
+- Live Arabic iframe displayed translated copy with `lang="ar"` and `dir="rtl"`. Browser widths 375, 768, and 1440 produced equal client/scroll widths inside the iframe, proving no horizontal overflow; viewport override was reset.
+- `npm run verify-zid-contract`, `npm run verify-salla-contract`, `npm run typecheck`, and `npm run build` passed. Build warnings were limited to existing chunk-size/dynamic-import notices.
+- Fresh-install welcome delivery and one-time activation remain pending. The installed demo app predates the new provisioning path; uninstall/reinstall is destructive and was not performed without action-time confirmation.
+- Exact next action: with explicit confirmation, uninstall/reinstall the demo app, verify state-bound OAuth, provider-delivered welcome email, one-time activation, and reinstall/reopen restoration. Leave scopes and credentials unchanged.
+
+## 2026-09-29 — Zid demo uninstall/reinstall boundary
+
+- User explicitly confirmed uninstall and reinstall on demo store `3181397`.
+- Selected Zid's required deactivation reason `Not using the App now.` and confirmed deactivation. Zid moved PrizeSkout from Activated Apps to Deactivated Apps.
+- Began reactivation, selected the published Core plan, reviewed the complete scope consent, and continued to checkout.
+- Zid checkout shows a recurring total of SAR 412.85/month and a disabled `Complete purchase` button pending payment-provider/card details. No payment data was entered and no purchase was submitted.
+- Checked the Zid Partner dashboard. The published app is recurring-only, Core has zero free-trial days, and the available development-store controls expose no no-charge reinstall path.
+- Current external state: demo store `3181397` has PrizeSkout deactivated. Restoration requires explicit authorization for the recurring charge or a separately established free/private test path.
+- Exact next action: ask the user whether to authorize the SAR 412.85/month recurring purchase. If not, create or arrange a no-charge test plan only under separate Partner-configuration authorization, then complete the lifecycle verification.
+
+## 2026-09-29 — Zid reinstall purchase authorized; secure payment handoff
+
+- The user explicitly authorized the recurring SAR 412.85/month Core-plan purchase for Zid demo store `3181397`.
+- Reopened the checkout and verified there is no saved payment method. Credit-card number, expiry, and CVV fields are blank embedded payment-provider fields, and `Complete purchase` remains disabled.
+- No payment credentials were entered by the agent and no purchase was submitted. The checkout was handed to the user for secure card entry and final submission.
+- Current external state: PrizeSkout remains deactivated on demo store `3181397`; purchase authorization must not be represented as payment completion.
+- Exact next action: after the user completes the authorized checkout and confirms Zid accepted it, verify app reactivation, state-bound OAuth, welcome-email delivery, one-time activation, and embedded reopen restoration.
+
+## 2026-09-29 — Zid seven-day trial feasibility check
+
+- Inspected the live Core plan editor without saving changes. `Trial available (Days)` supports values from 0 through 90, including 7.
+- The Partner Dashboard is in Edit Mode and states that, after submission, plans cannot be edited until Zid approves and publishes them. The plan workflow exposes `Save draft` followed by `Submit for review`; the current published Core plan and merchant checkout still show zero trial days.
+- Closed the editor without changing or submitting any value. PrizeSkout remains deactivated on demo store `3181397`, and no payment has been submitted.
+- Exact next action: decide whether to submit a 7-day Core-plan trial revision for Zid review or proceed with the already authorized checkout. Submitting the revision requires action-time confirmation; the current checkout will remain unchanged until Zid approves and publishes it.
+
+## 2026-09-29 — Zid no-charge development-store path audit
+
+- Inspected Partner Dashboard → Development Stores. Store `3181397` is the only development store and exposes dashboard access, but no app-install control on that page.
+- Inspected PrizeSkout → Application Details → Application Testing. Zid still labels `Prizeskout Qatar` as `Installed` and offers `View your app here`.
+- Followed the direct test link. It opened the merchant's public PrizeSkout marketplace page with `Subscribe` and the existing paid plans, not the embedded application. The Partner test-install flag is stale after merchant-side deactivation and does not bypass subscription checkout for this store.
+- Zid's current partner documentation describes one-click app installation on development stores. A fresh second development store is therefore the next safe way to test whether the initial Partner testing install remains no-charge.
+- Exact next action: obtain action-time confirmation to create a fresh development store, then use `Application Testing` to install PrizeSkout and verify whether OAuth, welcome delivery, activation, sync, and embedded reopen work without marketplace checkout.
+
+## 2026-09-29 — Fresh Zid development-store no-charge install test
+
+- After action-time confirmation, created development store `3251312`, `PrizeSkout Lifecycle QA 2`. Zid displayed `Development store was created successfully`.
+- In PrizeSkout → Application Details → Application Testing, the fresh store exposed `Install App`. After action-time permission confirmation, clicked it; Zid displayed `Application was installed successfully`, changed the Partner status to `Installed`, and did not show checkout.
+- Entered the new store through Partner Dashboard Access. Merchant `My apps` listed PrizeSkout under `Deactivated apps` with an `Activate` button and `From 412.85 / 1 Month`.
+- The merchant app page showed `Subscribe`, Core at SAR 412.85/month, and no direct embedded-app access. Therefore Partner one-click testing installation does not grant active access or bypass marketplace billing for this already-published paid app.
+- No payment was submitted. Store `3181397` remains deactivated; store `3251312` exists and has a Partner-installed but merchant-deactivated PrizeSkout record.
+- Exact next action: choose a Zid-reviewed 7-day trial revision, complete the already authorized paid checkout, or contact Zid Partner Support to request/reset no-charge development-store access; after activation, verify OAuth, welcome delivery, one-time activation, sync, and reopen.
+
+## 2026-09-29 — Standalone merchant end-to-end coherence audit
+
+- Traversed the live logged-in account through Overview, Catalog and bulk-cost setup, Integrations, Margin Intelligence, Alerts, Payout Recovery, Promotion Simulator, AI Store Manager, and Evidence & History. No cost edit, repricing, promotion, dispute, resolution, message, export, approval, or other protected action was submitted.
+- Found the same Talabat recovery case shown as AED 679 in Payout Recovery but QAR 679 in attention/Store Manager because recovery attention and ledger records hardcoded QAR. Changed the server refresh to use retained `calculation.currency`; legacy cases without currency now display `Currency not recorded` and currencies are grouped rather than summed across codes. New recovery cases retain the dashboard currency in their calculation evidence.
+- Replaced raw workflow/dead-letter identifiers with merchant-readable explanations while preserving original database evidence. Live resolved attention items now explain merchant approval in plain language.
+- Order Guard's unprovisioned production schema still returns 503. The UI now converts that dependency failure into a neutral unavailable state, hides the unusable activation form, and states that catalog, prices, and store data were unchanged. No migration was deployed.
+- `npm run verify-zid-contract` — passed before and after changes.
+- `npm run verify-salla-contract` — passed before and after changes.
+- `npm run typecheck` — passed after one intermediate compile caught and corrected a removed currency variable reference.
+- `npm run build` — passed; existing chunk-size and mixed dynamic/static import warnings only.
+- `npx wrangler deploy --config dist/server/wrangler.json` — initial version `0775d297-5ead-4b33-a25f-08aa8369583e`, then final version `6b718054-cd9b-4474-91ee-6e12766053f3` after the live audit exposed the legacy missing-currency presentation.
+- Live verification — passed: Order Guard shows the unavailable readiness message after load; AI Store Manager shows `Currency not recorded` for the legacy case and humanized expired/dead-letter details; Evidence & History humanizes waiting-approval events; catalog coverage settles at 25% after data load.
+- Changed implementation files: `src/server/core/merchant-experience.ts`, `src/lib/merchant-language.ts`, `src/components/dashboard/MerchantOperatingLoop.tsx`, `src/components/dashboard/OrderGuardPanel.tsx`, `src/components/dashboard/OrderGuardPanel.css`, `src/components/dashboard/payout/RecoveryWorkspace.tsx`, and `scripts/verify-zid-contract.mts`.
+- Changed continuity files: active task packet, `state.yaml`, `01-current-state.md`, `05-deployment-register.md`, `07-risk-register.md`, and this session log.
+- Exact next action: continue the pending Zid activation decision for full fresh-install lifecycle verification; separately reconcile Order Guard production migration state before any schema deployment.

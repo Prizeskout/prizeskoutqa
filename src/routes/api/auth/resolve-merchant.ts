@@ -31,12 +31,15 @@ export const Route = createFileRoute("/api/auth/resolve-merchant")({
           });
         }
 
-        const { data: row } = await supabaseAdmin
+        const linkedMerchantId = typeof userData.user.user_metadata?.prizeskout_merchant_id === "string"
+          ? userData.user.user_metadata.prizeskout_merchant_id.trim()
+          : "";
+        let lookup = supabaseAdmin
           .from("ps_access_codes")
           .select("merchant_id, code")
-          .eq("email", email)
-          .limit(1)
-          .maybeSingle();
+          .eq("email", email);
+        if (linkedMerchantId) lookup = lookup.eq("merchant_id", linkedMerchantId);
+        const { data: row } = await lookup.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
         if (!row) {
           return new Response(

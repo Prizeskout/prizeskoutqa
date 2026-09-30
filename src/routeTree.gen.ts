@@ -102,6 +102,8 @@ import { Route as ApiPublicHooksDispatchQueueRouteImport } from './routes/api/pu
 import { Route as ApiPublicHooksDispatchConfirmationRouteImport } from './routes/api/public/hooks/dispatch-confirmation'
 import { Route as ApiPublicHooksCopilotSchedulesRouteImport } from './routes/api/public/hooks/copilot-schedules'
 import { Route as ApiPublicHooksAuthEmailRouteImport } from './routes/api/public/hooks/auth-email'
+import { Route as ApiEmbeddedZidSyncRouteImport } from './routes/api/embedded/zid/sync'
+import { Route as ApiEmbeddedZidBootstrapRouteImport } from './routes/api/embedded/zid/bootstrap'
 import { Route as ApiEmbeddedSallaSyncRouteImport } from './routes/api/embedded/salla/sync'
 import { Route as ApiEmbeddedSallaBootstrapRouteImport } from './routes/api/embedded/salla/bootstrap'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
@@ -596,6 +598,16 @@ const ApiPublicHooksAuthEmailRoute = ApiPublicHooksAuthEmailRouteImport.update({
   path: '/api/public/hooks/auth-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEmbeddedZidSyncRoute = ApiEmbeddedZidSyncRouteImport.update({
+  id: '/api/embedded/zid/sync',
+  path: '/api/embedded/zid/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmbeddedZidBootstrapRoute = ApiEmbeddedZidBootstrapRouteImport.update({
+  id: '/api/embedded/zid/bootstrap',
+  path: '/api/embedded/zid/bootstrap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiEmbeddedSallaSyncRoute = ApiEmbeddedSallaSyncRouteImport.update({
   id: '/api/embedded/salla/sync',
   path: '/api/embedded/salla/sync',
@@ -737,6 +749,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
   '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
+  '/api/embedded/zid/bootstrap': typeof ApiEmbeddedZidBootstrapRoute
+  '/api/embedded/zid/sync': typeof ApiEmbeddedZidSyncRoute
   '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
@@ -840,6 +854,8 @@ export interface FileRoutesByTo {
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
   '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
+  '/api/embedded/zid/bootstrap': typeof ApiEmbeddedZidBootstrapRoute
+  '/api/embedded/zid/sync': typeof ApiEmbeddedZidSyncRoute
   '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
@@ -947,6 +963,8 @@ export interface FileRoutesById {
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
   '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
+  '/api/embedded/zid/bootstrap': typeof ApiEmbeddedZidBootstrapRoute
+  '/api/embedded/zid/sync': typeof ApiEmbeddedZidSyncRoute
   '/api/public/hooks/auth-email': typeof ApiPublicHooksAuthEmailRoute
   '/api/public/hooks/copilot-schedules': typeof ApiPublicHooksCopilotSchedulesRoute
   '/api/public/hooks/dispatch-confirmation': typeof ApiPublicHooksDispatchConfirmationRoute
@@ -1055,6 +1073,8 @@ export interface FileRouteTypes {
     | '/api/auth/zid/callback'
     | '/api/embedded/salla/bootstrap'
     | '/api/embedded/salla/sync'
+    | '/api/embedded/zid/bootstrap'
+    | '/api/embedded/zid/sync'
     | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
@@ -1158,6 +1178,8 @@ export interface FileRouteTypes {
     | '/api/auth/zid/callback'
     | '/api/embedded/salla/bootstrap'
     | '/api/embedded/salla/sync'
+    | '/api/embedded/zid/bootstrap'
+    | '/api/embedded/zid/sync'
     | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
@@ -1264,6 +1286,8 @@ export interface FileRouteTypes {
     | '/api/auth/zid/callback'
     | '/api/embedded/salla/bootstrap'
     | '/api/embedded/salla/sync'
+    | '/api/embedded/zid/bootstrap'
+    | '/api/embedded/zid/sync'
     | '/api/public/hooks/auth-email'
     | '/api/public/hooks/copilot-schedules'
     | '/api/public/hooks/dispatch-confirmation'
@@ -1351,6 +1375,8 @@ export interface RootRouteChildren {
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
   ApiEmbeddedSallaBootstrapRoute: typeof ApiEmbeddedSallaBootstrapRoute
   ApiEmbeddedSallaSyncRoute: typeof ApiEmbeddedSallaSyncRoute
+  ApiEmbeddedZidBootstrapRoute: typeof ApiEmbeddedZidBootstrapRoute
+  ApiEmbeddedZidSyncRoute: typeof ApiEmbeddedZidSyncRoute
   ApiPublicHooksAuthEmailRoute: typeof ApiPublicHooksAuthEmailRoute
   ApiPublicHooksCopilotSchedulesRoute: typeof ApiPublicHooksCopilotSchedulesRoute
   ApiPublicHooksDispatchConfirmationRoute: typeof ApiPublicHooksDispatchConfirmationRoute
@@ -2035,6 +2061,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAuthEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/embedded/zid/sync': {
+      id: '/api/embedded/zid/sync'
+      path: '/api/embedded/zid/sync'
+      fullPath: '/api/embedded/zid/sync'
+      preLoaderRoute: typeof ApiEmbeddedZidSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/embedded/zid/bootstrap': {
+      id: '/api/embedded/zid/bootstrap'
+      path: '/api/embedded/zid/bootstrap'
+      fullPath: '/api/embedded/zid/bootstrap'
+      preLoaderRoute: typeof ApiEmbeddedZidBootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/embedded/salla/sync': {
       id: '/api/embedded/salla/sync'
       path: '/api/embedded/salla/sync'
@@ -2269,6 +2309,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
   ApiEmbeddedSallaBootstrapRoute: ApiEmbeddedSallaBootstrapRoute,
   ApiEmbeddedSallaSyncRoute: ApiEmbeddedSallaSyncRoute,
+  ApiEmbeddedZidBootstrapRoute: ApiEmbeddedZidBootstrapRoute,
+  ApiEmbeddedZidSyncRoute: ApiEmbeddedZidSyncRoute,
   ApiPublicHooksAuthEmailRoute: ApiPublicHooksAuthEmailRoute,
   ApiPublicHooksCopilotSchedulesRoute: ApiPublicHooksCopilotSchedulesRoute,
   ApiPublicHooksDispatchConfirmationRoute:

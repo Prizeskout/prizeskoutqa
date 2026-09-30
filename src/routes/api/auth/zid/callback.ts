@@ -23,6 +23,7 @@ import { syncPlatformCatalog } from "@/server/core/platform-sync";
 import { backgroundTask } from "@/server/cf-ctx";
 import { resolveZidTenant } from "@/server/core/zid-install";
 import { registerZidWebhooks } from "@/server/core/zid-webhooks";
+import { provisionZidMerchantAccess, verifiedZidStoreFromProfile, type VerifiedZidStore } from "@/server/core/zid-account-link";
 
 const ZID_TOKEN_URL    = "https://oauth.zid.sa/oauth/token";
 const ZID_AUTH_URL     = "https://oauth.zid.sa/oauth/authorize";
@@ -148,10 +149,12 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
             return errorPage("Session expired. Please try connecting again.");
           }
         } else {
-          // Path B: marketplace-initiated install. The store ID discovered
-          // after token exchange resolves the stable PrizeSkout tenant.
-          merchantId = "marketplace";
+          // Marketplace activation first enters this endpoint without a code;
+          // that branch above creates a bound nonce and starts OAuth. Accepting
+          // a code without that session would bypass OAuth state verification.
+          return errorPage("The Zid authorization session expired. Please activate PrizeSkout again from Zid.");
         }
+        const marketplaceInstall = merchantId === "marketplace";
         const redirectUri = `${getPublicOrigin(request)}/api/auth/zid/callback`;
 
         // 1. Exchange authorization code for tokens
@@ -193,6 +196,7 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
 
         // 2. Probe store profile to get the native store ID
         let storeId = "";
+        let verifiedStore: VerifiedZidStore | null = null;
         try {
           const probeHeaders: Record<string, string> = {
             Authorization: `Bearer ${bearerToken}`,
@@ -202,11 +206,9 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
 
           const profileRes = await fetch(ZID_STORE_URL, { headers: probeHeaders });
           if (profileRes.ok) {
-            const profile = await profileRes.json() as {
-              store?: { id?: string | number };
-              id?: string | number;
-            };
-            storeId = String(profile.store?.id ?? profile.id ?? "");
+            const profile = await profileRes.json() as Record<string, unknown>;
+            verifiedStore = verifiedZidStoreFromProfile(profile);
+            storeId = verifiedStore?.id ?? "";
           }
         } catch { /* non-fatal — store_id stored empty, webhook lookup still works */ }
 
@@ -216,7 +218,7 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
 
         // A Zid store owns one PrizeSkout tenant. Reinstallations reuse the
         // existing tenant instead of generating duplicate merchant accounts.
-        const tenant = await resolveZidTenant(storeId, merchantId);
+        const tenant = await resolveZidTenant(storeId, merchantId, verifiedStore?.name);
         merchantId = tenant.merchantId;
 
         // Zid appends this registered UUID to the embedded Application URL.
@@ -267,6 +269,8 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
               webhook_secret:   webhookSecret,
               metadata: {
                 store_id:      storeId,
+                store_name:    verifiedStore?.name ?? `Zid Store ${storeId}`,
+                store_email_verified: Boolean(verifiedStore?.email),
                 expires_at:    expiresAt,
                 oauth:         true,
                 embedded_token: embeddedToken,
@@ -281,6 +285,24 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
         if (upsertErr || !row) {
           return errorPage("Failed to save Zid credentials. Please try again.");
         }
+
+        // Provision passwordless PrizeSkout access and send a one-time welcome
+        // link when Zid's authenticated store profile supplies an email. Never
+        // email the reusable access code or any Zid credential.
+        await provisionZidMerchantAccess({
+          channelId: row.id,
+          accountId: tenant.accountId,
+          store: verifiedStore ?? { id: storeId, name: `Zid Store ${storeId}`, email: "", locale: "en" },
+          metadata: {
+            store_id: storeId,
+            store_name: verifiedStore?.name ?? `Zid Store ${storeId}`,
+            store_email_verified: Boolean(verifiedStore?.email),
+            expires_at: expiresAt,
+            oauth: true,
+            embedded_token: embeddedToken,
+            refresh_token: tokens.refresh_token ?? null,
+          },
+        }).catch(error => console.error("[zid-oauth] merchant access provisioning failed", error));
 
         // 4. Register webhook with Zid
         // Zid uses Basic Auth on inbound webhooks: Authorization: Basic base64("prizeskout:<secret>")
@@ -306,19 +328,45 @@ export const Route = createFileRoute("/api/auth/zid/callback")({
           licenseeId: tenant.licenseeId,
           merchantId,
           region:     "SA",
+        }).then(async result => {
+          const { data: current } = await supabaseAdmin.from("ps_merchant_channels").select("metadata").eq("id", row.id).maybeSingle();
+          const metadata = current?.metadata && typeof current.metadata === "object" && !Array.isArray(current.metadata)
+            ? current.metadata as Record<string, unknown>
+            : {};
+          await supabaseAdmin.from("ps_merchant_channels").update({
+            metadata: {
+              ...metadata,
+              initial_catalog_sync_at: new Date().toISOString(),
+              initial_catalog_sync_items_found: result.items_found,
+              initial_catalog_sync_items_stored: result.items_stored,
+              initial_catalog_sync_error: null,
+            },
+            last_verified_at: new Date().toISOString(),
+            error_message: null,
+            updated_at: new Date().toISOString(),
+          }).eq("id", row.id);
         }).catch(async (error) => {
           const message = error instanceof Error ? error.message : String(error);
           console.error("[zid-oauth] initial catalog sync failed", message);
+          const { data: current } = await supabaseAdmin.from("ps_merchant_channels").select("metadata").eq("id", row.id).maybeSingle();
+          const metadata = current?.metadata && typeof current.metadata === "object" && !Array.isArray(current.metadata)
+            ? current.metadata as Record<string, unknown>
+            : {};
           await supabaseAdmin
             .from("ps_merchant_channels")
-            .update({ error_message: `Initial catalog sync failed: ${message.slice(0, 400)}` })
+            .update({
+              error_message: `Initial catalog sync failed: ${message.slice(0, 400)}`,
+              metadata: { ...metadata, initial_catalog_sync_error: message.slice(0, 400) },
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", row.id);
         }));
 
-        // 6. Redirect: honour return_to, else marketplace installs go to onboarding, user-initiated to dashboard
-        const defaultDest = cookieVal
-          ? "/dashboard/revenue-hub"
-          : `https://dashboard.zid.sa/en-sa/stores/${encodeURIComponent(storeId)}/apps/${encodeURIComponent(clientId)}/embedded`;
+        // 6. Redirect: marketplace activation returns to the app inside Zid;
+        // a connection deliberately started from PrizeSkout returns to PrizeSkout.
+        const defaultDest = marketplaceInstall
+          ? `https://dashboard.zid.sa/en-sa/stores/${encodeURIComponent(storeId)}/apps/${encodeURIComponent(clientId)}/embedded`
+          : "/dashboard/revenue-hub";
         const dest = (returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : defaultDest;
         if (dest.startsWith("https://dashboard.zid.sa/")) return htmlRedirect(dest);
         const sep  = dest.includes("?") ? "&" : "?";

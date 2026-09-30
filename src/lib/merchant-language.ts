@@ -1,3 +1,5 @@
+import { looksTechnical } from "./error-classify";
+
 const STATUS: Record<string, string> = {
   idle: "Ready",
   received: "Ready to review",
@@ -36,6 +38,16 @@ export function confidenceLabel(value: unknown) {
     : key === "medium" || key === "estimated"
       ? "Best available estimate"
       : "Information still needed";
+}
+export function merchantDetail(value: unknown) {
+  const detail = String(value ?? "").trim();
+  if (/approval_expired|approval expired/i.test(detail))
+    return "This task's approval expired before it could run. Review the task and approve a fresh request if you still want it completed.";
+  if (/authorize_store_manager_task/i.test(detail) && /waiting[_ ]approval/i.test(detail))
+    return "This Store Manager task was waiting for merchant approval before it could run.";
+  if (/dead letter/i.test(detail) || looksTechnical(detail))
+    return "PrizeSkout could not complete this workflow. Review the item or retry it; no store data was changed.";
+  return detail;
 }
 export function workflowStepLabel(step: { execution?: unknown; approval_required?: unknown }) {
   return step.execution === "manual_fallback"
