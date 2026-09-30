@@ -4842,10 +4842,15 @@ export function PrizeSkoutDashboard() {
       setCpOperationStatus(op === "customer_search" ? "complete" : "ready");
       return true;
     } catch (error) {
+      const failureMessage =
+        error instanceof Error ? error.message : "The operation could not be completed.";
       setCpOperationStatus("failed");
-      setCpOperationMessage(
-        error instanceof Error ? error.message : "The operation could not be completed.",
-      );
+      setCpOperationMessage(failureMessage);
+      appendCpThread("assistant", failureMessage, "error", {
+        kind: "operation",
+        operation,
+        status: "Preview failed; nothing was changed",
+      });
       return false;
     }
   };
