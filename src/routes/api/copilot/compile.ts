@@ -541,7 +541,8 @@ export const Route = createFileRoute("/api/copilot/compile")({
             const validated=validateManagerWorkflow({steps:Array.isArray(workflow.steps)?workflow.steps as Array<Record<string,unknown>>:[]});
             if(!validated.ok)return json({error:validated.errors.join(" ")},422);
             const canExecute=validated.steps.every(step=>step.execution==="connected");
-            if(canExecute){
+            const hasDeterministicOperation=isOperationalRequest(normalizedPrompt);
+            if(canExecute||hasDeterministicOperation){
               try{
                 const operationRaw=(await callAI({system:OPERATION_SYSTEM,user:`${normalizedPrompt}${context}`,maxTokens:900})).text;
                 const operation=normalizeExecutableManagerOperation(operationRaw);
