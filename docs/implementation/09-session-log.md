@@ -510,3 +510,51 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Committed as `5a4652e` (`Harden AI store manager and deployment builds`) and pushed `main` to `origin`.
 - Cloudflare build `5d610f37-fd35-4c01-afde-c9f65d6a86bd` recognized all three build variables, completed build and deploy stages, and produced Worker version `089bdce8-a787-4c2d-b1b2-9679eef6d0fe`.
 - `https://prizeskout.qa/`, `https://app.prizeskout.qa/`, `/embedded/salla`, and `/embedded/zid` returned HTTP 200. The logged-in production dashboard loaded normally with no missing-Supabase environment error.
+
+## 2026-09-30 — Contextual AI Store Manager conversation slice
+
+- Used the logged-in PrizeSkout account for a read-only baseline. `What needs my attention today?` returned evidence-bounded catalogue and payout priorities; the follow-up `Which ones should I start with?` retained the prior conversational context. No approval was granted and no protected store action ran.
+- Preserved the pre-existing uncommitted copilot work and completed its verification. The manager now uses one validated agent decision contract for natural answers, concise clarification, or prepared workflows instead of keyword-selected answer versus workflow prompts.
+- Manager conversations retain up to 16 recent turns. Natural workflow acknowledgements are returned to the chat, while every workflow step still passes through the capability registry for risk, availability, readback, and merchant-approval enforcement.
+- Production remains on the previously recorded Worker version; this contextual-agent change is local and is not represented as deployed or production-verified.
+
+### Verification commands and exact outcomes
+
+- `npm run verify-continuity` — passed.
+- `npm run verify-zid-contract` — passed.
+- `npm run verify-salla-contract` — passed.
+- `npm run typecheck` — passed.
+- `npm run verify-copilot-prompts` — passed, including the 16-turn manager window and validated answer/clarify/workflow contract.
+- `git diff --check` — passed; Git reported only existing LF-to-CRLF conversion warnings.
+- `npm run build` — passed; existing chunk-size and mixed dynamic/static import warnings only.
+
+### Changed files and exact next action
+
+- Implementation: `src/routes/api/copilot/compile.ts`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, and `scripts/verify-copilot-prompts.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: after explicit commit/push authorization, deploy through the configured Git build and run a production regression covering greeting, ambiguous follow-up, channel switch, clarification, recommendation-only wording, and an approval-gated write. The separate Zid trial/checkout/support decision remains open.
+
+## 2026-09-30 — AI Store Manager 20-action connected-demo audit
+
+- Ran 20 distinct actions in the logged-in production account: catalogue sync; Zid catalogue listing; exact product lookup; single-product repricing preview; low/out-of-stock check; order summary; profit brief; VAT summary; returns/refunds impact; coupon safety; Zid/Salla comparison; exact price change; finite stock change; unlimited-stock change; rename; unpublished product draft; inactive coupon creation; coupon disable; all-Zid repricing preview; and manager-driven catalogue sync.
+- Read-only catalogue sync retained 32 items: 12 Zid and 20 Salla. The catalogue visibly showed Bose SKU `Z.DEMO-I38YG538` at SAR 999.
+- Observed production defects: manager context omitted visible prices and stock; exact product lookup became a task and its run control navigated to Defend Loop; preview repricing was refused despite catalogue pricing; and the channel comparison incorrectly claimed 1 Zid / 31 Salla.
+- After the user's action-time confirmation, approved exactly five reversible/test-scoped writes: Bose price SAR 999→1,009, stock 7, rename to `Bose QC Ultra Demo`, unpublished `PrizeSkout QA Mug` at SAR 25/cost SAR 10/stock 5, and inactive coupon `QA10` at 10%. Did not approve unlimited stock, coupon disable, or older queued tasks.
+- All five approvals moved to `Approved, not sent yet`. The UI stated that no unsupported platform action was claimed as completed. A fresh catalogue sync still showed 32 items and Bose unchanged at its original name and SAR 999; therefore no connected-store write is verified.
+- Baseline `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` all passed before the browser audit.
+- No code, deployment, scope, credential, or migration change was made in this slice. Existing uncommitted contextual-manager files and unrelated user artifacts were preserved.
+- Exact next action: wire manager capability steps to the existing deterministic Zid/Salla operation execution and receipt/readback path, pass authoritative catalogue price/stock/channel context, and rerun the five-write demo audit with before/after connector verification. Do not describe approval records as executed store changes.
+
+## 2026-09-30 — AI Store Manager execution and catalogue-context remediation
+
+- Added current price, currency, inventory quantity, infinite-stock mode, inventory status, and authoritative channel summaries to the manager's merchant context. The manager is explicitly instructed not to replace these catalogue facts with narrower financial-evidence counts.
+- Added a bounded deterministic-operation bridge for contextual manager workflows whose validated capability steps are all connected. These requests now enter the existing operation preview, approval, connector execution, and live readback path. Manual-fallback or unsupported work remains a generic supervised task and cannot claim execution.
+- Server-side normalization derives operation risk and confirmation requirements, overriding model-supplied approval flags. Added focused coverage proving a product edit is always approval-gated and a catalogue sync remains read-only.
+- `npm run typecheck` — passed.
+- `npm run verify-copilot-prompts` — passed, including contextual decision and deterministic-operation bridge coverage.
+- `npm run verify-zid-contract` — passed.
+- `npm run verify-salla-contract` — passed.
+- `npm run build` — passed; existing chunk-size and mixed dynamic/static import warnings only.
+- Changed implementation files: `src/routes/api/copilot/compile.ts`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, and `scripts/verify-copilot-prompts.mts`.
+- No commit, push, deployment, connector write, scope change, credential change, or migration occurred.
+- Exact next action: after explicit commit/push authorization, deploy through the configured Git build and repeat the five-operation Zid demo audit. Verify every approved action with the operation receipt and a fresh connector readback before describing it as complete.

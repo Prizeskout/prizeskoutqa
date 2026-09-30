@@ -3940,15 +3940,21 @@ export function PrizeSkoutDashboard() {
       : cpThread
           .filter(message => message.metadata?.assistant_role === requestedRole)
           .map(message => ({ role: message.role, text: message.text }));
+    const conversationLimit = requestedRole === "manager" ? 16 : 6;
     const conversation = compactConversation([
       ...roleConversation,
       { role: "user", text: prompt },
-    ]);
+    ], conversationLimit);
     const catalogContext = importedProducts.slice(0, 100).map((product) => ({
       name: product.name_en || product.name_ar,
       sku: product.sku,
       platform: product.source_platform,
       cost_verified: product.cost_confidence === "verified",
+      current_price: product.current_price,
+      currency: product.currency,
+      inventory_quantity: product.inventory_quantity,
+      inventory_is_infinite: product.inventory_is_infinite,
+      inventory_status: product.inventory_status,
     }));
     const verifiedCostProducts = importedProducts.filter((product) => product.cost_confidence === "verified").length;
     setCpPhase("loading");
@@ -3985,7 +3991,7 @@ export function PrizeSkoutDashboard() {
         const operation: Record<string, unknown> = { _type: "operation", operation: "payout_document_audit", platform, summary: reply, requires_confirmation: false, risk_level: "read", metrics };
         setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply); setCpDocumentAttachments([]);
         appendCpThread("assistant", reply, "evidence", { kind: "payout_reconciliation", operation, metrics, result: audit });
-        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }], conversationLimit);
         return true;
       }
       if (requestedRole !== "cfo" && cpImageAttachments.length) {
@@ -4012,7 +4018,7 @@ export function PrizeSkoutDashboard() {
         setCpImageAttachments([]);
         const reply = String(operation.summary);
         appendCpThread("assistant", reply, "approval", { kind: "operation", operation, files: cpImageAttachments.map(file => ({ name: file.name, size: file.size, type: file.type })) });
-        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }], conversationLimit);
         return true;
       }
       if (/\b(?:run|check|pull|calculate|show)\b[\s\S]{0,40}\b(?:payout|settlement)\b|\b(?:payout|settlement)\b[\s\S]{0,40}\b(?:check|calculation|expected)\b/i.test(prompt)) {
@@ -4026,7 +4032,7 @@ export function PrizeSkoutDashboard() {
         const operation: Record<string, unknown> = { _type: "operation", operation: "automatic_payout_check", platform: "talabat", summary: reply, requires_confirmation: false, risk_level: "read", metrics };
         setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply);
         appendCpThread("assistant", reply, "evidence", { kind: "payout_check", operation, metrics, result });
-        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }], conversationLimit);
         return true;
       }
       if (/\b(?:simulate|model|test|calculate)\b[\s\S]{0,40}\b(?:promotion|campaign|discount)\b/i.test(prompt)) {
@@ -4036,7 +4042,7 @@ export function PrizeSkoutDashboard() {
         const daysMatch = prompt.match(/(?:for|over|duration)\s+(\d+)\s*days?/i);
         if (!discountMatch || !liftMatch || !ordersMatch || !daysMatch) {
           const reply = "I can run that promotion simulation here. Tell me the discount percentage, expected order lift, normal baseline orders for the same period, and campaign duration in days. I will use the approved channel agreement, verified product costs, and your active margin floor.";
-          setCpChatMessage(reply); setCpPhase("result"); appendCpThread("assistant", reply); cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]); return false;
+          setCpChatMessage(reply); setCpPhase("result"); appendCpThread("assistant", reply); cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }], conversationLimit); return false;
         }
         const platform = ["talabat", "snoonu", "jahez", "keeta", "salla", "zid"].find(value => prompt.toLowerCase().includes(value)) ?? importedProducts[0]?.source_platform ?? "zid";
         const contract = approvedContracts.find(term => term.status === "approved" && term.platform === platform);
@@ -4047,7 +4053,7 @@ export function PrizeSkoutDashboard() {
         const metrics = { products: simulation.products.length, eligible: simulation.eligible_products, expected_orders: simulation.expected_orders, baseline_contribution: simulation.baseline_contribution, campaign_contribution: simulation.campaign_contribution, incremental_contribution: simulation.incremental_contribution, margin_floor: `${persistedGlobalFloor}%`, decision: simulation.profitable ? "safe for review" : "not approval ready" };
         const reply = simulation.profitable ? "The promotion beats the baseline, every included product meets the active margin floor, and the evidence is ready for review." : "The promotion is not ready for approval. Review the result below: it either misses the baseline, breaches a product margin floor, or lacks verified cost evidence.";
         const operation: Record<string, unknown> = { _type: "operation", operation: "promotion_simulation", platform, summary: reply, requires_confirmation: false, risk_level: "read", metrics };
-        setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply); appendCpThread("assistant", reply, "evidence", { kind: "promotion_simulation", operation, metrics, result: simulation }); cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }]); return true;
+        setCpObj(operation); setCpPhase("result"); setCpOperationStatus("complete"); setCpOperationMessage(reply); appendCpThread("assistant", reply, "evidence", { kind: "promotion_simulation", operation, metrics, result: simulation }); cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: reply }], conversationLimit); return true;
       }
       const res = await fetchWithTimeout(
         "/api/copilot/compile",
@@ -4069,6 +4075,15 @@ export function PrizeSkoutDashboard() {
                   ? Math.round((verifiedCostProducts / importedProducts.length) * 100)
                   : null,
               },
+              channel_summary: importedProducts.reduce<Record<string, { product_count: number; verified_cost_products: number; out_of_stock_products: number }>>((summary, product) => {
+                const channel = product.source_platform.toLowerCase();
+                const current = summary[channel] ?? { product_count: 0, verified_cost_products: 0, out_of_stock_products: 0 };
+                current.product_count += 1;
+                if (product.cost_confidence === "verified") current.verified_cost_products += 1;
+                if (product.inventory_status === "out_of_stock") current.out_of_stock_products += 1;
+                summary[channel] = current;
+                return summary;
+              }, {}),
               conversation,
               current_page: tab,
               language: lang,
@@ -4119,9 +4134,9 @@ export function PrizeSkoutDashboard() {
         setCpObj(workflow);
         setCpChatMessage(null);
         setCpPhase("result");
-        const workflowReply = `Prepared task: ${String(workflow.title ?? "Store management workflow")}. ${String(workflow.summary ?? "Review the steps and approvals below.")}`;
+        const workflowReply = data.message?.trim() || `I prepared ${String(workflow.title ?? "the requested store work")} for your review. Nothing protected will run without the required approval.`;
         appendCpThread("assistant", workflowReply, "task", { kind: "workflow", workflow });
-        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: workflowReply }]);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: workflowReply }], conversationLimit);
         return await prepareManagerWorkflow(workflow);
       } else if (data.type === "operation" && data.operation) {
         cpPendingDraftRef.current = null;
@@ -4131,7 +4146,7 @@ export function PrizeSkoutDashboard() {
         setCpPhase("result");
         const operationReply = String(operation.summary ?? "I prepared the requested store operation for review.");
         appendCpThread("assistant", operationReply, operation.requires_confirmation ? "approval" : "task", { kind: "operation", operation });
-        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: operationReply }]);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: operationReply }], conversationLimit);
         return await prepareCopilotOperation(operation);
       } else if (data.type === "clarification" && data.message) {
         cpPendingDraftRef.current =
@@ -4142,7 +4157,7 @@ export function PrizeSkoutDashboard() {
         cpConversationRef.current = compactConversation([
           ...conversation,
           { role: "assistant", text: data.message },
-        ]);
+        ], conversationLimit);
         appendCpThread("assistant", data.message);
         return false;
       } else if (data.type === "chat" && data.message) {
@@ -4152,7 +4167,7 @@ export function PrizeSkoutDashboard() {
         cpConversationRef.current = compactConversation([
           ...conversation,
           { role: "assistant", text: data.message },
-        ]);
+        ], conversationLimit);
         appendCpThread("assistant", data.message, "text", data.insight ? { kind: "cfo_insight", insight: data.insight } : {});
         return true;
       } else if (data.rule) {
@@ -4161,7 +4176,7 @@ export function PrizeSkoutDashboard() {
         setCpPhase("result");
         const ruleReply = String(data.rule.summary ?? "I compiled the requested rule as a draft for review.");
         appendCpThread("assistant", ruleReply);
-        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: ruleReply }]);
+        cpConversationRef.current = compactConversation([...conversation, { role: "assistant", text: ruleReply }], conversationLimit);
         return true;
       } else {
         setCpError(data.error ?? "Unexpected response — try rephrasing your request.");

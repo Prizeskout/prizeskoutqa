@@ -1,4 +1,4 @@
-import { deterministicZidInsight, isManagerReadOnlyQuestion, managerCatalogCoverageAnswer, sanitizeManagerAnswer } from "../src/routes/api/copilot/compile";
+import { deterministicZidInsight, managerCatalogCoverageAnswer, normalizeExecutableManagerOperation, parseManagerAgentDecision, sanitizeManagerAnswer } from "../src/routes/api/copilot/compile";
 import { productMatches } from "../src/server/core/zid-product-match";
 import {compactConversation,normalizeCopilotPrompt,resolveProductReferences} from "../src/lib/copilot-understanding";
 import {validateManagerWorkflow} from "../src/server/core/store-manager-capabilities";
@@ -89,6 +89,9 @@ console.log("PASS: similar product names trigger ambiguity instead of an unsafe 
 const compacted=compactConversation(Array.from({length:9},(_,index)=>({role:index%2?"assistant" as const:"user" as const,text:`turn ${index}`})));
 if(compacted.length!==6||compacted[0]?.text!=="turn 3")throw new Error("Conversation compaction failed");
 console.log("PASS: recent conversation context is bounded and preserves follow-ups");
+const managerConversation=compactConversation(Array.from({length:20},(_,index)=>({role:index%2?"assistant" as const:"user" as const,text:`manager turn ${index}`})),16);
+if(managerConversation.length!==16||managerConversation[0]?.text!=="manager turn 4")throw new Error("Manager conversation window failed");
+console.log("PASS: Store Manager retains a longer 16-turn context window for natural follow-ups");
 const workflow=validateManagerWorkflow({steps:[{title:"Inspect catalogue",capability:"catalog.inspect"},{title:"Publish approved products",capability:"product.publish"},{title:"Ask partner to enroll the campaign",capability:"manual.coordinate"}]});
 if(!workflow.ok||workflow.steps[0]?.approval_required!==false||workflow.steps[1]?.approval_required!==true||workflow.steps[2]?.execution!=="manual_fallback")throw new Error(`Manager workflow safety enrichment failed: ${JSON.stringify(workflow)}`);
 console.log("PASS: manager workflows derive approvals, verification, risk, and manual fallback from the capability registry");
@@ -96,19 +99,20 @@ const invalidWorkflow=validateManagerWorkflow({steps:[{title:"Pretend tool",capa
 if(invalidWorkflow.ok)throw new Error("Unsupported manager capability was accepted");
 console.log("PASS: unsupported capabilities cannot be presented as connected automation");
 
-for(const prompt of [
-  "What needs my attention today?",
-  "Give me a read-only snapshot of catalog health. Do not create a task.",
-  "Which products are missing verified costs?",
-  "Explain the open Talabat payout recovery case in plain language.",
-  "Recommend price changes, but do not apply or queue any changes.",
-])if(!isManagerReadOnlyQuestion(prompt))throw new Error(`Read-only Store Manager question was routed as a workflow: ${prompt}`);
-for(const prompt of [
-  "Raise every Zid price by 10% immediately.",
-  "Delete all discontinued products permanently.",
-  "Send a dispute to Talabat now.",
-])if(isManagerReadOnlyQuestion(prompt))throw new Error(`Protected Store Manager action was routed as read-only chat: ${prompt}`);
-console.log("PASS: Store Manager routes questions to direct answers and protected actions to workflows");
+const answerDecision=parseManagerAgentDecision('{"mode":"answer","message":"Your catalogue is healthy.","workflow":null,"resolved_context":{"platform":"zid","product":null,"date_range":null,"continuation_of":null}}');
+const clarifyDecision=parseManagerAgentDecision('{"mode":"clarify","message":"Which store should I use?","workflow":null,"resolved_context":{"platform":null,"product":null,"date_range":null,"continuation_of":null}}');
+const workflowDecision=parseManagerAgentDecision('{"mode":"workflow","message":"I can prepare that change for review.","workflow":{"title":"Update prices","summary":"Preview and publish approved prices.","priority":"high","steps":[{"title":"Inspect prices","capability":"catalog.inspect","target":"zid","inputs":{},"depends_on":[],"success_condition":"Products are identified"}],"assumptions":[]},"resolved_context":{"platform":"zid","product":null,"date_range":null,"continuation_of":null}}');
+if(answerDecision.mode!=="answer"||clarifyDecision.mode!=="clarify"||workflowDecision.mode!=="workflow")throw new Error("Manager agent decision parsing failed");
+for(const invalid of ['{"mode":"task","message":"x"}','{"mode":"workflow","message":"x","workflow":null}','{"mode":"answer","message":""}']){
+  let rejected=false;try{parseManagerAgentDecision(invalid);}catch{rejected=true;}if(!rejected)throw new Error(`Invalid manager decision was accepted: ${invalid}`);
+}
+console.log("PASS: Store Manager supports answer, clarification, and workflow decisions through one validated contract");
+
+const managerPriceOperation=normalizeExecutableManagerOperation('{"operation":"product_change","platform":"zid","query":"Z.DEMO-I38YG538","sku":"Z.DEMO-I38YG538","scope":"single","product_mode":"edit","product_price":1009,"summary":"Change price","requires_confirmation":false,"warnings":[],"confidence":0.96}');
+if(managerPriceOperation.operation!=="product_change"||managerPriceOperation.product_price!==1009||managerPriceOperation.requires_confirmation!==true||managerPriceOperation.risk_level!=="reversible_write")throw new Error("Manager product change did not enter the deterministic approval executor");
+const managerSyncOperation=normalizeExecutableManagerOperation('{"operation":"sync_catalog","platform":"zid","scope":"all","summary":"Sync catalogue","requires_confirmation":true,"warnings":[],"confidence":0.9}');
+if(managerSyncOperation.operation!=="sync_catalog"||managerSyncOperation.requires_confirmation!==false||managerSyncOperation.risk_level!=="read")throw new Error("Manager read operation was not normalized safely");
+console.log("PASS: supported Store Manager work is normalized into deterministic operation execution with derived approval risk");
 
 const coverageAnswer=managerCatalogCoverageAnswer({total_products:32,verified_cost_products:8,verified_cost_coverage_pct:25});
 if(coverageAnswer!=="Verified cost coverage is 25%: 8 of 32 imported products have verified costs.")throw new Error(`Manager catalogue coverage answer failed: ${coverageAnswer}`);

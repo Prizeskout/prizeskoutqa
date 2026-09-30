@@ -1,5 +1,5 @@
 schema_version: 1
-last_updated: "2026-09-29"
+last_updated: "2026-09-30"
 current_phase: P0
 current_task: P0-ZID-001
 current_task_packet: docs/implementation/task-packets/P0-ZID-001-marketplace-experience.md
@@ -30,12 +30,12 @@ tasks:
   P0-ZID-001:
     title: Complete the Zid marketplace and embedded merchant experience
     status: in_progress
-    code: state_bound_oauth_idempotent_passwordless_provisioning_embedded_bootstrap_retry_checklist_and_channel_safe_financial_views_implemented
-    tests: zid_salla_copilot_prompt_typecheck_and_production_build_passing
+    code: state_bound_oauth_idempotent_passwordless_provisioning_embedded_bootstrap_retry_checklist_channel_safe_financial_views_contextual_manager_agent_and_deterministic_operation_bridge_implemented
+    tests: zid_salla_copilot_prompt_typecheck_and_production_build_passing_locally
     migration: not_expected_verify_before_change
     configuration: published_oauth_app_7116_urls_and_webhook_verified_cloudflare_git_build_supabase_variables_configured_broad_scopes_require_separate_impact_decision
     deployment: git_deployed_worker_version_089bdce8
-    production_verification: authenticated_iframe_and_standalone_merchant_journey_passed_ai_store_manager_50_prompt_audit_and_focused_regression_passed_currency_and_workflow_language_fixed_order_guard_dependency_contained_demo_app_deactivated_fresh_email_pending
+    production_verification: authenticated_iframe_and_standalone_merchant_journey_passed_ai_store_manager_50_prompt_audit_and_focused_regression_passed_live_20_action_manager_audit_found_generic_workflow_approvals_not_dispatched_to_zid_local_deterministic_operation_bridge_and_authoritative_catalog_context_fix_not_yet_deployed_currency_and_workflow_language_fixed_order_guard_dependency_contained_demo_app_deactivated_fresh_email_pending
     customer_readiness: not_ready
     next_action: Choose a Zid-reviewed 7-day trial revision, the already authorized paid checkout, or a Zid Partner Support request for no-charge development access; then verify the full lifecycle. Provision Order Guard only after production migration state is authorized and reconciled.
   P0-SALLA-001:
