@@ -47,6 +47,7 @@ Last reconciled with the repository: 2026-09-30.
 - Automatic connectors must never imply complete coverage merely because a sync succeeded.
 - Order Guard remains unavailable in production because its database objects are not provisioned. The merchant UI now explains that the feature is not available, hides unusable activation controls, and confirms that catalog/prices/store data are unchanged; do not deploy an unverified migration solely to enable it.
 - AI Store Manager execution/context fixes are deployed through Worker `88f131ee-2949-4a05-841b-fae06ae07837`. A repeated 20-prompt audit now preserves the authoritative 12 Zid / 20 Salla split and exact Bose price/stock context, but read-only operations still lack a visible completion receipt in chat. Five reversible demo-store writes are prepared and await action-time confirmation; no connector write is verified.
+- After action-time confirmation, the exact Bose price change reached the deterministic preview boundary but Zid store-detail lookup returned HTTP 401 before an approval token or write was produced. No product or coupon mutation occurred. The remaining four confirmed writes were not attempted because the same inactive/expired Zid authorization would prevent safe readback verification.
 
 ## Protected production surfaces
 

@@ -569,3 +569,12 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npm run verify-copilot-prompts`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, `npm run typecheck`, `npm run verify-continuity`, and `git diff --check` passed before the final push; Git reported only LF-to-CRLF warnings.
 - Changed implementation files: `src/routes/api/copilot/compile.ts` and `scripts/verify-copilot-prompts.mts`. Changed continuity files: active task packet, `state.yaml`, and this session log.
 - Exact next action: after user confirmation, approve and run only the five listed demo-store writes, then verify each connector receipt and fresh Zid readback. Do not approve unlimited stock, coupon disable, or older queued actions.
+
+## 2026-09-30 — Confirmed write attempt stopped by Zid authorization
+
+- The user confirmed exactly five reversible demo-store writes. Retried the Bose price change through the deterministic operation path first.
+- Added fail-closed UI reporting so a preview failure is retained in the manager conversation and shown in the active command bar. Commits `cf63cdd` and `51028b7` were pushed; final observed Worker version was `6dcb619d-1beb-44fb-aef5-91a1b14f0e3a`.
+- Production result: `Zid store details returned 401.` The failure happened before PrizeSkout received an approval token and before any store mutation. The price remains unverified and unchanged from PrizeSkout's last synchronized evidence.
+- Did not attempt stock, rename, draft-product, or coupon writes because the same authorization failure prevents safe execution and required readback verification. Unlimited stock, coupon disable, and older queued tasks remain untouched.
+- `npm run verify-copilot-prompts`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, `npm run typecheck`, and `git diff --check` passed for the UI failure-reporting slice.
+- Exact next action: restore/reinstall the Zid demo-store authorization, confirm a successful live store-detail preview, then repeat only the five authorized writes with a receipt and fresh readback for each.
