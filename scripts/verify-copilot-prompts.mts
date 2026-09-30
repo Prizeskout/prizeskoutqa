@@ -112,6 +112,8 @@ const managerPriceOperation=normalizeExecutableManagerOperation('{"operation":"p
 if(managerPriceOperation.operation!=="product_change"||managerPriceOperation.product_price!==1009||managerPriceOperation.requires_confirmation!==true||managerPriceOperation.risk_level!=="reversible_write")throw new Error("Manager product change did not enter the deterministic approval executor");
 const managerSyncOperation=normalizeExecutableManagerOperation('{"operation":"sync_catalog","platform":"zid","scope":"all","summary":"Sync catalogue","requires_confirmation":true,"warnings":[],"confidence":0.9}');
 if(managerSyncOperation.operation!=="sync_catalog"||managerSyncOperation.requires_confirmation!==false||managerSyncOperation.risk_level!=="read")throw new Error("Manager read operation was not normalized safely");
+const deterministicManagerSync=deterministicZidInsight("Synchronize the Zid catalogue now and report the product count when finished.") as Parsed|null;
+if(deterministicManagerSync?.type!=="operation"||deterministicManagerSync.operation?.operation!=="sync_catalog"||deterministicManagerSync.operation?.requires_confirmation!==false)throw new Error("Manager catalogue sync did not route directly to the deterministic executor");
 console.log("PASS: supported Store Manager work is normalized into deterministic operation execution with derived approval risk");
 
 const coverageAnswer=managerCatalogCoverageAnswer({total_products:32,verified_cost_products:8,verified_cost_coverage_pct:25});

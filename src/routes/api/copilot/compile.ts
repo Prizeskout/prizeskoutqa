@@ -353,6 +353,9 @@ export function deterministicZidInsight(prompt:string,prior?:Record<string,unkno
   const canonicalPrompt=prompt.replace(/[`]/g,"").replace(/\bprodcut\b/gi,"product").replace(/\bpublsh\b/gi,"publish").replace(/\bcatelogue\b/gi,"catalogue").replace(/[٠-٩]/g,digit=>String("٠١٢٣٤٥٦٧٨٩".indexOf(digit))).replace(/(?:أنشئ|انشئ|إنشاء)/g,"create").replace(/أضف/g,"add").replace(/منتج/g,"product").replace(/باسم/g,"named").replace(/بسعر/g,"price at").replace(/(?:ريال سعودي|ريال|ر\.س)/g,"SAR").replace(/(?:وانشره|انشره|انشر)/g," publish ");
   const text=canonicalPrompt.toLowerCase();
   const priorSku=String(prior?.created_product_sku??prior?.sku??prior?.query??"").trim();
+  if(/\b(?:sync|synchroni[sz]e|refresh|pull|import|fetch)\b[\s\S]*\b(?:zid\s+)?(?:catalog|catalogue|products?|items?)\b|\b(?:zid\s+)?(?:catalog|catalogue)\b[\s\S]*\b(?:sync|synchroni[sz]e|refresh|pull|import|fetch)\b/i.test(canonicalPrompt)){
+    return {type:"operation",operation:{_type:"operation",operation:"sync_catalog",platform:"zid",query:null,category:null,sku:null,scope:"all",risk_level:"read",requires_confirmation:false,plan:["Synchronize the connected Zid catalogue.","Read the synchronized catalogue back from PrizeSkout.","Report the confirmed Zid product count without changing store data."],summary:"Synchronize the Zid catalogue and report the confirmed product count."}};
+  }
   const catalogueList=/\b(?:show|list|display|view)\b[\s\S]*\b(?:latest|recent|current|all)?\s*(?:products?|catalog|catalogue|items?)\b/i.test(canonicalPrompt)
     || /\b(?:show|list|display|view)\b[\s\S]*\b(?:zid|salla|foodics)\b[\s\S]*\b(?:products?|catalog|catalogue|items?)\b/i.test(canonicalPrompt);
   if(catalogueList){
@@ -525,6 +528,10 @@ export const Route = createFileRoute("/api/copilot/compile")({
             if(/\b(?:verified\s+)?cost\s+coverage\b/i.test(normalizedPrompt)){
               const message=managerCatalogCoverageAnswer(body.context?.catalog_summary);
               if(message)return json({type:"chat",message,latency_ms:Date.now()-t0});
+            }
+            const deterministicOperation=deterministicZidInsight(normalizedPrompt,body.context?.previous_operation);
+            if(deterministicOperation?.type==="operation"){
+              return json({...deterministicOperation,latency_ms:Date.now()-t0});
             }
             const evidence=await getCopilotFinancialEvidence(body.merchant_id);
             const request=`CURRENT MERCHANT MESSAGE:\n${normalizedPrompt}${context}\n\nVERIFIED PRIZESKOUT EVIDENCE:\n${JSON.stringify(evidence)}`;
