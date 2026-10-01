@@ -632,3 +632,4 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Commit authorization
 
 - The user explicitly requested commit and push. Commit only the Overview hierarchy, reusable Truth Trail, repeatable visual verifier, Loop design audit, and related continuity records; preserve all unrelated untracked artifacts.
+- Commit `575e74a` (`Improve dashboard evidence hierarchy`) was created and pushed from `main` to `origin/main`. Unrelated untracked artifact directories remained unstaged and unchanged.
