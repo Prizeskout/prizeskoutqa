@@ -35,3 +35,7 @@ PrizeSkout will prioritize first verified finding and controlled recovery before
 ## ADR-009 — Retain Salla Easy Mode
 
 The production Salla App Store integration remains in Easy Mode unless Salla provides an app-specific written requirement to change it. Salla's current authorization documentation labels Easy Mode recommended and states that it is the only mode allowed for published App Store apps; Custom Mode is the manual callback/code-exchange path used for testing. The 14-day access-token lifetime applies to Salla OAuth generally, not only Easy Mode. With `offline_access`, both designs still require safe refresh-token rotation; refresh tokens last one month and are single-use. PrizeSkout therefore keeps Easy Mode and supplies the missing product transition through a verified embedded page, backend token introspection, idempotent account linking/provisioning, guided onboarding, and a serialized refresh lease.
+
+## ADR-010 - Decision-first financial overview and Truth Trail
+
+The Overview leads with one evidence-bounded conclusion and its next safe action rather than an equal-weight metric wall. A reusable Truth Trail presents orders, commercial terms, expected payout, payout evidence, finding, merchant approval, and receipt confirmation as distinct stages with explicit verified, review, missing, or optional labels. Missing receipt confirmation is never implied by a payout summary, and protected actions remain approval-gated.

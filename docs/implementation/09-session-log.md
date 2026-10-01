@@ -578,3 +578,57 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Did not attempt stock, rename, draft-product, or coupon writes because the same authorization failure prevents safe execution and required readback verification. Unlimited stock, coupon disable, and older queued tasks remain untouched.
 - `npm run verify-copilot-prompts`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, `npm run typecheck`, and `git diff --check` passed for the UI failure-reporting slice.
 - Exact next action: restore/reinstall the Zid demo-store authorization, confirm a successful live store-detail preview, then repeat only the five authorized writes with a receipt and fresh readback for each.
+
+## 2026-10-01 — Loop AI dashboard-pattern audit
+
+- Read the active continuity pack and `P0-ZID-001` task packet, preserved all unrelated untracked artifacts, and ran the safe baseline checks.
+- Reconstructed prior dashboard-reference work from repository history and reviewed the current PrizeSkout design system, dashboard implementation, and retained product-film screenshots.
+- Reviewed Loop AI's current public homepage and business-intelligence positioning. No authenticated Loop account was accessed.
+- Browser inventory confirmed logged-in PrizeSkout and public Loop tabs, but subsequent browser binding timed out twice. The session therefore records no new authenticated live UI verification.
+- Added `docs/implementation/10-loop-ai-dashboard-audit.md`. The recommended direction borrows Loop's governed-model, scoped-answer, reasoning-progress, refinement, and reconciliation-sequence patterns while rejecting broad workforce scope and evidence-free BI.
+- No application code, production configuration, connector authorization, migration, or customer-readiness state changed.
+- Baseline outcomes: `npm run verify-continuity` passed; `npm run verify-zid-contract` passed; `npm run verify-salla-contract` passed; `npm run typecheck` produced no errors.
+- Changed files: design-audit document, active task packet, and this session log.
+- Exact next action: confirm the proposed Overview hierarchy and Truth Trail direction before changing UI code. The separate production blocker remains restoration of valid Zid demo-store authorization before repeating the five-write audit.
+
+## 2026-10-01 - Decision-first Overview and reusable Truth Trail
+
+- Implemented the approved first Loop-inspired dashboard slice without changing calculations, connectors, migrations, permissions, or production state.
+- Replaced the Overview's equal-weight top metric groups with one evidence-bounded decision and next safe action plus three quieter supporting indicators.
+- Added a reusable, accessible, responsive Truth Trail for orders, commercial terms, expected payout, payout evidence, finding, merchant approval, and receipt confirmation. Every state has text and an icon; unknown receipt confirmation is explicitly missing rather than inferred.
+- Preserved the existing financial scope filters, operational panels, merchant approval boundaries, and the active Zid HTTP-401 authorization blocker.
+- Attempted desktop and phone Playwright rendering against the local authenticated dashboard. The Vite server became ready, but the route stalled and the browser navigation timed out; no visual QA pass is claimed.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and final `npm run verify-zid-contract` - passed.
+- Startup and final `npm run verify-salla-contract` - passed.
+- Startup and final `npm run typecheck` - passed with no errors.
+- `npm run build` - passed; existing chunk-size and mixed dynamic/static import warnings only.
+- `npm run verify-economic-twin-dashboard` - passed (`Economic Twin dashboard aggregation verified.`).
+- `npx eslint --fix src/components/dashboard/ExecutiveOverview.tsx src/components/dashboard/TruthTrail.tsx` followed by focused `npx eslint` - formatting corrected and focused lint passed.
+- Local Playwright desktop/phone render - not completed; navigation to the local dashboard route timed out after the Vite server reported ready.
+
+### Changed files and exact next action
+
+- Implementation: `src/components/dashboard/ExecutiveOverview.tsx` and new `src/components/dashboard/TruthTrail.tsx`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, `06-decision-log.md`, and this session log. The previously added Loop design audit remains uncommitted.
+- Exact next action: complete authenticated desktop and phone visual QA of the Overview in a responsive local or logged-in production-equivalent route, correct any hierarchy or overflow defects, and only then reuse the Truth Trail in Payout Recovery, Margin Intelligence, and AI actions. Separately restore Zid demo-store authorization before repeating connector writes.
+
+## 2026-10-01 - Overview visual-verification harness correction
+
+- Diagnosed the earlier timeout as a verification-path problem rather than an Overview rendering defect. The development server was still completing its first compilation, while `vite preview` expects `dist/server/server.js` and is incompatible with this repository's Cloudflare output at `dist/server/index.js`.
+- Verified the repository's supported production server (`node server.mjs`) returns the dashboard route with HTTP 200.
+- Added `npm run verify-overview-ui`, which starts the supported production server with `.env.local`, renders the Overview in Playwright at 1440x1000 and 390x844, captures temporary screenshots, and asserts seven Truth Trail stages, zero horizontal overflow, and zero browser page errors.
+- Inspected both full-page captures. Desktop hierarchy, phone stacking, action sizing, scope controls, and the vertical mobile Truth Trail are intact. No UI correction was required.
+- `npm run verify-overview-ui` - passed. Screenshots were written to the operating-system temporary directory rather than repository artifacts.
+- `npm run typecheck` - passed after adding the verifier.
+- `npm run verify-continuity` - passed after updating the continuity pack.
+- `git diff --check` - passed with only line-ending conversion warnings.
+- Focused ESLint invocation reported that `scripts/*.mts` has no matching ESLint configuration; it produced no code error. TypeScript and the executable verifier are the applicable checks for this script.
+- Exact next action: reuse the visually verified Truth Trail pattern in Payout Recovery, Margin Intelligence, and AI action receipts while preserving the distinct evidence states. The separate Zid authorization blocker remains unresolved.
+
+### Commit authorization
+
+- The user explicitly requested commit and push. Commit only the Overview hierarchy, reusable Truth Trail, repeatable visual verifier, Loop design audit, and related continuity records; preserve all unrelated untracked artifacts.
