@@ -661,3 +661,25 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Implementation: `src/components/dashboard/FocusedIntelligenceSummary.tsx`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, `src/components/dashboard/TruthTrail.tsx`, new `scripts/verify-margin-intelligence-ui.mts`, and `package.json`.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, `07-risk-register.md`, and this session log.
 - Exact next action: after explicit commit/push authorization, deploy and repeat the logged-in production Margin Intelligence journey, including the evidence-action handoff. Separately decide the supported `/v1/margin/*` contract and make its verifier fail on unexpected `not_found` responses. Restore Zid authorization before repeating connector writes.
+
+## 2026-10-01 - Repeated production Margin Intelligence audit
+
+- Refreshed the logged-in production route after commit `22149a2` reached the live dashboard. The new Margin Intelligence heading, decision-first hierarchy, seven-stage Truth Trail, evidence queue, and removal of payout-specific KPIs were visible.
+- Verified the main action reaches Catalog, where the retained account reports 32 products, 8 confirmed costs, 24 missing costs, 12 Zid items, and 20 Salla items. The Margin Intelligence channel filter showed exactly the 12 Zid rows.
+- Applied a temporary 390x844 browser viewport and waited for production data to load. The mobile layout had `innerWidth` 390 and document width 386, with no horizontal overflow; the viewport override was reset afterward.
+- Found a live evidence-stage contradiction: the header reported 8 verified costs, but the trail said 0 verified and every row—including rows visibly labeled `Verified`—asked for product cost. The cause was counting cost evidence only when a later commercial-terms calculation snapshot also contained `base_cost`.
+- Corrected the local logic so verified cost evidence is counted independently of the terms-generated economics snapshot. The eight verified-cost products now request approved channel terms; the other 24 request product cost. A rare row with verified cost and terms but no snapshot receives explicit refresh-cost-evidence guidance.
+- No price, inventory, promotion, approval, connector, migration, credential, or other protected production action ran. The follow-up correction is local and uncommitted.
+
+### Verification commands and exact outcomes
+
+- `npm run verify-margin-intelligence-ui` - passed after the follow-up correction.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed with no errors.
+
+### Changed files and exact next action
+
+- Implementation: `src/components/dashboard/FocusedIntelligenceSummary.tsx`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: after explicit commit/push authorization, deploy the stage correction and repeat the production check for 8 verified / 24 missing costs plus the commercial-terms handoff. The public `/v1/margin/*` verifier gap and Zid authorization blocker remain separate open work.
