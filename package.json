@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "start": "node server.mjs",
     "verify-margin": "tsx --env-file=.env.local scripts/verify-margin.mts",
+    "verify-margin-intelligence-ui": "tsx --env-file=.env.local scripts/verify-margin-intelligence-ui.mts",
     "verify-margin-policy": "tsx scripts/verify-margin-policy.mts",
     "verify-copilot-prompts": "tsx scripts/verify-copilot-prompts.mts",
     "verify-product-images": "tsx --env-file=.env.local scripts/verify-product-images.mts",

@@ -1,6 +1,6 @@
 # Current State
 
-Last reconciled with the repository: 2026-09-30.
+Last reconciled with the repository: 2026-10-01.
 
 ## Repository condition
 
@@ -49,6 +49,8 @@ Last reconciled with the repository: 2026-09-30.
 - AI Store Manager execution/context fixes are deployed through Worker `88f131ee-2949-4a05-841b-fae06ae07837`. A repeated 20-prompt audit now preserves the authoritative 12 Zid / 20 Salla split and exact Bose price/stock context, but read-only operations still lack a visible completion receipt in chat. Five reversible demo-store writes are prepared and await action-time confirmation; no connector write is verified.
 - After action-time confirmation, the exact Bose price change reached the deterministic preview boundary but Zid store-detail lookup returned HTTP 401 before an approval token or write was produced. No product or coupon mutation occurred. The remaining four confirmed writes were not attempted because the same inactive/expired Zid authorization would prevent safe readback verification.
 - A local dashboard-design slice replaces the Overview's equal-weight top metric groups with one evidence-bounded decision, three supporting indicators, and a reusable responsive Truth Trail. The rail explicitly separates orders, terms, expected payout, payout evidence, finding, merchant approval, and receipt confirmation. Production financial calculations, connectors, authorization, and customer-readiness state are unchanged. Production build, typecheck, Economic Twin aggregation, protected Zid/Salla contracts, and repeatable Playwright rendering at 1440px and 390px pass with seven visible rail stages, no horizontal overflow, and no browser page errors.
+- A logged-in Margin Intelligence audit found that the production view mixed order and payout language, showed an irrelevant expected-payout KPI, called incomplete rows a ranking, and did not tell merchants how to resolve each blocker. The local view now leads with the next safe evidence action, distinguishes Catalog, product cost, channel terms, unit economics, target, approval, and readback, and routes incomplete products to Catalog or Integrations. Repeatable 1440px and 390px production-server rendering passes with seven stages, no horizontal overflow, no browser page errors, and no unrelated recovery error toast. This change is local and not production-verified.
+- The legacy `verify-margin` command currently exits zero while all probed public `/v1/margin/*` routes respond `not_found`. Treat that command as a discovered verifier/API-contract gap, not successful margin API validation, until the expected public route contract is resolved and unexpected non-2xx responses fail the check.
 
 ## Protected production surfaces
 

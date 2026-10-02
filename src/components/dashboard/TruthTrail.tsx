@@ -28,9 +28,11 @@ const statusIcon = {
 export function TruthTrail({
   steps,
   title = "Truth Trail",
+  description = "Order truth stays separate from terms, payout evidence, and receipt confirmation.",
 }: {
   steps: TruthTrailStep[];
   title?: string;
+  description?: string;
 }) {
   const titleId = useId();
   return (
@@ -49,7 +51,7 @@ export function TruthTrail({
     `}</style>
       <div className="truth-trail-head">
         <h2 id={titleId}>{title}</h2>
-        <p>Order truth stays separate from terms, payout evidence, and receipt confirmation.</p>
+        <p>{description}</p>
       </div>
       <ol className="truth-trail-list">
         {steps.map((step) => {

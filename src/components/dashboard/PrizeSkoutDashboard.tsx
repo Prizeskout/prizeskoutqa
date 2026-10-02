@@ -5412,8 +5412,10 @@ export function PrizeSkoutDashboard() {
   };
 
   useEffect(() => {
+    if (tab !== "analytics" || sidebarNav !== "recovery") return;
+    setRecoveryLoading(true);
     void loadRecoveryRegister();
-  }, []);
+  }, [tab, sidebarNav]);
 
   // First-run welcome check: the instant Talabat is connected and this
   // merchant has never had a payout check recorded, run one automatically
@@ -6008,7 +6010,7 @@ export function PrizeSkoutDashboard() {
           ? sidebarNav === "recovery"
             ? "Verify expected payouts, investigate discrepancies, and prepare merchant-approved recovery evidence."
             : sidebarNav === "margin"
-              ? "True profit, fees, costs, and payout performance across every connected channel."
+              ? "Evidence readiness and per-sale economics for each connected product."
               : "Your financial command center for margin, payouts, risk, and next actions."
           : tab === "manager"
             ? lang === "ar"
@@ -6036,7 +6038,7 @@ export function PrizeSkoutDashboard() {
           ? sidebarNav === "recovery"
             ? "Payout Recovery"
             : sidebarNav === "margin"
-              ? "True Margin Intelligence"
+              ? "Margin Intelligence"
               : "Overview"
           : tab === "manager"
             ? lang === "ar"
@@ -7748,7 +7750,7 @@ export function PrizeSkoutDashboard() {
             ) : (<>
               {sidebarNav === "margin" && <>
                 <div id="margin-intelligence-section" style={{ scrollMarginTop: 24 }}>
-                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} opportunity={storeOpportunity.correctionPerCatalogSale} orders={payoutData?.order_count ?? 0} expectedPayout={payoutData?.expected_payout ?? null} channels={overviewChannels} riskRows={overviewRisks} productRows={importedProducts} />
+                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} channels={overviewChannels} productRows={importedProducts} onCatalog={() => openCatalogFilter("all")} onIntegrations={() => setTab("vault")} />
                 </div>
                 <div className="ps-legacy-margin-workspace" aria-hidden="true">
 

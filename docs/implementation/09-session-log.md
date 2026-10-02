@@ -633,3 +633,31 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - The user explicitly requested commit and push. Commit only the Overview hierarchy, reusable Truth Trail, repeatable visual verifier, Loop design audit, and related continuity records; preserve all unrelated untracked artifacts.
 - Commit `575e74a` (`Improve dashboard evidence hierarchy`) was created and pushed from `main` to `origin/main`. Unrelated untracked artifact directories remained unstaged and unchanged.
+
+## 2026-10-01 - Margin Intelligence end-to-end audit and evidence-readiness repair
+
+- Used the logged-in PrizeSkout account to traverse Margin Intelligence without submitting a protected price, inventory, promotion, or connector action.
+- The live page overstated cross-channel profit readiness, mixed order evidence with payout wording, included an irrelevant expected-payout KPI, described uncalculated products as a ranking, and expanded blocked products without explaining the missing evidence or offering a useful next step.
+- Reworked the local flow around one next safe evidence action. The seven-stage rail now separates Catalog, product cost, channel terms, unit economics, margin target, merchant approval, and connector readback. Decision-ready SKU and terms-ready channel counts replace payout language.
+- Replaced the false ranking with a SKU evidence queue. Every blocked row now names whether verified cost or approved channel terms are missing and routes the merchant to Catalog or Integrations. Known evidence remains visible without presenting pending economics as calculated.
+- Restricted recovery-register loading to its own Recovery view, removing an unrelated recovery-error toast from Margin Intelligence.
+- Added a repeatable production-server verifier for desktop and phone layouts. It asserts the seven stages, absence of the expected-payout KPI and recovery toast, no horizontal overflow, no browser page errors, and a working next-action handoff.
+- No deployment, migration, connector mutation, production configuration change, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and final `npm run verify-zid-contract` - passed.
+- Startup and final `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed.
+- `npm run build` - passed; existing chunk-size and mixed dynamic/static import warnings only.
+- `npm run verify-margin-intelligence-ui` - passed at 1440x1000 and 390x844; seven stages, action handoff, no expected-payout KPI, no recovery toast, no horizontal overflow, and no browser page errors.
+- `npm run verify-margin` - exited 0, but every requested `/v1/margin/*` endpoint returned `not_found`; this is recorded as R-023 and is not accepted as a successful margin API check.
+- Final `npm run verify-continuity` - passed after the continuity updates.
+- `git diff --check` - passed with only line-ending conversion warnings.
+
+### Changed files and exact next action
+
+- Implementation: `src/components/dashboard/FocusedIntelligenceSummary.tsx`, `src/components/dashboard/PrizeSkoutDashboard.tsx`, `src/components/dashboard/TruthTrail.tsx`, new `scripts/verify-margin-intelligence-ui.mts`, and `package.json`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, `07-risk-register.md`, and this session log.
+- Exact next action: after explicit commit/push authorization, deploy and repeat the logged-in production Margin Intelligence journey, including the evidence-action handoff. Separately decide the supported `/v1/margin/*` contract and make its verifier fail on unexpected `not_found` responses. Restore Zid authorization before repeating connector writes.
