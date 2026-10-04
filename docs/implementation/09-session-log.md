@@ -683,3 +683,128 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Implementation: `src/components/dashboard/FocusedIntelligenceSummary.tsx`.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: after explicit commit/push authorization, deploy the stage correction and repeat the production check for 8 verified / 24 missing costs plus the commercial-terms handoff. The public `/v1/margin/*` verifier gap and Zid authorization blocker remain separate open work.
+
+## 2026-10-03 - Loop AI integration-model research
+
+- Reviewed Loop AI's current public homepage, business-intelligence page, terms, case studies, funding announcements, and public hiring material, plus official DoorDash, Uber Eats, Sage Intacct, Deliveroo, and Talabat sources.
+- Added `docs/implementation/11-loop-ai-integration-research.md`, written for non-technical readers. It distinguishes confirmed facts from reconstruction and unknowns.
+- Main finding: Loop's connector breadth is supported by a mixed collection model—approved interfaces, secure file feeds, merchant-provided historical files, and customer-authorized portal collection—rather than evidence of a formal partnership with every named source.
+- Recommended a PrizeSkout collection ladder led by merchant-controlled statements, email, uploads, and secure file delivery, followed by approved read-only connections and selective formal partnerships. Portal automation is explicitly a conditional last-mile option, not a default.
+- No authenticated Loop account was accessed. No application code, connector, merchant data, production configuration, deployment, migration, authorization, commit, or push changed.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed with no errors.
+
+### Changed files and exact next action
+
+- Research: new `docs/implementation/11-loop-ai-integration-research.md`.
+- Continuity: active task packet, `state.yaml`, and this session log.
+- Exact next action for the research: validate the proposed source priority with five to ten real GCC multi-location merchants and collect redacted examples of the top three marketplace statements plus one POS export. The active implementation action remains deployment of the authorized local Margin Intelligence correction only after explicit commit/push authorization; the margin verifier gap and Zid authorization blocker remain open.
+
+## 2026-10-03 - Reader-ready Loop AI research PDF
+
+- Converted the non-technical Loop AI integration research into `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf` after the user clarified that the expected deliverable was a PDF.
+- The final report contains 10 A4 pages: executive answer, confirmed evidence, likely operating playbook, explicit unknowns, the PrizeSkout collection ladder, reusable source kit, 90-day plan, conclusion, and 17 linked public sources.
+- Rendered all 10 pages to PNG with PyMuPDF because Poppler was unavailable in this Windows environment. Visually inspected every page for clipping, overlap, hierarchy, table legibility, page numbering, and source readability. Corrected table-header contrast and spacing before the final render.
+- Reopened the final PDF programmatically and confirmed 10 pages and 17 working link annotations.
+- No application code, integration, merchant data, production configuration, deployment, migration, authorization, commit, or push changed.
+
+### Changed files and exact next action
+
+- Deliverable: `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+- Continuity: active task packet and this session log.
+- Exact next action for the research remains validation of the source priority with five to ten GCC multi-location merchants and collection of redacted source documents. The unrelated active implementation action remains unchanged.
+
+## 2026-10-03 - Simplified executive revision of Loop AI PDF
+
+- Replaced the original 10-page decorated report with a two-page black-and-white executive brief in response to user feedback.
+- Removed colored panels, decorative elements, tables, and presentation-style page treatments. Retained only plain headings, short paragraphs, bullets, one thin divider, page numbers, and compact linked sources.
+- Rewrote the report in everyday language and removed technical terminology wherever it was not essential. The first page now answers how Loop likely achieved broad coverage; the second gives PrizeSkout's practical route and a short 90-day plan.
+- Rendered and visually inspected both final pages with PyMuPDF. Confirmed no clipping, overlap, orphaned headings, or unreadable source text. Reopened the PDF and confirmed two pages and nine link annotations.
+- No application code, integration, merchant data, production configuration, deployment, migration, authorization, commit, or push changed.
+
+### Changed file and exact next action
+
+- Revised deliverable: `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+- Exact next action remains testing the recommended source order with five to ten real GCC multi-location merchants before treating it as the delivery roadmap.
+
+## 2026-10-03 - Loop AI report moved to a dedicated folder
+
+- Moved the final PDF out of the crowded general PDF output directory and into `deliverables/Loop-AI-Research/` for quick identification.
+- The document content did not change. The prior path no longer contains this report.
+- New location: `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+
+## 2026-10-03 - Natural-tone single-page revision
+
+- Rewrote the Loop AI report after the user found the tone and formatting AI-like.
+- Replaced the two-page executive template with a one-page internal note written in first-person, natural prose.
+- Removed the confidential-brief label, formulaic section sequence, repeated bottom line, balanced content blocks, and most bullet formatting. Retained only two useful headings, one short action list, and a compact source line.
+- Rendered and visually inspected the final page with PyMuPDF. Confirmed one page, nine working source links, no clipping, no overlap, and ample whitespace.
+- Final location remains `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+
+## 2026-10-03 - Removed PrizeSkout implications section
+
+- Removed the entire "What this means for us" section shown in the user's screenshot, including the explanatory paragraph, all five bullets, and the GCC examples.
+- The PDF now contains only the Loop research and ends after the description of how Loop appears to collect and reuse platform reports.
+- Rendered and visually inspected the final PDF. Confirmed one page and verified that the removed section and text no longer appear.
+- Exact verification: `python tmp/pdfs/remove_prizeskout_section.py` completed with `pages=1 section_removed=True`.
+- No application code, integration, production configuration, deployment, migration, authorization, commit, or push changed.
+
+## 2026-10-03 - Removed Loop PDF title
+
+- Removed the title at the user's direction. The PDF now contains only the four research paragraphs.
+- Rendered and visually inspected the one-page PDF; confirmed the title is absent and the remaining text is intact.
+- Exact verification: `python tmp/pdfs/remove_loop_pdf_title.py` completed with `pages=1 title_removed=True`.
+- `state.yaml` already had `last_updated: "2026-10-03"`; no task status or deployment state changed.
+
+## 2026-10-03 - Second user-voice correction
+
+- Replaced the passage the user identified as still unlike their voice.
+- The new wording directly states that Loop was found on Sage Intacct, that DoorDash and Uber require approval, and that this may mean direct access to some platforms but not all.
+- Replaced the abstract process explanation with a simple description of collecting and arranging reports once, reusing that setup for other restaurants, and having a team fix issues when reports change.
+- Rendered and visually inspected the final one-page PDF. Confirmed the replacement fits cleanly with no clipping or overflow.
+- Final location remains `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+
+## 2026-10-03 - Rewritten in the user's voice
+
+- Rewrote the complete Loop AI page after the user supplied a direct example of their tone.
+- The opening now closely follows that example: the research checked all available sources, found no indication of a partnership with every platform, and states that conclusion plainly.
+- Applied the same short, personal language to the collection-method explanation and PrizeSkout implications. Removed abstract phrases such as “the evidence points to,” “the reasonable conclusion,” and other report-like wording.
+- Corrected the obvious `looke` typo to `looked` while preserving the user's intended voice.
+- Rendered and visually inspected the final one-page PDF with PyMuPDF. Confirmed no clipping, overlap, footer, date, divider, recommendation block, source line, or page number.
+- Final location remains `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+- No application code, integration, merchant data, production configuration, deployment, migration, authorization, commit, or push changed.
+
+## 2026-10-03 - Removed requested report elements
+
+- Removed the date, horizontal divider, complete recommendation section, complete source line, footer label, and page number from the Loop AI PDF.
+- The final one-page document now contains only its title, the research findings, and what those findings mean for PrizeSkout.
+- Rendered and visually inspected the final page with PyMuPDF. Confirmed one page, no links, no clipping, no overlap, and no remaining requested elements.
+- Final location remains `deliverables/Loop-AI-Research/PrizeSkout-Loop-AI-Integration-Research.pdf`.
+
+## 2026-10-04 - Dashboard-only typography and phone-shell correction
+
+- Kept the public landing page untouched. The signed-in dashboard now uses Plus Jakarta Sans consistently for headings and interface text rather than mixing that family with Inter.
+- Visual review of the existing phone render exposed a real defect: the desktop sidebar was shown during the first phone render, leaving the working area squeezed into a narrow column. The dashboard now starts in its compact shell and promotes desktop widths only after its media query resolves.
+- Re-rendered Overview and Margin Intelligence at 1440px and 390px. The corrected phone dashboard has the compact header and full-width work area; both responsive checks confirm no horizontal overflow and no browser page errors.
+- No deployment, commit, push, migration, connector, financial calculation, merchant data, credential, or protected external action occurred.
+
+### Verification commands and exact outcomes
+
+- `npm run verify-continuity` - passed.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed with no errors.
+- `npm run build` - passed. Existing chunk-size and dynamic-import warnings only.
+- `npm run verify-overview-ui` - passed at 1440px and 390px; seven Truth Trail stages, no horizontal overflow, no browser page errors.
+- `npm run verify-margin-intelligence-ui` - passed at 1440px and 390px; no horizontal overflow, no browser page errors.
+
+### Changed files and exact next action
+
+- Implementation: `src/components/dashboard/PrizeSkoutDashboard.tsx`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: after explicit commit/push authorization, deploy the existing local Margin Intelligence cost-versus-terms stage correction and repeat the logged-in production journey. The public margin-verifier gap and restored Zid authorization remain separate open work.

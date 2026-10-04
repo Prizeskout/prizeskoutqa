@@ -242,7 +242,10 @@ const OG = "#EF681A";
 const SHOW_PER_ORDER_PAYOUT_DETAILS = false;
 const GN = "#10B981";
 const MONO = "ui-monospace,'SFMono-Regular',Menlo,Monaco,monospace";
-const DISPLAY = "Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif";
+// Keep the signed-in workspace on one family. The public site deliberately has
+// its own type treatment; mixing Inter into dashboard headings made the product
+// view look assembled from separate screens.
+const DISPLAY = "'Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif";
 
 function DashboardSectionHeader({ eyebrow, title, description, action }: {
   eyebrow: string;
@@ -2384,7 +2387,11 @@ export function PrizeSkoutDashboard() {
   });
   const [storeName, setStoreName] = useState("");
   const [lang, setLang] = useState<Lang>("en");
-  const [isDesktop, setIsDesktop] = useState(true);
+  // Start with the compact shell so server-rendered and first client-rendered
+  // markup agree. The media-query effect immediately promotes wide screens to
+  // the sidebar layout. Starting at `true` left phone users with a squeezed
+  // desktop sidebar while hydration was still settling.
+  const [isDesktop, setIsDesktop] = useState(false);
   const [feed, setFeed] = useState<FeedRow[]>([]);
 
   useEffect(() => {
@@ -7750,7 +7757,10 @@ export function PrizeSkoutDashboard() {
             ) : (<>
               {sidebarNav === "margin" && <>
                 <div id="margin-intelligence-section" style={{ scrollMarginTop: 24 }}>
-                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} channels={overviewChannels} productRows={importedProducts} onCatalog={() => openCatalogFilter("all")} onIntegrations={() => setTab("vault")} />
+                  <MarginIntelligenceSummary currency={currency} products={importedProducts.length} verified={storeOpportunity.verified} risks={storeOpportunity.atRisk.length} channels={overviewChannels} productRows={importedProducts} onCatalog={() => openCatalogFilter("all")} onIntegrations={() => {
+                    setTab("vault");
+                    window.setTimeout(() => document.getElementById("ps-commercial-terms-card")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+                  }} />
                 </div>
                 <div className="ps-legacy-margin-workspace" aria-hidden="true">
 
@@ -13008,6 +13018,38 @@ export function PrizeSkoutDashboard() {
               <div className="ps-kpi-tile"><span>Available connectors</span><strong>{INBOUND_INTEGRATIONS.length}</strong><small>Read-only inbound sources</small></div>
               <div className="ps-kpi-tile"><span>Catalog coverage</span><strong>{importedProducts.length}</strong><small>Products received from stores</small></div>
               <div className="ps-kpi-tile"><span>Connection state</span><strong style={{ color: defendHealth?.state === "active" ? GN : "#B45309" }}>{defendHealth?.state === "active" ? "Healthy" : "Review"}</strong><small>{defendHealth?.detail ?? "Checking sources"}</small></div>
+            </div>
+            <div
+              id="ps-commercial-terms-card"
+              style={{
+                scrollMarginTop: 24,
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: 16,
+                boxShadow: "var(--shadow)",
+                padding: "22px 24px",
+              }}
+            >
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ color: OG, fontSize: 11, fontWeight: 850, letterSpacing: ".08em", textTransform: "uppercase" }}>
+                  Commercial terms
+                </div>
+                <h2 style={{ margin: "6px 0 4px", fontSize: 20, fontWeight: 850 }}>
+                  Approve the agreement PrizeSkout should calculate with
+                </h2>
+                <p style={{ margin: 0, color: "var(--muted)", fontSize: 13.5, lineHeight: 1.55 }}>
+                  Add the commissions, fees, taxes, and funding rules for each connected channel. Product margins remain not calculated until these terms are reviewed and approved.
+                </p>
+              </div>
+              <ContractIntelligenceVault
+                connectedPlatforms={Object.entries(channelStatuses).filter(([, status]) => status === "connected").map(([platform]) => platform)}
+                onTermsChanged={(terms) => setApprovedContracts(terms.filter(term => term.status === "approved"))}
+                onApproved={(term) => {
+                  setApprovedContract(term);
+                  setApprovedContracts(current => [term, ...current.filter(item => item.platform !== term.platform)]);
+                  setPayoutUploadRate(String(term.commission_rate_pct));
+                }}
+              />
             </div>
             {/* Inbound */}
             <div data-tour="inbound" style={{ display: "flex", flexDirection: "column", gap: 16 }}>

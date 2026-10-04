@@ -75,6 +75,9 @@ try {
           const destination = actionLabel.includes("cost") ? "Catalog" : "Integrations";
           await page.getByRole("heading", { name: destination, exact: true }).waitFor({ timeout: 30_000 });
         }
+        await page.getByRole("button", { name: "Integrations", exact: true }).click();
+        await page.getByRole("heading", { name: "Approve the agreement PrizeSkout should calculate with", exact: true }).waitFor({ timeout: 30_000 });
+        assert.equal(await page.locator("#ps-commercial-terms-card").count(), 1);
       }
       await page.close();
     }
