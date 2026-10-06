@@ -37,7 +37,7 @@ tasks:
     deployment: git_deployed_worker_version_6dcb619d
     production_verification: authenticated_iframe_and_standalone_merchant_journey_passed_ai_store_manager_context_and_deterministic_routing_deployed_repeat_20_prompt_audit_corrected_12_zid_20_salla_context_confirmed_price_write_stopped_before_mutation_when_live_zid_store_details_returned_401_remaining_writes_not_attempted_margin_intelligence_deployed_authenticated_cost_terms_correction_passed_32_total_8_verified_24_missing_terms_handoff_and_no_false_ranking_verified_residual_expanded_copy_fix_local_only_demo_app_authorization_must_be_restored_currency_and_workflow_language_fixed_order_guard_dependency_contained_demo_app_deactivated_fresh_email_pending
     customer_readiness: not_ready
-    next_action: Executive Overview and Order Automation have full-density measured acceptance. Order Automation renders 1440x2551 against the 1440x2663 source (112px/about 4.2%), with verifier-only retained orders, exceptions, and branches plus six explicitly unavailable governed-rule slots. Next perform the literal source audit for Promotions and Discounts.dc.html. Preserve unavailable financial outputs and disabled protected actions.
+    next_action: Executive Overview, Order Automation, and Promotions and Discounts now have full-density measured local acceptance. Promotions renders 1440x2755 against the 1440x2649 source (106px/about 4.0%), using verifier-only retained scenarios while unsupported campaign economics remain unavailable and protected actions remain disabled. Next commit and push this verified slice, then confirm the deployed authenticated dashboard renders the pushed implementation.
   P0-SALLA-001:
     title: Recover and complete the Salla integration end to end
     status: in_progress

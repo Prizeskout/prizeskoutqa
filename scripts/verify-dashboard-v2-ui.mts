@@ -92,7 +92,19 @@ const modulesFixture = {
       { branch: "Msheireb", received: 1, live: 1, attention: 1, critical: 0 }, { branch: "Al Sadd", received: 1, live: 0, attention: 0, critical: 0 },
     ],
   },
-  promotions: { state: "empty", observed_through: null, scenarios: [], counts: { total: 0, active: 0, pending_approval: 0, completed: 0 }, blockers: ["No merchant-scoped promotion scenarios are retained."] },
+  promotions: {
+    state: "available", observed_through: "2026-10-04T12:00:00.000Z",
+    scenarios: [
+      { id: "p1", name: "Weekend 25% Off", platform: "Talabat", status: "pending_approval", inputs: { branch: "4 branches", discount: "25%" }, results: {}, created_at: "2026-09-12T10:00:00.000Z", evidence_ready: false },
+      { id: "p2", name: "Free delivery over QAR 80", platform: "Snoonu", status: "running", inputs: { branch: "All 12", discount: "Delivery" }, results: {}, created_at: "2026-08-01T10:00:00.000Z", evidence_ready: false },
+      { id: "p3", name: "Lunch Combo 20%", platform: "Keeta", status: "running", inputs: { branch: "6 branches", discount: "20%" }, results: {}, created_at: "2026-09-03T10:00:00.000Z", evidence_ready: false },
+      { id: "p4", name: "BOGO Shawarma", platform: "Talabat", status: "draft", inputs: { branch: "Al Sadd, Lusail", discount: "BOGO" }, results: {}, created_at: "2026-09-20T10:00:00.000Z", evidence_ready: false },
+      { id: "p5", name: "New customer 30%", platform: "Jahez", status: "pending_approval", inputs: { branch: "All 12", discount: "30%" }, results: {}, created_at: "2026-08-15T10:00:00.000Z", evidence_ready: false },
+      { id: "p6", name: "Family Bundle 15%", platform: "Snoonu", status: "completed", inputs: { branch: "5 branches", discount: "15%" }, results: {}, created_at: "2026-09-06T10:00:00.000Z", evidence_ready: false },
+      { id: "p7", name: "Late night 20%", platform: "Keeta", status: "ready_to_launch", inputs: { branch: "3 branches", discount: "20%" }, results: {}, created_at: "2026-09-28T10:00:00.000Z", evidence_ready: false },
+    ],
+    counts: { total: 7, active: 3, pending_approval: 2, completed: 1 }, blockers: ["Campaign financial outcomes require attributable order, funding, and cost evidence."],
+  },
 };
 
 type PriorityFixture = typeof fixture;
@@ -158,10 +170,12 @@ try {
       await page.goto(`${origin}/dashboard/v2/promotions`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await page.getByRole("heading", { name: /Campaign contribution is not calculated/ }).waitFor({ timeout: 60_000 });
       assert.equal(page.url(), `${origin}/dashboard/v2/promotions`);
-      assert.equal(await page.getByText("No verified campaigns in scope", { exact: true }).count(), 1);
+      await page.getByRole("rowheader", { name: /Weekend 25% Off/ }).waitFor();
+      assert.equal(await page.getByRole("rowheader", { name: /Late night 20%/ }).count(), 1);
       assert.equal(await page.getByRole("button", { name: "Request approval" }).isDisabled(), true);
-      const promotionsDimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+      const promotionsDimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, scrollHeight: document.documentElement.scrollHeight }));
       assert.equal(promotionsDimensions.scrollWidth, promotionsDimensions.clientWidth, `${viewport.name}: Promotions page-level horizontal overflow`);
+      if (viewport.width === 1440) assert.ok(promotionsDimensions.scrollHeight >= 2500 && promotionsDimensions.scrollHeight <= 2800, `desktop: full-density Promotions height ${promotionsDimensions.scrollHeight}px drifted from the 2649px reference`);
       await page.screenshot({ path: join(screenshots, `dashboard-v2-promotions-${viewport.name}.png`), fullPage: true });
 
       await page.goto(`${origin}/dashboard/v2/priority-centre`, { waitUntil: "domcontentloaded", timeout: 60_000 });

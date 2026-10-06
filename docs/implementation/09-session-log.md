@@ -1414,3 +1414,12 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Switched temporarily to the already-configured `Prizeskout` GitHub identity, pushed `main` from `170fc5c` to `14f649c`, then restored `Web3freak` as the active identity.
 - Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts were not staged or committed.
 - Git push is not deployment verification. No production dashboard claim or customer-readiness state changed.
+- 2026-10-06 — Completed the literal Promotions and Discounts dashboard slice from `Promotions and Discounts.dc.html`.
+  - Preserved all unrelated untracked artifacts and read the required continuity pack plus active task packet.
+  - Baseline: `npm run verify-continuity` passed; `npm run verify-zid-contract` passed; `npm run verify-salla-contract` passed.
+  - Added full-density campaign, health, simulator, six-row guardrail, and dark Copilot structure. Seven retained campaigns exist only in `verify-dashboard-v2-ui.mts`; production continues to render only merchant-scoped retained scenarios.
+  - Financial outputs without attributable evidence remain `—`, `Not calculated`, `Missing`, or `Not evaluated`; protected simulation, approval, action, and guardrail controls remain disabled.
+  - Measured reference: 1440x2649. Measured implementation: 1440x2755, a 106px/about-4.0% difference. Added a 2500-2800px desktop height guard.
+  - Verification: `npm run typecheck` passed; `npm run verify-dashboard-v2-ui` passed at 1440px, 390px, 375px, and phone landscape; `npm run verify-dashboard-v2-modules` passed; `npm run verify-dashboard-v2-contract` passed; protected Zid and Salla contract checks passed; `npm run build` passed with pre-existing mixed-import and chunk-size warnings.
+  - Changed files: `src/components/dashboard-v2/DashboardV2Promotions.tsx`, `src/components/dashboard-v2/dashboard-v2.css`, `scripts/verify-dashboard-v2-ui.mts`, and continuity documentation.
+  - Exact next action: run the final post-documentation continuity and visual checks, commit and push the slice, then inspect the logged-in deployed PrizeSkout dashboard and correct/re-push if production does not match.
