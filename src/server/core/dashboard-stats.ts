@@ -45,6 +45,12 @@ export type EconomicTwinSummary = {
   variance: number;
   orders: number;
   recoverable_amount: number;
+  cost_coverage: {
+    orders_total: number;
+    orders_complete: number;
+    pct: number;
+    complete: boolean;
+  };
   by_channel: EconomicTwinDimension[];
   by_branch: EconomicTwinDimension[];
   by_sku: EconomicTwinDimension[];
@@ -137,7 +143,12 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
     recoverable = recoveries.reduce(
       (sum, row) => sum + Math.max(0, money(row.claims_ready_amount) - money(row.recovered_amount)),
       0,
-    );
+    ),
+    costCompleteOrders = orders.filter((row) => {
+      const value = obj(row.normalized_payload).product_cost_amount;
+      return value != null && Number.isFinite(Number(value));
+    }).length,
+    costCoveragePct = orders.length ? Math.round((costCompleteOrders / orders.length) * 10000) / 100 : 0;
   return {
     currency: orders.find((row) => row.currency)?.currency ?? null,
     gross_sales: money(gross),
@@ -153,6 +164,12 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
     variance: money(actual - expected),
     orders: orders.length,
     recoverable_amount: money(recoverable),
+    cost_coverage: {
+      orders_total: orders.length,
+      orders_complete: costCompleteOrders,
+      pct: costCoveragePct,
+      complete: orders.length > 0 && costCompleteOrders === orders.length,
+    },
     by_channel: dimension((row) => String(row.channel ?? "unassigned")),
     by_branch: dimension((row) => String(row.branch_external_id ?? "unassigned")),
     by_sku: dimension((_row, line) => String(line?.sku ?? line?.name ?? "unassigned"), true),
@@ -161,8 +178,8 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
 
 const SPARKLINE_DAYS = 33;
 
-export async function getDashboardStats(accountId: string,filters:{days?:number;platform?:string;branch?:string}={}): Promise<DashboardStats> {
-  const now = new Date();
+export async function getDashboardStats(accountId: string,filters:{days?:number;platform?:string;branch?:string;endDate?:Date}={}): Promise<DashboardStats> {
+  const now = filters.endDate ? new Date(filters.endDate) : new Date();
   const seriesStart = new Date(now);
   const selectedDays=Math.max(1,Math.min(365,filters.days??SPARKLINE_DAYS));
   seriesStart.setDate(seriesStart.getDate() - (selectedDays - 1));
@@ -200,6 +217,7 @@ export async function getDashboardStats(accountId: string,filters:{days?:number;
       )
       .eq("account_id", accountId)
       .gte("occurred_at", seriesStart.toISOString())
+      .lte("occurred_at", now.toISOString())
       .limit(10000),
     (supabaseAdmin as any)
       .from("ps_normalized_event_heads")
@@ -249,6 +267,7 @@ export async function getDashboardStats(accountId: string,filters:{days?:number;
         normalized_payload: {
           ...obj(row.normalized_payload),
           product_cost_amount: summary.economics.product_cost_amount,
+          product_cost_coverage: summary.cost_evidence.coverage,
         },
       };
     });

@@ -33,6 +33,8 @@
     "verify-economic-evidence": "tsx scripts/verify-economic-evidence.mts",
     "verify-economic-twin-dashboard": "tsx scripts/verify-economic-twin-dashboard.mts",
     "verify-overview-ui": "tsx --env-file=.env.local scripts/verify-overview-ui.mts",
+    "verify-dashboard-v2-contract": "tsx scripts/verify-dashboard-v2-contract.mts",
+    "verify-dashboard-v2-ui": "tsx scripts/verify-dashboard-v2-ui.mts",
     "verify-manual-column-mapping": "tsx scripts/verify-manual-column-mapping.mts",
     "verify-payout-authority": "tsx scripts/verify-payout-authority.mts",
     "verify-price-action-safety": "tsx scripts/verify-price-action-safety.mts",

@@ -39,3 +39,11 @@ The production Salla App Store integration remains in Easy Mode unless Salla pro
 ## ADR-010 - Decision-first financial overview and Truth Trail
 
 The Overview leads with one evidence-bounded conclusion and its next safe action rather than an equal-weight metric wall. A reusable Truth Trail presents orders, commercial terms, expected payout, payout evidence, finding, merchant approval, and receipt confirmation as distinct stages with explicit verified, review, missing, or optional labels. Missing receipt confirmation is never implied by a payout summary, and protected actions remain approval-gated.
+
+## ADR-011 - Parallel, feature-gated Dashboard V2 migration
+
+The supplied dashboard prototype is a visual reference rather than production code. PrizeSkout will rebuild it inside the existing React application behind an internal preview route and a production-off feature flag. The current dashboard remains the fallback until merchant-scoped backend contracts, financial parity, responsive behavior, permissions, and protected-action boundaries are verified. Prototype sample values, browser-only calculations, fake live feeds, and local approval state are never shipped as merchant truth.
+
+## ADR-012 - Canonical public margin endpoint
+
+The supported public margin contract is the endpoint documented in `api-spec.ts`: `POST /v1/margin`. Legacy `/v1/margin/costs`, `/channels`, `/sku`, `/breakeven`, and `/impact` handlers are not published by the gateway and must not be treated as supported production routes. Verification targets the documented sandbox contract, proves synthetic non-mutating provenance, and fails on every unexpected non-2xx or malformed response. Publishing any legacy subroute requires a separate contract, scope, tenancy, and migration review.

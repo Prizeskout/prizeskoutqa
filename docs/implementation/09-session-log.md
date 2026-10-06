@@ -808,3 +808,344 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Implementation: `src/components/dashboard/PrizeSkoutDashboard.tsx`.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: after explicit commit/push authorization, deploy the existing local Margin Intelligence cost-versus-terms stage correction and repeat the logged-in production journey. The public margin-verifier gap and restored Zid authorization remain separate open work.
+
+## 2026-10-04 - Feature-gated Dashboard V2 foundation
+
+- Reviewed the supplied `Prizeskout Dashboard (New).zip` as a design handoff rather than executable product code. Its own handoff identifies hard-coded financial values, prototype-only interactions, browser-side calculations, fake order streaming, and trial-licensed TT Firs Neue assets.
+- Added an isolated React preview route at `/dashboard/v2`. Development can open it directly; production redirects to the current `/dashboard/revenue-hub` unless `VITE_DASHBOARD_V2_ENABLED=true` is deliberately supplied at build time.
+- Built the responsive application shell, grouped navigation, top bar, executive heading, decision panel, financial-truth cards, implementation queue, and explicit Order Automation unavailable state using the existing licensed Plus Jakarta Sans asset.
+- Did not import prototype sample figures, `support.js`, fake live orders, browser-only financial calculations, or local approval state. No existing dashboard route, financial calculation, connector behavior, authorization, migration, merchant data, or protected external action changed.
+- Recorded ADR-011 for the parallel feature-gated migration and R-024 for the risk of prototype data appearing as merchant truth.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors after the normal Vite route-generation step registered `/dashboard/v2`.
+- `npm run build` - passed for client and SSR. Existing large-chunk and mixed dynamic/static import warnings remain; the new client route chunk is approximately 9.53 kB before gzip and 3.18 kB gzip.
+- `npm run verify-economic-twin-dashboard` - passed.
+- `git diff --check` - passed; Git emitted only the existing Windows line-ending notice for generated `src/routeTree.gen.ts`.
+- Headless Playwright at 1440x1000 and 390x844 - `/dashboard/v2` loaded with the expected title and heading, zero horizontal overflow, zero browser console/page errors, the Order Automation unavailable statement present, and prototype sample values `795,420` and `92.4%` absent.
+
+### Changed files and exact next action
+
+- Implementation: `.env.example`, generated `src/routeTree.gen.ts`, `src/routes/dashboard.v2.tsx`, and new `src/components/dashboard-v2/` shell, overview, and stylesheet.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, decision log, risk register, and this session log.
+- Exact next action: implement a server-owned, merchant-scoped read-only Dashboard V2 evidence-summary contract with provenance, freshness, completeness, evidence strength, effective dates, currencies, and explicit partial/stale/unavailable states. Then render the first real Overview conclusion and compare it with the current dashboard before enabling the production preview flag.
+
+## 2026-10-04 - Merchant-scoped Dashboard V2 evidence contract
+
+- Added deterministic `dashboard-v2-summary-v1` types and summarization logic over append-only normalized commerce events, normalized event heads, agreement matches, and reconciliation findings.
+- Added authenticated `GET /api/dashboard/v2/summary`. It verifies the merchant/access-code pair on the server, applies the same merchant and account scope to every query, sends `private, no-store`, and exposes no mutation path.
+- The contract keeps order, contract, payout, and optional receipt truth separate. Each state includes record count, evidence strength, observed/effective dates, currencies, provenance, and blockers.
+- Missing or mixed currencies, partial evidence strength, missing approved agreements, stale records, and unavailable source tables block a ready conclusion. Missing evidence is never rendered as zero activity.
+- Wired the V2 Overview to the contract with abortable no-store loading, explicit session-unavailable behavior, and accessible visual states for verified, partial, stale, missing, and unavailable evidence.
+- Kept Order Automation unavailable and all protected actions disabled. No prototype financial values, client-side financial calculations, mutations, migrations, deployment, connector calls, merchant-data changes, or protected external actions occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed for complete single-currency evidence, partial evidence, mixed currencies, and unavailable event services.
+- `npm run build` - passed for client and SSR; only existing large-chunk and mixed dynamic/static import warnings remained.
+- `npm run verify-economic-twin-dashboard` - passed.
+- `git diff --check` - passed before the final continuity update, with only existing Windows line-ending notices.
+- Headless Playwright at 1440x1000 and 390x844 using a deterministic contract fixture - showed Verified, Verified, Partial, and Missing truth states, the partial-evidence conclusion, zero horizontal overflow, no browser errors, and no prototype sample values. A separate 390px missing-session check rendered the explicit verified-session requirement with zero overflow.
+
+### Changed files and exact next action
+
+- Implementation: `package.json`, generated `src/routeTree.gen.ts`, new `scripts/verify-dashboard-v2-contract.mts`, new `src/server/core/dashboard-v2-summary.ts`, new `src/routes/api/dashboard/v2/summary.ts`, and the Dashboard V2 overview, shell, and stylesheet.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: extend the server contract with governed reconciliation and Economic Twin outputs, render only values whose evidence gates pass, and add an explicit old-versus-new parity verifier before enabling the production preview flag.
+
+## 2026-10-04 - Dashboard V2 governed Economic Twin metrics
+
+- Continued from the exact dashboard supplied in `Prizeskout Dashboard (New).zip`; the prototype remains the visual target, while its hard-coded financial values and fake interactions remain excluded.
+- Extended `dashboard-v2-summary-v1` with server-owned Economic Twin values. Gross sales, net revenue, order counts, channel totals, settlement variance, and recoverable margin now have distinct evidence gates and explicit blockers.
+- Kept true contribution and contribution margin as `Not calculated`. The retained Economic Twin can enrich known costs but does not yet prove full product-cost coverage, so missing costs are not treated as zero.
+- Added explicit parity comparison between each exposed V2 value and its existing Economic Twin reference.
+- Rebuilt the Overview hero and operational strip to follow the supplied dashboard's hierarchy more closely while preserving truthful unavailable states and keeping Order Automation disabled.
+- No deployment, migration, merchant-data mutation, connector call, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed, including governed metric gates and old-versus-new parity.
+- `npm run verify-economic-twin-dashboard` - passed.
+- `npm run build` - passed for client and SSR; existing large-chunk and mixed dynamic/static import warnings only.
+- `git diff --check` - passed before continuity updates; Windows line-ending notices only.
+- Deterministic Playwright at 1440x1100 and 390x844 - zero horizontal overflow and zero browser errors; qualified gross and net values rendered, the product-cost coverage blocker rendered, and the prototype contribution value `QAR 795,420` remained absent.
+
+### Changed files and exact next action
+
+- Implementation: `src/server/core/dashboard-v2-summary.ts`, `src/routes/api/dashboard/v2/summary.ts`, `scripts/verify-dashboard-v2-contract.mts`, `src/components/dashboard-v2/DashboardV2Overview.tsx`, and `src/components/dashboard-v2/dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the supplied prototype's profit bridge and channel profitability table, expose contribution only after a server-owned product-cost completeness denominator passes, bind reconciliation metrics to retained findings, and expand parity fixtures before enabling the production preview flag.
+
+## 2026-10-04 - Dashboard V2 profit bridge and channel profitability
+
+- Added a server-owned product-cost coverage denominator to the existing Economic Twin: total selected orders, cost-complete orders, percentage, and a strict complete flag.
+- Contribution, contribution margin, aggregate product cost, and channel-level contribution now render only when every selected order has evidenced product cost. A nonzero cost total is never treated as proof of completeness.
+- Implemented the supplied dashboard's profit bridge and channel profitability sections with responsive, accessible table markup. The bridge uses recorded gross, net, product cost, and contribution values; unsupported deduction categories are not fabricated.
+- Kept gross-to-net reductions as one governed bucket because the current evidence contract cannot safely split every difference into commission, promotions, refunds, fees, and adjustments without risking double counting.
+- Applied the UI/UX guidance to keep semantic table structure, visible evidence states, contained mobile scrolling, responsive bridge layout, focus handling, and reduced-motion behavior.
+- No deployment, migration, merchant-data mutation, connector call, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed, including complete-cost contribution, incomplete-cost suppression, bridge values, channel suppression, and expanded parity coverage.
+- `npm run verify-economic-twin-dashboard` - passed after adding the cost-coverage denominator.
+- `npm run build` - passed for client and SSR; existing large-chunk and mixed dynamic/static import warnings only.
+- Deterministic Playwright at 1440x1100 and 390x844 - profit bridge, channel profitability, cost coverage, and contribution rendered; zero page-level horizontal overflow and zero browser errors. At 390px the 960px table remained contained in its 362px horizontal scroll region.
+
+### Changed files and exact next action
+
+- Implementation: `src/server/core/dashboard-stats.ts`, `src/server/core/dashboard-v2-summary.ts`, `scripts/verify-dashboard-v2-contract.mts`, `src/components/dashboard-v2/DashboardV2Overview.tsx`, and `src/components/dashboard-v2/dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the supplied prototype's settlement reconciliation section, bind every displayed variance to the latest applicable retained finding, preserve unallocated batch differences separately from order-level discrepancies, and expand parity fixtures before enabling the production preview flag.
+
+## 2026-10-04 - Dashboard V2 finding-bound settlement reconciliation
+
+- Extended the merchant-scoped endpoint to read the retained finding's run/evidence references, expected and reported amounts, variance, order and settlement references, contract term, blockers, evidence strength, and recoverability.
+- Added a deterministic reconciliation contract that selects the latest finding inside the selected period and proven currency. It distinguishes confirmed, probable, unallocated, insufficient, reconciled, missing, and unavailable states in text as well as color.
+- Removed the aggregate Economic Twin payout variance from the visible settlement metric. Any displayed variance is now identical to the selected retained finding's variance and carries that finding ID.
+- A supported shortfall is exposed only for a confirmed negative variance with order-level allocation, an applicable contract term, no blockers, and `claims_ready` recoverability. Merchant approval remains required before any external action.
+- Added the supplied dashboard's settlement-reconciliation visual structure with expected payout, reported payout, finding variance, allocation boundary, explanation, blockers, and provenance.
+- Applied the UI/UX guidance to make state labels explicit, preserve readable responsive stacking, and avoid using color as the sole indicator.
+- No deployment, migration, merchant-data mutation, connector call, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup and final `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed, including confirmed order-level claim readiness and unallocated batch suppression.
+- `npm run verify-api-independent-foundation` - passed.
+- `npm run verify-economic-twin-dashboard` - passed.
+- `npm run build` - passed for client and SSR; existing large-chunk and mixed dynamic/static import warnings only.
+- Deterministic Playwright at 1440x1100 and 390x844 - settlement section, unallocated label, batch boundary, and variance rendered; the order-allocation warning rendered; no supported-shortfall claim appeared; zero page-level horizontal overflow and zero browser errors.
+
+### Changed files and exact next action
+
+- Implementation: `src/server/core/dashboard-v2-summary.ts`, `src/routes/api/dashboard/v2/summary.ts`, `scripts/verify-dashboard-v2-contract.mts`, `src/components/dashboard-v2/DashboardV2Overview.tsx`, and `src/components/dashboard-v2/dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the supplied prototype's branch-performance section from evidence-backed Economic Twin branch dimensions, gate contribution on complete cost coverage, avoid ranking incomplete or unidentified branches, and add a repeatable browser verifier before enabling the production preview flag.
+
+## 2026-10-04 - Dashboard V2 evidence-gated branch performance
+
+- Extended the Dashboard V2 contract with branch-performance state, ranking eligibility, identified and unassigned order counts, blockers, and evidence-backed branch rows from the existing Economic Twin.
+- Branch contribution, product cost, and margin remain unavailable until every selected order has complete product-cost evidence.
+- Branch rows become a ranking only when every selected order also has a retained branch identifier. Unassigned orders remain excluded from named branches and are disclosed separately rather than silently attributed.
+- Implemented the supplied prototype's branch-performance table with contribution-margin bars, explicit ranking state, accessible table semantics, and contained horizontal scrolling on phones.
+- Added `npm run verify-dashboard-v2-ui`, a repeatable deterministic Playwright verifier for the isolated preview. It checks semantic branch rows, ranking state, unallocated-finding safety, page overflow, phone table containment, and browser errors at 1440px and 390px.
+- The first verifier run failed because a bare-text assertion ignored the rank included in the accessible row header. The verifier was corrected to assert the semantic row header and then passed; no dashboard defect was found in that run.
+- Applied the UI/UX guidance to keep ranking state textual, preserve accessible row headers, and contain dense financial tables within their cards on small screens.
+- No deployment, migration, merchant-data mutation, connector call, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup and final `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed, including eligible branch ranking and unassigned-branch suppression.
+- `npm run verify-economic-twin-dashboard` - passed.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px and 390px; zero page overflow and browser errors, branch table present, phone table scrolling contained, and the unallocated settlement fixture did not display a supported-shortfall claim.
+- `npm run build` - passed for client and SSR; existing large-chunk and mixed dynamic/static import warnings only.
+
+### Changed files and exact next action
+
+- Implementation: `src/server/core/dashboard-v2-summary.ts`, `scripts/verify-dashboard-v2-contract.mts`, `scripts/verify-dashboard-v2-ui.mts`, `package.json`, `src/components/dashboard-v2/DashboardV2Overview.tsx`, and `src/components/dashboard-v2/dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: add a governed prior-period Economic Twin comparison and use it to implement the supplied Executive Overview's deterministic `What changed?` brief. Report measured changes only; do not infer causes or propose protected actions without retained evidence.
+
+## 2026-10-05 - Dashboard V2 deterministic prior-period comparison
+
+- Added an explicit aggregation end date so the existing server-owned Economic Twin can calculate a bounded prior period with the same merchant, channel, branch, and duration filters as the current period.
+- Extended `dashboard-v2-summary-v1` with current-versus-previous gross-sales, net-revenue, order, contribution, and margin movements. Monetary movement is unavailable when proven currencies differ; contribution and margin movement are unavailable unless product-cost coverage is complete in both periods.
+- Implemented the supplied Executive Overview's `What changed?` panel. Its headline is deterministic, describes measured movement only, and states that no cause is inferred when evidence cannot support one.
+- No deployment, migration, connector call, merchant-data mutation, protected external action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed, including the available prior-period comparison, exact gross-sales movement, and deterministic increased-summary assertion.
+- `npm run verify-economic-twin-dashboard` - passed.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px and 390px; zero page overflow and browser errors, and the governed comparison fixture rendered successfully.
+- `npm run build` - passed for client and SSR; only the existing large-chunk and mixed dynamic/static import warnings remained.
+- The first chained focused run exposed a temporal-dead-zone error because comparison gating referenced `costCoverage` before initialization. The implementation was corrected to gate directly on each period's Economic Twin coverage; all focused checks then passed.
+- A UI verifier invocation in that failed chain timed out waiting for its isolated development server. A clean standalone rerun passed at both required viewports.
+
+### Changed files and exact next action
+
+- Implementation: `src/server/core/dashboard-stats.ts`, `src/server/core/dashboard-v2-summary.ts`, `src/routes/api/dashboard/v2/summary.ts`, `src/components/dashboard-v2/DashboardV2Overview.tsx`, `src/components/dashboard-v2/dashboard-v2.css`, `scripts/verify-dashboard-v2-contract.mts`, and `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the supplied Executive Overview's read-only priority-decisions panel from retained findings and recovery cases. Keep every priority evidence-linked, disclose evidence strength and blockers, and preserve merchant approval before any protected action.
+
+## 2026-10-05 - Dashboard V2 evidence-linked priority decisions
+
+- Added merchant-scoped recovery-case loading to the read-only Dashboard V2 endpoint and joined cases to findings only through the immutable `reconciliation_finding_id` provenance link.
+- Added a server-owned Priority Decisions contract that ranks at most three unresolved findings, includes finding and case references, evidence strength, allocation reference, blockers, next safe action, and explicit merchant-approval boundaries.
+- Claims-ready value is displayed only for a confirmed, blocker-free finding. Unallocated batch differences remain amount-free and require order-level evidence. Unlinked recovery cases are not inferred into the panel.
+- Implemented the supplied Executive Overview's Priority Decisions visual section with semantic ordered-list structure, textual state labels, responsive wrapping, and no action controls.
+- The UI/UX guidance reinforced explicit text states, source references, readable empty states, and breakpoint checks at desktop, two portrait phone widths, and phone landscape.
+- No deployment, migration, connector call, merchant-data mutation, protected external action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup and final `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed, including claims-ready linked-case provenance, amount gating, approval boundary, and unallocated batch suppression.
+- `npm run verify-economic-twin-dashboard` - passed.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape; zero page overflow or browser errors, and the priority title plus order-evidence boundary rendered.
+- `npm run build` - passed for client and SSR; only existing large-chunk and mixed dynamic/static import warnings remained.
+
+### Changed files and exact next action
+
+- Implementation: `src/server/core/dashboard-v2-summary.ts`, `src/routes/api/dashboard/v2/summary.ts`, `src/components/dashboard-v2/DashboardV2Overview.tsx`, `src/components/dashboard-v2/dashboard-v2.css`, `scripts/verify-dashboard-v2-contract.mts`, and `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the supplied dashboard's dedicated Priority Centre route from the same read-only contract, retaining explicit provenance, blocked/empty states, and merchant approval before protected actions.
+
+## 2026-10-06 - Dashboard V2 dedicated Priority Centre
+
+- Completed the feature-gated `/dashboard/v2/priority-centre` route using the same merchant-scoped `dashboard-v2-summary-v1` priority contract as the Executive Overview.
+- Preserved retained finding ID, linked recovery-case ID, evidence strength, allocation reference, supported-amount gating, blockers, and next safe action. Unallocated batch differences remain explicitly not claims-ready.
+- Added explicit loading, empty, blocked, and unavailable states. The route has no approve, send, dispute, or mutation controls and creates no browser-owned approval state.
+- Wired the sidebar to the dedicated route while keeping the production preview disabled unless `VITE_DASHBOARD_V2_ENABLED=true` is deliberately set.
+- Hardened the repeatable browser verifier for this repository's cold Vite compile time, direct-route loading, async evidence hydration, and correct Overview-versus-Priority-Centre assertion sequencing.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-economic-twin-dashboard` - passed.
+- `npm run build` - passed for client and SSR; only existing large-chunk and mixed dynamic/static import warnings remained.
+- Initial `npm run verify-dashboard-v2-ui` attempts exposed verifier timing and sequencing defects: cold Vite startup, async route evidence hydration, and an Overview branch-table assertion running after route navigation. No financial-contract assertion failed. The verifier was corrected without removing safety assertions.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. It verified finding/case provenance, not-claims-ready gating, absence of protected controls, explicit empty/blocked/unavailable states, zero page overflow, and zero browser errors.
+- `git diff --check` - passed; line-ending conversion warnings only.
+
+### Changed files and exact next action
+
+- Dashboard V2 implementation already present and verified in this slice: `src/routes/dashboard.v2_.priority-centre.tsx`, `src/components/dashboard-v2/DashboardV2PriorityCentre.tsx`, `src/components/dashboard-v2/DashboardV2Shell.tsx`, `src/components/dashboard-v2/dashboard-v2.css`, and generated `src/routeTree.gen.ts`.
+- Verifier: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: keep the production preview flag disabled and choose the next approved read-only Dashboard V2 slice. Separately verify the deployed Margin Intelligence correction, repair the stale public margin verifier, and restore valid Zid authorization before any connector-write audit.
+
+## 2026-10-06 - Public margin verifier contract correction
+
+- Confirmed from `api-spec.ts` and the public gateway that `POST /v1/margin` is the supported public margin endpoint. The legacy `/v1/margin/costs`, `/channels`, `/sku`, `/breakeven`, and `/impact` handlers are not published gateway contracts.
+- Replaced obsolete subroute probes with a canonical `POST /v1/margin` sandbox probe.
+- The verifier now fails on every unexpected non-2xx response, non-object JSON response, wrong API mode, missing synthetic/non-mutating marker, or response-shape mismatch.
+- The successful production-domain run returned the documented synthetic margin example with `X-Api-Mode: test`; it did not invoke live handlers or mutate merchant financial data.
+- The verifier's temporary test API key was deleted in its cleanup block.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup and final `npm run typecheck` - passed with no errors.
+- `npm run verify-margin` - passed against `https://prizeskout.qa`; canonical `POST /v1/margin` returned HTTP 200, test mode, synthetic/non-mutating provenance, and the documented margin object; cleanup deleted the temporary key.
+- `npm run verify-public-api-safety` - passed.
+- `npm run verify-margin-policy` - passed, including fee-VAT basis, cash floor, and evidence gates.
+- `git diff --check` - passed; line-ending conversion warnings only.
+
+### Changed files and exact next action
+
+- Verifier: `scripts/verify-margin.mts`.
+- Governance and continuity: `06-decision-log.md`, `07-risk-register.md`, active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: verify the deployed Margin Intelligence cost-versus-terms correction through the authenticated production journey. Keep the Dashboard V2 preview disabled and restore valid Zid authorization before any connector-write audit.
+
+## 2026-10-06 - Authenticated Margin Intelligence production repeat
+
+- Opened the authenticated production workspace for `Naija Restaurant` and inspected Margin Intelligence read-only.
+- Verified 32 SKUs in scope, 25% cost coverage, 8 verified product costs, 24 missing product costs, one of six terms-ready channels, zero decision-ready SKUs, and no calculated best/attention ranking.
+- Verified the next safe action is `Complete commercial terms`; it navigated to the Integrations commercial-terms card without creating or approving terms.
+- Expanded a verified-cost Zid SKU. It remained `Not calculated`, showed `Approved channel terms needed`, retained `Verified` cost evidence, and did not ask for product cost again.
+- Found one residual copy defect in the expanded detail: `No evidenced costs or deductions yet` contradicted the verified-cost badge. Updated the local UI to state that verified product cost is recorded while detailed deductions await approved terms and generated unit economics.
+- No term was configured, no sync was triggered, no protected action ran, and no merchant or connector data changed.
+- No deployment, commit, push, or migration occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- Authenticated production desktop journey - passed the 32/8/24 split, commercial-terms handoff, no false ranking, and verified-row blocker checks.
+- `npm run verify-margin-intelligence-ui` - passed; repeatable screenshots were produced in the temporary verification directory.
+- `git diff --check` - passed; line-ending conversion warnings only.
+
+### Changed files and exact next action
+
+- UI copy: `src/components/dashboard/FocusedIntelligenceSummary.tsx`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: restore valid Zid authorization before repeating any connector-write audit. Keep the Dashboard V2 preview disabled and do not provision Order Guard until migration state is authorized and reconciled.
+
+## 2026-10-06 - Read-only Zid authorization diagnosis
+
+- Reviewed the credential helper before testing and deliberately did not call it because an attempted refresh would acquire a lease, rotate tokens, and update the production channel row.
+- Queried sanitized connection metadata only: presence flags, store ID, recorded expiry/verification dates, status, and recorded error. No token value was printed or copied.
+- Called only Zid's read-only store-profile endpoint with the currently stored credentials. Both connection rows for deactivated demo store `3181397` returned HTTP 401 despite bearer, manager, and refresh tokens being present and recorded expiry in 2029.
+- Other historical Zid connection rows returned HTTP 200 in the same probe, ruling out a universal Zid API outage or missing global application credentials.
+- The evidence is consistent with store authorization being revoked/inactivated when PrizeSkout was deactivated. A refresh-token attempt is not a safe repair and could overwrite retained credentials without restoring merchant authorization.
+- No token refresh, OAuth initiation, reinstall, subscription, Partner configuration change, sync, connector write, merchant-data mutation, deployment, commit, push, or migration occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed with no errors.
+- Sanitized read-only Zid profile audit - store `3181397` rows returned HTTP 401; several other stored Zid connections returned HTTP 200.
+
+### Changed files and exact next action
+
+- Continuity only: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: choose one merchant-side activation path for Zid demo testing—complete the paid subscription, submit a reviewed trial revision, or ask Partner Support for a no-charge reset/grant—before any connector-write audit. Do not refresh or overwrite the current 3181397 credentials as a workaround.
+
+## 2026-10-06 - Commit and push verification
+
+- The user explicitly authorized committing and pushing the accumulated repository implementation work.
+- Commit scope includes Dashboard V2, governed Economic Twin extensions, Margin Intelligence wording, the canonical public margin verifier, route generation, environment documentation, continuity/governance records, and the repository Loop AI research note.
+- Generated and unrelated workspace artifacts under `.codex-build/`, `deliverables/`, `output/`, `tmp/`, and `tools/` remain untracked and excluded from the commit.
+
+### Verification commands and exact outcomes
+
+- `npm run verify-continuity` - passed.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-economic-twin-dashboard` - passed.
+- `npm run verify-margin-policy` - passed.
+- `npm run verify-public-api-safety` - passed.
+- `npm run verify-margin-intelligence-ui` - passed and produced temporary screenshots.
+- `npm run typecheck` - passed with no errors.
+- `npm run build` - passed for client and SSR; existing large-chunk and mixed dynamic/static import warnings only.
+- `git diff --check` - passed; line-ending conversion warnings only.
+
+### Changed files and exact next action
+
+- Commit the explicitly scoped source, script, configuration, research, and continuity files; push `main` to `origin`.
+- Exact next action after push: monitor the Git-triggered deployment and verify public, dashboard, Salla embedded, and Zid embedded routes before changing deployment state. Connector-write testing remains blocked on merchant-side Zid activation.
