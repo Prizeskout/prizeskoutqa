@@ -57,7 +57,9 @@ import { Route as AdminSignInRouteImport } from './routes/admin.sign-in'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMerchantsRouteImport } from './routes/admin.merchants'
 import { Route as AdminCallbackRouteImport } from './routes/admin.callback'
+import { Route as DashboardV2PromotionsRouteImport } from './routes/dashboard.v2_.promotions'
 import { Route as DashboardV2PriorityCentreRouteImport } from './routes/dashboard.v2_.priority-centre'
+import { Route as DashboardV2OrderAutomationRouteImport } from './routes/dashboard.v2_.order-automation'
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiSettingsLocaleRouteImport } from './routes/api/settings/locale'
@@ -109,6 +111,7 @@ import { Route as ApiEmbeddedZidBootstrapRouteImport } from './routes/api/embedd
 import { Route as ApiEmbeddedSallaSyncRouteImport } from './routes/api/embedded/salla/sync'
 import { Route as ApiEmbeddedSallaBootstrapRouteImport } from './routes/api/embedded/salla/bootstrap'
 import { Route as ApiDashboardV2SummaryRouteImport } from './routes/api/dashboard/v2/summary'
+import { Route as ApiDashboardV2ModulesRouteImport } from './routes/api/dashboard/v2/modules'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
@@ -359,10 +362,21 @@ const AdminCallbackRoute = AdminCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AdminRoute,
 } as any)
+const DashboardV2PromotionsRoute = DashboardV2PromotionsRouteImport.update({
+  id: '/v2_/promotions',
+  path: '/v2/promotions',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardV2PriorityCentreRoute =
   DashboardV2PriorityCentreRouteImport.update({
     id: '/v2_/priority-centre',
     path: '/v2/priority-centre',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardV2OrderAutomationRoute =
+  DashboardV2OrderAutomationRouteImport.update({
+    id: '/v2_/order-automation',
+    path: '/v2/order-automation',
     getParentRoute: () => DashboardRoute,
   } as any)
 const DashboardScenariosSlugRoute = DashboardScenariosSlugRouteImport.update({
@@ -638,6 +652,11 @@ const ApiDashboardV2SummaryRoute = ApiDashboardV2SummaryRouteImport.update({
   path: '/api/dashboard/v2/summary',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDashboardV2ModulesRoute = ApiDashboardV2ModulesRouteImport.update({
+  id: '/api/dashboard/v2/modules',
+  path: '/api/dashboard/v2/modules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -764,10 +783,13 @@ export interface FileRoutesByFullPath {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/dashboard/v2/order-automation': typeof DashboardV2OrderAutomationRoute
   '/dashboard/v2/priority-centre': typeof DashboardV2PriorityCentreRoute
+  '/dashboard/v2/promotions': typeof DashboardV2PromotionsRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/dashboard/v2/modules': typeof ApiDashboardV2ModulesRoute
   '/api/dashboard/v2/summary': typeof ApiDashboardV2SummaryRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
   '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
@@ -872,10 +894,13 @@ export interface FileRoutesByTo {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/dashboard/v2/order-automation': typeof DashboardV2OrderAutomationRoute
   '/dashboard/v2/priority-centre': typeof DashboardV2PriorityCentreRoute
+  '/dashboard/v2/promotions': typeof DashboardV2PromotionsRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/dashboard/v2/modules': typeof ApiDashboardV2ModulesRoute
   '/api/dashboard/v2/summary': typeof ApiDashboardV2SummaryRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
   '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
@@ -984,10 +1009,13 @@ export interface FileRoutesById {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/dashboard/v2_/order-automation': typeof DashboardV2OrderAutomationRoute
   '/dashboard/v2_/priority-centre': typeof DashboardV2PriorityCentreRoute
+  '/dashboard/v2_/promotions': typeof DashboardV2PromotionsRoute
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/dashboard/v2/modules': typeof ApiDashboardV2ModulesRoute
   '/api/dashboard/v2/summary': typeof ApiDashboardV2SummaryRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
   '/api/embedded/salla/sync': typeof ApiEmbeddedSallaSyncRoute
@@ -1097,10 +1125,13 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/dashboard/v2/order-automation'
     | '/dashboard/v2/priority-centre'
+    | '/dashboard/v2/promotions'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/dashboard/v2/modules'
     | '/api/dashboard/v2/summary'
     | '/api/embedded/salla/bootstrap'
     | '/api/embedded/salla/sync'
@@ -1205,10 +1236,13 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/dashboard/v2/order-automation'
     | '/dashboard/v2/priority-centre'
+    | '/dashboard/v2/promotions'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/dashboard/v2/modules'
     | '/api/dashboard/v2/summary'
     | '/api/embedded/salla/bootstrap'
     | '/api/embedded/salla/sync'
@@ -1316,10 +1350,13 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/dashboard/v2_/order-automation'
     | '/dashboard/v2_/priority-centre'
+    | '/dashboard/v2_/promotions'
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/dashboard/v2/modules'
     | '/api/dashboard/v2/summary'
     | '/api/embedded/salla/bootstrap'
     | '/api/embedded/salla/sync'
@@ -1410,6 +1447,7 @@ export interface RootRouteChildren {
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiSettingsLocaleRoute: typeof ApiSettingsLocaleRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
+  ApiDashboardV2ModulesRoute: typeof ApiDashboardV2ModulesRoute
   ApiDashboardV2SummaryRoute: typeof ApiDashboardV2SummaryRoute
   ApiEmbeddedSallaBootstrapRoute: typeof ApiEmbeddedSallaBootstrapRoute
   ApiEmbeddedSallaSyncRoute: typeof ApiEmbeddedSallaSyncRoute
@@ -1784,11 +1822,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCallbackRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/dashboard/v2_/promotions': {
+      id: '/dashboard/v2_/promotions'
+      path: '/v2/promotions'
+      fullPath: '/dashboard/v2/promotions'
+      preLoaderRoute: typeof DashboardV2PromotionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/v2_/priority-centre': {
       id: '/dashboard/v2_/priority-centre'
       path: '/v2/priority-centre'
       fullPath: '/dashboard/v2/priority-centre'
       preLoaderRoute: typeof DashboardV2PriorityCentreRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/v2_/order-automation': {
+      id: '/dashboard/v2_/order-automation'
+      path: '/v2/order-automation'
+      fullPath: '/dashboard/v2/order-automation'
+      preLoaderRoute: typeof DashboardV2OrderAutomationRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/scenarios/$slug': {
@@ -2148,6 +2200,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDashboardV2SummaryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/dashboard/v2/modules': {
+      id: '/api/dashboard/v2/modules'
+      path: '/api/dashboard/v2/modules'
+      fullPath: '/api/dashboard/v2/modules'
+      preLoaderRoute: typeof ApiDashboardV2ModulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid/callback': {
       id: '/api/auth/zid/callback'
       path: '/callback'
@@ -2241,7 +2300,9 @@ interface DashboardRouteChildren {
   DashboardV2Route: typeof DashboardV2Route
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardScenariosSlugRoute: typeof DashboardScenariosSlugRoute
+  DashboardV2OrderAutomationRoute: typeof DashboardV2OrderAutomationRoute
   DashboardV2PriorityCentreRoute: typeof DashboardV2PriorityCentreRoute
+  DashboardV2PromotionsRoute: typeof DashboardV2PromotionsRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -2251,7 +2312,9 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardV2Route: DashboardV2Route,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardScenariosSlugRoute: DashboardScenariosSlugRoute,
+  DashboardV2OrderAutomationRoute: DashboardV2OrderAutomationRoute,
   DashboardV2PriorityCentreRoute: DashboardV2PriorityCentreRoute,
+  DashboardV2PromotionsRoute: DashboardV2PromotionsRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
@@ -2370,6 +2433,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiSettingsLocaleRoute: ApiSettingsLocaleRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
+  ApiDashboardV2ModulesRoute: ApiDashboardV2ModulesRoute,
   ApiDashboardV2SummaryRoute: ApiDashboardV2SummaryRoute,
   ApiEmbeddedSallaBootstrapRoute: ApiEmbeddedSallaBootstrapRoute,
   ApiEmbeddedSallaSyncRoute: ApiEmbeddedSallaSyncRoute,

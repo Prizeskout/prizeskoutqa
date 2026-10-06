@@ -1149,3 +1149,260 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Commit the explicitly scoped source, script, configuration, research, and continuity files; push `main` to `origin`.
 - Exact next action after push: monitor the Git-triggered deployment and verify public, dashboard, Salla embedded, and Zid embedded routes before changing deployment state. Connector-write testing remains blocked on merchant-side Zid activation.
+
+## 2026-10-06 - Supplied Dashboard V2 three-screen shell correction
+
+- Located the authoritative local handoff at `C:\Users\DELL\Downloads\Prizeskout Dashboard (New).zip` and reviewed its README, tokens, data contracts, official logo, thumbnail, and three HTML screen references.
+- Confirmed the prior implementation was incomplete: it exposed only Executive Overview and a standalone Priority Centre, while the handoff requires Executive Overview, Order Automation, and Promotions & Discounts inside one shared light shell.
+- Reworked the Dashboard V2 shell to follow the supplied 228px light navigation, grouped information architecture, scoped top bar, period/currency/confidence/priority controls, footer navigation, and official supplied logo.
+- Added feature-gated routes for `/dashboard/v2/order-automation` and `/dashboard/v2/promotions`. Their complete reference sections are represented, but unverifiable metrics, live feeds, campaign results, simulations, rule writes, recommendations, and approvals remain explicitly unavailable instead of using prototype mock data.
+- No migration, deployment, connector call, merchant-data mutation, external message, approval, or protected action occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and post-change `npm run verify-zid-contract` - passed.
+- Startup and post-change `npm run verify-salla-contract` - passed.
+- Initial post-change `npm run typecheck` - failed because generated route types did not yet include the two new route files; no runtime or contract failure was reported.
+- `npm run build` - passed for client and SSR, generated the new route tree, and emitted only existing large-chunk and mixed dynamic/static import warnings.
+- Final `npm run typecheck` - passed with no errors after route generation.
+- `npm run verify-dashboard-v2-contract` - passed.
+
+### Changed files and exact next action
+
+- Shell and styles: `src/components/dashboard-v2/DashboardV2Shell.tsx`, `src/components/dashboard-v2/dashboard-v2.css`, and `src/assets/prizeskout-dashboard-logo.png`.
+- New modules and routes: `src/components/dashboard-v2/DashboardV2OrderAutomation.tsx`, `src/components/dashboard-v2/DashboardV2Promotions.tsx`, `src/routes/dashboard.v2_.order-automation.tsx`, `src/routes/dashboard.v2_.promotions.tsx`, and generated `src/routeTree.gen.ts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: finish Executive Overview pixel fidelity against the supplied HTML and thumbnail, extend the browser verifier to all three screens, then wire Order Automation and Promotions only to authorized merchant-scoped server contracts. Keep the production flag disabled and do not provision Order Guard without migration authorization.
+
+## 2026-10-06 - Executive Overview handoff fidelity correction
+
+- Rendered the current Dashboard V2 and compared it directly with the supplied handoff thumbnail and README. Confirmed that the former page was too long and reordered around implementation notes rather than the reference hierarchy.
+- Rebuilt the Overview sequence to match the handoff: dominant financial hero with sparkline, operational strip, paired Profit Bridge and What Changed panels, channel profitability, paired settlement and leakage panels, branch performance, and footer.
+- Removed the extra Financial Truth Boundaries, Backend Wiring, protected-capability, and Current Workspace panels from the visible Overview because they are not part of the supplied screen. Their safety rules remain enforced by the server summary contract.
+- Extended the Playwright verifier to save and assert Overview, Order Automation, Promotions, and Priority Centre at every supported viewport. Order Automation and Promotions continue to expose explicit unavailable states and disabled protected controls until governed contracts exist.
+- No migration, deployment, connector call, merchant-data mutation, approval, external message, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-contract` - passed.
+- First post-layout `npm run verify-dashboard-v2-ui` - failed because its old assertion still expected the removed `Priority decisions` heading; this was a verifier expectation mismatch, not a runtime error.
+- Final `npm run verify-dashboard-v2-ui` - passed Overview, Order Automation, Promotions, and Priority Centre at 1440px, 390px, 375px, and phone landscape with no page-level overflow or browser errors. Screenshots were generated in the reported temporary directory.
+
+### Changed files and exact next action
+
+- Overview and styling: `src/components/dashboard-v2/DashboardV2Overview.tsx`, `src/components/dashboard-v2/dashboard-v2.css`.
+- Browser coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the supplied Order Automation screen's complete flow monitor, exception, branch, Copilot, and rules structures against a new merchant-scoped read-only server contract. Do not provision or mutate Order Guard, synthesize a live feed, or enable rule writes without authorized migration state and merchant approval controls.
+
+## 2026-10-06 - Order Automation handoff structure
+
+- Replaced the unavailable-only Order Automation page with the complete hierarchy from the supplied ZIP: automation hero, outcome bar, six-stage flow, live-order and exception panes, branch table, Copilot question surface, rules table, Trigger/When/Then editor, backtest control, and save boundary.
+- Preserved truthful states throughout. No live rate, event, exception, branch result, rule, backtest, or revenue-protected value is shown without merchant-scoped retained evidence. All protected controls remain disabled.
+- No Order Guard migration, deployment, connector call, merchant-data mutation, approval, external message, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, and `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-ui` - passed Overview, Order Automation, Promotions, and Priority Centre at 1440px, 390px, 375px, and phone landscape with no page-level overflow or browser errors; updated screenshots were generated.
+
+### Changed files and exact next action
+
+- Order Automation and shared styles: `src/components/dashboard-v2/DashboardV2OrderAutomation.tsx`, `src/components/dashboard-v2/dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: add a merchant-scoped, read-only Order Automation summary contract over authorized retained Order Guard tables, preserving unavailable responses when schema state is absent. Then complete the supplied Promotions & Discounts structure and governed simulator contract.
+
+## 2026-10-06 - Promotions and Discounts handoff structure
+
+- Rebuilt the third supplied dashboard screen with its complete visual hierarchy: promotion hero and funding guardrail, campaign table, attached health panel, recommendation choices, simulator inputs, baseline/projected result table, guardrail checks, guardrails table, and dark Copilot panel.
+- Did not port the prototype's hard-coded campaigns or browser-owned profitability model. All campaign results, health scores, projections, recommendations, approvals, and guardrail mutations remain explicitly unavailable or disabled until governed server evidence exists.
+- The UI/UX skill guided preservation of consistent controls, semantic tables, disabled-state clarity, responsive stacking, and non-color-only labels while the supplied handoff remained the visual authority.
+- No migration, deployment, connector call, merchant-data mutation, approval, external message, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, and `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-ui` - passed all four Dashboard V2 routes at 1440px, 390px, 375px, and phone landscape with no page-level overflow or browser errors; updated screenshots were generated.
+
+### Changed files and exact next action
+
+- Promotions and shared styles: `src/components/dashboard-v2/DashboardV2Promotions.tsx`, `src/components/dashboard-v2/dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement merchant-scoped read-only summary contracts for Order Automation and Promotions over authorized retained evidence, then wire these complete structures to those contracts and add deterministic fixture coverage for populated, empty, stale, and unavailable states. Keep all protected actions disabled until role, migration, approval, and readback controls are verified.
+
+## 2026-10-06 - Dashboard V2 read-only module contracts
+
+- Added an authenticated merchant-scoped endpoint for Order Automation and Promotions evidence. It directly reads retained rows and deliberately avoids `getOrderGuard`, whose sweep path can update risk and attention state.
+- Order Automation now shows actual retained order totals, live/risk counts, latest order rows, exception rows, and branch aggregates when present. Automation rate, SLA, and revenue-protected values remain uncalculated because the retained schema does not prove them.
+- Promotions now shows retained scenario counts, statuses, platform, and evidence-readiness. It does not infer campaign contribution, margin, health, or recommendations from saved scenarios.
+- Added a deterministic module-contract verifier proving unavailable behavior, order aggregation, non-inference of automation rate, scenario status aggregation, and absence of invented contribution.
+- No migration, deployment, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- `npm run build` - passed for client and SSR; existing chunk-size and mixed-import warnings only.
+- `npm run typecheck` - passed with no errors.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-v2-ui` - passed all four routes at 1440px, 390px, 375px, and phone landscape.
+
+### Changed files and exact next action
+
+- Contract and API: `src/server/core/dashboard-v2-modules.ts`, `src/routes/api/dashboard/v2/modules.ts`.
+- Client wiring: `src/components/dashboard-v2/useDashboardV2Modules.ts`, `DashboardV2OrderAutomation.tsx`, `DashboardV2Promotions.tsx`, and shared CSS.
+- Verification/configuration: `scripts/verify-dashboard-v2-modules.mts`, `package.json`, generated route tree, and continuity records.
+- Exact next action: extend the module endpoint and browser fixtures for populated and stale states, then expose only campaign financial and flow-stage values whose retained provenance is sufficient. Keep all unsupported calculations and protected actions disabled.
+
+## 2026-10-06 - Dashboard V2 local default cutover
+
+- Made the supplied Executive Overview the default local component at `/dashboard/revenue-hub` when no explicit legacy workspace query is present.
+- Preserved existing legacy workspace deep links and connected Settings, Integrations, and Audit navigation back to those retained tools.
+- Removed the build-time preview redirects from all Dashboard V2 routes so Overview, Priority Centre, Order Automation, and Promotions form one usable authenticated route set without `VITE_DASHBOARD_V2_ENABLED`.
+- Extended the browser verifier to load the real Revenue Hub landing URL without the flag before traversing the V2 routes.
+- No deployment, connector call, merchant-data mutation, protected action, migration, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- First `npm run typecheck` - failed because the Revenue Hub search validator initially narrowed away the existing `from` search parameter; the validator was corrected to preserve all existing search fields.
+- Final `npm run typecheck` - passed with no errors.
+- `npm run build` - passed for client and SSR without the V2 enable flag; emitted only existing large-chunk and mixed dynamic/static import warnings.
+- `npm run verify-dashboard-v2-ui` - passed the default Revenue Hub entry plus Overview, Order Automation, Promotions, and Priority Centre at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-PWgiNX`.
+
+### Changed files and exact next action
+
+- Cutover/routes: `src/routes/dashboard.revenue-hub.tsx`, `src/routes/dashboard.v2.tsx`, `src/routes/dashboard.v2_.priority-centre.tsx`, `src/routes/dashboard.v2_.order-automation.tsx`, and `src/routes/dashboard.v2_.promotions.tsx`.
+- Retained legacy navigation: `src/components/dashboard-v2/DashboardV2Shell.tsx`.
+- Browser coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: add deterministic populated and stale browser fixtures for the module contract, then wire only provenance-backed campaign financial fields and flow-stage counts. Keep unsupported calculations, recommendations, and protected actions disabled; do not claim production availability before deployment and authenticated verification.
+
+## 2026-10-06 - Exact dashboard fidelity correction started
+
+- A direct audit against the user-named `Executive Overview.dc.html` confirmed the existing implementation was an adaptation and could not be described as exact.
+- Added the four supplied TT Firs Neue font files and wired their original 400/500/600/700 weights.
+- Applied the source token values, compact text-only sidebar treatment, 32px canvas padding, 20px vertical rhythm, 26px/400 page heading, 1.1:1 hero split, and 72px contribution metric geometry.
+- Restored the reference's two-part Branch Performance card with its 340px attention panel and safely disabled investigation/assignment controls.
+- The UI/UX skill guided the accessibility and responsive checks; the supplied HTML remains the visual authority.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed with no errors.
+- First `npm run verify-dashboard-v2-ui` - failed because the verifier still expected the removed `Ranking ready` label after the reference-aligned `All branches →` control was introduced.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-Au8prC`.
+
+### Changed files and exact next action
+
+- Supplied typography: `src/assets/fonts/TTFirsNeue-Regular.ttf`, `TTFirsNeue-Medium.ttf`, `TTFirsNeue-DemiBold.ttf`, and `TTFirsNeue-Bold.ttf`.
+- Exact-source correction: `src/components/dashboard-v2/DashboardV2Overview.tsx`, `src/components/dashboard-v2/dashboard-v2.css`.
+- Browser expectation: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: implement the remaining confidence popover, Priority Centre drawer, chart/table geometry, and responsive parity directly from the supplied HTML, then compare reference and implementation screenshots before describing the page as exact.
+
+## 2026-10-06 - Executive Overview overlays and measured screenshot comparison
+
+- Implemented the supplied design's 320px Confidence popover and 420px right-side Priority Centre drawer.
+- Popover content is derived from the four governed truth states; drawer content is derived from retained priority decisions. Escape, close controls, scrim closure, expanded state, dialog semantics, and full Priority Centre navigation are implemented.
+- Restored the hero comparison pill, prior-period text, current/previous legend, evidence reference, six-cell supporting detail, and exact 20px page rhythm. Unsupported margin-at-risk totals remain visibly `Not calculated`.
+- Rendered the literal reference HTML and the implementation at 1440px for side-by-side inspection. Remaining measurable mismatch is concentrated in the profit waterfall and channel, settlement, and leakage detail geometry.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, and `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed.
+- First UI run after heading correction failed because the verifier still expected the old conclusion heading; the expectation was updated to the governed comparison heading.
+- Second UI run failed because the reconciliation label now correctly appears in both the hero detail and reconciliation card; the assertion was scoped to the reconciliation card.
+- Final `npm run verify-dashboard-v2-ui` - passed Overview, overlays, Order Automation, Promotions, and Priority Centre at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-gTJlFI`.
+- Literal reference screenshot: `C:\Users\DELL\AppData\Local\Temp\prizeskout-reference-overview.png` (1440x2792).
+
+### Changed files and exact next action
+
+- Shell overlays: `src/components/dashboard-v2/DashboardV2Shell.tsx` and `dashboard-v2.css`.
+- Hero and governed chrome mapping: `src/components/dashboard-v2/DashboardV2Overview.tsx`.
+- Interaction verification: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: reproduce the reference profit waterfall and the channel, settlement, and leakage table geometry using governed values and explicit unavailable cells, then repeat the side-by-side screenshot comparison.
+
+## 2026-10-06 - Executive Overview waterfall and table geometry
+
+- Rebuilt Profit Bridge as the reference-shaped eight-column waterfall. The four contract-backed values retain their provenance; unsupported commission, promotion, refund, and adjustment splits render as unavailable dashes rather than invented amounts.
+- Expanded Channel Profitability to the reference ten-column structure with revenue/contribution markers, effective fee ratio, COGS, contribution, margin, and an explicit unavailable channel-variance column.
+- Rebuilt Settlement Reconciliation with expected payout, platform statement, separate receipt confirmation, unexplained-variance treatment, retained settlement row, allocation state, and the order-allocation safety note.
+- Compared the new 1440px render with the literal source. Major component geometry now aligns; remaining height variance is caused by fixture row counts and will be measured with a populated multi-row visual fixture.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, and `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed.
+- First `npm run verify-dashboard-v2-ui` - failed because the reconciliation-label assertion still required a standalone exact text node after the label was incorporated into the reference-shaped variance detail; the assertion was updated to match within the reconciliation card.
+- Final `npm run verify-dashboard-v2-ui` - passed all dashboard routes at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-XhcBcM`.
+- `npm run build` - passed client and SSR builds; only existing large-chunk and mixed-import warnings were emitted.
+
+### Changed files and exact next action
+
+- Exact component geometry: `src/components/dashboard-v2/DashboardV2Overview.tsx`, `dashboard-v2.css`.
+- Updated browser assertion: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: add populated multi-row visual fixtures for full-height comparison, finish evidence-backed leakage row controls, and complete the final Executive Overview acceptance comparison before starting the same audit on the companion screens.
+
+## 2026-10-06 - Executive Overview full-density acceptance
+
+- Expanded the deterministic browser fixture to five channels, four retained leakage findings, and six branches. These rows exist only in the verifier and cannot appear as merchant data.
+- Added the reference-shaped leakage category, evidence-strength, View Evidence, and Investigate control layout. Controls remain disabled because protected workflows are not authorized from this surface.
+- The full-density implementation renders at 1440x2827 versus the literal source at 1440x2792, a 35px/about-1.3% total-height difference, with matching major section and row density.
+- Added a 2700-2950px desktop height regression guard in addition to existing overflow, route, evidence, and interaction assertions.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, and `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed.
+- First UI run failed because `No linked case` appeared once per four fixture findings; the assertion was scoped to the first priority item.
+- Second UI run failed because the read-only protected-action message correctly appeared once per four items; the full-density expectation was updated to four.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape, including the full-density height guard. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-hl17kU`.
+
+### Changed files and exact next action
+
+- Full-density fixture and acceptance guard: `scripts/verify-dashboard-v2-ui.mts`.
+- Leakage row geometry: `src/components/dashboard-v2/DashboardV2Overview.tsx`, `dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: render `Order Automation.dc.html` and the implemented Order Automation route at 1440px, perform the same measured difference audit, and correct the route before moving to Promotions and Discounts.
+
+## 2026-10-06 - Order Automation full-density acceptance
+
+- Rendered the literal `Order Automation.dc.html` at 1440x2663 and compared it with the implemented route.
+- Added verifier-only module data for seven retained orders, four evidence-risk exceptions, and six branch aggregates. No fixture data enters production runtime.
+- Rebuilt retained-order rows with time, channel, branch, lifecycle, currency, and amount; rebuilt exceptions as the source-shaped risk cards with disabled review controls.
+- Added six explicit unavailable rule slots and expanded the disabled Trigger/When/Then editor to the source geometry. No prototype rule, automation rate, SLA, protected revenue, or action was represented as verified.
+- The corrected route renders at 1440x2551, a 112px/about-4.2% difference from the source. A 2450-2750px desktop height guard was added.
+- No deployment, migration, connector call, merchant-data mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, and `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed.
+- First UI run failed because the new retained-order identifier includes the source-shaped `#` prefix; the assertion was corrected.
+- Second UI run failed because the exception card contains the identifier within a longer heading; the assertion was changed to a bounded regex count.
+- Third UI run failed because `New rule` matched both the top action and the source-shaped `+ New rule`; the existing top-button assertion was made exact.
+- Final `npm run verify-dashboard-v2-ui` - passed all routes and viewports. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-MS6H21`.
+
+### Changed files and exact next action
+
+- Full-density module fixture and height guard: `scripts/verify-dashboard-v2-ui.mts`.
+- Order lists, exceptions, rules, and editor geometry: `src/components/dashboard-v2/DashboardV2OrderAutomation.tsx`, `dashboard-v2.css`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: render `Promotions and Discounts.dc.html`, compare it with the route at 1440px, add verifier-only populated scenario density, and correct the final screen without introducing ungoverned calculations or actions.
