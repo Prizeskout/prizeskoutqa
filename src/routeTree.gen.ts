@@ -112,6 +112,7 @@ import { Route as ApiEmbeddedSallaSyncRouteImport } from './routes/api/embedded/
 import { Route as ApiEmbeddedSallaBootstrapRouteImport } from './routes/api/embedded/salla/bootstrap'
 import { Route as ApiDashboardV2SummaryRouteImport } from './routes/api/dashboard/v2/summary'
 import { Route as ApiDashboardV2ModulesRouteImport } from './routes/api/dashboard/v2/modules'
+import { Route as ApiDashboardV2ContextRouteImport } from './routes/api/dashboard/v2/context'
 import { Route as ApiAuthZidCallbackRouteImport } from './routes/api/auth/zid/callback'
 import { Route as ApiAuthSallaCallbackRouteImport } from './routes/api/auth/salla/callback'
 import { Route as ApiAuthKeetaCallbackRouteImport } from './routes/api/auth/keeta/callback'
@@ -657,6 +658,11 @@ const ApiDashboardV2ModulesRoute = ApiDashboardV2ModulesRouteImport.update({
   path: '/api/dashboard/v2/modules',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDashboardV2ContextRoute = ApiDashboardV2ContextRouteImport.update({
+  id: '/api/dashboard/v2/context',
+  path: '/api/dashboard/v2/context',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthZidCallbackRoute = ApiAuthZidCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -789,6 +795,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/dashboard/v2/context': typeof ApiDashboardV2ContextRoute
   '/api/dashboard/v2/modules': typeof ApiDashboardV2ModulesRoute
   '/api/dashboard/v2/summary': typeof ApiDashboardV2SummaryRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
@@ -900,6 +907,7 @@ export interface FileRoutesByTo {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/dashboard/v2/context': typeof ApiDashboardV2ContextRoute
   '/api/dashboard/v2/modules': typeof ApiDashboardV2ModulesRoute
   '/api/dashboard/v2/summary': typeof ApiDashboardV2SummaryRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
@@ -1015,6 +1023,7 @@ export interface FileRoutesById {
   '/api/auth/keeta/callback': typeof ApiAuthKeetaCallbackRoute
   '/api/auth/salla/callback': typeof ApiAuthSallaCallbackRoute
   '/api/auth/zid/callback': typeof ApiAuthZidCallbackRoute
+  '/api/dashboard/v2/context': typeof ApiDashboardV2ContextRoute
   '/api/dashboard/v2/modules': typeof ApiDashboardV2ModulesRoute
   '/api/dashboard/v2/summary': typeof ApiDashboardV2SummaryRoute
   '/api/embedded/salla/bootstrap': typeof ApiEmbeddedSallaBootstrapRoute
@@ -1131,6 +1140,7 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/dashboard/v2/context'
     | '/api/dashboard/v2/modules'
     | '/api/dashboard/v2/summary'
     | '/api/embedded/salla/bootstrap'
@@ -1242,6 +1252,7 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/dashboard/v2/context'
     | '/api/dashboard/v2/modules'
     | '/api/dashboard/v2/summary'
     | '/api/embedded/salla/bootstrap'
@@ -1356,6 +1367,7 @@ export interface FileRouteTypes {
     | '/api/auth/keeta/callback'
     | '/api/auth/salla/callback'
     | '/api/auth/zid/callback'
+    | '/api/dashboard/v2/context'
     | '/api/dashboard/v2/modules'
     | '/api/dashboard/v2/summary'
     | '/api/embedded/salla/bootstrap'
@@ -1447,6 +1459,7 @@ export interface RootRouteChildren {
   ApiRepricingCatalogRoute: typeof ApiRepricingCatalogRoute
   ApiSettingsLocaleRoute: typeof ApiSettingsLocaleRoute
   ApiWebhooksPlatformRoute: typeof ApiWebhooksPlatformRoute
+  ApiDashboardV2ContextRoute: typeof ApiDashboardV2ContextRoute
   ApiDashboardV2ModulesRoute: typeof ApiDashboardV2ModulesRoute
   ApiDashboardV2SummaryRoute: typeof ApiDashboardV2SummaryRoute
   ApiEmbeddedSallaBootstrapRoute: typeof ApiEmbeddedSallaBootstrapRoute
@@ -2207,6 +2220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDashboardV2ModulesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/dashboard/v2/context': {
+      id: '/api/dashboard/v2/context'
+      path: '/api/dashboard/v2/context'
+      fullPath: '/api/dashboard/v2/context'
+      preLoaderRoute: typeof ApiDashboardV2ContextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/zid/callback': {
       id: '/api/auth/zid/callback'
       path: '/callback'
@@ -2433,6 +2453,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRepricingCatalogRoute: ApiRepricingCatalogRoute,
   ApiSettingsLocaleRoute: ApiSettingsLocaleRoute,
   ApiWebhooksPlatformRoute: ApiWebhooksPlatformRoute,
+  ApiDashboardV2ContextRoute: ApiDashboardV2ContextRoute,
   ApiDashboardV2ModulesRoute: ApiDashboardV2ModulesRoute,
   ApiDashboardV2SummaryRoute: ApiDashboardV2SummaryRoute,
   ApiEmbeddedSallaBootstrapRoute: ApiEmbeddedSallaBootstrapRoute,

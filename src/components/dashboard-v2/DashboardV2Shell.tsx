@@ -25,60 +25,61 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import logo from "@/assets/prizeskout-dashboard-logo.png";
+import { useDashboardV2Context } from "./useDashboardV2Context";
+import { setDashboardV2Period, useDashboardV2Period } from "./useDashboardV2Period";
 import "./dashboard-v2.css";
 
 type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
-  state: "planned" | "available";
   to?: "/dashboard/v2" | "/dashboard/v2/priority-centre" | "/dashboard/v2/order-automation" | "/dashboard/v2/promotions";
-  legacyHref?: string;
+  href?: string;
   badge?: string;
 };
 
 const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
   {
     items: [
-      { label: "Overview", icon: LayoutDashboard, state: "available", to: "/dashboard/v2" },
-      { label: "Priority Centre", icon: CircleAlert, state: "available", to: "/dashboard/v2/priority-centre", badge: "0" },
-      { label: "AI Copilot", icon: Bot, state: "planned", badge: "⌘K" },
+      { label: "Overview", icon: LayoutDashboard, to: "/dashboard/v2" },
+      { label: "Priority Centre", icon: CircleAlert, to: "/dashboard/v2/priority-centre", badge: "0" },
+      { label: "AI Copilot", icon: Bot, href: "/dashboard/revenue-hub?workspace=rules&view=copilot", badge: "⌘K" },
     ],
   },
   {
     label: "Intelligence",
     items: [
-      { label: "Profit intelligence", icon: ChartNoAxesCombined, state: "planned" },
-      { label: "Margin leakage", icon: ShieldCheck, state: "planned" },
-      { label: "Menu intelligence", icon: PackageCheck, state: "planned" },
+      { label: "Profit intelligence", icon: ChartNoAxesCombined, href: "/dashboard/revenue-hub?workspace=analytics&view=margin" },
+      { label: "Margin leakage", icon: ShieldCheck, href: "/dashboard/v2#margin-leakage" },
+      { label: "Menu intelligence", icon: PackageCheck, href: "/dashboard/revenue-hub?workspace=catalog&view=catalog" },
     ],
   },
   {
     label: "Operations",
     items: [
-      { label: "Order Automation", icon: Store, state: "available", to: "/dashboard/v2/order-automation" },
-      { label: "Orders", icon: ListChecks, state: "planned" },
-      { label: "Branches", icon: Building2, state: "planned" },
+      { label: "Order Automation", icon: Store, to: "/dashboard/v2/order-automation" },
+      { label: "Orders", icon: ListChecks, href: "/dashboard/v2/order-automation" },
+      { label: "Branches", icon: Building2, href: "/dashboard/v2#branch-performance" },
     ],
   },
   {
     label: "Commercial",
     items: [
-      { label: "Promotions & Discounts", icon: BadgePercent, state: "available", to: "/dashboard/v2/promotions" },
-      { label: "Channels", icon: Sparkles, state: "planned" },
+      { label: "Promotions & Discounts", icon: BadgePercent, to: "/dashboard/v2/promotions" },
+      { label: "Channels", icon: Sparkles, href: "/dashboard/revenue-hub?workspace=vault&view=integrations" },
     ],
   },
   {
     label: "Finance",
     items: [
-      { label: "Settlements", icon: ReceiptText, state: "planned" },
-      { label: "Reports", icon: FileCheck2, state: "planned" },
+      { label: "Settlements", icon: ReceiptText, href: "/dashboard/revenue-hub?workspace=analytics&view=recovery" },
+      { label: "Reports", icon: FileCheck2, href: "/dashboard/revenue-hub?workspace=history&view=evidence" },
     ],
   },
   {
     label: "Infrastructure",
     items: [
-      { label: "Integrations", icon: PlugZap, state: "available", legacyHref: "/dashboard/revenue-hub?workspace=settings" },
-      { label: "API / Developers", icon: Code2, state: "planned" },
+      { label: "Integrations", icon: PlugZap, href: "/dashboard/revenue-hub?workspace=vault&view=integrations" },
+      { label: "API / Developers", icon: Code2, href: "/docs" },
     ],
   },
 ];
@@ -142,34 +143,21 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
                     <span>{item.label}</span>
                     {item.badge && <small>{item.badge}</small>}
                   </Link>
-                ) : item.legacyHref ? (
-                  <a key={item.label} href={item.legacyHref} className="ps-v2-nav-item" onClick={onClose}>
-                    <Icon size={16} aria-hidden="true" />
-                    <span>{item.label}</span>
-                  </a>
                 ) : (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className="ps-v2-nav-item"
-                    data-active={active}
-                    aria-current={active ? "page" : undefined}
-                    disabled={!active}
-                    title={!active ? "This module will be wired in a later protected slice" : undefined}
-                  >
+                  <a key={item.label} href={item.href} className="ps-v2-nav-item" onClick={onClose}>
                     <Icon size={16} aria-hidden="true" />
                     <span>{item.label}</span>
                     {item.badge && <small>{item.badge}</small>}
-                  </button>
+                  </a>
                 );
               })}
             </section>
           ))}
         </nav>
         <div className="ps-v2-sidebar-footer">
-          <a className="ps-v2-nav-item" href="/dashboard/revenue-hub?workspace=settings"><Settings size={16} /><span>Settings</span></a>
-          <button type="button" className="ps-v2-nav-item" disabled><Users size={16} /><span>Team & Permissions</span></button>
-          <a className="ps-v2-nav-item" href="/dashboard/revenue-hub?workspace=vault"><History size={16} /><span>Audit Log</span></a>
+          <a className="ps-v2-nav-item" href="/dashboard/revenue-hub?workspace=settings&view=settings"><Settings size={16} aria-hidden="true" /><span>Settings</span></a>
+          <a className="ps-v2-nav-item" href="/access"><Users size={16} aria-hidden="true" /><span>Store Access</span></a>
+          <a className="ps-v2-nav-item" href="/dashboard/revenue-hub?workspace=history&view=evidence"><History size={16} aria-hidden="true" /><span>Audit Log</span></a>
         <div className="ps-v2-user">
           <span className="ps-v2-avatar" aria-hidden="true">{name.slice(0, 2).toUpperCase()}</span>
           <span>
@@ -184,6 +172,8 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
 }
 
 export function DashboardV2Shell({ children, activePage = "overview", chromeData }: { children: ReactNode; activePage?: DashboardV2Page; chromeData?: DashboardV2ChromeData }) {
+  const context = useDashboardV2Context();
+  const period = useDashboardV2Period();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [confidenceOpen, setConfidenceOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
@@ -210,14 +200,14 @@ export function DashboardV2Shell({ children, activePage = "overview", chromeData
             <Menu size={19} />
           </button>
           <div className="ps-v2-scope" aria-label="Current financial scope">
-            <button type="button" disabled>Group <ChevronDown size={12} /></button>
-            <button type="button" disabled>All brands <ChevronDown size={12} /></button>
-            <button type="button" disabled>Qatar · all branches <ChevronDown size={12} /></button>
-            <button type="button" disabled>All channels <ChevronDown size={12} /></button>
+            <button type="button" disabled>{context?.merchant_label ?? "Merchant account"} <ChevronDown size={12} /></button>
+            <button type="button" disabled>{context?.brand_label ?? "Brand scope loading"} <ChevronDown size={12} /></button>
+            <button type="button" disabled>{context?.location_label ?? "Location scope loading"} <ChevronDown size={12} /></button>
+            <button type="button" disabled>{context?.channel_label ?? "Channel scope loading"} <ChevronDown size={12} /></button>
           </div>
           <div className="ps-v2-topbar-spacer" />
-          <div className="ps-v2-period" aria-label="Reporting period"><button disabled>7D</button><button disabled className="active">30D</button><button disabled>QTD</button><button disabled>YTD</button></div>
-          <span className="ps-v2-currency">QAR</span>
+          <div className="ps-v2-period" aria-label="Reporting period"><button type="button" className={period === 7 ? "active" : undefined} aria-pressed={period === 7} onClick={() => setDashboardV2Period(7)}>7D</button><button type="button" className={period === 30 ? "active" : undefined} aria-pressed={period === 30} onClick={() => setDashboardV2Period(30)}>30D</button><button disabled title="Quarter-to-date requires the paginated period contract">QTD</button><button disabled title="Year-to-date requires the paginated period contract">YTD</button></div>
+          <span className="ps-v2-currency">{context?.currency ?? "—"}</span>
           <div className="ps-v2-confidence-wrap">
             <button type="button" className="ps-v2-confidence" aria-expanded={confidenceOpen} onClick={() => setConfidenceOpen((open) => !open)}><span /> <em>Confidence</em> <b>{chromeData?.confidenceLabel ?? "—"}</b></button>
             {confidenceOpen && <section className="ps-v2-confidence-popover" aria-label="Evidence confidence"><div><strong>Evidence confidence</strong><button type="button" onClick={() => setConfidenceOpen(false)} aria-label="Close confidence details"><X size={14} /></button></div><div className="ps-v2-confidence-meter"><i style={{ width: chromeData ? chromeData.confidenceLabel : "0%" }} /></div><p>{chromeData?.confidenceDetail ?? "Confidence is unavailable until retained evidence is loaded."}</p>{chromeData?.confidenceMissing && <small><strong>Missing:</strong> {chromeData.confidenceMissing}</small>}</section>}

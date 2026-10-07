@@ -104,6 +104,7 @@
 .ps-v2-secondary-link { min-height: 38px; display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid var(--v2-line); border-radius: 8px; color: var(--v2-ink); background: var(--v2-surface); font-size: 12px; font-weight: 700; text-decoration: none; }
 
 .ps-v2-main { max-width: 1360px; width: 100%; padding: 32px 32px 56px; display: flex; flex-direction: column; gap: 20px; }
+.ps-v2-main [id] { scroll-margin-top: 84px; }
 .ps-v2-page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 0; }
 .ps-v2-eyebrow, .ps-v2-label { color: var(--v2-faint); font-size: 10px; line-height: 1.4; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
 .ps-v2-page-heading h1 { max-width: 980px; margin: 4px 0 0; font-size: 26px; line-height: 1.25; letter-spacing: -.025em; font-weight: 400; text-wrap: pretty; }

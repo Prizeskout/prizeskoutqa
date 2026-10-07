@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DashboardV2Summary } from "@/server/core/dashboard-v2-summary";
+import { useDashboardV2Period } from "./useDashboardV2Period";
 
 export type DashboardV2LoadState =
   | { phase: "loading"; summary: null; message: null }
@@ -7,6 +8,7 @@ export type DashboardV2LoadState =
   | { phase: "unavailable"; summary: null; message: string };
 
 export function useDashboardV2Summary(): DashboardV2LoadState {
+  const period = useDashboardV2Period();
   const [load, setLoad] = useState<DashboardV2LoadState>({ phase: "loading", summary: null, message: null });
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export function useDashboardV2Summary(): DashboardV2LoadState {
       return;
     }
     const controller = new AbortController();
-    void fetch("/api/dashboard/v2/summary?days=30", {
+    void fetch(`/api/dashboard/v2/summary?days=${period}`, {
       headers: { "X-Merchant-Id": merchantId, "X-Access-Code": accessCode },
       signal: controller.signal,
       cache: "no-store",
@@ -32,7 +34,7 @@ export function useDashboardV2Summary(): DashboardV2LoadState {
         setLoad({ phase: "unavailable", summary: null, message: error instanceof Error ? error.message : "Financial evidence could not be loaded." });
       });
     return () => controller.abort();
-  }, []);
+  }, [period]);
 
   return load;
 }

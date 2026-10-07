@@ -1,6 +1,7 @@
 import { CircleAlert, FileSearch, ShieldCheck } from "lucide-react";
 import { DashboardV2Shell } from "./DashboardV2Shell";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
+import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 
 function formatAmount(value: number | null, currency: string | null): string | null {
   if (value == null || !Number.isFinite(value)) return null;
@@ -21,7 +22,7 @@ export function DashboardV2PriorityCentre() {
         : load.message ?? decisions?.blockers[0] ?? "Priority decisions are unavailable for this merchant session.";
 
   return (
-    <DashboardV2Shell activePage="priority">
+    <DashboardV2Shell activePage="priority" chromeData={buildDashboardV2ChromeData(load.summary)}>
       <div className="ps-v2-page-heading">
         <div>
           <p className="ps-v2-eyebrow">Priority centre / Evidence-linked decisions</p>

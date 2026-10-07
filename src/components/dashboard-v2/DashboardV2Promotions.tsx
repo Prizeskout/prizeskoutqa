@@ -1,6 +1,8 @@
 import { Bot, ShieldAlert } from "lucide-react";
 import { DashboardV2Shell } from "./DashboardV2Shell";
 import { useDashboardV2Modules } from "./useDashboardV2Modules";
+import { useDashboardV2Summary } from "./useDashboardV2Summary";
+import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 
 const simulatorFields = ["Branches", "Menu items", "Discount", "Merchant-funded share", "Expected uplift", "Duration"];
 const guardrails = [
@@ -14,10 +16,11 @@ const guardrails = [
 
 export function DashboardV2Promotions() {
   const { promotions } = useDashboardV2Modules();
+  const summary = useDashboardV2Summary().summary;
   const scenarios = promotions?.scenarios ?? [];
   const selected = scenarios[0];
 
-  return <DashboardV2Shell activePage="promotions">
+  return <DashboardV2Shell activePage="promotions" chromeData={buildDashboardV2ChromeData(summary)}>
     <div className="ps-v2-page-heading"><div><p className="ps-v2-eyebrow">Commercial / Promotions & Discounts / Last 30 days</p><h1>Campaign contribution is not calculated. <span className="ps-v2-muted">Verified campaign terms, SKU costs, and attributable orders are required.</span></h1></div><div className="ps-v2-status-actions"><button className="ps-v2-action" disabled>Guardrails</button><button className="ps-v2-action ps-v2-action-dark" disabled>Simulate campaign</button></div></div>
 
     <section className="ps-v2-hero ps-v2-promotions-hero" aria-label="Promotion summary"><div className="ps-v2-hero-main"><span className="ps-v2-label">Incremental contribution from promotions</span><h2 className="ps-v2-dominant-metric">Not calculated</h2><p>{promotions?.blockers[0] ?? "PrizeSkout will not infer promotion profitability from catalog or batch totals."}</p><div className="ps-v2-funding-caption"><span>Who funds the discounts</span><span>Guardrail: merchant &lt; 50%</span></div><div className="ps-v2-funding-bar"><span /><i aria-label="50 percent guardrail" /></div><div className="ps-v2-funding-legend"><span>Merchant-funded —</span><span>Platform-funded —</span></div><span className="ps-v2-evidence-reference">SOURCE · PROMOTION_SCENARIOS · {promotions?.state.toUpperCase() ?? "UNAVAILABLE"}</span></div><div className="ps-v2-metric-grid"><div><span>Retained scenarios</span><strong>{promotions ? promotions.counts.total : "—"}</strong></div><div><span>Active</span><strong>{promotions ? promotions.counts.active : "—"}</strong></div><div><span>Pending approval</span><strong>{promotions ? promotions.counts.pending_approval : "—"}</strong></div><div><span>Completed</span><strong>{promotions ? promotions.counts.completed : "—"}</strong></div><div><span>Platform-funded spend</span><strong>—</strong><small>Not attributable</small></div><div data-tone="risk"><span>Campaigns at risk</span><strong>—</strong><small>Not inferred from scenarios</small></div></div></section>

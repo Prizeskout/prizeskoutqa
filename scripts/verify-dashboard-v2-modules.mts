@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { summarizeOrderModule, summarizePromotionModule } from "../src/server/core/dashboard-v2-modules";
+import { summarizeDashboardV2Context } from "../src/server/core/dashboard-v2-context";
 
 const unavailable = summarizeOrderModule({ available: false });
 assert.equal(unavailable.state, "unavailable");
@@ -19,5 +20,21 @@ assert.equal(promotions.state, "available");
 assert.equal(promotions.counts.pending_approval, 1);
 assert.equal(promotions.scenarios[0]?.evidence_ready, true);
 assert.equal("contribution" in promotions.scenarios[0]!, false, "contract must not invent campaign contribution");
+
+const context = summarizeDashboardV2Context({
+  workspace: { name: "Sterling Group", country_code: "QA", currency: "QAR" },
+  entities: [{ id: "brand-1", name: "Sterling", entity_type: "brand", active: true }, { id: "branch-1", name: "West Bay", entity_type: "branch", active: true }],
+  channels: [{ platform: "talabat", status: "connected" }, { platform: "snoonu", status: "connected" }, { platform: "old", status: "revoked" }],
+});
+assert.equal(context.state, "available");
+assert.equal(context.merchant_label, "Sterling Group");
+assert.equal(context.brand_label, "Sterling");
+assert.equal(context.location_label, "Qatar · 1 branch");
+assert.equal(context.channel_label, "2 connected channels");
+assert.equal(context.currency, "QAR");
+
+const missingContext = summarizeDashboardV2Context({ errors: ["Scope table unavailable."] });
+assert.equal(missingContext.state, "unavailable");
+assert.equal(missingContext.currency, null, "currency must not default without retained scope evidence");
 
 console.log("Dashboard V2 module contracts verified.");

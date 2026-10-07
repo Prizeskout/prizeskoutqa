@@ -1428,3 +1428,67 @@ Run a controlled first-time install with an inbox whose delivery can be observed
   - `npx wrangler whoami` confirmed the expected PrizeSkout Cloudflare account. The first `npx wrangler deploy --config dist/server/wrangler.json` attempt failed on a transient final fetch request before version creation. Retrying the identical verified build succeeded as Worker `fe912420-8122-4da0-b613-348bd3a8bc0b` on `prizeskout.qa/*` and `app.prizeskout.qa`.
   - Logged-in production verification passed: `/dashboard/revenue-hub` loaded Dashboard V2; `/dashboard/v2/promotions` contained `Promotion cost cap`, `Deep discount approval`, six guardrail rows, computed Copilot background `rgb(17, 17, 17)`, a disabled Request approval control, and equal document/client widths (no page-level horizontal overflow). Production correctly showed no retained scenarios rather than verifier fixtures.
   - Exact next action: push this deployment record, then continue only with a newly identified literal reference difference. Zid authorization and Order Guard provisioning remain separate governed blockers.
+- 2026-10-07 — Began conservative Dashboard V2 wiring with one read-only shared-chrome slice.
+  - Read the continuity pack and active task packet, preserved unrelated untracked artifacts, and passed baseline continuity plus protected Zid/Salla contracts.
+  - Added `dashboard-v2-chrome.ts` to derive evidence confidence and priority drawer data from the existing merchant-scoped summary contract. Wired Order Automation, Promotions, and Priority Centre to it; no new endpoint, mutation, migration, external action, or financial inference was added.
+  - Extended the UI verifier to prove the fixture's 100% confidence and four priority decisions remain present across all V2 routes. `npm run typecheck`, `npm run verify-dashboard-v2-modules`, `npm run verify-dashboard-v2-contract`, and `npm run verify-dashboard-v2-ui` passed. Two earlier UI launches failed before assertions because Vite/route startup exceeded existing timeouts; a warm isolated rerun completed the full 1440px, 390px, 375px, and phone-landscape matrix.
+  - Changed files: `src/components/dashboard-v2/dashboard-v2-chrome.ts`, `DashboardV2OrderAutomation.tsx`, `DashboardV2Promotions.tsx`, `DashboardV2PriorityCentre.tsx`, `scripts/verify-dashboard-v2-ui.mts`, and continuity documentation.
+  - Exact next action: review the local diff and, only after explicit authorization, commit/push/deploy it; then verify confidence and priority continuity in the logged-in PrizeSkout account. Keep all protected actions disabled.
+
+## 2026-10-07 - Dashboard V2 merchant context and period wiring
+
+- Resumed from the interrupted worktree after reading the complete continuity pack and active task packet; preserved all prior changes and unrelated untracked artifacts.
+- Added an authenticated `/api/dashboard/v2/context` read-only contract for retained merchant, brand, branch, connected-channel, and currency labels. The top bar no longer hard-codes Group, Qatar, or QAR.
+- Wired the supported 7D and 30D selector through both `/api/dashboard/v2/summary` and `/api/dashboard/v2/modules`; QTD and YTD remain disabled until bounded contracts are implemented.
+- Increased only the local UI verifier's cold-start readiness/navigation windows after Vite required 88.8 seconds to become ready on this machine. No runtime timeout or production behavior changed.
+- No protected action, connector call, migration, merchant-data mutation, commit, push, deployment, or logged-in production verification occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-modules` - passed, including merchant-context contract assertions.
+- `npm run verify-dashboard-v2-contract` - passed.
+- First two `npm run verify-dashboard-v2-ui` attempts failed before assertions because the isolated Vite server exceeded the old 90-second readiness window and emitted no startup error.
+- The next UI attempt reached Vite readiness at 88.8 seconds but the first 60-second cold navigation timed out; readiness and navigation limits were widened for the verifier only.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-9gOonH`.
+- `npm run build` - passed with the existing mixed-import and chunk-size warnings.
+
+### Changed files and exact next action
+
+- Merchant-scoped context: `src/server/core/dashboard-v2-context.ts`, `src/routes/api/dashboard/v2/context.ts`, `src/components/dashboard-v2/useDashboardV2Context.ts`, and generated route registration.
+- Period wiring: `src/components/dashboard-v2/useDashboardV2Period.ts`, summary/module hooks, modules endpoint, and `DashboardV2Shell.tsx`.
+- Shared governed chrome and verification: dashboard V2 route components, `dashboard-v2-chrome.ts`, `scripts/verify-dashboard-v2-modules.mts`, and `scripts/verify-dashboard-v2-ui.mts`.
+- Exact next action: review the complete local diff and, only after explicit authorization, commit/push/deploy it; then verify merchant scope, currency, 7D/30D refresh, confidence, and priority continuity in the logged-in PrizeSkout account. Keep all protected actions disabled.
+
+## 2026-10-07 - Dashboard V2 complete sidebar wiring audit
+
+- Applied the `ui-ux-pro-max` navigation and accessibility guidance: semantic links, URL-deep-linkable state, icon-plus-label navigation, and no dead disabled destinations.
+- Audited every Dashboard V2 sidebar and footer item against the typed V2 routes and the existing legacy workspace/view router.
+- Wired all 18 destinations. V2-native routes cover Overview, Priority Centre, Order Automation, Orders, Branches, Margin Leakage, and Promotions. Existing governed workspaces cover AI Copilot, Profit Intelligence, Menu Intelligence, Channels, Settlements, Reports, Integrations, Settings, and Audit Log. API/Developers opens `/docs`; Store Access opens `/access`.
+- Corrected two existing route defects: Integrations previously opened general Settings, and Audit Log previously opened the integrations vault.
+- Added stable `margin-leakage` and `branch-performance` anchors and scroll offset behavior.
+- Extended the browser verifier to assert every sidebar/footer href at every viewport, assert both deep-link targets, and fail if any disabled sidebar destination returns.
+- No connector call, migration, financial calculation, protected action, merchant mutation, commit, push, deployment, or production-browser verification occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and final `npm run verify-zid-contract` - passed.
+- Startup and final `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed after the navigation changes.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape, including all 18 navigation destinations and both in-page anchors. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-byNKsb`.
+- `npm run build` - passed with the existing mixed-import and chunk-size warnings.
+- `git diff --check` - passed before the final continuity updates, with only expected LF-to-CRLF notices.
+
+### Changed files and exact next action
+
+- Navigation and semantic link map: `src/components/dashboard-v2/DashboardV2Shell.tsx`.
+- Stable section targets and scroll offset: `src/components/dashboard-v2/DashboardV2Overview.tsx`, `src/components/dashboard-v2/dashboard-v2.css`.
+- End-to-end navigation assertions: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: review the local diff and, only after explicit authorization, commit/push/deploy it; then verify every sidebar handoff, real merchant scope/currency, 7D/30D refresh, confidence, and priority continuity in the logged-in PrizeSkout account. Keep unavailable calculations and all protected actions disabled.
