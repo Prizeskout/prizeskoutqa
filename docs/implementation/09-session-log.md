@@ -1653,3 +1653,58 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Regression copy assertions: `scripts/verify-dashboard-v2-ui.mts`.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: review the verified local copy diff. Commit/push only with explicit authorization; deployment remains separate.
+
+## 2026-10-08 - Store Manager channel scope correction
+
+- Traced the reported "across Zid and Salla" greeting to unconstrained generated greeting copy rather than a literal UI string.
+- Added a deterministic greeting for simple salutations. It names only channels supplied by the merchant's authenticated dashboard context and otherwise says "your connected channels".
+- Normalized and de-duplicated merchant channel context and added an explicit agent rule that PrizeSkout is not limited to Zid and Salla.
+- Kept confirmed connection, read capability, write capability, and manual evidence paths separate so the broader wording does not overstate live connector support.
+- No connector call, protected action, migration, deployment, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and final `npm run verify-zid-contract` - passed.
+- Startup and final `npm run verify-salla-contract` - passed.
+- Startup and final `npm run typecheck` - passed.
+- `npm run verify-copilot-prompts` - passed, including multi-channel Talabat/Keeta/Foodics and no-confirmed-channel greeting cases.
+
+### Changed files and exact next action
+
+- Store Manager scope and deterministic greeting: `src/routes/api/copilot/compile.ts`.
+- Regression coverage: `scripts/verify-copilot-prompts.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run `git diff --check` and final continuity verification. Commit/push only with explicit authorization; deployment and signed-in production verification remain separate.
+
+## 2026-10-08 - Retired-dashboard navigation closure
+
+- Reproduced the reported defect in the signed-in production browser. Settings > Margin Rules exposed a link to `/dashboard/revenue-hub?workspace=rules#channel-margin-overrides`, and that compatibility route rendered the retired `.ps-db` dashboard.
+- Removed `PrizeSkoutDashboard` from the Revenue Hub compatibility route. Old workspace values now redirect to canonical destinations inside the current dashboard, and a plain Revenue Hub URL redirects to `/dashboard`.
+- Corrected direct navigation in Margin Rules, Store Access, the Evidence and Pricing compatibility routes, merchant onboarding, and the Snoonu pilot return action.
+- Searched the new dashboard, reused settings components, and routes for remaining `workspace` links and `/access` escapes. No matching customer-facing escape remains in that scope.
+- No protected action, connector mutation, migration, deployment, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Required startup continuity, protected Zid/Salla contracts, and typecheck - passed.
+- First post-change typecheck failed because dynamic dashboard modules must use TanStack's typed `/dashboard/$module` route; corrected with explicit module parameters.
+- First browser run reached the new canonical Settings route but retained the harmless old hash during redirect; the assertion was corrected to verify the pathname and absence of `.ps-db`.
+- Final `npm run typecheck` - passed.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. It now covers the reported Margin Rules URL, current Margin Rules link, Store Access link, Evidence compatibility redirect, and absence of the legacy shell. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-aQLswr`.
+- Final `npm run verify-zid-contract` and `npm run verify-salla-contract` - passed.
+- Final `npm run build` - passed with existing chunk-size and mixed-import warnings.
+
+### Changed files and exact next action
+
+- Compatibility route closure: `src/routes/dashboard.revenue-hub.tsx`, `dashboard.evidence.tsx`, and `dashboard.pricing.tsx`.
+- Canonical navigation: Margin Rules, Settings Store Access, onboarding, and Snoonu pilot components.
+- Regression coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run final diff and continuity verification. Commit/push only with explicit authorization; deploy only with separate authorization, then repeat the click audit in the signed-in production account.
+
+### Authorized repository delivery
+
+- The user explicitly requested commit and push for the verified Store Manager channel-scope and retired-dashboard navigation corrections.
+- Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts remain excluded.
+- Exact next action after push: deploy only with separate authorization, then repeat the signed-in Margin Rules, Store Access, compatibility-link, and Store Manager greeting checks.

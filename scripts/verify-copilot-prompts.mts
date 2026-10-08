@@ -1,4 +1,4 @@
-import { deterministicZidInsight, managerCatalogCoverageAnswer, normalizeExecutableManagerOperation, parseManagerAgentDecision, sanitizeManagerAnswer } from "../src/routes/api/copilot/compile";
+import { buildManagerMerchantContext, deterministicZidInsight, managerCatalogCoverageAnswer, managerGreetingAnswer, normalizeExecutableManagerOperation, parseManagerAgentDecision, sanitizeManagerAnswer } from "../src/routes/api/copilot/compile";
 import { productMatches } from "../src/server/core/zid-product-match";
 import {compactConversation,normalizeCopilotPrompt,resolveProductReferences} from "../src/lib/copilot-understanding";
 import {validateManagerWorkflow} from "../src/server/core/store-manager-capabilities";
@@ -119,6 +119,15 @@ console.log("PASS: supported Store Manager work is normalized into deterministic
 const coverageAnswer=managerCatalogCoverageAnswer({total_products:32,verified_cost_products:8,verified_cost_coverage_pct:25});
 if(coverageAnswer!=="Verified cost coverage is 25%: 8 of 32 imported products have verified costs.")throw new Error(`Manager catalogue coverage answer failed: ${coverageAnswer}`);
 console.log("PASS: Store Manager answers cost coverage from the current imported catalogue deterministically");
+
+const multiChannelContext=buildManagerMerchantContext({connected_channels:[" Talabat ","keeta","Foodics","talabat"]});
+if(JSON.stringify(multiChannelContext.connected_channels)!==JSON.stringify(["talabat","keeta","foodics"]))throw new Error(`Manager channel context was not normalized: ${JSON.stringify(multiChannelContext)}`);
+const multiChannelGreeting=managerGreetingAnswer(multiChannelContext.connected_channels as string[]);
+if(!multiChannelGreeting.includes("Talabat, Keeta, and Foodics")||/Zid|Salla/.test(multiChannelGreeting))throw new Error(`Manager greeting imposed the wrong channel scope: ${multiChannelGreeting}`);
+const genericGreeting=managerGreetingAnswer([]);
+if(!genericGreeting.includes("your connected channels")||/Zid|Salla/.test(genericGreeting))throw new Error(`Manager empty-context greeting guessed a platform: ${genericGreeting}`);
+if(!String(multiChannelContext.channel_scope).includes("Only the channels listed"))throw new Error("Manager context is missing its explicit channel boundary");
+console.log("PASS: Store Manager greetings use the merchant's confirmed channels and never default to Zid and Salla");
 
 const cfoInsight = parseCfoInsight(
   JSON.stringify({

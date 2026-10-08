@@ -243,7 +243,7 @@ function SnoonuPilotDemo() {
 
         <footer style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "24px 0 8px", color: MUTED, fontSize: 11.5 }}>
           <span>Fixture schema: 2026-09-09 · Event types and signature checks match the implemented pilot contract.</span>
-          <a className="pilot-link" href="/dashboard/revenue-hub?workspace=vault" style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 40, color: TEXT, fontWeight: 750, textDecoration: "none" }}>Return to Integration Vault <ArrowRight size={14} aria-hidden="true" /></a>
+          <a className="pilot-link" href="/dashboard/integrations" style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 40, color: TEXT, fontWeight: 750, textDecoration: "none" }}>Return to Integrations <ArrowRight size={14} aria-hidden="true" /></a>
         </footer>
       </main>
     </div>

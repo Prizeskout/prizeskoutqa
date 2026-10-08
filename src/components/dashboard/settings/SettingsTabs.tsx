@@ -240,7 +240,7 @@ function StoreAccessTab() {
           </div>
         )}
         <a
-          href="/access"
+          href="/dashboard/store-access"
           style={{
             display: "inline-flex",
             marginTop: 14,

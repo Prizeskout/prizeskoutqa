@@ -70,7 +70,7 @@ export function MarginRulesTab() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 650 }}>
+    <div id="margin-rules" style={{ maxWidth: 650 }}>
       <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", margin: "0 0 6px" }}>
         {t("settingsTabs.marginRules.heading")}
       </h3>
@@ -209,7 +209,7 @@ export function MarginRulesTab() {
       </div>
 
       <a
-        href="/dashboard/revenue-hub?workspace=rules#channel-margin-overrides"
+        href="/dashboard/settings#margin-rules"
         style={{
           marginTop: 16,
           display: "inline-flex",
@@ -222,7 +222,7 @@ export function MarginRulesTab() {
           fontSize: 13,
         }}
       >
-        Open Margin Policy Engine
+        Review margin rules
       </a>
       <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginTop: 12 }}>
         Channel overrides are enforced now. Category and product overrides remain unavailable until

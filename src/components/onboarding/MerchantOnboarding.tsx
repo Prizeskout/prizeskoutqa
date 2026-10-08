@@ -1191,10 +1191,10 @@ export function MerchantOnboarding() {
                 location={location}
                 accessCode={legacyAccessCode || undefined}
                 initialConnected={existingConnected}
-                onBack={() => legacyAccessCode ? window.location.assign("/dashboard/revenue-hub?workspace=settings") : setStage("account")}
+                onBack={() => legacyAccessCode ? window.location.assign("/dashboard/settings") : setStage("account")}
                 onComplete={(connectedChannels, deferredChannels) => {
                   if (legacyAccessCode) {
-                    window.location.assign("/dashboard/revenue-hub?workspace=settings");
+                    window.location.assign("/dashboard/settings");
                     return;
                   }
                   setConnected(connectedChannels);

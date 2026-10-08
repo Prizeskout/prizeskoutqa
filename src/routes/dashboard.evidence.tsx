@@ -7,8 +7,8 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 export const Route = createFileRoute("/dashboard/evidence")({
   beforeLoad: () => {
     throw redirect({
-      to: "/dashboard/revenue-hub",
-      search: { workspace: "history" },
+      to: "/dashboard/$module",
+      params: { module: "audit-log" },
       replace: true,
     });
   },
