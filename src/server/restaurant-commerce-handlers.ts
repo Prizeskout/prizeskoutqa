@@ -503,7 +503,12 @@ export function summarizeRestaurantOrderEconomics(
       contribution_amount:
         net != null && productCost != null ? Math.round((net - productCost) * 100) / 100 : null,
     },
-    lines,
+    lines: lines.map((line, index) => ({
+      ...line,
+      product_cost_amount: lineCosts[index]?.evidence
+        ? roundMoney(Number(line.quantity) * Number(lineCosts[index].evidence?.unit_cost))
+        : null,
+    })),
     cost_evidence:
       productCost == null
         ? {

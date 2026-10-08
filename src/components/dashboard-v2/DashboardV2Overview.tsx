@@ -93,7 +93,7 @@ export function DashboardV2Overview() {
     },
   ];
   const channels = summary?.metrics.by_channel ?? [];
-  const truthRows = summary ? Object.values(summary.truths) : [];
+  const truthRows = summary ? [summary.truths.orders, summary.truths.contract, summary.truths.payout] : [];
   const verifiedTruths = truthRows.filter((truth) => truth.status === "verified").length;
   const confidencePct = truthRows.length
     ? Math.round((verifiedTruths / truthRows.length) * 100)
@@ -438,7 +438,7 @@ export function DashboardV2Overview() {
         >
           <Header
             title="Settlement reconciliation"
-            subtitle="Expected → platform statement → bank received"
+            subtitle="Expected payout compared with the platform statement"
             aside={<span className="ps-v2-readonly">Settlement → Orders → Fees → Evidence</span>}
           />
           <div className="ps-v2-settlement-flow">
@@ -453,13 +453,6 @@ export function DashboardV2Overview() {
               <span>Platform statement</span>
               <strong>
                 {money(summary?.reconciliation.reported_amount, summary?.reconciliation.currency)}
-              </strong>
-            </div>
-            <b>→</b>
-            <div>
-              <span>Bank received</span>
-              <strong>
-                {summary?.truths.receipt.status === "verified" ? "Confirmed" : "Not confirmed"}
               </strong>
             </div>
           </div>

@@ -47,5 +47,5 @@ process.env.PRODUCT_FILM_LICENSEE_ID=licenseeId;
 process.env.PRODUCT_FILM_STORE_NAME="Naija Restaurant";
 process.env.PRODUCT_FILM_PLATFORM="foodics";
 process.env.PRODUCT_FILM_PROFILE="naija";
-process.env.PRODUCT_FILM_BUSINESS_DATE=new Date().toISOString().slice(0,10);
+process.env.PRODUCT_FILM_BUSINESS_DATE=process.env.NAIJA_DEMO_BUSINESS_DATE??new Date().toISOString().slice(0,10);
 await import("./prepare-product-film-demo.mts");

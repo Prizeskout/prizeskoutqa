@@ -59,16 +59,16 @@ const orderEvidenceId=(orderResult.body as any).data.evidence_item_id as string;
 
 const expectedFor=(gross:number)=>Math.round((gross-gross*.18-gross*.18*.05-1)*100)/100;
 const settlements=orders.map((order,index)=>{
-  const expected=expectedFor(order.gross_amount),gap=index===1?6.2:index===3?4.75:0,settled=Math.round((expected-gap)*100)/100;
+  const demoGaps=profile==="naija"?[0,12.4,0,8.75,6.25,0]:[0,6.2,0,4.75,0,0];
+  const expected=expectedFor(order.gross_amount),gap=demoGaps[index]??0,settled=Math.round((expected-gap)*100)/100;
   const commission=Math.round(order.gross_amount*.18*100)/100,vat=Math.round(commission*.05*100)/100;
   return {external_event_id:"snoonu-film-settlement-"+suffix+"-"+(index+1),settlement_reference:"SN-SET-"+suffix.slice(-6)+"-"+(index+1),
     order_external_id:order.external_order_id,occurred_at:new Date(Date.parse(order.occurred_at)+7200000).toISOString(),currency:"QAR",
     settled_amount:settled,gross_sales_amount:order.gross_amount,commission_amount:commission,tax_on_fees_amount:vat,
     other_fee_amount:Math.round((order.gross_amount-commission-vat-settled)*100)/100,adjustment_amount:0};
 });
-const receipts=settlements.map((row,index)=>({external_event_id:"snoonu-film-receipt-"+suffix+"-"+(index+1),bank_reference:"QNB-"+suffix.slice(-8)+"-"+(index+1),settlement_reference:row.settlement_reference,occurred_at:new Date(Date.parse(row.occurred_at)+3600000).toISOString(),currency:"QAR",received_amount:row.settled_amount}));
 const settlementResult=await handleRestaurantSettlementBatch(new Request("https://demo.local/v1/commerce/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
-  batch_id:`${platform}-film-settlements-${suffix}`,source_provider:platform,channel:platform,schema_version:"2026-09-05",delivery_complete:true,settlements,receipts,
+  batch_id:`${platform}-film-settlements-${suffix}`,source_provider:platform,channel:platform,schema_version:"2026-09-05",delivery_complete:true,settlements,receipts:[],
 })}),ctx);
 assert([200,202].includes(settlementResult.status),JSON.stringify(settlementResult.body));
 const settlementEvidenceId=(settlementResult.body as any).data.evidence_item_id as string;
@@ -88,15 +88,16 @@ const {data:findings}=await db.from("ps_reconciliation_findings").select("id,rec
 if(!process.env.PRODUCT_FILM_ACCOUNT_ID)await db.from("ps_recovery_cases").delete().eq("account_id",accountId).eq("platform",platform).throwOnError();
 const filmFindingByOrder=new Map<string,{id:string;recoverability:string;order_external_id:string|null;variance:number|null}>();
 for(const finding of findings??[]) if(finding.order_external_id?.startsWith("SN-")) filmFindingByOrder.set(finding.order_external_id,finding);
-const intendedGapOrders=new Set([orders[1].external_order_id,orders[3].external_order_id]);
+const intendedGapOrders=new Set(profile==="naija"?[orders[1].external_order_id,orders[3].external_order_id,orders[4].external_order_id]:[orders[1].external_order_id,orders[3].external_order_id]);
 const filmFindings=[...filmFindingByOrder.values()].filter(finding=>finding.order_external_id!==null&&intendedGapOrders.has(finding.order_external_id));
 for(const finding of filmFindings) await createRecoveryCaseFromFinding(accountId,finding.id);
 
 for(const [sku,, ,cost] of menu){
   const {data:existing}=await db.from("ps_product_cost_versions").select("id").eq("account_id",accountId).eq("merchant_id",accountId).eq("sku",sku).is("effective_to",null).maybeSingle().throwOnError();
-  if(!existing) await db.from("ps_product_cost_versions").insert({
+  if(existing)await db.from("ps_product_cost_versions").update({amount:cost,effective_from:"2026-01-01T00:00:00.000Z",evidence_ref:`controlled-demo-cost-${sku}`}).eq("id",existing.id).throwOnError();
+  else await db.from("ps_product_cost_versions").insert({
     account_id:accountId,merchant_id:accountId,sku,amount:cost,currency:"QAR",source:"manual_verified",
-    effective_from:now.toISOString(),evidence_ref:"product-film-cost-"+suffix+"-"+sku,
+    effective_from:"2026-01-01T00:00:00.000Z",evidence_ref:`controlled-demo-cost-${sku}`,
   }).throwOnError();
 }
 const {data:priorEconomics}=await db.from("ps_economics_versions").select("id").eq("account_id",accountId).eq("merchant_id",accountId).eq("channel",platform).eq("status","approved").is("effective_to",null).maybeSingle().throwOnError();

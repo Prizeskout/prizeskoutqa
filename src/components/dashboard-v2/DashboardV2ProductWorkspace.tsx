@@ -413,7 +413,7 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
             <div>
               <h2>Latest payout check</h2>
               <p>
-                Compare what you expected, what the platform reported, and what reached your bank.
+                Compare what PrizeSkout expected with what the platform reported.
               </p>
             </div>
           </header>

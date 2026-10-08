@@ -64,9 +64,9 @@ const obj = (value: unknown) =>
     : {};
 export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): EconomicTwinSummary {
   const orders = events.filter((row) => row.event_kind === "order_snapshot"),
-    payouts = events.filter(
-      (row) => row.event_kind === "payout_total" || row.event_kind === "receipt_confirmation",
-    );
+    settlements = events.filter((row) => row.event_kind === "settlement_line"),
+    settlementByOrder = new Map(settlements.filter((row) => row.order_external_id).map((row) => [String(row.order_external_id), row])),
+    settlementFor = (row: any) => settlementByOrder.get(String(row.order_external_id ?? ""));
   const dimension = (
     keyOf: (row: any, line?: Record<string, unknown>) => string,
     lines = false,
@@ -83,7 +83,7 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
             : 1,
           gross = lines ? money(line?.gross_amount) : money(row.gross_amount),
           net = lines ? money(line?.net_amount) : money(row.net_amount),
-          fees = money(row.fee_amount) * share,
+          fees = money(settlementFor(row)?.fee_amount ?? row.fee_amount) * share,
           discounts = lines ? money(line?.discount_amount) : money(row.discount_amount),
           cost = lines ? money(line?.product_cost_amount) : money(payload.product_cost_amount),
           current = map.get(key) ?? {
@@ -102,7 +102,7 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
         current.fees += fees;
         current.discounts += discounts;
         current.product_cost += cost;
-        current.contribution += net - cost;
+        current.contribution += net - fees - cost;
         current.orders += 1;
         map.set(key, current);
       }
@@ -124,7 +124,7 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
   };
   const gross = orders.reduce((sum, row) => sum + money(row.gross_amount), 0),
     net = orders.reduce((sum, row) => sum + money(row.net_amount), 0),
-    fees = orders.reduce((sum, row) => sum + money(row.fee_amount), 0),
+    fees = orders.reduce((sum, row) => sum + money(settlementFor(row)?.fee_amount ?? row.fee_amount), 0),
     discounts = orders.reduce((sum, row) => sum + money(row.discount_amount), 0),
     cost = orders.reduce(
       (sum, row) => sum + money(obj(row.normalized_payload).product_cost_amount),
@@ -134,12 +134,8 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
       (sum, row) => sum + money(obj(row.normalized_payload).refund_amount),
       0,
     ),
-    expected = payouts
-      .filter((row) => row.event_kind === "payout_total")
-      .reduce((sum, row) => sum + money(row.net_amount ?? row.gross_amount), 0),
-    actual = payouts
-      .filter((row) => row.event_kind === "receipt_confirmation")
-      .reduce((sum, row) => sum + money(row.net_amount ?? row.gross_amount), 0),
+    expected = orders.reduce((sum, row) => sum + money(row.net_amount) - money(settlementFor(row)?.fee_amount ?? row.fee_amount), 0),
+    actual = settlements.reduce((sum, row) => sum + money(row.net_amount ?? row.gross_amount), 0),
     recoverable = recoveries.reduce(
       (sum, row) => sum + Math.max(0, money(row.claims_ready_amount) - money(row.recovered_amount)),
       0,
@@ -157,8 +153,8 @@ export function summarizeEconomicTwin(events: any[], recoveries: any[] = []): Ec
     discounts: money(discounts),
     refunds: money(refunds),
     product_cost: money(cost),
-    contribution: money(net - cost),
-    contribution_margin_pct: net ? Math.round(((net - cost) / net) * 10000) / 100 : null,
+    contribution: money(net - fees - cost),
+    contribution_margin_pct: net ? Math.round(((net - fees - cost) / net) * 10000) / 100 : null,
     expected_payout: money(expected),
     actual_payout: money(actual),
     variance: money(actual - expected),
@@ -192,6 +188,7 @@ export async function getDashboardStats(accountId: string,filters:{days?:number;
     { data: heads },
     { data: recoveries },
     { data: costRows },
+    { data: versionedCostRows },
   ] = await Promise.all([
     supabaseAdmin
       .from("ps_aggregator_dispatch_log")
@@ -213,7 +210,7 @@ export async function getDashboardStats(accountId: string,filters:{days?:number;
     (supabaseAdmin as any)
       .from("ps_normalized_commerce_events")
       .select(
-        "id,event_kind,channel,branch_external_id,currency,gross_amount,discount_amount,fee_amount,net_amount,normalized_payload,occurred_at",
+        "id,event_kind,channel,branch_external_id,order_external_id,currency,gross_amount,discount_amount,fee_amount,net_amount,normalized_payload,occurred_at",
       )
       .eq("account_id", accountId)
       .gte("occurred_at", seriesStart.toISOString())
@@ -236,6 +233,12 @@ export async function getDashboardStats(accountId: string,filters:{days?:number;
       )
       .eq("account_id", accountId)
       .limit(10000),
+    (supabaseAdmin as any)
+      .from("ps_product_cost_versions")
+      .select("id,sku,currency,amount,effective_from,effective_to,source,created_at")
+      .eq("account_id", accountId)
+      .eq("merchant_id", accountId)
+      .limit(10000),
   ]);
 
   const rows = error || !data ? [] : data;
@@ -255,19 +258,32 @@ export async function getDashboardStats(accountId: string,filters:{days?:number;
   const marginDeltas: number[] = [];
   const daily_series = new Array(selectedDays).fill(0);
   const currentEventIds = new Set((heads ?? []).map((head: any) => head.current_event_id));
+  const effectiveCosts = costRows?.length
+    ? costRows
+    : (versionedCostRows ?? []).map((row: any) => ({
+        id: row.id,
+        sku: row.sku,
+        currency: row.currency,
+        unit_cost: row.amount,
+        effective_from: String(row.effective_from ?? "").slice(0, 10),
+        effective_to: row.effective_to ? String(row.effective_to).slice(0, 10) : null,
+        source_provider: row.source,
+        created_at: row.created_at,
+      }));
   const currentEvents = (normalizedRows ?? [])
     .filter((row: any) => currentEventIds.has(row.id))
     .filter((row:any)=>!filters.platform||String(row.channel??"").toLowerCase()===filters.platform.toLowerCase())
     .filter((row:any)=>!filters.branch||String(row.branch_external_id??"")===filters.branch)
     .map((row: any) => {
       if (row.event_kind !== "order_snapshot") return row;
-      const summary = summarizeRestaurantOrderEconomics(row, costRows ?? []);
+      const summary = summarizeRestaurantOrderEconomics(row, effectiveCosts);
       return {
         ...row,
         normalized_payload: {
           ...obj(row.normalized_payload),
           product_cost_amount: summary.economics.product_cost_amount,
           product_cost_coverage: summary.cost_evidence.coverage,
+          lines: summary.lines,
         },
       };
     });

@@ -1754,3 +1754,47 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Demo preparation: `scripts/prepare-naija-demo.mts` and `scripts/prepare-product-film-demo.mts`.
 - Demo truth label and navigation: dashboard context API/core, shared shell/CSS, and Overview.
 - Exact next action: run final continuity and diff checks. Commit/push only on explicit authorization; deploy only under separate authorization, then verify the signed-in Naija Restaurant dashboard and demo banner in production.
+
+## 2026-10-08 - Naija Restaurant Margin Leakage demonstration
+
+- Added a second controlled Foodics demonstration batch for 2026-10-07 with six orders and three deliberate, order-level payout shortfalls.
+- The account now retains five recent claims-ready demonstration findings. The three highest-ranked Margin Leakage items are QAR 12.40, QAR 8.75, and QAR 6.25, each with strong evidence and a linked recovery case.
+- Existing Zid and Salla connection records were not changed. No external message, claim, refund, promotion, or price action was submitted.
+- Updated the reusable Naija demo seeder to accept an explicit business date and create a three-item leakage scenario.
+
+### Verification commands and exact outcomes
+
+- `NAIJA_DEMO_BUSINESS_DATE=2026-10-07 npx tsx --env-file=.env.local scripts/prepare-naija-demo.mts` - succeeded: six orders, three claims-ready findings totaling QAR 27.40, six retained product costs, and a Store Manager task waiting for approval.
+- Direct read-only database verification - 12 recent findings total, five claims-ready confirmed discrepancies; highest three amounts QAR 12.40, QAR 8.75, and QAR 6.25, all `strong` evidence.
+
+### Changed files and exact next action
+
+- Demo scenario tooling: `scripts/prepare-naija-demo.mts` and `scripts/prepare-product-film-demo.mts`.
+- Continuity: this session log and active task state.
+- Exact next action: verify continuity and protected contracts. Commit/push only on explicit authorization; deployment remains separate.
+
+## 2026-10-08 - Demo financial-flow correction
+
+- Live browser audit confirmed the reported defects: production showed 0% cost coverage, withheld contribution and margin, displayed bank-receipt language, and left product costs and activity empty in downstream workspaces.
+- Root cause: the deployed database does not expose the newer `ps_product_cost_evidence` table, while the account's retained `ps_product_cost_versions` records are available. Dashboard statistics and activity now use the immutable table when present and safely fall back to retained versioned costs when it is absent.
+- Corrected the Economic Twin to attach effective-dated costs to order lines and use order-allocated platform statement fees in contribution calculations.
+- Removed bank-receipt language from Overview, Settlements, and workspace copy. Receipt confirmation remains distinct in the backend evidence model but is not part of customer-facing confidence or the core demo flow.
+- Added an evidence-history fallback for Audit Log when the older governed audit table is unavailable.
+- The controlled Naija dataset now verifies locally as 18 orders, QAR 1,206 gross sales, QAR 218.76 platform fees, QAR 450 product cost, 100% cost coverage, QAR 537.24 true contribution, and 44.55% margin.
+- No external connector call, bank data, protected action, migration, commit, push, or deployment occurred.
+
+### Verification commands and exact outcomes
+
+- Direct `getDashboardStats` verification - 18 orders, 100% cost coverage, QAR 537.24 contribution, 44.55% margin, populated SKU and branch economics.
+- `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-restaurant-commerce-contract` - passed.
+- First `npm run verify-dashboard-v2-ui` failed because confidence intentionally changed from four layers to the three product-relevant layers; the assertion was updated.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape.
+
+### Changed files and exact next action
+
+- Financial compatibility and calculations: `src/server/core/dashboard-stats.ts`, `src/server/restaurant-commerce-handlers.ts`, and dashboard activity API.
+- Customer experience: Overview, product workspace, workspace copy, shared confidence helper, and regression coverage.
+- Demo tooling: Naija and product-film preparation scripts.
+- Exact next action: run protected contracts and continuity, then commit/push only on explicit authorization. Deployment remains separate; after deployment repeat the signed-in module audit.

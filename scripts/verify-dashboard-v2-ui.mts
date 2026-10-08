@@ -203,7 +203,7 @@ try {
       if (viewport.width > 1024) {
         await page.getByRole("button", { name: /Confidence/ }).click();
         await page.getByRole("region", { name: "Evidence confidence" }).waitFor();
-        assert.equal(await page.getByText("4 of 4 required record types are ready.", { exact: true }).count(), 1);
+        assert.equal(await page.getByText("3 of 3 required record types are ready.", { exact: true }).count(), 1);
         await page.keyboard.press("Escape");
         assert.equal(await page.getByRole("region", { name: "Evidence confidence" }).count(), 0);
       }

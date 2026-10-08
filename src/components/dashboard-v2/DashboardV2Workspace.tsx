@@ -65,9 +65,9 @@ const WORKSPACES: Record<
   },
   settlements: {
     eyebrow: "Finance / Settlements",
-    title: "Settlement truth stays separate from bank receipt.",
+    title: "Check each platform payout against what you expected.",
     description:
-      "Expected amount, platform-reported amount, allocation scope, and receipt confirmation remain distinct.",
+      "Expected amounts, platform-reported amounts, and order-level evidence remain clearly separated.",
     boundary: "Batch differences cannot become order claims without order-level evidence.",
     icon: ReceiptText,
   },
@@ -128,7 +128,7 @@ export function DashboardV2Workspace({ workspace }: { workspace: DashboardV2Work
   const context = useDashboardV2Context();
   const Icon = config.icon;
   const truthCount = summary
-    ? Object.values(summary.truths).filter((truth) => truth.status === "verified").length
+    ? [summary.truths.orders, summary.truths.contract, summary.truths.payout].filter((truth) => truth.status === "verified").length
     : 0;
 
   return (

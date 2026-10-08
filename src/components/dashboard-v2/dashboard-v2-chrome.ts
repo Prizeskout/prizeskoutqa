@@ -12,7 +12,7 @@ function money(value: number | null, currency: string | null): string | null {
 export function buildDashboardV2ChromeData(
   summary: DashboardV2Summary | null,
 ): DashboardV2ChromeData {
-  const truths = summary ? Object.values(summary.truths) : [];
+  const truths = summary ? [summary.truths.orders, summary.truths.contract, summary.truths.payout] : [];
   const verified = truths.filter((truth) => truth.status === "verified").length;
   const confidence = truths.length ? Math.round((verified / truths.length) * 100) : 0;
   const missing = truths
