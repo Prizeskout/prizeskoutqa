@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/dashboard/v2/summary")({
         if (!await verifyMerchantAccess(merchantId, accessCode)) return json({ error: "Unauthorized" }, 403);
 
         const requestedDays = Number(new URL(request.url).searchParams.get("days") ?? 30);
-        const days = Number.isFinite(requestedDays) ? Math.max(1, Math.min(90, Math.floor(requestedDays))) : 30;
+        const days = Number.isFinite(requestedDays) ? Math.max(1, Math.min(366, Math.floor(requestedDays))) : 30;
         const db = supabaseAdmin as any;
         const previousEnd = new Date(); previousEnd.setUTCDate(previousEnd.getUTCDate() - days);
         const [eventsResult, headsResult, agreementsResult, findingsResult, recoveryCasesResult, statsResult, previousStatsResult] = await Promise.all([

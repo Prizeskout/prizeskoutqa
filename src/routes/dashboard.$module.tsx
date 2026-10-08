@@ -1,5 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { DashboardV2Workspace, dashboardV2WorkspaceIds, type DashboardV2WorkspaceId } from "@/components/dashboard-v2/DashboardV2Workspace";
+import { dashboardV2WorkspaceIds, type DashboardV2WorkspaceId } from "@/components/dashboard-v2/DashboardV2Workspace";
+import { DashboardV2ProductWorkspace } from "@/components/dashboard-v2/DashboardV2ProductWorkspace";
 
 export const Route = createFileRoute("/dashboard/$module")({
   beforeLoad: ({ params }) => {
@@ -11,5 +12,5 @@ export const Route = createFileRoute("/dashboard/$module")({
 
 function WorkspaceRoute() {
   const { module } = Route.useParams();
-  return <DashboardV2Workspace workspace={module as DashboardV2WorkspaceId} />;
+  return <DashboardV2ProductWorkspace workspace={module as DashboardV2WorkspaceId} />;
 }

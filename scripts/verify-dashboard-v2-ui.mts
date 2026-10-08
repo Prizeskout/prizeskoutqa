@@ -115,7 +115,7 @@ const sidebarDestinations = [
   ["Margin leakage", "/dashboard#margin-leakage"],
   ["Menu intelligence", "/dashboard/menu-intelligence"],
   ["Order Automation", "/dashboard/order-automation"],
-  ["Orders", "/dashboard/order-automation"],
+  ["Orders", "/dashboard/orders"],
   ["Branches", "/dashboard#branch-performance"],
   ["Promotions & Discounts", "/dashboard/promotions"],
   ["Channels", "/dashboard/channels"],
@@ -143,6 +143,7 @@ try {
       await page.route("**/api/dashboard/v2/summary?days=*", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, summary: fixture }) }));
       await page.route("**/api/dashboard/v2/modules?days=*", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(modulesFixture) }));
       await page.route("**/api/dashboard/v2/context", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(contextFixture) }));
+      await page.route("**/api/dashboard/v2/activity", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, audit: { state: "available", rows: [] }, channels: { state: "available", rows: [] }, costs: { state: "available", rows: [] } }) }));
       await page.addInitScript(() => { localStorage.setItem("ps_merchant_id", "acct"); localStorage.setItem("ps_access_code", "fixture"); });
       await page.goto(`${origin}/dashboard/revenue-hub`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByRole("heading", { name: /Gross sales increased/ }).waitFor({ timeout: 120_000 });
@@ -161,6 +162,10 @@ try {
         assert.equal(await page.getByRole("button", { name: "7D", exact: true }).getAttribute("aria-pressed"), "true");
         await page.getByRole("button", { name: "30D", exact: true }).click();
         assert.equal(await page.getByRole("button", { name: "30D", exact: true }).getAttribute("aria-pressed"), "true");
+        await page.getByRole("button", { name: "QTD", exact: true }).click();
+        assert.match(page.url(), /[?&]period=qtd(?:&|$)/);
+        await page.getByRole("button", { name: "YTD", exact: true }).click();
+        assert.match(page.url(), /[?&]period=ytd(?:&|$)/);
       }
 
       await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded", timeout: 120_000 });
@@ -239,7 +244,7 @@ try {
       if (viewport.width === 1440) {
         for (const [label, href] of workspaceDestinations) {
           await page.goto(`${origin}${href}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-          await page.getByText("No legacy fallback", { exact: true }).waitFor({ timeout: 120_000 });
+          await page.locator("h1").waitFor({ timeout: 120_000 });
           assert.equal(page.url(), `${origin}${href}`, `${label}: destination changed unexpectedly`);
           assert.equal(await page.locator(".ps-v2-sidebar").count(), 1, `${label}: Dashboard V2 shell is missing`);
           assert.equal(await page.locator(".ps-db").count(), 0, `${label}: legacy dashboard shell was rendered`);

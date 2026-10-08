@@ -1,17 +1,17 @@
 import { Bot, Radio, ShieldAlert } from "lucide-react";
-import { DashboardV2Shell } from "./DashboardV2Shell";
+import { DashboardV2Shell, type DashboardV2Page } from "./DashboardV2Shell";
 import { useDashboardV2Modules } from "./useDashboardV2Modules";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
 import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 
 const stages = ["Incoming", "Validation", "Availability check", "Automation rule", "Accepted", "POS sync"];
 
-export function DashboardV2OrderAutomation() {
+export function DashboardV2OrderAutomation({ activePage = "automation" }: { activePage?: Extract<DashboardV2Page, "automation" | "orders"> }) {
   const { order } = useDashboardV2Modules();
   const summary = useDashboardV2Summary().summary;
   const hasOrders = Boolean(order?.orders.length);
-  return <DashboardV2Shell activePage="automation" chromeData={buildDashboardV2ChromeData(summary)}>
-    <div className="ps-v2-page-heading"><div><p className="ps-v2-eyebrow">Operations / Order Automation</p><h1>Automation performance is not calculated. <span className="ps-v2-muted">Order Guard must be provisioned before live order decisions appear.</span></h1></div><div className="ps-v2-status-actions"><button className="ps-v2-action" disabled>Branch override</button><button className="ps-v2-action" disabled>New rule</button></div></div>
+  return <DashboardV2Shell activePage={activePage} chromeData={buildDashboardV2ChromeData(summary)}>
+    <div className="ps-v2-page-heading"><div><p className="ps-v2-eyebrow">Operations / {activePage === "orders" ? "Orders" : "Order Automation"}</p><h1>{activePage === "orders" ? "Retained merchant orders and evidence status." : "Automation performance is not calculated."} <span className="ps-v2-muted">Order Guard must be provisioned before live order decisions appear.</span></h1></div><div className="ps-v2-status-actions"><button className="ps-v2-action" disabled>Branch override</button><button className="ps-v2-action" disabled>New rule</button></div></div>
 
     <section className="ps-v2-hero" aria-label="Automation summary"><div className="ps-v2-hero-main"><span className="ps-v2-label">Automation rate</span><h2 className="ps-v2-dominant-metric">Not calculated</h2><p>{order?.blockers[0] ?? "No live or retained order-automation evidence is available in this session."}</p><div className="ps-v2-outcome-bar" aria-label="Automation outcomes unavailable"><span /><span /><span /><span /></div><span className="ps-v2-evidence-reference">SOURCE · ORDER_GUARD · {order?.state.toUpperCase() ?? "UNAVAILABLE"}</span></div><div className="ps-v2-metric-grid"><div><span>Orders received</span><strong>{order ? order.received : "—"}</strong></div><div><span>Live orders</span><strong>{order ? order.live : "—"}</strong></div><div><span>Need attention</span><strong>{order ? order.attention : "—"}</strong></div><div><span>Critical</span><strong>{order ? order.critical : "—"}</strong></div><div data-tone="risk"><span>SLA breaches</span><strong>—</strong></div><div data-tone="brand"><span>Revenue protected</span><strong>—</strong><small>Not inferred from retained orders</small></div></div></section>
 

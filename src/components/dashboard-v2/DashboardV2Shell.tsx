@@ -57,7 +57,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
     label: "Operations",
     items: [
       { label: "Order Automation", icon: Store, to: "/dashboard/order-automation" },
-      { label: "Orders", icon: ListChecks, href: "/dashboard/order-automation" },
+      { label: "Orders", icon: ListChecks, to: "/dashboard/orders" },
       { label: "Branches", icon: Building2, href: "/dashboard#branch-performance" },
     ],
   },
@@ -84,7 +84,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
   },
 ];
 
-export type DashboardV2Page = "overview" | "priority" | "automation" | "promotions" | "ai-copilot" | "profit-intelligence" | "menu-intelligence" | "channels" | "settlements" | "reports" | "integrations" | "api-developers" | "settings" | "store-access" | "audit-log";
+export type DashboardV2Page = "overview" | "priority" | "automation" | "orders" | "promotions" | "ai-copilot" | "profit-intelligence" | "menu-intelligence" | "channels" | "settlements" | "reports" | "integrations" | "api-developers" | "settings" | "store-access" | "audit-log";
 
 export type DashboardV2ChromeData = {
   confidenceLabel: string;
@@ -97,6 +97,7 @@ const PAGE_PATHS: Record<DashboardV2Page, string> = {
   overview: "/dashboard",
   priority: "/dashboard/priority-centre",
   automation: "/dashboard/order-automation",
+  orders: "/dashboard/orders",
   promotions: "/dashboard/promotions",
   "ai-copilot": "/dashboard/ai-copilot",
   "profit-intelligence": "/dashboard/profit-intelligence",
@@ -217,7 +218,7 @@ export function DashboardV2Shell({ children, activePage = "overview", chromeData
             <button type="button" disabled>{context?.channel_label ?? "Channel scope loading"} <ChevronDown size={12} /></button>
           </div>
           <div className="ps-v2-topbar-spacer" />
-          <div className="ps-v2-period" aria-label="Reporting period"><button type="button" className={period === 7 ? "active" : undefined} aria-pressed={period === 7} onClick={() => setDashboardV2Period(7)}>7D</button><button type="button" className={period === 30 ? "active" : undefined} aria-pressed={period === 30} onClick={() => setDashboardV2Period(30)}>30D</button><button disabled title="Quarter-to-date requires the paginated period contract">QTD</button><button disabled title="Year-to-date requires the paginated period contract">YTD</button></div>
+          <div className="ps-v2-period" aria-label="Reporting period"><button type="button" className={period === 7 ? "active" : undefined} aria-pressed={period === 7} onClick={() => setDashboardV2Period(7)}>7D</button><button type="button" className={period === 30 ? "active" : undefined} aria-pressed={period === 30} onClick={() => setDashboardV2Period(30)}>30D</button><button type="button" className={period === "qtd" ? "active" : undefined} aria-pressed={period === "qtd"} onClick={() => setDashboardV2Period("qtd")}>QTD</button><button type="button" className={period === "ytd" ? "active" : undefined} aria-pressed={period === "ytd"} onClick={() => setDashboardV2Period("ytd")}>YTD</button></div>
           <span className="ps-v2-currency">{context?.currency ?? "—"}</span>
           <div className="ps-v2-confidence-wrap">
             <button type="button" className="ps-v2-confidence" aria-expanded={confidenceOpen} onClick={() => setConfidenceOpen((open) => !open)}><span /> <em>Confidence</em> <b>{chromeData?.confidenceLabel ?? "—"}</b></button>

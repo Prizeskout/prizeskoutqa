@@ -1564,3 +1564,35 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - At the user's explicit request, committed the verified native-shell and canonical-route correction as `a00fdb9` (`fix: keep dashboard navigation in canonical shell`).
 - Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts were not staged.
 - Exact next action: commit this continuity record and push both commits to `origin/main`. This does not authorize deployment.
+
+## 2026-10-07 - Dashboard functional workspace completion
+
+- Used the `ui-ux-pro-max` guidance for actionable empty states, visibly disabled protected actions, responsive controls, and deep-linkable module navigation.
+- Replaced the generic module placeholder with functional, governed surfaces: evidence-backed CFO Copilot chat; retained profit, product-cost, settlement, channel, and audit views; CSV/JSON report downloads; existing settings, Store Access, and channel/integration controls; and the supported API reference/copy tool.
+- Added merchant-authenticated `/api/dashboard/v2/activity` reads for `ps_govern_audit_log`, `ps_merchant_channels`, and `ps_product_cost_evidence`. The endpoint returns no credential secrets and degrades to explicit unavailable states if a table cannot be read.
+- Separated Orders onto `/dashboard/orders` with its own active navigation state while retaining the existing order evidence contract.
+- Enabled QTD and YTD as bounded day windows (up to 366 days) through the existing summary/module contracts.
+- Kept the Confidence control visible at intermediate widths by compacting its label instead of removing the control.
+- Order Guard was not provisioned and missing merchant evidence was not invented. Those remain operational onboarding/migration prerequisites.
+- No production mutation, migration, external action, commit, push, or deployment occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed.
+- `npm run build` - passed with existing mixed-import and chunk-size warnings.
+- First post-change typecheck failed because the generic workspace-ID exclusion needed the new `orders` page; corrected.
+- Final `npm run typecheck` - passed.
+- First UI run failed because the test attempted to reacquire the 30D control after the YTD state change; the redundant reset was removed.
+- Second UI run reached the YTD click but the post-click role lookup raced the route state; the assertion now verifies the canonical period query directly.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-FfCjfO`.
+
+### Changed files and exact next action
+
+- Functional workspaces and activity hook: `DashboardV2ProductWorkspace.tsx`, `useDashboardV2Activity.ts`.
+- Merchant-scoped activity contract: `src/routes/api/dashboard/v2/activity.ts` and generated route registration.
+- Orders, periods, responsive Confidence, routing, and styles: Dashboard V2 shell/hooks/routes/CSS and UI verifier.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run final Dashboard contracts, protected Zid/Salla checks, diff checks, and continuity verification. Keep Order Guard provisioning and merchant evidence acquisition as explicit separately governed work.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DashboardV2Summary } from "@/server/core/dashboard-v2-summary";
-import { useDashboardV2Period } from "./useDashboardV2Period";
+import { dashboardV2PeriodDays, useDashboardV2Period } from "./useDashboardV2Period";
 
 export type DashboardV2LoadState =
   | { phase: "loading"; summary: null; message: null }
@@ -19,7 +19,7 @@ export function useDashboardV2Summary(): DashboardV2LoadState {
       return;
     }
     const controller = new AbortController();
-    void fetch(`/api/dashboard/v2/summary?days=${period}`, {
+    void fetch(`/api/dashboard/v2/summary?days=${dashboardV2PeriodDays(period)}`, {
       headers: { "X-Merchant-Id": merchantId, "X-Access-Code": accessCode },
       signal: controller.signal,
       cache: "no-store",

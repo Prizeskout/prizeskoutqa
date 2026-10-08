@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/dashboard/v2/modules")({ server: { ha
   const merchantId = (request.headers.get("x-merchant-id") ?? "").trim(), accessCode = request.headers.get("x-access-code") ?? "";
   if (!await verifyMerchantAccess(merchantId, accessCode)) return json({ error: "Unauthorized" }, 403);
   const requestedDays = Number(new URL(request.url).searchParams.get("days") ?? 30);
-  const days = Number.isFinite(requestedDays) ? Math.max(1, Math.min(90, Math.floor(requestedDays))) : 30;
+  const days = Number.isFinite(requestedDays) ? Math.max(1, Math.min(366, Math.floor(requestedDays))) : 30;
   const since = new Date(); since.setUTCDate(since.getUTCDate() - (days - 1)); since.setUTCHours(0, 0, 0, 0);
   const db = supabaseAdmin as any;
   const [source, orders, promotions] = await Promise.all([

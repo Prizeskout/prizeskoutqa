@@ -4,7 +4,7 @@ import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 import { useDashboardV2Context } from "./useDashboardV2Context";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
 
-export type DashboardV2WorkspaceId = Exclude<DashboardV2Page, "overview" | "priority" | "automation" | "promotions">;
+export type DashboardV2WorkspaceId = Exclude<DashboardV2Page, "overview" | "priority" | "automation" | "orders" | "promotions">;
 
 const WORKSPACES: Record<DashboardV2WorkspaceId, { eyebrow: string; title: string; description: string; boundary: string; icon: typeof Bot }> = {
   "ai-copilot": { eyebrow: "Intelligence / AI Copilot", title: "Ask from the governed financial workspace.", description: "Copilot context stays attached to the same merchant, period, evidence confidence, and priority queue as the rest of Dashboard V2.", boundary: "Protected tasks still require merchant approval and a verified connector readback.", icon: Bot },
