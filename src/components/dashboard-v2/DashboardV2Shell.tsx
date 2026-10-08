@@ -417,6 +417,12 @@ export function DashboardV2Shell({
           </button>
         </header>
         <main id="dashboard-v2-content" tabIndex={-1} className="ps-v2-main">
+          {context?.demo_mode && (
+            <div className="ps-v2-demo-banner" role="status">
+              <strong>Demo data</strong>
+              <span>{context.demo_label ?? "Controlled demonstration data - not live financial evidence"}</span>
+            </div>
+          )}
           {children}
         </main>
       </div>

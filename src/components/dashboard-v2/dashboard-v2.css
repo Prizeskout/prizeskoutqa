@@ -314,8 +314,8 @@
 .ps-v2-branch-attention dt { color: var(--v2-ink-2); }
 .ps-v2-branch-attention dd { margin: 0; color: #a13f30; font-weight: 600; text-align: end; }
 .ps-v2-branch-actions { display: flex; gap: 8px; margin-top: auto; }
-.ps-v2-branch-actions button { min-height: 34px; padding: 8px 12px; border: 0; border-radius: 8px; background: var(--v2-ink); color: white; font-size: 12px; font-weight: 500; }
-.ps-v2-branch-actions button + button { background: var(--v2-surface); color: var(--v2-ink); box-shadow: inset 0 0 0 1px var(--v2-line); }
+.ps-v2-branch-actions a { min-height: 34px; display: inline-flex; align-items: center; padding: 8px 12px; border: 0; border-radius: 8px; background: var(--v2-ink); color: white; font-size: 12px; font-weight: 500; text-decoration: none; }
+.ps-v2-branch-actions a + a { background: var(--v2-surface); color: var(--v2-ink); box-shadow: inset 0 0 0 1px var(--v2-line); }
 .ps-v2-branch-actions button:disabled { opacity: .48; cursor: not-allowed; }
 .ps-v2-branch-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--v2-brand); }
 .ps-v2-priority-list { list-style: none; margin: 14px -24px -8px; padding: 0; border-top: 1px solid var(--v2-line); }
@@ -336,8 +336,8 @@
 .ps-v2-priority-meta { display: flex; flex-wrap: wrap; gap: 5px 12px; color: var(--v2-faint); font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 9px; }
 .ps-v2-priority-controls { display: flex; align-items: center; gap: 6px; margin: 8px 0; }
 .ps-v2-priority-controls > span { margin-inline-end: auto; color: var(--v2-muted); font-size: 9px; }
-.ps-v2-priority-controls button { min-height: 28px; padding: 4px 9px; border: 1px solid var(--v2-line); border-radius: 6px; background: transparent; color: var(--v2-ink-2); font-size: 9px; }
-.ps-v2-priority-controls button:last-child { border-color: var(--v2-ink); background: var(--v2-ink); color: white; }
+.ps-v2-priority-controls a { min-height: 28px; display: inline-flex; align-items: center; padding: 4px 9px; border: 1px solid var(--v2-line); border-radius: 6px; background: transparent; color: var(--v2-ink-2); font-size: 9px; text-decoration: none; }
+.ps-v2-priority-controls a:last-child { border-color: var(--v2-ink); background: var(--v2-ink); color: white; }
 .ps-v2-priority-controls button:disabled { opacity: .5; cursor: not-allowed; }
 .ps-v2-priority-meta strong { margin-inline-start: auto; color: var(--v2-ink); font-size: 11px; }
 .ps-v2-priority-body > small { display: block; margin-top: 8px; color: var(--v2-muted); font-size: 9px; line-height: 1.45; }
@@ -586,3 +586,16 @@
 @media (prefers-reduced-motion: reduce) {
   .ps-v2-sidebar, .ps-v2-scrim { transition: none; }
 }
+.ps-v2-demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid #f3b37d;
+  border-radius: 12px;
+  background: #fff5ec;
+  color: #7a2f00;
+  font-size: 14px;
+}
+.ps-v2-demo-banner strong { color: #b94800; }

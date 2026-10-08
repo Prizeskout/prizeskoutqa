@@ -145,6 +145,18 @@ try {
       await page.route("**/api/dashboard/v2/modules?days=*", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(modulesFixture) }));
       await page.route("**/api/dashboard/v2/context", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(contextFixture) }));
       await page.route("**/api/dashboard/v2/activity", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, audit: { state: "available", rows: [] }, channels: { state: "available", rows: [] }, costs: { state: "available", rows: [] } }) }));
+      const marginPolicyWrites: Array<Record<string, unknown>> = [];
+      await page.route("**/api/channels/connect", async (route) => {
+        const requestBody=route.request().postDataJSON() as Record<string,unknown>;
+        if(requestBody.platform!=="margin_floor")return route.fallback();
+        const basePolicy={marginFloorPct:.18,minimumContributionAmount:0,maxPriceIncreasePct:.15,approvalMode:"approval_every_change",version:2,overrides:[]};
+        if(requestBody.action==="set"){
+          marginPolicyWrites.push(requestBody);
+          const overrides=((requestBody.channel_overrides as Array<Record<string,unknown>>)??[]).map(item=>({channel:item.channel,servicePath:item.service_path,marginFloorPct:item.margin_floor_pct,minimumContributionAmount:item.minimum_contribution_amount,maxPriceIncreasePct:item.max_price_increase_pct,approvalMode:item.approval_mode}));
+          return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,policy:{...basePolicy,marginFloorPct:Number(requestBody.margin_floor_pct),minimumContributionAmount:Number(requestBody.minimum_contribution_amount),maxPriceIncreasePct:Number(requestBody.max_price_increase_pct),approvalMode:requestBody.approval_mode,version:3,overrides}})});
+        }
+        return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,policy:basePolicy,versions:[]})});
+      });
       await page.addInitScript(() => { localStorage.setItem("ps_merchant_id", "acct"); localStorage.setItem("ps_access_code", "fixture"); });
       await page.goto(`${origin}/dashboard/revenue-hub`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByRole("heading", { name: /Gross sales increased/ }).waitFor({ timeout: 120_000 });
@@ -261,10 +273,18 @@ try {
         await page.getByRole("heading", { name: "Manage your account and preferences." }).waitFor({ timeout: 120_000 });
         assert.equal(new URL(page.url()).pathname, "/dashboard/settings", "legacy Margin Rules link must stay in the canonical dashboard");
         assert.equal(await page.locator(".ps-db").count(), 0, "legacy Margin Rules link rendered the retired dashboard");
-        const marginRulesLink=page.getByRole("link", { name: "Review margin rules", exact: true });
-        assert.equal(await marginRulesLink.getAttribute("href"), "/dashboard/settings#margin-rules");
-        await marginRulesLink.click();
-        assert.equal(page.url(), `${origin}/dashboard/settings#margin-rules`);
+        await page.getByRole("button", { name: "Change margin rules", exact: true }).click();
+        await page.getByLabel("Minimum contribution margin", { exact: true }).fill("22");
+        await page.getByRole("button", { name: "Add channel override", exact: true }).click();
+        await page.getByLabel("Override 1 channel", { exact: true }).fill("talabat");
+        await page.getByRole("button", { name: "Review changes", exact: true }).click();
+        await page.getByRole("region", { name: "Margin rule review", exact: true }).waitFor();
+        assert.equal(await page.getByText("Future price changes will still require merchant approval.", { exact: true }).count(),1);
+        await page.getByRole("button", { name: "Activate these rules", exact: true }).click();
+        await page.getByText("Margin rules activated successfully.", { exact: true }).waitFor();
+        assert.equal(marginPolicyWrites.length,1,"margin policy must activate only after explicit review confirmation");
+        assert.equal(marginPolicyWrites[0]?.margin_floor_pct,.22);
+        assert.equal((marginPolicyWrites[0]?.channel_overrides as Array<Record<string,unknown>>)[0]?.channel,"talabat");
         await page.goto(`${origin}/dashboard/store-access`, { waitUntil: "domcontentloaded", timeout: 120_000 });
         const storeAccessLink=page.getByRole("link", { name: "Open Store Access →", exact: true });
         assert.equal(await storeAccessLink.getAttribute("href"), "/dashboard/store-access");

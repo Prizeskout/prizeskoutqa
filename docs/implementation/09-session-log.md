@@ -1708,3 +1708,49 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - The user explicitly requested commit and push for the verified Store Manager channel-scope and retired-dashboard navigation corrections.
 - Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts remain excluded.
 - Exact next action after push: deploy only with separate authorization, then repeat the signed-in Margin Rules, Store Access, compatibility-link, and Store Manager greeting checks.
+
+## 2026-10-08 - Inline Margin Rules editor
+
+- Corrected the follow-up defect where `Review margin rules` stayed on the same section but offered no way to change the policy.
+- Added an inline editor for the default contribution margin, maximum price increase, minimum cash contribution, approval mode, and named channel overrides.
+- Added client validation, duplicate-channel prevention, a distinct review step, explicit activation, loading feedback, success confirmation, and server error display.
+- Automatic price changes are not offered. The editor states that policy activation does not itself change store prices and that future protected price changes still require merchant approval.
+- Extended the browser regression to edit the margin, add a Talabat override, review it, activate it, verify the payload, and confirm that activation occurs only after the second action.
+- No live merchant policy, store price, connector state, migration, deployment, commit, or push changed.
+
+### Verification commands and exact outcomes
+
+- Required startup continuity, protected Zid/Salla contracts, and typecheck - passed.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape, including the inline policy review/activation flow. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-GVHZ4H`.
+- Final `npm run verify-zid-contract` and `npm run verify-salla-contract` - passed.
+- Final `npm run typecheck` - passed.
+- Final `npm run build` - passed with existing chunk-size and mixed-import warnings.
+
+### Changed files and exact next action
+
+- Inline policy workflow: `src/components/dashboard/settings/MarginRulesTab.tsx`.
+- Regression coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run final diff and continuity verification. Commit/push only with explicit authorization; deployment and signed-in merchant activation testing remain separate.
+
+## 2026-10-08 - Naija Restaurant controlled demo dataset and issue navigation
+
+- Populated the active Naija Restaurant account with six synthetic Foodics menu orders, product costs, settlement and receipt evidence, reconciliation findings, recovery work, and one AI Store Manager task waiting for approval.
+- Preserved its existing Zid and Salla connection rows; no external connector call or protected action occurred.
+- Marked the workspace and generated records as controlled demonstration data, not verified live financial evidence.
+- Replaced the non-working Overview `All issues`, evidence, investigation, and branch-review controls with canonical Priority Centre links.
+- Added a shared dashboard demo-data banner driven by server-owned workspace metadata. This UI change is local and not deployed.
+
+### Verification commands and exact outcomes
+
+- `npx tsx --env-file=.env.local scripts/prepare-naija-demo.mts` - succeeded: six orders, six product costs, two claims-ready findings totaling QAR 10.95, and a Store Manager task in `waiting_approval` state.
+- `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+
+### Changed files and exact next action
+
+- Demo preparation: `scripts/prepare-naija-demo.mts` and `scripts/prepare-product-film-demo.mts`.
+- Demo truth label and navigation: dashboard context API/core, shared shell/CSS, and Overview.
+- Exact next action: run final continuity and diff checks. Commit/push only on explicit authorization; deploy only under separate authorization, then verify the signed-in Naija Restaurant dashboard and demo banner in production.

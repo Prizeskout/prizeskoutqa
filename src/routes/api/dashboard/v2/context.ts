@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/dashboard/v2/context")({ server: { ha
   if (!await verifyMerchantAccess(merchantId, accessCode)) return json({ error: "Unauthorized" }, 403);
   const db = supabaseAdmin as any;
   const [workspace, settings, entities, channels] = await Promise.all([
-    db.from("ps_restaurant_workspaces").select("name,country_code,currency,licensee_id").eq("account_id", merchantId).maybeSingle(),
+    db.from("ps_restaurant_workspaces").select("name,country_code,currency,licensee_id,metadata").eq("account_id", merchantId).maybeSingle(),
     db.from("user_account_settings").select("company_name,country,currency").eq("user_id", merchantId).maybeSingle(),
     db.from("ps_enterprise_entities").select("id,name,entity_type,active").eq("account_id", merchantId).in("entity_type", ["brand", "branch"]).order("created_at"),
     db.from("ps_merchant_channels").select("platform,status").eq("account_id", merchantId),

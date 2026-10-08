@@ -93,6 +93,7 @@ Last reconciled with the repository: 2026-10-01.
 - Dashboard progress through the measured Executive Overview and Order Automation acceptance slices was committed as `14f649c` and pushed to `origin/main` at the user's explicit request. This confirms repository delivery only; Cloudflare deployment and authenticated production behavior have not yet been verified for this commit.
 - AI Store Manager no longer defaults its greeting or conversational scope to Zid and Salla. It now names only channels confirmed in the signed-in merchant context and uses a generic connected-channel description when none are confirmed. This local correction does not broaden live connector capabilities or claim write access; deployment and signed-in production verification are still pending.
 - Live browser inspection found that the new Settings workspace still escaped to the retired dashboard through the Margin Rules button. Locally, `/dashboard/revenue-hub` is now redirect-only and cannot render `PrizeSkoutDashboard`; old workspace links map into canonical dashboard routes. Direct Margin Rules, Store Access, Evidence, Pricing, onboarding, and Snoonu pilot navigation has also been corrected. Typecheck, production build, protected connector contracts, and the four-viewport browser navigation suite pass; deployment and signed-in production confirmation are pending.
+- Margin Rules now includes its own editable, approval-gated workflow inside the canonical Settings page. Merchants can change default rules and channel-specific overrides, review the exact proposed values, and explicitly activate them. The form states that it does not change live store prices, does not expose automatic price-change mode, and reports validation, loading, success, and failure states. This is local and not deployed.
 
 ## Protected production surfaces
 
@@ -103,3 +104,5 @@ Last reconciled with the repository: 2026-10-01.
 ## Customer-readiness rule
 
 Code presence is not customer readiness. Each feature must separately record code, tests, migration, configuration, deployment, production verification, and release state in its task packet and in `state.yaml`.
+
+On 2026-10-08, the active Naija Restaurant account was given a controlled demonstration dataset for a product walkthrough. It includes six synthetic Foodics orders/menu items with product costs, settlement and receipt evidence, reconciliation findings, recovery work, and a Store Manager task awaiting approval. Existing Zid and Salla connection records were preserved. The workspace is marked as demo mode so the local dashboard can distinguish these records from verified live financial evidence. The related local UI change makes Overview issue and branch-review prompts navigate to the Priority Centre; it is not deployed.

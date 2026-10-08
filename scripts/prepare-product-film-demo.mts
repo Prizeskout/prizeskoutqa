@@ -7,23 +7,24 @@ import { createRecoveryCaseFromFinding } from "../src/server/core/recovery-cases
 const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
 assert(url&&key,"SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
 const db=createClient(url,key,{auth:{persistSession:false}});
-const accountId="00000000-0000-4000-8000-000000005100",licenseeId="00000000-0000-4000-8000-000000005200";
+const accountId=process.env.PRODUCT_FILM_ACCOUNT_ID??"00000000-0000-4000-8000-000000005100",licenseeId=process.env.PRODUCT_FILM_LICENSEE_ID??"00000000-0000-4000-8000-000000005200";
 const now=new Date(),day=process.env.PRODUCT_FILM_BUSINESS_DATE??"2026-09-18",suffix=day.replace(/\D/g,"").slice(2);
+const platform=process.env.PRODUCT_FILM_PLATFORM??"snoonu",profile=process.env.PRODUCT_FILM_PROFILE??"saffron";
 const ctx={apiKeyId:"product-film-demo",userId:accountId,accountId,licenseeId,scopes:["read","write","admin"],plan:"enterprise",isPlatform:false,planMode:"live"} as any;
 
-await db.from("ps_access_codes").upsert({code:"PS-FILM-2026",merchant_id:accountId,email:"demo@prizeskout.qa",store_name:"Saffron Table — Doha"},{onConflict:"code"}).throwOnError();
+if(!process.env.PRODUCT_FILM_ACCOUNT_ID)await db.from("ps_access_codes").upsert({code:"PS-FILM-2026",merchant_id:accountId,email:"demo@prizeskout.qa",store_name:"Saffron Table — Doha"},{onConflict:"code"}).throwOnError();
 await db.from("ps_merchant_channels").upsert({
-  account_id:accountId,licensee_id:licenseeId,merchant_id:"snoonu-film-demo",platform:"snoonu",
+  account_id:accountId,licensee_id:licenseeId,merchant_id:`${platform}-film-demo`,platform,
   scopes:["merchant.read","branches.read","catalogue.read","orders.read","settlements.read"],status:"connected",
   connected_at:now.toISOString(),last_verified_at:now.toISOString(),
-  metadata:{snoonu_merchant_id:"sn_saffron_table_doha",snoonu_branch_ids:["sn_west_bay","sn_lusail"],connection_mode:"controlled_product_film_demo",synthetic:true,label:"Demonstration data"},
+  metadata:{connection_mode:"controlled_product_film_demo",synthetic:true,label:"Controlled demonstration data - not live financial evidence"},
 },{onConflict:"account_id,merchant_id,platform"}).throwOnError();
 
-const {data:priorTerm}=await db.from("ps_marketplace_contract_terms").select("id").eq("account_id",accountId).eq("platform","snoonu").eq("effective_from","2026-01-01").eq("status","approved").maybeSingle().throwOnError();
+const {data:priorTerm}=await db.from("ps_marketplace_contract_terms").select("id").eq("account_id",accountId).eq("platform",platform).eq("effective_from","2026-01-01").eq("status","approved").maybeSingle().throwOnError();
 let contractTermId=priorTerm?.id as string|undefined;
 if(!contractTermId){
   const {data:term}=await db.from("ps_marketplace_contract_terms").insert({
-    account_id:accountId,platform:"snoonu",contract_name:"Snoonu Qatar — controlled demonstration terms",
+    account_id:accountId,platform,contract_name:`${platform.toUpperCase()} controlled demonstration terms`,
     commission_rate_pct:18,vat_on_fees_pct:5,payment_fee_pct:0,fixed_order_fee:1,delivery_contribution:0,
     effective_from:"2026-01-01",status:"approved",commission_base:"eligible_sales",currency:"QAR",
     source_file_name:"controlled-demonstration-agreement.pdf",notes:"Synthetic terms used only for the PrizeSkout product film.",
@@ -32,22 +33,26 @@ if(!contractTermId){
   contractTermId=term!.id;
 }
 
-const menu=[
+const menu=(profile==="naija"?[
+  ["NR-JOLLOF","Smoky Party Jollof Rice",78,28],["NR-SUYA","Beef Suya Platter",92,37],
+  ["NR-EGUSI","Egusi Soup & Pounded Yam",88,34],["NR-MOI","Moi Moi & Plantain",54,19],
+  ["NR-PEPPER","Pepper Soup Bowl",66,25],["NR-ZOBO","Chilled Zobo",24,7],
+]:[
   ["ST-CHICKEN","Charcoal Chicken Platter",100,39],["ST-SHAWARMA","Shawarma Family Box",120,58],
   ["ST-WINGS","Crispy Wings",80,36],["ST-MEZZA","Mezza Sharing Board",150,79],
   ["ST-BREAKFAST","Breakfast Box",90,42],["ST-KIDS","Kids Meal Set",65,31],
-] as const;
+] as const);
 const base=Date.parse(day+"T09:30:00.000Z");
 const orders=menu.map(([sku,name,gross],index)=>({
   external_event_id:"snoonu-film-order-"+suffix+"-"+(index+1),external_order_id:"SN-"+suffix.slice(-6)+"-"+String(index+1).padStart(3,"0"),
-  occurred_at:new Date(base+index*180000).toISOString(),business_date:day,currency:"QAR",channel:"snoonu",status:"delivered",final:true,
-  legal_entity_external_id:"saffron-table-qa",brand_external_id:"saffron-table",branch_external_id:index%2?"sn_lusail":"sn_west_bay",
+  occurred_at:new Date(base+index*180000).toISOString(),business_date:day,currency:"QAR",channel:platform,status:"delivered",final:true,
+  legal_entity_external_id:profile==="naija"?"naija-restaurant-qa":"saffron-table-qa",brand_external_id:profile==="naija"?"naija-restaurant":"saffron-table",branch_external_id:profile==="naija"?(index%2?"naija-lusail":"naija-west-bay"):(index%2?"sn_lusail":"sn_west_bay"),
   revenue_center_external_id:index%2?"lusail-kitchen":"west-bay-kitchen",gross_amount:gross,discount_amount:0,tax_amount:0,
   service_charge_amount:0,delivery_charge_amount:0,refund_amount:0,cancellation_amount:0,net_amount:gross,
   lines:[{external_line_id:"line-"+suffix+"-"+(index+1),sku,name,quantity:1,gross_amount:gross,discount_amount:0,tax_amount:0}],
 }));
 const orderResult=await handleRestaurantOrderBatch(new Request("https://demo.local/v1/commerce/orders",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
-  batch_id:"snoonu-film-orders-"+suffix,source_provider:"snoonu",schema_version:"2026-09-05",delivery_complete:true,declared_record_count:orders.length,orders,
+  batch_id:`${platform}-film-orders-${suffix}`,source_provider:platform,schema_version:"2026-09-05",delivery_complete:true,declared_record_count:orders.length,orders,
 })}),ctx);
 assert([200,202].includes(orderResult.status),JSON.stringify(orderResult.body));
 const orderEvidenceId=(orderResult.body as any).data.evidence_item_id as string;
@@ -63,13 +68,13 @@ const settlements=orders.map((order,index)=>{
 });
 const receipts=settlements.map((row,index)=>({external_event_id:"snoonu-film-receipt-"+suffix+"-"+(index+1),bank_reference:"QNB-"+suffix.slice(-8)+"-"+(index+1),settlement_reference:row.settlement_reference,occurred_at:new Date(Date.parse(row.occurred_at)+3600000).toISOString(),currency:"QAR",received_amount:row.settled_amount}));
 const settlementResult=await handleRestaurantSettlementBatch(new Request("https://demo.local/v1/commerce/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
-  batch_id:"snoonu-film-settlements-"+suffix,source_provider:"snoonu",channel:"snoonu",schema_version:"2026-09-05",delivery_complete:true,settlements,receipts,
+  batch_id:`${platform}-film-settlements-${suffix}`,source_provider:platform,channel:platform,schema_version:"2026-09-05",delivery_complete:true,settlements,receipts,
 })}),ctx);
 assert([200,202].includes(settlementResult.status),JSON.stringify(settlementResult.body));
 const settlementEvidenceId=(settlementResult.body as any).data.evidence_item_id as string;
 
 for(const evidenceItemId of [orderEvidenceId,settlementEvidenceId]) await db.from("ps_evidence_agreement_matches").insert({
-  account_id:accountId,merchant_id:accountId,evidence_item_id:evidenceItemId,contract_term_id:contractTermId,state:"confirmed",platform:"snoonu",
+  account_id:accountId,merchant_id:accountId,evidence_item_id:evidenceItemId,contract_term_id:contractTermId,state:"confirmed",platform,
   evidence_date_start:day,evidence_date_end:day,currency:"QAR",match_score:100,reasons:["Controlled demo evidence explicitly matched to the approved demonstration agreement."],
   blockers:[],candidate_contract_ids:[contractTermId],matcher_version:"product-film-"+suffix,confirmed_by:"PrizeSkout product film",confirmed_at:now.toISOString(),
 }).throwOnError();
@@ -80,7 +85,7 @@ const runId=(reconciliationResult.body as any).data.run_id as string;
 const {data:findings}=await db.from("ps_reconciliation_findings").select("id,recoverability,order_external_id,variance").eq("account_id",accountId).eq("run_id",runId).eq("recoverability","claims_ready").throwOnError();
 // This UUID is reserved for the controlled product-film tenant. Reset only
 // its mutable recovery workspace so repeated rehearsals remain deterministic.
-await db.from("ps_recovery_cases").delete().eq("account_id",accountId).eq("platform","snoonu").throwOnError();
+if(!process.env.PRODUCT_FILM_ACCOUNT_ID)await db.from("ps_recovery_cases").delete().eq("account_id",accountId).eq("platform",platform).throwOnError();
 const filmFindingByOrder=new Map<string,{id:string;recoverability:string;order_external_id:string|null;variance:number|null}>();
 for(const finding of findings??[]) if(finding.order_external_id?.startsWith("SN-")) filmFindingByOrder.set(finding.order_external_id,finding);
 const intendedGapOrders=new Set([orders[1].external_order_id,orders[3].external_order_id]);
@@ -94,11 +99,11 @@ for(const [sku,, ,cost] of menu){
     effective_from:now.toISOString(),evidence_ref:"product-film-cost-"+suffix+"-"+sku,
   }).throwOnError();
 }
-const {data:priorEconomics}=await db.from("ps_economics_versions").select("id").eq("account_id",accountId).eq("merchant_id",accountId).eq("channel","foodics").eq("status","approved").is("effective_to",null).maybeSingle().throwOnError();
+const {data:priorEconomics}=await db.from("ps_economics_versions").select("id").eq("account_id",accountId).eq("merchant_id",accountId).eq("channel",platform).eq("status","approved").is("effective_to",null).maybeSingle().throwOnError();
 let economicsVersionId=priorEconomics?.id as string|undefined;
 if(!economicsVersionId){
   const {data:economics}=await db.from("ps_economics_versions").insert({
-    account_id:accountId,merchant_id:accountId,channel:"foodics",region:"QA",version:1,effective_from:now.toISOString(),
+    account_id:accountId,merchant_id:accountId,channel:platform,region:"QA",version:1,effective_from:now.toISOString(),
     commission_rate:.18,vat_rate:.05,payment_fee_rate:0,fixed_order_fee:1,logistics_subsidy:0,promotion_contribution_rate:0,
     margin_floor_pct:.18,source_contract_id:contractTermId,status:"approved",approved_by:"PrizeSkout product film",approved_at:now.toISOString(),
   }).select("id").single().throwOnError();
@@ -107,7 +112,7 @@ if(!economicsVersionId){
 for(const [sku,name,price,cost] of menu){
   const idempotencyKey="product-film-catalog-"+sku;
   const {data:ingest}=await db.from("ps_ingest_events").upsert({
-    account_id:accountId,licensee_id:licenseeId,event_id:"film-"+sku,idempotency_key:idempotencyKey,region:"QA",source_platform:"foodics",
+    account_id:accountId,licensee_id:licenseeId,event_id:"film-"+sku,idempotency_key:idempotencyKey,region:"QA",source_platform:platform,
     merchant_id:accountId,location_id:"saffron-table-doha",item_id:sku,sku,item_name_en:name,item_name_ar:null,inventory_status:"in_stock",
     base_cost:cost,current_retail_price:price,currency:"QAR",vat_rate:.05,raw_payload:{cost_source:"merchant_upload",target_channel:"snoonu",quantity:40,is_infinite:false},status:"decided",
   },{onConflict:"account_id,idempotency_key"}).select("id").single().throwOnError();
@@ -124,14 +129,14 @@ for(const [sku,name,price,cost] of menu){
   }
 }
 await db.from("ps_store_manager_profiles").upsert({account_id:accountId,manager_name:"PrizeSkout Store Manager",operating_mode:"supervised",daily_brief_enabled:true,daily_brief_hour:8,timezone:"Asia/Qatar",language:"en"},{onConflict:"account_id"}).throwOnError();
-await db.from("ps_store_manager_tasks").delete().eq("account_id",accountId).eq("title","Prepare Snoonu products below the margin floor").throwOnError();
+if(!process.env.PRODUCT_FILM_ACCOUNT_ID)await db.from("ps_store_manager_tasks").delete().eq("account_id",accountId).eq("title","Prepare Snoonu products below the margin floor").throwOnError();
 await db.from("ps_store_manager_tasks").upsert({
   account_id:accountId,idempotency_key:"product-film-margin-review-"+day,source:"assistant",task_type:"pricing_review",
-  title:"Prepare Snoonu products below the margin floor",detail:"Review the controlled demonstration catalogue and prepare protected recommendations for merchant approval.",
-  status:"waiting_approval",risk_level:"financial",priority:"high",connector:"snoonu",target_type:"catalogue",target_id:"saffron-table",
-  assigned_to:"PrizeSkout Store Manager",input:{channel:"snoonu",margin_floor_pct:18,demonstration:true},
-  proposed_changes:[{sku:"ST-WINGS",action:"review_price",reason:"Below the approved contribution margin floor."},{sku:"ST-KIDS",action:"review_price",reason:"Below the approved contribution margin floor."}],
+  title:`Prepare ${platform.toUpperCase()} products below the margin floor`,detail:"Review the controlled demonstration catalogue and prepare protected recommendations for merchant approval.",
+  status:"waiting_approval",risk_level:"financial",priority:"high",connector:platform,target_type:"catalogue",target_id:"demo-catalogue",
+  assigned_to:"PrizeSkout Store Manager",input:{channel:platform,margin_floor_pct:18,demonstration:true},
+  proposed_changes:[{sku:menu[2][0],action:"review_price",reason:"Below the approved contribution margin floor."},{sku:menu[5][0],action:"review_price",reason:"Below the approved contribution margin floor."}],
   evidence:[{reconciliation_run_id:runId},{source:"merchant_confirmed_product_costs"}],approval_required:true,
 },{onConflict:"account_id,idempotency_key"}).throwOnError();
 
-console.log(JSON.stringify({account_id:accountId,access_code:"PS-FILM-2026",store_name:"Saffron Table — Doha",channel:"snoonu",orders_ingested:orders.length,reconciliation_run_id:runId,claims_ready_findings:filmFindings.length,claims_ready_amount:filmFindings.reduce((sum,finding)=>sum+Math.abs(Number(finding.variance??0)),0),product_costs:menu.length,manager_task:"waiting_approval"},null,2));
+console.log(JSON.stringify({account_id:accountId,channel:platform,orders_ingested:orders.length,reconciliation_run_id:runId,claims_ready_findings:filmFindings.length,claims_ready_amount:filmFindings.reduce((sum,finding)=>sum+Math.abs(Number(finding.variance??0)),0),product_costs:menu.length,manager_task:"waiting_approval",synthetic:true},null,2));

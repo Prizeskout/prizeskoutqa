@@ -12,6 +12,8 @@ export type DashboardV2Context = {
   functional_role: "finance" | "operations" | "management" | "accounting" | null;
   role_label: string;
   role_description: string;
+  demo_mode: boolean;
+  demo_label: string | null;
 };
 
 const clean = (value: unknown): string | null => typeof value === "string" && value.trim() ? value.trim() : null;
@@ -26,6 +28,7 @@ export function summarizeDashboardV2Context(input: {
   functionalRole?: unknown;
 }): DashboardV2Context {
   const workspace = input.workspace ?? {};
+  const workspaceMetadata = workspace.metadata && typeof workspace.metadata === "object" ? workspace.metadata as Record<string, unknown> : {};
   const settings = input.settings ?? {};
   const entities = input.entities ?? [];
   const brands = entities.filter((row) => row.entity_type === "brand" && row.active !== false).map((row) => ({ id: String(row.id), name: clean(row.name) ?? "Unnamed brand" }));
@@ -61,5 +64,7 @@ export function summarizeDashboardV2Context(input: {
     functional_role: functionalRole,
     role_label: roleLabel,
     role_description: roleDescription,
+    demo_mode: workspaceMetadata.demo_mode === true,
+    demo_label: clean(workspaceMetadata.demo_label),
   };
 }

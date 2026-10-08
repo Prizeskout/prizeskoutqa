@@ -507,7 +507,7 @@ export function DashboardV2Overview() {
           <Header
             title="Margin leakage"
             subtitle="The most important issues to review"
-            aside={<span className="ps-v2-readonly">All issues →</span>}
+            aside={<a className="ps-v2-action" href="/dashboard/priority-centre">All issues →</a>}
           />
           {summary?.priority_decisions?.items.length ? (
             <ol className="ps-v2-priority-list">
@@ -526,12 +526,12 @@ export function DashboardV2Overview() {
                     <p>{item.next_safe_action}</p>
                     <div className="ps-v2-priority-controls">
                       <span>{item.evidence_strength ?? "strength not recorded"} evidence</span>
-                      <button type="button" disabled>
+                      <a href="/dashboard/priority-centre">
                         View evidence
-                      </button>
-                      <button type="button" disabled>
+                      </a>
+                      <a href="/dashboard/priority-centre">
                         Investigate
-                      </button>
+                      </a>
                     </div>
                     <div className="ps-v2-priority-meta">
                       <span>Evidence {item.finding_id}</span>
@@ -647,12 +647,12 @@ export function DashboardV2Overview() {
             </div>
           </dl>
           <div className="ps-v2-branch-actions">
-            <button type="button" disabled>
+            <a href="/dashboard/priority-centre">
               Investigate branch
-            </button>
-            <button type="button" disabled>
+            </a>
+            <a href="/dashboard/priority-centre">
               Assign
-            </button>
+            </a>
           </div>
         </aside>
       </section>
