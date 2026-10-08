@@ -1987,3 +1987,12 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npx wrangler deployments list --config dist/server/wrangler.json --json` passed read-only and showed no new Cloudflare Worker version after the push; the latest listed version remained `90c91b8b-65f6-41b4-9a2b-228d9ebadba6`.
 - No manual deployment was attempted because deployment authorization is separate from repository delivery.
 - Exact next action: obtain explicit manual-deployment authorization, deploy the already verified artifact, then run the production reference route matrix and fresh authenticated Naija smoke pass.
+
+### Manual deployment and production verification
+
+- The user explicitly authorized manual deployment after confirming an active Cloudflare browser session.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker version `2b045407-5749-4d0b-b3cd-162fed24f99c` to `prizeskout.qa/*` and the `app.prizeskout.qa` custom domain.
+- The production reference verifier used the existing server-marked Naija workspace and access mapping without exposing credentials. It passed the complete platform route matrix at 1440, 390, 375, and 844x390.
+- The production pass confirmed exact key reference values, complete sections, working local interactions/drawers, no browser page errors, no page-level horizontal overflow, and no write API requests.
+- HTTP health checks returned 200 for `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/`.
+- Exact next action: use the controlled demo for the intended audience, rotate shared credentials when the audience changes, and do not treat this as real-merchant or Order Guard production readiness.
