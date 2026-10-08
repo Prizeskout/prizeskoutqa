@@ -165,6 +165,7 @@ try {
       await page.locator(".ps-v2-scope button").getByText("Sterling Group", { exact: true }).waitFor({ state: "attached" });
       await page.getByText("Finance officer", { exact: true }).first().waitFor({ state: "attached" });
       assert.equal(await page.getByText("Demo data", { exact: true }).count(), 0, `${viewport.name}: demo banner must not be customer-visible`);
+      assert.equal(await page.locator(".ps-v2-user strong").count(), 0, `${viewport.name}: sidebar must not expose an email-derived user name`);
       assert.equal(await page.getByText("QAR", { exact: true }).count(), 1);
       assert.equal(await page.locator(".ps-v2-sidebar .ps-v2-nav-item[disabled]").count(), 0, `${viewport.name}: sidebar must not contain dead disabled destinations`);
       for (const [label, href] of sidebarDestinations) {

@@ -1921,3 +1921,11 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - The live session resolved to Naija Restaurant and showed QAR 795,420 contribution, QAR 1.84M gross sales, 43.2% margin, QAR 8,940 settlement variance, QAR 27,450 recoverable margin, 100% confidence, and three priorities.
 - The removed customer-facing demo banner was absent. The server-owned demo marker remains retained.
 - Exact next action: share the dedicated URL/email/password only with the intended demo audience and rotate the password when that audience changes.
+
+## 2026-10-08 - Demo-name sidebar removal
+
+- Removed the email-derived `demo` label from the shared dashboard sidebar identity block.
+- Retained a neutral `PS` avatar and the functional role label.
+- Added a browser assertion that no sidebar user-name element is rendered.
+- Typecheck, the four-viewport Dashboard V2 UI suite, protected Zid/Salla contracts, and production build passed.
+- Exact next action: commit, push, deploy, and verify the production sidebar.

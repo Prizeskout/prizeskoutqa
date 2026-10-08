@@ -23,7 +23,6 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
 import logo from "@/assets/prizeskout-dashboard-logo.png";
 import { useDashboardV2Context } from "./useDashboardV2Context";
 import { setDashboardV2Period, useDashboardV2Period } from "./useDashboardV2Period";
@@ -154,11 +153,6 @@ function Sidebar({
   roleLabel: string;
   functionalRole?: string | null;
 }) {
-  const { user } = useAuth();
-  const name =
-    (user?.user_metadata?.display_name as string | undefined) ||
-    user?.email?.split("@")[0] ||
-    "PrizeSkout merchant";
   const preferredGroup =
     functionalRole === "finance" || functionalRole === "accounting"
       ? "Finance"
@@ -256,10 +250,9 @@ function Sidebar({
           </a>
           <div className="ps-v2-user">
             <span className="ps-v2-avatar" aria-hidden="true">
-              {name.slice(0, 2).toUpperCase()}
+              PS
             </span>
             <span>
-              <strong>{name}</strong>
               <small>{roleLabel}</small>
             </span>
           </div>
