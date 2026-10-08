@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/dashboard/v2/summary")({
             .select("id,run_id,evidence_item_id,contract_term_id,conclusion,recoverability,order_external_id,settlement_reference,currency,expected_amount,reported_amount,variance,evidence_strength,explanation,blockers,created_at")
             .eq("account_id", merchantId).order("created_at", { ascending: false }).limit(100),
           db.from("ps_recovery_cases")
-            .select("id,reconciliation_finding_id,status,claims_ready_amount,exception_amount,currency,created_at")
+            .select("id,reconciliation_finding_id,status,claims_ready_amount,exception_amount,created_at")
             .eq("account_id", merchantId).order("created_at", { ascending: false }).limit(100),
           getDashboardStats(merchantId, { days }).then((value) => ({ data: value, error: null })).catch((error: unknown) => ({ data: null, error })),
           getDashboardStats(merchantId, { days, endDate: previousEnd }).then((value) => ({ data: value, error: null })).catch((error: unknown) => ({ data: null, error })),
