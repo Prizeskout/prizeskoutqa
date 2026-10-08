@@ -1,7 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { DashboardV2PriorityCentre } from "@/components/dashboard-v2/DashboardV2PriorityCentre";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard/v2_/priority-centre")({
-  head: () => ({ meta: [{ title: "Priority Centre | PrizeSkout" }] }),
-  component: DashboardV2PriorityCentre,
+  beforeLoad: () => { throw redirect({ to: "/dashboard/priority-centre", replace: true }); },
 });

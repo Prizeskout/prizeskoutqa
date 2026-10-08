@@ -46,8 +46,12 @@ import { Route as EmbeddedSallaRouteImport } from './routes/embedded/salla'
 import { Route as EmbedWidgetRouteImport } from './routes/embed/widget'
 import { Route as DashboardV2RouteImport } from './routes/dashboard.v2'
 import { Route as DashboardRevenueHubRouteImport } from './routes/dashboard.revenue-hub'
+import { Route as DashboardPromotionsRouteImport } from './routes/dashboard.promotions'
+import { Route as DashboardPriorityCentreRouteImport } from './routes/dashboard.priority-centre'
 import { Route as DashboardPricingRouteImport } from './routes/dashboard.pricing'
+import { Route as DashboardOrderAutomationRouteImport } from './routes/dashboard.order-automation'
 import { Route as DashboardEvidenceRouteImport } from './routes/dashboard.evidence'
+import { Route as DashboardModuleRouteImport } from './routes/dashboard.$module'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiRestoreRouteImport } from './routes/api/restore'
 import { Route as ApiRegisterCodeRouteImport } from './routes/api/register-code'
@@ -60,6 +64,7 @@ import { Route as AdminCallbackRouteImport } from './routes/admin.callback'
 import { Route as DashboardV2PromotionsRouteImport } from './routes/dashboard.v2_.promotions'
 import { Route as DashboardV2PriorityCentreRouteImport } from './routes/dashboard.v2_.priority-centre'
 import { Route as DashboardV2OrderAutomationRouteImport } from './routes/dashboard.v2_.order-automation'
+import { Route as DashboardV2ModuleRouteImport } from './routes/dashboard.v2_.$module'
 import { Route as DashboardScenariosSlugRouteImport } from './routes/dashboard.scenarios.$slug'
 import { Route as ApiWebhooksPlatformRouteImport } from './routes/api/webhooks/$platform'
 import { Route as ApiSettingsLocaleRouteImport } from './routes/api/settings/locale'
@@ -308,14 +313,35 @@ const DashboardRevenueHubRoute = DashboardRevenueHubRouteImport.update({
   path: '/revenue-hub',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPromotionsRoute = DashboardPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPriorityCentreRoute = DashboardPriorityCentreRouteImport.update({
+  id: '/priority-centre',
+  path: '/priority-centre',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardPricingRoute = DashboardPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardOrderAutomationRoute =
+  DashboardOrderAutomationRouteImport.update({
+    id: '/order-automation',
+    path: '/order-automation',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardEvidenceRoute = DashboardEvidenceRouteImport.update({
   id: '/evidence',
   path: '/evidence',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardModuleRoute = DashboardModuleRouteImport.update({
+  id: '/$module',
+  path: '/$module',
   getParentRoute: () => DashboardRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -380,6 +406,11 @@ const DashboardV2OrderAutomationRoute =
     path: '/v2/order-automation',
     getParentRoute: () => DashboardRoute,
   } as any)
+const DashboardV2ModuleRoute = DashboardV2ModuleRouteImport.update({
+  id: '/v2_/$module',
+  path: '/v2/$module',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardScenariosSlugRoute = DashboardScenariosSlugRouteImport.update({
   id: '/scenarios/$slug',
   path: '/scenarios/$slug',
@@ -745,8 +776,12 @@ export interface FileRoutesByFullPath {
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/dashboard/$module': typeof DashboardModuleRoute
   '/dashboard/evidence': typeof DashboardEvidenceRoute
+  '/dashboard/order-automation': typeof DashboardOrderAutomationRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
+  '/dashboard/priority-centre': typeof DashboardPriorityCentreRoute
+  '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/dashboard/v2': typeof DashboardV2Route
   '/embed/widget': typeof EmbedWidgetRoute
@@ -789,6 +824,7 @@ export interface FileRoutesByFullPath {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/dashboard/v2/$module': typeof DashboardV2ModuleRoute
   '/dashboard/v2/order-automation': typeof DashboardV2OrderAutomationRoute
   '/dashboard/v2/priority-centre': typeof DashboardV2PriorityCentreRoute
   '/dashboard/v2/promotions': typeof DashboardV2PromotionsRoute
@@ -857,8 +893,12 @@ export interface FileRoutesByTo {
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/dashboard/$module': typeof DashboardModuleRoute
   '/dashboard/evidence': typeof DashboardEvidenceRoute
+  '/dashboard/order-automation': typeof DashboardOrderAutomationRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
+  '/dashboard/priority-centre': typeof DashboardPriorityCentreRoute
+  '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/dashboard/v2': typeof DashboardV2Route
   '/embed/widget': typeof EmbedWidgetRoute
@@ -901,6 +941,7 @@ export interface FileRoutesByTo {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/dashboard/v2/$module': typeof DashboardV2ModuleRoute
   '/dashboard/v2/order-automation': typeof DashboardV2OrderAutomationRoute
   '/dashboard/v2/priority-centre': typeof DashboardV2PriorityCentreRoute
   '/dashboard/v2/promotions': typeof DashboardV2PromotionsRoute
@@ -973,8 +1014,12 @@ export interface FileRoutesById {
   '/api/register-code': typeof ApiRegisterCodeRoute
   '/api/restore': typeof ApiRestoreRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/dashboard/$module': typeof DashboardModuleRoute
   '/dashboard/evidence': typeof DashboardEvidenceRoute
+  '/dashboard/order-automation': typeof DashboardOrderAutomationRoute
   '/dashboard/pricing': typeof DashboardPricingRoute
+  '/dashboard/priority-centre': typeof DashboardPriorityCentreRoute
+  '/dashboard/promotions': typeof DashboardPromotionsRoute
   '/dashboard/revenue-hub': typeof DashboardRevenueHubRoute
   '/dashboard/v2': typeof DashboardV2Route
   '/embed/widget': typeof EmbedWidgetRoute
@@ -1017,6 +1062,7 @@ export interface FileRoutesById {
   '/api/settings/locale': typeof ApiSettingsLocaleRoute
   '/api/webhooks/$platform': typeof ApiWebhooksPlatformRoute
   '/dashboard/scenarios/$slug': typeof DashboardScenariosSlugRoute
+  '/dashboard/v2_/$module': typeof DashboardV2ModuleRoute
   '/dashboard/v2_/order-automation': typeof DashboardV2OrderAutomationRoute
   '/dashboard/v2_/priority-centre': typeof DashboardV2PriorityCentreRoute
   '/dashboard/v2_/promotions': typeof DashboardV2PromotionsRoute
@@ -1090,8 +1136,12 @@ export interface FileRouteTypes {
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
+    | '/dashboard/$module'
     | '/dashboard/evidence'
+    | '/dashboard/order-automation'
     | '/dashboard/pricing'
+    | '/dashboard/priority-centre'
+    | '/dashboard/promotions'
     | '/dashboard/revenue-hub'
     | '/dashboard/v2'
     | '/embed/widget'
@@ -1134,6 +1184,7 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/dashboard/v2/$module'
     | '/dashboard/v2/order-automation'
     | '/dashboard/v2/priority-centre'
     | '/dashboard/v2/promotions'
@@ -1202,8 +1253,12 @@ export interface FileRouteTypes {
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
+    | '/dashboard/$module'
     | '/dashboard/evidence'
+    | '/dashboard/order-automation'
     | '/dashboard/pricing'
+    | '/dashboard/priority-centre'
+    | '/dashboard/promotions'
     | '/dashboard/revenue-hub'
     | '/dashboard/v2'
     | '/embed/widget'
@@ -1246,6 +1301,7 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/dashboard/v2/$module'
     | '/dashboard/v2/order-automation'
     | '/dashboard/v2/priority-centre'
     | '/dashboard/v2/promotions'
@@ -1317,8 +1373,12 @@ export interface FileRouteTypes {
     | '/api/register-code'
     | '/api/restore'
     | '/auth/callback'
+    | '/dashboard/$module'
     | '/dashboard/evidence'
+    | '/dashboard/order-automation'
     | '/dashboard/pricing'
+    | '/dashboard/priority-centre'
+    | '/dashboard/promotions'
     | '/dashboard/revenue-hub'
     | '/dashboard/v2'
     | '/embed/widget'
@@ -1361,6 +1421,7 @@ export interface FileRouteTypes {
     | '/api/settings/locale'
     | '/api/webhooks/$platform'
     | '/dashboard/scenarios/$slug'
+    | '/dashboard/v2_/$module'
     | '/dashboard/v2_/order-automation'
     | '/dashboard/v2_/priority-centre'
     | '/dashboard/v2_/promotions'
@@ -1758,6 +1819,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRevenueHubRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/promotions': {
+      id: '/dashboard/promotions'
+      path: '/promotions'
+      fullPath: '/dashboard/promotions'
+      preLoaderRoute: typeof DashboardPromotionsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/priority-centre': {
+      id: '/dashboard/priority-centre'
+      path: '/priority-centre'
+      fullPath: '/dashboard/priority-centre'
+      preLoaderRoute: typeof DashboardPriorityCentreRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/pricing': {
       id: '/dashboard/pricing'
       path: '/pricing'
@@ -1765,11 +1840,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPricingRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/order-automation': {
+      id: '/dashboard/order-automation'
+      path: '/order-automation'
+      fullPath: '/dashboard/order-automation'
+      preLoaderRoute: typeof DashboardOrderAutomationRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/evidence': {
       id: '/dashboard/evidence'
       path: '/evidence'
       fullPath: '/dashboard/evidence'
       preLoaderRoute: typeof DashboardEvidenceRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/$module': {
+      id: '/dashboard/$module'
+      path: '/$module'
+      fullPath: '/dashboard/$module'
+      preLoaderRoute: typeof DashboardModuleRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/auth/callback': {
@@ -1854,6 +1943,13 @@ declare module '@tanstack/react-router' {
       path: '/v2/order-automation'
       fullPath: '/dashboard/v2/order-automation'
       preLoaderRoute: typeof DashboardV2OrderAutomationRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/v2_/$module': {
+      id: '/dashboard/v2_/$module'
+      path: '/v2/$module'
+      fullPath: '/dashboard/v2/$module'
+      preLoaderRoute: typeof DashboardV2ModuleRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/scenarios/$slug': {
@@ -2314,24 +2410,34 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface DashboardRouteChildren {
+  DashboardModuleRoute: typeof DashboardModuleRoute
   DashboardEvidenceRoute: typeof DashboardEvidenceRoute
+  DashboardOrderAutomationRoute: typeof DashboardOrderAutomationRoute
   DashboardPricingRoute: typeof DashboardPricingRoute
+  DashboardPriorityCentreRoute: typeof DashboardPriorityCentreRoute
+  DashboardPromotionsRoute: typeof DashboardPromotionsRoute
   DashboardRevenueHubRoute: typeof DashboardRevenueHubRoute
   DashboardV2Route: typeof DashboardV2Route
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardScenariosSlugRoute: typeof DashboardScenariosSlugRoute
+  DashboardV2ModuleRoute: typeof DashboardV2ModuleRoute
   DashboardV2OrderAutomationRoute: typeof DashboardV2OrderAutomationRoute
   DashboardV2PriorityCentreRoute: typeof DashboardV2PriorityCentreRoute
   DashboardV2PromotionsRoute: typeof DashboardV2PromotionsRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardModuleRoute: DashboardModuleRoute,
   DashboardEvidenceRoute: DashboardEvidenceRoute,
+  DashboardOrderAutomationRoute: DashboardOrderAutomationRoute,
   DashboardPricingRoute: DashboardPricingRoute,
+  DashboardPriorityCentreRoute: DashboardPriorityCentreRoute,
+  DashboardPromotionsRoute: DashboardPromotionsRoute,
   DashboardRevenueHubRoute: DashboardRevenueHubRoute,
   DashboardV2Route: DashboardV2Route,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardScenariosSlugRoute: DashboardScenariosSlugRoute,
+  DashboardV2ModuleRoute: DashboardV2ModuleRoute,
   DashboardV2OrderAutomationRoute: DashboardV2OrderAutomationRoute,
   DashboardV2PriorityCentreRoute: DashboardV2PriorityCentreRoute,
   DashboardV2PromotionsRoute: DashboardV2PromotionsRoute,

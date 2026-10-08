@@ -1,7 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { DashboardV2Promotions } from "@/components/dashboard-v2/DashboardV2Promotions";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard/v2_/promotions")({
-  head: () => ({ meta: [{ title: "Promotions & Discounts | PrizeSkout" }] }),
-  component: DashboardV2Promotions,
+  beforeLoad: () => { throw redirect({ to: "/dashboard/promotions", replace: true }); },
 });

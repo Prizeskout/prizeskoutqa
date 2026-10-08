@@ -21,7 +21,7 @@ async function waitForServer() {
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(`${origin}/dashboard/v2`);
+      const response = await fetch(`${origin}/dashboard`);
       if (response.ok) return;
     } catch {
       // Vite may still be starting.
@@ -108,25 +108,27 @@ const modulesFixture = {
 };
 const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [] } };
 const sidebarDestinations = [
-  ["Overview", "/dashboard/v2"],
-  ["Priority Centre", "/dashboard/v2/priority-centre"],
-  ["AI Copilot", "/dashboard/revenue-hub?workspace=rules&view=copilot"],
-  ["Profit intelligence", "/dashboard/revenue-hub?workspace=analytics&view=margin"],
-  ["Margin leakage", "/dashboard/v2#margin-leakage"],
-  ["Menu intelligence", "/dashboard/revenue-hub?workspace=catalog&view=catalog"],
-  ["Order Automation", "/dashboard/v2/order-automation"],
-  ["Orders", "/dashboard/v2/order-automation"],
-  ["Branches", "/dashboard/v2#branch-performance"],
-  ["Promotions & Discounts", "/dashboard/v2/promotions"],
-  ["Channels", "/dashboard/revenue-hub?workspace=vault&view=integrations"],
-  ["Settlements", "/dashboard/revenue-hub?workspace=analytics&view=recovery"],
-  ["Reports", "/dashboard/revenue-hub?workspace=history&view=evidence"],
-  ["Integrations", "/dashboard/revenue-hub?workspace=vault&view=integrations"],
-  ["API / Developers", "/docs"],
-  ["Settings", "/dashboard/revenue-hub?workspace=settings&view=settings"],
-  ["Store Access", "/access"],
-  ["Audit Log", "/dashboard/revenue-hub?workspace=history&view=evidence"],
+  ["Overview", "/dashboard"],
+  ["Priority Centre", "/dashboard/priority-centre"],
+  ["AI Copilot", "/dashboard/ai-copilot"],
+  ["Profit intelligence", "/dashboard/profit-intelligence"],
+  ["Margin leakage", "/dashboard#margin-leakage"],
+  ["Menu intelligence", "/dashboard/menu-intelligence"],
+  ["Order Automation", "/dashboard/order-automation"],
+  ["Orders", "/dashboard/order-automation"],
+  ["Branches", "/dashboard#branch-performance"],
+  ["Promotions & Discounts", "/dashboard/promotions"],
+  ["Channels", "/dashboard/channels"],
+  ["Settlements", "/dashboard/settlements"],
+  ["Reports", "/dashboard/reports"],
+  ["Integrations", "/dashboard/integrations"],
+  ["API / Developers", "/dashboard/api-developers"],
+  ["Settings", "/dashboard/settings"],
+  ["Store Access", "/dashboard/store-access"],
+  ["Audit Log", "/dashboard/audit-log"],
 ] as const;
+
+const workspaceDestinations = sidebarDestinations.filter(([, href]) => href.startsWith("/dashboard/") && !["/dashboard/priority-centre", "/dashboard/order-automation", "/dashboard/promotions"].includes(href));
 
 type PriorityFixture = typeof fixture;
 
@@ -161,7 +163,7 @@ try {
         assert.equal(await page.getByRole("button", { name: "30D", exact: true }).getAttribute("aria-pressed"), "true");
       }
 
-      await page.goto(`${origin}/dashboard/v2`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+      await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByText("All branches →", { exact: true }).waitFor({ timeout: 120_000 });
       const dimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, scrollHeight: document.documentElement.scrollHeight }));
       assert.equal(dimensions.scrollWidth, dimensions.clientWidth, `${viewport.name}: page-level horizontal overflow`);
@@ -178,7 +180,7 @@ try {
         assert.ok(table.scrollWidth > table.clientWidth, "phone: branch table should scroll inside its card");
       }
       const priorityLink = page.getByRole("link", { name: "Priority centre" });
-      assert.equal(await priorityLink.getAttribute("href"), "/dashboard/v2/priority-centre");
+      assert.equal(await priorityLink.getAttribute("href"), "/dashboard/priority-centre");
       if (viewport.width > 1024) {
         await page.getByRole("button", { name: /Confidence/ }).click();
         await page.getByRole("region", { name: "Evidence confidence" }).waitFor();
@@ -193,9 +195,9 @@ try {
       assert.equal(await page.getByRole("dialog", { name: "Priority Centre" }).count(), 0);
       await page.screenshot({ path: join(screenshots, `dashboard-v2-overview-${viewport.name}.png`), fullPage: true });
 
-      await page.goto(`${origin}/dashboard/v2/order-automation`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+      await page.goto(`${origin}/dashboard/order-automation`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByRole("heading", { name: /Automation performance is not calculated/ }).waitFor({ timeout: 120_000 });
-      assert.equal(page.url(), `${origin}/dashboard/v2/order-automation`);
+      assert.equal(page.url(), `${origin}/dashboard/order-automation`);
       await page.getByText("#S-30100", { exact: true }).waitFor();
       assert.equal(await page.getByText(/#K-49174/).count(), 2);
       assert.equal(await page.getByRole("button", { name: "New rule", exact: true }).isDisabled(), true);
@@ -206,9 +208,9 @@ try {
       if (viewport.width === 1440) assert.ok(automationDimensions.scrollHeight >= 2450 && automationDimensions.scrollHeight <= 2750, `desktop: full-density Order Automation height ${automationDimensions.scrollHeight}px drifted from the 2663px reference`);
       await page.screenshot({ path: join(screenshots, `dashboard-v2-order-automation-${viewport.name}.png`), fullPage: true });
 
-      await page.goto(`${origin}/dashboard/v2/promotions`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+      await page.goto(`${origin}/dashboard/promotions`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByRole("heading", { name: /Campaign contribution is not calculated/ }).waitFor({ timeout: 120_000 });
-      assert.equal(page.url(), `${origin}/dashboard/v2/promotions`);
+      assert.equal(page.url(), `${origin}/dashboard/promotions`);
       await page.getByRole("rowheader", { name: /Weekend 25% Off/ }).waitFor();
       assert.equal(await page.getByRole("rowheader", { name: /Late night 20%/ }).count(), 1);
       assert.equal(await page.getByRole("button", { name: "Request approval" }).isDisabled(), true);
@@ -219,9 +221,9 @@ try {
       if (viewport.width === 1440) assert.ok(promotionsDimensions.scrollHeight >= 2500 && promotionsDimensions.scrollHeight <= 2800, `desktop: full-density Promotions height ${promotionsDimensions.scrollHeight}px drifted from the 2649px reference`);
       await page.screenshot({ path: join(screenshots, `dashboard-v2-promotions-${viewport.name}.png`), fullPage: true });
 
-      await page.goto(`${origin}/dashboard/v2/priority-centre`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+      await page.goto(`${origin}/dashboard/priority-centre`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByRole("heading", { name: "Resolve what the evidence supports next." }).waitFor({ timeout: 120_000 });
-      assert.equal(page.url(), `${origin}/dashboard/v2/priority-centre`);
+      assert.equal(page.url(), `${origin}/dashboard/priority-centre`);
       await page.getByText("finding-batch", { exact: true }).waitFor({ timeout: 120_000 });
       await page.locator(".ps-v2-confidence b").getByText("100%", { exact: true }).waitFor({ state: "attached" });
       assert.equal(await page.locator(".ps-v2-priority-link b").getByText("4", { exact: true }).count(), 1);
@@ -233,6 +235,22 @@ try {
       assert.equal(await page.getByRole("button", { name: /approve|send|dispute/i }).count(), 0, `${viewport.name}: protected action control appeared`);
       const priorityDimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
       assert.equal(priorityDimensions.scrollWidth, priorityDimensions.clientWidth, `${viewport.name}: Priority Centre page-level horizontal overflow`);
+
+      if (viewport.width === 1440) {
+        for (const [label, href] of workspaceDestinations) {
+          await page.goto(`${origin}${href}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+          await page.getByText("No legacy fallback", { exact: true }).waitFor({ timeout: 120_000 });
+          assert.equal(page.url(), `${origin}${href}`, `${label}: destination changed unexpectedly`);
+          assert.equal(await page.locator(".ps-v2-sidebar").count(), 1, `${label}: Dashboard V2 shell is missing`);
+          assert.equal(await page.locator(".ps-db").count(), 0, `${label}: legacy dashboard shell was rendered`);
+          assert.equal(await page.locator(`.ps-v2-sidebar a.ps-v2-nav-item[href="${href}"][aria-current="page"]`).count(), 1, `${label}: sidebar destination is not active`);
+          const workspaceDimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+          assert.equal(workspaceDimensions.scrollWidth, workspaceDimensions.clientWidth, `${label}: page-level horizontal overflow`);
+        }
+        await page.goto(`${origin}/dashboard/v2/promotions`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+        await page.getByRole("heading", { name: /Campaign contribution is not calculated/ }).waitFor({ timeout: 120_000 });
+        assert.equal(page.url(), `${origin}/dashboard/promotions`, "legacy V2 URL must redirect to the canonical dashboard route");
+      }
       assert.deepEqual(errors, [], `${viewport.name}: unexpected browser errors`);
       await page.screenshot({ path: join(screenshots, `dashboard-v2-priority-${viewport.name}.png`), fullPage: true });
       await page.close();
@@ -248,7 +266,7 @@ try {
       await page.route("**/api/dashboard/v2/summary?days=*", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, summary: scenarioFixture }) }));
       await page.route("**/api/dashboard/v2/context", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(contextFixture) }));
       await page.addInitScript(() => { localStorage.setItem("ps_merchant_id", "acct"); localStorage.setItem("ps_access_code", "fixture"); });
-      await page.goto(`${origin}/dashboard/v2/priority-centre`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+      await page.goto(`${origin}/dashboard/priority-centre`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByText(scenario.expected, { exact: true }).waitFor({ timeout: 120_000 });
       assert.equal(await page.getByRole("button", { name: /approve|send|dispute/i }).count(), 0);
       await page.close();

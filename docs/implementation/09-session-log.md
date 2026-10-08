@@ -1499,3 +1499,62 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - The first push was rejected with HTTP 403 because GitHub was using the `Web3freak` identity, which lacks repository access.
 - Temporarily switched to the already-configured `Prizeskout` GitHub identity, pushed `main` from `8f7357f` to `d80a01d`, and restored `Web3freak` as the active identity.
 - Unrelated untracked artifacts remained excluded. Commit/push does not constitute Cloudflare deployment or logged-in production verification.
+
+## 2026-10-07 - Dashboard V2 legacy-handoff correction
+
+- Inspected the logged-in production dashboard before changing code, as requested. From `/dashboard/v2/promotions`, clicking Profit Intelligence opened `/dashboard/revenue-hub?workspace=analytics&view=margin` and rendered the legacy `.ps-db` shell; AI Copilot did the same through the rules workspace. Production DOM inspection showed the same legacy-target pattern for Menu Intelligence, Channels, Settlements, Reports, Integrations, Settings, and Audit Log.
+- Corrected the product boundary locally: Copilot, Profit Intelligence, Menu Intelligence, Channels, Settlements, Reports, Integrations, API/Developers, Settings, Store Access, and Audit Log now resolve to native `/dashboard/v2/...` routes inside the shared Dashboard V2 shell.
+- Added a truthful read-only workspace surface for those destinations. It exposes only authenticated merchant context and the existing server-owned summary contract, explicitly labels the evidence boundary, and enables no protected action or unsupported module calculation.
+- Extended the browser verifier to open every corrected destination, require the V2 sidebar and active item, reject the legacy `.ps-db` shell, and check horizontal overflow.
+- No production deployment, connector call, migration, merchant mutation, external action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Initial `npm run typecheck` - failed because the new file route had not yet been registered in `routeTree.gen.ts`.
+- `npm run build` - passed and generated the dynamic Dashboard V2 route; only the existing mixed-import and chunk-size warnings were emitted.
+- Final `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape, including all corrected workspace routes. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-LgMNGW`.
+- Final `npm run verify-dashboard-v2-modules` - passed.
+- Final `npm run verify-dashboard-v2-contract` - passed.
+- Final `npm run verify-zid-contract` - passed.
+- Final `npm run verify-salla-contract` - passed.
+
+### Changed files and exact next action
+
+- Shared navigation: `src/components/dashboard-v2/DashboardV2Shell.tsx`.
+- Native read-only workspace surface and dynamic route: `src/components/dashboard-v2/DashboardV2Workspace.tsx`, `src/routes/dashboard.v2_.$module.tsx`, and `src/routeTree.gen.ts`.
+- Regression coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run module/summary contracts, protected Zid/Salla contracts, diff checks, and final continuity verification. Commit and push only with explicit user authorization; do not infer deployment authorization.
+
+## 2026-10-07 - Canonical dashboard URL correction
+
+- Applied `ui-ux-pro-max` deep-link guidance: the URL now reflects the product destination without exposing the internal V2 implementation label.
+- Replaced customer-facing `/dashboard/v2...` navigation with canonical `/dashboard` and `/dashboard/...` routes across Overview, native modules, read-only workspaces, anchors, footer navigation, and the Priority Centre drawer.
+- Preserved old `/dashboard/v2...` URLs as compatibility redirects so existing bookmarks do not fail.
+- Left `/api/dashboard/v2/...` contracts unchanged because they are internal, not customer-visible, and their versioning protects compatibility.
+- Replaced the obsolete `/dashboard` redirect/legacy overview route with the governed new Overview. No connector, financial calculation, mutation, migration, protected action, deployment, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- `npm run build` - passed with existing mixed-import and chunk-size warnings.
+- `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape; it also proved `/dashboard/v2/promotions` redirects to `/dashboard/promotions`. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-tLy3JE`.
+- Final `npm run verify-dashboard-v2-modules` - passed.
+- Final `npm run verify-dashboard-v2-contract` - passed.
+- Final protected Zid and Salla contract checks - passed.
+- `git diff --check` - passed with line-ending notices only.
+- Final `npm run verify-continuity` - passed.
+
+### Changed files and exact next action
+
+- Canonical route entry points and compatibility redirects: `src/routes/dashboard.index.tsx`, `src/routes/dashboard.$module.tsx`, `src/routes/dashboard.priority-centre.tsx`, `src/routes/dashboard.order-automation.tsx`, `src/routes/dashboard.promotions.tsx`, and the existing `dashboard.v2...` route files.
+- Navigation and regression assertions: `src/components/dashboard-v2/DashboardV2Shell.tsx`, `scripts/verify-dashboard-v2-ui.mts`, and generated route registration.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run final module/summary and protected integration contracts, diff checks, and continuity verification. Commit and push only with explicit user authorization; deployment still requires separate authorization.

@@ -32,7 +32,7 @@ import "./dashboard-v2.css";
 type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
-  to?: "/dashboard/v2" | "/dashboard/v2/priority-centre" | "/dashboard/v2/order-automation" | "/dashboard/v2/promotions";
+  to?: string;
   href?: string;
   badge?: string;
 };
@@ -40,51 +40,51 @@ type NavItem = {
 const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
   {
     items: [
-      { label: "Overview", icon: LayoutDashboard, to: "/dashboard/v2" },
-      { label: "Priority Centre", icon: CircleAlert, to: "/dashboard/v2/priority-centre", badge: "0" },
-      { label: "AI Copilot", icon: Bot, href: "/dashboard/revenue-hub?workspace=rules&view=copilot", badge: "⌘K" },
+      { label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
+      { label: "Priority Centre", icon: CircleAlert, to: "/dashboard/priority-centre", badge: "0" },
+      { label: "AI Copilot", icon: Bot, to: "/dashboard/ai-copilot", badge: "⌘K" },
     ],
   },
   {
     label: "Intelligence",
     items: [
-      { label: "Profit intelligence", icon: ChartNoAxesCombined, href: "/dashboard/revenue-hub?workspace=analytics&view=margin" },
-      { label: "Margin leakage", icon: ShieldCheck, href: "/dashboard/v2#margin-leakage" },
-      { label: "Menu intelligence", icon: PackageCheck, href: "/dashboard/revenue-hub?workspace=catalog&view=catalog" },
+      { label: "Profit intelligence", icon: ChartNoAxesCombined, to: "/dashboard/profit-intelligence" },
+      { label: "Margin leakage", icon: ShieldCheck, href: "/dashboard#margin-leakage" },
+      { label: "Menu intelligence", icon: PackageCheck, to: "/dashboard/menu-intelligence" },
     ],
   },
   {
     label: "Operations",
     items: [
-      { label: "Order Automation", icon: Store, to: "/dashboard/v2/order-automation" },
-      { label: "Orders", icon: ListChecks, href: "/dashboard/v2/order-automation" },
-      { label: "Branches", icon: Building2, href: "/dashboard/v2#branch-performance" },
+      { label: "Order Automation", icon: Store, to: "/dashboard/order-automation" },
+      { label: "Orders", icon: ListChecks, href: "/dashboard/order-automation" },
+      { label: "Branches", icon: Building2, href: "/dashboard#branch-performance" },
     ],
   },
   {
     label: "Commercial",
     items: [
-      { label: "Promotions & Discounts", icon: BadgePercent, to: "/dashboard/v2/promotions" },
-      { label: "Channels", icon: Sparkles, href: "/dashboard/revenue-hub?workspace=vault&view=integrations" },
+      { label: "Promotions & Discounts", icon: BadgePercent, to: "/dashboard/promotions" },
+      { label: "Channels", icon: Sparkles, to: "/dashboard/channels" },
     ],
   },
   {
     label: "Finance",
     items: [
-      { label: "Settlements", icon: ReceiptText, href: "/dashboard/revenue-hub?workspace=analytics&view=recovery" },
-      { label: "Reports", icon: FileCheck2, href: "/dashboard/revenue-hub?workspace=history&view=evidence" },
+      { label: "Settlements", icon: ReceiptText, to: "/dashboard/settlements" },
+      { label: "Reports", icon: FileCheck2, to: "/dashboard/reports" },
     ],
   },
   {
     label: "Infrastructure",
     items: [
-      { label: "Integrations", icon: PlugZap, href: "/dashboard/revenue-hub?workspace=vault&view=integrations" },
-      { label: "API / Developers", icon: Code2, href: "/docs" },
+      { label: "Integrations", icon: PlugZap, to: "/dashboard/integrations" },
+      { label: "API / Developers", icon: Code2, to: "/dashboard/api-developers" },
     ],
   },
 ];
 
-type DashboardV2Page = "overview" | "priority" | "automation" | "promotions";
+export type DashboardV2Page = "overview" | "priority" | "automation" | "promotions" | "ai-copilot" | "profit-intelligence" | "menu-intelligence" | "channels" | "settlements" | "reports" | "integrations" | "api-developers" | "settings" | "store-access" | "audit-log";
 
 export type DashboardV2ChromeData = {
   confidenceLabel: string;
@@ -93,11 +93,22 @@ export type DashboardV2ChromeData = {
   priorityItems: Array<{ id: string; title: string; detail: string; amount?: string | null; state: string }>;
 };
 
-const PAGE_PATHS: Record<DashboardV2Page, NonNullable<NavItem["to"]>> = {
-  overview: "/dashboard/v2",
-  priority: "/dashboard/v2/priority-centre",
-  automation: "/dashboard/v2/order-automation",
-  promotions: "/dashboard/v2/promotions",
+const PAGE_PATHS: Record<DashboardV2Page, string> = {
+  overview: "/dashboard",
+  priority: "/dashboard/priority-centre",
+  automation: "/dashboard/order-automation",
+  promotions: "/dashboard/promotions",
+  "ai-copilot": "/dashboard/ai-copilot",
+  "profit-intelligence": "/dashboard/profit-intelligence",
+  "menu-intelligence": "/dashboard/menu-intelligence",
+  channels: "/dashboard/channels",
+  settlements: "/dashboard/settlements",
+  reports: "/dashboard/reports",
+  integrations: "/dashboard/integrations",
+  "api-developers": "/dashboard/api-developers",
+  settings: "/dashboard/settings",
+  "store-access": "/dashboard/store-access",
+  "audit-log": "/dashboard/audit-log",
 };
 
 function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => void; activePage: DashboardV2Page }) {
@@ -131,9 +142,9 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
                 const Icon = item.icon;
                 const active = item.to === PAGE_PATHS[activePage];
                 return item.to ? (
-                  <Link
+                  <a
                     key={item.label}
-                    to={item.to}
+                    href={item.to}
                     className="ps-v2-nav-item"
                     data-active={active}
                     aria-current={active ? "page" : undefined}
@@ -142,7 +153,7 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
                     <Icon size={16} aria-hidden="true" />
                     <span>{item.label}</span>
                     {item.badge && <small>{item.badge}</small>}
-                  </Link>
+                  </a>
                 ) : (
                   <a key={item.label} href={item.href} className="ps-v2-nav-item" onClick={onClose}>
                     <Icon size={16} aria-hidden="true" />
@@ -155,9 +166,9 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
           ))}
         </nav>
         <div className="ps-v2-sidebar-footer">
-          <a className="ps-v2-nav-item" href="/dashboard/revenue-hub?workspace=settings&view=settings"><Settings size={16} aria-hidden="true" /><span>Settings</span></a>
-          <a className="ps-v2-nav-item" href="/access"><Users size={16} aria-hidden="true" /><span>Store Access</span></a>
-          <a className="ps-v2-nav-item" href="/dashboard/revenue-hub?workspace=history&view=evidence"><History size={16} aria-hidden="true" /><span>Audit Log</span></a>
+          <a className="ps-v2-nav-item" data-active={activePage === "settings"} aria-current={activePage === "settings" ? "page" : undefined} href="/dashboard/settings"><Settings size={16} aria-hidden="true" /><span>Settings</span></a>
+          <a className="ps-v2-nav-item" data-active={activePage === "store-access"} aria-current={activePage === "store-access" ? "page" : undefined} href="/dashboard/store-access"><Users size={16} aria-hidden="true" /><span>Store Access</span></a>
+          <a className="ps-v2-nav-item" data-active={activePage === "audit-log"} aria-current={activePage === "audit-log" ? "page" : undefined} href="/dashboard/audit-log"><History size={16} aria-hidden="true" /><span>Audit Log</span></a>
         <div className="ps-v2-user">
           <span className="ps-v2-avatar" aria-hidden="true">{name.slice(0, 2).toUpperCase()}</span>
           <span>
@@ -218,7 +229,7 @@ export function DashboardV2Shell({ children, activePage = "overview", chromeData
           {children}
         </main>
       </div>
-      {priorityOpen && <><button type="button" className="ps-v2-drawer-scrim" aria-label="Close Priority Centre" onClick={() => setPriorityOpen(false)} /><aside className="ps-v2-priority-drawer" role="dialog" aria-modal="true" aria-labelledby="ps-v2-priority-drawer-title"><header><div><strong id="ps-v2-priority-drawer-title">Priority Centre</strong><span>{chromeData?.priorityItems.length ? `${chromeData.priorityItems.length} evidence-backed decisions need review` : "No evidence-backed decision is waiting"}</span></div><button type="button" onClick={() => setPriorityOpen(false)} aria-label="Close Priority Centre"><X size={16} /></button></header><div className="ps-v2-priority-drawer-list">{chromeData?.priorityItems.length ? chromeData.priorityItems.map((item, index) => <article key={item.id}><i /><div><small>{String(index + 1).padStart(2, "0")} · {item.state.replaceAll("_", " ")}</small><strong>{item.title}</strong><p>{item.detail}</p><footer><span>{item.id}</span>{item.amount && <b>{item.amount}</b>}</footer></div></article>) : <p className="ps-v2-drawer-empty">No retained finding currently supports a priority decision.</p>}</div><Link to="/dashboard/v2/priority-centre" className="ps-v2-drawer-full-link" onClick={() => setPriorityOpen(false)}>Open full Priority Centre →</Link></aside></>}
+      {priorityOpen && <><button type="button" className="ps-v2-drawer-scrim" aria-label="Close Priority Centre" onClick={() => setPriorityOpen(false)} /><aside className="ps-v2-priority-drawer" role="dialog" aria-modal="true" aria-labelledby="ps-v2-priority-drawer-title"><header><div><strong id="ps-v2-priority-drawer-title">Priority Centre</strong><span>{chromeData?.priorityItems.length ? `${chromeData.priorityItems.length} evidence-backed decisions need review` : "No evidence-backed decision is waiting"}</span></div><button type="button" onClick={() => setPriorityOpen(false)} aria-label="Close Priority Centre"><X size={16} /></button></header><div className="ps-v2-priority-drawer-list">{chromeData?.priorityItems.length ? chromeData.priorityItems.map((item, index) => <article key={item.id}><i /><div><small>{String(index + 1).padStart(2, "0")} · {item.state.replaceAll("_", " ")}</small><strong>{item.title}</strong><p>{item.detail}</p><footer><span>{item.id}</span>{item.amount && <b>{item.amount}</b>}</footer></div></article>) : <p className="ps-v2-drawer-empty">No retained finding currently supports a priority decision.</p>}</div><Link to="/dashboard/priority-centre" className="ps-v2-drawer-full-link" onClick={() => setPriorityOpen(false)}>Open full Priority Centre →</Link></aside></>}
     </div>
   );
 }
