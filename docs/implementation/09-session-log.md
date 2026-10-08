@@ -1894,3 +1894,21 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Demo data/API gating, Overview, Order Automation, Promotions, banner removal, browser regression, and continuity records changed.
 - Exact next action: run final continuity and diff checks, commit the intended tracked files, and push to `origin/main` as explicitly authorized. Do not deploy without separate authorization.
+
+## 2026-10-08 - Dedicated controlled-demo login
+
+- Provisioned `demo@prizeskout.qa` as a confirmed Supabase identity and viewer member of only the demo-marked Naija Restaurant licensee.
+- Created a separate demo access mapping without changing the operational user's credentials.
+- Corrected password login to resolve the authenticated session through `/api/auth/resolve-merchant`, retain the linked merchant/code locally, and enter the dashboard just like the existing magic-link flow.
+- Added an idempotent provisioning script that requires an externally supplied strong password and verifies both Supabase authentication and optional production merchant resolution.
+- Direct credential authentication and the live production resolution endpoint passed for the demo identity.
+
+### Verification commands and exact outcomes
+
+- `npm run typecheck` - passed.
+- Protected Zid and Salla contract checks - passed.
+- `npm run build` - passed with existing chunk-size and mixed-import warnings.
+
+### Exact next action
+
+- Run continuity, commit and push the login bootstrap, deploy the verified build, and complete an actual browser sign-in against the production access page.

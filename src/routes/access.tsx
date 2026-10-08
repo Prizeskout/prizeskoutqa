@@ -48,11 +48,25 @@ function AccessPage() {
     }
     setSubmitting(true);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
       if (signInError) throw signInError;
+      const token = signInData.session?.access_token;
+      if (!token) throw new Error("No authenticated session was returned.");
+      const response = await fetch("/api/auth/resolve-merchant", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const resolved = await response.json() as { merchant_id?: string; code?: string; error?: string };
+      if (!response.ok || !resolved.merchant_id || !resolved.code) {
+        await supabase.auth.signOut();
+        throw new Error(resolved.error ?? "No PrizeSkout workspace is linked to this login.");
+      }
+      localStorage.setItem("ps_merchant_id", resolved.merchant_id);
+      localStorage.setItem("ps_access_code", resolved.code);
+      localStorage.setItem("ps_connected", "true");
       navigate({ to: "/dashboard" });
     } catch {
       setError("Email or password is incorrect. Check your details and try again.");
