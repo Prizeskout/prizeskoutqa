@@ -36,7 +36,6 @@
     "verify-dashboard-v2-contract": "tsx scripts/verify-dashboard-v2-contract.mts",
     "verify-dashboard-v2-modules": "tsx scripts/verify-dashboard-v2-modules.mts",
     "verify-dashboard-v2-ui": "tsx scripts/verify-dashboard-v2-ui.mts",
-    "verify-dashboard-reference-demo": "tsx scripts/verify-dashboard-reference-demo.mts",
     "verify-manual-column-mapping": "tsx scripts/verify-manual-column-mapping.mts",
     "verify-payout-authority": "tsx scripts/verify-payout-authority.mts",
     "verify-price-action-safety": "tsx scripts/verify-price-action-safety.mts",
