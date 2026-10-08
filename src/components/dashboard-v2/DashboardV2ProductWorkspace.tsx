@@ -249,7 +249,8 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
   const [label, title] = configs[workspace] ?? [workspace, workspace];
   const auditRows = activity.data?.audit.rows ?? [],
     channelRows = activity.data?.channels.rows ?? [],
-    costRows = activity.data?.costs.rows ?? [];
+    costRows = activity.data?.costs.rows ?? [],
+    menuRows = summary?.metrics.by_sku ?? [];
   return (
     <DashboardV2Shell activePage={workspace} chromeData={chrome}>
       <div className="ps-v2-page-heading">
@@ -372,10 +373,42 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
         <section className="ps-v2-card ps-v2-module-card">
           <header>
             <div>
-              <h2>Product costs</h2>
-              <p>See the cost recorded for each item and when that cost started.</p>
+              <h2>Menu item performance</h2>
+              <p>
+                Compare item sales with recorded fees and product costs. Profit and attention
+                status appear only when every selected order has complete cost evidence.
+              </p>
             </div>
+            <span className="ps-v2-coverage-badge" data-complete={summary?.metrics.cost_coverage.complete ? "true" : "false"}>
+              {summary ? `${summary.metrics.cost_coverage.orders_complete} of ${summary.metrics.cost_coverage.orders_total} orders costed` : "Cost coverage unavailable"}
+            </span>
           </header>
+          <div className="ps-v2-table-wrap ps-v2-menu-table-wrap">
+            <table className="ps-v2-menu-table">
+              <thead>
+                <tr><th>Menu item / SKU</th><th>Orders</th><th>Sales</th><th>Product cost</th><th>Platform fees</th><th>Contribution</th><th>Margin</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {menuRows.length ? menuRows.map((row) => {
+                  const contribution = row.contribution;
+                  const ready = contribution != null && row.margin_pct != null;
+                  const status = contribution == null || row.margin_pct == null ? "Needs cost evidence" : contribution < 0 ? "Needs attention" : contribution === 0 ? "Break-even" : "Making money";
+                  return <tr key={row.sku} data-status={ready ? (contribution! < 0 ? "attention" : "ready") : "blocked"}>
+                    <th scope="row">{row.sku === "unassigned" ? "Item not identified" : row.sku}</th>
+                    <td>{row.orders}</td>
+                    <td>{money(row.revenue, summary?.metrics.currency)}</td>
+                    <td>{money(row.product_cost, summary?.metrics.currency)}</td>
+                    <td>{money(row.fees, summary?.metrics.currency)}</td>
+                    <td>{money(row.contribution, summary?.metrics.currency)}</td>
+                    <td>{row.margin_pct == null ? "Not calculated" : `${row.margin_pct}%`}</td>
+                    <td><span>{status}</span></td>
+                  </tr>;
+                }) : <tr><th scope="row">No menu sales available</th><td colSpan={7}>{load.phase === "loading" ? "Loading selected-period orders" : load.message ?? "Add order evidence to compare menu performance."}</td></tr>}
+              </tbody>
+            </table>
+          </div>
+          <details className="ps-v2-menu-cost-evidence">
+            <summary>View recorded unit-cost evidence ({costRows.length})</summary>
           <div className="ps-v2-placeholder-table">
             <div>
               <span>SKU</span>
@@ -405,6 +438,7 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
               </div>
             )}
           </div>
+          </details>
         </section>
       )}
       {workspace === "settlements" && (

@@ -42,6 +42,7 @@ const fixture = {
     cost_coverage: { orders_total: 22252, orders_complete: 22252, pct: 100, complete: true },
     profit_bridge: [{ key: "gross_sales", label: "Gross sales", amount: 1840000, kind: "total" }, { key: "contribution", label: "True contribution", amount: 795420, kind: "result" }],
     by_channel: [{ channel: "talabat", gross_sales: 450000, revenue: 396000, orders: 4980, fees: 88000, discounts: 62000, product_cost: 110900, contribution: 285100, margin_pct: 72 }],
+    by_sku: [{ sku: "NR-ZOBO", gross_sales: 140, revenue: 120, orders: 5, fees: 20, discounts: 20, product_cost: 35, contribution: 65, margin_pct: 54.17 }, { sku: "NR-LOSS", gross_sales: 70, revenue: 55, orders: 2, fees: 10, discounts: 15, product_cost: 50, contribution: -5, margin_pct: -9.09 }],
     branch_performance: { state: "available", ranked: true, identified_orders: 22252, unassigned_orders: 0, blockers: [], rows: [{ branch: "west-bay", gross_sales: 950000, revenue: 860000, orders: 11200, fees: 120000, discounts: 70000, product_cost: 420000, contribution: 440000, margin_pct: 51.2 }, { branch: "lusail", gross_sales: 890000, revenue: 840000, orders: 11052, fees: 115000, discounts: 65000, product_cost: 489580, contribution: 350420, margin_pct: 41.7 }] },
   },
   reconciliation: { state: "unallocated", finding_id: "finding-batch", conclusion: "unallocated_batch_difference", label: "Unallocated batch difference", currency: "QAR", expected_amount: 1000, reported_amount: 980, variance: -20, allocation_scope: "batch", order_external_id: null, settlement_reference: "BATCH-7", evidence_strength: "strong", recoverability: "review_required", claims_ready_amount: null, explanation: "The payout differs at batch level but cannot be assigned to an order.", blockers: [], created_at: "2026-10-04T10:00:00.000Z" },
@@ -178,7 +179,7 @@ try {
         assert.equal(await page.getByRole("button", { name: "30D", exact: true }).getAttribute("aria-pressed"), "true");
         await page.getByRole("button", { name: "QTD", exact: true }).click();
         assert.match(page.url(), /[?&]period=qtd(?:&|$)/);
-        await page.getByRole("button", { name: "YTD", exact: true }).click();
+        await page.getByRole("button", { name: "YTD", exact: true }).evaluate((element) => (element as HTMLButtonElement).click());
         assert.match(page.url(), /[?&]period=ytd(?:&|$)/);
       }
 
@@ -263,6 +264,16 @@ try {
           assert.equal(await page.locator(".ps-v2-sidebar").count(), 1, `${label}: Dashboard V2 shell is missing`);
           assert.equal(await page.locator(".ps-db").count(), 0, `${label}: legacy dashboard shell was rendered`);
           assert.equal(await page.locator(`.ps-v2-sidebar a.ps-v2-nav-item[href="${href}"][aria-current="page"]`).count(), 1, `${label}: sidebar destination is not active`);
+          if (label === "Menu intelligence") {
+            await page.getByRole("heading", { name: "Menu item performance", exact: true }).waitFor();
+            assert.equal(await page.getByRole("columnheader", { name: "Contribution", exact: true }).count(), 1);
+            await page.getByText("Making money", { exact: true }).waitFor();
+            const menuTableText = await page.locator(".ps-v2-menu-table").innerText();
+            assert.match(menuTableText, /Making money/, menuTableText);
+            assert.match(menuTableText, /Needs attention/, menuTableText);
+            assert.equal(await page.getByText("18 of 18 orders costed", { exact: true }).count(), 0);
+            assert.equal(await page.getByText("22252 of 22252 orders costed", { exact: true }).count(), 1);
+          }
           const workspaceDimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
           assert.equal(workspaceDimensions.scrollWidth, workspaceDimensions.clientWidth, `${label}: page-level horizontal overflow`);
         }

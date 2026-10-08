@@ -1798,3 +1798,58 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Customer experience: Overview, product workspace, workspace copy, shared confidence helper, and regression coverage.
 - Demo tooling: Naija and product-film preparation scripts.
 - Exact next action: run protected contracts and continuity, then commit/push only on explicit authorization. Deployment remains separate; after deployment repeat the signed-in module audit.
+
+## 2026-10-08 - Legacy recovery-case compatibility deployment
+
+- Resumed from the recorded repository state and confirmed `e18f7f5` was already committed and pushed to `origin/main`.
+- Verified that the commit removes only the unsupported `currency` column from the Dashboard V2 `ps_recovery_cases` select; finding currency remains authoritative.
+- Built and deployed the exact commit as Cloudflare Worker `7463a579-e5c9-450b-9c40-4730a6f6f184`.
+- Apex, app, Salla embedded, and Zid embedded routes returned HTTP 200.
+- Authenticated Naija verification could not be completed: the prior signed-in Chrome tab remains attached to the previous automation session, while a fresh verification tab correctly requests sign-in. No merchant-specific production result is claimed from the public-route checks.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed.
+- `npm run build` - passed with the existing chunk-size and mixed-import warnings.
+- `npx wrangler deploy` - passed; current Worker version `7463a579-e5c9-450b-9c40-4730a6f6f184`.
+- Public route checks with `curl.exe` - HTTP 200 for apex, app, Salla embedded, and Zid embedded routes.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `git diff --check` - passed before continuity-record edits.
+
+### Changed files and exact next action
+
+- Deployment and continuity records: active task packet, `state.yaml`, `01-current-state.md`, `05-deployment-register.md`, and this session log.
+- Exact next action: sign in to the fresh PrizeSkout verification tab or release the prior authenticated tab, then repeat the signed-in Naija Restaurant module audit. Confirm the controlled demo figures and leakage cards, absence of bank wording, and absence of the recovery-case schema error before recording production verification.
+
+## 2026-10-08 - Menu Intelligence promise correction
+
+- Corrected the mismatch between the Menu Intelligence promise and its cost-only table.
+- Added SKU-level Economic Twin rows to the authenticated dashboard summary contract.
+- The primary table now shows selected-period orders, sales, recorded product cost, allocated platform fees, contribution, margin, and an explicit performance status.
+- `Making money`, `Break-even`, and `Needs attention` are shown only when complete selected-order product-cost coverage makes contribution decision-ready. Incomplete coverage leaves cost, contribution, and margin uncalculated and asks for cost evidence.
+- Preserved effective-dated unit-cost provenance in a secondary disclosure instead of discarding it.
+- No connector call, protected action, migration, merchant-data mutation, commit, push, or deployment occurred.
+
+### Verification commands and exact outcomes
+
+- Required startup continuity, protected Zid/Salla contracts, and typecheck - passed.
+- `npm run verify-dashboard-v2-contract` - passed, including complete- and incomplete-cost SKU gates.
+- First two `npm run verify-dashboard-v2-ui` attempts failed at an existing YTD click because the route update detached the button; the verifier now invokes that known route control without waiting on the replaced DOM node.
+- The next UI run reached Menu Intelligence before its asynchronous summary loaded; the assertion was corrected to wait for the populated table.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-ENeYuF`.
+- Final `npm run typecheck` - passed.
+- Final protected Zid and Salla contracts - passed.
+- `npm run build` - passed with the existing chunk-size and mixed-import warnings.
+- `git diff --check` - passed before continuity-record edits.
+
+### Changed files and exact next action
+
+- Governed SKU summary contract: `src/server/core/dashboard-v2-summary.ts`.
+- Menu Intelligence presentation and responsive table styling: `DashboardV2ProductWorkspace.tsx` and `dashboard-v2.css`.
+- Regression coverage: Dashboard V2 contract and UI verifiers.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: review the local diff. Commit/push and deploy only with explicit authorization, then verify the signed-in Naija Menu Intelligence table against the retained demonstration orders and costs.

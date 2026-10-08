@@ -20,7 +20,7 @@ const complete = summarizeDashboardV2Evidence({
   agreementMatches: [{ id: "match-1", contract_term_id: "term-1", state: "confirmed", currency: "QAR", evidence_date_start: "2026-10-01", evidence_date_end: "2026-10-31", matcher_version: "v1", created_at: "2026-10-03T12:00:00.000Z" }],
   findings: [{ id: "finding-confirmed", conclusion: "confirmed_discrepancy", recoverability: "claims_ready", evidence_strength: "confirmed", currency: "QAR", expected_amount: 820, reported_amount: 800, variance: -20, order_external_id: "ORDER-18", settlement_reference: "SET-1", contract_term_id: "term-1", blockers: [], explanation: "Allocated order evidence supports a payout shortfall.", created_at: "2026-10-03T13:00:00.000Z" }],
   recoveryCases: [{ id: "case-1", reconciliation_finding_id: "finding-confirmed", status: "ready", claims_ready_amount: 20, exception_amount: 20, currency: "QAR", created_at: "2026-10-03T14:00:00.000Z" }],
-  economicTwin: { currency: "QAR", gross_sales: 1000, net_revenue: 800, fees: 120, discounts: 80, refunds: 0, product_cost: 400, orders: 18, contribution: 400, contribution_margin_pct: 50, variance: -20, recoverable_amount: 10, cost_coverage: { orders_total: 18, orders_complete: 18, pct: 100, complete: true }, by_channel: [{ key: "talabat", gross_sales: 1000, net_revenue: 800, fees: 120, discounts: 80, product_cost: 400, orders: 18, contribution: 400, margin_pct: 50 }], by_branch: [{ key: "west-bay", gross_sales: 600, net_revenue: 500, fees: 70, discounts: 30, product_cost: 220, orders: 10, contribution: 280, margin_pct: 56 }, { key: "lusail", gross_sales: 400, net_revenue: 300, fees: 50, discounts: 50, product_cost: 180, orders: 8, contribution: 120, margin_pct: 40 }] },
+  economicTwin: { currency: "QAR", gross_sales: 1000, net_revenue: 800, fees: 120, discounts: 80, refunds: 0, product_cost: 400, orders: 18, contribution: 400, contribution_margin_pct: 50, variance: -20, recoverable_amount: 10, cost_coverage: { orders_total: 18, orders_complete: 18, pct: 100, complete: true }, by_channel: [{ key: "talabat", gross_sales: 1000, net_revenue: 800, fees: 120, discounts: 80, product_cost: 400, orders: 18, contribution: 400, margin_pct: 50 }], by_branch: [{ key: "west-bay", gross_sales: 600, net_revenue: 500, fees: 70, discounts: 30, product_cost: 220, orders: 10, contribution: 280, margin_pct: 56 }, { key: "lusail", gross_sales: 400, net_revenue: 300, fees: 50, discounts: 50, product_cost: 180, orders: 8, contribution: 120, margin_pct: 40 }], by_sku: [{ key: "NR-ZOBO", gross_sales: 140, net_revenue: 120, fees: 20, discounts: 20, product_cost: 35, orders: 5, contribution: 65, margin_pct: 54.17 }] },
   previousEconomicTwin: { currency: "QAR", gross_sales: 900, net_revenue: 750, orders: 15, product_cost: 375, contribution: 375, contribution_margin_pct: 50, cost_coverage: { orders_total: 15, orders_complete: 15, pct: 100, complete: true } },
 });
 assert.equal(complete.conclusion.state, "ready_for_reconciliation");
@@ -38,6 +38,7 @@ assert.equal(complete.reconciliation.state, "confirmed");
 assert.equal(complete.reconciliation.allocation_scope, "order");
 assert.equal(complete.reconciliation.claims_ready_amount, 20);
 assert.equal(complete.metrics.by_channel[0]?.contribution, 400);
+assert.deepEqual(complete.metrics.by_sku[0], { sku: "NR-ZOBO", gross_sales: 140, revenue: 120, orders: 5, fees: 20, discounts: 20, product_cost: 35, contribution: 65, margin_pct: 54.17 });
 assert.equal(complete.metrics.branch_performance.ranked, true);
 assert.equal(complete.metrics.branch_performance.rows[0]?.contribution, 280);
 assert.equal(complete.comparison.state, "available");
@@ -64,11 +65,13 @@ const incompleteCosts = summarizeDashboardV2Evidence({
   events: [strongEvent("order_snapshot"), strongEvent("payout_total"), strongEvent("receipt_confirmation")],
   agreementMatches: [{ id: "match-cost", contract_term_id: "term-cost", state: "confirmed", currency: "QAR", evidence_date_start: "2026-10-01", matcher_version: "v1", created_at: "2026-10-03T12:00:00.000Z" }],
   findings: [],
-  economicTwin: { currency: "QAR", gross_sales: 1000, net_revenue: 800, product_cost: 100, orders: 18, contribution: 700, contribution_margin_pct: 87.5, cost_coverage: { orders_total: 18, orders_complete: 4, pct: 22.22, complete: false }, by_channel: [{ key: "talabat", gross_sales: 1000, net_revenue: 800, product_cost: 100, orders: 18, contribution: 700, margin_pct: 87.5 }] },
+  economicTwin: { currency: "QAR", gross_sales: 1000, net_revenue: 800, product_cost: 100, orders: 18, contribution: 700, contribution_margin_pct: 87.5, cost_coverage: { orders_total: 18, orders_complete: 4, pct: 22.22, complete: false }, by_channel: [{ key: "talabat", gross_sales: 1000, net_revenue: 800, product_cost: 100, orders: 18, contribution: 700, margin_pct: 87.5 }], by_sku: [{ key: "NR-ZOBO", net_revenue: 120, fees: 20, product_cost: 35, orders: 5, contribution: 65, margin_pct: 54.17 }] },
 });
 assert.equal(incompleteCosts.metrics.true_contribution, null);
 assert.equal(incompleteCosts.metrics.profit_bridge.at(-1)?.amount, null);
 assert.equal(incompleteCosts.metrics.by_channel[0]?.contribution, null);
+assert.equal(incompleteCosts.metrics.by_sku[0]?.contribution, null);
+assert.equal(incompleteCosts.metrics.by_sku[0]?.product_cost, null);
 assert.match(incompleteCosts.metrics.blockers.join(" "), /4 of 18/);
 
 const unallocated = summarizeDashboardV2Evidence({

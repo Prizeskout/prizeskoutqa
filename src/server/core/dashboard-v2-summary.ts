@@ -66,6 +66,17 @@ export type DashboardV2Summary = {
       contribution: number | null;
       margin_pct: number | null;
     }>;
+    by_sku: Array<{
+      sku: string;
+      gross_sales: number;
+      revenue: number;
+      orders: number;
+      fees: number;
+      discounts: number;
+      product_cost: number | null;
+      contribution: number | null;
+      margin_pct: number | null;
+    }>;
     branch_performance: {
       state: "available" | "partial" | "blocked" | "missing";
       ranked: boolean;
@@ -234,6 +245,7 @@ export type DashboardV2SummaryInput = {
     cost_coverage?: { orders_total?: number; orders_complete?: number; pct?: number; complete?: boolean };
     by_channel?: Array<{ key?: string; gross_sales?: number; net_revenue?: number; orders?: number; fees?: number; discounts?: number; product_cost?: number; contribution?: number; margin_pct?: number | null }>;
     by_branch?: Array<{ key?: string; gross_sales?: number; net_revenue?: number; orders?: number; fees?: number; discounts?: number; product_cost?: number; contribution?: number; margin_pct?: number | null }>;
+    by_sku?: Array<{ key?: string; gross_sales?: number; net_revenue?: number; orders?: number; fees?: number; discounts?: number; product_cost?: number; contribution?: number; margin_pct?: number | null }>;
   } | null;
   previousEconomicTwin?: DashboardV2SummaryInput["economicTwin"];
   availability?: {
@@ -566,6 +578,19 @@ export function summarizeDashboardV2Evidence(input: DashboardV2SummaryInput): Da
     by_channel: orderMetricsReady
       ? (twin?.by_channel ?? []).map((row) => ({
           channel: String(row.key ?? "unassigned"),
+          gross_sales: Number.isFinite(row.gross_sales) ? Number(row.gross_sales) : 0,
+          revenue: Number.isFinite(row.net_revenue) ? Number(row.net_revenue) : 0,
+          orders: Number.isFinite(row.orders) ? Number(row.orders) : 0,
+          fees: Number.isFinite(row.fees) ? Number(row.fees) : 0,
+          discounts: Number.isFinite(row.discounts) ? Number(row.discounts) : 0,
+          product_cost: contributionReady && Number.isFinite(row.product_cost) ? Number(row.product_cost) : null,
+          contribution: contributionReady && Number.isFinite(row.contribution) ? Number(row.contribution) : null,
+          margin_pct: contributionReady && Number.isFinite(row.margin_pct) ? Number(row.margin_pct) : null,
+        }))
+      : [],
+    by_sku: orderMetricsReady
+      ? (twin?.by_sku ?? []).map((row) => ({
+          sku: String(row.key ?? "unassigned"),
           gross_sales: Number.isFinite(row.gross_sales) ? Number(row.gross_sales) : 0,
           revenue: Number.isFinite(row.net_revenue) ? Number(row.net_revenue) : 0,
           orders: Number.isFinite(row.orders) ? Number(row.orders) : 0,
