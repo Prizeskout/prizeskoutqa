@@ -597,16 +597,3 @@
 @media (prefers-reduced-motion: reduce) {
   .ps-v2-sidebar, .ps-v2-scrim { transition: none; }
 }
-.ps-v2-demo-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
-  border: 1px solid #f3b37d;
-  border-radius: 12px;
-  background: #fff5ec;
-  color: #7a2f00;
-  font-size: 14px;
-}
-.ps-v2-demo-banner strong { color: #b94800; }

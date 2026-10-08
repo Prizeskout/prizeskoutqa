@@ -2,12 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyMerchantAccess } from "@/server/core/byok-connect";
 import { summarizeOrderModule, summarizePromotionModule } from "@/server/core/dashboard-v2-modules";
+import { dashboardV2DemoModules, isDashboardV2DemoWorkspace } from "@/server/core/dashboard-v2-demo-data";
 
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "private, no-store" } });
 
 export const Route = createFileRoute("/api/dashboard/v2/modules")({ server: { handlers: { GET: async ({ request }) => {
   const merchantId = (request.headers.get("x-merchant-id") ?? "").trim(), accessCode = request.headers.get("x-access-code") ?? "";
   if (!await verifyMerchantAccess(merchantId, accessCode)) return json({ error: "Unauthorized" }, 403);
+  const demoWorkspace = await (supabaseAdmin as any).from("ps_restaurant_workspaces").select("metadata").eq("account_id", merchantId).maybeSingle();
+  if (!demoWorkspace.error && isDashboardV2DemoWorkspace(demoWorkspace.data)) return json({ ok: true, ...dashboardV2DemoModules });
   const requestedDays = Number(new URL(request.url).searchParams.get("days") ?? 30);
   const days = Number.isFinite(requestedDays) ? Math.max(1, Math.min(366, Math.floor(requestedDays))) : 30;
   const since = new Date(); since.setUTCDate(since.getUTCDate() - (days - 1)); since.setUTCHours(0, 0, 0, 0);

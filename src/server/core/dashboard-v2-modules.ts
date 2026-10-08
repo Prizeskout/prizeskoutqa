@@ -6,7 +6,8 @@ export type DashboardV2OrderModule = {
   live: number;
   attention: number;
   critical: number;
-  automation_rate_pct: null;
+  automation_rate_pct: number | null;
+  demo?: Record<string, unknown>;
   orders: Array<{ id: string; external_order_id: string; branch: string | null; channel: string | null; status: string; risk_level: string; currency: string; order_total: number | null; placed_at: string }>;
   branches: Array<{ branch: string; received: number; live: number; attention: number; critical: number }>;
   blockers: string[];
@@ -18,6 +19,7 @@ export type DashboardV2PromotionModule = {
   scenarios: Array<{ id: string; name: string; platform: string; status: string; inputs: Record<string, unknown>; results: Record<string, unknown>; created_at: string; evidence_ready: boolean }>;
   counts: { total: number; active: number; pending_approval: number; completed: number };
   blockers: string[];
+  demo?: Record<string, unknown>;
 };
 
 const terminal = new Set(["ready", "completed", "cancelled", "unable_to_fulfil"]);

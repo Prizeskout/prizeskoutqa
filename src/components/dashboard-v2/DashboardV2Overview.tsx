@@ -30,7 +30,7 @@ export function DashboardV2Overview() {
   };
   const bridge = summary?.metrics.profit_bridge ?? [];
   const bridgeMaximum = Math.max(1, ...bridge.map((row) => row.amount ?? 0));
-  const bridgeByKey = new Map(bridge.map((row) => [row.key, row]));
+  const bridgeByKey = new Map<string, (typeof bridge)[number]>(bridge.map((row) => [row.key, row]));
   const contributionAmount = bridgeByKey.get("contribution")?.amount ?? 0;
   const productCostAmount = bridgeByKey.get("product_cost")?.amount ?? 0;
   const reductionAmount = bridgeByKey.get("gross_to_net")?.amount ?? 0;
@@ -45,34 +45,34 @@ export function DashboardV2Overview() {
     {
       key: "commission",
       label: "Commission",
-      kind: "unavailable",
-      amount: null,
+      kind: bridgeByKey.has("commission") ? "deduction" : "unavailable",
+      amount: bridgeByKey.get("commission")?.amount ?? null,
       bottom: contributionAmount + productCostAmount + reductionAmount,
     },
     {
       key: "promotions",
       label: "Promotions",
-      kind: "unavailable",
-      amount: null,
+      kind: bridgeByKey.has("promotions") ? "deduction" : "unavailable",
+      amount: bridgeByKey.get("promotions")?.amount ?? null,
       bottom: contributionAmount + productCostAmount + reductionAmount,
     },
     {
       key: "gross_to_net",
-      label: "Recorded reductions",
+      label: bridgeByKey.has("platform_fees") ? "Platform fees" : "Recorded reductions",
       kind: "deduction",
-      amount: bridgeByKey.get("gross_to_net")?.amount,
+      amount: bridgeByKey.get("platform_fees")?.amount ?? bridgeByKey.get("gross_to_net")?.amount,
       bottom: contributionAmount + productCostAmount,
     },
     {
       key: "refunds",
       label: "Refunds",
-      kind: "unavailable",
-      amount: null,
+      kind: bridgeByKey.has("refunds") ? "deduction" : "unavailable",
+      amount: bridgeByKey.get("refunds")?.amount ?? null,
       bottom: contributionAmount + productCostAmount,
     },
     {
       key: "product_cost",
-      label: "Product cost",
+      label: "COGS",
       kind: "cost",
       amount: bridgeByKey.get("product_cost")?.amount,
       bottom: contributionAmount,
@@ -80,8 +80,8 @@ export function DashboardV2Overview() {
     {
       key: "adjustments",
       label: "Adjustments",
-      kind: "unavailable",
-      amount: null,
+      kind: bridgeByKey.has("adjustments") ? "deduction" : "unavailable",
+      amount: bridgeByKey.get("adjustments")?.amount ?? null,
       bottom: contributionAmount,
     },
     {

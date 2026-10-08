@@ -1853,3 +1853,44 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Regression coverage: Dashboard V2 contract and UI verifiers.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: review the local diff. Commit/push and deploy only with explicit authorization, then verify the signed-in Naija Menu Intelligence table against the retained demonstration orders and costs.
+
+## 2026-10-08 - Customer-visible demo banner removal
+
+- Removed the shared dashboard banner labeled `Demo data` and `Controlled demonstration data - not live financial evidence` at the user's direction.
+- Preserved the server-owned `demo_mode` and `demo_label` context fields for internal provenance; no financial calculation, evidence classification, or protected-action boundary changed.
+- Removed the banner's now-unused CSS.
+- Extended the browser fixture to enable demo mode and assert that the banner is absent at every supported viewport.
+- No connector call, merchant-data mutation, migration, commit, push, or deployment occurred.
+
+### Verification commands and exact outcomes
+
+- Required startup continuity, protected Zid/Salla contracts, and typecheck - passed.
+- Final `npm run typecheck` - passed.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-6khPP9`.
+
+### Changed files and exact next action
+
+- Banner rendering: `src/components/dashboard-v2/DashboardV2Shell.tsx`.
+- Unused banner styling: `src/components/dashboard-v2/dashboard-v2.css`.
+- Regression coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: review the local diff. Commit/push only with explicit authorization; deploy only with separate authorization, then confirm the banner is absent in the signed-in production dashboard.
+
+## 2026-10-08 - Exact controlled-demo dashboard population
+
+- Added the supplied Executive Overview, Order Automation, and Promotions values as a server-owned controlled-demo fixture gated by authenticated `metadata.demo_mode === true`.
+- Populated QAR 1.84M gross sales, QAR 795,420 contribution, the exact channel/branch/settlement rows, the 1,389-order automation day and rules, and the 14-campaign promotion portfolio.
+- Included the previously requested customer-visible demo-banner removal while retaining the internal server-owned demo marker.
+- Normal merchant requests continue through governed retained evidence. No connector call, merchant mutation, migration, protected action, deployment, or production-verification claim occurred.
+
+### Verification commands and exact outcomes
+
+- Startup continuity, typecheck, and protected Zid/Salla contracts - passed.
+- `npm run verify-dashboard-v2-contract` and `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-3xcWIG`.
+- `npm run build` - passed with existing chunk-size and mixed-import warnings.
+
+### Changed files and exact next action
+
+- Demo data/API gating, Overview, Order Automation, Promotions, banner removal, browser regression, and continuity records changed.
+- Exact next action: run final continuity and diff checks, commit the intended tracked files, and push to `origin/main` as explicitly authorized. Do not deploy without separate authorization.

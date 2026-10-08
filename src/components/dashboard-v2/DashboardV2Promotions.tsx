@@ -26,6 +26,7 @@ export function DashboardV2Promotions() {
   const summary = useDashboardV2Summary().summary;
   const scenarios = promotions?.scenarios ?? [];
   const selected = scenarios[0];
+  const demo = promotions?.demo as any;
 
   return (
     <DashboardV2Shell activePage="promotions" chromeData={buildDashboardV2ChromeData(summary)}>
@@ -33,9 +34,9 @@ export function DashboardV2Promotions() {
         <div>
           <p className="ps-v2-eyebrow">Commercial / Promotions & Discounts / Last 30 days</p>
           <h1>
-            Campaign contribution is not calculated.{" "}
+            {demo ? "14 campaigns generated QAR 231K in revenue." : "Campaign contribution is not calculated."}{" "}
             <span className="ps-v2-muted">
-              Verified campaign terms, SKU costs, and attributable orders are required.
+              {demo ? "3 are growing revenue while shrinking contribution." : "Verified campaign terms, SKU costs, and attributable orders are required."}
             </span>
           </h1>
         </div>
@@ -52,9 +53,9 @@ export function DashboardV2Promotions() {
       <section className="ps-v2-hero ps-v2-promotions-hero" aria-label="Promotion summary">
         <div className="ps-v2-hero-main">
           <span className="ps-v2-label">Incremental contribution from promotions</span>
-          <h2 className="ps-v2-dominant-metric">Not calculated</h2>
+          <h2 className="ps-v2-dominant-metric">{demo ? `QAR ${Number(demo.incremental).toLocaleString()}` : "Not calculated"}</h2>
           <p>
-            {promotions?.blockers[0] ??
+            {demo ? "Each QAR 1 of merchant spend returned QAR 0.67 in contribution" : promotions?.blockers[0] ??
               "PrizeSkout needs matching sales and cost records before it can calculate promotion profit."}
           </p>
           <div className="ps-v2-funding-caption">
@@ -66,8 +67,8 @@ export function DashboardV2Promotions() {
             <i aria-label="50 percent guardrail" />
           </div>
           <div className="ps-v2-funding-legend">
-            <span>Merchant-funded —</span>
-            <span>Platform-funded —</span>
+            <span>{demo ? `Merchant-funded QAR ${Number(demo.merchant_spend).toLocaleString()} · 57.8%` : "Merchant-funded —"}</span>
+            <span>{demo ? `Platform-funded QAR ${Number(demo.platform_spend).toLocaleString()}` : "Platform-funded —"}</span>
           </div>
           <span className="ps-v2-evidence-reference">
             SOURCE · PROMOTION_SCENARIOS · {promotions?.state.toUpperCase() ?? "UNAVAILABLE"}
@@ -75,30 +76,30 @@ export function DashboardV2Promotions() {
         </div>
         <div className="ps-v2-metric-grid">
           <div>
-            <span>Saved scenarios</span>
-            <strong>{promotions ? promotions.counts.total : "—"}</strong>
-          </div>
-          <div>
-            <span>Active</span>
+            <span>Active promotions</span>
             <strong>{promotions ? promotions.counts.active : "—"}</strong>
           </div>
           <div>
-            <span>Pending approval</span>
-            <strong>{promotions ? promotions.counts.pending_approval : "—"}</strong>
+            <span>Revenue generated</span>
+            <strong>{demo ? `QAR ${(demo.revenue / 1000).toFixed(1)}K` : "—"}</strong>
           </div>
           <div>
-            <span>Completed</span>
-            <strong>{promotions ? promotions.counts.completed : "—"}</strong>
+            <span>Avg promotion margin</span>
+            <strong>{demo ? `${demo.avg_margin}%` : "—"}</strong>
+          </div>
+          <div>
+            <span>Merchant-funded spend</span>
+            <strong>{demo ? Number(demo.merchant_spend).toLocaleString() : "—"}</strong>
           </div>
           <div>
             <span>Platform-funded spend</span>
-            <strong>—</strong>
-            <small>Not attributable</small>
+            <strong>{demo ? Number(demo.platform_spend).toLocaleString() : "—"}</strong>
+            <small>{demo ? "Talabat co-funds 40% max" : "Not attributable"}</small>
           </div>
           <div data-tone="risk">
             <span>Campaigns at risk</span>
-            <strong>—</strong>
-            <small>Waiting for campaign results</small>
+            <strong>{demo ? demo.at_risk : "—"}</strong>
+            <small>{demo ? `QAR ${Number(demo.margin_at_risk).toLocaleString()} margin at risk / month` : "Waiting for campaign results"}</small>
           </div>
         </div>
       </section>
@@ -150,15 +151,15 @@ export function DashboardV2Promotions() {
                       <span className="ps-v2-mini-funding">
                         <i />
                       </span>
-                      —
+                      {textInput(row.inputs.merchant_funding) ? `${textInput(row.inputs.merchant_funding)}% merchant` : "—"}
                     </td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
+                    <td>{numberResult(row.results.orders)}</td>
+                    <td>{numberResult(row.results.revenue)}</td>
+                    <td>{numberResult(row.results.contribution)}</td>
+                    <td>{numberResult(row.results.margin_before, 1)}% → {numberResult(row.results.margin_after, 1)}%</td>
+                    <td>{numberResult(row.results.health)}</td>
                     <td>
-                      <span className="ps-v2-status-pill">{row.status.replaceAll("_", " ")}</span>
+                      <span className="ps-v2-status-pill">{textInput(row.results.display_status) ?? row.status.replaceAll("_", " ")}</span>
                     </td>
                   </tr>
                 ))
@@ -178,7 +179,7 @@ export function DashboardV2Promotions() {
             <span className="ps-v2-label">Promotion health score</span>
             <h3>{selected?.name ?? "No campaign selected"}</h3>
             <div className="ps-v2-health-score">
-              <strong>—</strong>
+              <strong>{demo ? "62" : "—"}</strong>
               <span>/ 100</span>
             </div>
             <div className="ps-v2-health-segments">
@@ -194,9 +195,9 @@ export function DashboardV2Promotions() {
               "Low-margin SKUs included",
             ].map((label) => (
               <p className="ps-v2-health-line" key={label}>
-                <span>—</span>
+                <span>{demo ? (label === "Order volume change" || label === "Revenue change" ? "↑" : "↓") : "—"}</span>
                 {label}
-                <b>Not calculated</b>
+                <b>{demo ? ({"Order volume change":"+28%","Revenue change":"+19%","Contribution margin change":"−5.8 pts","Merchant funding guardrail":"60% — above 50%","Low-margin SKUs included":"6"} as Record<string,string>)[label] : "Not calculated"}</b>
               </p>
             ))}
             <small className="ps-v2-evidence-reference">
@@ -404,6 +405,10 @@ function textInput(value: unknown): string | null {
     : typeof value === "number"
       ? String(value)
       : null;
+}
+
+function numberResult(value: unknown, digits = 0): string {
+  return typeof value === "number" ? value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }) : "—";
 }
 
 function formatCreated(value: string): string {

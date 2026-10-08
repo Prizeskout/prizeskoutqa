@@ -21,6 +21,7 @@ export function DashboardV2OrderAutomation({
   const { order } = useDashboardV2Modules();
   const summary = useDashboardV2Summary().summary;
   const hasOrders = Boolean(order?.orders.length);
+  const demo = order?.demo as any;
   return (
     <DashboardV2Shell activePage={activePage} chromeData={buildDashboardV2ChromeData(summary)}>
       <div className="ps-v2-page-heading">
@@ -31,9 +32,9 @@ export function DashboardV2OrderAutomation({
           <h1>
             {activePage === "orders"
               ? "See your recent orders and their status."
-              : "Automation performance is not calculated."}{" "}
+              : demo ? "92.4% of today's orders were accepted without staff." : "Automation performance is not calculated."}{" "}
             <span className="ps-v2-muted">
-              Finish setting up Order Guard to see live order decisions.
+              {demo ? "4 exceptions need a decision." : "Finish setting up Order Guard to see live order decisions."}
             </span>
           </h1>
         </div>
@@ -50,8 +51,8 @@ export function DashboardV2OrderAutomation({
       <section className="ps-v2-hero" aria-label="Automation summary">
         <div className="ps-v2-hero-main">
           <span className="ps-v2-label">Automation rate</span>
-          <h2 className="ps-v2-dominant-metric">Not calculated</h2>
-          <p>{order?.blockers[0] ?? "No live order information is available yet."}</p>
+          <h2 className="ps-v2-dominant-metric">{demo ? "92.4%" : "Not calculated"}</h2>
+          <p>{demo ? "1,284 of 1,389 orders auto-accepted · 99.2% rule success" : order?.blockers[0] ?? "No live order information is available yet."}</p>
           <div className="ps-v2-outcome-bar" aria-label="Automation outcomes unavailable">
             <span />
             <span />
@@ -68,25 +69,25 @@ export function DashboardV2OrderAutomation({
             <strong>{order ? order.received : "—"}</strong>
           </div>
           <div>
-            <span>Live orders</span>
-            <strong>{order ? order.live : "—"}</strong>
+            <span>{demo ? "Avg acceptance time" : "Live orders"}</span>
+            <strong>{demo ? "4.2 sec" : order ? order.live : "—"}</strong>
           </div>
           <div>
-            <span>Need attention</span>
-            <strong>{order ? order.attention : "—"}</strong>
+            <span>{demo ? "Manually accepted" : "Need attention"}</span>
+            <strong>{demo ? demo.manual : order ? order.attention : "—"}</strong>
           </div>
           <div>
-            <span>Critical</span>
-            <strong>{order ? order.critical : "—"}</strong>
+            <span>{demo ? "Rejected" : "Critical"}</span>
+            <strong>{demo ? demo.rejected : order ? order.critical : "—"}</strong>
           </div>
           <div data-tone="risk">
             <span>SLA breaches</span>
-            <strong>—</strong>
+            <strong>{demo ? demo.sla : "—"}</strong>
           </div>
           <div data-tone="brand">
             <span>Revenue protected</span>
-            <strong>—</strong>
-            <small>Waiting for enough order information</small>
+            <strong>{demo ? `QAR ${Number(demo.protected).toLocaleString()}` : "—"}</strong>
+            <small>{demo ? `${demo.prevented} missed orders prevented` : "Waiting for enough order information"}</small>
           </div>
         </div>
       </section>
@@ -102,11 +103,11 @@ export function DashboardV2OrderAutomation({
           </span>
         </header>
         <ol className="ps-v2-flow-stages">
-          {stages.map((stage, index) => (
-            <li key={stage}>
+          {(demo?.stages ?? stages.map((stage) => [stage, indexSafe(order?.received), "Not proven"])).map((stage: any[], index: number) => (
+            <li key={String(stage[0])}>
               <span>{index + 1}</span>
-              <strong>{stage}</strong>
-              <small>{index === 0 && order ? order.received : "Not proven"}</small>
+              <strong>{stage[0]}</strong>
+              <small><b>{stage[1]}</b> {stage[2]}</small>
             </li>
           ))}
         </ol>
@@ -205,7 +206,9 @@ export function DashboardV2OrderAutomation({
               <span>Attention</span>
               <span>Critical</span>
             </div>
-            {order?.branches.length ? (
+            {demo?.branches ? (
+              demo.branches.map((row: string[]) => <div key={row[0]}><span>{row[0]}</span><span>{row[1]}</span><span>{row[2]}</span><span>{row[3]}</span><span>{row[4]} · {row[5]}</span></div>)
+            ) : order?.branches.length ? (
               order.branches.map((row) => (
                 <div key={row.branch}>
                   <span>{row.branch}</span>
@@ -264,13 +267,9 @@ export function DashboardV2OrderAutomation({
             <span>Branches</span>
             <span>Triggers 30d / Success</span>
           </div>
-          {Array.from({ length: 6 }, (_, index) => (
+          {(demo?.rules ?? Array.from({ length: 6 }, (_, index) => [index === 0 ? "No order rules yet" : "Rule slot unavailable","—","—","—","—"])).map((row: string[], index: number) => (
             <div className="ps-v2-empty-rule-row" key={index}>
-              <span>{index === 0 ? "No order rules yet" : "Rule slot unavailable"}</span>
-              <span>—</span>
-              <span>—</span>
-              <span>—</span>
-              <span>—</span>
+              <span>{row[0]}</span><span>{index < 5 && demo ? "On" : "Off"}</span><span>S · T · K · J</span><span>{row[1]}</span><span>{row[2]} · {row[3]} · {row[4]}</span>
             </div>
           ))}
         </div>
@@ -331,6 +330,8 @@ export function DashboardV2OrderAutomation({
     </DashboardV2Shell>
   );
 }
+
+function indexSafe(value: number | undefined) { return value == null ? "—" : value.toLocaleString(); }
 
 function Unavailable({
   title,

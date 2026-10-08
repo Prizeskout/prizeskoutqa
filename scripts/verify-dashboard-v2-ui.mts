@@ -107,7 +107,7 @@ const modulesFixture = {
     counts: { total: 7, active: 3, pending_approval: 2, completed: 1 }, blockers: ["Campaign financial outcomes require attributable order, funding, and cost evidence."],
   },
 };
-const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [], functional_role: "finance", role_label: "Finance officer", role_description: "Profit, settlements, reporting, and audit evidence" } };
+const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [], functional_role: "finance", role_label: "Finance officer", role_description: "Profit, settlements, reporting, and audit evidence", demo_mode: true, demo_label: "Controlled demonstration data - not live financial evidence" } };
 const sidebarDestinations = [
   ["Overview", "/dashboard"],
   ["Priority Centre", "/dashboard/priority-centre"],
@@ -164,6 +164,7 @@ try {
       assert.equal(page.url(), `${origin}/dashboard`, "retired Revenue Hub URL must resolve to the canonical dashboard");
       await page.locator(".ps-v2-scope button").getByText("Sterling Group", { exact: true }).waitFor({ state: "attached" });
       await page.getByText("Finance officer", { exact: true }).first().waitFor({ state: "attached" });
+      assert.equal(await page.getByText("Demo data", { exact: true }).count(), 0, `${viewport.name}: demo banner must not be customer-visible`);
       assert.equal(await page.getByText("QAR", { exact: true }).count(), 1);
       assert.equal(await page.locator(".ps-v2-sidebar .ps-v2-nav-item[disabled]").count(), 0, `${viewport.name}: sidebar must not contain dead disabled destinations`);
       for (const [label, href] of sidebarDestinations) {
