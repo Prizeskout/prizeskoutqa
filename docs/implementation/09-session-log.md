@@ -1952,3 +1952,33 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Commit `eb86988` was pushed and deployed as Worker `eaf3412b-e919-48ff-8d5d-9c41722042ea`.
 - A cache-busted authenticated production load verified that the sidebar now shows `PS` and `General manager`; the `demo` name is absent.
+
+## 2026-10-08 - Full attached interactive demo integration
+
+- Integrated the supplied `PrizeSkout Demo.dc.html` as the complete Naija Restaurant presentation experience for authenticated `demo_mode` workspaces.
+- Preserved the source entry screen, guided tour, dark visual system, fixture values, and Overview, Margin Leakage, Menu Intelligence, Order Automation, Promotions, Channels, Settlements, Integrations, and final value views.
+- Adapted the visible merchant identity to Naija Restaurant without exposing the shared login email.
+- Self-hosted the supplied runtime, TT Firs Neue fonts, PrizeSkout logos, and integrity-checked React, ReactDOM, and Babel vendor files so the demo has no third-party runtime dependency.
+- Scaled the source's 1280px presentation canvas at narrow viewports so it does not crop the dashboard.
+- Replaced the prototype's false `dispute pack sent` state with `preview prepared` and explicit merchant-approval copy. The experience made no write API requests.
+- Normal merchants remain on the governed dashboard; no connector, migration, merchant record, external action, deployment, or production state changed.
+
+### Verification commands and exact outcomes
+
+- Required startup `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` - passed.
+- Final `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- Final protected `npm run verify-zid-contract` and `npm run verify-salla-contract` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440px, 390px, 375px, and 844px, covering the entry screen, Naija identity, all eight dashboard destinations, responsive frame, no browser page errors, and no write API requests. Final screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-reference-demo-KP7YVC`.
+- `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-jgdtlj`.
+- `npm run build` - passed with the existing chunk-size and mixed static/dynamic import warnings.
+- `git diff --check` - passed before continuity-record edits.
+
+### Changed files and exact next action
+
+- Demo presentation assets: `public/prizeskout-demo/`.
+- Demo-mode mounting and responsive presentation frame: `DashboardDemoExperience.tsx` and `src/routes/dashboard.tsx`.
+- Regression coverage: `scripts/verify-dashboard-reference-demo.mts`, `scripts/verify-dashboard-v2-ui.mts`, and `package.json`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, decision/risk registers, and this session log.
+- Exact next action: commit and push the verified tracked files as explicitly authorized. Deploy only with separate authorization, then perform the dedicated Naija login and complete production walkthrough without representing the fixture as live merchant financial evidence.

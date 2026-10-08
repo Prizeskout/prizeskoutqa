@@ -47,3 +47,7 @@ The supplied dashboard prototype is a visual reference rather than production co
 ## ADR-012 - Canonical public margin endpoint
 
 The supported public margin contract is the endpoint documented in `api-spec.ts`: `POST /v1/margin`. Legacy `/v1/margin/costs`, `/channels`, `/sku`, `/breakeven`, and `/impact` handlers are not published by the gateway and must not be treated as supported production routes. Verification targets the documented sandbox contract, proves synthetic non-mutating provenance, and fails on every unexpected non-2xx or malformed response. Publishing any legacy subroute requires a separate contract, scope, tenancy, and migration review.
+
+## ADR-013 - Full-fidelity interactive demo isolation
+
+The supplied interactive demo is preserved as a self-contained presentation asset and mounted by the application only when authenticated server context identifies the workspace as `demo_mode`. Its static figures remain controlled demonstration data, its entry screen identifies the environment as a demo, and its controls cannot call PrizeSkout write APIs. Normal merchants continue through the governed dashboard contracts. Any prototype copy that implies a protected external action occurred must be changed to a local preview plus the merchant-approval boundary. Runtime dependencies are self-hosted to keep the scheduled presentation independent of third-party CDNs.
