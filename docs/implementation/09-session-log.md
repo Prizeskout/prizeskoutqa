@@ -1,5 +1,19 @@
 # Session Log
 
+## 2026-10-08 - Exact supplied demo module correction
+
+- Request: urgently match the re-shared Order Automation and Promotions and Discounts HTML, continuing the explicitly authorized commit/push/demo delivery workflow.
+- Read charter, state, current-state, and active packet; preserved all unrelated untracked artifacts.
+- Changed `DashboardV2OrderAutomation.tsx`, `DashboardV2Promotions.tsx`; added source-derived `OrderReferenceDemo.tsx`, `PromotionsReferenceDemo.tsx`, `reference-demo.css`, and `scripts/verify-dashboard-reference-demo.mts`. Updated the broad UI verifier's missing `ps_connected` fixture value; no application authentication bypass was added.
+- Native React rendering replaces incomplete demo-only placeholders. Source scripts are not evaluated at runtime; no iframe, support.js, connector calls, approval dispatch, or database mutations were introduced. Selection/toggles/sliders stay in ephemeral preview state. Original source hashes are recorded in the two components.
+- Baseline `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck`: exit 0.
+- Post-change `npm run typecheck`, `npm run verify-dashboard-v2-modules`, `npm run verify-dashboard-v2-contract`: exit 0.
+- `npx tsx scripts/verify-dashboard-reference-demo.mts`: exit 0; exact key figures/sections, interactive selection/filtering/sliders, no write APIs, no page errors, no page-level overflow at 1440/390/375/844. Screenshots initially in `C:/Users/DELL/AppData/Local/Temp/prizeskout-reference-demo-XYPUu6`. Desktop renders: Orders 1440x2684, Promotions 1440x2653. Reviewed both desktop renders and the phone output; improved contained phone campaign/rule table widths afterward.
+- First broad `npm run verify-dashboard-v2-ui`: failed at its YTD assertion after `/onboarding?period=qtd`, caused by missing `ps_connected` in its mock session. Corrected test fixture; repeat pending.
+- First `npm run build`: exit 0 with existing large-chunk/mixed-import warnings. Rebuilding to include the final responsive CSS correction.
+- Exact next executable action: finish running checks, commit/push, deploy `dist/server/wrangler.json`, then run the focused verifier with production origin and demo merchant environment variables. Record deployment and live outcome before final handoff.
+- Final local outcomes: repeat focused verifier exit 0 (`prizeskout-reference-demo-wY6tzf`); broader `npm run verify-dashboard-v2-ui` exit 0 at all four viewports (`prizeskout-dashboard-v2-LCje8l`); protected Zid and Salla contracts exit 0; `npm run verify-continuity` exit 0; `git diff --check` exit 0. Wrangler identity matches PrizeSkout account `6e383531f404fe9c49c9a470ee2f9fbf`.
+
 Append concise entries; do not rewrite prior entries.
 
 ## 2026-09-28 — Salla integration recovery started

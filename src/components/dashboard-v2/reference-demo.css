@@ -1,0 +1,97 @@
+.ps-reference-demo {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --surface-2: #f4f3ef;
+  --surface-3: #e7e7e2;
+  --ink: #0e1114;
+  --ink-2: #363b42;
+  --muted: #676c74;
+  --faint: #9a9ea5;
+  --line: #eceae5;
+  --card-sh:
+    0 0 0 1px rgba(20, 18, 14, 0.06), 0 1px 2px rgba(20, 18, 14, 0.04),
+    0 14px 36px -18px rgba(20, 18, 14, 0.14);
+  --brand: #f47320;
+  --brand-text: oklch(0.56 0.16 47);
+  --brand-ink: #ffffff;
+  --brand-bg: oklch(0.965 0.03 60);
+  --pos: oklch(0.5 0.11 158);
+  --pos-bg: oklch(0.95 0.035 158);
+  --neg: oklch(0.54 0.16 27);
+  --neg-bg: oklch(0.955 0.025 27);
+  --neg-bar: oklch(0.66 0.14 27);
+  --warn: oklch(0.82 0.14 92);
+  --warn-ink: oklch(0.5 0.1 85);
+  --warn-bg: oklch(0.965 0.045 95);
+  --cogs: #bdb9b0;
+  --panel: #111111;
+  --panel-2: #1c1c1c;
+  --panel-ink: #f3f2ef;
+  --panel-muted: #a3a19c;
+  --panel-line: #2c2b29;
+  --rp: 13px;
+  --sans: "TT Firs Neue", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+.ps-reference-demo a {
+  color: var(--brand-text);
+  text-decoration: none;
+}
+.ps-reference-demo a:hover {
+  text-decoration: underline;
+}
+.ps-reference-demo input[type="range"] {
+  accent-color: var(--brand);
+  width: 100%;
+  margin: 0;
+}
+.ps-reference-demo button:focus-visible,
+.ps-reference-demo [role="button"]:focus-visible,
+.ps-reference-demo input:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  .ps-reference-demo > div[style*="grid-template-columns"],
+  .ps-reference-demo > section[style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@media (max-width: 700px) {
+  .ps-reference-demo section > div[style*="1.9fr"] {
+    min-width: 1080px !important;
+  }
+  .ps-reference-demo #rules > div[style*="2.6fr"] {
+    min-width: 960px !important;
+  }
+  .ps-reference-demo section > div[style*="1.2fr"] {
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .ps-reference-demo > div:first-child {
+    flex-wrap: wrap;
+  }
+  .ps-reference-demo section {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .ps-reference-demo section > div[style*="grid-template-columns"] {
+    min-width: 650px;
+  }
+  .ps-reference-demo > section > div[style*="grid-template-rows"] {
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .ps-reference-demo > section > div[style*="padding: 26px"] {
+    min-width: 0;
+  }
+}

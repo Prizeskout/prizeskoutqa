@@ -3,6 +3,7 @@ import { DashboardV2Shell, type DashboardV2Page } from "./DashboardV2Shell";
 import { useDashboardV2Modules } from "./useDashboardV2Modules";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
 import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
+import { OrderReferenceDemo } from "./OrderReferenceDemo";
 
 const stages = [
   "Incoming",
@@ -22,6 +23,11 @@ export function DashboardV2OrderAutomation({
   const summary = useDashboardV2Summary().summary;
   const hasOrders = Boolean(order?.orders.length);
   const demo = order?.demo as any;
+  if (demo && activePage === "automation") return (
+    <DashboardV2Shell activePage={activePage} chromeData={buildDashboardV2ChromeData(summary)}>
+      <OrderReferenceDemo />
+    </DashboardV2Shell>
+  );
   return (
     <DashboardV2Shell activePage={activePage} chromeData={buildDashboardV2ChromeData(summary)}>
       <div className="ps-v2-page-heading">

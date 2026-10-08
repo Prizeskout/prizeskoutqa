@@ -3,6 +3,7 @@ import { DashboardV2Shell } from "./DashboardV2Shell";
 import { useDashboardV2Modules } from "./useDashboardV2Modules";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
 import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
+import { PromotionsReferenceDemo } from "./PromotionsReferenceDemo";
 
 const simulatorFields = [
   "Branches",
@@ -27,6 +28,11 @@ export function DashboardV2Promotions() {
   const scenarios = promotions?.scenarios ?? [];
   const selected = scenarios[0];
   const demo = promotions?.demo as any;
+  if (demo) return (
+    <DashboardV2Shell activePage="promotions" chromeData={buildDashboardV2ChromeData(summary)}>
+      <PromotionsReferenceDemo />
+    </DashboardV2Shell>
+  );
 
   return (
     <DashboardV2Shell activePage="promotions" chromeData={buildDashboardV2ChromeData(summary)}>

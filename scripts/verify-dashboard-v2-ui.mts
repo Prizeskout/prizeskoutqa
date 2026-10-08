@@ -158,7 +158,7 @@ try {
         }
         return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({ok:true,policy:basePolicy,versions:[]})});
       });
-      await page.addInitScript(() => { localStorage.setItem("ps_merchant_id", "acct"); localStorage.setItem("ps_access_code", "fixture"); });
+      await page.addInitScript(() => { localStorage.setItem("ps_connected", "true"); localStorage.setItem("ps_merchant_id", "acct"); localStorage.setItem("ps_access_code", "fixture"); });
       await page.goto(`${origin}/dashboard/revenue-hub`, { waitUntil: "domcontentloaded", timeout: 120_000 });
       await page.getByRole("heading", { name: /Gross sales increased/ }).waitFor({ timeout: 120_000 });
       assert.equal(page.url(), `${origin}/dashboard`, "retired Revenue Hub URL must resolve to the canonical dashboard");
