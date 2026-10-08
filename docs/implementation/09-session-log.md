@@ -1596,3 +1596,9 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Orders, periods, responsive Confidence, routing, and styles: Dashboard V2 shell/hooks/routes/CSS and UI verifier.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: run final Dashboard contracts, protected Zid/Salla checks, diff checks, and continuity verification. Keep Order Guard provisioning and merchant evidence acquisition as explicit separately governed work.
+
+### Authorized repository delivery
+
+- At the user's explicit request, committed the verified functional-workspace slice as `c60ccd1` (`feat: complete dashboard workspaces`).
+- Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts were not staged.
+- Exact next action: commit this continuity record and push both commits to `origin/main`. This does not authorize deployment, migration, Order Guard provisioning, or merchant-evidence mutation.

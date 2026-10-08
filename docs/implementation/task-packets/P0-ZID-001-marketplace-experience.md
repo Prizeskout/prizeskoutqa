@@ -151,3 +151,5 @@ The customer-visible URL correction is also local and verified: normal navigatio
 The authorized implementation commit is `a00fdb9` (`fix: keep dashboard navigation in canonical shell`). Exact next action: push the repository commits to `origin/main`; do not deploy without separate authorization.
 
 The new functional-workspace slice is local and browser-verified. Exact next action: run final module/summary and protected integration contracts plus continuity. Order Guard requires separately authorized migration-state reconciliation, and merchant evidence must be supplied or connected by the merchant; neither may be marked complete from UI work.
+
+The verified implementation is committed as `c60ccd1` (`feat: complete dashboard workspaces`). Exact next action: push the authorized repository commits to `origin/main`; do not infer migration or deployment authorization.
