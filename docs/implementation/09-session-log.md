@@ -1629,3 +1629,27 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Regression coverage: `scripts/verify-dashboard-v2-ui.mts`.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: run final protected contracts, diff check, and continuity verification. Commit/push only with explicit authorization; deployment and signed-in production verification remain separate.
+## 2026-10-08 - Plain-language product copy pass
+
+- Replaced the Margin Rules introduction with a short explanation of the default target and per-channel targets.
+- Audited the canonical dashboard for internal terms such as retained, governed, merchant-scoped, provenance, evidence-gated, and effective-dated, then rewrote visible descriptions in everyday language.
+- Simplified copy across Overview, confidence, Priority Centre, Orders, Order Automation, Promotions, Copilot, AI Store Manager, profit, menu costs, channels, settlements, reports, settings, access, audit history, and developer access.
+- Kept technical identifiers where they help developers or audit review. Financial boundaries, missing states, approval requirements, and the separation of order, contract, payout, and receipt records did not change.
+- No deployment, migration, connector mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup continuity, protected Zid/Salla contracts, and typecheck - passed.
+- First post-copy Dashboard V2 UI run failed because two assertions expected the old confidence and Priority drawer wording; the assertions were updated to require the new wording.
+- Second post-copy UI run progressed to Priority Centre and failed because its heading assertion still expected the old wording; corrected before the final run.
+- Third post-copy UI run progressed to AI Store Manager and failed because its heading assertion still expected the old wording; corrected before the final run.
+- Final `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-4AWWEm`.
+- Final typecheck, Dashboard V2 contract/module checks, protected Zid/Salla contracts, and production build - passed. The build emitted only the existing mixed-import and chunk-size warnings.
+- Final continuity verification - passed.
+
+### Changed files and exact next action
+
+- Plain-language UI copy: Dashboard V2 components and Margin Rules/Settings tabs.
+- Regression copy assertions: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: review the verified local copy diff. Commit/push only with explicit authorization; deployment remains separate.

@@ -1,5 +1,7 @@
 # Current State
 
+- 2026-10-08 local plain-language pass: simplified customer-facing helper text across Margin Rules and the canonical dashboard workspaces, including Overview, Priority Centre, Orders, Order Automation, Promotions, Copilot, Store Manager, profit, menu costs, channels, settlements, reports, settings, access, audit history, and developer access. Financial safeguards remain unchanged: missing values still say they are missing, payout differences are not assigned to orders without proof, and protected actions still require approval. No deployment occurred.
+
 - 2026-10-08 local dashboard correction: removed the customer-visible `ACTIVE · VERSION 2` margin-policy badge, restored AI Store Manager as a first-class `/dashboard/store-manager` destination, and embedded the existing monitored Store Manager operating loop alongside manager-mode conversation. Dashboard context now resolves `licensee_members.functional_role` only from a verified Supabase session matched to the merchant workspace licensee; finance/accounting and operations receive prioritized navigation and explicit role context, while absent evidence falls back to Merchant operator. No permission is granted from the browser label, no protected action boundary changed, and no deployment occurred. Typecheck, production build, Dashboard V2 contracts/modules, protected Zid/Salla contracts, and the four-viewport Dashboard V2 UI suite pass locally.
 
 Last reconciled with the repository: 2026-10-01.

@@ -191,13 +191,13 @@ try {
       if (viewport.width > 1024) {
         await page.getByRole("button", { name: /Confidence/ }).click();
         await page.getByRole("region", { name: "Evidence confidence" }).waitFor();
-        assert.equal(await page.getByText("4 of 4 financial truth layers are verified for this scope.", { exact: true }).count(), 1);
+        assert.equal(await page.getByText("4 of 4 required record types are ready.", { exact: true }).count(), 1);
         await page.keyboard.press("Escape");
         assert.equal(await page.getByRole("region", { name: "Evidence confidence" }).count(), 0);
       }
       await page.getByRole("button", { name: /Priority 4/ }).click();
       await page.getByRole("dialog", { name: "Priority Centre" }).waitFor();
-      assert.equal(await page.getByText("4 evidence-backed decisions need review", { exact: true }).count(), 1);
+      assert.equal(await page.getByText("4 decisions need your review", { exact: true }).count(), 1);
       await page.keyboard.press("Escape");
       assert.equal(await page.getByRole("dialog", { name: "Priority Centre" }).count(), 0);
       await page.screenshot({ path: join(screenshots, `dashboard-v2-overview-${viewport.name}.png`), fullPage: true });
@@ -229,7 +229,7 @@ try {
       await page.screenshot({ path: join(screenshots, `dashboard-v2-promotions-${viewport.name}.png`), fullPage: true });
 
       await page.goto(`${origin}/dashboard/priority-centre`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-      await page.getByRole("heading", { name: "Resolve what the evidence supports next." }).waitFor({ timeout: 120_000 });
+      await page.getByRole("heading", { name: "See what needs your attention next." }).waitFor({ timeout: 120_000 });
       assert.equal(page.url(), `${origin}/dashboard/priority-centre`);
       await page.getByText("finding-batch", { exact: true }).waitFor({ timeout: 120_000 });
       await page.locator(".ps-v2-confidence b").getByText("100%", { exact: true }).waitFor({ state: "attached" });
@@ -255,7 +255,7 @@ try {
           assert.equal(workspaceDimensions.scrollWidth, workspaceDimensions.clientWidth, `${label}: page-level horizontal overflow`);
         }
         await page.goto(`${origin}/dashboard/store-manager`, { waitUntil: "domcontentloaded", timeout: 120_000 });
-        await page.getByRole("heading", { name: "Store operations conversation", exact: true }).waitFor({ timeout: 120_000 });
+        await page.getByRole("heading", { name: "Chat with your Store Manager", exact: true }).waitFor({ timeout: 120_000 });
         assert.equal(await page.getByText("AI Store Manager", { exact: true }).count() > 0, true);
         await page.goto(`${origin}/dashboard/v2/promotions`, { waitUntil: "domcontentloaded", timeout: 120_000 });
         await page.getByRole("heading", { name: /Campaign contribution is not calculated/ }).waitFor({ timeout: 120_000 });

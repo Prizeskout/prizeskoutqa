@@ -2,14 +2,32 @@ import { DashboardV2Shell } from "./DashboardV2Shell";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
 import type { ReactNode } from "react";
 
-const money = (value: number | null | undefined, currency?: string | null) => value == null || !Number.isFinite(value) ? "Not calculated" : `${currency ? `${currency} ` : ""}${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value)}`;
-const compact = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? "Not calculated" : new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
-const titleCase = (value: string) => value === "unassigned" ? "Unassigned channel" : value.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+const money = (value: number | null | undefined, currency?: string | null) =>
+  value == null || !Number.isFinite(value)
+    ? "Not calculated"
+    : `${currency ? `${currency} ` : ""}${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value)}`;
+const compact = (value: number | null | undefined) =>
+  value == null || !Number.isFinite(value)
+    ? "Not calculated"
+    : new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(
+        value,
+      );
+const titleCase = (value: string) =>
+  value === "unassigned"
+    ? "Unassigned channel"
+    : value.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 export function DashboardV2Overview() {
   const load = useDashboardV2Summary();
   const summary = load.summary;
-  const conclusion = summary?.conclusion ?? { title: load.phase === "loading" ? "Loading retained financial evidence..." : "Financial evidence is unavailable.", detail: load.message ?? "A verified merchant session is required.", next_action: "Restore the verified evidence session." };
+  const conclusion = summary?.conclusion ?? {
+    title:
+      load.phase === "loading"
+        ? "Loading your financial records..."
+        : "Financial information is not available.",
+    detail: load.message ?? "Please sign in again to view this account.",
+    next_action: "Sign in again and reload the dashboard.",
+  };
   const bridge = summary?.metrics.profit_bridge ?? [];
   const bridgeMaximum = Math.max(1, ...bridge.map((row) => row.amount ?? 0));
   const bridgeByKey = new Map(bridge.map((row) => [row.key, row]));
@@ -17,67 +35,654 @@ export function DashboardV2Overview() {
   const productCostAmount = bridgeByKey.get("product_cost")?.amount ?? 0;
   const reductionAmount = bridgeByKey.get("gross_to_net")?.amount ?? 0;
   const bridgeLayout = [
-    { key: "gross_sales", label: "Gross sales", kind: "total", amount: bridgeByKey.get("gross_sales")?.amount, bottom: 0 },
-    { key: "commission", label: "Commission", kind: "unavailable", amount: null, bottom: contributionAmount + productCostAmount + reductionAmount },
-    { key: "promotions", label: "Promotions", kind: "unavailable", amount: null, bottom: contributionAmount + productCostAmount + reductionAmount },
-    { key: "gross_to_net", label: "Recorded reductions", kind: "deduction", amount: bridgeByKey.get("gross_to_net")?.amount, bottom: contributionAmount + productCostAmount },
-    { key: "refunds", label: "Refunds", kind: "unavailable", amount: null, bottom: contributionAmount + productCostAmount },
-    { key: "product_cost", label: "Product cost", kind: "cost", amount: bridgeByKey.get("product_cost")?.amount, bottom: contributionAmount },
-    { key: "adjustments", label: "Adjustments", kind: "unavailable", amount: null, bottom: contributionAmount },
-    { key: "contribution", label: "True contribution", kind: "result", amount: bridgeByKey.get("contribution")?.amount, bottom: 0 },
+    {
+      key: "gross_sales",
+      label: "Gross sales",
+      kind: "total",
+      amount: bridgeByKey.get("gross_sales")?.amount,
+      bottom: 0,
+    },
+    {
+      key: "commission",
+      label: "Commission",
+      kind: "unavailable",
+      amount: null,
+      bottom: contributionAmount + productCostAmount + reductionAmount,
+    },
+    {
+      key: "promotions",
+      label: "Promotions",
+      kind: "unavailable",
+      amount: null,
+      bottom: contributionAmount + productCostAmount + reductionAmount,
+    },
+    {
+      key: "gross_to_net",
+      label: "Recorded reductions",
+      kind: "deduction",
+      amount: bridgeByKey.get("gross_to_net")?.amount,
+      bottom: contributionAmount + productCostAmount,
+    },
+    {
+      key: "refunds",
+      label: "Refunds",
+      kind: "unavailable",
+      amount: null,
+      bottom: contributionAmount + productCostAmount,
+    },
+    {
+      key: "product_cost",
+      label: "Product cost",
+      kind: "cost",
+      amount: bridgeByKey.get("product_cost")?.amount,
+      bottom: contributionAmount,
+    },
+    {
+      key: "adjustments",
+      label: "Adjustments",
+      kind: "unavailable",
+      amount: null,
+      bottom: contributionAmount,
+    },
+    {
+      key: "contribution",
+      label: "True contribution",
+      kind: "result",
+      amount: bridgeByKey.get("contribution")?.amount,
+      bottom: 0,
+    },
   ];
   const channels = summary?.metrics.by_channel ?? [];
   const truthRows = summary ? Object.values(summary.truths) : [];
   const verifiedTruths = truthRows.filter((truth) => truth.status === "verified").length;
-  const confidencePct = truthRows.length ? Math.round((verifiedTruths / truthRows.length) * 100) : 0;
-  const missingTruths = truthRows.filter((truth) => truth.status !== "verified").map((truth) => `${titleCase(truth.key)} ${truth.status}`).join(" · ");
-  const contributionMovement = summary?.comparison.movements.find((movement) => movement.key === "contribution");
+  const confidencePct = truthRows.length
+    ? Math.round((verifiedTruths / truthRows.length) * 100)
+    : 0;
+  const missingTruths = truthRows
+    .filter((truth) => truth.status !== "verified")
+    .map((truth) => `${titleCase(truth.key)} ${truth.status}`)
+    .join(" · ");
+  const contributionMovement = summary?.comparison.movements.find(
+    (movement) => movement.key === "contribution",
+  );
   const chromeData = {
     confidenceLabel: summary ? `${confidencePct}%` : "—",
-    confidenceDetail: summary ? `${verifiedTruths} of ${truthRows.length} financial truth layers are verified for this scope.` : "Confidence is unavailable until retained evidence is loaded.",
+    confidenceDetail: summary
+      ? `${verifiedTruths} of ${truthRows.length} required record types are ready.`
+      : "Confidence will appear when your financial records finish loading.",
     confidenceMissing: missingTruths || undefined,
-    priorityItems: (summary?.priority_decisions.items ?? []).map((item) => ({ id: item.finding_id, title: item.title, detail: item.next_safe_action, amount: item.amount == null ? null : money(item.amount, item.currency), state: item.state })),
+    priorityItems: (summary?.priority_decisions.items ?? []).map((item) => ({
+      id: item.finding_id,
+      title: item.title,
+      detail: item.next_safe_action,
+      amount: item.amount == null ? null : money(item.amount, item.currency),
+      state: item.state,
+    })),
   };
 
-  return <DashboardV2Shell chromeData={chromeData}>
-    <div className="ps-v2-page-heading"><div><p className="ps-v2-eyebrow">Current financial scope · selected period vs previous period</p><h1>{summary?.comparison.summary ?? conclusion.title} <span className="ps-v2-muted">{conclusion.detail}</span></h1></div><span className="ps-v2-sync">{summary?.generated_at ? `Synced ${new Date(summary.generated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Sync unavailable"}</span></div>
-
-    <section className="ps-v2-hero" aria-labelledby="v2-hero-title">
-      <div className="ps-v2-hero-main"><div className="ps-v2-hero-kicker"><span className="ps-v2-label">True contribution profit</span><span>After all evidenced platform costs &amp; COGS</span></div><h2 id="v2-hero-title" className="ps-v2-dominant-metric">{money(summary?.metrics.true_contribution, summary?.metrics.currency)}</h2><div className="ps-v2-hero-comparison"><b>{contributionMovement?.change_pct == null ? "Comparison unavailable" : `${contributionMovement.change_pct >= 0 ? "↑" : "↓"} ${Math.abs(contributionMovement.change_pct).toFixed(1)}%`}</b><span>{contributionMovement ? `vs ${money(contributionMovement.previous, summary?.metrics.currency)} previous period · ${contributionMovement.change >= 0 ? "+" : "−"}${money(Math.abs(contributionMovement.change), summary?.metrics.currency)}` : summary?.metrics.blockers[0] ?? "Waiting for the governed comparison."}</span></div><div className="ps-v2-sparkline" aria-hidden="true"><svg viewBox="0 0 520 72" preserveAspectRatio="none"><path d="M0 55 L42 46 L86 54 L130 26 L174 51 L218 48 L262 31 L306 45 L350 39 L394 17 L438 47 L480 40 L520 22" /><path className="previous" d="M0 58 L42 52 L86 49 L130 43 L174 52 L218 46 L262 40 L306 43 L350 38 L394 36 L438 42 L480 37 L520 34" /></svg></div><div className="ps-v2-hero-legend"><span><i />Daily contribution</span><span><i />Previous period</span><code>{summary?.latest_finding ? `Evidence ${summary.latest_finding.id}` : summary?.version ?? "Evidence loading"}</code></div></div>
-      <div className="ps-v2-metric-grid" aria-label="Financial summary"><div><span>Gross sales</span><strong>{money(summary?.metrics.gross_sales, summary?.metrics.currency)}</strong><small>{money(summary?.metrics.orders)} orders evidenced</small></div><div><span>Net revenue</span><strong>{money(summary?.metrics.net_revenue, summary?.metrics.currency)}</strong><small>After recorded reductions</small></div><div><span>Contribution margin</span><strong>{summary?.metrics.contribution_margin_pct == null ? "Not calculated" : `${summary.metrics.contribution_margin_pct.toFixed(1)}%`}</strong><small>Evidence-gated</small></div><div data-tone="risk"><span>Margin at risk</span><strong>Not calculated</strong><small>No unsupported leakage total</small></div><div><span>Settlement variance</span><strong>{money(summary?.metrics.settlement_variance, summary?.metrics.currency)}</strong><small>{summary?.reconciliation.label ?? "Finding not loaded"}</small></div><div data-tone="brand"><span>Recoverable margin</span><strong>{money(summary?.metrics.recoverable_margin, summary?.metrics.currency)}</strong><small>Only with attributable evidence</small></div></div>
-    </section>
-
-    <section className="ps-v2-signal-strip" aria-label="Operational signals"><div><span className="ps-v2-label">Operational signals</span></div><div><span className="ps-v2-signal-dot" /><span><strong>Order Automation</strong><small>Unavailable until Order Guard is provisioned</small></span><b>→</b></div><div><span className="ps-v2-signal-dot" data-tone="warning" /><span><strong>Promotion Health</strong><small>Campaign evidence not loaded</small></span><b>→</b></div></section>
-
-    <div className="ps-v2-dashboard-row ps-v2-dashboard-row-primary">
-      <section className="ps-v2-card ps-v2-profit-bridge" aria-labelledby="v2-bridge-title"><Header title="Profit bridge" subtitle={`Where ${money(summary?.metrics.gross_sales, summary?.metrics.currency)} of evidenced gross sales goes before it becomes contribution`} aside={<span className="ps-v2-bridge-legend"><i />Platform <i />Operational <i />COGS</span>} /><div className="ps-v2-bridge-chart" role="img" aria-label="Financial bridge from gross sales to true contribution">{bridgeLayout.map((row) => <div className="ps-v2-bridge-step" data-kind={row.kind} key={row.key}><strong>{row.amount == null ? "—" : `${row.kind === "deduction" || row.kind === "cost" ? "−" : ""}${compact(row.amount)}`}</strong><div className="ps-v2-bridge-track"><span style={{ height: row.amount == null ? "2px" : `${Math.max(3, (Math.abs(row.amount) / bridgeMaximum) * 100)}%`, bottom: `${Math.max(0, (row.bottom / bridgeMaximum) * 100)}%` }} /></div><span>{row.label}</span></div>)}</div><div className="ps-v2-bridge-note"><div><strong>{summary?.metrics.cost_coverage.complete ? "Contribution is evidence-complete." : "Contribution is intentionally withheld."}</strong><span>Unavailable deduction categories remain blank rather than inferred.</span></div><b>{money(summary?.metrics.true_contribution, summary?.metrics.currency)}</b></div></section>
-      <section className="ps-v2-change-card" aria-labelledby="v2-change-title"><div><span className="ps-v2-change-mark" /><h2 id="v2-change-title">What changed?</h2></div><p>{summary?.comparison?.summary ?? "Waiting for a governed previous-period comparison."}</p>{summary?.comparison?.movements.map((movement, index) => <div className="ps-v2-change-driver" key={movement.key}><span>{index + 1}</span><div><strong>{movement.label}</strong><small>{movement.change >= 0 ? "+" : "−"}{movement.unit === "points" ? `${Math.abs(movement.change).toFixed(1)} pts` : money(Math.abs(movement.change), movement.unit === "money" ? summary.metrics.currency : null)} · {movement.change_pct == null ? "measured difference" : `${Math.abs(movement.change_pct).toFixed(1)}% vs previous`}</small></div></div>)}{!!summary?.comparison?.blockers.length && <small className="ps-v2-change-boundary">Evidence boundary: {summary.comparison.blockers[0]} No cause is inferred.</small>}</section>
-    </div>
-
-    <section className="ps-v2-card ps-v2-channel-card" aria-labelledby="v2-channel-title"><Header title="Channel profitability" subtitle="Revenue is not profit. Contribution is shown only when cost evidence is complete." aside={<div className="ps-v2-period"><button disabled>Revenue</button><button disabled className="active">Profit</button><button disabled>Margin</button><button disabled>Leakage</button><button disabled>Variance</button></div>} />{channels.length ? <><div className="ps-v2-table-wrap"><table className="ps-v2-channel-table"><caption className="ps-v2-sr-only">Channel profitability</caption><thead><tr><th>Channel · revenue vs profit</th><th>Revenue</th><th>Orders</th><th>AOV</th><th>Eff. commission</th><th>Promo cost</th><th>COGS</th><th>Contribution</th><th>Margin</th><th>Variance</th></tr></thead><tbody>{channels.map((row) => <tr key={row.channel}><th scope="row"><span className="ps-v2-channel-mark">{titleCase(row.channel).charAt(0)}</span><span className="ps-v2-channel-name">{titleCase(row.channel)}<i /><i /></span></th><td>{money(row.revenue, summary?.metrics.currency)}</td><td>{money(row.orders)}</td><td>{money(row.orders ? row.revenue / row.orders : null)}</td><td>{row.revenue && row.fees != null ? `${((row.fees / row.revenue) * 100).toFixed(1)}%` : "—"}</td><td>{money(row.discounts)}</td><td>{money(row.product_cost)}</td><td><strong>{money(row.contribution)}</strong></td><td><strong>{row.margin_pct == null ? "Not calculated" : `${row.margin_pct.toFixed(1)}%`}</strong></td><td>—</td></tr>)}</tbody></table></div><footer className="ps-v2-channel-footer"><span><i />Share of revenue</span><span><i />Share of contribution</span><small>Channel variance remains unavailable without channel-allocated payout evidence.</small></footer></> : <p className="ps-v2-empty-copy">No evidenced channel rows are available.</p>}</section>
-
-    <div id="margin-leakage" className="ps-v2-dashboard-row">
-      <section className="ps-v2-card ps-v2-reconciliation-card" data-state={summary?.reconciliation.state ?? "unavailable"}><Header title="Settlement reconciliation" subtitle="Expected → platform statement → bank received" aside={<span className="ps-v2-readonly">Settlement → Orders → Fees → Evidence</span>} /><div className="ps-v2-settlement-flow"><div><span>Expected · PrizeSkout model</span><strong>{money(summary?.reconciliation.expected_amount, summary?.reconciliation.currency)}</strong></div><b>→</b><div><span>Platform statement</span><strong>{money(summary?.reconciliation.reported_amount, summary?.reconciliation.currency)}</strong></div><b>→</b><div><span>Bank received</span><strong>{summary?.truths.receipt.status === "verified" ? "Confirmed" : "Not confirmed"}</strong></div></div><div className="ps-v2-variance-summary"><div><span>Unexplained variance</span><strong>{money(summary?.reconciliation.variance, summary?.reconciliation.currency)}</strong></div><i><b /></i><small>{summary?.reconciliation.label ?? "Finding not loaded"} · {summary?.reconciliation.explanation ?? "No retained finding is available."}</small></div><div className="ps-v2-settlement-table"><div><strong>{summary?.reconciliation.settlement_reference ?? "Settlement reference unavailable"}</strong><span>{summary?.reconciliation.finding_id ?? "No finding reference"}</span></div><span>{money(summary?.reconciliation.expected_amount)}</span><span>{money(summary?.reconciliation.reported_amount)}</span><strong>{money(summary?.reconciliation.variance)}</strong><em>{summary?.reconciliation.allocation_scope === "order" ? "Order allocated" : summary?.reconciliation.allocation_scope === "batch" ? "Under review" : "Evidence required"}</em></div>{summary?.reconciliation.state === "unallocated" && <p className="ps-v2-boundary-note"><strong>Not allocated to an order.</strong> This difference cannot become a claim without order-level evidence.</p>}</section>
-      <section className="ps-v2-card ps-v2-priority-card ps-v2-leakage-card"><Header title="Margin leakage" subtitle="Highest-priority retained findings" aside={<span className="ps-v2-readonly">All issues →</span>} />{summary?.priority_decisions?.items.length ? <ol className="ps-v2-priority-list">{summary.priority_decisions.items.map((item) => <li key={item.id}><span className="ps-v2-priority-rank">{item.rank}</span><div className="ps-v2-priority-body"><div className="ps-v2-priority-title-row"><div><small>{item.state.replaceAll("_", " ")}</small><strong>{item.title}</strong><span>{item.reference ?? "Retained finding"}</span></div>{item.amount != null && <strong>{money(item.amount, item.currency)}</strong>}</div><p>{item.next_safe_action}</p><div className="ps-v2-priority-controls"><span>{item.evidence_strength ?? "strength not recorded"} evidence</span><button type="button" disabled>View evidence</button><button type="button" disabled>Investigate</button></div><div className="ps-v2-priority-meta"><span>Evidence {item.finding_id}</span></div></div></li>)}</ol> : <p className="ps-v2-empty-copy">No retained leakage finding is available.</p>}</section>
-    </div>
-
-    <section id="branch-performance" className="ps-v2-branch-card">
-      <div className="ps-v2-branch-main">
-        <Header title="Branch performance" subtitle={summary?.metrics.branch_performance.ranked ? `${summary.metrics.branch_performance.rows.length} evidenced branches · ranked by contribution margin` : "Ranking withheld until identity and cost coverage are complete"} aside={<span className="ps-v2-coverage-badge" data-complete={summary?.metrics.branch_performance.ranked ?? false}>{summary?.metrics.branch_performance.ranked ? "All branches →" : "Ranking blocked"}</span>} />
-        {summary?.metrics.branch_performance.rows.length ? <div className="ps-v2-table-wrap ps-v2-branch-table-wrap"><table className="ps-v2-channel-table ps-v2-branch-table"><caption className="ps-v2-sr-only">Branch performance</caption><thead><tr><th>Branch</th><th>Contribution</th><th>Margin</th><th>Revenue</th><th>Orders</th><th>Variance</th></tr></thead><tbody>{summary.metrics.branch_performance.rows.map((row) => <tr key={row.branch}><th scope="row"><span className="ps-v2-branch-dot" />{titleCase(row.branch)}</th><td><strong>{money(row.contribution, summary.metrics.currency)}</strong></td><td><span className="ps-v2-margin-cell"><i style={{ width: row.margin_pct == null ? "0%" : `${Math.max(0, Math.min(100, row.margin_pct))}%` }} /><strong>{row.margin_pct == null ? "Not calculated" : `${row.margin_pct.toFixed(1)}%`}</strong></span></td><td>{money(row.revenue, summary.metrics.currency)}</td><td>{money(row.orders)}</td><td>{summary.reconciliation.state === "unavailable" ? "Not calculated" : money(summary.reconciliation.variance, summary.reconciliation.currency)}</td></tr>)}</tbody></table></div> : <p className="ps-v2-empty-copy">No identified branch evidence is available.</p>}
+  return (
+    <DashboardV2Shell chromeData={chromeData}>
+      <div className="ps-v2-page-heading">
+        <div>
+          <p className="ps-v2-eyebrow">
+            Current financial scope · selected period vs previous period
+          </p>
+          <h1>
+            {summary?.comparison.summary ?? conclusion.title}{" "}
+            <span className="ps-v2-muted">{conclusion.detail}</span>
+          </h1>
+        </div>
+        <span className="ps-v2-sync">
+          {summary?.generated_at
+            ? `Synced ${new Date(summary.generated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+            : "Sync unavailable"}
+        </span>
       </div>
-      <aside className="ps-v2-branch-attention">
-        <span>Requires attention</span>
-        <h2>{summary?.metrics.branch_performance.ranked ? "Review the lowest-margin evidenced branch" : "Branch comparison is not decision-ready"}</h2>
-        <p>{summary?.metrics.branch_performance.blockers[0] ?? "The current evidence does not support a branch-level intervention."}</p>
-        <dl><div><dt>Settlement variance</dt><dd>{money(summary?.reconciliation.variance, summary?.reconciliation.currency)}</dd></div><div><dt>Evidence</dt><dd>{summary?.reconciliation.finding_id ? `Finding ${summary.reconciliation.finding_id}` : "Not available"}</dd></div></dl>
-        <div className="ps-v2-branch-actions"><button type="button" disabled>Investigate branch</button><button type="button" disabled>Assign</button></div>
-      </aside>
-    </section>
-    <footer className="ps-v2-dashboard-footer"><span>True contribution uses only retained, attributable evidence. Unallocated differences stay separate.</span><span>{conclusion.next_action}</span></footer>
-  </DashboardV2Shell>;
+
+      <section className="ps-v2-hero" aria-labelledby="v2-hero-title">
+        <div className="ps-v2-hero-main">
+          <div className="ps-v2-hero-kicker">
+            <span className="ps-v2-label">True contribution profit</span>
+            <span>After recorded platform fees and product costs</span>
+          </div>
+          <h2 id="v2-hero-title" className="ps-v2-dominant-metric">
+            {money(summary?.metrics.true_contribution, summary?.metrics.currency)}
+          </h2>
+          <div className="ps-v2-hero-comparison">
+            <b>
+              {contributionMovement?.change_pct == null
+                ? "Comparison unavailable"
+                : `${contributionMovement.change_pct >= 0 ? "↑" : "↓"} ${Math.abs(contributionMovement.change_pct).toFixed(1)}%`}
+            </b>
+            <span>
+              {contributionMovement
+                ? `vs ${money(contributionMovement.previous, summary?.metrics.currency)} previous period · ${contributionMovement.change >= 0 ? "+" : "−"}${money(Math.abs(contributionMovement.change), summary?.metrics.currency)}`
+                : (summary?.metrics.blockers[0] ?? "Waiting for enough information to compare.")}
+            </span>
+          </div>
+          <div className="ps-v2-sparkline" aria-hidden="true">
+            <svg viewBox="0 0 520 72" preserveAspectRatio="none">
+              <path d="M0 55 L42 46 L86 54 L130 26 L174 51 L218 48 L262 31 L306 45 L350 39 L394 17 L438 47 L480 40 L520 22" />
+              <path
+                className="previous"
+                d="M0 58 L42 52 L86 49 L130 43 L174 52 L218 46 L262 40 L306 43 L350 38 L394 36 L438 42 L480 37 L520 34"
+              />
+            </svg>
+          </div>
+          <div className="ps-v2-hero-legend">
+            <span>
+              <i />
+              Daily contribution
+            </span>
+            <span>
+              <i />
+              Previous period
+            </span>
+            <code>
+              {summary?.latest_finding
+                ? `Evidence ${summary.latest_finding.id}`
+                : (summary?.version ?? "Evidence loading")}
+            </code>
+          </div>
+        </div>
+        <div className="ps-v2-metric-grid" aria-label="Financial summary">
+          <div>
+            <span>Gross sales</span>
+            <strong>{money(summary?.metrics.gross_sales, summary?.metrics.currency)}</strong>
+            <small>{money(summary?.metrics.orders)} orders evidenced</small>
+          </div>
+          <div>
+            <span>Net revenue</span>
+            <strong>{money(summary?.metrics.net_revenue, summary?.metrics.currency)}</strong>
+            <small>After recorded reductions</small>
+          </div>
+          <div>
+            <span>Contribution margin</span>
+            <strong>
+              {summary?.metrics.contribution_margin_pct == null
+                ? "Not calculated"
+                : `${summary.metrics.contribution_margin_pct.toFixed(1)}%`}
+            </strong>
+            <small>Shown when all required costs are available</small>
+          </div>
+          <div data-tone="risk">
+            <span>Margin at risk</span>
+            <strong>Not calculated</strong>
+            <small>No unsupported leakage total</small>
+          </div>
+          <div>
+            <span>Settlement variance</span>
+            <strong>
+              {money(summary?.metrics.settlement_variance, summary?.metrics.currency)}
+            </strong>
+            <small>{summary?.reconciliation.label ?? "Finding not loaded"}</small>
+          </div>
+          <div data-tone="brand">
+            <span>Recoverable margin</span>
+            <strong>{money(summary?.metrics.recoverable_margin, summary?.metrics.currency)}</strong>
+            <small>Only with attributable evidence</small>
+          </div>
+        </div>
+      </section>
+
+      <section className="ps-v2-signal-strip" aria-label="Operational signals">
+        <div>
+          <span className="ps-v2-label">Operational signals</span>
+        </div>
+        <div>
+          <span className="ps-v2-signal-dot" />
+          <span>
+            <strong>Order Automation</strong>
+            <small>Unavailable until Order Guard is provisioned</small>
+          </span>
+          <b>→</b>
+        </div>
+        <div>
+          <span className="ps-v2-signal-dot" data-tone="warning" />
+          <span>
+            <strong>Promotion Health</strong>
+            <small>Campaign evidence not loaded</small>
+          </span>
+          <b>→</b>
+        </div>
+      </section>
+
+      <div className="ps-v2-dashboard-row ps-v2-dashboard-row-primary">
+        <section className="ps-v2-card ps-v2-profit-bridge" aria-labelledby="v2-bridge-title">
+          <Header
+            title="Profit bridge"
+            subtitle={`Where ${money(summary?.metrics.gross_sales, summary?.metrics.currency)} of evidenced gross sales goes before it becomes contribution`}
+            aside={
+              <span className="ps-v2-bridge-legend">
+                <i />
+                Platform <i />
+                Operational <i />
+                COGS
+              </span>
+            }
+          />
+          <div
+            className="ps-v2-bridge-chart"
+            role="img"
+            aria-label="Financial bridge from gross sales to true contribution"
+          >
+            {bridgeLayout.map((row) => (
+              <div className="ps-v2-bridge-step" data-kind={row.kind} key={row.key}>
+                <strong>
+                  {row.amount == null
+                    ? "—"
+                    : `${row.kind === "deduction" || row.kind === "cost" ? "−" : ""}${compact(row.amount)}`}
+                </strong>
+                <div className="ps-v2-bridge-track">
+                  <span
+                    style={{
+                      height:
+                        row.amount == null
+                          ? "2px"
+                          : `${Math.max(3, (Math.abs(row.amount) / bridgeMaximum) * 100)}%`,
+                      bottom: `${Math.max(0, (row.bottom / bridgeMaximum) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <span>{row.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="ps-v2-bridge-note">
+            <div>
+              <strong>
+                {summary?.metrics.cost_coverage.complete
+                  ? "Contribution is evidence-complete."
+                  : "Contribution is intentionally withheld."}
+              </strong>
+              <span>Unavailable deduction categories remain blank rather than inferred.</span>
+            </div>
+            <b>{money(summary?.metrics.true_contribution, summary?.metrics.currency)}</b>
+          </div>
+        </section>
+        <section className="ps-v2-change-card" aria-labelledby="v2-change-title">
+          <div>
+            <span className="ps-v2-change-mark" />
+            <h2 id="v2-change-title">What changed?</h2>
+          </div>
+          <p>
+            {summary?.comparison?.summary ??
+              "Waiting for enough information to compare with the previous period."}
+          </p>
+          {summary?.comparison?.movements.map((movement, index) => (
+            <div className="ps-v2-change-driver" key={movement.key}>
+              <span>{index + 1}</span>
+              <div>
+                <strong>{movement.label}</strong>
+                <small>
+                  {movement.change >= 0 ? "+" : "−"}
+                  {movement.unit === "points"
+                    ? `${Math.abs(movement.change).toFixed(1)} pts`
+                    : money(
+                        Math.abs(movement.change),
+                        movement.unit === "money" ? summary.metrics.currency : null,
+                      )}{" "}
+                  ·{" "}
+                  {movement.change_pct == null
+                    ? "measured difference"
+                    : `${Math.abs(movement.change_pct).toFixed(1)}% vs previous`}
+                </small>
+              </div>
+            </div>
+          ))}
+          {!!summary?.comparison?.blockers.length && (
+            <small className="ps-v2-change-boundary">
+              Evidence boundary: {summary.comparison.blockers[0]} No cause is inferred.
+            </small>
+          )}
+        </section>
+      </div>
+
+      <section className="ps-v2-card ps-v2-channel-card" aria-labelledby="v2-channel-title">
+        <Header
+          title="Channel profitability"
+          subtitle="Revenue is not profit. Contribution is shown only when cost evidence is complete."
+          aside={
+            <div className="ps-v2-period">
+              <button disabled>Revenue</button>
+              <button disabled className="active">
+                Profit
+              </button>
+              <button disabled>Margin</button>
+              <button disabled>Leakage</button>
+              <button disabled>Variance</button>
+            </div>
+          }
+        />
+        {channels.length ? (
+          <>
+            <div className="ps-v2-table-wrap">
+              <table className="ps-v2-channel-table">
+                <caption className="ps-v2-sr-only">Channel profitability</caption>
+                <thead>
+                  <tr>
+                    <th>Channel · revenue vs profit</th>
+                    <th>Revenue</th>
+                    <th>Orders</th>
+                    <th>AOV</th>
+                    <th>Eff. commission</th>
+                    <th>Promo cost</th>
+                    <th>COGS</th>
+                    <th>Contribution</th>
+                    <th>Margin</th>
+                    <th>Variance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {channels.map((row) => (
+                    <tr key={row.channel}>
+                      <th scope="row">
+                        <span className="ps-v2-channel-mark">
+                          {titleCase(row.channel).charAt(0)}
+                        </span>
+                        <span className="ps-v2-channel-name">
+                          {titleCase(row.channel)}
+                          <i />
+                          <i />
+                        </span>
+                      </th>
+                      <td>{money(row.revenue, summary?.metrics.currency)}</td>
+                      <td>{money(row.orders)}</td>
+                      <td>{money(row.orders ? row.revenue / row.orders : null)}</td>
+                      <td>
+                        {row.revenue && row.fees != null
+                          ? `${((row.fees / row.revenue) * 100).toFixed(1)}%`
+                          : "—"}
+                      </td>
+                      <td>{money(row.discounts)}</td>
+                      <td>{money(row.product_cost)}</td>
+                      <td>
+                        <strong>{money(row.contribution)}</strong>
+                      </td>
+                      <td>
+                        <strong>
+                          {row.margin_pct == null
+                            ? "Not calculated"
+                            : `${row.margin_pct.toFixed(1)}%`}
+                        </strong>
+                      </td>
+                      <td>—</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <footer className="ps-v2-channel-footer">
+              <span>
+                <i />
+                Share of revenue
+              </span>
+              <span>
+                <i />
+                Share of contribution
+              </span>
+              <small>
+                Channel variance remains unavailable without channel-allocated payout evidence.
+              </small>
+            </footer>
+          </>
+        ) : (
+          <p className="ps-v2-empty-copy">No evidenced channel rows are available.</p>
+        )}
+      </section>
+
+      <div id="margin-leakage" className="ps-v2-dashboard-row">
+        <section
+          className="ps-v2-card ps-v2-reconciliation-card"
+          data-state={summary?.reconciliation.state ?? "unavailable"}
+        >
+          <Header
+            title="Settlement reconciliation"
+            subtitle="Expected → platform statement → bank received"
+            aside={<span className="ps-v2-readonly">Settlement → Orders → Fees → Evidence</span>}
+          />
+          <div className="ps-v2-settlement-flow">
+            <div>
+              <span>Expected · PrizeSkout model</span>
+              <strong>
+                {money(summary?.reconciliation.expected_amount, summary?.reconciliation.currency)}
+              </strong>
+            </div>
+            <b>→</b>
+            <div>
+              <span>Platform statement</span>
+              <strong>
+                {money(summary?.reconciliation.reported_amount, summary?.reconciliation.currency)}
+              </strong>
+            </div>
+            <b>→</b>
+            <div>
+              <span>Bank received</span>
+              <strong>
+                {summary?.truths.receipt.status === "verified" ? "Confirmed" : "Not confirmed"}
+              </strong>
+            </div>
+          </div>
+          <div className="ps-v2-variance-summary">
+            <div>
+              <span>Unexplained variance</span>
+              <strong>
+                {money(summary?.reconciliation.variance, summary?.reconciliation.currency)}
+              </strong>
+            </div>
+            <i>
+              <b />
+            </i>
+            <small>
+              {summary?.reconciliation.label ?? "Finding not loaded"} ·{" "}
+              {summary?.reconciliation.explanation ?? "No payout result is available."}
+            </small>
+          </div>
+          <div className="ps-v2-settlement-table">
+            <div>
+              <strong>
+                {summary?.reconciliation.settlement_reference ?? "Settlement reference unavailable"}
+              </strong>
+              <span>{summary?.reconciliation.finding_id ?? "No finding reference"}</span>
+            </div>
+            <span>{money(summary?.reconciliation.expected_amount)}</span>
+            <span>{money(summary?.reconciliation.reported_amount)}</span>
+            <strong>{money(summary?.reconciliation.variance)}</strong>
+            <em>
+              {summary?.reconciliation.allocation_scope === "order"
+                ? "Order allocated"
+                : summary?.reconciliation.allocation_scope === "batch"
+                  ? "Under review"
+                  : "Evidence required"}
+            </em>
+          </div>
+          {summary?.reconciliation.state === "unallocated" && (
+            <p className="ps-v2-boundary-note">
+              <strong>Not allocated to an order.</strong> This difference cannot become a claim
+              without order-level evidence.
+            </p>
+          )}
+        </section>
+        <section className="ps-v2-card ps-v2-priority-card ps-v2-leakage-card">
+          <Header
+            title="Margin leakage"
+            subtitle="The most important issues to review"
+            aside={<span className="ps-v2-readonly">All issues →</span>}
+          />
+          {summary?.priority_decisions?.items.length ? (
+            <ol className="ps-v2-priority-list">
+              {summary.priority_decisions.items.map((item) => (
+                <li key={item.id}>
+                  <span className="ps-v2-priority-rank">{item.rank}</span>
+                  <div className="ps-v2-priority-body">
+                    <div className="ps-v2-priority-title-row">
+                      <div>
+                        <small>{item.state.replaceAll("_", " ")}</small>
+                        <strong>{item.title}</strong>
+                        <span>{item.reference ?? "Recorded issue"}</span>
+                      </div>
+                      {item.amount != null && <strong>{money(item.amount, item.currency)}</strong>}
+                    </div>
+                    <p>{item.next_safe_action}</p>
+                    <div className="ps-v2-priority-controls">
+                      <span>{item.evidence_strength ?? "strength not recorded"} evidence</span>
+                      <button type="button" disabled>
+                        View evidence
+                      </button>
+                      <button type="button" disabled>
+                        Investigate
+                      </button>
+                    </div>
+                    <div className="ps-v2-priority-meta">
+                      <span>Evidence {item.finding_id}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="ps-v2-empty-copy">No margin issues are ready to review.</p>
+          )}
+        </section>
+      </div>
+
+      <section id="branch-performance" className="ps-v2-branch-card">
+        <div className="ps-v2-branch-main">
+          <Header
+            title="Branch performance"
+            subtitle={
+              summary?.metrics.branch_performance.ranked
+                ? `${summary.metrics.branch_performance.rows.length} evidenced branches · ranked by contribution margin`
+                : "Ranking withheld until identity and cost coverage are complete"
+            }
+            aside={
+              <span
+                className="ps-v2-coverage-badge"
+                data-complete={summary?.metrics.branch_performance.ranked ?? false}
+              >
+                {summary?.metrics.branch_performance.ranked ? "All branches →" : "Ranking blocked"}
+              </span>
+            }
+          />
+          {summary?.metrics.branch_performance.rows.length ? (
+            <div className="ps-v2-table-wrap ps-v2-branch-table-wrap">
+              <table className="ps-v2-channel-table ps-v2-branch-table">
+                <caption className="ps-v2-sr-only">Branch performance</caption>
+                <thead>
+                  <tr>
+                    <th>Branch</th>
+                    <th>Contribution</th>
+                    <th>Margin</th>
+                    <th>Revenue</th>
+                    <th>Orders</th>
+                    <th>Variance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.metrics.branch_performance.rows.map((row) => (
+                    <tr key={row.branch}>
+                      <th scope="row">
+                        <span className="ps-v2-branch-dot" />
+                        {titleCase(row.branch)}
+                      </th>
+                      <td>
+                        <strong>{money(row.contribution, summary.metrics.currency)}</strong>
+                      </td>
+                      <td>
+                        <span className="ps-v2-margin-cell">
+                          <i
+                            style={{
+                              width:
+                                row.margin_pct == null
+                                  ? "0%"
+                                  : `${Math.max(0, Math.min(100, row.margin_pct))}%`,
+                            }}
+                          />
+                          <strong>
+                            {row.margin_pct == null
+                              ? "Not calculated"
+                              : `${row.margin_pct.toFixed(1)}%`}
+                          </strong>
+                        </span>
+                      </td>
+                      <td>{money(row.revenue, summary.metrics.currency)}</td>
+                      <td>{money(row.orders)}</td>
+                      <td>
+                        {summary.reconciliation.state === "unavailable"
+                          ? "Not calculated"
+                          : money(summary.reconciliation.variance, summary.reconciliation.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="ps-v2-empty-copy">No identified branch evidence is available.</p>
+          )}
+        </div>
+        <aside className="ps-v2-branch-attention">
+          <span>Requires attention</span>
+          <h2>
+            {summary?.metrics.branch_performance.ranked
+              ? "Review the lowest-margin evidenced branch"
+              : "Branch comparison is not decision-ready"}
+          </h2>
+          <p>
+            {summary?.metrics.branch_performance.blockers[0] ??
+              "The current evidence does not support a branch-level intervention."}
+          </p>
+          <dl>
+            <div>
+              <dt>Settlement variance</dt>
+              <dd>{money(summary?.reconciliation.variance, summary?.reconciliation.currency)}</dd>
+            </div>
+            <div>
+              <dt>Evidence</dt>
+              <dd>
+                {summary?.reconciliation.finding_id
+                  ? `Finding ${summary.reconciliation.finding_id}`
+                  : "Not available"}
+              </dd>
+            </div>
+          </dl>
+          <div className="ps-v2-branch-actions">
+            <button type="button" disabled>
+              Investigate branch
+            </button>
+            <button type="button" disabled>
+              Assign
+            </button>
+          </div>
+        </aside>
+      </section>
+      <footer className="ps-v2-dashboard-footer">
+        <span>
+          True profit uses only costs and fees that PrizeSkout can match to your sales. Unmatched
+          differences stay separate.
+        </span>
+        <span>{conclusion.next_action}</span>
+      </footer>
+    </DashboardV2Shell>
+  );
 }
 
-function Header({ title, subtitle, aside }: { title: string; subtitle: string; aside?: ReactNode }) {
-  return <div className="ps-v2-section-heading"><div><h2>{title}</h2><p>{subtitle}</p></div>{aside}</div>;
+function Header({
+  title,
+  subtitle,
+  aside,
+}: {
+  title: string;
+  subtitle: string;
+  aside?: ReactNode;
+}) {
+  return (
+    <div className="ps-v2-section-heading">
+      <div>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
+      </div>
+      {aside}
+    </div>
+  );
 }
