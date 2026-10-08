@@ -48,6 +48,13 @@ const WORKSPACES: Record<
     boundary: "Profit stays Not calculated until all required product costs are available.",
     icon: ChartNoAxesCombined,
   },
+  "margin-leakage": {
+    eyebrow: "Intelligence / Margin leakage",
+    title: "Find where margin is leaking.",
+    description: "Review evidence-backed issues and their supported financial impact.",
+    boundary: "A batch difference is never assigned to an order without order-level evidence.",
+    icon: ShieldCheck,
+  },
   "menu-intelligence": {
     eyebrow: "Intelligence / Menu intelligence",
     title: "See which menu items make money.",
@@ -55,6 +62,13 @@ const WORKSPACES: Record<
     boundary:
       "PrizeSkout will not rank or reprice an item when key costs or channel terms are missing.",
     icon: PackageCheck,
+  },
+  branches: {
+    eyebrow: "Operations / Branches",
+    title: "Compare branch performance.",
+    description: "Review branch results only where location and cost evidence are complete.",
+    boundary: "Unassigned orders block a complete branch ranking.",
+    icon: ChartNoAxesCombined,
   },
   channels: {
     eyebrow: "Commercial / Channels",

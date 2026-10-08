@@ -2,6 +2,8 @@ import { CircleAlert, FileSearch, ShieldCheck } from "lucide-react";
 import { DashboardV2Shell } from "./DashboardV2Shell";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
 import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
+import { useDashboardV2Modules } from "./useDashboardV2Modules";
+import { PlatformReferenceDemo, platformReferenceChrome } from "./PlatformReferenceDemo";
 
 function formatAmount(value: number | null, currency: string | null): string | null {
   if (value == null || !Number.isFinite(value)) return null;
@@ -10,6 +12,7 @@ function formatAmount(value: number | null, currency: string | null): string | n
 
 export function DashboardV2PriorityCentre() {
   const load = useDashboardV2Summary();
+  const { platformDemo } = useDashboardV2Modules();
   const decisions = load.summary?.priority_decisions;
   const state =
     load.phase === "loading"
@@ -29,6 +32,12 @@ export function DashboardV2PriorityCentre() {
           : (load.message ??
             decisions?.blockers[0] ??
             "Priority decisions are not available right now.");
+
+  if (platformDemo) return (
+    <DashboardV2Shell activePage="priority" chromeData={platformReferenceChrome}>
+      <PlatformReferenceDemo screen="priority" data={platformDemo} />
+    </DashboardV2Shell>
+  );
 
   return (
     <DashboardV2Shell activePage="priority" chromeData={buildDashboardV2ChromeData(load.summary)}>

@@ -107,18 +107,18 @@ const modulesFixture = {
     counts: { total: 7, active: 3, pending_approval: 2, completed: 1 }, blockers: ["Campaign financial outcomes require attributable order, funding, and cost evidence."],
   },
 };
-const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [], functional_role: "finance", role_label: "Finance officer", role_description: "Profit, settlements, reporting, and audit evidence", demo_mode: true, demo_label: "Controlled demonstration data - not live financial evidence" } };
+const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [], functional_role: "finance", role_label: "Finance officer", role_description: "Profit, settlements, reporting, and audit evidence", demo_mode: false, demo_label: null } };
 const sidebarDestinations = [
   ["Overview", "/dashboard"],
   ["Priority Centre", "/dashboard/priority-centre"],
   ["AI Copilot", "/dashboard/ai-copilot"],
   ["AI Store Manager", "/dashboard/store-manager"],
   ["Profit intelligence", "/dashboard/profit-intelligence"],
-  ["Margin leakage", "/dashboard#margin-leakage"],
+  ["Margin leakage", "/dashboard/margin-leakage"],
   ["Menu intelligence", "/dashboard/menu-intelligence"],
   ["Order Automation", "/dashboard/order-automation"],
   ["Orders", "/dashboard/orders"],
-  ["Branches", "/dashboard#branch-performance"],
+  ["Branches", "/dashboard/branches"],
   ["Promotions & Discounts", "/dashboard/promotions"],
   ["Channels", "/dashboard/channels"],
   ["Settlements", "/dashboard/settlements"],

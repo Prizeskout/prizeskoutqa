@@ -1952,3 +1952,30 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Commit `eb86988` was pushed and deployed as Worker `eaf3412b-e919-48ff-8d5d-9c41722042ea`.
 - A cache-busted authenticated production load verified that the sidebar now shows `PS` and `General manager`; the `demo` name is absent.
+
+## 2026-10-08 - Corrected full Platform demo implementation
+
+- Replaced the mistaken product-tour interpretation with a native implementation of `PrizeSkout Platform.dc.html` for the authenticated, server-marked Naija Restaurant demo.
+- Added the supplied fixed data for Priority Centre, AI Store Manager, Profit Intelligence, Margin Leakage, Menu Intelligence, Orders, Branches, Channels, Settlements, Reports, Integrations, API/Developers, Settings, Store Access, and Audit Log to the authenticated demo-only modules response.
+- Preserved the existing dedicated Executive Overview, Order Automation, and Promotions reference screens.
+- Added canonical Margin Leakage and Branches routes, exact 98% confidence and six-priority reference chrome, table sorting/filtering, responsive drill-in drawers, toggle previews, and safe non-writing action previews.
+- Kept the platform payload unavailable to normal merchant workspaces and made every external-looking control a local preview with no write API request.
+- Preserved all unrelated untracked user artifacts.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup and final `npm run verify-zid-contract` - passed.
+- Startup and final `npm run verify-salla-contract` - passed.
+- Startup and final `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844x390; all supplied key values and complete sections were present, drawers/interactions worked, no page overflow or browser errors occurred, and no write API request was made.
+- `npm run verify-dashboard-v2-ui` - passed at 1440, 390, 375, and phone landscape after updating the expected Margin Leakage and Branches canonical routes.
+- `npm run build` - passed; only the existing chunk-size and mixed-import warnings were emitted.
+- `git diff --check` - passed.
+
+### Changed files and exact next action
+
+- Added the demo-only Platform payload, generic native renderer and responsive styling; extended authenticated module delivery, canonical navigation, route support, and browser verification; updated continuity records.
+- Exact next action: run final continuity and diff checks, commit and push under the user's original explicit delivery authorization, then wait for the Git deployment and repeat the authenticated Naija browser smoke pass. Do not record production verification until that live pass succeeds.

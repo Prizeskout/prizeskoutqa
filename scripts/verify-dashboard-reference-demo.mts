@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
 import { dashboardV2DemoModules, dashboardV2DemoSummary } from "../src/server/core/dashboard-v2-demo-data";
+import { dashboardV2PlatformDemo } from "../src/server/core/dashboard-v2-platform-demo";
 
 const origin = process.env.DEMO_VERIFY_ORIGIN || "http://127.0.0.1:4185";
 const live = Boolean(process.env.DEMO_VERIFY_ORIGIN);
@@ -28,7 +29,7 @@ try {
     page.on("request", r => { if(r.url().includes("/api/") && r.method() !== "GET") writes.push(r.url()); });
     if(!live) {
       await page.route("**/api/dashboard/v2/summary?*", r => r.fulfill({ json: { ok: true, summary: dashboardV2DemoSummary } }));
-      await page.route("**/api/dashboard/v2/modules?*", r => r.fulfill({ json: { ok: true, ...dashboardV2DemoModules } }));
+      await page.route("**/api/dashboard/v2/modules?*", r => r.fulfill({ json: { ok: true, ...dashboardV2DemoModules, platform_demo: dashboardV2PlatformDemo } }));
       await page.route("**/api/dashboard/v2/context", r => r.fulfill({ json: { ok: true, context: { state: "available", merchant_label: "Naija Restaurant", brand_label: "All brands", location_label: "Qatar · 12", channel_label: "All channels", currency: "QAR", brands: [], branches: [], channels: [], blockers: [], role_label: "General manager", demo_mode: true } } }));
     }
     await page.addInitScript(({merchant, code}) => {localStorage.setItem("ps_connected", "true");localStorage.setItem("ps_merchant_id", merchant);localStorage.setItem("ps_access_code", code);}, {merchant: live ? process.env.DEMO_MERCHANT_ID! : "fixture", code: live ? process.env.DEMO_ACCESS_CODE! : "fixture"});
@@ -62,6 +63,42 @@ try {
           assert.notEqual(await page.locator("#simulator").innerText(), previousProjection);
           await page.getByRole("button", {name:"Request approval", exact:true}).click();
           await page.getByText("Preview only — no approval request was sent.", {exact:true}).waitFor();
+        }
+      }
+    }
+    const platformRoutes: Record<string, string[]> = {
+      "priority-centre": ["6 items need a decision today", "QAR 41,280", "Talabat settlement discrepancy"],
+      "store-manager": ["Keeps every branch live", "214", "Paused Mixed Grill Platter"],
+      "profit-intelligence": ["QAR 795,420 true contribution", "43.2%", "Contribution by brand"],
+      "margin-leakage": ["QAR 41,280 of margin at risk", "QAR 27,450", "Weekend 25% Off over-funded"],
+      "menu-intelligence": ["6 items are underpriced", "+QAR 7,420", "Chicken Shawarma"],
+      orders: ["22,252 orders this month", "3.1%", "#PS-84217"],
+      branches: ["Al Sadd needs attention", "West Bay 22.4%", "Branch comparison"],
+      channels: ["Revenue is not profit", "Talabat QAR 396K", "Snoonu 21.8%"],
+      settlements: ["QAR 8,940 unexplained", "38 / 41", "SN-29401"],
+      reports: ["Reports that write themselves", "Weekly margin bridge", "Month-end reconciliation pack"],
+      integrations: ["5 systems connected", "QNB bank feed", "Oracle MICROS"],
+      "api-developers": ["Build on PrizeSkout", "182,400", "settlement.variance_detected"],
+      settings: ["How PrizeSkout calculates your numbers", "Asia/Qatar", "Include packaging in COGS"],
+      "store-access": ["Who can see and do what", "Sara Al-Mansoori", "Role permissions"],
+      "audit-log": ["Every number, decision and change", "4,812", "EV-91032"],
+    };
+    for (const [path, expected] of Object.entries(platformRoutes)) {
+      await page.goto(`${origin}/dashboard/${path}`, { waitUntil: "domcontentloaded" });
+      await page.locator(".ps-platform-demo").waitFor({ timeout: 120000 });
+      const text = await page.locator(".ps-platform-demo").innerText();
+      for (const label of expected) assert.ok(text.includes(label), `${width} ${path}: missing ${label}`);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(overflow <= 1, `${width} ${path}: page overflow ${overflow}`);
+      if (width === 1440 || width === 390) {
+        await page.screenshot({ path: join(screenshots, `${path}-${width}.png`), fullPage: true });
+      }
+      if (width === 1440) {
+        const firstRow = page.locator(".ps-platform-data-row").first();
+        if (await firstRow.count()) {
+          await firstRow.click();
+          await page.locator(".ps-platform-drawer").waitFor();
+          await page.locator(".ps-platform-drawer").getByRole("button", { name: "Close details" }).click();
         }
       }
     }

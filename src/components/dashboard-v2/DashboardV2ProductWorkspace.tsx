@@ -7,7 +7,10 @@ import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 import { useDashboardV2Activity } from "./useDashboardV2Activity";
 import { useDashboardV2Context } from "./useDashboardV2Context";
 import { useDashboardV2Summary } from "./useDashboardV2Summary";
+import { useDashboardV2Modules } from "./useDashboardV2Modules";
+import { PlatformReferenceDemo, platformReferenceChrome } from "./PlatformReferenceDemo";
 import type { DashboardV2WorkspaceId } from "./DashboardV2Workspace";
+import type { DashboardV2PlatformDemoScreen } from "@/server/core/dashboard-v2-platform-demo";
 
 const money = (value: number | null | undefined, currency: string | null | undefined) =>
   value == null
@@ -225,14 +228,17 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
     summary = load.summary,
     context = useDashboardV2Context(),
     activity = useDashboardV2Activity();
+  const { platformDemo } = useDashboardV2Modules();
   const chrome = buildDashboardV2ChromeData(summary);
   const configs: Partial<Record<DashboardV2WorkspaceId, [string, string]>> = {
     "ai-copilot": ["AI Copilot", "Ask questions about your business finances."],
     "profit-intelligence": ["Profit intelligence", "See your sales, costs, and true profit."],
+    "margin-leakage": ["Margin leakage", "See where margin is at risk and what evidence supports it."],
     "menu-intelligence": [
       "Menu intelligence",
       "See which menu items make money and which need attention.",
     ],
+    branches: ["Branches", "Compare revenue, margin, promotion intensity, refunds, and payout variance."],
     channels: ["Channels", "Connect and manage your sales channels."],
     settlements: ["Settlements", "Compare what you expected with what the platform reported."],
     reports: ["Reports", "View and download your financial summary."],
@@ -246,6 +252,43 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
     "AI Store Manager",
     "Get help with daily store work and review changes before they happen.",
   ];
+  const demoScreenMap: Partial<Record<DashboardV2WorkspaceId, DashboardV2PlatformDemoScreen>> = {
+    "store-manager": "store",
+    "profit-intelligence": "profit",
+    "margin-leakage": "leakage",
+    "menu-intelligence": "menu",
+    branches: "branches",
+    channels: "channels",
+    settlements: "settlements",
+    reports: "reports",
+    integrations: "integrations",
+    "api-developers": "api",
+    settings: "settings",
+    "store-access": "access",
+    "audit-log": "audit",
+  };
+  const demoScreen = demoScreenMap[workspace];
+  if (!context || (context.demo_mode && !platformDemo)) {
+    return (
+      <DashboardV2Shell activePage={workspace} chromeData={chrome}>
+        <section className="ps-v2-card ps-v2-module-card" aria-live="polite">
+          <header>
+            <div>
+              <h2>Loading workspace</h2>
+              <p>Checking the authenticated merchant scope and available records.</p>
+            </div>
+          </header>
+        </section>
+      </DashboardV2Shell>
+    );
+  }
+  if (context?.demo_mode && platformDemo && demoScreen) {
+    return (
+      <DashboardV2Shell activePage={workspace} chromeData={platformReferenceChrome}>
+        <PlatformReferenceDemo screen={demoScreen} data={platformDemo} />
+      </DashboardV2Shell>
+    );
+  }
   const [label, title] = configs[workspace] ?? [workspace, workspace];
   const auditRows = activity.data?.audit.rows ?? [],
     channelRows = activity.data?.channels.rows ?? [],

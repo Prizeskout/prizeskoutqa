@@ -42,7 +42,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
       { label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
       { label: "Priority Centre", icon: CircleAlert, to: "/dashboard/priority-centre", badge: "0" },
       { label: "AI Copilot", icon: Bot, to: "/dashboard/ai-copilot", badge: "⌘K" },
-      { label: "AI Store Manager", icon: Sparkles, to: "/dashboard/store-manager" },
+      { label: "AI Store Manager", icon: Sparkles, to: "/dashboard/store-manager", badge: "Live" },
     ],
   },
   {
@@ -53,7 +53,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
         icon: ChartNoAxesCombined,
         to: "/dashboard/profit-intelligence",
       },
-      { label: "Margin leakage", icon: ShieldCheck, href: "/dashboard#margin-leakage" },
+      { label: "Margin leakage", icon: ShieldCheck, to: "/dashboard/margin-leakage" },
       { label: "Menu intelligence", icon: PackageCheck, to: "/dashboard/menu-intelligence" },
     ],
   },
@@ -62,7 +62,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
     items: [
       { label: "Order Automation", icon: Store, to: "/dashboard/order-automation" },
       { label: "Orders", icon: ListChecks, to: "/dashboard/orders" },
-      { label: "Branches", icon: Building2, href: "/dashboard#branch-performance" },
+      { label: "Branches", icon: Building2, to: "/dashboard/branches" },
     ],
   },
   {
@@ -97,7 +97,9 @@ export type DashboardV2Page =
   | "ai-copilot"
   | "store-manager"
   | "profit-intelligence"
+  | "margin-leakage"
   | "menu-intelligence"
+  | "branches"
   | "channels"
   | "settlements"
   | "reports"
@@ -129,7 +131,9 @@ const PAGE_PATHS: Record<DashboardV2Page, string> = {
   "ai-copilot": "/dashboard/ai-copilot",
   "store-manager": "/dashboard/store-manager",
   "profit-intelligence": "/dashboard/profit-intelligence",
+  "margin-leakage": "/dashboard/margin-leakage",
   "menu-intelligence": "/dashboard/menu-intelligence",
+  branches: "/dashboard/branches",
   channels: "/dashboard/channels",
   settlements: "/dashboard/settlements",
   reports: "/dashboard/reports",
@@ -146,12 +150,14 @@ function Sidebar({
   activePage,
   roleLabel,
   functionalRole,
+  priorityCount,
 }: {
   open: boolean;
   onClose: () => void;
   activePage: DashboardV2Page;
   roleLabel: string;
   functionalRole?: string | null;
+  priorityCount: number;
 }) {
   const preferredGroup =
     functionalRole === "finance" || functionalRole === "accounting"
@@ -196,6 +202,7 @@ function Sidebar({
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = item.to === PAGE_PATHS[activePage];
+                const badge = item.label === "Priority Centre" ? String(priorityCount) : item.badge;
                 return item.to ? (
                   <a
                     key={item.label}
@@ -207,13 +214,13 @@ function Sidebar({
                   >
                     <Icon size={16} aria-hidden="true" />
                     <span>{item.label}</span>
-                    {item.badge && <small>{item.badge}</small>}
+                    {badge && <small>{badge}</small>}
                   </a>
                 ) : (
                   <a key={item.label} href={item.href} className="ps-v2-nav-item" onClick={onClose}>
                     <Icon size={16} aria-hidden="true" />
                     <span>{item.label}</span>
-                    {item.badge && <small>{item.badge}</small>}
+                    {badge && <small>{badge}</small>}
                   </a>
                 );
               })}
@@ -300,6 +307,7 @@ export function DashboardV2Shell({
         activePage={activePage}
         roleLabel={context?.role_label ?? "Merchant operator"}
         functionalRole={context?.functional_role}
+        priorityCount={chromeData?.priorityItems.length ?? 0}
       />
       <div className="ps-v2-workspace">
         <header className="ps-v2-topbar">
