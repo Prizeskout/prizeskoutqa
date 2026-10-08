@@ -1979,3 +1979,11 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Added the demo-only Platform payload, generic native renderer and responsive styling; extended authenticated module delivery, canonical navigation, route support, and browser verification; updated continuity records.
 - Exact next action: run final continuity and diff checks, commit and push under the user's original explicit delivery authorization, then wait for the Git deployment and repeat the authenticated Naija browser smoke pass. Do not record production verification until that live pass succeeds.
+
+### Repository delivery and deployment status
+
+- Commit `979a911` (`feat: implement full Naija platform demo`) was pushed to `origin/main`.
+- GitHub reported the automatic Vercel status as failed for that commit.
+- `npx wrangler deployments list --config dist/server/wrangler.json --json` passed read-only and showed no new Cloudflare Worker version after the push; the latest listed version remained `90c91b8b-65f6-41b4-9a2b-228d9ebadba6`.
+- No manual deployment was attempted because deployment authorization is separate from repository delivery.
+- Exact next action: obtain explicit manual-deployment authorization, deploy the already verified artifact, then run the production reference route matrix and fresh authenticated Naija smoke pass.
