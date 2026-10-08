@@ -1929,3 +1929,8 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Added a browser assertion that no sidebar user-name element is rendered.
 - Typecheck, the four-viewport Dashboard V2 UI suite, protected Zid/Salla contracts, and production build passed.
 - Exact next action: commit, push, deploy, and verify the production sidebar.
+
+### Deployment result
+
+- Commit `eb86988` was pushed and deployed as Worker `eaf3412b-e919-48ff-8d5d-9c41722042ea`.
+- A cache-busted authenticated production load verified that the sidebar now shows `PS` and `General manager`; the `demo` name is absent.
