@@ -1912,3 +1912,12 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Exact next action
 
 - Run continuity, commit and push the login bootstrap, deploy the verified build, and complete an actual browser sign-in against the production access page.
+
+### Deployment and live verification
+
+- Commit `cf9a02d` (`feat: add dedicated dashboard demo login`) was pushed to `origin/main`.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed; Worker version `da110220-53aa-4754-b0e8-b79a044e9b57` serves the apex and app custom domains.
+- A fresh Chrome tab opened `https://prizeskout.qa/access`, authenticated with the dedicated viewer credentials, and navigated to `https://prizeskout.qa/dashboard`.
+- The live session resolved to Naija Restaurant and showed QAR 795,420 contribution, QAR 1.84M gross sales, 43.2% margin, QAR 8,940 settlement variance, QAR 27,450 recoverable margin, 100% confidence, and three priorities.
+- The removed customer-facing demo banner was absent. The server-owned demo marker remains retained.
+- Exact next action: share the dedicated URL/email/password only with the intended demo audience and rotate the password when that audience changes.
