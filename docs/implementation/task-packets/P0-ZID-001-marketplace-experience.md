@@ -146,3 +146,5 @@ Repository delivery is complete through commit `d80a01d` on `origin/main`. This 
 That logged-in pass exposed a product-level navigation defect: legacy handoffs violated the requirement that the new dashboard remain one product. The local correction is implemented and browser-verified. Exact next action: complete final protected contract and continuity checks, then commit and push only on explicit user authorization; deployment remains a separate authorization and must be followed by another logged-in production pass.
 
 The customer-visible URL correction is also local and verified: normal navigation now uses `/dashboard` without a `v2` segment, while old V2 bookmarks redirect safely. Exact next action remains final protected checks and continuity, followed by commit/push only with explicit authorization and deployment only under separate authorization.
+
+The authorized implementation commit is `a00fdb9` (`fix: keep dashboard navigation in canonical shell`). Exact next action: push the repository commits to `origin/main`; do not deploy without separate authorization.

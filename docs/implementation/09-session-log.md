@@ -1558,3 +1558,9 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Navigation and regression assertions: `src/components/dashboard-v2/DashboardV2Shell.tsx`, `scripts/verify-dashboard-v2-ui.mts`, and generated route registration.
 - Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
 - Exact next action: run final module/summary and protected integration contracts, diff checks, and continuity verification. Commit and push only with explicit user authorization; deployment still requires separate authorization.
+
+### Authorized repository delivery
+
+- At the user's explicit request, committed the verified native-shell and canonical-route correction as `a00fdb9` (`fix: keep dashboard navigation in canonical shell`).
+- Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts were not staged.
+- Exact next action: commit this continuity record and push both commits to `origin/main`. This does not authorize deployment.
