@@ -13,6 +13,10 @@
 - First `npm run build`: exit 0 with existing large-chunk/mixed-import warnings. Rebuilding to include the final responsive CSS correction.
 - Exact next executable action: finish running checks, commit/push, deploy `dist/server/wrangler.json`, then run the focused verifier with production origin and demo merchant environment variables. Record deployment and live outcome before final handoff.
 - Final local outcomes: repeat focused verifier exit 0 (`prizeskout-reference-demo-wY6tzf`); broader `npm run verify-dashboard-v2-ui` exit 0 at all four viewports (`prizeskout-dashboard-v2-LCje8l`); protected Zid and Salla contracts exit 0; `npm run verify-continuity` exit 0; `git diff --check` exit 0. Wrangler identity matches PrizeSkout account `6e383531f404fe9c49c9a470ee2f9fbf`.
+- Final `npm run build`: exit 0, including responsive CSS correction; only existing chunk-size/mixed-import warnings. Commit `4668f10` pushed to `origin/main`; GitHub active identity restored to Web3freak.
+- `npx wrangler deploy --config dist/server/wrangler.json`: exit 0, Worker `57402ec6-0d7a-4600-b7dd-19ddcdc9f0dd`, both existing apex/app routes retained.
+- Production `npx tsx scripts/verify-dashboard-reference-demo.mts` with `DEMO_VERIFY_ORIGIN=https://prizeskout.qa` and dedicated merchant-access credentials: exit 0. Both routes passed at 1440/390/375/844, key values/sections, selections/filtering/simulator change, preview-only action responses, zero write API calls, zero page errors, zero page-level overflow. Screenshots: `C:/Users/DELL/AppData/Local/Temp/prizeskout-reference-demo-I2jWc8`. This uses verified merchant access, not a repeated password-login test.
+- Exact next action: refresh the two live demo pages for the waiting audience. Normal merchant capability/readiness and Order Guard provisioning remain unchanged. Preserve unrelated artifacts.
 
 Append concise entries; do not rewrite prior entries.
 

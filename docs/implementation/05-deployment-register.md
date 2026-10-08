@@ -42,6 +42,8 @@ Files from `20260905000000` through `20260913010000` exist locally. Their deploy
 
 ## Rules
 
+- 2026-10-08: commit `4668f10`, Cloudflare Worker `57402ec6-0d7a-4600-b7dd-19ddcdc9f0dd`, deployed from the passing final `npm run build` artifact using `npx wrangler deploy --config dist/server/wrangler.json`. Corrects the two supplied reference-demo canvases only. Production merchant-access Playwright checks pass for both pages at 1440/390/375/844, including local interactions and zero write APIs. No migration, connector mutation, password reset, or live financial recalculation occurred. Previous rollback version: `eaf3412b-e919-48ff-8d5d-9c41722042ea`.
+
 - Never edit a migration marked deployed or reported deployed.
 - Never deploy an “unknown” migration merely because it exists.
 - Before deployment, identify dependencies, inspect production state, and update the current task packet.
