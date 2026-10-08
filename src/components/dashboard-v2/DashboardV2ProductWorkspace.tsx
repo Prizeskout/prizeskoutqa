@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Bot, Check, Clipboard, Download, FileJson, LoaderCircle, Send } from "lucide-react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
+import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
 import { DashboardV2Shell } from "./DashboardV2Shell";
 import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 import { useDashboardV2Activity } from "./useDashboardV2Activity";
@@ -18,7 +19,7 @@ function download(filename: string, body: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-function Copilot() {
+function Copilot({ role = "cfo" }: { role?: "cfo" | "manager" }) {
   const context = useDashboardV2Context();
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; text: string }>>([]);
@@ -29,12 +30,18 @@ function Copilot() {
     const merchantId = localStorage.getItem("ps_merchant_id") ?? "", accessCode = localStorage.getItem("ps_access_code") ?? "";
     setMessages((rows) => [...rows, { role: "user", text: question }]); setPrompt(""); setBusy(true); setError(null);
     try {
-      const response = await fetch("/api/copilot/compile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: question, requested_role: "cfo", merchant_id: merchantId, access_code: accessCode, context: { current_page: "dashboard/ai-copilot", currency: context?.currency, connected_channels: context?.channels, conversation: messages.slice(-8) } }) });
+      const response = await fetch("/api/copilot/compile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: question, requested_role: role, merchant_id: merchantId, access_code: accessCode, context: { current_page: `dashboard/${role === "manager" ? "store-manager" : "ai-copilot"}`, currency: context?.currency, connected_channels: context?.channels, conversation: messages.slice(-8) } }) });
       const body = await response.json(); if (!response.ok) throw new Error(body.error || "Copilot could not answer.");
       setMessages((rows) => [...rows, { role: "assistant", text: body.message || "No evidence-backed answer was returned." }]);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Copilot could not answer."); } finally { setBusy(false); }
   }
-  return <><section className="ps-v2-card ps-v2-module-card"><header><div><h2>Evidence-backed conversation</h2><p>Answers use retained PrizeSkout evidence; no external action is executed from this chat.</p></div><span className="ps-v2-readonly"><Bot size={13}/> CFO Copilot</span></header><div className="ps-v2-copilot-thread" aria-live="polite">{messages.length ? messages.map((message, index) => <article key={index} data-role={message.role}><strong>{message.role === "user" ? "You" : "PrizeSkout"}</strong><p>{message.text}</p></article>) : <div className="ps-v2-empty-workspace"><Bot size={28}/><strong>Ask a financial question</strong><p>Try “What evidence is missing?” or “Which channel needs attention?”</p></div>}{busy && <p><LoaderCircle className="ps-v2-spin" size={16}/> Reviewing retained evidence…</p>}</div>{error && <p className="ps-v2-form-error" role="alert">{error}</p>}<form className="ps-v2-copilot-form" onSubmit={(event) => { event.preventDefault(); void ask(); }}><label htmlFor="v2-copilot-prompt">Question</label><textarea id="v2-copilot-prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={2000} placeholder="Ask about profit, payouts, fees, trends, or missing evidence"/><button className="ps-v2-action" disabled={!prompt.trim() || busy}><Send size={14}/> Ask Copilot</button></form></section></>;
+  const manager = role === "manager";
+  return <section className="ps-v2-card ps-v2-module-card">
+    <header><div><h2>{manager ? "Store operations conversation" : "Evidence-backed conversation"}</h2><p>{manager ? "Prepare store work from retained context. Protected actions are proposed for approval, never silently executed." : "Answers use retained PrizeSkout evidence; no external action is executed from this chat."}</p></div><span className="ps-v2-readonly"><Bot size={13}/> {manager ? "AI Store Manager" : "CFO Copilot"}</span></header>
+    <div className="ps-v2-copilot-thread" aria-live="polite">{messages.length ? messages.map((message, index) => <article key={index} data-role={message.role}><strong>{message.role === "user" ? "You" : "PrizeSkout"}</strong><p>{message.text}</p></article>) : <div className="ps-v2-empty-workspace"><Bot size={28}/><strong>{manager ? "What should the store manager handle?" : "Ask a financial question"}</strong><p>{manager ? "Try “Review today’s operational risks” or “Prepare a safe catalogue update.”" : "Try “What evidence is missing?” or “Which channel needs attention?”"}</p></div>}{busy && <p><LoaderCircle className="ps-v2-spin" size={16}/> Reviewing retained evidence…</p>}</div>
+    {error && <p className="ps-v2-form-error" role="alert">{error}</p>}
+    <form className="ps-v2-copilot-form" onSubmit={(event) => { event.preventDefault(); void ask(); }}><label htmlFor={`v2-${role}-prompt`}>{manager ? "Request" : "Question"}</label><textarea id={`v2-${role}-prompt`} value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={2000} placeholder={manager ? "Ask the Store Manager to inspect, prepare, or organize work" : "Ask about profit, payouts, fees, trends, or missing evidence"}/><button className="ps-v2-action" disabled={!prompt.trim() || busy}><Send size={14}/> {manager ? "Ask Store Manager" : "Ask Copilot"}</button></form>
+  </section>;
 }
 
 function Reports({ summary }: { summary: ReturnType<typeof useDashboardV2Summary>["summary"] }) {
@@ -48,10 +55,12 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
   const load = useDashboardV2Summary(), summary = load.summary, context = useDashboardV2Context(), activity = useDashboardV2Activity();
   const chrome = buildDashboardV2ChromeData(summary);
   const configs: Partial<Record<DashboardV2WorkspaceId, [string,string]>> = { "ai-copilot": ["AI Copilot", "Ask from the governed financial workspace."], "profit-intelligence": ["Profit intelligence", "Understand revenue, cost coverage, and contribution without invented economics."], "menu-intelligence": ["Menu intelligence", "Review retained SKU cost evidence and its effective dates."], channels: ["Channels", "Manage connected commerce channels and evidence readiness."], settlements: ["Settlements", "Review the latest retained reconciliation conclusion."], reports: ["Reports", "Export the current governed financial view."], integrations: ["Integrations", "Connect and manage merchant-authorized sources."], "api-developers": ["API & Developers", "Use the documented, governed PrizeSkout API."], settings: ["Settings", "Manage merchant workspace preferences and protection controls."], "store-access": ["Store access", "Manage the private code used to restore this merchant workspace."], "audit-log": ["Audit log", "Inspect immutable governed events and provenance."] };
+  configs["store-manager"] = ["AI Store Manager", "Operate the store through monitored, approval-gated workflows."];
   const [label, title] = configs[workspace] ?? [workspace, workspace];
   const auditRows = activity.data?.audit.rows ?? [], channelRows = activity.data?.channels.rows ?? [], costRows = activity.data?.costs.rows ?? [];
   return <DashboardV2Shell activePage={workspace} chromeData={chrome}><div className="ps-v2-page-heading"><div><p className="ps-v2-eyebrow">Workspace / {label}</p><h1>{title}</h1></div></div>
     {workspace === "ai-copilot" && <Copilot />}
+    {workspace === "store-manager" && <><Copilot role="manager" /><section className="ps-v2-store-manager"><MerchantOperatingLoop /></section></>}
     {workspace === "settings" && <section className="ps-v2-card ps-v2-module-card"><SettingsTabs initialTab="Margin Rules" /></section>}
     {workspace === "store-access" && <section className="ps-v2-card ps-v2-module-card"><SettingsTabs initialTab="Store Access" /></section>}
     {(workspace === "integrations" || workspace === "channels") && <><section className="ps-v2-card ps-v2-module-card"><SettingsTabs initialTab="Channels" /></section><section className="ps-v2-card ps-v2-module-card"><header><div><h2>Retained connection status</h2><p>Server-owned channel records for this merchant.</p></div></header><div className="ps-v2-placeholder-table"><div><span>Platform</span><span>Status</span><span>Last verified</span><span>Issue</span></div>{channelRows.length ? channelRows.map((row)=><div key={String(row.id)}><span>{text(row.platform)}</span><span>{text(row.status)}</span><span>{date(row.last_verified_at ?? row.updated_at)}</span><span>{text(row.error_message, "None recorded")}</span></div>) : <div><span>No retained connections</span><span>{activity.loading ? "Loading" : activity.data?.channels.state ?? "Unavailable"}</span><span>—</span><span>{activity.error ?? activity.data?.channels.blocker ?? "Connect a supported channel above"}</span></div>}</div></section></>}

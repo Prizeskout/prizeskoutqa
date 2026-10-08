@@ -1602,3 +1602,30 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - At the user's explicit request, committed the verified functional-workspace slice as `c60ccd1` (`feat: complete dashboard workspaces`).
 - Unrelated untracked `.codex-build`, `deliverables`, `output`, `tmp`, and `tools` artifacts were not staged.
 - Exact next action: commit this continuity record and push both commits to `origin/main`. This does not authorize deployment, migration, Order Guard provisioning, or merchant-evidence mutation.
+## 2026-10-08 - AI Store Manager restoration and role-aware dashboard
+
+- Removed the customer-visible `ACTIVE · VERSION 2` marker from Margin Rules.
+- Restored AI Store Manager as a first-class canonical `/dashboard/store-manager` workspace. It combines manager-mode conversation with the existing monitored Store Manager operating loop; protected operations remain approval-gated.
+- Added server-derived functional perspective from the signed-in user's `licensee_members.functional_role`, matched to the merchant workspace licensee. Finance/accounting prioritize Finance navigation, operations prioritizes Operations, and missing role evidence remains Merchant operator.
+- Extended the Dashboard V2 browser verifier to cover the Store Manager destination and finance-role context. No deployment, migration, connector mutation, protected action, commit, or push occurred.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup/final protected `npm run verify-zid-contract` and `npm run verify-salla-contract` - passed at startup; final rerun follows continuity updates.
+- `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- First `npm run verify-dashboard-v2-ui` - failed on a transient detached YTD control during route re-render; the unchanged suite passed on retry.
+- Final extended `npm run verify-dashboard-v2-ui` - passed at 1440px, 390px, 375px, and phone landscape, including AI Store Manager and finance-role context. Screenshots: `C:\Users\DELL\AppData\Local\Temp\prizeskout-dashboard-v2-Ua6knR`.
+- `npm run build` - passed with existing mixed-import and chunk-size warnings.
+- `npm run verify-store-manager-ui` - legacy verifier failed because it still expects the retired Revenue Hub `Overview` heading; Dashboard V2 Store Manager coverage now lives in the passing Dashboard V2 UI suite.
+- `git diff --check` - passed before continuity updates with expected line-ending notices only.
+
+### Changed files and exact next action
+
+- Store Manager workspace and role-aware shell: Dashboard V2 workspace, shell, context hook/API/core, and CSS.
+- Version-marker removal: `src/components/dashboard/settings/MarginRulesTab.tsx`.
+- Regression coverage: `scripts/verify-dashboard-v2-ui.mts`.
+- Continuity: active task packet, `state.yaml`, `01-current-state.md`, and this session log.
+- Exact next action: run final protected contracts, diff check, and continuity verification. Commit/push only with explicit authorization; deployment and signed-in production verification remain separate.

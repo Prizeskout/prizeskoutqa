@@ -505,6 +505,8 @@
 .ps-v2-api-example { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--v2-line); border-radius: 10px; background: #111; color: #fff; }
 .ps-v2-api-example button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #444; border-radius: 7px; padding: 7px 10px; background: #222; color: #fff; cursor: pointer; }
 .ps-v2-spin { animation: ps-v2-spin .8s linear infinite; vertical-align: middle; }
+.ps-v2-role-context { white-space: nowrap; padding: 5px 8px; border: 1px solid var(--v2-line); border-radius: 999px; color: var(--v2-muted); font-size: 10px; font-weight: 750; }
+.ps-v2-store-manager { margin-top: 16px; }
 @keyframes ps-v2-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 1024px) {

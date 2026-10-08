@@ -9,6 +9,9 @@ export type DashboardV2Context = {
   branches: Array<{ id: string; name: string }>;
   channels: string[];
   blockers: string[];
+  functional_role: "finance" | "operations" | "management" | "accounting" | null;
+  role_label: string;
+  role_description: string;
 };
 
 const clean = (value: unknown): string | null => typeof value === "string" && value.trim() ? value.trim() : null;
@@ -20,6 +23,7 @@ export function summarizeDashboardV2Context(input: {
   entities?: Array<Record<string, unknown>> | null;
   channels?: Array<Record<string, unknown>> | null;
   errors?: string[];
+  functionalRole?: unknown;
 }): DashboardV2Context {
   const workspace = input.workspace ?? {};
   const settings = input.settings ?? {};
@@ -32,6 +36,16 @@ export function summarizeDashboardV2Context(input: {
   const merchant = clean(workspace.name) ?? clean(settings.company_name);
   const blockers = [...(input.errors ?? [])];
   if (!merchant) blockers.push("Merchant display name is not retained.");
+  const functionalRole = ["finance", "operations", "management", "accounting"].includes(String(input.functionalRole))
+    ? input.functionalRole as DashboardV2Context["functional_role"]
+    : null;
+  const roleCopy = {
+    finance: ["Finance officer", "Profit, settlements, reporting, and audit evidence"],
+    accounting: ["Accounting officer", "Reconciliation, settlements, reporting, and audit evidence"],
+    operations: ["Operations manager", "Orders, channels, automation, and store operations"],
+    management: ["General manager", "Executive performance, priorities, and governed decisions"],
+  } as const;
+  const [roleLabel, roleDescription] = functionalRole ? roleCopy[functionalRole] : ["Merchant operator", "Merchant-wide operating context"];
 
   return {
     state: merchant ? (blockers.length ? "partial" : "available") : "unavailable",
@@ -44,5 +58,8 @@ export function summarizeDashboardV2Context(input: {
     branches,
     channels,
     blockers,
+    functional_role: functionalRole,
+    role_label: roleLabel,
+    role_description: roleDescription,
   };
 }

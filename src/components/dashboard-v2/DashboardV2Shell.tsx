@@ -43,6 +43,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
       { label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
       { label: "Priority Centre", icon: CircleAlert, to: "/dashboard/priority-centre", badge: "0" },
       { label: "AI Copilot", icon: Bot, to: "/dashboard/ai-copilot", badge: "⌘K" },
+      { label: "AI Store Manager", icon: Sparkles, to: "/dashboard/store-manager" },
     ],
   },
   {
@@ -84,7 +85,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
   },
 ];
 
-export type DashboardV2Page = "overview" | "priority" | "automation" | "orders" | "promotions" | "ai-copilot" | "profit-intelligence" | "menu-intelligence" | "channels" | "settlements" | "reports" | "integrations" | "api-developers" | "settings" | "store-access" | "audit-log";
+export type DashboardV2Page = "overview" | "priority" | "automation" | "orders" | "promotions" | "ai-copilot" | "store-manager" | "profit-intelligence" | "menu-intelligence" | "channels" | "settlements" | "reports" | "integrations" | "api-developers" | "settings" | "store-access" | "audit-log";
 
 export type DashboardV2ChromeData = {
   confidenceLabel: string;
@@ -100,6 +101,7 @@ const PAGE_PATHS: Record<DashboardV2Page, string> = {
   orders: "/dashboard/orders",
   promotions: "/dashboard/promotions",
   "ai-copilot": "/dashboard/ai-copilot",
+  "store-manager": "/dashboard/store-manager",
   "profit-intelligence": "/dashboard/profit-intelligence",
   "menu-intelligence": "/dashboard/menu-intelligence",
   channels: "/dashboard/channels",
@@ -112,12 +114,16 @@ const PAGE_PATHS: Record<DashboardV2Page, string> = {
   "audit-log": "/dashboard/audit-log",
 };
 
-function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => void; activePage: DashboardV2Page }) {
+function Sidebar({ open, onClose, activePage, roleLabel, functionalRole }: { open: boolean; onClose: () => void; activePage: DashboardV2Page; roleLabel: string; functionalRole?: string | null }) {
   const { user } = useAuth();
   const name =
     (user?.user_metadata?.display_name as string | undefined) ||
     user?.email?.split("@")[0] ||
     "PrizeSkout merchant";
+  const preferredGroup = functionalRole === "finance" || functionalRole === "accounting" ? "Finance" : functionalRole === "operations" ? "Operations" : null;
+  const navGroups = preferredGroup
+    ? [NAV_GROUPS[0], ...NAV_GROUPS.slice(1).sort((a, b) => Number(b.label === preferredGroup) - Number(a.label === preferredGroup))]
+    : NAV_GROUPS;
 
   return (
     <>
@@ -136,7 +142,7 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
           </button>
         </div>
         <nav className="ps-v2-nav">
-          {NAV_GROUPS.map((group, groupIndex) => (
+          {navGroups.map((group, groupIndex) => (
             <section key={group.label ?? `primary-${groupIndex}`}>
               {group.label && <h2>{group.label}</h2>}
               {group.items.map((item) => {
@@ -174,7 +180,7 @@ function Sidebar({ open, onClose, activePage }: { open: boolean; onClose: () => 
           <span className="ps-v2-avatar" aria-hidden="true">{name.slice(0, 2).toUpperCase()}</span>
           <span>
             <strong>{name}</strong>
-            <small>Merchant operator</small>
+            <small>{roleLabel}</small>
           </span>
         </div>
         </div>
@@ -205,7 +211,7 @@ export function DashboardV2Shell({ children, activePage = "overview", chromeData
   return (
     <div className="ps-v2-root">
       <a className="ps-v2-skip" href="#dashboard-v2-content">Skip to dashboard content</a>
-      <Sidebar open={mobileOpen} onClose={() => setMobileOpen(false)} activePage={activePage} />
+      <Sidebar open={mobileOpen} onClose={() => setMobileOpen(false)} activePage={activePage} roleLabel={context?.role_label ?? "Merchant operator"} functionalRole={context?.functional_role} />
       <div className="ps-v2-workspace">
         <header className="ps-v2-topbar">
           <button type="button" className="ps-v2-icon-button ps-v2-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
@@ -218,6 +224,7 @@ export function DashboardV2Shell({ children, activePage = "overview", chromeData
             <button type="button" disabled>{context?.channel_label ?? "Channel scope loading"} <ChevronDown size={12} /></button>
           </div>
           <div className="ps-v2-topbar-spacer" />
+          <span className="ps-v2-role-context" title={context?.role_description}>{context?.role_label ?? "Merchant operator"}</span>
           <div className="ps-v2-period" aria-label="Reporting period"><button type="button" className={period === 7 ? "active" : undefined} aria-pressed={period === 7} onClick={() => setDashboardV2Period(7)}>7D</button><button type="button" className={period === 30 ? "active" : undefined} aria-pressed={period === 30} onClick={() => setDashboardV2Period(30)}>30D</button><button type="button" className={period === "qtd" ? "active" : undefined} aria-pressed={period === "qtd"} onClick={() => setDashboardV2Period("qtd")}>QTD</button><button type="button" className={period === "ytd" ? "active" : undefined} aria-pressed={period === "ytd"} onClick={() => setDashboardV2Period("ytd")}>YTD</button></div>
           <span className="ps-v2-currency">{context?.currency ?? "—"}</span>
           <div className="ps-v2-confidence-wrap">

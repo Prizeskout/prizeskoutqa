@@ -106,11 +106,12 @@ const modulesFixture = {
     counts: { total: 7, active: 3, pending_approval: 2, completed: 1 }, blockers: ["Campaign financial outcomes require attributable order, funding, and cost evidence."],
   },
 };
-const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [] } };
+const contextFixture = { ok: true, context: { state: "available", merchant_label: "Sterling Group", brand_label: "Sterling", location_label: "Qatar · 6 branches", channel_label: "5 connected channels", currency: "QAR", brands: [{ id: "brand-1", name: "Sterling" }], branches: [], channels: ["talabat", "snoonu", "keeta", "jahez", "direct-pos"], blockers: [], functional_role: "finance", role_label: "Finance officer", role_description: "Profit, settlements, reporting, and audit evidence" } };
 const sidebarDestinations = [
   ["Overview", "/dashboard"],
   ["Priority Centre", "/dashboard/priority-centre"],
   ["AI Copilot", "/dashboard/ai-copilot"],
+  ["AI Store Manager", "/dashboard/store-manager"],
   ["Profit intelligence", "/dashboard/profit-intelligence"],
   ["Margin leakage", "/dashboard#margin-leakage"],
   ["Menu intelligence", "/dashboard/menu-intelligence"],
@@ -149,6 +150,7 @@ try {
       await page.getByRole("heading", { name: /Gross sales increased/ }).waitFor({ timeout: 120_000 });
       assert.equal(page.url(), `${origin}/dashboard/revenue-hub`);
       await page.locator(".ps-v2-scope button").getByText("Sterling Group", { exact: true }).waitFor({ state: "attached" });
+      await page.getByText("Finance officer", { exact: true }).first().waitFor({ state: "attached" });
       assert.equal(await page.getByText("QAR", { exact: true }).count(), 1);
       assert.equal(await page.locator(".ps-v2-sidebar .ps-v2-nav-item[disabled]").count(), 0, `${viewport.name}: sidebar must not contain dead disabled destinations`);
       for (const [label, href] of sidebarDestinations) {
@@ -252,6 +254,9 @@ try {
           const workspaceDimensions = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
           assert.equal(workspaceDimensions.scrollWidth, workspaceDimensions.clientWidth, `${label}: page-level horizontal overflow`);
         }
+        await page.goto(`${origin}/dashboard/store-manager`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+        await page.getByRole("heading", { name: "Store operations conversation", exact: true }).waitFor({ timeout: 120_000 });
+        assert.equal(await page.getByText("AI Store Manager", { exact: true }).count() > 0, true);
         await page.goto(`${origin}/dashboard/v2/promotions`, { waitUntil: "domcontentloaded", timeout: 120_000 });
         await page.getByRole("heading", { name: /Campaign contribution is not calculated/ }).waitFor({ timeout: 120_000 });
         assert.equal(page.url(), `${origin}/dashboard/promotions`, "legacy V2 URL must redirect to the canonical dashboard route");

@@ -67,7 +67,6 @@ export function MarginRulesTab() {
                 <div style={{ fontSize: 13, color: "var(--muted)" }}>Default minimum contribution margin</div>
                 <div style={{ marginTop: 3, fontSize: 30, fontWeight: 800, color: OG }}>{Math.round(policy.marginFloorPct * 100)}%</div>
               </div>
-              <span style={{ color: "#087F5B", fontWeight: 800, fontSize: 12 }}>ACTIVE · VERSION {policy.version}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 10, marginTop: 18 }}>
               <div style={{ padding: "12px 14px", border: "1px solid var(--border)", borderRadius: 9, background: "var(--surface)" }}>
