@@ -2016,4 +2016,5 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Added `README.md`; updated the active task packet, `state.yaml`, and this session log.
-- Exact next action: commit the documentation slice and push it to `origin/main` under the user's explicit authorization. After repository delivery, continue using the live controlled demo only for its intended audience and rotate shared credentials when that audience changes. Runtime deployment is neither required nor authorized for this documentation-only change.
+- Commit `2fdcb05` (`docs: add contributor quickstart`) was pushed to `origin/main` under the user's explicit authorization.
+- Exact next action: continue using the live controlled demo only for its intended audience and rotate shared credentials when that audience changes. Runtime deployment is neither required nor authorized for this documentation-only change.
