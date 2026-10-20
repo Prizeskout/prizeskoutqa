@@ -1467,6 +1467,8 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Startup `npm run verify-zid-contract` - passed.
 - Startup `npm run verify-salla-contract` - passed.
 - Startup `npm run typecheck` - passed.
+- Final `git diff --check` - passed.
+- Final `npm run verify-continuity` - passed.
 - `npm run verify-dashboard-v2-modules` - passed, including merchant-context contract assertions.
 - `npm run verify-dashboard-v2-contract` - passed.
 - First two `npm run verify-dashboard-v2-ui` attempts failed before assertions because the isolated Vite server exceeded the old 90-second readiness window and emitted no startup error.
@@ -1996,3 +1998,22 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - The production pass confirmed exact key reference values, complete sections, working local interactions/drawers, no browser page errors, no page-level horizontal overflow, and no write API requests.
 - HTTP health checks returned 200 for `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/`.
 - Exact next action: use the controlled demo for the intended audience, rotate shared credentials when the audience changes, and do not treat this as real-merchant or Order Guard production readiness.
+
+## 2026-10-20 - Contributor entry-point documentation
+
+- Added a root `README.md` that points contributors to the authoritative `AGENTS.md` and implementation state before they change production-connected code.
+- Documented the minimum local setup, protected Zid/Salla contract checks, continuity handoff requirement, and the separation between repository delivery, deployment, live financial correctness, and customer readiness.
+- Changed no application runtime, financial calculation, integration, migration, configuration, deployment, or merchant data.
+- Preserved all pre-existing untracked user artifacts.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup `npm run typecheck` - passed.
+
+### Changed files and exact next action
+
+- Added `README.md`; updated the active task packet, `state.yaml`, and this session log.
+- Exact next action: commit the documentation slice and push it to `origin/main` under the user's explicit authorization. After repository delivery, continue using the live controlled demo only for its intended audience and rotate shared credentials when that audience changes. Runtime deployment is neither required nor authorized for this documentation-only change.
