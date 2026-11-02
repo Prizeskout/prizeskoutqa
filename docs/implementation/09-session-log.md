@@ -2038,3 +2038,4 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - `src/components/dashboard-v2/dashboard-v2.css`, `src/components/dashboard-v2/platform-reference-demo.css`, `src/components/dashboard-v2/reference-demo.css`, `src/components/dashboard/PsShell.tsx`, `src/components/dashboard/DashboardLayout.tsx`, this session log.
 - Committed at the user's request; not deployed. Exact next action: visually confirm, then run `npx vite build && npx wrangler deploy` when the user authorizes.
+- Cloudflare deploy attempt: `npx vite build` passed; `npx wrangler deploy` failed on an expired Wrangler login (user has since re-logged in). Actual production hosting is PipeOps, which deploys from `origin/main`; pushed to `origin/main` at the user's request to deploy live. Exact next action: confirm the PipeOps build succeeds and the dashboard renders pure white in production.
