@@ -10,13 +10,13 @@
   --platform-line: #eceae5;
   --platform-brand: #f47320;
   --platform-brand-text: #a94b12;
-  --platform-brand-bg: #fff3e8;
+  --platform-brand-bg: #ffffff;
   --platform-pos: #26795b;
   --platform-pos-bg: #eaf7f1;
   --platform-neg: #b33b28;
-  --platform-neg-bg: #fff0ed;
+  --platform-neg-bg: #ffffff;
   --platform-warn: #916d0c;
-  --platform-warn-bg: #fff7db;
+  --platform-warn-bg: #ffffff;
   --platform-shadow: 0 0 0 1px rgba(20,18,14,.06),0 1px 2px rgba(20,18,14,.04),0 14px 36px -18px rgba(20,18,14,.14);
   --ink-2: #363b42;
   --neg-bar: #cf6454;

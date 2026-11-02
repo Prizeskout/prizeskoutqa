@@ -72,7 +72,7 @@ export function ScenarioPricingCard({ rec, scenarioId, initialDecision, onDecisi
               fontWeight: 600,
               padding: "2px 8px",
               borderRadius: 999,
-              background: isRaise ? "rgba(251,146,60,0.12)" : "rgba(52,211,153,0.12)",
+              background: isRaise ? "transparent" : "rgba(52,211,153,0.12)",
               color: isRaise ? "#FB923C" : "#34D399",
               border: `1px solid ${isRaise ? "rgba(251,146,60,0.25)" : "rgba(52,211,153,0.25)"}`,
               letterSpacing: "0.03em",
@@ -249,7 +249,7 @@ export function ScenarioPricingCard({ rec, scenarioId, initialDecision, onDecisi
               onClick={applyRec}
               style={{
                 flex: 1,
-                background: isRaise ? "rgba(251,146,60,0.12)" : "rgba(52,211,153,0.12)",
+                background: isRaise ? "transparent" : "rgba(52,211,153,0.12)",
                 border: `1px solid ${isRaise ? "rgba(251,146,60,0.3)" : "rgba(52,211,153,0.3)"}`,
                 color: isRaise ? "#FB923C" : "#34D399",
                 fontSize: 12.5,

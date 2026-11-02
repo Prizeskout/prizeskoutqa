@@ -1296,7 +1296,7 @@ export class OrderReferenceDemo extends React.Component {
             style={{
               background: "var(--panel)",
               backgroundImage:
-                "radial-gradient(120% 70% at 100% 0%,rgba(244,115,32,0.18),transparent 60%)",
+                "none",
               color: "var(--panel-ink)",
               borderRadius: "16px",
               boxShadow: "0 14px 36px -18px rgba(0,0,0,0.45)",

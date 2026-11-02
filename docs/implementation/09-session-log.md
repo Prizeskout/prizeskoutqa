@@ -2046,3 +2046,9 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - User reported orange backgrounds remained. In `dashboard-v2.css`, set the KPI metric grid and its risk/brand tiles, branch-attention panel, settlement read-only badge, variance summary, variance amount box, and hero next-action strip to `var(--v2-surface)` (#ffffff), adding hairline borders where needed for separation. Small status pills keep their tints. No logic, data, or integration changes.
 - `npx vite build` - passed (57s). Pushed to `origin/main` (PipeOps) and ran `npx wrangler deploy` at the user's request.
 - Exact next action: user visually confirms the production dashboard.
+
+## 2026-11-02 - Full sweep of remaining orange/peach/amber tints
+
+- User still saw orange. Set shared tint tokens to #ffffff (`--brand-bg`, `--neg-bg`, `--warn-bg` in `reference-demo.css`; `--platform-brand-bg`, `--platform-neg-bg`, `--platform-warn-bg` in `platform-reference-demo.css`; `--v2-warning-bg` in `dashboard-v2.css`). Whitened remaining hard-coded tints in `dashboard-v2.css` (exception list, selected campaign row, status pills, copilot bubble, warning icon, confidence note), removed orange glows on dark panels (`dashboard-v2.css`, `OrderReferenceDemo.tsx`, `PromotionsReferenceDemo.tsx`), and whitened peach fills in `ExecutiveOverview.tsx`, `FocusedIntelligenceSummary.tsx`, `TruthTrail.tsx`, `ScenarioPricingCard.tsx`, `PrizeSkoutDashboard.tsx`. Text colours and data marks (chart bars, brand accents) unchanged. No logic or data changes.
+- `npx tsc --noEmit -p .` - passed. `npx vite build` - passed (38s). Pushed to `origin/main` (PipeOps) and ran `npx wrangler deploy` at the user's request.
+- Exact next action: user visually confirms production after hard refresh.

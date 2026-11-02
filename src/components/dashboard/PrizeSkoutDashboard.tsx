@@ -309,7 +309,7 @@ const CSS = `
   .ps-dashboard-sidebar{width:252px!important;flex-basis:252px!important;padding:22px 14px 16px!important;background:linear-gradient(180deg,#0B1B3A 0%,#08152E 58%,#071126 100%)!important;border-inline-end:1px solid rgba(255,255,255,.055)!important;color:#fff!important;box-shadow:inset -1px 0 0 rgba(255,255,255,.035),16px 0 40px -34px rgba(8,18,40,.9)}
   .ps-dashboard-sidebar nav{margin-top:25px!important;gap:3px!important}.ps-dashboard-sidebar nav button{min-height:42px!important;padding:10px 11px!important;border-radius:8px!important}
   .ps-dashboard-sidebar nav button{color:rgba(255,255,255,.72)!important}
-  .ps-dashboard-sidebar nav button[aria-current="page"]{background:linear-gradient(90deg,rgba(243,106,33,.18),rgba(255,255,255,.09))!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px rgba(255,255,255,.035)}
+  .ps-dashboard-sidebar nav button[aria-current="page"]{background:linear-gradient(90deg,rgba(243,106,33,0),rgba(255,255,255,.09))!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px rgba(255,255,255,.035)}
   .ps-dashboard-sidebar nav button:hover{background:rgba(255,255,255,.075)!important;color:#fff!important;transform:translateX(1px)}
   .ps-dashboard-sidebar nav button,.ps-dashboard-sidebar-footer button{transition:background-color 150ms var(--ease),color 150ms var(--ease),transform 150ms var(--ease)!important}
   .ps-nav-group-label{padding:13px 11px 5px;color:rgba(255,255,255,.4);font-size:9px;font-weight:800;letter-spacing:.115em;text-transform:uppercase;user-select:none}
@@ -431,7 +431,7 @@ const CSS = `
   @media(max-width:760px){.ps-catalog-insights,.ps-defend-snapshot{grid-template-columns:1fr}.ps-catalog-insight-card:first-child,.ps-defend-snapshot>section:first-child{grid-row:auto}.ps-defend-snapshot ol{grid-template-columns:1fr 1fr;gap:14px}.ps-defend-snapshot li:after{display:none}}
   .ps-mobile-sidebar{background:linear-gradient(180deg,#0B1B3A,#071126)!important;color:#fff!important;border-inline-end-color:rgba(255,255,255,.08)!important;box-shadow:18px 0 48px rgba(4,12,28,.34)}
   .ps-mobile-sidebar nav button{color:rgba(255,255,255,.74)!important;min-height:44px}
-  .ps-mobile-sidebar nav button[aria-current="page"]{background:linear-gradient(90deg,rgba(243,106,33,.19),rgba(255,255,255,.08))!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--accent)}
+  .ps-mobile-sidebar nav button[aria-current="page"]{background:linear-gradient(90deg,rgba(243,106,33,0),rgba(255,255,255,.08))!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--accent)}
   .ps-mobile-sidebar nav button:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
   .ps-mobile-sidebar>div:first-child button{color:#fff!important;border-color:rgba(255,255,255,.15)!important}
   @keyframes pk-drawer-ltr{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
