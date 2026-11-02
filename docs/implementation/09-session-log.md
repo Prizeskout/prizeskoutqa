@@ -2039,3 +2039,10 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `src/components/dashboard-v2/dashboard-v2.css`, `src/components/dashboard-v2/platform-reference-demo.css`, `src/components/dashboard-v2/reference-demo.css`, `src/components/dashboard/PsShell.tsx`, `src/components/dashboard/DashboardLayout.tsx`, this session log.
 - Committed at the user's request; not deployed. Exact next action: visually confirm, then run `npx vite build && npx wrangler deploy` when the user authorizes.
 - Cloudflare deploy attempt: `npx vite build` passed; `npx wrangler deploy` failed on an expired Wrangler login (user has since re-logged in). Actual production hosting is PipeOps, which deploys from `origin/main`; pushed to `origin/main` at the user's request to deploy live. Exact next action: confirm the PipeOps build succeeds and the dashboard renders pure white in production.
+- After the user re-logged in, `npx wrangler deploy` passed; Worker version `6cce5450-b7c5-48be-bc44-8ec4b741cdbd` on `prizeskout.qa/*` and `app.prizeskout.qa`.
+
+## 2026-11-02 - Remove orange/beige panel tints from dashboard
+
+- User reported orange backgrounds remained. In `dashboard-v2.css`, set the KPI metric grid and its risk/brand tiles, branch-attention panel, settlement read-only badge, variance summary, variance amount box, and hero next-action strip to `var(--v2-surface)` (#ffffff), adding hairline borders where needed for separation. Small status pills keep their tints. No logic, data, or integration changes.
+- `npx vite build` - passed (57s). Pushed to `origin/main` (PipeOps) and ran `npx wrangler deploy` at the user's request.
+- Exact next action: user visually confirms the production dashboard.
