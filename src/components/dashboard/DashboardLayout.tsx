@@ -314,7 +314,7 @@ function DashboardLayoutInner({
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#FAFAF9" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFFFFF" }}>
       <Sidebar />
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
       <div
@@ -340,7 +340,7 @@ function DashboardLayoutInner({
           id="main-content"
           tabIndex={-1}
           className="dashboard-main-content"
-          style={{ flex: 1, backgroundColor: "#FAFAF9", overflowY: "auto" }}
+          style={{ flex: 1, backgroundColor: "#FFFFFF", overflowY: "auto" }}
         >
           <div
             key={location.pathname}

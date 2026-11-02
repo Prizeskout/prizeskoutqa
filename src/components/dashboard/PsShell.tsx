@@ -41,7 +41,7 @@ const PS_CSS = `
   --ps-thumb-border:#1a1b1f;
 }
 [data-ps-theme="light"] {
-  --ps-page:#F4F5F6; --ps-surface-2:#FFFFFF; --ps-surface-3:#F0F1F3; --ps-card:#FFFFFF;
+  --ps-page:#FFFFFF; --ps-surface-2:#FFFFFF; --ps-surface-3:#F0F1F3; --ps-card:#FFFFFF;
   --ps-card-veil:rgba(255,255,255,0.5); --ps-veil-strong:rgba(255,255,255,0.7);
   --ps-chip:#F1F2F4; --ps-chip-2:#E5E7EB; --ps-inactive:#C7CAD0;
   --ps-border:#E5E7EB; --ps-border-2:#EBEDF0; --ps-border-3:#DDE0E4;
