@@ -2133,3 +2133,30 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `7008aa19-52ff-400e-a619-ce305a4025a1` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
 - Exact next action: hard-refresh and visually inspect the deployed dashboard at authenticated desktop and phone widths; do not mark the production appearance verified until that pass succeeds.
+
+## 2026-11-02 - High-impact financial command surface
+
+### Slice
+
+- Reassessed the authenticated production Overview after the user reported that the previous craft pass was not noticeably different.
+- Replaced the light generic navigation with an institutional ink command rail and stronger active-route treatment.
+- Consolidated the top controls into a calmer command header, compressed the executive briefing, and made the primary contribution area a dominant dark financial control panel.
+- Sharpened supporting cards into ledger-style sections, increased analytical table density, and aligned specialized Platform, Order Automation, and Promotions routes with the new command surface.
+- Preserved structure, source values, financial calculations, routes, evidence boundaries, and merchant approvals.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` - passed.
+- Post-change `git diff --check` - passed with only LF-to-CRLF working-copy warnings.
+- Post-change `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact key values, complete sections, working interactions, no API writes, browser errors, or page overflow.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+- Representative desktop and 390px renders were visually inspected after the automated matrix.
+
+### Changed files and exact next action
+
+- Changed the three dashboard stylesheet families and the required continuity records. Existing untracked user artifacts remain untouched.
+- This slice is local and is not committed, pushed, deployed, or production-verified.
+- Exact next action: review the new direction, then commit, push, and deploy only if explicitly requested.

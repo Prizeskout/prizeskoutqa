@@ -257,3 +257,13 @@
   .ps-platform-demo *::before,
   .ps-platform-demo *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; }
 }
+
+/* Ledger-density alignment with the shared financial command surface. */
+.ps-platform-demo { gap:16px; }
+.ps-platform-heading { padding-bottom:14px; border-bottom:1px solid var(--platform-line); }
+.ps-platform-heading h1 { font-size:clamp(22px,2vw,28px); }
+.ps-platform-kpis { border-radius:6px; box-shadow:none; }
+.ps-platform-kpis article { min-height:102px; justify-content:center; }
+.ps-platform-panel { border-radius:6px; box-shadow:none; }
+.ps-platform-panel > header { border-bottom:1px solid #eef1f4; }
+.ps-platform-table-head { background:#eef1f5; }

@@ -160,3 +160,10 @@
 @media (max-width:700px) {
   .ps-reference-demo h1 { line-height:1.16!important; }
 }
+
+/* Ledger-density alignment with the shared financial command surface. */
+.ps-reference-demo { gap:16px; }
+.ps-reference-demo > div:first-child { padding-bottom:14px; border-bottom:1px solid var(--line); }
+.ps-reference-demo section,
+.ps-reference-demo article { border-radius:6px!important; box-shadow:none!important; }
+.ps-reference-demo [style*="background: var(--surface-2)"] { background:#eef1f5!important; }
