@@ -2158,5 +2158,7 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed the three dashboard stylesheet families and the required continuity records. Existing untracked user artifacts remain untouched.
-- This slice is local and is not committed, pushed, deployed, or production-verified.
-- Exact next action: review the new direction, then commit, push, and deploy only if explicitly requested.
+- Commit `2ab592d` (`style: create dashboard financial command surface`) was pushed to `origin/main` under explicit user authorization.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `13563d12-1628-4e6e-92a4-9a6305fba0f0` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
+- Exact next action: hard-refresh and visually inspect the deployed command surface at authenticated desktop and phone widths; do not mark production appearance verified until that pass succeeds.
