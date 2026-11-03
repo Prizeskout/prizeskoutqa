@@ -159,6 +159,62 @@
   .ps-platform-toggles > button { grid-template-columns:minmax(0,1fr) 40px; padding:13px 16px; }
   .ps-platform-toggles em { grid-column:1; }
 }
+
+/* Enterprise finish shared by the full demo-only platform route family. */
+.ps-platform-demo {
+  --platform-bg: #f7f8fa;
+  --platform-surface-2: #f2f4f7;
+  --platform-surface-3: #e4e7ec;
+  --platform-ink: #101828;
+  --platform-ink-2: #344054;
+  --platform-muted: #667085;
+  --platform-faint: #7d8998;
+  --platform-line: #dfe3e8;
+  --platform-brand: #ea6418;
+  --platform-brand-text: #9a3d0a;
+  --platform-pos: #16734a;
+  --platform-pos-bg: #ecf8f2;
+  --platform-neg: #a13f30;
+  --platform-warn: #8a5300;
+  --platform-shadow: 0 1px 2px rgba(16,24,40,.035),0 4px 12px rgba(16,24,40,.025);
+  gap: 18px;
+  font-family: Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing: 0;
+}
+.ps-platform-heading p { color:#778293; font-size:9px; font-weight:750; letter-spacing:.09em; }
+.ps-platform-heading h1 { color:#172033; font-size:clamp(25px,2.5vw,34px); font-weight:520; letter-spacing:-.025em; }
+.ps-platform-heading a,
+.ps-platform-heading button { border-radius:5px; font-weight:650; }
+.ps-platform-kpis,
+.ps-platform-panel { border:1px solid var(--platform-line); border-radius:10px; }
+.ps-platform-kpis article { padding:17px 20px; }
+.ps-platform-kpis article > span { color:#667085; font-size:9px; font-weight:700; letter-spacing:.065em; }
+.ps-platform-kpis article > strong { color:#101828; font-size:26px; font-weight:600; letter-spacing:-.025em; }
+.ps-platform-panel > header h2 { color:#172033; font-weight:650; }
+.ps-platform-filters { border-radius:6px; background:#eef1f4; }
+.ps-platform-filters button { border-radius:4px; font-weight:600; }
+.ps-platform-filters button[aria-pressed="true"] { box-shadow:0 1px 2px rgba(16,24,40,.09),inset 0 0 0 1px #d9dee5; }
+.ps-platform-table-head { background:#f7f8fa; }
+.ps-platform-table-head button { color:#667085; font-size:9px; font-weight:700; }
+.ps-platform-data-row:hover { background:#f8f9fb; }
+.ps-platform-data-row > span[data-pill],
+.ps-platform-feed article > span { border-radius:4px; }
+.ps-platform-panel-foot button { border-radius:5px; font-weight:650; }
+.ps-platform-bars > div > i { border-radius:3px; }
+.ps-platform-feed article > i { border-radius:2px; }
+.ps-platform-toggles button > i { border-radius:4px; }
+.ps-platform-toggles button > i b { border-radius:3px; }
+.ps-platform-drawer { box-shadow:-18px 0 40px rgba(16,24,40,.14); }
+.ps-platform-drawer > header button,
+.ps-platform-drawer-body > p,
+.ps-platform-drawer > footer a,
+.ps-platform-drawer > footer button { border-radius:6px; }
+.ps-platform-toast { border-radius:6px; background:#101828; }
+
+@media (max-width:760px) {
+  .ps-platform-kpis,
+  .ps-platform-panel { border-radius:8px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .ps-platform-demo *,
   .ps-platform-demo *::before,

@@ -838,3 +838,100 @@
   .ps-v2-hero, .ps-v2-card { border-radius: 8px; }
   .ps-v2-hero-main .ps-v2-dominant-metric { font-size: clamp(38px, 12vw, 52px); }
 }
+
+/* Route-completion layer: specialized workspaces, forms, states, and controls. */
+.ps-v2-module-grid,
+.ps-v2-dashboard-row,
+.ps-v2-two-column { gap:16px; }
+.ps-v2-module-card { min-height:250px; padding:20px 22px; }
+.ps-v2-unavailable { min-height:170px; }
+.ps-v2-unavailable strong { font-weight:650; }
+.ps-v2-action,
+.ps-v2-secondary-link,
+.ps-v2-report-actions button,
+.ps-v2-api-example button { min-height:36px; font-weight:650; }
+.ps-v2-action:not([disabled]):hover,
+.ps-v2-secondary-link:hover { border-color:#b9c1cc; background:#f8f9fb; }
+.ps-v2-action-dark:hover { background:#25334a; border-color:#25334a; }
+
+.ps-v2-placeholder-table,
+.ps-v2-inset-panel,
+.ps-v2-copilot-thread,
+.ps-v2-copilot-form textarea,
+.ps-v2-api-example,
+.ps-v2-rule-editor,
+.ps-v2-simulator-inputs,
+.ps-v2-simulator-output { border:1px solid #dfe3e8; }
+.ps-v2-placeholder-table div:first-child { background:#f7f8fa; color:#667085; font-weight:700; }
+.ps-v2-placeholder-table div { min-height:42px; }
+
+.ps-v2-copilot-thread { background:#f7f8fa; }
+.ps-v2-copilot-thread article { border-radius:7px; box-shadow:0 1px 2px rgba(16,24,40,.035); }
+.ps-v2-copilot-thread article[data-role="user"] { background:#eef1f4; }
+.ps-v2-copilot-thread article strong { color:#475467; font-size:9px; }
+.ps-v2-copilot-form textarea {
+  border-radius:6px;
+  background:#fff;
+  transition:border-color 140ms ease,box-shadow 140ms ease;
+}
+.ps-v2-copilot-form textarea:focus { border-color:#98a2b3; box-shadow:0 0 0 3px rgba(71,84,103,.1); outline:0; }
+
+.ps-v2-priority-centre-card { padding:0; overflow:hidden; }
+.ps-v2-priority-centre-list > li { border-color:#e4e7ec; }
+.ps-v2-priority-centre-list > li:hover { background:#f8f9fb; }
+.ps-v2-priority-centre-rank,
+.ps-v2-priority-rank { border-radius:4px; }
+.ps-v2-priority-state,
+.ps-v2-priority-approval,
+.ps-v2-coverage-badge,
+.ps-v2-finding-state { border-radius:4px; font-weight:700; }
+.ps-v2-priority-provenance > div { background:#f7f8fa; border-color:#e4e7ec; }
+.ps-v2-priority-next,
+.ps-v2-priority-blocker,
+.ps-v2-priority-boundary,
+.ps-v2-boundary-note,
+.ps-v2-claims-note { border-radius:0; }
+
+.ps-v2-flow-stages li > span { border-radius:6px; background:#fff; }
+.ps-v2-retained-list > div > span { border-radius:4px; }
+.ps-v2-exception-list article { border:1px solid #dfe3e8; }
+.ps-v2-exception-list article button { border-radius:4px; }
+.ps-v2-rule-editor { background:#f7f8fa; }
+.ps-v2-rule-editor > div { border:1px solid #dfe3e8; }
+.ps-v2-rule-chips span,
+.ps-v2-question-chips button { border-radius:4px; }
+
+.ps-v2-campaign-table tr[data-selected="true"] { background:#fff8f3; box-shadow:inset 3px 0 var(--v2-brand); }
+.ps-v2-health-panel { background:#f7f8fa; }
+.ps-v2-health-panel label { border-radius:6px; }
+.ps-v2-health-segments span,
+.ps-v2-funding-bar,
+.ps-v2-mini-funding,
+.ps-v2-disabled-slider { border-radius:2px; }
+.ps-v2-disabled-field,
+.ps-v2-simulator-inputs input { border-radius:5px; }
+
+.ps-v2-evidence-card { border:1px solid #dfe3e8; }
+.ps-v2-evidence-card[data-state="verified"] { border-left:3px solid #16734a; }
+.ps-v2-evidence-card[data-state="partial"],
+.ps-v2-evidence-card[data-state="stale"] { border-left:3px solid #a66b00; }
+.ps-v2-evidence-card[data-state="unavailable"] { border-left:3px solid #98a2b3; }
+.ps-v2-empty-workspace { min-height:180px; border:1px dashed #cfd5dd; border-radius:7px; background:#fafbfc; }
+.ps-v2-menu-cost-evidence summary { color:#344054; }
+.ps-v2-api-example { background:#101828; }
+.ps-v2-api-example code { color:#e4e7ec; }
+.ps-v2-form-error { padding:8px 10px; border-left:3px solid #b42318; background:#fff5f4; }
+
+.ps-v2-drawer-scrim,
+.ps-v2-scrim { backdrop-filter:blur(2px); }
+.ps-v2-confidence-popover small { background:#fffaeb; }
+.ps-v2-priority-drawer-list article:hover { background:#f8f9fb; }
+
+@media (max-width:767px) {
+  .ps-v2-module-card { padding:18px; }
+  .ps-v2-module-grid,
+  .ps-v2-dashboard-row,
+  .ps-v2-two-column { gap:12px; }
+  .ps-v2-priority-centre-card { border-radius:8px; }
+  .ps-v2-empty-workspace { min-height:150px; }
+}

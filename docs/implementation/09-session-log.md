@@ -2081,3 +2081,26 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Commit `1cae180` (`style: mature dashboard visual system`) was pushed to `origin/main` under explicit user authorization. The first push attempt used the active `Web3freak` credential and was rejected with HTTP 403; the already-configured `Prizeskout` account successfully pushed the commit, and `Web3freak` was restored as active afterward.
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker version `fa3f3da6-76c9-4c3e-a58f-89847bdea29a` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - Exact next action: hard-refresh the authenticated dashboard and complete focused desktop and phone visual verification. Do not mark the appearance production-verified until that pass succeeds.
+
+## 2026-11-02 - Complete dashboard route-family visual pass
+
+### Slice
+
+- Extended the enterprise finance visual language across `dashboard-v2.css`, `platform-reference-demo.css`, and `reference-demo.css`.
+- Covered the full canonical route family and specialized Platform, Order Automation, and Promotions renderers, including navigation, KPI strips, tables, filters, forms, Copilot threads, drawers, rule editors, evidence states, empty states, toggles, campaign controls, and phone layouts.
+- Preserved all existing structure, values, route behavior, financial contracts, and protected-action boundaries.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` - passed.
+- Post-change `git diff --check` - passed with only existing LF-to-CRLF working-copy warnings.
+- Post-change `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact key values, complete sections, working interactions, no API writes, no browser errors, and no page overflow.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+
+### Changed files and exact next action
+
+- Changed the three dashboard stylesheet families and the required continuity records.
+- Exact next action: review and commit/push only with explicit user authorization. Deployment and authenticated production visual verification remain separate.
