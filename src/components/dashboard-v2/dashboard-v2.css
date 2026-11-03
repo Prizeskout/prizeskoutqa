@@ -1315,3 +1315,36 @@
   .ps-v2-metric-grid div:nth-child(2n) { border-inline-end:0; }
   .ps-v2-metric-grid div:nth-last-child(-n+2) { border-bottom:0; }
 }
+
+/* Overview signature: executive command centre, not a generic module page. */
+.ps-v2-dashboard-row-primary {
+  position:relative;
+  padding-top:14px;
+  border-top:1px solid #dfe3e8;
+}
+.ps-v2-profit-bridge {
+  border-radius:3px;
+  border-top:3px solid #101828;
+}
+.ps-v2-profit-bridge .ps-v2-section-heading h2 { font-size:17px; }
+.ps-v2-change-card {
+  border-radius:3px;
+  background:#101828;
+  color:#f8fafc;
+  box-shadow:none;
+}
+.ps-v2-change-card h2,
+.ps-v2-change-card strong { color:#fff; }
+.ps-v2-change-card p,
+.ps-v2-change-card small,
+.ps-v2-change-boundary { color:#98a2b3; }
+.ps-v2-change-mark { background:#f47320; }
+.ps-v2-channel-card { border-top:3px solid #315b7c; border-radius:3px; }
+.ps-v2-reconciliation-card { border-top:3px solid #315b7c; border-radius:3px; }
+.ps-v2-leakage-card { border-top:3px solid #d95b12; border-radius:3px; }
+.ps-v2-branch-card { border-radius:3px; overflow:hidden; }
+.ps-v2-branch-attention { border-left:3px solid #d95b12; }
+@media (max-width:767px) {
+  .ps-v2-dashboard-row-primary { padding-top:10px; }
+  .ps-v2-change-card { border-radius:3px; }
+}

@@ -267,3 +267,124 @@
 .ps-platform-panel { border-radius:6px; box-shadow:none; }
 .ps-platform-panel > header { border-bottom:1px solid #eef1f4; }
 .ps-platform-table-head { background:#eef1f5; }
+
+/* Workspace signatures: one product, four distinct operating modes. */
+.ps-platform-demo[data-screen="profit"] {
+  --workspace-accent:#16734a;
+  --workspace-accent-soft:#eaf6f0;
+}
+.ps-platform-demo[data-screen="profit"] .ps-platform-heading {
+  border-bottom:2px solid var(--workspace-accent);
+}
+.ps-platform-demo[data-screen="profit"] .ps-platform-heading p { color:var(--workspace-accent); }
+.ps-platform-demo[data-screen="profit"] .ps-platform-kpis {
+  grid-template-columns:minmax(260px,1.35fr) repeat(3,minmax(0,1fr));
+}
+.ps-platform-demo[data-screen="profit"] .ps-platform-kpis article:first-child {
+  background:#10251d;
+  border-color:#10251d;
+}
+.ps-platform-demo[data-screen="profit"] .ps-platform-kpis article:first-child > span,
+.ps-platform-demo[data-screen="profit"] .ps-platform-kpis article:first-child > small { color:#a8cbbb; }
+.ps-platform-demo[data-screen="profit"] .ps-platform-kpis article:first-child > strong {
+  color:#fff;
+  font-size:32px;
+}
+.ps-platform-demo[data-screen="profit"] .ps-platform-panel > header {
+  box-shadow:inset 3px 0 0 var(--workspace-accent);
+}
+.ps-platform-demo[data-screen="profit"] .ps-platform-bars > div > i b { background:var(--workspace-accent)!important; }
+
+.ps-platform-demo[data-screen="settlements"] {
+  --workspace-accent:#315b7c;
+  --workspace-accent-soft:#edf3f7;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-heading {
+  padding:14px 16px;
+  border:1px solid #d7e0e7;
+  border-left:4px solid var(--workspace-accent);
+  background:#f7fafc;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-heading p { color:var(--workspace-accent); }
+.ps-platform-demo[data-screen="settlements"] .ps-platform-kpis {
+  border-top:3px solid var(--workspace-accent);
+  border-radius:2px;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-kpis article {
+  min-height:92px;
+  background:#fbfcfd;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-kpis article > strong {
+  font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;
+  font-size:24px;
+  letter-spacing:-.045em;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-panel {
+  border-radius:2px;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-panel > header {
+  background:#f7fafc;
+  border-bottom:1px solid #d7e0e7;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-table-head {
+  background:#eaf0f4;
+}
+.ps-platform-demo[data-screen="settlements"] .ps-platform-data-row > span:not(:first-child) {
+  font-variant-numeric:tabular-nums;
+}
+
+.ps-platform-demo[data-screen="priority"] {
+  --workspace-accent:#d95b12;
+  --workspace-accent-soft:#fff7ed;
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-heading {
+  position:relative;
+  padding-left:18px;
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-heading::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 14px 0;
+  width:4px;
+  background:var(--workspace-accent);
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-heading p { color:var(--workspace-accent); }
+.ps-platform-demo[data-screen="priority"] .ps-platform-kpis {
+  border-radius:2px;
+  box-shadow:inset 0 3px 0 var(--workspace-accent);
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-kpis article:first-child {
+  background:#101828;
+  border-color:#101828;
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-kpis article:first-child > span,
+.ps-platform-demo[data-screen="priority"] .ps-platform-kpis article:first-child > small { color:#98a2b3; }
+.ps-platform-demo[data-screen="priority"] .ps-platform-kpis article:first-child > strong { color:#fff; }
+.ps-platform-demo[data-screen="priority"] .ps-platform-panel > header {
+  padding-left:26px;
+  position:relative;
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-panel > header::before {
+  content:"";
+  position:absolute;
+  left:14px;
+  top:18px;
+  bottom:14px;
+  width:3px;
+  border-radius:2px;
+  background:var(--workspace-accent);
+}
+.ps-platform-demo[data-screen="priority"] .ps-platform-data-row:hover {
+  background:#fffaf5;
+}
+
+@media (max-width:760px) {
+  .ps-platform-demo[data-screen="profit"] .ps-platform-kpis {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .ps-platform-demo[data-screen="profit"] .ps-platform-kpis article:first-child > strong {
+    font-size:26px;
+  }
+  .ps-platform-demo[data-screen="settlements"] .ps-platform-heading { padding:12px; }
+  .ps-platform-demo[data-screen="priority"] .ps-platform-heading { padding-left:14px; }
+}

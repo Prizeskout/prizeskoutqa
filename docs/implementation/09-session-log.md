@@ -2191,3 +2191,26 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `bcb9748c-9e84-45ee-918e-cc305ce83786` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
 - Exact next action: hard-refresh and verify the removed label plus collapsed/expanded desktop navigation in the authenticated dashboard; do not mark the production interaction verified until that pass succeeds.
+## 2026-11-03 - Dashboard workspace differentiation
+
+### Slice
+
+- Added route-specific visual signatures while retaining the existing dashboard design and structure.
+- Overview now reads as an executive command centre; Profit Intelligence as an analytical workspace; Settlements as a reconciliation ledger; and Priority Centre as a decision queue.
+- Changed no values, calculations, evidence provenance, integrations, migrations, merchant data, or protected actions.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` - passed.
+- Post-change `git diff --check` - passed with only LF-to-CRLF working-copy warnings.
+- Post-change `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact values, complete sections, working interactions, no API writes, no browser errors, and no page overflow.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+- Representative Profit Intelligence, Settlements, and Priority Centre desktop and 390px renders were visually inspected.
+
+### Changed files and exact next action
+
+- Changed `src/components/dashboard-v2/dashboard-v2.css`, `src/components/dashboard-v2/platform-reference-demo.css`, and the required continuity records. Existing untracked user artifacts remain untouched.
+- Exact next action: review the local result, then commit and push only with explicit user authorization. Do not record deployment or production verification until those actions actually occur.

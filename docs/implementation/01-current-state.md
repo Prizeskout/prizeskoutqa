@@ -68,6 +68,8 @@ Last reconciled with the repository: 2026-10-01.
 
 ## Known operational gaps from the latest reliable handoff
 
+- A local workspace-differentiation slice gives the established dashboard routes distinct operating character without changing their design, structure, values, or financial logic: Overview is an executive command centre, Profit Intelligence is a green analytical workspace, Settlements is a steel-blue reconciliation ledger, and Priority Centre is an orange decision queue. Typecheck, Dashboard V2 contract/module checks, production build, and the complete 1440/390/375/844 reference matrix pass with exact values, working interactions, no API writes, no browser errors, and no page overflow. Representative desktop and phone renders were visually reviewed. This slice is not committed, pushed, deployed, or production-verified.
+
 - Supabase CLI migration listing was blocked by `LegacyDbConfigLoginRoleStatusError` / HTTP 403 for the logged-in project role. This is an account authorization issue, not evidence of a database-schema failure.
 - Production forwarding-email transport, matching inbound webhook secret, and an approved test tenant/document were still required for end-to-end email smoke testing.
 - Salla first-time welcome delivery and consumed-link rejection are verified through Resend and the live PrizeSkout callback. Time-elapsed expiry beyond one-time consumption was not separately waited out.
