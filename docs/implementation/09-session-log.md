@@ -2103,4 +2103,6 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed the three dashboard stylesheet families and the required continuity records.
-- Exact next action: review and commit/push only with explicit user authorization. Deployment and authenticated production visual verification remain separate.
+- Commit `626645d` (`style: mature complete dashboard route family`) was pushed to `origin/main` under explicit user authorization.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `cd80996f-8b4d-4613-af9e-b953d76a05f7` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- Exact next action: hard-refresh the authenticated production dashboard and verify the complete route family visually at desktop and phone widths.
