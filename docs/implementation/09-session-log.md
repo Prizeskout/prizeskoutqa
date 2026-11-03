@@ -2129,5 +2129,7 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed `src/components/dashboard-v2/dashboard-v2.css`, `src/components/dashboard-v2/platform-reference-demo.css`, `src/components/dashboard-v2/reference-demo.css`, and the required continuity records.
-- This slice is local and is not committed, pushed, deployed, or authenticated-production verified.
-- Exact next action: visually inspect the local dashboard at desktop and phone widths; commit, push, and deploy only if the user explicitly requests those actions.
+- Commit `7c60aca` (`style: refine dashboard enterprise craft`) was pushed to `origin/main` under explicit user authorization. The first push selected the active `Web3freak` credential and returned HTTP 403; switching temporarily to the configured `Prizeskout` account succeeded, and `Web3freak` was restored as active afterward.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `7008aa19-52ff-400e-a619-ce305a4025a1` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
+- Exact next action: hard-refresh and visually inspect the deployed dashboard at authenticated desktop and phone widths; do not mark the production appearance verified until that pass succeeds.
