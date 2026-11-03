@@ -178,7 +178,8 @@
   --platform-warn: #8a5300;
   --platform-shadow: 0 1px 2px rgba(16,24,40,.035),0 4px 12px rgba(16,24,40,.025);
   gap: 18px;
-  font-family: Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:"PrizeSkout Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-feature-settings:"cv02","cv03","cv04","cv11";
   letter-spacing: 0;
 }
 .ps-platform-heading p { color:#778293; font-size:9px; font-weight:750; letter-spacing:.09em; }
@@ -211,9 +212,45 @@
 .ps-platform-drawer > footer button { border-radius:6px; }
 .ps-platform-toast { border-radius:6px; background:#101828; }
 
+/* Craft pass for the data-dense platform workspace. */
+.ps-platform-heading h1 { font-weight:600; text-wrap:balance; }
+.ps-platform-kpis article > strong {
+  font-variant-numeric:tabular-nums lining-nums;
+  font-weight:600;
+  letter-spacing:-.035em;
+}
+.ps-platform-panel { transition:border-color 140ms ease,box-shadow 140ms ease; }
+.ps-platform-panel:hover { border-color:#cfd5dd; }
+.ps-platform-heading a,
+.ps-platform-heading button,
+.ps-platform-filters button,
+.ps-platform-panel-foot button,
+.ps-platform-data-row {
+  transition:color 140ms ease,background-color 140ms ease,border-color 140ms ease,box-shadow 140ms ease,transform 140ms ease;
+}
+.ps-platform-heading a:active,
+.ps-platform-heading button:active,
+.ps-platform-panel-foot button:active { transform:translateY(1px); }
+.ps-platform-heading a:focus-visible,
+.ps-platform-heading button:focus-visible,
+.ps-platform-filters button:focus-visible,
+.ps-platform-panel-foot button:focus-visible,
+.ps-platform-data-row:focus-visible {
+  outline:2px solid rgba(234,100,24,.55);
+  outline-offset:2px;
+}
+.ps-platform-table-head { position:sticky; top:0; z-index:2; box-shadow:inset 0 -1px var(--platform-line); }
+.ps-platform-bars > div > i { height:8px; background:#e4e7ec; }
+.ps-platform-feed article > div strong,
+.ps-platform-toggles strong { font-weight:600; }
+.ps-platform-data-row[aria-selected="true"] { background:#fff8f3; box-shadow:inset 3px 0 var(--platform-brand); }
+
 @media (max-width:760px) {
   .ps-platform-kpis,
   .ps-platform-panel { border-radius:8px; }
+  .ps-platform-heading h1 { line-height:1.16; }
+  .ps-platform-heading > div:last-child { overflow-x:auto; scrollbar-width:none; }
+  .ps-platform-heading > div:last-child::-webkit-scrollbar { display:none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ps-platform-demo *,

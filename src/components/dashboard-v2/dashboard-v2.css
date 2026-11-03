@@ -2,6 +2,9 @@
 @font-face { font-family: "TT Firs Neue"; src: url("../../assets/fonts/TTFirsNeue-Medium.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face { font-family: "TT Firs Neue"; src: url("../../assets/fonts/TTFirsNeue-DemiBold.ttf") format("truetype"); font-weight: 600; font-style: normal; font-display: swap; }
 @font-face { font-family: "TT Firs Neue"; src: url("../../assets/fonts/TTFirsNeue-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "PrizeSkout Inter"; src: url("../../assets/landing/inter-display-regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "PrizeSkout Inter"; src: url("../../assets/landing/inter-display-medium.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "PrizeSkout Inter"; src: url("../../assets/landing/inter-display-semibold.ttf") format("truetype"); font-weight: 600 800; font-style: normal; font-display: swap; }
 
 .ps-v2-root {
   --v2-brand: #f47320;
@@ -934,4 +937,81 @@
   .ps-v2-two-column { gap:12px; }
   .ps-v2-priority-centre-card { border-radius:8px; }
   .ps-v2-empty-workspace { min-height:150px; }
+}
+
+/* Craft pass: deliberate typography, iconography, hierarchy, and interaction detail. */
+.ps-v2-root {
+  font-family:"PrizeSkout Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-feature-settings:"cv02","cv03","cv04","cv11";
+}
+.ps-v2-nav-item {
+  grid-template-columns:18px minmax(0,1fr) auto;
+  column-gap:10px;
+  transition:color 140ms ease,background-color 140ms ease,border-color 140ms ease;
+}
+.ps-v2-nav-item > svg {
+  display:block;
+  width:15px;
+  height:15px;
+  color:#98a2b3;
+  stroke-width:1.75;
+  transition:color 140ms ease;
+}
+.ps-v2-nav-item:hover > svg { color:#475467; }
+.ps-v2-nav-item[data-active="true"] > svg { color:var(--v2-brand); }
+.ps-v2-page-heading h1,
+.ps-v2-hero-main h2 { font-weight:600; text-wrap:balance; }
+.ps-v2-hero-main .ps-v2-dominant-metric,
+.ps-v2-metric-grid strong,
+.ps-v2-signal-strip strong,
+.ps-v2-stat-value {
+  font-variant-numeric:tabular-nums lining-nums;
+  letter-spacing:-.035em;
+}
+.ps-v2-hero-main .ps-v2-dominant-metric { font-weight:600; }
+.ps-v2-card,
+.ps-v2-hero,
+.ps-v2-signal-strip { transition:border-color 140ms ease,box-shadow 140ms ease; }
+.ps-v2-card:hover { border-color:#cfd5dd; }
+.ps-v2-table-wrap,
+.ps-v2-menu-table-wrap { position:relative; overflow:auto; }
+.ps-v2-channel-table thead th,
+.ps-v2-menu-table thead th,
+.ps-v2-branch-table thead th {
+  position:sticky;
+  top:0;
+  z-index:2;
+  box-shadow:inset 0 -1px #dfe3e8;
+}
+.ps-v2-channel-table tbody tr,
+.ps-v2-menu-table tbody tr,
+.ps-v2-branch-table tbody tr { transition:background-color 120ms ease; }
+.ps-v2-action,
+.ps-v2-secondary-link,
+.ps-v2-icon-button,
+.ps-v2-period button,
+.ps-v2-scope button {
+  transition:color 140ms ease,background-color 140ms ease,border-color 140ms ease,box-shadow 140ms ease,transform 140ms ease;
+}
+.ps-v2-action:not([disabled]):active,
+.ps-v2-secondary-link:active,
+.ps-v2-icon-button:active { transform:translateY(1px); }
+.ps-v2-action:focus-visible,
+.ps-v2-secondary-link:focus-visible,
+.ps-v2-icon-button:focus-visible,
+.ps-v2-period button:focus-visible,
+.ps-v2-scope button:focus-visible {
+  outline:2px solid rgba(234,100,24,.55);
+  outline-offset:2px;
+}
+.ps-v2-action:disabled,
+.ps-v2-icon-button:disabled { cursor:not-allowed; opacity:.48; }
+.ps-v2-warning,
+.ps-v2-boundary-note,
+.ps-v2-priority-blocker { border-left-width:3px; }
+@media (max-width:767px) {
+  .ps-v2-page-heading h1 { line-height:1.16; }
+  .ps-v2-card header { align-items:flex-start; }
+  .ps-v2-report-actions { overflow-x:auto; scrollbar-width:none; }
+  .ps-v2-report-actions::-webkit-scrollbar { display:none; }
 }

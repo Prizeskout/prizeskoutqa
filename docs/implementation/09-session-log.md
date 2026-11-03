@@ -2106,3 +2106,28 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Commit `626645d` (`style: mature complete dashboard route family`) was pushed to `origin/main` under explicit user authorization.
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `cd80996f-8b4d-4613-af9e-b953d76a05f7` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - Exact next action: hard-refresh the authenticated production dashboard and verify the complete route family visually at desktop and phone widths.
+
+## 2026-11-02 - Dashboard craft pass
+
+### Slice
+
+- Loaded the bundled PrizeSkout Inter display family across the shared dashboard shell and specialized Platform, Order Automation, and Promotions workspaces.
+- Restored the existing sidebar navigation icons and refined their active, hover, and focus hierarchy.
+- Strengthened heading and tabular-number hierarchy, sticky table headers, panel differentiation, selected rows, control feedback, disabled states, and mobile action handling.
+- Preserved dashboard structure, routes, source values, financial contracts, merchant approvals, and protected-action boundaries.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` - passed.
+- Post-change `git diff --check` - passed with only LF-to-CRLF working-copy warnings.
+- Post-change `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact key values, complete sections, working interactions, no API writes, no browser errors, and no page overflow.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+
+### Changed files and exact next action
+
+- Changed `src/components/dashboard-v2/dashboard-v2.css`, `src/components/dashboard-v2/platform-reference-demo.css`, `src/components/dashboard-v2/reference-demo.css`, and the required continuity records.
+- This slice is local and is not committed, pushed, deployed, or authenticated-production verified.
+- Exact next action: visually inspect the local dashboard at desktop and phone widths; commit, push, and deploy only if the user explicitly requests those actions.
