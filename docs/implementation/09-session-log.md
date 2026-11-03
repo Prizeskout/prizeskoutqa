@@ -2187,5 +2187,7 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed `DashboardV2Shell.tsx`, `DashboardV2Overview.tsx`, `dashboard-v2.css`, and the required continuity records. Existing user artifacts remain untouched.
-- This slice is local and is not committed, pushed, deployed, or production-verified.
-- Exact next action: review the collapsible rail and removed label; commit, push, and deploy only if explicitly requested.
+- Commit `18e53c1` (`feat: add collapsible dashboard navigation`) was pushed to `origin/main` under explicit user authorization.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `bcb9748c-9e84-45ee-918e-cc305ce83786` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
+- Exact next action: hard-refresh and verify the removed label plus collapsed/expanded desktop navigation in the authenticated dashboard; do not mark the production interaction verified until that pass succeeds.
