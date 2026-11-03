@@ -2162,3 +2162,30 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `13563d12-1628-4e6e-92a4-9a6305fba0f0` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
 - Exact next action: hard-refresh and visually inspect the deployed command surface at authenticated desktop and phone widths; do not mark production appearance verified until that pass succeeds.
+
+## 2026-11-02 - Remove dashboard version label and collapse navigation
+
+### Slice
+
+- Removed the customer-visible summary contract string (`dashboard-v2-summary-v1`) and replaced it with neutral evidence language. The internal versioned server contract remains unchanged.
+- Added a desktop navigation collapse control and a persistent icon-only state stored in browser local storage.
+- Preserved active-route highlighting, the Priority Centre count, tooltips, accessible control names, footer navigation, and the user avatar in collapsed mode.
+- Preserved the full mobile navigation drawer rather than applying desktop collapse behavior to phone layouts.
+- Changed no financial calculation, evidence state, route, integration, migration, merchant data, or protected action.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity`, `npm run verify-zid-contract`, `npm run verify-salla-contract`, and `npm run typecheck` - passed.
+- Customer-visible source search found no remaining summary version rendering; legal-document version text and the public `/v1/margin` API contract were correctly retained.
+- Post-change `git diff --check` - passed with only LF-to-CRLF working-copy warnings.
+- Post-change `npm run typecheck` - passed.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact values, complete sections, interactions, no API writes, browser errors, or page overflow.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+
+### Changed files and exact next action
+
+- Changed `DashboardV2Shell.tsx`, `DashboardV2Overview.tsx`, `dashboard-v2.css`, and the required continuity records. Existing user artifacts remain untouched.
+- This slice is local and is not committed, pushed, deployed, or production-verified.
+- Exact next action: review the collapsible rail and removed label; commit, push, and deploy only if explicitly requested.

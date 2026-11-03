@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   Menu,
   PackageCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
   PlugZap,
   ReceiptText,
   Settings,
@@ -147,6 +149,8 @@ const PAGE_PATHS: Record<DashboardV2Page, string> = {
 function Sidebar({
   open,
   onClose,
+  collapsed,
+  onToggleCollapsed,
   activePage,
   roleLabel,
   functionalRole,
@@ -154,6 +158,8 @@ function Sidebar({
 }: {
   open: boolean;
   onClose: () => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   activePage: DashboardV2Page;
   roleLabel: string;
   functionalRole?: string | null;
@@ -183,9 +189,23 @@ function Sidebar({
         aria-label="Close navigation"
         onClick={onClose}
       />
-      <aside className="ps-v2-sidebar" data-open={open} aria-label="Dashboard navigation">
+      <aside
+        className="ps-v2-sidebar"
+        data-open={open}
+        data-collapsed={collapsed}
+        aria-label="Dashboard navigation"
+      >
         <div className="ps-v2-logo-row">
           <img src={logo} alt="PrizeSkout" />
+          <button
+            type="button"
+            className="ps-v2-icon-button ps-v2-sidebar-collapse"
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+            title={collapsed ? "Expand navigation" : "Collapse navigation"}
+          >
+            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
           <button
             type="button"
             className="ps-v2-icon-button ps-v2-sidebar-close"
@@ -210,6 +230,7 @@ function Sidebar({
                     className="ps-v2-nav-item"
                     data-active={active}
                     aria-current={active ? "page" : undefined}
+                    title={collapsed ? item.label : undefined}
                     onClick={onClose}
                   >
                     <Icon size={16} aria-hidden="true" />
@@ -217,7 +238,13 @@ function Sidebar({
                     {badge && <small>{badge}</small>}
                   </a>
                 ) : (
-                  <a key={item.label} href={item.href} className="ps-v2-nav-item" onClick={onClose}>
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="ps-v2-nav-item"
+                    onClick={onClose}
+                    title={collapsed ? item.label : undefined}
+                  >
                     <Icon size={16} aria-hidden="true" />
                     <span>{item.label}</span>
                     {badge && <small>{badge}</small>}
@@ -233,6 +260,7 @@ function Sidebar({
             data-active={activePage === "settings"}
             aria-current={activePage === "settings" ? "page" : undefined}
             href="/dashboard/settings"
+            title={collapsed ? "Settings" : undefined}
           >
             <Settings size={16} aria-hidden="true" />
             <span>Settings</span>
@@ -242,6 +270,7 @@ function Sidebar({
             data-active={activePage === "store-access"}
             aria-current={activePage === "store-access" ? "page" : undefined}
             href="/dashboard/store-access"
+            title={collapsed ? "Store Access" : undefined}
           >
             <Users size={16} aria-hidden="true" />
             <span>Store Access</span>
@@ -251,6 +280,7 @@ function Sidebar({
             data-active={activePage === "audit-log"}
             aria-current={activePage === "audit-log" ? "page" : undefined}
             href="/dashboard/audit-log"
+            title={collapsed ? "Audit Log" : undefined}
           >
             <History size={16} aria-hidden="true" />
             <span>Audit Log</span>
@@ -281,8 +311,13 @@ export function DashboardV2Shell({
   const context = useDashboardV2Context();
   const period = useDashboardV2Period();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [confidenceOpen, setConfidenceOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+
+  useEffect(() => {
+    setSidebarCollapsed(window.localStorage.getItem("prizeskout-sidebar-collapsed") === "true");
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -297,13 +332,21 @@ export function DashboardV2Shell({
   }, []);
 
   return (
-    <div className="ps-v2-root">
+    <div className="ps-v2-root" data-sidebar-collapsed={sidebarCollapsed}>
       <a className="ps-v2-skip" href="#dashboard-v2-content">
         Skip to dashboard content
       </a>
       <Sidebar
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => {
+          setSidebarCollapsed((current) => {
+            const next = !current;
+            window.localStorage.setItem("prizeskout-sidebar-collapsed", String(next));
+            return next;
+          });
+        }}
         activePage={activePage}
         roleLabel={context?.role_label ?? "Merchant operator"}
         functionalRole={context?.functional_role}

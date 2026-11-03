@@ -1043,6 +1043,16 @@
   width:128px;
   filter:grayscale(1) brightness(0) invert(1);
 }
+.ps-v2-sidebar-collapse {
+  display:inline-flex;
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  border-color:var(--v2-command-line);
+  background:rgba(255,255,255,.04);
+  color:#98a2b3;
+}
+.ps-v2-sidebar-collapse:hover { background:rgba(255,255,255,.09); color:#fff; }
 .ps-v2-nav { gap:14px; padding-top:16px; }
 .ps-v2-nav h2 {
   margin:0 0 6px 11px;
@@ -1081,6 +1091,47 @@
   background:#f8fafc;
   color:#101828;
   border-radius:4px;
+}
+@media (min-width:768px) {
+  .ps-v2-sidebar { transition:width 180ms ease,flex-basis 180ms ease,padding 180ms ease; }
+  .ps-v2-sidebar[data-collapsed="true"] {
+    width:72px;
+    flex-basis:72px;
+    padding-inline:10px;
+  }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-logo-row {
+    justify-content:center;
+    padding-inline:0;
+  }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-logo-row img { display:none; }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav { padding-top:14px; }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav section { display:flex; flex-direction:column; gap:3px; }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav h2,
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav-item > span,
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-user > span:last-child { display:none; }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav-item {
+    width:44px;
+    min-height:40px;
+    margin-inline:auto;
+    grid-template-columns:1fr;
+    justify-items:center;
+    padding:8px;
+  }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav-item > svg { width:17px; height:17px; }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-nav-item small {
+    position:absolute;
+    margin:0 0 24px 26px;
+    min-width:15px;
+    height:15px;
+    display:grid;
+    place-items:center;
+    padding:0 3px;
+    border-radius:8px;
+    background:#f47320;
+    color:#fff;
+    font-size:7px;
+  }
+  .ps-v2-sidebar[data-collapsed="true"] .ps-v2-user { justify-content:center; padding-inline:0; }
 }
 .ps-v2-topbar {
   min-height:64px;
@@ -1246,6 +1297,7 @@
 }
 @media (max-width:767px) {
   .ps-v2-sidebar { width:min(88vw,320px); }
+  .ps-v2-sidebar-collapse { display:none; }
   .ps-v2-topbar { min-height:58px; padding:8px 14px; gap:8px; }
   .ps-v2-scope { display:none; }
   .ps-v2-period { margin-inline-start:0; }

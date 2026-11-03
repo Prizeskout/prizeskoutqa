@@ -181,7 +181,7 @@ export function DashboardV2Overview() {
             <code>
               {summary?.latest_finding
                 ? `Evidence ${summary.latest_finding.id}`
-                : (summary?.version ?? "Evidence loading")}
+                : "Evidence-backed summary"}
             </code>
           </div>
         </div>
