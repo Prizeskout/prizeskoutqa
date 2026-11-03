@@ -2213,4 +2213,7 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed `src/components/dashboard-v2/dashboard-v2.css`, `src/components/dashboard-v2/platform-reference-demo.css`, and the required continuity records. Existing untracked user artifacts remain untouched.
-- Exact next action: review the local result, then commit and push only with explicit user authorization. Do not record deployment or production verification until those actions actually occur.
+- Commit `1f220cd` (`style: differentiate dashboard workspaces`) was pushed to `origin/main` under explicit user authorization. The first push selected the active `Web3freak` credential and returned HTTP 403; switching temporarily to the configured `Prizeskout` account succeeded, and `Web3freak` was restored as active afterward.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `f978bd62-8561-4de4-a0bc-343e2068f72f` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
+- Exact next action: hard-refresh and visually verify Overview, Profit Intelligence, Settlements, and Priority Centre in an authenticated production session; do not mark the appearance production-verified until that pass succeeds.

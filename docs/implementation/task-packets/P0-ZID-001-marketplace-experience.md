@@ -213,4 +213,5 @@ The chrome refinement removes the customer-visible summary contract version whil
 - Made Overview read as an executive financial command centre, Profit Intelligence as an analytical performance workspace, Settlements as a reconciliation ledger, and Priority Centre as a decision queue.
 - Used restrained workspace accents, surface hierarchy, tabular financial treatment, and section rules instead of adding decorative content or changing information architecture.
 - Verified type safety, Dashboard V2 contracts/modules, production build, and the full reference route matrix at 1440, 390, 375, and 844 widths. Representative desktop and phone renders were also visually inspected.
-- Exact next action: review the local result, then commit and push only with explicit user authorization. Deployment and authenticated production verification remain separate.
+- Commit `1f220cd` (`style: differentiate dashboard workspaces`) is pushed and deployed as Worker `f978bd62-8561-4de4-a0bc-343e2068f72f`; apex, access, and app routes return HTTP 200.
+- Exact next action: hard-refresh and visually verify all four workspace treatments in the authenticated dashboard. Keep that visual check distinct from real-merchant readiness.
