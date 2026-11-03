@@ -2052,3 +2052,30 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - User still saw orange. Set shared tint tokens to #ffffff (`--brand-bg`, `--neg-bg`, `--warn-bg` in `reference-demo.css`; `--platform-brand-bg`, `--platform-neg-bg`, `--platform-warn-bg` in `platform-reference-demo.css`; `--v2-warning-bg` in `dashboard-v2.css`). Whitened remaining hard-coded tints in `dashboard-v2.css` (exception list, selected campaign row, status pills, copilot bubble, warning icon, confidence note), removed orange glows on dark panels (`dashboard-v2.css`, `OrderReferenceDemo.tsx`, `PromotionsReferenceDemo.tsx`), and whitened peach fills in `ExecutiveOverview.tsx`, `FocusedIntelligenceSummary.tsx`, `TruthTrail.tsx`, `ScenarioPricingCard.tsx`, `PrizeSkoutDashboard.tsx`. Text colours and data marks (chart bars, brand accents) unchanged. No logic or data changes.
 - `npx tsc --noEmit -p .` - passed. `npx vite build` - passed (38s). Pushed to `origin/main` (PipeOps) and ran `npx wrangler deploy` at the user's request.
 - Exact next action: user visually confirms production after hard refresh.
+
+## 2026-11-02 - Dashboard enterprise visual-maturity pass
+
+### Slice
+
+- Reviewed the authenticated production Overview in the user's existing Chrome session without changing live data or triggering actions.
+- Preserved the dashboard information architecture, routes, financial contracts, responsive structure, and protected-action boundaries.
+- Added a contained visual-system layer in `dashboard-v2.css`: neutral system typography, stronger hierarchy and contrast, cool workspace separation, sharper cards and controls, restrained brand orange, denser navigation, tabular financial values, and clearer financial tables.
+- Changed no financial calculation, integration, migration, configuration, merchant data, or deployment state.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-zid-contract` - passed.
+- Startup `npm run verify-salla-contract` - passed.
+- Startup and post-change `npm run typecheck` - passed.
+- `git diff --check` - passed; Git reported only the existing LF-to-CRLF working-copy warning.
+- `npm run verify-dashboard-v2-contract` - passed.
+- Post-change `npm run verify-zid-contract` - passed.
+- Post-change `npm run verify-salla-contract` - passed.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+- `npm run verify-dashboard-v2-ui` - began after typecheck but produced no result for several minutes and was stopped. No assertion failure was reported, and the responsive matrix is not claimed passing for this slice.
+
+### Changed files and exact next action
+
+- Changed `src/components/dashboard-v2/dashboard-v2.css` and updated the active continuity records.
+- Exact next action: complete a focused local desktop and phone visual pass, rerun continuity, and commit/push only with explicit user authorization. Do not infer deployment or production verification.
