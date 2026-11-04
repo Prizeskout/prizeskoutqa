@@ -2348,3 +2348,26 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Added `src/lib/merchant-session.ts`; changed Dashboard V2 data hooks, all Evidence Inbox readers, signed inbound-email intake, its foundation verifier, and the required continuity records. Existing untracked user artifacts remain untouched.
 - Exact next action: commit, push, and deploy this verified slice, then repeat the authenticated live route journey with browser-local merchant keys absent to prove session recovery before auditing the remaining merchant routes.
+
+## 2026-11-04 - Expired merchant session gate and hydration correction
+
+### Slice
+
+- Deployed the prior merchant-session recovery and inbound-intake slice as commit `c484b4e`, Worker `891d3d86-369f-471b-96d3-e3ad8798e0ee`.
+- Proved that the current production browser has no merchant keys, no other local/session storage, and no Supabase authentication session; this is an expired session rather than a recoverable authenticated session.
+- Replaced the storage-only route precheck with a dashboard-wide session gate that waits for the shared resolver and redirects a genuinely expired browser to `/access`.
+- Corrected the shared hook to render the same recovery state during SSR and the browser's first render. The first verifier run caught a hydration mismatch; the corrected run passed without browser errors.
+- Changed no financial data, merchant record, approval, external action, connector, Zid integration, or Salla integration.
+
+### Verification commands and exact outcomes
+
+- `npm run typecheck` - passed.
+- First `npm run verify-dashboard-reference-demo` - failed because the new gate exposed a server/browser first-render mismatch; no production deployment occurred from the failing build.
+- Corrected `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact values, complete sections, interactions, no API writes, and no browser errors.
+- `npm run build` - passed; only existing chunk-size and mixed static/dynamic import warnings were emitted.
+- Zid and Salla checks were intentionally omitted at the user's direction.
+
+### Changed files and exact next action
+
+- Changed `src/routes/dashboard.tsx`, `src/lib/merchant-session.ts`, and the required continuity records. Existing unrelated untracked user artifacts remain untouched.
+- Exact next action: run continuity verification, commit and push this verified slice, deploy the exact build, and verify that a production hard navigation with the currently expired browser returns to `/access` without exposing an empty dashboard.

@@ -239,3 +239,11 @@ The chrome refinement removes the customer-visible summary contract version whil
 - Production build, typecheck, API-independent foundation, evidence release readiness, Dashboard V2 modules, protected Zid/Salla contracts, and the complete route-family verifier pass. Evidence Inbox is exercised at 1440 and 390 widths with no load-time write, exactly one explicit mailbox POST, no page overflow, and no browser errors.
 - Commit `0d27cb1` (`feat: restore canonical evidence inbox`) is pushed and deployed as Worker `cb34ff4a-c663-40cc-8b60-2546f7b4c8ad`. Authenticated production verification loaded the Naija Evidence Inbox with canonical navigation, seven retained evidence records, zero automatic sources, a healthy empty processing queue, and the mailbox action still unexecuted. Apex, access, Evidence Inbox, and app routes return HTTP 200.
 - Exact next action: configure the matching source-pull secret in Cloudflare and Supabase Vault after action-time confirmation, then run the authenticated no-source hook and scheduled-job smoke.
+
+## 2026-11-04 - Merchant session continuity and expired-session handling
+
+- Commit `c484b4e` is pushed and deployed as Worker `891d3d86-369f-471b-96d3-e3ad8798e0ee`. It recovers merchant credentials from an existing authenticated Supabase session and hardens inbound-email size and Base64 boundaries.
+- The production browser was then proven to have neither browser-local merchant keys nor any Supabase auth session. This is a genuinely expired session, so recovery cannot and must not invent merchant identity.
+- The local follow-up gates the complete dashboard route family, sends expired sessions to `/access`, and keeps the server and browser's first render identical before resolving browser storage. This removes the hydration mismatch caught by the responsive verifier.
+- `npm run typecheck`, `npm run build`, and `npm run verify-dashboard-reference-demo` pass. The route matrix covers 1440, 390, 375, and 844 widths with exact values, complete sections, interactions, no writes, no browser errors, and no hydration mismatch.
+- Exact next action: commit, push, and deploy the gate, verify the expired-session redirect in production, then obtain a fresh merchant sign-in before continuing authenticated route-by-route production verification. Zid and Salla remain outside this audit.

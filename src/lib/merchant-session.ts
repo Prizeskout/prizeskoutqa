@@ -40,8 +40,11 @@ export async function resolveMerchantCredentials(): Promise<MerchantCredentials>
 }
 
 export function useMerchantCredentials() {
-  const [credentials, setCredentials] = useState(storedMerchantCredentials);
-  const [resolving, setResolving] = useState(!credentials.merchant_id || !credentials.access_code);
+  // Keep the server and browser's first render identical. Reading localStorage in
+  // the state initializer makes an authenticated browser render the dashboard
+  // while SSR renders the recovery state, which causes a hydration mismatch.
+  const [credentials, setCredentials] = useState<MerchantCredentials>(empty);
+  const [resolving, setResolving] = useState(true);
   useEffect(() => {
     const receive = (event: Event) => setCredentials((event as CustomEvent<MerchantCredentials>).detail ?? storedMerchantCredentials());
     window.addEventListener(eventName, receive);
