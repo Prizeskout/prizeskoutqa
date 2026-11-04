@@ -2292,4 +2292,9 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed `src/server/core/order-guard.ts`, `supabase/migrations/20260913010000_order_guard.sql`, `scripts/verify-order-guard.mts`, and the required continuity records. Existing untracked user artifacts remain untouched.
-- Exact next action: run the production build and continuity gate, commit/push/deploy the runtime hardening as an authorized substantial slice, then separately reconcile and apply the Order Guard migration and verify its RLS and append-only trigger before provisioning any merchant source.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+- `npm run verify-continuity` - passed.
+- Commit `9d2a697` (`fix: harden order guard production boundaries`) was pushed to `origin/main` under the user's standing delivery authorization.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `89adc0b3-c94b-47a0-98c1-608277ebb2bd` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- Apex, access, Order Automation, and app-domain health checks returned HTTP 200.
+- Exact next action: separately reconcile and apply the Order Guard migration and verify its RLS and append-only trigger before provisioning any merchant source. The source-pull secret path still requires action-time confirmation before credential entry.
