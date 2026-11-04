@@ -939,6 +939,27 @@
   .ps-v2-empty-workspace { min-height:150px; }
 }
 
+.ps-v2-evidence-workspace { display:grid; gap:16px; }
+.ps-evidence-mailbox h2 { display:flex; align-items:center; gap:8px; }
+.ps-evidence-mailbox-intro { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px; background:#f7f9fb; border:1px solid #e1e6eb; }
+.ps-evidence-mailbox-intro p { margin:5px 0 0; color:#667085; max-width:760px; }
+.ps-evidence-mailbox-ready { display:grid; gap:14px; }
+.ps-evidence-mailbox-address { display:grid; gap:4px; padding:16px; background:#101828; color:#fff; border-left:4px solid #f47320; }
+.ps-evidence-mailbox-address span,.ps-evidence-mailbox-address small { color:#98a2b3; font-size:11px; }
+.ps-evidence-mailbox-address strong { font-family:ui-monospace,"SFMono-Regular",Consolas,monospace; font-size:16px; overflow-wrap:anywhere; }
+.ps-evidence-mailbox-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid #dfe3e8; }
+.ps-evidence-mailbox-options article { padding:14px; border-right:1px solid #dfe3e8; }
+.ps-evidence-mailbox-options article:last-child { border-right:0; }
+.ps-evidence-mailbox-options p { min-height:48px; margin:5px 0 10px; color:#667085; font-size:12px; }
+.ps-evidence-mailbox-options span { display:inline-flex; padding:3px 7px; background:#f2f4f7; color:#667085; font-size:10px; font-weight:700; text-transform:uppercase; }
+.ps-evidence-mailbox-options span[data-ready="true"] { background:#eaf6f0; color:#16734a; }
+@media (max-width:760px) {
+  .ps-evidence-mailbox-intro { align-items:flex-start; flex-direction:column; }
+  .ps-evidence-mailbox-options { grid-template-columns:1fr; }
+  .ps-evidence-mailbox-options article { border-right:0; border-bottom:1px solid #dfe3e8; }
+  .ps-evidence-mailbox-options article:last-child { border-bottom:0; }
+}
+
 /* Craft pass: deliberate typography, iconography, hierarchy, and interaction detail. */
 .ps-v2-root {
   font-family:"PrizeSkout Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;

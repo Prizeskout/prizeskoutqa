@@ -2240,3 +2240,28 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Exact next action
 
 - Configure one generated source-pull secret in Cloudflare and its matching URL/secret pair in Supabase Vault, then smoke the hook and verify the scheduled job. This is a sensitive credential transmission into the logged-in services and requires the computer-control action-time confirmation before entry.
+
+## 2026-11-04 - Canonical merchant Evidence Inbox
+
+### Slice
+
+- Found that the production dashboard redirected the core `/dashboard/evidence` workflow into Audit Log even though the governed evidence services already existed.
+- Added Evidence Inbox to canonical Infrastructure navigation and rendered mailbox setup, automatic-source coverage, evidence review, and immutable evidence library inside the current shell.
+- Added an explicit `Show or create private address` action. The page creates nothing on load; the existing merchant-scoped endpoint remains the only mailbox mutation boundary.
+- Added responsive mailbox states for direct forwarding, automatic forwarding rules, and the still-unconfigured optional connected-mailbox path.
+
+### Verification commands and exact outcomes
+
+- `git diff --check` - passed with only LF-to-CRLF working-copy warnings.
+- `npm run typecheck` - passed.
+- `npm run build` - passed; only existing chunk-size and mixed static/dynamic import warnings were emitted.
+- `npm run verify-api-independent-foundation` - passed.
+- `npm run verify-evidence-release-readiness` - passed for 23 protected tables across 22 migrations.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths. Evidence Inbox was additionally exercised at 1440 and 390 widths with canonical navigation, no load-time write, exactly one explicit mailbox POST, no page overflow, and no browser errors.
+
+### Exact next action
+
+- Commit, push, deploy, and authenticate-check the Evidence Inbox. Then return to source-pull secret configuration after action-time credential-entry confirmation.

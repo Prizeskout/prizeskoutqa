@@ -1,15 +1,11 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { DashboardV2ProductWorkspace } from "@/components/dashboard-v2/DashboardV2ProductWorkspace";
 
-/**
- * Evidence now lives inside the unified merchant dashboard. Keep this route as
- * a compatibility redirect for bookmarks and notifications.
- */
 export const Route = createFileRoute("/dashboard/evidence")({
-  beforeLoad: () => {
-    throw redirect({
-      to: "/dashboard/$module",
-      params: { module: "audit-log" },
-      replace: true,
-    });
-  },
+  head: () => ({ meta: [{ title: "Evidence Inbox | PrizeSkout" }] }),
+  component: EvidenceRoute,
 });
+
+function EvidenceRoute() {
+  return <DashboardV2ProductWorkspace workspace="evidence" />;
+}

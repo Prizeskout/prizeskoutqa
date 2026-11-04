@@ -4,6 +4,7 @@ import {
   Code2,
   FileCheck2,
   History,
+  Inbox,
   PackageCheck,
   PlugZap,
   ReceiptText,
@@ -91,6 +92,13 @@ const WORKSPACES: Record<
     description: "Reports keep the selected dates, currency, and any missing information visible.",
     boundary: "A report will not fill in numbers that PrizeSkout cannot verify.",
     icon: FileCheck2,
+  },
+  evidence: {
+    eyebrow: "Infrastructure / Evidence Inbox",
+    title: "Collect and review the records behind every conclusion.",
+    description: "Forward, upload, and review merchant-controlled evidence in one governed workspace.",
+    boundary: "Original evidence stays private and no uncertain document enters financial calculations without review.",
+    icon: Inbox,
   },
   integrations: {
     eyebrow: "Infrastructure / Integrations",

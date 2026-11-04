@@ -223,3 +223,12 @@ The chrome refinement removes the customer-visible summary contract version whil
 - Verified that Supabase Vault contains the evidence-processor URL/secret pair but not the source-pull pair. Cloudflare contains `EVIDENCE_PROCESSOR_SECRET` but not `EVIDENCE_SOURCE_PULL_SECRET` or `INBOUND_EVIDENCE_WEBHOOK_SECRET`.
 - Verified that production currently has zero registered evidence sources and zero evidence mailboxes. Enabling source pulling cannot call a merchant connector until one is separately authorized and registered.
 - Exact next action: configure a matching source-pull secret in Cloudflare and Supabase Vault, then smoke the authenticated hook with no registered sources. Treat inbound-email transport and the Order Guard migration as later, separately verified actions.
+
+## 2026-11-04 - Canonical Evidence Inbox
+
+- Replaced the `/dashboard/evidence` redirect to Audit Log with a first-class Evidence Inbox in the current dashboard shell and Infrastructure navigation.
+- Reused the governed evidence services already present: private mailbox preparation, automatic-source coverage, review/approval queue, and immutable evidence library.
+- Private mailbox preparation is not automatic. The page performs no write on load and calls the existing merchant-authenticated endpoint only after an explicit merchant click.
+- Added a responsive institutional presentation for the mailbox setup and retained existing truth, provenance, review, and approval boundaries.
+- Production build, typecheck, API-independent foundation, evidence release readiness, Dashboard V2 modules, protected Zid/Salla contracts, and the complete route-family verifier pass. Evidence Inbox is exercised at 1440 and 390 widths with no load-time write, exactly one explicit mailbox POST, no page overflow, and no browser errors.
+- Exact next action: commit, push, deploy, and authenticate-check this slice under the user's standing authorization; then return to source-pull secret configuration after the required action-time confirmation.

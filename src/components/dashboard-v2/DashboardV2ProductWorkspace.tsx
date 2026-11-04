@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Bot, Check, Clipboard, Download, FileJson, LoaderCircle, Send } from "lucide-react";
 import { SettingsTabs } from "@/components/dashboard/settings/SettingsTabs";
 import { MerchantOperatingLoop } from "@/components/dashboard/MerchantOperatingLoop";
+import { EvidenceLibrary } from "@/components/dashboard/evidence/EvidenceLibrary";
+import { EvidenceMailboxSetup } from "@/components/dashboard/evidence/EvidenceMailboxSetup";
+import { EvidenceReviewWorkspace } from "@/components/dashboard/evidence/EvidenceReviewWorkspace";
+import { EvidenceSourceCoverage } from "@/components/dashboard/evidence/EvidenceSourceCoverage";
 import { DashboardV2Shell } from "./DashboardV2Shell";
 import { buildDashboardV2ChromeData } from "./dashboard-v2-chrome";
 import { useDashboardV2Activity } from "./useDashboardV2Activity";
@@ -242,6 +246,7 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
     channels: ["Channels", "Connect and manage your sales channels."],
     settlements: ["Settlements", "Compare what you expected with what the platform reported."],
     reports: ["Reports", "View and download your financial summary."],
+    evidence: ["Evidence Inbox", "Collect, review, and trace the records behind every conclusion."],
     integrations: ["Integrations", "Connect the tools and services you use."],
     "api-developers": ["API & Developers", "Build with the PrizeSkout API."],
     settings: ["Settings", "Manage your account and preferences."],
@@ -370,6 +375,14 @@ export function DashboardV2ProductWorkspace({ workspace }: { workspace: Dashboar
         </>
       )}
       {workspace === "reports" && <Reports summary={summary} />}
+      {workspace === "evidence" && (
+        <div className="ps-v2-evidence-workspace">
+          <EvidenceMailboxSetup />
+          <EvidenceSourceCoverage />
+          <EvidenceReviewWorkspace />
+          <EvidenceLibrary />
+        </div>
+      )}
       {workspace === "profit-intelligence" && (
         <section className="ps-v2-card ps-v2-module-card">
           <header>

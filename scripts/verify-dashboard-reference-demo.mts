@@ -31,6 +31,13 @@ try {
       await page.route("**/api/dashboard/v2/summary?*", r => r.fulfill({ json: { ok: true, summary: dashboardV2DemoSummary } }));
       await page.route("**/api/dashboard/v2/modules?*", r => r.fulfill({ json: { ok: true, ...dashboardV2DemoModules, platform_demo: dashboardV2PlatformDemo } }));
       await page.route("**/api/dashboard/v2/context", r => r.fulfill({ json: { ok: true, context: { state: "available", merchant_label: "Naija Restaurant", brand_label: "All brands", location_label: "Qatar · 12", channel_label: "All channels", currency: "QAR", brands: [], branches: [], channels: [], blockers: [], role_label: "General manager", demo_mode: true } } }));
+      await page.route("**/api/evidence/sources", r => r.fulfill({ json: { sources: [] } }));
+      await page.route("**/api/evidence/reviews?*", r => r.fulfill({ json: { reviews: [], evidence_library: [], processing_status: { queued: 0, processing: 0, completed: 0, failed: 0, stalled: false, last_heartbeat: null, failed_documents: [] } } }));
+      await page.route("**/api/evidence/mailbox", r => r.fulfill({ json: { ok: true, address: "merchant-fixture@evidence.prizeskout.qa", status: "active", created_at: "2026-11-03T00:00:00Z", options: [
+        { id: "private_forwarding_address", status: "ready", explanation: "Forward individual business emails or attachments to this private address." },
+        { id: "automatic_forwarding_rule", status: "ready", explanation: "Create a rule in your current mailbox so matching business emails are forwarded automatically." },
+        { id: "connected_mailbox", status: "not_configured", explanation: "Optionally authorize PrizeSkout to collect matching messages from a mailbox in read-only mode." },
+      ] } }));
     }
     await page.addInitScript(({merchant, code}) => {localStorage.setItem("ps_connected", "true");localStorage.setItem("ps_merchant_id", merchant);localStorage.setItem("ps_access_code", code);}, {merchant: live ? process.env.DEMO_MERCHANT_ID! : "fixture", code: live ? process.env.DEMO_ACCESS_CODE! : "fixture"});
     for (const path of ["order-automation", "promotions"]) {
@@ -101,6 +108,20 @@ try {
           await page.locator(".ps-platform-drawer").getByRole("button", { name: "Close details" }).click();
         }
       }
+    }
+    if (!live && (width === 1440 || width === 390)) {
+      await page.goto(`${origin}/dashboard/evidence`, { waitUntil: "domcontentloaded" });
+      await page.getByRole("heading", { name: "Collect, review, and trace the records behind every conclusion." }).waitFor({ timeout: 120000 });
+      await page.getByText("No automatic sources connected", { exact: true }).waitFor();
+      await page.getByText("No documents are registered in the evidence vault yet", { exact: true }).waitFor();
+      assert.equal(await page.getByRole("link", { name: "Evidence Inbox" }).count(), 1, "Canonical navigation must expose Evidence Inbox.");
+      const evidenceOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      assert.ok(evidenceOverflow <= 1, `${width} evidence: page overflow ${evidenceOverflow}`);
+      const writesBeforeMailbox = writes.length;
+      await page.getByRole("button", { name: "Show or create private address" }).click();
+      await page.getByText("merchant-fixture@evidence.prizeskout.qa", { exact: true }).waitFor();
+      assert.deepEqual(writes.slice(writesBeforeMailbox), [`${origin}/api/evidence/mailbox`], "Mailbox setup must be the only explicit Evidence Inbox write.");
+      writes.splice(writesBeforeMailbox);
     }
     assert.deepEqual(errors, [], `browser errors at ${width}`);
     assert.deepEqual(writes, [], "Demo controls must never call write APIs");

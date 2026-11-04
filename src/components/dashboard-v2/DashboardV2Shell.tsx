@@ -8,6 +8,7 @@ import {
   CircleAlert,
   FileCheck2,
   History,
+  Inbox,
   LayoutDashboard,
   Menu,
   PackageCheck,
@@ -84,6 +85,7 @@ const NAV_GROUPS: Array<{ label?: string; items: NavItem[] }> = [
   {
     label: "Infrastructure",
     items: [
+      { label: "Evidence Inbox", icon: Inbox, to: "/dashboard/evidence" },
       { label: "Integrations", icon: PlugZap, to: "/dashboard/integrations" },
       { label: "API / Developers", icon: Code2, to: "/dashboard/api-developers" },
     ],
@@ -105,6 +107,7 @@ export type DashboardV2Page =
   | "channels"
   | "settlements"
   | "reports"
+  | "evidence"
   | "integrations"
   | "api-developers"
   | "settings"
@@ -139,6 +142,7 @@ const PAGE_PATHS: Record<DashboardV2Page, string> = {
   channels: "/dashboard/channels",
   settlements: "/dashboard/settlements",
   reports: "/dashboard/reports",
+  evidence: "/dashboard/evidence",
   integrations: "/dashboard/integrations",
   "api-developers": "/dashboard/api-developers",
   settings: "/dashboard/settings",
