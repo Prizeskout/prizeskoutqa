@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {fetchFoodicsOrderEvidence, mapFoodicsOrder} from "../src/server/core/foodics-evidence-adapter.ts";
 
 const fixture = {order: {
@@ -35,4 +36,13 @@ assert.equal(calls[0].searchParams.get("sort"), "reference");
 assert.equal(calls[0].searchParams.get("filter[reference_after]"), "849");
 assert.equal(calls[0].searchParams.get("include"), "branch,original_order");
 
-console.log("Foodics read-only evidence adapter fixtures passed.");
+const puller = readFileSync("src/server/core/evidence-source-pull.ts", "utf8");
+const leaseMigration = readFileSync("supabase/migrations/20260914000000_evidence_source_pull_leases.sql", "utf8");
+assert.match(puller, /rpc\("ps_claim_due_evidence_sources"/);
+assert.match(puller, /finally\s*{[\s\S]{0,100}await releaseSourceLease\(source\.id, runId\)/);
+assert.match(leaseMigration, /for update skip locked/i);
+assert.match(leaseMigration, /sync_lease_until = p_now \+ interval '10 minutes'/i);
+assert.match(leaseMigration, /revoke all on function[\s\S]*from public, anon, authenticated/i);
+assert.match(leaseMigration, /grant execute on function[\s\S]*to service_role/i);
+
+console.log("Foodics read-only evidence adapter and atomic scheduler lease checks passed.");

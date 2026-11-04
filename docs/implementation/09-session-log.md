@@ -2298,3 +2298,28 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `89adc0b3-c94b-47a0-98c1-608277ebb2bd` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - Apex, access, Order Automation, and app-domain health checks returned HTTP 200.
 - Exact next action: separately reconcile and apply the Order Guard migration and verify its RLS and append-only trigger before provisioning any merchant source. The source-pull secret path still requires action-time confirmation before credential entry.
+
+## 2026-11-04 - Atomic evidence-source scheduler leases
+
+### Slice
+
+- Found that concurrent source-pull scheduler invocations could independently select the same due connection and duplicate provider reads or downstream processing attempts.
+- Added an additive migration with a service-role-only atomic claim function, row locking with `skip locked`, a ten-minute recovery lease, and an index supporting due-source selection.
+- Changed the Worker pull loop to use the atomic claim, release every source lease in `finally`, report lease failures honestly, and continue processing later claimed sources after an individual failure.
+- Did not change any merchant authorization, source permission, financial conclusion, connector credential, or production database state.
+
+### Verification commands and exact outcomes
+
+- Startup `npm run verify-continuity` - passed.
+- Startup `npm run verify-order-guard` - passed.
+- `npm run verify-foodics-evidence-adapter` - passed with Foodics minimization and atomic scheduler lease checks.
+- `npm run typecheck` - passed.
+- `npm run verify-api-independent-foundation` - passed.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+
+### Changed files and exact next action
+
+- Changed `src/server/core/evidence-source-pull.ts`, `scripts/verify-foodics-evidence-adapter.mts`, added `supabase/migrations/20260914000000_evidence_source_pull_leases.sql`, and updated the required continuity records. Existing untracked user artifacts remain untouched.
+- Exact next action: apply and verify the additive lease migration before deploying this dependent Worker build; then configure the source-pull secret pair and run authenticated no-source and overlapping-invocation smokes.

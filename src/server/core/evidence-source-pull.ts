@@ -21,11 +21,14 @@ const metadataCurrency = (metadata: unknown) => {
   return typeof value === "string" ? value.trim().toUpperCase() : "";
 };
 
-const isDue = (source: EvidenceSource, now: number) => {
-  if (!source.last_sync_at) return true;
-  const interval = Math.max(15, Number(source.expected_sync_interval_minutes) || 1440) * 60_000;
-  return Date.parse(source.last_sync_at) + interval <= now;
-};
+async function releaseSourceLease(connectionId: string, leaseToken: string) {
+  const db = supabaseAdmin as any;
+  const {error} = await db.from("ps_evidence_source_connections")
+    .update({sync_lease_token: null, sync_lease_until: null})
+    .eq("id", connectionId)
+    .eq("sync_lease_token", leaseToken);
+  if (error) throw new Error(`Evidence source lease could not be released: ${error.message}`);
+}
 
 async function foodicsChannel(source: EvidenceSource) {
   const db = supabaseAdmin as any;
@@ -107,16 +110,31 @@ export async function pullFoodicsEvidenceSource(source: EvidenceSource) {
 export async function pullDueEvidenceSources(limit = 10) {
   const db = supabaseAdmin as any;
   const boundedLimit = Math.min(Math.max(Math.floor(limit), 1), 25);
-  const {data, error} = await db.from("ps_evidence_source_connections")
-    .select("id,account_id,merchant_id,provider,branch_references,external_connection_reference,sync_cursor,expected_sync_interval_minutes,last_sync_at")
-    .eq("status", "active").eq("read_only", true).order("last_sync_at", {ascending: true, nullsFirst: true}).limit(100);
-  if (error) throw new Error(error.message);
-  const due = ((data ?? []) as EvidenceSource[]).filter(source => isDue(source, Date.now())).slice(0, boundedLimit);
   const runId = randomUUID();
+  const {data, error} = await db.rpc("ps_claim_due_evidence_sources", {
+    p_limit: boundedLimit,
+    p_lease_token: runId,
+    p_now: new Date().toISOString(),
+  });
+  if (error) throw new Error(error.message);
+  const due = (data ?? []) as EvidenceSource[];
   const results = [];
   for (const source of due) {
-    if (source.provider === "foodics") results.push(await pullFoodicsEvidenceSource(source));
-    else results.push(await recordPullFailure(source, new Error(`No pull adapter is enabled for ${source.provider}.`)));
+    let result: Awaited<ReturnType<typeof pullFoodicsEvidenceSource>> | {ok: false; connectionId: string; error: string};
+    try {
+      result = source.provider === "foodics"
+        ? await pullFoodicsEvidenceSource(source)
+        : await recordPullFailure(source, new Error(`No pull adapter is enabled for ${source.provider}.`));
+    } catch (error) {
+      result = {ok: false, connectionId: source.id, error: error instanceof Error ? error.message : "Evidence source pull failed."};
+    } finally {
+      try {
+        await releaseSourceLease(source.id, runId);
+      } catch (error) {
+        result = {ok: false, connectionId: source.id, error: error instanceof Error ? error.message : "Evidence source lease could not be released."};
+      }
+    }
+    results.push(result!);
   }
   return {runId, due: due.length, succeeded: results.filter(result => result.ok).length, failed: results.filter(result => !result.ok).length, results};
 }
