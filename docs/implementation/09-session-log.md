@@ -2264,4 +2264,8 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 ### Exact next action
 
-- Commit, push, deploy, and authenticate-check the Evidence Inbox. Then return to source-pull secret configuration after action-time credential-entry confirmation.
+- Commit `0d27cb1` (`feat: restore canonical evidence inbox`) was pushed to `origin/main`.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `cb34ff4a-c663-40cc-8b60-2546f7b4c8ad` to `prizeskout.qa/*` and `app.prizeskout.qa`.
+- Authenticated production verification loaded `/dashboard/evidence` in the Naija workspace with canonical Evidence Inbox navigation, seven retained evidence records, zero automatic sources, a healthy empty processing queue, and the private-address action still unexecuted. This verification did not create a mailbox or mutate evidence.
+- `https://prizeskout.qa/`, `https://prizeskout.qa/access`, `https://prizeskout.qa/dashboard/evidence`, and `https://app.prizeskout.qa/` returned HTTP 200.
+- Exact next action: configure the matching source-pull secret in Cloudflare and Supabase Vault after action-time confirmation, then run the authenticated no-source hook and scheduled-job smoke.
