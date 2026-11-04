@@ -6,6 +6,7 @@ import {buildNormalizedCommerceEvents} from "../src/server/core/normalized-comme
 import {assessReconciliationReadiness,buildNormalizedReconciliationInput,classifyAllocationFinding,compareShadowParity,reconciliationCoverage} from "../src/server/core/normalized-reconciliation-shadow";
 import {createHmac} from "node:crypto";
 import {verifyInboundEmailSignature} from "../src/server/core/evidence-mailbox";
+import {decodeInboundBase64} from "../src/routes/api/evidence/inbound-email";
 import {classifyStructuredText,extractStructuredEvidence,inferEvidencePlatform} from "../src/server/core/evidence-document-processor";
 import {assessPdfTextQuality} from "../src/server/core/server-pdf-text";
 import {sanitizeOcrEvidenceDraft} from "../src/server/core/ocr-evidence-extractor";
@@ -148,6 +149,9 @@ const inboundBody=JSON.stringify({recipient:"merchant@example.test",message_id:"
 const inboundSignature=createHmac("sha256",inboundSecret).update(inboundBody).digest("hex");
 assert.equal(verifyInboundEmailSignature(inboundBody,inboundSignature,inboundSecret),true);
 assert.equal(verifyInboundEmailSignature(`${inboundBody}x`,inboundSignature,inboundSecret),false);
+assert.equal(decodeInboundBase64("cHJpemVza291dA==").toString("utf8"),"prizeskout");
+assert.throws(()=>decodeInboundBase64("not-base64"),/invalid Base64/i);
+assert.throws(()=>decodeInboundBase64("cHJpemVza291dA"),/invalid Base64/i);
 assert.equal(inferEvidencePlatform("Payout from Talabat"),"talabat");
 assert.equal(classifyStructuredText("Order ID,Date,Sales,Status\n1,2026-08-01,100,delivered","unknown"),"order_export");
 assert.equal(detectEvidenceLayout("Order ID,Date,Sales,Status\n1,2026-08-01,100,delivered").profile,"order_transaction_v1");

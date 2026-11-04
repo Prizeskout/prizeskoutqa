@@ -10,6 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useAppDialog } from "@/components/dashboard/AppDialog";
+import { useMerchantCredentials } from "@/lib/merchant-session";
 
 type AgreementMatch = {
   id: string;
@@ -201,10 +202,6 @@ Object.assign(labels, {
   brand: "Brand",
   legal_entity: "Legal entity",
 });
-const credentials = () => ({
-  merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
-  access_code: localStorage.getItem("ps_access_code") ?? "",
-});
 const editablePayload = (review: Review) =>
   review.extraction_payload.format === "structured"
     ? { ...review.extraction_payload.result }
@@ -216,6 +213,7 @@ const editablePayload = (review: Review) =>
       : { ...review.extraction_payload };
 
 export function EvidenceReviewWorkspace() {
+  const { credentials, resolving } = useMerchantCredentials();
   const { prompt: askText, dialog } = useAppDialog();
   const [reviews, setReviews] = useState<Review[]>([]),
     [status, setStatus] = useState<ProcessingStatus | null>(null),
@@ -225,7 +223,7 @@ export function EvidenceReviewWorkspace() {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const load = useCallback(async (id?: string) => {
-    const auth = credentials(),
+    const auth = credentials,
       params = new URLSearchParams(id ? { draft_id: id } : {});
     const response = await fetch(`/api/evidence/reviews?${params}`, {
         headers: { "x-merchant-id": auth.merchant_id, "x-access-code": auth.access_code },
@@ -238,12 +236,14 @@ export function EvidenceReviewWorkspace() {
       setSelected(review);
       setEdited(review ? editablePayload(review) : {});
     } else setReviews(body.reviews ?? []);
-  }, []);
+  }, [credentials]);
   useEffect(() => {
+    if (resolving) return;
+    if (!credentials.merchant_id) { setMessage("A verified merchant session is required."); setLoading(false); return; }
     load()
       .catch((e) => setMessage(e.message))
       .finally(() => setLoading(false));
-  }, [load]);
+  }, [credentials.merchant_id, load, resolving]);
   const open = async (review: Review) => {
     setMessage("");
     try {
@@ -280,7 +280,7 @@ export function EvidenceReviewWorkspace() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ...credentials(),
+            ...credentials,
             draft_id: selected.id,
             decision,
             reviewed_payload: reviewedPayload,
@@ -319,7 +319,7 @@ export function EvidenceReviewWorkspace() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ...credentials(),
+            ...credentials,
             action: "decide_order_match",
             finding_id: finding.id,
             resolution,
@@ -405,7 +405,7 @@ export function EvidenceReviewWorkspace() {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
-                            ...credentials(),
+                            ...credentials,
                             action: "retry_failed",
                             job_id: doc.id,
                           }),
@@ -690,7 +690,7 @@ export function EvidenceReviewWorkspace() {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({
-                                ...credentials(),
+                                ...credentials,
                                 action: "confirm_agreement",
                                 match_id: selected.agreement_match!.id,
                                 contract_term_id: term.id,
@@ -846,7 +846,7 @@ export function EvidenceReviewWorkspace() {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({
-                                    ...credentials(),
+                                    ...credentials,
                                     action: "prepare_recovery",
                                     finding_id: finding.id,
                                   }),

@@ -1,18 +1,19 @@
 import {useCallback,useEffect,useMemo,useState,type CSSProperties} from "react";
 import { friendlyClientMessage } from "@/lib/api-error";
 import {ExternalLink,FileCheck2,FileQuestion,FileText,Search,ShieldCheck} from "lucide-react";
+import {useMerchantCredentials} from "@/lib/merchant-session";
 
 type EvidenceItem={id:string;source_kind:string;source_provider:string;document_kind:string;observed_at:string|null;received_at:string;media_type:string|null;original_filename:string|null;content_sha256:string;original_retained:boolean;processing_state:string;review_state:string|null};
-const credentials=()=>({merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??""});
 const title=(value:string)=>value.split(/[_-]+/).map(part=>part.charAt(0).toUpperCase()+part.slice(1)).join(" ");
 
 export function EvidenceLibrary(){
+  const {credentials,resolving}=useMerchantCredentials();
   const [items,setItems]=useState<EvidenceItem[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState(""),[opening,setOpening]=useState("");
-  const load=useCallback(async()=>{const auth=credentials(),response=await fetch("/api/evidence/reviews",{headers:{"x-merchant-id":auth.merchant_id,"x-access-code":auth.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Evidence library could not be loaded.");setItems(body.evidence_library??[]);},[]);
-  useEffect(()=>{load().catch(reason=>setError(friendlyClientMessage(reason, "Evidence library could not be loaded."))).finally(()=>setLoading(false));},[load]);
+  const load=useCallback(async()=>{const response=await fetch("/api/evidence/reviews",{headers:{"x-merchant-id":credentials.merchant_id,"x-access-code":credentials.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Evidence library could not be loaded.");setItems(body.evidence_library??[]);},[credentials.access_code,credentials.merchant_id]);
+  useEffect(()=>{if(resolving)return;if(!credentials.merchant_id){setLoading(false);setError("A verified merchant session is required.");return;}load().catch(reason=>setError(friendlyClientMessage(reason, "Evidence library could not be loaded."))).finally(()=>setLoading(false));},[credentials.merchant_id,load,resolving]);
   const filtered=useMemo(()=>{const needle=query.trim().toLowerCase();return needle?items.filter(item=>`${item.original_filename??""} ${item.document_kind} ${item.source_provider} ${item.source_kind}`.toLowerCase().includes(needle)):items;},[items,query]);
   const retained=items.filter(item=>item.original_retained).length;
-  const openOriginal=async(item:EvidenceItem)=>{setOpening(item.id);setError("");try{const auth=credentials(),response=await fetch(`/api/evidence/reviews?evidence_id=${encodeURIComponent(item.id)}`,{headers:{"x-merchant-id":auth.merchant_id,"x-access-code":auth.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Original evidence could not be opened.");if(!body.evidence_original_url)throw new Error("The original file was not retained for this evidence record.");window.open(body.evidence_original_url,"_blank","noopener,noreferrer");}catch(reason){setError(friendlyClientMessage(reason, "Original evidence could not be opened."));}finally{setOpening("");}};
+  const openOriginal=async(item:EvidenceItem)=>{setOpening(item.id);setError("");try{const response=await fetch(`/api/evidence/reviews?evidence_id=${encodeURIComponent(item.id)}`,{headers:{"x-merchant-id":credentials.merchant_id,"x-access-code":credentials.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Original evidence could not be opened.");if(!body.evidence_original_url)throw new Error("The original file was not retained for this evidence record.");window.open(body.evidence_original_url,"_blank","noopener,noreferrer");}catch(reason){setError(friendlyClientMessage(reason, "Original evidence could not be opened."));}finally{setOpening("");}};
   return <section className="ps-evidence-library" style={card} aria-labelledby="evidence-library-title">
     <div style={heading}><div><div style={eyebrow}>IMMUTABLE EVIDENCE VAULT</div><h2 id="evidence-library-title" style={h2}><ShieldCheck size={18}/> Evidence Library</h2><p style={muted}>Evidence registered in the immutable vault appears here. Legacy payout checks and activity remain listed below.</p></div><div style={summary}><strong>{items.length}</strong> vault records · <strong>{retained}</strong> originals retained</div></div>
     <label style={search}><Search size={16}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search filename, provider, or document type"/></label>

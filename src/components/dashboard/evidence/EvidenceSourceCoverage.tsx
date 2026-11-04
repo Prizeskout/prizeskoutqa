@@ -1,16 +1,17 @@
 import {useCallback,useEffect,useState,type CSSProperties} from "react";
 import { friendlyClientMessage } from "@/lib/api-error";
 import {AlertTriangle,CheckCircle2,Clock3,Database,Loader2,PauseCircle,ShieldCheck} from "lucide-react";
+import {useMerchantCredentials} from "@/lib/merchant-session";
 
 type Source={id:string;provider:string;connection_kind:string;status:string;authorized:boolean;health:{state:string;label:string;attention:boolean};coverage:{basis:string;completeness:string;period_start:string|null;period_end:string|null;records_seen:number;final_records:number;non_final_records:number;channels:string[];currencies:string[];branches:string[];successful_deliveries:number}};
-const credentials=()=>({merchant_id:localStorage.getItem("ps_merchant_id")??"",access_code:localStorage.getItem("ps_access_code")??""});
 const title=(value:string)=>value.split(/[\s_-]+/).filter(Boolean).map(part=>part[0]?.toUpperCase()+part.slice(1)).join(" ");
 const date=(value:string|null)=>value?new Date(value).toLocaleString():"No evidence received";
 
 export function EvidenceSourceCoverage(){
+  const {credentials,resolving}=useMerchantCredentials();
   const [sources,setSources]=useState<Source[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
-  const load=useCallback(async()=>{const auth=credentials(),response=await fetch("/api/evidence/sources",{headers:{"x-merchant-id":auth.merchant_id,"x-access-code":auth.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Evidence sources could not be loaded.");setSources(body.sources??[]);},[]);
-  useEffect(()=>{load().catch(reason=>setError(friendlyClientMessage(reason, "Evidence sources could not be loaded."))).finally(()=>setLoading(false));},[load]);
+  const load=useCallback(async()=>{const response=await fetch("/api/evidence/sources",{headers:{"x-merchant-id":credentials.merchant_id,"x-access-code":credentials.access_code}}),body=await response.json();if(!response.ok)throw new Error(body.error??"Evidence sources could not be loaded.");setSources(body.sources??[]);},[credentials.access_code,credentials.merchant_id]);
+  useEffect(()=>{if(resolving)return;if(!credentials.merchant_id){setLoading(false);setError("A verified merchant session is required.");return;}load().catch(reason=>setError(friendlyClientMessage(reason, "Evidence sources could not be loaded."))).finally(()=>setLoading(false));},[credentials.merchant_id,load,resolving]);
   return <section style={card}><div style={heading}><div><h2 style={h2}><Database size={18}/> Automatic evidence sources</h2><p style={muted}>Coverage shows only records PrizeSkout received. It does not guarantee the provider supplied every record.</p></div><span style={badge}>{sources.length} source{sources.length===1?"":"s"}</span></div>
     {loading?<div className="ps-evidence-loading" role="status" aria-live="polite"><Loader2 size={18} className="animate-spin"/><div><strong>Checking source coverage</strong><small>Reconciling provider health and delivery windows…</small></div></div>:error?<div style={warning}><AlertTriangle size={17}/>{error}</div>:sources.length===0?<div style={empty}><Database size={18}/><div><strong>No automatic sources connected</strong><small>Manual evidence remains available while you connect a provider.</small></div></div>:<div style={{display:"grid",gap:10}}>{sources.map(source=>{
       const healthy=!source.health.attention,Icon=source.status==="paused"||source.status==="disconnected"?PauseCircle:healthy?CheckCircle2:AlertTriangle,c=source.coverage;

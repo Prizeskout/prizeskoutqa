@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { DashboardV2Summary } from "@/server/core/dashboard-v2-summary";
 import { dashboardV2PeriodDays, useDashboardV2Period } from "./useDashboardV2Period";
+import { useMerchantCredentials } from "@/lib/merchant-session";
 
 export type DashboardV2LoadState =
   | { phase: "loading"; summary: null; message: null }
@@ -9,11 +10,12 @@ export type DashboardV2LoadState =
 
 export function useDashboardV2Summary(): DashboardV2LoadState {
   const period = useDashboardV2Period();
+  const { credentials, resolving } = useMerchantCredentials();
   const [load, setLoad] = useState<DashboardV2LoadState>({ phase: "loading", summary: null, message: null });
 
   useEffect(() => {
-    const merchantId = localStorage.getItem("ps_merchant_id")?.trim() ?? "";
-    const accessCode = localStorage.getItem("ps_access_code")?.trim() ?? "";
+    const merchantId = credentials.merchant_id, accessCode = credentials.access_code;
+    if (resolving) { setLoad({ phase: "loading", summary: null, message: null }); return; }
     if (!merchantId || !accessCode) {
       setLoad({ phase: "unavailable", summary: null, message: "A verified merchant session is required before financial evidence can be loaded." });
       return;
@@ -34,7 +36,7 @@ export function useDashboardV2Summary(): DashboardV2LoadState {
         setLoad({ phase: "unavailable", summary: null, message: error instanceof Error ? error.message : "Financial evidence could not be loaded." });
       });
     return () => controller.abort();
-  }, [period]);
+  }, [credentials.access_code, credentials.merchant_id, period, resolving]);
 
   return load;
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Clipboard, Inbox, Loader2, Mail, ShieldCheck } from "lucide-react";
 import { friendlyClientMessage } from "@/lib/api-error";
+import { useMerchantCredentials } from "@/lib/merchant-session";
 
 type Mailbox = {
   address: string;
@@ -9,12 +10,8 @@ type Mailbox = {
   options: Array<{ id: string; status: string; address?: string; explanation: string }>;
 };
 
-const credentials = () => ({
-  merchant_id: localStorage.getItem("ps_merchant_id") ?? "",
-  access_code: localStorage.getItem("ps_access_code") ?? "",
-});
-
 export function EvidenceMailboxSetup() {
+  const { credentials, resolving } = useMerchantCredentials();
   const [mailbox, setMailbox] = useState<Mailbox | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -25,11 +22,10 @@ export function EvidenceMailboxSetup() {
     setBusy(true);
     setError("");
     try {
-      const auth = credentials();
       const response = await fetch("/api/evidence/mailbox", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(auth),
+        body: JSON.stringify(credentials),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "Private forwarding could not be prepared.");
@@ -64,7 +60,7 @@ export function EvidenceMailboxSetup() {
             <strong>Your address is created only when you choose this setup.</strong>
             <p>Forward individual messages or create a rule in your current mailbox. PrizeSkout retains the original privately before processing it.</p>
           </div>
-          <button className="ps-v2-action" type="button" disabled={busy} onClick={() => void prepareMailbox()}>
+          <button className="ps-v2-action" type="button" disabled={busy || resolving || !credentials.merchant_id} onClick={() => void prepareMailbox()}>
             {busy ? <Loader2 className="ps-v2-spin" size={14} /> : <Inbox size={14} />}
             {busy ? "Preparing…" : "Show or create private address"}
           </button>

@@ -2323,3 +2323,28 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 
 - Changed `src/server/core/evidence-source-pull.ts`, `scripts/verify-foodics-evidence-adapter.mts`, added `supabase/migrations/20260914000000_evidence_source_pull_leases.sql`, and updated the required continuity records. Existing untracked user artifacts remain untouched.
 - Exact next action: apply and verify the additive lease migration before deploying this dependent Worker build; then configure the source-pull secret pair and run authenticated no-source and overlapping-invocation smokes.
+
+## 2026-11-04 - Merchant journey session recovery and inbound intake limits
+
+### Slice
+
+- Followed the live merchant journey from Evidence Inbox to Overview while deliberately excluding Zid and Salla. The existing session lost its browser-local merchant keys across the hard navigation and rendered an unauthenticated fallback instead of the Naija workspace.
+- Added a shared merchant-session resolver that restores merchant ID and access code from the existing authenticated Supabase session, persists them locally, and updates dashboard consumers reactively.
+- Wired summary, context, module, activity, mailbox, source coverage, evidence review, and evidence library readers to wait for and reuse the recovered identity.
+- Hardened signed inbound-email intake with bounded streaming, strict Base64 validation, a 25-attachment limit, and a 30 MiB total retained-evidence limit within a 45 MiB request ceiling.
+- Changed no financial calculation, evidence conclusion, merchant approval, external message, connector, or live merchant data.
+
+### Verification commands and exact outcomes
+
+- `npm run typecheck` - passed.
+- `npm run verify-api-independent-foundation` - passed, including strict inbound Base64 checks.
+- `npm run verify-dashboard-v2-contract` - passed.
+- `npm run verify-dashboard-v2-modules` - passed.
+- `npm run verify-dashboard-reference-demo` - passed at 1440, 390, 375, and 844 widths with exact key values, complete sections, interactions, no API writes, and no page errors.
+- `npm run build` - passed; only the existing chunk-size and mixed static/dynamic import warnings were emitted.
+- Zid and Salla checks were intentionally omitted from this merchant audit at the user's direction.
+
+### Changed files and exact next action
+
+- Added `src/lib/merchant-session.ts`; changed Dashboard V2 data hooks, all Evidence Inbox readers, signed inbound-email intake, its foundation verifier, and the required continuity records. Existing untracked user artifacts remain untouched.
+- Exact next action: commit, push, and deploy this verified slice, then repeat the authenticated live route journey with browser-local merchant keys absent to prove session recovery before auditing the remaining merchant routes.
