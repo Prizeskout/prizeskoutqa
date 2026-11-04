@@ -2370,4 +2370,9 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 ### Changed files and exact next action
 
 - Changed `src/routes/dashboard.tsx`, `src/lib/merchant-session.ts`, and the required continuity records. Existing unrelated untracked user artifacts remain untouched.
-- Exact next action: run continuity verification, commit and push this verified slice, deploy the exact build, and verify that a production hard navigation with the currently expired browser returns to `/access` without exposing an empty dashboard.
+- `npm run verify-continuity` - passed.
+- Commit `bd60c7f` (`fix: handle expired merchant sessions safely`) was pushed to `origin/main`.
+- `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `627c0ebf-0227-4eab-8a58-0c4990c545a7`.
+- A clean production browser opened `/dashboard`, displayed `Restoring your PrizeSkout workspace…`, redirected to `/access`, and produced no browser errors. It did not display an empty or unscoped financial dashboard.
+- `https://prizeskout.qa/`, `/access`, `/dashboard`, and `https://app.prizeskout.qa/` returned HTTP 200.
+- Exact next action: obtain a fresh merchant sign-in and continue the authenticated non-Zid/Salla route audit. The expired browser cannot prove authenticated recovery, and no merchant identity may be inferred or fabricated.
