@@ -2269,3 +2269,27 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - Authenticated production verification loaded `/dashboard/evidence` in the Naija workspace with canonical Evidence Inbox navigation, seven retained evidence records, zero automatic sources, a healthy empty processing queue, and the private-address action still unexecuted. This verification did not create a mailbox or mutate evidence.
 - `https://prizeskout.qa/`, `https://prizeskout.qa/access`, `https://prizeskout.qa/dashboard/evidence`, and `https://app.prizeskout.qa/` returned HTTP 200.
 - Exact next action: configure the matching source-pull secret in Cloudflare and Supabase Vault after action-time confirmation, then run the authenticated no-source hook and scheduled-job smoke.
+
+## 2026-11-04 - Order Guard production preflight hardening
+
+### Slice
+
+- Removed query-string webhook credentials so partner secrets are accepted only through request headers and are not exposed through ordinary URL logging.
+- Replaced full UrbanPiper payload retention with the minimum lifecycle evidence needed to explain Order Guard decisions; customer identity, address, basket, and other unrelated partner fields are not copied into the order record.
+- Changed action-history ownership from cascading deletion to restrictive deletion and added a database trigger that rejects updates and deletes, preserving append-only history.
+- Expanded the repeatable Order Guard verifier to enforce credential transport, minimized retention, restrictive foreign-key behavior, and the append-only trigger.
+- No production migration, merchant source, credential, order, or dashboard state was changed.
+
+### Verification commands and exact outcomes
+
+- `npm run verify-order-guard` - passed; normalization, lifecycle mapping, credential safety, minimized retention, and append-only history checks passed.
+- `npm run typecheck` - passed.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run verify-api-independent-foundation` - passed.
+- `git diff --check` - passed with only LF-to-CRLF working-copy warnings.
+
+### Changed files and exact next action
+
+- Changed `src/server/core/order-guard.ts`, `supabase/migrations/20260913010000_order_guard.sql`, `scripts/verify-order-guard.mts`, and the required continuity records. Existing untracked user artifacts remain untouched.
+- Exact next action: run the production build and continuity gate, commit/push/deploy the runtime hardening as an authorized substantial slice, then separately reconcile and apply the Order Guard migration and verify its RLS and append-only trigger before provisioning any merchant source.

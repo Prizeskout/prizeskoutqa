@@ -53,12 +53,27 @@ create table if not exists public.ps_order_guard_orders (
 create table if not exists public.ps_order_guard_actions (
   id uuid primary key default gen_random_uuid(),
   account_id text not null,
-  order_id uuid not null references public.ps_order_guard_orders(id) on delete cascade,
+  order_id uuid not null references public.ps_order_guard_orders(id) on delete restrict,
   action text not null,
   actor text not null,
   detail jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+
+create or replace function public.ps_preserve_order_guard_action_history()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  raise exception 'Order Guard action history is append-only';
+end;
+$$;
+
+drop trigger if exists ps_order_guard_actions_append_only on public.ps_order_guard_actions;
+create trigger ps_order_guard_actions_append_only
+before update or delete on public.ps_order_guard_actions
+for each row execute function public.ps_preserve_order_guard_action_history();
 
 create index if not exists ps_order_guard_live on public.ps_order_guard_orders(account_id,status,risk_level,placed_at desc);
 create index if not exists ps_order_guard_actions_order on public.ps_order_guard_actions(order_id,created_at desc);

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { classifyOrderRisk, normalizeUrbanPiperOrder } from "../src/server/core/order-guard";
 
 const received = normalizeUrbanPiperOrder({
@@ -85,6 +86,34 @@ assert.equal(risk("preparing", 1_000, 900), "critical");
 assert.equal(risk("preparing", 100, 50, true), "critical");
 assert.equal(risk("completed", 1_000), "cleared");
 
+const core = readFileSync("src/server/core/order-guard.ts", "utf8");
+const migration = readFileSync("supabase/migrations/20260913010000_order_guard.sql", "utf8");
+assert.doesNotMatch(
+  core,
+  /searchParams\.get\(["']key["']\)/,
+  "Webhook secrets must not be accepted in query strings.",
+);
+assert.match(
+  core,
+  /raw_payload:\s*retainedSourceEvidence\(normalized\)/,
+  "Order Guard must retain a minimized evidence projection rather than a full customer payload.",
+);
+assert.match(
+  migration,
+  /order_id uuid not null references public\.ps_order_guard_orders\(id\) on delete restrict/,
+  "Action history must prevent deletion of its source order.",
+);
+assert.match(
+  migration,
+  /before update or delete on public\.ps_order_guard_actions/,
+  "Order Guard action history must be append-only.",
+);
+assert.doesNotMatch(
+  migration,
+  /ps_order_guard_actions[\s\S]{0,300}on delete cascade/,
+  "Action history must never cascade-delete.",
+);
+
 console.log(
-  "Order Guard contract verified: payload normalization, lifecycle mapping, and validation pass.",
+  "Order Guard contract verified: normalization, lifecycle mapping, credential safety, minimized retention, and append-only history pass.",
 );

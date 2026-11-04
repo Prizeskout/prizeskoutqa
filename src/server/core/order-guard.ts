@@ -137,9 +137,25 @@ function suppliedToken(request: Request) {
     request.headers.get("x_api_token")?.trim() ||
     request.headers.get("x-api-token")?.trim() ||
     request.headers.get("x-urbanpiper-webhook-secret")?.trim() ||
-    new URL(request.url).searchParams.get("key")?.trim() ||
     ""
   );
+}
+
+function retainedSourceEvidence(normalized: ReturnType<typeof normalizeUrbanPiperOrder>) {
+  // Keep only the fields needed to explain lifecycle decisions. Full partner
+  // payloads can contain customer names, phones, addresses, and basket details.
+  return {
+    external_order_id: normalized.externalOrderId,
+    external_business_id: normalized.externalBusinessId,
+    external_branch_id: normalized.externalBranchId,
+    channel: normalized.channel,
+    status: normalized.status,
+    placed_at: normalized.placedAt,
+    expected_ready_at: normalized.expectedReadyAt,
+    currency: normalized.currency,
+    order_total: normalized.orderTotal,
+    next_state: normalized.nextState,
+  };
 }
 
 export async function receiveUrbanPiperOrder(request: Request): Promise<Response> {
@@ -244,7 +260,7 @@ async function persistUrbanPiperOrder(request: Request): Promise<Response> {
     ready_at: existing?.ready_at ?? (["ready", "completed"].includes(effectiveStatus) ? now : null),
     completed_at: existing?.completed_at ?? (effectiveStatus === "completed" ? now : null),
     last_source_event_at: now,
-    raw_payload: normalized.raw,
+    raw_payload: retainedSourceEvidence(normalized),
     updated_at: now,
   };
   const { data: saved, error } = await db
