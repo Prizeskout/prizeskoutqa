@@ -215,3 +215,11 @@ The chrome refinement removes the customer-visible summary contract version whil
 - Verified type safety, Dashboard V2 contracts/modules, production build, and the full reference route matrix at 1440, 390, 375, and 844 widths. Representative desktop and phone renders were also visually inspected.
 - Commit `1f220cd` (`style: differentiate dashboard workspaces`) is pushed and deployed as Worker `f978bd62-8561-4de4-a0bc-343e2068f72f`; apex, access, and app routes return HTTP 200.
 - Exact next action: hard-refresh and visually verify all four workspace treatments in the authenticated dashboard. Keep that visual check distinct from real-merchant readiness.
+
+## 2026-11-03 - Production evidence-automation audit
+
+- Hard-refreshed the authenticated production dashboard and verified that the deployed command surface loads the controlled Naija workspace while keeping Order Guard unavailable and campaign evidence absent rather than presenting either as live.
+- Queried production Supabase read-only: evidence mailbox/source tables exist; Order Guard source/order tables do not exist; `evidence-process` and `evidence-source-pull` cron jobs are active.
+- Verified that Supabase Vault contains the evidence-processor URL/secret pair but not the source-pull pair. Cloudflare contains `EVIDENCE_PROCESSOR_SECRET` but not `EVIDENCE_SOURCE_PULL_SECRET` or `INBOUND_EVIDENCE_WEBHOOK_SECRET`.
+- Verified that production currently has zero registered evidence sources and zero evidence mailboxes. Enabling source pulling cannot call a merchant connector until one is separately authorized and registered.
+- Exact next action: configure a matching source-pull secret in Cloudflare and Supabase Vault, then smoke the authenticated hook with no registered sources. Treat inbound-email transport and the Order Guard migration as later, separately verified actions.

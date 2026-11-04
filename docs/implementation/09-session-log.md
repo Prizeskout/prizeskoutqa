@@ -2217,3 +2217,26 @@ Run a controlled first-time install with an inbox whose delivery can be observed
 - `npx wrangler deploy --config dist/server/wrangler.json` passed and deployed Worker `f978bd62-8561-4de4-a0bc-343e2068f72f` to `prizeskout.qa/*` and `app.prizeskout.qa`.
 - `https://prizeskout.qa/`, `https://prizeskout.qa/access`, and `https://app.prizeskout.qa/` returned HTTP 200 after deployment.
 - Exact next action: hard-refresh and visually verify Overview, Profit Intelligence, Settlements, and Priority Centre in an authenticated production session; do not mark the appearance production-verified until that pass succeeds.
+
+## 2026-11-03 - Begin production-readiness wiring
+
+### Audit
+
+- Created a persistent Codex goal for the production-readiness program so work can resume across credit refreshes.
+- Hard-refreshed the authenticated production dashboard. Its transient loading state cleared to the controlled Naija workspace; unavailable Order Guard and missing campaign evidence remained explicitly unavailable.
+- Supabase read-only query confirmed `ps_evidence_mailboxes` and `ps_evidence_source_connections` exist, while `ps_order_guard_sources` and `ps_order_guard_orders` are absent.
+- Supabase read-only query confirmed active `evidence-process` (`*/5 * * * *`) and `evidence-source-pull` (`7,22,37,52 * * * *`) cron jobs.
+- Supabase Vault name-only query found `evidence_processor_url` and `evidence_processor_secret`; the source-pull URL/secret names are absent.
+- `npx wrangler secret list --config dist/server/wrangler.json` confirmed `EVIDENCE_PROCESSOR_SECRET` exists and `EVIDENCE_SOURCE_PULL_SECRET` plus `INBOUND_EVIDENCE_WEBHOOK_SECRET` are absent. No secret values were read or recorded.
+- Production queries returned zero rows for evidence-source connections and evidence mailboxes.
+
+### Verification commands and exact outcomes
+
+- `npm run verify-continuity` - passed.
+- `npm run verify-zid-contract` - passed.
+- `npm run verify-salla-contract` - passed.
+- `npm run typecheck` - passed.
+
+### Exact next action
+
+- Configure one generated source-pull secret in Cloudflare and its matching URL/secret pair in Supabase Vault, then smoke the hook and verify the scheduled job. This is a sensitive credential transmission into the logged-in services and requires the computer-control action-time confirmation before entry.
